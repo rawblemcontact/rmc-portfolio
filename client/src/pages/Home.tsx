@@ -17,7 +17,9 @@ import {
   ArrowRight,
   ExternalLink,
   ChevronDown,
-  LucideIcon
+  LucideIcon,
+  FileText,
+  Zap
 } from "lucide-react";
 
 // --- ANIMATION VARIANTS ---
@@ -47,6 +49,114 @@ const hoverScale: Variants = {
     rotate: -2,
     transition: { type: "spring", stiffness: 300, damping: 10 }
   }
+};
+
+// --- RESUME COMPONENT ---
+const ResumeView = () => {
+  return (
+    <div className="bg-white min-h-screen text-black font-sans p-8 md:p-16 max-w-5xl mx-auto selection:bg-gray-200 selection:text-black">
+      {/* Header */}
+      <header className="border-b-2 border-black pb-8 mb-8">
+        <h1 className="text-4xl md:text-5xl font-bold uppercase tracking-tight mb-2">Robbie McLaughlin</h1>
+        <p className="text-xl text-gray-700 mb-4">Writer • Digital Media Coordinator • Content Creator</p>
+        <div className="flex flex-wrap gap-4 text-sm font-medium">
+          <a href="mailto:robbie@example.com" className="flex items-center gap-2 hover:underline">
+            <Mail size={16} /> robbie@example.com
+          </a>
+          <span className="flex items-center gap-2">
+            <GraduationCap size={16} /> B.A. Writing, University of Victoria (Distinction)
+          </span>
+        </div>
+      </header>
+
+      {/* Summary */}
+      <section className="mb-10">
+        <h2 className="text-2xl font-bold uppercase border-b border-gray-300 pb-2 mb-4">Professional Profile</h2>
+        <p className="leading-relaxed text-gray-800">
+          Communications-focused writer and digital media coordinator with a proven track record in interactive content creation and community management. Expert in blending creative storytelling with analytical strategy to drive engagement. Demonstrated reliability and leadership in high-pressure service environments.
+        </p>
+      </section>
+
+      {/* Projects */}
+      <section className="mb-10">
+        <h2 className="text-2xl font-bold uppercase border-b border-gray-300 pb-2 mb-4">Independent Projects</h2>
+        <div className="mb-6">
+          <div className="flex justify-between items-baseline mb-2">
+            <h3 className="text-xl font-bold">RAWBLEM</h3>
+            <span className="text-gray-600 font-medium">Independent Digital Content & Interactive Media</span>
+          </div>
+          <p className="italic text-gray-700 mb-3">TikTok-focused interactive content project</p>
+          <ul className="list-disc list-outside ml-5 space-y-2 text-gray-800">
+            <li>Produced high-engagement TikTok interactive content focusing on narrative storytelling.</li>
+            <li>Scripted, filmed, and edited short-form videos using CapCut and DaVinci Resolve.</li>
+            <li>Analyzed engagement metrics (views, retention, shares) to iterate on content strategy and optimize for platform algorithms.</li>
+          </ul>
+        </div>
+      </section>
+
+      {/* Experience */}
+      <section className="mb-10">
+        <h2 className="text-2xl font-bold uppercase border-b border-gray-300 pb-2 mb-4">Professional Experience</h2>
+        
+        <div className="mb-8">
+          <div className="flex justify-between items-baseline mb-2">
+            <h3 className="text-xl font-bold">Starbucks</h3>
+            <span className="text-gray-600 font-medium">2018 — Present</span>
+          </div>
+          <p className="italic text-gray-700 mb-3">Barista & Team Member</p>
+          <ul className="list-disc list-outside ml-5 space-y-2 text-gray-800">
+            <li>Consistently recognized for "Rank 10" reliability and teamwork in a high-volume, high-pressure environment.</li>
+            <li>Demonstrated strong communication skills and adaptability during peak service hours.</li>
+            <li>Maintained high standards of customer service and product quality.</li>
+          </ul>
+        </div>
+
+        <div className="mb-6">
+          <div className="flex justify-between items-baseline mb-2">
+            <h3 className="text-xl font-bold">University of Victoria E-Sports Community</h3>
+            <span className="text-gray-600 font-medium">Volunteer</span>
+          </div>
+          <p className="italic text-gray-700 mb-3">Social Media Coordinator</p>
+          <ul className="list-disc list-outside ml-5 space-y-2 text-gray-800">
+            <li>Managed social media channels to increase community engagement and event attendance.</li>
+            <li>Created and edited digital content for promotional campaigns.</li>
+            <li>Facilitated communication between players, organizers, and the broader university community.</li>
+          </ul>
+        </div>
+      </section>
+
+      {/* Skills */}
+      <section className="mb-10">
+        <h2 className="text-2xl font-bold uppercase border-b border-gray-300 pb-2 mb-4">Skills & Tools</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-800">
+          <div>
+            <h4 className="font-bold mb-2">Core Competencies</h4>
+            <ul className="list-disc list-outside ml-5 space-y-1">
+              <li>Content Editing & Production</li>
+              <li>Social Media Operations</li>
+              <li>Community Management</li>
+              <li>Digital Strategy & Analytics</li>
+              <li>Creative Writing & Storytelling</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-bold mb-2">Technical Proficiency</h4>
+            <ul className="list-disc list-outside ml-5 space-y-1">
+              <li>Adobe Creative Suite</li>
+              <li>DaVinci Resolve</li>
+              <li>CapCut</li>
+              <li>Hootsuite</li>
+              <li>Canva</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <footer className="text-center text-gray-500 text-sm mt-16 pt-8 border-t border-gray-200">
+        <p>Portfolio available at: [Portfolio URL]</p>
+      </footer>
+    </div>
+  );
 };
 
 // --- COMPONENTS ---
@@ -480,15 +590,48 @@ const SkillArsenal = () => {
 };
 
 export default function Home() {
+  const [isResumeMode, setIsResumeMode] = useState(false);
+
   return (
-    <div className="bg-zinc-900 min-h-screen selection:bg-red-600 selection:text-white overflow-x-hidden">
-      <Navigation />
-      <Hero />
-      <PhantomProfile />
-      <PalaceProjects />
-      <ConfidantExperience />
-      <SocialLink />
-      <SkillArsenal />
+    <div className={`min-h-screen selection:bg-red-600 selection:text-white overflow-x-hidden transition-colors duration-500 ${isResumeMode ? 'bg-white' : 'bg-zinc-900'}`}>
+      
+      {/* Mode Toggle - Fixed Position */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2 mix-blend-difference">
+        <span className="text-white text-xs font-mono uppercase tracking-widest bg-black px-2 py-1 mb-1 hidden md:block">
+          Switch View
+        </span>
+        <Button 
+          onClick={() => setIsResumeMode(!isResumeMode)}
+          size="lg"
+          className={`rounded-full shadow-xl border-4 transition-all duration-300 h-16 w-16 p-0 ${
+            isResumeMode 
+              ? "bg-black text-white border-black hover:bg-zinc-800" 
+              : "bg-red-600 text-white border-white hover:bg-red-700 hover:scale-110"
+          }`}
+        >
+          {isResumeMode ? <Zap size={28} /> : <FileText size={28} />}
+        </Button>
+      </div>
+
+      {isResumeMode ? (
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ duration: 0.5 }}
+        >
+          <ResumeView />
+        </motion.div>
+      ) : (
+        <>
+          <Navigation />
+          <Hero />
+          <PhantomProfile />
+          <PalaceProjects />
+          <ConfidantExperience />
+          <SocialLink />
+          <SkillArsenal />
+        </>
+      )}
     </div>
   );
 }
