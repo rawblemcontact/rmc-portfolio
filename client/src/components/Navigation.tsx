@@ -1,6 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
-import { Link } from "wouter";
 import { Menu, X, Star, Heart, Zap, User, Briefcase, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
