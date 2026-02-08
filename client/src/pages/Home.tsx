@@ -64,6 +64,9 @@ const ResumeView = () => {
             <Mail size={16} /> robbie@example.com
           </a>
           <span className="flex items-center gap-2">
+            <Linkedin size={16} /> <a href="https://linkedin.com/in/robbie-mclaughlin" className="hover:underline">linkedin.com/in/robbie-mclaughlin</a>
+          </span>
+          <span className="flex items-center gap-2">
             <GraduationCap size={16} /> B.A. Writing, University of Victoria (Distinction)
           </span>
         </div>
@@ -75,54 +78,6 @@ const ResumeView = () => {
         <p className="leading-relaxed text-gray-800">
           Communications-focused writer and digital media coordinator with a proven track record in interactive content creation and community management. Expert in blending creative storytelling with analytical strategy to drive engagement. Demonstrated reliability and leadership in high-pressure service environments.
         </p>
-      </section>
-
-      {/* Projects */}
-      <section className="mb-10">
-        <h2 className="text-2xl font-bold uppercase border-b border-gray-300 pb-2 mb-4">Independent Projects</h2>
-        <div className="mb-6">
-          <div className="flex justify-between items-baseline mb-2">
-            <h3 className="text-xl font-bold">RAWBLEM</h3>
-            <span className="text-gray-600 font-medium">Independent Digital Content & Interactive Media</span>
-          </div>
-          <p className="italic text-gray-700 mb-3">TikTok-focused interactive content project</p>
-          <ul className="list-disc list-outside ml-5 space-y-2 text-gray-800">
-            <li>Produced high-engagement TikTok interactive content focusing on narrative storytelling.</li>
-            <li>Scripted, filmed, and edited short-form videos using CapCut and DaVinci Resolve.</li>
-            <li>Analyzed engagement metrics (views, retention, shares) to iterate on content strategy and optimize for platform algorithms.</li>
-          </ul>
-        </div>
-      </section>
-
-      {/* Experience */}
-      <section className="mb-10">
-        <h2 className="text-2xl font-bold uppercase border-b border-gray-300 pb-2 mb-4">Professional Experience</h2>
-        
-        <div className="mb-8">
-          <div className="flex justify-between items-baseline mb-2">
-            <h3 className="text-xl font-bold">Starbucks</h3>
-            <span className="text-gray-600 font-medium">2018 — Present</span>
-          </div>
-          <p className="italic text-gray-700 mb-3">Barista & Team Member</p>
-          <ul className="list-disc list-outside ml-5 space-y-2 text-gray-800">
-            <li>Consistently recognized for "Rank 10" reliability and teamwork in a high-volume, high-pressure environment.</li>
-            <li>Demonstrated strong communication skills and adaptability during peak service hours.</li>
-            <li>Maintained high standards of customer service and product quality.</li>
-          </ul>
-        </div>
-
-        <div className="mb-6">
-          <div className="flex justify-between items-baseline mb-2">
-            <h3 className="text-xl font-bold">University of Victoria E-Sports Community</h3>
-            <span className="text-gray-600 font-medium">Volunteer</span>
-          </div>
-          <p className="italic text-gray-700 mb-3">Social Media Coordinator</p>
-          <ul className="list-disc list-outside ml-5 space-y-2 text-gray-800">
-            <li>Managed social media channels to increase community engagement and event attendance.</li>
-            <li>Created and edited digital content for promotional campaigns.</li>
-            <li>Facilitated communication between players, organizers, and the broader university community.</li>
-          </ul>
-        </div>
       </section>
 
       {/* Skills */}
@@ -152,6 +107,70 @@ const ResumeView = () => {
         </div>
       </section>
 
+      {/* Experience */}
+      <section className="mb-10">
+        <h2 className="text-2xl font-bold uppercase border-b border-gray-300 pb-2 mb-4">Experience</h2>
+        
+        <div className="mb-8">
+          <div className="flex justify-between items-baseline mb-2">
+            <h3 className="text-xl font-bold">Starbucks</h3>
+            <span className="text-gray-600 font-medium">2018 — Present</span>
+          </div>
+          <p className="italic text-gray-700 mb-3">Barista & Team Member</p>
+          <ul className="list-disc list-outside ml-5 space-y-2 text-gray-800">
+            <li>Consistently recognized for "Rank 10" reliability and teamwork in a high-volume, high-pressure environment.</li>
+            <li>Demonstrated strong communication skills and adaptability during peak service hours.</li>
+            <li>Maintained high standards of customer service and product quality.</li>
+          </ul>
+        </div>
+      </section>
+
+      {/* Projects */}
+      <section className="mb-10">
+        <h2 className="text-2xl font-bold uppercase border-b border-gray-300 pb-2 mb-4">Projects</h2>
+        <div className="mb-6">
+          <div className="flex justify-between items-baseline mb-2">
+            <h3 className="text-xl font-bold">RAWBLEM</h3>
+            <span className="text-gray-600 font-medium">Independent Digital Content & Interactive Media</span>
+          </div>
+          <p className="italic text-gray-700 mb-3">TikTok-focused interactive content project</p>
+          <ul className="list-disc list-outside ml-5 space-y-2 text-gray-800">
+            <li>Produced high-engagement TikTok interactive content focusing on narrative storytelling.</li>
+            <li>Scripted, filmed, and edited short-form videos using CapCut and DaVinci Resolve.</li>
+            <li>Analyzed engagement metrics (views, retention, shares) to iterate on content strategy and optimize for platform algorithms.</li>
+          </ul>
+        </div>
+      </section>
+
+      {/* Involvement */}
+      <section className="mb-10">
+        <h2 className="text-2xl font-bold uppercase border-b border-gray-300 pb-2 mb-4">Involvement</h2>
+        <div className="mb-6">
+          <div className="flex justify-between items-baseline mb-2">
+            <h3 className="text-xl font-bold">University of Victoria E-Sports Community</h3>
+            <span className="text-gray-600 font-medium">Volunteer</span>
+          </div>
+          <p className="italic text-gray-700 mb-3">Social Media Coordinator</p>
+          <ul className="list-disc list-outside ml-5 space-y-2 text-gray-800">
+            <li>Managed social media channels to increase community engagement and event attendance.</li>
+            <li>Created and edited digital content for promotional campaigns.</li>
+            <li>Facilitated communication between players, organizers, and the broader university community.</li>
+          </ul>
+        </div>
+      </section>
+
+      {/* Education */}
+      <section className="mb-10">
+        <h2 className="text-2xl font-bold uppercase border-b border-gray-300 pb-2 mb-4">Education</h2>
+        <div>
+          <div className="flex justify-between items-baseline">
+            <h3 className="text-xl font-bold">University of Victoria</h3>
+            <span className="text-gray-600 font-medium">Distinction</span>
+          </div>
+          <p className="italic text-gray-700">Bachelor of Arts in Writing</p>
+        </div>
+      </section>
+      
       <footer className="text-center text-gray-500 text-sm mt-16 pt-8 border-t border-gray-200">
         <p>Portfolio available at: [Portfolio URL]</p>
       </footer>
@@ -276,10 +295,10 @@ const PhantomProfile = () => {
                 <div className="absolute -left-4 top-4 w-full h-full bg-red-600/20 transform -rotate-1"></div>
                 <div className="relative bg-zinc-100 border-l-8 border-black p-8 shadow-xl">
                   <p className="font-body text-xl md:text-2xl leading-relaxed text-zinc-800 font-medium mb-6">
-                    Like a Phantom Thief utilizing the Metaverse, I navigate the digital landscape to capture hearts and minds.
+                    Communications-focused writer and digital media coordinator with a proven track record in interactive content creation and community management.
                   </p>
                   <p className="font-body text-lg text-zinc-600 leading-relaxed mb-8">
-                    I am a UVic graduate with a B.A. in Writing (Distinction), specializing in digital media coordination. My strength lies in blending creative storytelling with analytical strategy—crafting content that doesn't just look good, but performs.
+                    Expert in blending creative storytelling with analytical strategy to drive engagement. Demonstrated reliability and leadership in high-pressure service environments.
                   </p>
                   
                   <div className="flex gap-4">
@@ -371,9 +390,9 @@ const PalaceProjects = () => {
                   </p>
                   
                   <div className="space-y-4 mb-8">
-                    <ProjectPoint text="Produced high-engagement TikTok interactive content" delay={0.1} />
-                    <ProjectPoint text="Scripted & edited short-form narrative video" delay={0.2} />
-                    <ProjectPoint text="Analyzed engagement metrics to optimize growth strategy" delay={0.3} />
+                    <ProjectPoint text="Produced high-engagement TikTok interactive content focusing on narrative storytelling" delay={0.1} />
+                    <ProjectPoint text="Scripted, filmed, and edited short-form videos using CapCut and DaVinci Resolve" delay={0.2} />
+                    <ProjectPoint text="Analyzed engagement metrics (views, retention, shares) to iterate on content strategy and optimize for platform algorithms" delay={0.3} />
                   </div>
                   
                   <div className="flex gap-3 flex-wrap">
@@ -440,9 +459,18 @@ const ConfidantExperience = () => {
                     <div className="h-px bg-red-600 flex-grow ml-4"></div>
                   </div>
                   
-                  <p className="font-body text-xl text-zinc-700 leading-relaxed">
-                    Mastered the art of high-pressure service and team coordination. Developed <span className="bg-yellow-200 px-1 font-bold">Rank 10 Reliability</span> and communication skills in a fast-paced environment.
-                  </p>
+                  <ul className="space-y-3">
+                    {[
+                      "Consistently recognized for 'Rank 10' reliability and teamwork in a high-volume, high-pressure environment.",
+                      "Demonstrated strong communication skills and adaptability during peak service hours.",
+                      "Maintained high standards of customer service and product quality."
+                    ].map((point, i) => (
+                      <li key={i} className="flex items-start gap-3">
+                        <span className="text-red-600 font-bold mt-1">▶</span>
+                        <span className="font-body text-xl text-zinc-700 leading-relaxed">{point}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </motion.div>
             </div>
@@ -454,21 +482,6 @@ const ConfidantExperience = () => {
 
 // --- SOCIAL LINK ---
 const SocialLink = () => {
-  const roles = [
-    {
-      icon: Gamepad2,
-      title: "UVIC E-SPORTS",
-      role: "Social Media Coordinator",
-      desc: "Leveled up community engagement through strategic social content. Managed channels, created hype, and connected players."
-    },
-    {
-      icon: PenTool,
-      title: "CONTENT OPS",
-      role: "Digital Strategy",
-      desc: "Executed social media operations, content editing, and community management. Turned casual followers into dedicated fans."
-    }
-  ];
-
   return (
     <section id="social" className="relative py-32 bg-white">
       <div className="container mx-auto px-6">
@@ -487,24 +500,61 @@ const SocialLink = () => {
           </h2>
           
           <div className="grid md:grid-cols-2 gap-8">
-            {roles.map((item, i) => (
-              <motion.div 
-                key={i}
-                whileHover={{ scale: 1.03 }}
-                className="bg-zinc-50 p-8 border-b-8 border-red-600 group hover:bg-black hover:text-white transition-all duration-300 shadow-lg relative overflow-hidden"
-              >
-                <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <item.icon size={120} />
-                </div>
-                
-                <item.icon size={48} className="mb-6 text-red-600 group-hover:text-yellow-400 transition-colors" />
-                <h3 className="text-3xl font-heading mb-2">{item.title}</h3>
-                <p className="font-marker text-xl text-zinc-500 group-hover:text-red-500 mb-4">{item.role}</p>
-                <p className="font-body text-lg leading-relaxed relative z-10">
-                  {item.desc}
-                </p>
-              </motion.div>
-            ))}
+            <motion.div 
+              whileHover={{ scale: 1.03 }}
+              className="bg-zinc-50 p-8 border-b-8 border-red-600 group hover:bg-black hover:text-white transition-all duration-300 shadow-lg relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                <Gamepad2 size={120} />
+              </div>
+              
+              <Gamepad2 size={48} className="mb-6 text-red-600 group-hover:text-yellow-400 transition-colors" />
+              <h3 className="text-3xl font-heading mb-2">UVIC E-SPORTS</h3>
+              <p className="font-marker text-xl text-zinc-500 group-hover:text-red-500 mb-4">Social Media Coordinator</p>
+              
+              <ul className="space-y-3 relative z-10">
+                {[
+                  "Managed social media channels to increase community engagement and event attendance.",
+                  "Created and edited digital content for promotional campaigns.",
+                  "Facilitated communication between players, organizers, and the broader university community."
+                ].map((point, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="text-red-500 group-hover:text-yellow-400 mt-1">★</span>
+                    <span className="font-body text-lg leading-relaxed">{point}</span>
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+            
+            <motion.div 
+              whileHover={{ scale: 1.03 }}
+              className="bg-zinc-50 p-8 border-b-8 border-red-600 group hover:bg-black hover:text-white transition-all duration-300 shadow-lg relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                <PenTool size={120} />
+              </div>
+              
+              <PenTool size={48} className="mb-6 text-red-600 group-hover:text-yellow-400 transition-colors" />
+              <h3 className="text-3xl font-heading mb-2">SKILLS & TOOLS</h3>
+              <p className="font-marker text-xl text-zinc-500 group-hover:text-red-500 mb-4">Technical Proficiency</p>
+              
+              <ul className="space-y-3 relative z-10">
+                 {[
+                  "Adobe Creative Suite", 
+                  "DaVinci Resolve", 
+                  "CapCut", 
+                  "Hootsuite", 
+                  "Canva", 
+                  "Content Editing & Production",
+                  "Social Media Operations"
+                ].map((skill, i) => (
+                  <li key={i} className="flex items-center gap-2">
+                     <span className="w-2 h-2 bg-red-600 group-hover:bg-yellow-400 rounded-full"></span>
+                     <span className="font-body text-lg font-bold">{skill}</span>
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
           </div>
         </div>
       </div>
@@ -520,7 +570,11 @@ const SkillArsenal = () => {
     { name: "CapCut", level: 95 },
     { name: "Hootsuite", level: 80 },
     { name: "Canva", level: 85 },
-    { name: "Social Ops", level: 90 },
+    { name: "Content Editing", level: 90 },
+    { name: "Social Media Ops", level: 92 },
+    { name: "Community Mgmt", level: 88 },
+    { name: "Digital Strategy", level: 85 },
+    { name: "Creative Writing", level: 95 }
   ];
 
   return (
@@ -571,7 +625,9 @@ const SkillArsenal = () => {
           {[Mail, Linkedin, Instagram].map((Icon, i) => (
             <motion.a 
               key={i}
-              href="#" 
+              href={i === 1 ? "https://linkedin.com/in/robbie-mclaughlin" : "#"}
+              target={i === 1 ? "_blank" : undefined}
+              rel={i === 1 ? "noopener noreferrer" : undefined}
               whileHover={{ y: -5, backgroundColor: "#DC2626", color: "#fff" }}
               className="bg-zinc-800 p-4 rounded-full text-zinc-400 transition-all border-2 border-transparent hover:border-white"
             >
