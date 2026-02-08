@@ -184,11 +184,11 @@ const Hero = ({ onStart, hasStarted }: { onStart: () => void, hasStarted: boolea
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Button 
                 size="lg" 
-                className="bg-white hover:bg-zinc-200 text-black font-display text-2xl uppercase tracking-widest px-12 py-8 rounded-none transition-all border-4 border-transparent hover:border-red-600 group overflow-hidden relative"
+                className="bg-white hover:bg-zinc-200 text-black font-display text-xl uppercase tracking-widest h-16 w-48 rounded-full transition-all border-4 border-transparent hover:border-red-600 group overflow-hidden relative"
                 onClick={onStart}
               >
-                <span className="relative z-10 flex items-center gap-4">
-                  START <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+                <span className="relative z-10 flex items-center justify-center gap-2">
+                  START <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </span>
               </Button>
             </motion.div>
@@ -428,20 +428,20 @@ const SocialLink = () => {
     <section id="social" className="relative py-32 bg-white text-black">
       <div className="container mx-auto px-6">
         <div className="max-w-6xl mx-auto border-l-[12px] border-black pl-8 md:pl-16 relative py-8">
-          {/* Floating Icon - Centered */}
-          <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
+          
+          <div className="flex flex-col md:flex-row items-center gap-8 mb-12">
+             <h2 className="text-5xl md:text-7xl font-display text-black relative z-10">
+               INVOLVEMENT
+             </h2>
+             {/* Heart Icon - Repositioned next to title */}
              <motion.div 
                 animate={{ scale: [1, 1.1, 1] }}
                 transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                className="bg-red-600 text-white p-6 rounded-full border-4 border-white shadow-xl"
+                className="bg-red-600 text-white p-4 rounded-full border-4 border-white shadow-xl"
               >
-                <Heart size={48} fill="white" />
+                <Heart size={32} fill="white" />
               </motion.div>
           </div>
-          
-          <h2 className="text-5xl md:text-7xl font-display text-black mb-12 relative z-10 mt-16 text-center">
-            INVOLVEMENT
-          </h2>
           
           <div className="grid md:grid-cols-1 gap-8 max-w-4xl mx-auto">
             <motion.div 
@@ -740,26 +740,27 @@ export default function Home() {
 
       {/* Floating Resume Button */}
       <motion.div 
-        className={`fixed z-50 flex flex-col items-end gap-2 mix-blend-difference transition-all duration-1000 ease-in-out
+        className={`fixed z-50 flex flex-col items-center gap-2 mix-blend-difference transition-all duration-1000 ease-in-out
             ${!hasStarted && !isResumeMode 
-                ? "top-[60%] left-1/2 -translate-x-1/2 translate-y-24 items-center" 
+                ? "top-[65%] left-1/2 -translate-x-1/2 translate-y-8" 
                 : "bottom-6 right-6 items-end"
             }
         `}
       >
-        <span className="text-white text-xs font-mono uppercase tracking-widest bg-black px-2 py-1 mb-1 hidden md:block">
-          {isResumeMode ? "View Portfolio" : "View Resume"}
-        </span>
         <Button 
           onClick={() => setIsResumeMode(!isResumeMode)}
           size="lg"
-          className={`rounded-full shadow-xl border-4 transition-all duration-300 h-16 w-16 p-0 ${
+          className={`shadow-xl border-4 transition-all duration-300 font-display text-xl uppercase tracking-widest rounded-full h-16 w-48 p-0 ${
             isResumeMode 
               ? "bg-black text-white border-black hover:bg-zinc-800" 
-              : "bg-red-600 text-white border-white hover:bg-red-700 hover:scale-110"
+              : "bg-red-600 text-white border-white hover:bg-red-700 hover:scale-105"
           }`}
         >
-          {isResumeMode ? <Zap size={28} /> : <FileText size={28} />}
+          {isResumeMode ? (
+             <span className="flex items-center gap-2"><Zap size={20} /> PORTFOLIO</span>
+          ) : (
+             <span className="flex items-center gap-2"><FileText size={20} /> RESUME MODE</span>
+          )}
         </Button>
       </motion.div>
 
