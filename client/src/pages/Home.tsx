@@ -1,6 +1,6 @@
 // Force rebuild: 2024-05-21
-import { motion, useScroll, useTransform, useSpring, AnimatePresence, Variants } from "framer-motion";
-import { useEffect, useState } from "react";
+import { motion, useScroll, useTransform, useSpring, AnimatePresence, Variants, useInView } from "framer-motion";
+import { useEffect, useState, useRef } from "react";
 import Navigation from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { 
@@ -156,7 +156,7 @@ const GlobalNavigator = ({ sections }: { sections: string[] }) => {
 
 
 // --- HERO SECTION ---
-const Hero = ({ onStart, hasStarted, isResumeMode, toggleResumeMode }: { onStart: () => void, hasStarted: boolean, isResumeMode: boolean, toggleResumeMode: () => void }) => {
+const Hero = ({ onStart, hasStarted, isResumeMode, toggleResumeMode, heroInViewRef }: { onStart: () => void, hasStarted: boolean, isResumeMode: boolean, toggleResumeMode: () => void, heroInViewRef: React.RefObject<HTMLDivElement> }) => {
   return (
     <section className="relative h-screen w-full overflow-hidden bg-black text-white flex items-center justify-center p-4">
       <div className="relative z-10 max-w-6xl w-full flex flex-col items-center justify-center gap-8 text-center">
@@ -181,7 +181,7 @@ const Hero = ({ onStart, hasStarted, isResumeMode, toggleResumeMode }: { onStart
             </span>
           </motion.h1>
           
-          <motion.div variants={fadeInUp} className="flex gap-8 items-center">
+          <motion.div ref={heroInViewRef} variants={fadeInUp} className="flex gap-8 items-center">
             {/* Start Button */}
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Button 
@@ -195,9 +195,9 @@ const Hero = ({ onStart, hasStarted, isResumeMode, toggleResumeMode }: { onStart
               </Button>
             </motion.div>
 
-            {/* Resume Mode Button - Only shown here when !hasStarted */}
+            {/* Resume Mode Button - Only shown inline when not floating */}
             <AnimatePresence>
-              {!hasStarted && (
+              {!isResumeMode && (
                 <motion.div 
                   layoutId="resume-button"
                   whileHover={{ scale: 1.05 }} 
@@ -744,6 +744,8 @@ const ResumeView = () => {
 export default function Home() {
   const [isResumeMode, setIsResumeMode] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
+  const heroInViewRef = useRef(null);
+  const isHeroInView = useInView(heroInViewRef, { margin: "-100px 0px 0px 0px" });
 
   const handleStart = () => {
     setHasStarted(true);
@@ -756,9 +758,9 @@ export default function Home() {
   return (
     <div className={`min-h-screen selection:bg-red-600 selection:text-white overflow-x-hidden transition-colors duration-500 ${isResumeMode ? 'bg-white' : 'bg-zinc-900'}`}>
       
-      {/* Floating Resume Button - Visible when started OR in resume mode */}
+      {/* Floating Resume Button - Visible when scrolled down OR in resume mode */}
       <AnimatePresence>
-        {(hasStarted || isResumeMode) && (
+        {(isResumeMode || !isHeroInView) && (
           <motion.div 
             layoutId="resume-button"
             className="fixed z-50 flex flex-col items-end gap-2 mix-blend-difference bottom-6 right-6 items-end"
@@ -769,16 +771,16 @@ export default function Home() {
             <Button 
               onClick={() => setIsResumeMode(!isResumeMode)}
               size="lg"
-              className={`shadow-xl border-4 transition-all duration-300 font-display text-xl uppercase tracking-widest rounded-full h-16 w-56 p-0 ${
+              className={`shadow-xl border-4 transition-all duration-300 font-display text-xl uppercase tracking-widest rounded-full h-16 w-16 p-0 flex items-center justify-center ${
                 isResumeMode 
                   ? "bg-black text-white border-white hover:bg-zinc-800" 
                   : "bg-red-600 text-white border-red-600 hover:bg-red-700 hover:scale-105"
               }`}
             >
               {isResumeMode ? (
-                 <span className="flex items-center gap-2"><Zap size={20} /> PORTFOLIO</span>
+                 <Zap size={24} />
               ) : (
-                 <span className="flex items-center gap-2"><FileText size={20} /> RESUME MODE</span>
+                 <FileText size={24} />
               )}
             </Button>
           </motion.div>
@@ -801,7 +803,13 @@ export default function Home() {
       ) : (
         <>
           <Navigation />
-          <Hero onStart={handleStart} hasStarted={hasStarted} isResumeMode={isResumeMode} toggleResumeMode={() => setIsResumeMode(!isResumeMode)} />
+          <Hero 
+            onStart={handleStart} 
+            hasStarted={hasStarted} 
+            isResumeMode={isResumeMode} 
+            toggleResumeMode={() => setIsResumeMode(!isResumeMode)} 
+            heroInViewRef={heroInViewRef}
+          />
           <PhantomProfile />
           <PalaceProjects />
           <ConfidantExperience />
