@@ -155,7 +155,7 @@ const GlobalNavigator = ({ sections }: { sections: string[] }) => {
 
 
 // --- HERO SECTION ---
-const Hero = ({ onStart, hasStarted }: { onStart: () => void, hasStarted: boolean }) => {
+const Hero = ({ onStart, hasStarted, isResumeMode, toggleResumeMode }: { onStart: () => void, hasStarted: boolean, isResumeMode: boolean, toggleResumeMode: () => void }) => {
   return (
     <section className="relative h-screen w-full overflow-hidden bg-black text-white flex items-center justify-center p-4">
       <div className="relative z-10 max-w-6xl w-full flex flex-col items-center justify-center gap-8 text-center">
@@ -180,7 +180,8 @@ const Hero = ({ onStart, hasStarted }: { onStart: () => void, hasStarted: boolea
             </span>
           </motion.h1>
           
-          <motion.div variants={fadeInUp} className="flex gap-4 items-center">
+          <motion.div variants={fadeInUp} className="flex gap-8 items-center">
+            {/* Start Button */}
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Button 
                 size="lg" 
@@ -192,6 +193,36 @@ const Hero = ({ onStart, hasStarted }: { onStart: () => void, hasStarted: boolea
                 </span>
               </Button>
             </motion.div>
+
+            {/* Resume Mode Button - Only shown here when !hasStarted */}
+            <AnimatePresence>
+              {!hasStarted && (
+                <motion.div 
+                  layoutId="resume-button"
+                  whileHover={{ scale: 1.05 }} 
+                  whileTap={{ scale: 0.95 }}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, scale: 0.5 }}
+                >
+                  <Button 
+                    onClick={toggleResumeMode}
+                    size="lg"
+                    className={`font-display text-xl uppercase tracking-widest h-16 w-56 rounded-full transition-all border-4 shadow-xl p-0 group overflow-hidden relative ${
+                      isResumeMode 
+                        ? "bg-black text-white border-white hover:bg-zinc-800" 
+                        : "bg-red-600 text-white border-red-600 hover:bg-red-700"
+                    }`}
+                  >
+                     {isResumeMode ? (
+                        <span className="flex items-center justify-center gap-2"><Zap size={20} /> PORTFOLIO</span>
+                     ) : (
+                        <span className="flex items-center justify-center gap-2"><FileText size={20} /> RESUME MODE</span>
+                     )}
+                  </Button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         </motion.div>
       </div>
@@ -724,45 +755,34 @@ export default function Home() {
   return (
     <div className={`min-h-screen selection:bg-red-600 selection:text-white overflow-x-hidden transition-colors duration-500 ${isResumeMode ? 'bg-white' : 'bg-zinc-900'}`}>
       
-      {/* Start Button Area Resume Toggle Logic */}
+      {/* Floating Resume Button - Only visible when started */}
       <AnimatePresence>
-        {!isResumeMode && !hasStarted && (
-           <motion.div 
-             initial={{ opacity: 0 }} 
-             animate={{ opacity: 1 }}
-             exit={{ opacity: 0 }}
-             className="fixed top-1/2 left-1/2 transform -translate-x-1/2 mt-40 z-50 pointer-events-none"
-           >
-              {/* This is just a placeholder to reserve visual space or logic if needed, but the button is actually inside Hero now for better layout control */}
-           </motion.div>
+        {hasStarted && (
+          <motion.div 
+            layoutId="resume-button"
+            className="fixed z-50 flex flex-col items-end gap-2 mix-blend-difference bottom-6 right-6 items-end"
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.5 }}
+          >
+            <Button 
+              onClick={() => setIsResumeMode(!isResumeMode)}
+              size="lg"
+              className={`shadow-xl border-4 transition-all duration-300 font-display text-xl uppercase tracking-widest rounded-full h-16 w-56 p-0 ${
+                isResumeMode 
+                  ? "bg-black text-white border-white hover:bg-zinc-800" 
+                  : "bg-red-600 text-white border-red-600 hover:bg-red-700 hover:scale-105"
+              }`}
+            >
+              {isResumeMode ? (
+                 <span className="flex items-center gap-2"><Zap size={20} /> PORTFOLIO</span>
+              ) : (
+                 <span className="flex items-center gap-2"><FileText size={20} /> RESUME MODE</span>
+              )}
+            </Button>
+          </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Floating Resume Button */}
-      <motion.div 
-        className={`fixed z-50 flex flex-col items-center gap-2 mix-blend-difference transition-all duration-1000 ease-in-out
-            ${!hasStarted && !isResumeMode 
-                ? "top-[65%] left-1/2 -translate-x-1/2 translate-y-8" 
-                : "bottom-6 right-6 items-end"
-            }
-        `}
-      >
-        <Button 
-          onClick={() => setIsResumeMode(!isResumeMode)}
-          size="lg"
-          className={`shadow-xl border-4 transition-all duration-300 font-display text-xl uppercase tracking-widest rounded-full h-16 w-48 p-0 ${
-            isResumeMode 
-              ? "bg-black text-white border-black hover:bg-zinc-800" 
-              : "bg-red-600 text-white border-white hover:bg-red-700 hover:scale-105"
-          }`}
-        >
-          {isResumeMode ? (
-             <span className="flex items-center gap-2"><Zap size={20} /> PORTFOLIO</span>
-          ) : (
-             <span className="flex items-center gap-2"><FileText size={20} /> RESUME MODE</span>
-          )}
-        </Button>
-      </motion.div>
 
       {/* Global Navigator - Only visible in Portfolio Mode */}
       {!isResumeMode && hasStarted && (
@@ -780,7 +800,7 @@ export default function Home() {
       ) : (
         <>
           <Navigation />
-          <Hero onStart={handleStart} hasStarted={hasStarted} />
+          <Hero onStart={handleStart} hasStarted={hasStarted} isResumeMode={isResumeMode} toggleResumeMode={() => setIsResumeMode(!isResumeMode)} />
           <PhantomProfile />
           <PalaceProjects />
           <ConfidantExperience />
