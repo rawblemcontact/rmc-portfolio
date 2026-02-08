@@ -202,7 +202,7 @@ const SectionHeader = ({ title, subtitle, align = "left", color = "text-white" }
 // --- HERO SECTION ---
 const Hero = () => {
   return (
-    <section className="relative min-h-screen w-full overflow-hidden bg-zinc-900 flex items-center justify-center p-4">
+    <section className="relative h-screen w-full overflow-hidden bg-zinc-900 flex items-center justify-center p-4">
       {/* Dynamic Background */}
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-[url('/assets/p5-hero-bg.png')] bg-cover bg-center opacity-40 mix-blend-luminosity"></div>
@@ -216,12 +216,12 @@ const Hero = () => {
         />
       </div>
 
-      <div className="relative z-10 max-w-6xl w-full flex flex-col md:flex-row items-center justify-between gap-12">
+      <div className="relative z-10 max-w-6xl w-full flex flex-col items-center justify-center gap-12 text-center">
         <motion.div
           initial="hidden"
           animate="visible"
           variants={staggerContainer}
-          className="flex flex-col items-center md:items-start text-center md:text-left"
+          className="flex flex-col items-center"
         >
           {/* Calling Card Intro */}
           <motion.div variants={fadeInUp} className="bg-black text-white p-4 transform -rotate-2 border-2 border-red-600 shadow-[8px_8px_0px_0px_#D91414] mb-8 max-w-md">
@@ -231,7 +231,7 @@ const Hero = () => {
             </p>
           </motion.div>
           
-          <motion.h1 variants={fadeInUp} className="relative">
+          <motion.h1 variants={fadeInUp} className="relative mb-12">
             <span className="block font-display text-8xl md:text-[10rem] leading-[0.8] text-white tracking-tighter drop-shadow-2xl z-10 relative">
               ROBBIE
             </span>
@@ -240,36 +240,25 @@ const Hero = () => {
             </span>
           </motion.h1>
           
-          <motion.div variants={fadeInUp} className="mt-12 flex flex-wrap gap-6 justify-center md:justify-start">
+          <motion.div variants={fadeInUp} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
             <Button 
               size="lg" 
-              className="bg-red-600 hover:bg-red-700 text-white font-heading text-xl uppercase tracking-widest px-8 py-6 rounded-none transform hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_white] transition-all border-2 border-black"
-              onClick={() => document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' })}
+              className="bg-red-600 hover:bg-red-700 text-white font-display text-4xl uppercase tracking-widest px-12 py-8 rounded-none transform -skew-x-12 shadow-[8px_8px_0px_0px_white] transition-all border-4 border-black group overflow-hidden relative"
+              onClick={() => {
+                const element = document.getElementById('profile');
+                if (element) {
+                  element.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
             >
-              See My Work <ArrowRight className="ml-2 w-6 h-6" />
-            </Button>
-            <Button 
-              size="lg" 
-              variant="outline"
-              className="bg-black text-white border-2 border-white font-heading text-xl uppercase tracking-widest px-8 py-6 rounded-none transform hover:-translate-y-1 hover:bg-white hover:text-black transition-all"
-              onClick={() => window.open('mailto:robbie@example.com')}
-            >
-              Contact Me
+              <span className="relative z-10 flex items-center gap-4 transform skew-x-12">
+                START <ArrowRight className="w-8 h-8 animate-pulse" />
+              </span>
+              <div className="absolute inset-0 bg-black transform translate-x-full group-hover:translate-x-0 transition-transform duration-300 z-0"></div>
             </Button>
           </motion.div>
         </motion.div>
       </div>
-      
-      {/* Scroll Indicator */}
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1, y: [0, 10, 0] }}
-        transition={{ delay: 1, duration: 2, repeat: Infinity }}
-        className="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-white/50 flex flex-col items-center gap-2"
-      >
-        <span className="font-heading tracking-widest text-sm">SCROLL TO START</span>
-        <ChevronDown />
-      </motion.div>
     </section>
   );
 };
