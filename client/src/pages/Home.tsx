@@ -756,9 +756,9 @@ export default function Home() {
   return (
     <div className={`min-h-screen selection:bg-red-600 selection:text-white overflow-x-hidden transition-colors duration-500 ${isResumeMode ? 'bg-white' : 'bg-zinc-900'}`}>
       
-      {/* Floating Resume Button - Only visible when started */}
+      {/* Floating Resume Button - Visible when started OR in resume mode */}
       <AnimatePresence>
-        {hasStarted && (
+        {(hasStarted || isResumeMode) && (
           <motion.div 
             layoutId="resume-button"
             className="fixed z-50 flex flex-col items-end gap-2 mix-blend-difference bottom-6 right-6 items-end"
