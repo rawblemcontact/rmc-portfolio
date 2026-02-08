@@ -46,7 +46,7 @@
   --color-ring: var(--color-p5-red);
 
   /* Typography Scale */
-  --font-display: 'Bangers', cursive;
+  --font-display: 'Oswald', sans-serif;
   --font-heading: 'Oswald', sans-serif;
   --font-body: 'Roboto Condensed', sans-serif;
   --font-marker: 'Permanent Marker', cursive;
