@@ -1278,11 +1278,13 @@ const BranchDiagram = ({
 
 // ─── SKILLS MOTION CONSTANTS (P3R / neo-Tokyo: UI 160–260ms, stagger 30–60ms) ──
 const SKILLS_EASE: [number, number, number, number] = [0.2, 0.8, 0.2, 1]; // ease-out
-const SKILLS_HOVER_DUR = 0.18;   // ~180ms selection feel
-const SKILLS_EXPAND_DUR = 0.26;  // panel settle
-const SKILLS_STAGGER = 0.04;    // 40ms per item
-const SKILLS_UNDERLINE_DUR = 0.22;
-const SKILLS_HOVER_SHIFT_PX = 6; // Ball travel: slower so it’s readable (was 0.5)
+const SKILLS_HOVER_DUR = 0.2;   // ~200ms selection feel (smoother)
+const SKILLS_EXPAND_DUR = 0.3;  // panel settle (slightly longer for polish)
+const SKILLS_STAGGER = 0.05;    // 50ms per item (more pronounced stagger)
+const SKILLS_UNDERLINE_DUR = 0.24;
+const SKILLS_HOVER_SHIFT_PX = 8; // Ball travel: increased for more dynamic feel
+const SKILLS_CARD_HOVER_SCALE = 1.04; // More pronounced hover scale
+const SKILLS_CARD_HOVER_Y = -12; // More lift on hover // Ball travel: slower so it’s readable (was 0.5)
 
 // ─── TEXTURE OVERLAY ─────────────────────────────────────────────────────────
 const TextureOverlay = ({ opacity = 0.03 }: { opacity?: number }) => (
@@ -1412,8 +1414,9 @@ const SkillsWebHooks = ({
         className="absolute left-[8%] top-[8%] w-[30%] min-w-[200px] max-w-[280px]"
         onMouseEnter={() => setHoverTarget("left")}
         animate={{
-          y: hoverTarget === "left" ? -8 : 0,
-          scale: hoverTarget === "left" ? 1.02 : 1,
+          y: hoverTarget === "left" ? SKILLS_CARD_HOVER_Y : 0,
+          scale: hoverTarget === "left" ? SKILLS_CARD_HOVER_SCALE : 1,
+          rotateZ: hoverTarget === "left" ? -1 : 0,
         }}
         transition={{ duration: cardDur, ease: SKILLS_CARD_EASE }}
         style={{ willChange: "transform" }}
@@ -1421,20 +1424,31 @@ const SkillsWebHooks = ({
         <button
           type="button"
           onClick={onClickLeft}
-          className="relative w-full h-[100px] md:h-[116px] rounded-lg overflow-hidden skills-card-diagonal flex items-center justify-center py-6 px-6 text-center"
+          className="relative w-full h-[100px] md:h-[116px] rounded-lg overflow-hidden skills-card-diagonal flex items-center justify-center py-6 px-6 text-center transition-shadow duration-300"
+          style={{
+            boxShadow: hoverTarget === "left" 
+              ? "0 12px 24px -8px rgba(22,163,74,0.3), 0 0 0 1px rgba(22,163,74,0.2)" 
+              : "none",
+          }}
         >
           <motion.div
             className="absolute inset-0 rounded-lg pointer-events-none opacity-0"
-            animate={{ opacity: hoverTarget === "left" ? 0.06 : 0 }}
+            animate={{ opacity: hoverTarget === "left" ? 0.12 : 0 }}
             transition={{ duration: cardDur, ease: SKILLS_CARD_EASE }}
             style={{
-              background: "linear-gradient(168deg, rgba(22,163,74,0.12) 0%, transparent 60%)",
+              background: "linear-gradient(168deg, rgba(22,163,74,0.2) 0%, transparent 60%)",
               willChange: "opacity",
             }}
           />
-          <span className="relative z-10 font-display text-sm md:text-base font-semibold uppercase tracking-[0.1em] text-white">
+          <motion.span 
+            className="relative z-10 font-display text-sm md:text-base font-semibold uppercase tracking-[0.1em] text-white"
+            animate={{
+              scale: hoverTarget === "left" ? 1.05 : 1,
+            }}
+            transition={{ duration: cardDur * 0.8, ease: SKILLS_CARD_EASE }}
+          >
             {leftLabel}
-          </span>
+          </motion.span>
         </button>
       </motion.div>
 
@@ -1443,8 +1457,9 @@ const SkillsWebHooks = ({
         className="absolute right-[8%] bottom-[8%] w-[30%] min-w-[200px] max-w-[280px]"
         onMouseEnter={() => setHoverTarget("right")}
         animate={{
-          y: hoverTarget === "right" ? -8 : 0,
-          scale: hoverTarget === "right" ? 1.02 : 1,
+          y: hoverTarget === "right" ? SKILLS_CARD_HOVER_Y : 0,
+          scale: hoverTarget === "right" ? SKILLS_CARD_HOVER_SCALE : 1,
+          rotateZ: hoverTarget === "right" ? 1 : 0,
         }}
         transition={{ duration: cardDur, ease: SKILLS_CARD_EASE }}
         style={{ willChange: "transform" }}
@@ -1452,20 +1467,31 @@ const SkillsWebHooks = ({
         <button
           type="button"
           onClick={onClickRight}
-          className="relative w-full h-[100px] md:h-[116px] rounded-lg overflow-hidden skills-card-diagonal flex items-center justify-center py-6 px-6 text-center"
+          className="relative w-full h-[100px] md:h-[116px] rounded-lg overflow-hidden skills-card-diagonal flex items-center justify-center py-6 px-6 text-center transition-shadow duration-300"
+          style={{
+            boxShadow: hoverTarget === "right" 
+              ? "0 12px 24px -8px rgba(8,145,178,0.3), 0 0 0 1px rgba(8,145,178,0.2)" 
+              : "none",
+          }}
         >
           <motion.div
             className="absolute inset-0 rounded-lg pointer-events-none opacity-0"
-            animate={{ opacity: hoverTarget === "right" ? 0.06 : 0 }}
+            animate={{ opacity: hoverTarget === "right" ? 0.12 : 0 }}
             transition={{ duration: cardDur, ease: SKILLS_CARD_EASE }}
             style={{
-              background: "linear-gradient(168deg, rgba(8,145,178,0.12) 0%, transparent 60%)",
+              background: "linear-gradient(168deg, rgba(8,145,178,0.2) 0%, transparent 60%)",
               willChange: "opacity",
             }}
           />
-          <span className="relative z-10 font-display text-sm md:text-base font-semibold uppercase tracking-[0.1em] text-white">
+          <motion.span 
+            className="relative z-10 font-display text-sm md:text-base font-semibold uppercase tracking-[0.1em] text-white"
+            animate={{
+              scale: hoverTarget === "right" ? 1.05 : 1,
+            }}
+            transition={{ duration: cardDur * 0.8, ease: SKILLS_CARD_EASE }}
+          >
             {rightLabel}
-          </span>
+          </motion.span>
         </button>
       </motion.div>
 
@@ -1477,25 +1503,44 @@ const SkillsWebHooks = ({
           preserveAspectRatio="none"
           aria-hidden
         >
-          <line
+          <motion.line
             x1={DIAGONAL_START.x}
             y1={DIAGONAL_START.y}
             x2={DIAGONAL_END.x}
             y2={DIAGONAL_END.y}
             className="skills-connector-line"
             stroke={lineStroke}
-            strokeOpacity={isActive ? 0.7 : 0.4}
+            animate={{
+              strokeOpacity: isActive ? 0.85 : 0.4,
+              strokeWidth: isActive ? 2.5 : 1.5,
+            }}
+            transition={{
+              duration: cardDur,
+              ease: SKILLS_CARD_EASE,
+            }}
           />
         </svg>
         {/* Node dot at geometric midpoint; pulses once per hover (remount via pulseKey) */}
-        <div
+        <motion.div
           key={pulseKey}
           className={`absolute z-10 w-2 h-2 md:w-2.5 md:h-2.5 rounded-full -translate-x-1/2 -translate-y-1/2 skills-node-dot ${isActive ? "skills-node-pulse-once" : ""}`}
           style={{
             left: `${DIAGONAL_MID.x}%`,
             top: `${DIAGONAL_MID.y}%`,
+          }}
+          animate={{
             backgroundColor: isActive ? lineStroke : "rgba(255,255,255,0.4)",
-            transition: "background-color 0.22s cubic-bezier(0.22, 1, 0.36, 1)",
+            scale: isActive ? [1, 1.4, 1.2, 1] : 1,
+            boxShadow: isActive 
+              ? `0 0 12px ${lineStroke}, 0 0 24px ${lineStroke}40` 
+              : "none",
+          }}
+          transition={{
+            backgroundColor: { duration: cardDur, ease: SKILLS_CARD_EASE },
+            scale: isActive 
+              ? { duration: 0.5, ease: [0.22, 1, 0.36, 1] }
+              : { duration: cardDur, ease: SKILLS_CARD_EASE },
+            boxShadow: { duration: cardDur, ease: SKILLS_CARD_EASE },
           }}
         />
       </div>
@@ -1532,26 +1577,36 @@ const SkillsExpandedView = ({
     >
       {/* Morphed title: card becomes this main title */}
       <motion.div
-        initial={{ opacity: 0, y: 12, scale: 0.98 }}
+        initial={{ opacity: 0, y: 16, scale: 0.96 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: expandDur, ease: SKILLS_EASE }}
+        transition={{ 
+          duration: expandDur * 1.2, 
+          ease: [0.16, 1, 0.3, 1],
+          delay: reducedMotion ? 0 : 0.05,
+        }}
         className="w-full flex items-center justify-between gap-4 mb-6"
       >
-        <h2
+        <motion.h2
           className="font-display text-2xl md:text-3xl font-semibold uppercase tracking-[0.08em] text-white border-l-4 pl-4"
           style={{ borderLeftColor: accent }}
+          initial={{ borderLeftWidth: 0 }}
+          animate={{ borderLeftWidth: 4 }}
+          transition={{ duration: expandDur * 0.8, delay: expandDur * 0.3 }}
         >
           {data.title}
-        </h2>
-        <button
+        </motion.h2>
+        <motion.button
           type="button"
           onClick={onClose}
           className="flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-white/70 hover:text-white border border-white/20 hover:border-white/40 rounded-lg px-3 py-2 transition-colors duration-200"
           aria-label="Back to skills"
+          whileHover={{ scale: 1.05, x: -2 }}
+          whileTap={{ scale: 0.98 }}
+          transition={{ duration: 0.2 }}
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           Back
-        </button>
+        </motion.button>
       </motion.div>
 
       {/* Subskills panel */}
@@ -1790,29 +1845,36 @@ const SkillCardMorph = ({
                   <motion.div
                     key={cat.title}
                     className="border-l border-white/20 pl-4"
-                    initial={reducedMotion ? false : { opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    initial={reducedMotion ? false : { opacity: 0, y: 10, x: -8 }}
+                    animate={{ opacity: 1, y: 0, x: 0 }}
                     transition={{
-                      duration: 0.26,
-                      ease: [0.4, 0, 0.2, 1],
+                      duration: 0.3,
+                      ease: [0.16, 1, 0.3, 1],
                       delay: reducedMotion ? 0 : 0.18 + staggerSec * (catIdx + 1),
                     }}
+                    whileHover={{ x: 4 }}
                   >
-                    <h4 className="font-display text-xs uppercase tracking-wider text-white/90 mb-2 font-semibold">
+                    <motion.h4 
+                      className="font-display text-xs uppercase tracking-wider text-white/90 mb-2 font-semibold"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: reducedMotion ? 0 : 0.18 + staggerSec * (catIdx + 1) + 0.1 }}
+                    >
                       {cat.title}
-                    </h4>
+                    </motion.h4>
                     <ul className="space-y-1">
                       {cat.items.map((item, itemIdx) => (
                         <motion.li
                           key={item}
                           className="font-mono text-xs text-white/85"
-                          initial={reducedMotion ? false : { opacity: 0, y: 4 }}
-                          animate={{ opacity: 1, y: 0 }}
+                          initial={reducedMotion ? false : { opacity: 0, y: 6, x: -4 }}
+                          animate={{ opacity: 1, y: 0, x: 0 }}
                           transition={{
-                            duration: 0.22,
-                            ease: [0.4, 0, 0.2, 1],
-                            delay: reducedMotion ? 0 : 0.18 + staggerSec * (catIdx + 1) + (itemIdx + 1) * 0.04,
+                            duration: 0.26,
+                            ease: [0.16, 1, 0.3, 1],
+                            delay: reducedMotion ? 0 : 0.18 + staggerSec * (catIdx + 1) + itemIdx * 0.04 + 0.15,
                           }}
+                          whileHover={{ x: 2, opacity: 1 }}
                         >
                           {item}
                         </motion.li>
@@ -1850,9 +1912,13 @@ const SkillCardMorph = ({
                 />
                 <motion.div
                   initial={{ transform: "translateZ(8px) translateY(-2px)" }}
-                  whileHover={{ transform: "translateZ(32px) translateY(-8px)" }}
-                  transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                  whileHover={{ 
+                    transform: "translateZ(40px) translateY(-12px) rotateX(-2deg)",
+                    scale: 1.02,
+                  }}
+                  transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
                   className="relative w-96 h-56 rounded-[24px] border-2 border-b-4 border-r-4 border-white bg-black p-1 pl-[3px] pt-[3px]"
+                  style={{ transformStyle: "preserve-3d" }}
                 >
                   <div className="relative z-0 h-full w-full overflow-hidden rounded-[20px] bg-black flex items-center justify-center p-3">
                     <h3 className="font-display text-base font-semibold uppercase tracking-wider text-white text-center leading-tight max-w-full font-normal not-italic">
