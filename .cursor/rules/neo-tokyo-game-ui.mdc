@@ -1,0 +1,25 @@
+---
+description: Neo Tokyo Game UI — futuristic command-based portfolio design language
+alwaysApply: true
+---
+
+# Neo Tokyo Game UI
+
+A futuristic command-based portfolio interface inspired by Japanese game UI and Swiss editorial grids.
+
+## Key Rules
+
+- **Left-align typography** — no centered hero layouts
+- **Technical labels** above content (e.g. `SYSTEM // PORTFOLIO`)
+- **Index numbers** (01, 02, 03…) for lists — monospace, muted
+- **Micro labels** on the right (OPEN, VIEW, ENTER) — action-oriented
+- **Grid overlays** on hero/menu — subtle white grid, ~3% opacity, 48px cells
+- **Dividers** between list items, not bordered boxes
+- **Colored underlines** on hover (not vertical bars) — `scaleX` 0→1, 200–300ms
+- **6px horizontal shift** on row hover — precise, not soft
+- **Satoshi** for display/body; monospace for technical labels
+- **Sharp corners** for command UI; rounded only for primary CTAs when appropriate
+
+## Colors
+
+Black backgrounds, white text, zinc for secondary. Accent: cyan; rainbow motif (red/yellow/blue/pink/green) for menu items — use sparingly.
