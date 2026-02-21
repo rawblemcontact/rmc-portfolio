@@ -63,3 +63,15 @@ See `P3R_MOTION_RULES.md` for detailed motion tokens. Key alignments:
 | **Hero** | Left-align, `SYSTEM // PORTFOLIO`, grid overlay, micro metadata line, rounded START CTA |
 | **Menu** | Command list (index + icon + label + micro), divider lines, colored underlines on hover, grid overlay |
 | **Cards** | Avoid boxed cards; prefer rows with dividers and precise hover states |
+
+---
+
+## Checkpoints (revert reference)
+
+### Skills cards — display-only (current)
+**State to revert to if we re-add click/expand later.**
+
+- **Location:** `client/src/pages/Home.tsx` — `SkillCardMorph`, `SkillArsenal`, `SKILLS_DATA`.
+- **Behavior:** Two cards (Core Competencies, Tools & Technologies) are display-only. No click handler; no expand/slide/flip. Cards show neutral front face only, with float animation and hover (translateZ, scale) intact.
+- **Data:** Subskill content kept in `SKILLS_DATA` (core/tools with categories and items). No expanded container is rendered.
+- **To restore this state:** Use git to return to the commit created after this checkpoint (see commit message containing “Skills cards display-only checkpoint”).
