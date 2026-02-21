@@ -27,6 +27,7 @@ import {
   User,
   Briefcase
 } from "lucide-react";
+import styled from "styled-components";
 import { TiltCard } from "@/components/TiltCard";
 import { WordsPullUp } from "@/components/WordsPullUp";
 import { FloatingPhone } from "@/components/FloatingPhone";
@@ -1727,441 +1728,209 @@ const MORPH_EASE = [0.2, 0.8, 0.2, 1] as const; // P3R ease-out
 const MORPH_EXPAND_DUR = 0.28;
 const MORPH_EXPAND_EASE = [0.22, 1, 0.36, 1] as const;
 const P3R_STAGGER_MS = 45; // 30–60ms per row
-const PHONE_W = 384;
-const PHONE_H = 224;
-// Expanded panel (portal): overlay uses flexbox so panel is always centered and correctly sized
-const EXPANDED_PANEL_WIDTH = "92vw";
-const EXPANDED_PANEL_MAX_W = 1280;
-const EXPANDED_OVERLAY_TOP_VH = 12;
-const EXPANDED_OVERLAY_BOTTOM_REM = 1.5;
 
-type SkillCardId = "core" | "tools";
+/* From Uiverse.io by Adrwaan - exact card, horizontal (landscape), scaled up */
+const UiverseCard = styled.div`
+  position: relative;
+  width: 360px;
+  height: 270px;
+  transition: transform 0.3s ease;
 
-const EXPANDED_HEIGHT = "calc(100vh - 14vh - 3rem)";
-const Z_ACTIVE_DEFAULT = 10;
+  &:hover {
+    transform: translateY(-6px);
+  }
 
-/** Expanded skills panel (portal) — kept for reference; skills use in-card expansion. */
+  &::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 360px;
+    height: 270px;
+    background-color: tomato;
+    border-radius: 10px;
+    z-index: -1;
+    transition: all 0.4s;
+    animation: uiverse-card-animate 5s linear infinite;
+  }
 
-const SkillsExpandedPortal = ({
-  expandedCard,
-  onBack,
-  reducedMotion,
-}: {
-  expandedCard: SkillCardId | null;
-  onBack: () => void;
-  reducedMotion: boolean;
-}) => {
-  const data = expandedCard ? SKILLS_DATA[expandedCard] : null;
-  const staggerSec = reducedMotion ? 0 : P3R_STAGGER_MS / 1000;
+  &:hover::before {
+    width: 367px;
+    height: 277px;
+  }
 
-  const overlay = (
-    <AnimatePresence mode="wait">
-      {expandedCard && data ? (
-        <motion.div
-          key={expandedCard}
-          className="fixed inset-0 z-[45] flex justify-center items-start pointer-events-auto"
-          style={{
-            paddingTop: `${EXPANDED_OVERLAY_TOP_VH}vh`,
-            paddingBottom: `${EXPANDED_OVERLAY_BOTTOM_REM}rem`,
-            paddingLeft: "4vw",
-            paddingRight: "4vw",
-          }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-        >
+  &:hover .paperplane {
+    transform: scale(1.07) translateY(-10%) rotate(18deg);
+  }
+
+  &:hover [data-ai-star] {
+    fill: #f5f5f5;
+  }
+
+  &:hover [data-card-title-wrap] {
+    transform: scale(1.08);
+  }
+
+  @keyframes uiverse-card-animate {
+    50% {
+      filter: hue-rotate(350deg);
+    }
+  }
+`;
+
+const CardBlackFace = styled.div`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 364px;
+  height: 274px;
+  background: #18181b;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 0;
+`;
+
+const PaperplaneSvg = styled.svg`
+  fill: #f5f5f5;
+  width: 70px;
+  transition: 0.4s all;
+`;
+
+const BulbSvg = styled.svg`
+  fill: #f5f5f5;
+  width: 70px;
+  transition: 0.4s all;
+`;
+
+const AiIdeaSvg = styled.svg`
+  fill: none;
+  stroke: #f5f5f5;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  width: 70px;
+  transition: 0.4s all;
+
+  [data-ai-star] {
+    transition: fill 0.25s ease;
+  }
+`;
+
+const GearSvg = styled.svg`
+  width: 70px;
+  transition: 0.4s all;
+
+  path {
+    fill: #ffffff;
+  }
+`;
+
+const CardTitleSlot = styled.div`
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0.5rem 0.5rem 0.75rem;
+  text-align: center;
+  pointer-events: none;
+
+  [data-card-title-wrap] {
+    display: block;
+    transform-origin: center bottom;
+    transition: transform 0.25s ease;
+  }
+`;
+
+const PAPERPLANE_PATH =
+  "M498.1 5.6c10.1 7 15.4 19.1 13.5 31.2l-64 416c-1.5 9.7-7.4 18.2-16 23s-18.9 5.4-28 1.6L284 427.7l-68.5 74.1c-8.9 9.7-22.9 12.9-35.2 8.1S160 493.2 160 480V396.4c0-4 1.5-7.8 4.2-10.7L331.8 202.8c5.8-6.3 5.6-16-.4-22s-15.7-6.4-22-.7L106 360.8 17.7 316.6C7.1 311.3 .3 300.7 0 288.9s5.9-22.8 16.1-28.7l448-256c10.7-6.1 23.9-5.5 34 1.4z";
+
+const BULB_PATH =
+  "M2 6a6 6 0 1 1 10.174 4.31c-.203.196-.359.4-.453.619l-.762 1.769A.5.5 0 0 1 10.5 13a.5.5 0 0 1 0 1a.5.5 0 0 1 0 1l-.224.447a1 1 0 0 1-.894.553H6.618a1 1 0 0 1-.894-.553L5.5 15a.5.5 0 0 1 0-1a.5.5 0 0 1 0-1a.5.5 0 0 1-.46-.302l-.761-1.77a2 2 0 0 0-.453-.618A5.98 5.98 0 0 1 2 6m6-5a5 5 0 0 0-3.479 8.592c.263.254.514.564.676.941L5.83 12h4.342l.632-1.467c.162-.377.413-.687.676-.941A5 5 0 0 0 8 1";
+
+const AI_IDEA_PATH_1 =
+  "M19 9.62c0 2.58-1.27 4.565-3.202 5.872c-.45.304-.675.456-.786.63c-.11.172-.149.4-.224.854l-.06.353c-.132.798-.199 1.197-.479 1.434s-.684.237-1.493.237h-2.612c-.809 0-1.213 0-1.493-.237s-.346-.636-.48-1.434l-.058-.353c-.076-.453-.113-.68-.223-.852s-.336-.326-.787-.634C5.192 14.183 4 12.199 4 9.62C4 5.413 7.358 2 11.5 2a7.4 7.4 0 0 1 1.5.152";
+const AI_IDEA_STAR =
+  "m16.5 2l.258.697c.338.914.507 1.371.84 1.704c.334.334.791.503 1.705.841L20 5.5l-.697.258c-.914.338-1.371.507-1.704.84c-.334.334-.503.791-.841 1.705L16.5 9l-.258-.697c-.338-.914-.507-1.371-.84-1.704c-.334-.334-.791-.503-1.705-.841L13 5.5l.697-.258c.914-.338 1.371-.507 1.704-.84c.334-.334.503-.791.841-1.705";
+const AI_IDEA_LINE =
+  "M13.5 19v1c0 .943 0 1.414-.293 1.707S12.443 22 11.5 22s-1.414 0-1.707-.293S9.5 20.943 9.5 20v-1";
+
+const GEAR_PATH =
+  "M128 82a46 46 0 1 0 46 46a46.06 46.06 0 0 0-46-46m0 80a34 34 0 1 1 34-34a34 34 0 0 1-34 34m86-31.16c.06-1.89.06-3.79 0-5.68L229.33 106a6 6 0 0 0 1.11-5.29a105.3 105.3 0 0 0-10.68-25.81a6 6 0 0 0-4.53-3l-24.45-2.71q-1.93-2.07-4-4l-2.72-24.46a6 6 0 0 0-3-4.53a105.7 105.7 0 0 0-25.77-10.66a6 6 0 0 0-5.29 1.14l-19.2 15.37a90 90 0 0 0-5.68 0L106 26.67a6 6 0 0 0-5.29-1.11A105.3 105.3 0 0 0 74.9 36.24a6 6 0 0 0-3 4.53l-2.67 24.45q-2.07 1.94-4 4L40.76 72a6 6 0 0 0-4.53 3a105.7 105.7 0 0 0-10.66 25.77a6 6 0 0 0 1.11 5.23l15.37 19.2a90 90 0 0 0 0 5.68l-15.38 19.17a6 6 0 0 0-1.11 5.29a105.3 105.3 0 0 0 10.68 25.76a6 6 0 0 0 4.53 3l24.45 2.71q1.94 2.07 4 4L72 215.24a6 6 0 0 0 3 4.53a105.7 105.7 0 0 0 25.77 10.66a6 6 0 0 0 5.29-1.11l19.1-15.32c1.89.06 3.79.06 5.68 0l19.21 15.38a6 6 0 0 0 3.75 1.31a6.2 6.2 0 0 0 1.54-.2a105.3 105.3 0 0 0 25.76-10.68a6 6 0 0 0 3-4.53l2.71-24.45q2.07-1.93 4-4l24.46-2.72a6 6 0 0 0 4.53-3a105.5 105.5 0 0 0 10.66-25.77a6 6 0 0 0-1.11-5.29Zm-3.1 41.63l-23.64 2.63a6 6 0 0 0-3.82 2a75 75 0 0 1-6.31 6.31a6 6 0 0 0-2 3.82l-2.63 23.63a94.3 94.3 0 0 1-17.36 7.14l-18.57-14.86a6 6 0 0 0-3.75-1.31h-.36a78 78 0 0 1-8.92 0a6 6 0 0 0-4.11 1.3L100.87 218a94 94 0 0 1-17.34-7.17l-2.63-23.62a6 6 0 0 0-2-3.82a75 75 0 0 1-6.31-6.31a6 6 0 0 0-3.82-2l-23.63-2.63A94.3 94.3 0 0 1 38 155.14l14.86-18.57a6 6 0 0 0 1.3-4.11a78 78 0 0 1 0-8.92a6 6 0 0 0-1.3-4.11L38 100.87a94 94 0 0 1 7.17-17.34l23.62-2.63a6 6 0 0 0 3.82-2a75 75 0 0 1 6.31-6.31a6 6 0 0 0 2-3.82l2.63-23.63A94.3 94.3 0 0 1 100.86 38l18.57 14.86a6 6 0 0 0 4.11 1.3a78 78 0 0 1 8.92 0a6 6 0 0 0 4.11-1.3L155.13 38a94 94 0 0 1 17.34 7.17l2.63 23.64a6 6 0 0 0 2 3.82a75 75 0 0 1 6.31 6.31a6 6 0 0 0 3.82 2l23.63 2.63a94.3 94.3 0 0 1 7.14 17.29l-14.86 18.57a6 6 0 0 0-1.3 4.11a78 78 0 0 1 0 8.92a6 6 0 0 0 1.3 4.11L218 155.13a94 94 0 0 1-7.15 17.34Z";
+
+const SkillArsenal = () => (
+  <section
+    id="skills"
+    className={`relative flex flex-col bg-black text-white scroll-mt-6 min-h-screen py-16 md:py-20 ${SLIDE}`}
+  >
+    <SectionGridOverlay />
+    <div className="container mx-auto px-6 relative z-10 flex flex-col items-center flex-1 min-h-0 justify-center">
+      <div className="flex flex-col items-center gap-6 md:gap-8 w-full max-w-4xl">
+        <SectionHeader title="SKILLS" align="center" showBar={false} compact />
+        <div className="flex flex-wrap justify-center items-center gap-8 mt-10">
           <motion.div
-            className="flex-1 flex flex-col min-h-0 rounded-[2.5rem_0_2.5rem_0] border-2 border-white/40 overflow-hidden bg-black"
-            style={{
-              width: EXPANDED_PANEL_WIDTH,
-              maxWidth: EXPANDED_PANEL_MAX_W,
-            }}
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            transition={{ duration: MORPH_EXPAND_DUR, ease: MORPH_EXPAND_EASE }}
+            initial={{ y: 40, opacity: 0 }}
+            whileInView={{ y: 0, opacity: 1 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0 }}
           >
-          <div className="absolute inset-0 rounded-[inherit] overflow-y-auto border-0" aria-hidden />
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onBack(); }}
-            className="absolute top-3 right-4 z-10 flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-white/70 hover:text-white border border-white/20 rounded-lg px-2.5 py-1.5 transition-colors duration-200"
-            aria-label="Back to skills"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            Back
-          </button>
-          <div className="relative z-0 pt-12 pb-6 px-6">
-            <motion.h3
-              className="font-display text-sm font-semibold uppercase tracking-wider text-white/95 mb-4 text-center"
-              initial={reducedMotion ? false : { opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1], delay: reducedMotion ? 0 : 0.12 }}
-            >
-              {data.title}
-            </motion.h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 text-left">
-              {data.categories.map((cat, catIdx) => (
-                <motion.div
-                  key={cat.title}
-                  className="border-l border-white/20 pl-4"
-                  initial={reducedMotion ? false : { opacity: 0, y: 10, x: -8 }}
-                  animate={{ opacity: 1, y: 0, x: 0 }}
-                  transition={{
-                    duration: 0.3,
-                    ease: [0.16, 1, 0.3, 1],
-                    delay: reducedMotion ? 0 : 0.18 + staggerSec * (catIdx + 1),
-                  }}
-                  whileHover={{ x: 4 }}
-                >
-                  <motion.h4
-                    className="font-display text-xs uppercase tracking-wider text-white/90 mb-2 font-semibold"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: reducedMotion ? 0 : 0.18 + staggerSec * (catIdx + 1) + 0.1 }}
-                  >
-                    {cat.title}
-                  </motion.h4>
-                  <ul className="space-y-1">
-                    {cat.items.map((item, itemIdx) => (
-                      <motion.li
-                        key={item}
-                        className="font-mono text-xs text-white/85"
-                        initial={reducedMotion ? false : { opacity: 0, y: 6, x: -4 }}
-                        animate={{ opacity: 1, y: 0, x: 0 }}
-                        transition={{
-                          duration: 0.26,
-                          ease: [0.16, 1, 0.3, 1],
-                          delay: reducedMotion ? 0 : 0.18 + staggerSec * (catIdx + 1) + itemIdx * 0.04 + 0.15,
-                        }}
-                        whileHover={{ x: 2, opacity: 1 }}
-                      >
-                        {item}
-                      </motion.li>
-                    ))}
-                  </ul>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </motion.div>
-      </motion.div>
-      ) : null}
-    </AnimatePresence>
-  );
-
-  return createPortal(overlay, document.body);
-};
-
-// Slide distance so both cards meet at center between them (x-axis only)
-const SKILL_SLIDE_PX = (PHONE_W + 32) / 2; // gap-8 = 32
-const SKILL_SLIDE_DUR = 0.42;
-const SKILL_PAUSE_AFTER_SLIDE = 0.22; // clicked card does no other changes until slide + this pause (shorter gap before subskill)
-const SKILL_TITLE_FADE_DUR = 0.20; // main card text fades during pause
-const SKILL_EXPAND_DUR = 0.48; // organic grow; ease-out so expansion feels smooth
-const SKILL_EXPAND_EASE = [0.33, 1, 0.2, 1] as const; // ease-out cubic
-const SKILL_SUBSKILL_FADE_DUR = 0.24; // subskill text fades in after card expand
-const SKILL_WIPE_DUR = 0.00; // P3R transition wipe: 420–720ms
-const SKILL_WIPE_EASE = [0.45, 0, 0.55, 1] as const; // P3R ease-in-out
-const SKILL_AIR = 0; // reduced so subskill text fades in sooner after wipe // P3R: new content only after wipe peak // pause between steps so sequence doesn’t feel rushed
-// Undercard offset (no slant)
-const SKILL_UNDERCARD_OFFSET_X = 8;
-const SKILL_UNDERCARD_OFFSET_Y = 6;
-
-/**
- * Skills card: accent undercard + hover; click → slide to center → overlay wipe (no text clipping) → reveal subskills.
- */
-const SkillCardMorph = ({
-  id,
-  data,
-  accentClass,
-  reducedMotion,
-  expandedCard,
-  onSelect,
-}: {
-  id: SkillCardId;
-  data: typeof SKILLS_DATA.core;
-  accentClass: string;
-  reducedMotion: boolean;
-  expandedCard: SkillCardId | null;
-  onSelect: (id: SkillCardId | null) => void;
-}) => {
-  const isClicked = expandedCard === id;
-  const isOther = expandedCard !== null && !isClicked;
-  const slideX = id === "core" ? SKILL_SLIDE_PX : -SKILL_SLIDE_PX;
-  const isExpanding = expandedCard !== null;
-  const [isFadingOut, setIsFadingOut] = useState(false);
-  const [slideDone, setSlideDone] = useState(false); // slide animation finished → start title fade during pause
-  const [slideComplete, setSlideComplete] = useState(false); // slide + pause done → wipe may start
-  const [wipeComplete, setWipeComplete] = useState(false);
-  const [startReveal, setStartReveal] = useState(false);
-  useEffect(() => {
-    if (!isClicked) {
-      setSlideDone(false);
-      setSlideComplete(false);
-      setWipeComplete(false);
-      setStartReveal(false);
-    }
-  }, [isClicked]);
-
-  // Slide finished → start main card title fade during pause
-  useEffect(() => {
-    if (!isClicked || !isExpanding) return;
-    const t = setTimeout(() => setSlideDone(true), SKILL_SLIDE_DUR * 1000);
-    return () => clearTimeout(t);
-  }, [isClicked, isExpanding]);
-
-  // Slide + pause done → wipe may start (no wipe/subskill DOM until then)
-  useEffect(() => {
-    if (!isClicked || !isExpanding) return;
-    const ms = (SKILL_SLIDE_DUR + SKILL_PAUSE_AFTER_SLIDE) * 1000;
-    const t = setTimeout(() => setSlideComplete(true), ms);
-    return () => clearTimeout(t);
-  }, [isClicked, isExpanding]);
-
-  // P3R: subskill content only after wipe peak (air after wipe)
-  useEffect(() => {
-    if (!isClicked || !wipeComplete) return;
-    const t = setTimeout(() => setStartReveal(true), SKILL_AIR * 1000);
-    return () => clearTimeout(t);
-  }, [isClicked, wipeComplete]);
-
-  const handleBack = useCallback(() => {
-    setIsFadingOut(true);
-  }, []);
-
-  const handleFadeComplete = useCallback(() => {
-    if (isFadingOut) {
-      onSelect(null);
-      setIsFadingOut(false);
-    }
-  }, [isFadingOut, onSelect]);
-
-  const handleWipeComplete = useCallback(() => {
-    if (isClicked) setWipeComplete(true);
-  }, [isClicked]);
-
-  return (
-    <motion.div
-      className="flex flex-col items-center flex-shrink-0"
-      style={{
-        position: "relative",
-        width: PHONE_W,
-        height: PHONE_H,
-        borderRadius: "1.5rem",
-        pointerEvents: isOther ? "none" : "auto",
-        zIndex: isClicked ? 10 : isOther ? 0 : 1,
-      }}
-      initial={false}
-      animate={{
-        x: isExpanding ? slideX : 0,
-        opacity: isOther ? 0 : 1,
-      }}
-      transition={{
-        x: { duration: SKILL_SLIDE_DUR, ease: [0.22, 1, 0.36, 1] },
-        opacity: { duration: isOther ? SKILL_SLIDE_DUR * 0.8 : 0.3, ease: [0.22, 1, 0.36, 1] },
-      }}
-    >
-      <div className="relative flex flex-col overflow-visible" style={{ width: "100%", height: "100%" }}>
-        <motion.div
-          className="absolute inset-0 flex items-center justify-center"
-          animate={{ y: reducedMotion ? 0 : [0, -8] }}
-          transition={
-            reducedMotion
-              ? { duration: 0 }
-              : { duration: 2.2, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }
-          }
-        >
-          <div
-            className="border-0 bg-transparent p-0 relative w-96 h-56"
-          >
-            {/* Under card (accent) — offset for depth */}
-            <motion.div
-              className={`absolute inset-0 rounded-[24px] ${accentClass}`}
-              style={{
-                transform: `translate(${SKILL_UNDERCARD_OFFSET_X}px, ${SKILL_UNDERCARD_OFFSET_Y}px)`,
-              }}
-              initial={false}
-              animate={{ opacity: isOther ? 0 : 1 }}
-              transition={{ duration: SKILL_SLIDE_DUR * 0.8 }}
-            />
-            {/* Main card: hover lift + scale */}
-            <motion.div
-              className="relative w-96 h-56 rounded-[24px] border-2 border-b-4 border-r-4 border-white bg-black p-1 pl-[3px] pt-[3px] cursor-pointer"
-              style={{ transformOrigin: "center center" }}
-              onClick={() => expandedCard === null && onSelect(id)}
-              whileHover={
-                expandedCard === null
-                  ? { y: -6, scale: 1.02 }
-                  : {}
-              }
-              transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <div className="relative w-full h-full overflow-hidden rounded-[20px]">
-                {/* Card face — title fades during pause (slideDone); no wipe/subskill in DOM until slideComplete */}
-                <div className="absolute inset-0 bg-black flex items-center justify-center p-3 rounded-[20px]">
-                  <motion.h3
-                    className="font-display text-base font-semibold uppercase tracking-wider text-white text-center leading-tight max-w-full font-normal not-italic select-none"
-                    initial={false}
-                    animate={{ opacity: isClicked && slideDone ? 0 : 1 }}
-                    transition={{ duration: SKILL_TITLE_FADE_DUR, ease: [0.22, 1, 0.36, 1] }}
-                  >
-                    {data.title}
-                  </motion.h3>
-                </div>
-                {/* Wipe + subskill panel: mount ONLY after slide + 0.5s pause so clicked card truly does not change until then */}
-                {isClicked && slideComplete && (
-                  <>
-                    <motion.div
-                      className="absolute inset-0 rounded-[20px] bg-black pointer-events-none"
-                      initial={{ x: "100%" }}
-                      animate={{ x: "0%" }}
-                      transition={{
-                        x: {
-                          duration: SKILL_WIPE_DUR,
-                          ease: SKILL_WIPE_EASE,
-                        },
-                      }}
-                      onAnimationComplete={handleWipeComplete}
-                      style={{
-                        left: 0,
-                        width: "100%",
-                        transformOrigin: "left center",
-                      }}
-                    />
-                    {/* Subskill content: revealed by sliding cover; fades out on Back */}
-                    <AnimatePresence>
-                      <motion.div
-                        key="subskills"
-                        className="absolute inset-0 overflow-auto no-scrollbar rounded-[20px] bg-black flex flex-col p-3"
-                      initial={false}
-                      animate={{ opacity: isFadingOut ? 0 : 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: isFadingOut ? 0.32 : 0.2, ease: [0.22, 1, 0.36, 1] }}
-                      onAnimationComplete={handleFadeComplete}
-                      style={{
-                        isolation: "isolate",
-                        pointerEvents: isFadingOut ? "none" : "auto",
-                      }}
-                      onClick={(e) => e.stopPropagation()}
+            <UiverseCard>
+              <CardBlackFace>
+                <AiIdeaSvg viewBox="0 0 24 24" className="paperplane">
+                  <path strokeLinecap="round" d={AI_IDEA_PATH_1} />
+                  <path data-ai-star d={AI_IDEA_STAR} />
+                  <path d={AI_IDEA_LINE} />
+                </AiIdeaSvg>
+                <CardTitleSlot>
+                  <span data-card-title-wrap>
+                    <motion.span
+                      className="block font-display text-base font-semibold uppercase tracking-tight text-[#f5f5f5] h-[52px]"
+                      initial={{ y: 12, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
                     >
-                      {/* Reveal cover: slides right after wipe + air (so subskills don’t pop in) */}
-                      <motion.div
-                        className="absolute inset-0 rounded-[20px] bg-black z-10"
-                        style={{
-                          pointerEvents: "none",
-                          left: 0,
-                          width: "100%",
-                          transformOrigin: "left center",
-                        }}
-                        initial={{ x: 0 }}
-                        animate={{ x: startReveal ? "100%" : "0%" }}
-                        exit={{ x: "100%" }}
-                        transition={{
-                          x: {
-                            duration: SKILL_WIPE_DUR,
-                            ease: SKILL_WIPE_EASE,
-                          },
-                        }}
-                      />
-                      <motion.div
-                        className="relative min-h-full z-[11]"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: startReveal ? 1 : 0 }}
-                        transition={{
-                          duration: SKILL_SUBSKILL_FADE_DUR,
-                          ease: [0.22, 1, 0.36, 1],
-                          delay: startReveal ? 0.08 : 0,
-                        }}
-                      >
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            e.preventDefault();
-                            handleBack();
-                          }}
-                          disabled={isFadingOut}
-                          className="font-mono text-[10px] text-white/60 uppercase tracking-wider mb-2 text-left hover:text-white/90 cursor-pointer disabled:pointer-events-none disabled:opacity-70"
-                        >
-                          ← Back
-                        </button>
-                        <h3 className="font-display text-sm font-semibold uppercase tracking-wider text-white leading-tight mb-3">
-                          {data.title}
-                        </h3>
-                        <div className="space-y-2">
-                          {data.categories.map((cat) => (
-                            <div key={cat.title}>
-                              <h4 className="font-mono text-[10px] text-white/80 uppercase tracking-wider mb-0.5">
-                                {cat.title}
-                              </h4>
-                              <ul className="space-y-0.5">
-                                {cat.items.map((item) => (
-                                  <li key={item} className="font-mono text-[10px] text-white/85">
-                                    {item}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          ))}
-                        </div>
-                      </motion.div>
-                    </motion.div>
-                    </AnimatePresence>
-                  </>
-                )}
-              </div>
-            </motion.div>
-          </div>
-        </motion.div>
-      </div>
-    </motion.div>
-  );
-};
-
-const SkillArsenal = () => {
-  const reducedMotion = useReducedMotion();
-  const [expandedCard, setExpandedCard] = useState<SkillCardId | null>(null);
-
-  const handleSelect = useCallback((id: SkillCardId | null) => {
-    setExpandedCard(id);
-  }, []);
-
-  return (
-    <>
-      <section
-        id="skills"
-        className={`relative flex flex-col bg-black text-white scroll-mt-6 min-h-screen py-16 md:py-20 ${SLIDE}`}
-      >
-        <SectionGridOverlay />
-        <div className="container mx-auto px-6 relative z-10 flex flex-col items-center flex-1 min-h-0 justify-center">
-          <div className="flex flex-col items-center gap-6 md:gap-8 w-full max-w-4xl">
-            <SectionHeader title="SKILLS" align="center" showBar={false} compact />
-            <div className="relative w-full mx-auto mt-10 md:mt-14 flex flex-col md:flex-row items-center justify-center gap-8 md:gap-12">
-            <SkillCardMorph
-              id="core"
-              data={SKILLS_DATA.core}
-              accentClass="bg-emerald-500"
-              reducedMotion={!!reducedMotion}
-              expandedCard={expandedCard}
-              onSelect={handleSelect}
-            />
-            <SkillCardMorph
-              id="tools"
-              data={SKILLS_DATA.tools}
-              accentClass="bg-cyan-500"
-              reducedMotion={!!reducedMotion}
-              expandedCard={expandedCard}
-              onSelect={handleSelect}
-            />
-            </div>
-          </div>
+                      CORE COMPETENCIES
+                    </motion.span>
+                  </span>
+                </CardTitleSlot>
+              </CardBlackFace>
+            </UiverseCard>
+          </motion.div>
+          <motion.div
+            initial={{ y: 40, opacity: 0 }}
+            whileInView={{ y: 0, opacity: 1 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.18 }}
+          >
+            <UiverseCard>
+              <CardBlackFace>
+                <GearSvg viewBox="0 0 256 256" className="paperplane">
+                  <path fillRule="evenodd" d={GEAR_PATH} />
+                </GearSvg>
+                <CardTitleSlot>
+                  <span data-card-title-wrap>
+                    <motion.span
+                      className="block font-display text-base font-semibold uppercase tracking-tight text-[#f5f5f5] h-[52px]"
+                      initial={{ y: 12, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1], delay: 0.25 }}
+                    >
+                      TOOLS AND TECHNOLOGIES
+                    </motion.span>
+                  </span>
+                </CardTitleSlot>
+              </CardBlackFace>
+            </UiverseCard>
+          </motion.div>
         </div>
-      </section>
-    </>
-  );
-};
+      </div>
+    </div>
+  </section>
+);
 
 // --- RESUME COMPONENT ---
 const ResumeView = () => {
