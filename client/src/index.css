@@ -88,6 +88,8 @@
   [id="skills"] {
     background-color: #000 !important;
     background-image: none !important;
+    overflow: visible;
+    isolation: isolate;
   }
   
   h1, h2, h3, h4, h5, h6 {
@@ -160,7 +162,13 @@
     position: absolute;
     inset: 0;
     z-index: 0;
-    overflow: hidden;
+    overflow: visible;
+  }
+  /* Keep skills card and content in front; no clipping */
+  #skills .container,
+  #skills [class*="max-w-4xl"],
+  #skills [class*="flex-row"][class*="gap-8"] {
+    overflow: visible !important;
   }
   .skills-grid-parallax {
     width: 200%;
