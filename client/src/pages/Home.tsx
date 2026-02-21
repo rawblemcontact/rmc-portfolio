@@ -1724,6 +1724,8 @@ const SkillsExpandedPanel = ({
 // P3R motion: UI 160–260ms, ease-out, panel slide + row stagger (30–60ms), y+opacity
 const MORPH_DUR = 0.22;
 const MORPH_EASE = [0.2, 0.8, 0.2, 1] as const; // P3R ease-out
+const MORPH_EXPAND_DUR = 0.28;
+const MORPH_EXPAND_EASE = [0.22, 1, 0.36, 1] as const;
 const P3R_STAGGER_MS = 45; // 30–60ms per row
 const PHONE_W = 384;
 const PHONE_H = 224;
@@ -1852,80 +1854,282 @@ const SkillsExpandedPortal = ({
   return createPortal(overlay, document.body);
 };
 
+// Slide distance so both cards meet at center between them (x-axis only)
+const SKILL_SLIDE_PX = (PHONE_W + 32) / 2; // gap-8 = 32
+const SKILL_SLIDE_DUR = 0.42;
+const SKILL_PAUSE_AFTER_SLIDE = 0.5; // clicked card does no other changes until slide + this pause
+const SKILL_TITLE_FADE_DUR = 0.36; // main card text fades during pause
+const SKILL_SUBSKILL_FADE_DUR = 0.32; // subskill text fades in after main card fade
+const SKILL_WIPE_DUR = 0.52; // P3R transition wipe: 420–720ms
+const SKILL_WIPE_EASE = [0.45, 0, 0.55, 1] as const; // P3R ease-in-out
+const SKILL_AIR = 0.24; // P3R: new content only after wipe peak // pause between steps so sequence doesn’t feel rushed
+// 2D slant (no 3D): card tilt and undercard offset
+const SKILL_SLANT_DEG = -3;
+const SKILL_UNDERCARD_OFFSET_X = 8;
+const SKILL_UNDERCARD_OFFSET_Y = 6;
+
 /**
- * Skills card: display only. No click behavior; subskill content kept handy in SKILLS_DATA.
+ * Skills card: 2D slanted accent + hover; click → slide to center → overlay wipe (no text clipping) → reveal subskills.
  */
 const SkillCardMorph = ({
+  id,
   data,
   accentClass,
   reducedMotion,
+  expandedCard,
+  onSelect,
 }: {
+  id: SkillCardId;
   data: typeof SKILLS_DATA.core;
   accentClass: string;
   reducedMotion: boolean;
+  expandedCard: SkillCardId | null;
+  onSelect: (id: SkillCardId | null) => void;
 }) => {
+  const isClicked = expandedCard === id;
+  const isOther = expandedCard !== null && !isClicked;
+  const slideX = id === "core" ? SKILL_SLIDE_PX : -SKILL_SLIDE_PX;
+  const isExpanding = expandedCard !== null;
+  const [isFadingOut, setIsFadingOut] = useState(false);
+  const [slideDone, setSlideDone] = useState(false); // slide animation finished → start title fade during pause
+  const [slideComplete, setSlideComplete] = useState(false); // slide + pause done → wipe may start
+  const [wipeComplete, setWipeComplete] = useState(false);
+  const [startReveal, setStartReveal] = useState(false);
+
+  useEffect(() => {
+    if (!isClicked) {
+      setSlideDone(false);
+      setSlideComplete(false);
+      setWipeComplete(false);
+      setStartReveal(false);
+    }
+  }, [isClicked]);
+
+  // Slide finished → start main card title fade during pause
+  useEffect(() => {
+    if (!isClicked || !isExpanding) return;
+    const t = setTimeout(() => setSlideDone(true), SKILL_SLIDE_DUR * 1000);
+    return () => clearTimeout(t);
+  }, [isClicked, isExpanding]);
+
+  // Slide + pause done → wipe may start (no wipe/subskill DOM until then)
+  useEffect(() => {
+    if (!isClicked || !isExpanding) return;
+    const ms = (SKILL_SLIDE_DUR + SKILL_PAUSE_AFTER_SLIDE) * 1000;
+    const t = setTimeout(() => setSlideComplete(true), ms);
+    return () => clearTimeout(t);
+  }, [isClicked, isExpanding]);
+
+  // P3R: subskill content only after wipe peak (air after wipe)
+  useEffect(() => {
+    if (!isClicked || !wipeComplete) return;
+    const t = setTimeout(() => setStartReveal(true), SKILL_AIR * 1000);
+    return () => clearTimeout(t);
+  }, [isClicked, wipeComplete]);
+
+  const handleBack = useCallback(() => {
+    setIsFadingOut(true);
+  }, []);
+
+  const handleFadeComplete = useCallback(() => {
+    if (isFadingOut) {
+      onSelect(null);
+      setIsFadingOut(false);
+    }
+  }, [isFadingOut, onSelect]);
+
+  const handleWipeComplete = useCallback(() => {
+    if (isClicked) setWipeComplete(true);
+  }, [isClicked]);
+
   return (
-    <div
-      className="flex flex-col items-center"
+    <motion.div
+      className="flex flex-col items-center flex-shrink-0"
       style={{
+        position: "relative",
         width: PHONE_W,
         height: PHONE_H,
         borderRadius: "1.5rem",
-        perspective: 1200,
+        pointerEvents: isOther ? "none" : "auto",
+        zIndex: isClicked ? 10 : isOther ? 0 : 1,
+      }}
+      initial={false}
+      animate={{
+        x: isExpanding ? slideX : 0,
+        opacity: isOther ? 0 : 1,
+        transition: {
+          x: { duration: SKILL_SLIDE_DUR, ease: [0.22, 1, 0.36, 1] },
+          opacity: { duration: isOther ? SKILL_SLIDE_DUR * 0.8 : 0.3, ease: [0.22, 1, 0.36, 1] },
+        },
       }}
     >
       <div className="relative flex flex-col overflow-visible" style={{ width: "100%", height: "100%" }}>
-        <div className="absolute inset-0 rounded-[inherit]" style={{ backfaceVisibility: "hidden" }}>
-          <motion.div
-            className="absolute inset-0 flex items-center justify-center"
-            animate={{ y: reducedMotion ? 0 : [0, -8] }}
-            transition={
-              reducedMotion
-                ? { duration: 0 }
-                : { duration: 2.2, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }
-            }
+        <motion.div
+          className="absolute inset-0 flex items-center justify-center"
+          animate={{ y: reducedMotion ? 0 : [0, -8] }}
+          transition={
+            reducedMotion
+              ? { duration: 0 }
+              : { duration: 2.2, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }
+          }
+        >
+          {/* 2D slanted wrapper: rotate only (no perspective/3D) */}
+          <div
+            className="border-0 bg-transparent p-0 relative w-96 h-56"
+            style={{ transform: `rotate(${SKILL_SLANT_DEG}deg)` }}
           >
-            <div
-              className="border-0 bg-transparent p-0"
-              style={{ transformStyle: "preserve-3d", transform: "rotateY(-30deg) rotateX(15deg)" }}
-              aria-hidden
+            {/* Under card (accent) — offset for depth, fades with card */}
+            <motion.div
+              className={`absolute w-96 h-56 rounded-[24px] ${accentClass}`}
+              style={{
+                left: SKILL_UNDERCARD_OFFSET_X,
+                top: SKILL_UNDERCARD_OFFSET_Y,
+              }}
+              initial={false}
+              animate={{ opacity: isOther ? 0 : 1 }}
+              transition={{ duration: SKILL_SLIDE_DUR * 0.8 }}
+            />
+            {/* Main card: hover lift + scale (2D only) */}
+            <motion.div
+              className="relative w-96 h-56 rounded-[24px] border-2 border-b-4 border-r-4 border-white bg-black p-1 pl-[3px] pt-[3px] cursor-pointer"
+              style={{ transformOrigin: "center center" }}
+              onClick={() => expandedCard === null && onSelect(id)}
+              whileHover={
+                expandedCard === null
+                  ? { y: -6, scale: 1.02, rotate: SKILL_SLANT_DEG + 1 }
+                  : {}
+              }
+              transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
             >
-              <div
-                className={`absolute w-96 h-56 rounded-[24px] ${accentClass}`}
-                style={{ transform: "translateZ(-4px) translateY(0)" }}
-                aria-hidden
-              />
-              <motion.div
-                initial={{ transform: "translateZ(8px) translateY(-2px)" }}
-                whileHover={{
-                  transform: "translateZ(40px) translateY(-12px) rotateX(-2deg)",
-                  scale: 1.02,
-                }}
-                transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-                className="relative w-96 h-56 rounded-[24px] border-2 border-b-4 border-r-4 border-white bg-black p-1 pl-[3px] pt-[3px]"
-                style={{ transformStyle: "preserve-3d" }}
-              >
-                <div className="relative z-0 h-full w-full overflow-hidden rounded-[20px] bg-black flex items-center justify-center p-3">
-                  <h3 className="font-display text-base font-semibold uppercase tracking-wider text-white text-center leading-tight max-w-full font-normal not-italic">
+              <div className="relative w-full h-full overflow-hidden rounded-[20px]">
+                {/* Card face — title fades during pause (slideDone); no wipe/subskill in DOM until slideComplete */}
+                <div className="absolute inset-0 bg-black flex items-center justify-center p-3 rounded-[20px]">
+                  <motion.h3
+                    className="font-display text-base font-semibold uppercase tracking-wider text-white text-center leading-tight max-w-full font-normal not-italic select-none"
+                    initial={false}
+                    animate={{ opacity: isClicked && slideDone ? 0 : 1 }}
+                    transition={{ duration: SKILL_TITLE_FADE_DUR, ease: [0.22, 1, 0.36, 1] }}
+                  >
                     {data.title}
-                  </h3>
+                  </motion.h3>
                 </div>
-              </motion.div>
-            </div>
-          </motion.div>
-        </div>
-        <div
-          className="absolute inset-0 rounded-[inherit] bg-black"
-          style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
-          aria-hidden
-        />
+                {/* Wipe + subskill panel: mount ONLY after slide + 0.5s pause so clicked card truly does not change until then */}
+                {isClicked && slideComplete && (
+                  <>
+                    <motion.div
+                      className="absolute inset-0 rounded-[20px] bg-black pointer-events-none"
+                      initial={{ x: "100%" }}
+                      animate={{ x: "0%" }}
+                      transition={{
+                        x: {
+                          duration: SKILL_WIPE_DUR,
+                          ease: SKILL_WIPE_EASE,
+                        },
+                      }}
+                      onAnimationComplete={handleWipeComplete}
+                      style={{
+                        left: 0,
+                        width: "100%",
+                        transformOrigin: "left center",
+                      }}
+                    />
+                    {/* Subskill content: revealed by sliding cover; fades out on Back */}
+                    <AnimatePresence>
+                      <motion.div
+                        key="subskills"
+                        className="absolute inset-0 overflow-auto no-scrollbar rounded-[20px] bg-black flex flex-col p-3"
+                      initial={false}
+                      animate={{ opacity: isFadingOut ? 0 : 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: isFadingOut ? 0.32 : 0.2, ease: [0.22, 1, 0.36, 1] }}
+                      onAnimationComplete={handleFadeComplete}
+                      style={{
+                        isolation: "isolate",
+                        pointerEvents: isFadingOut ? "none" : "auto",
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {/* Reveal cover: slides right after wipe + air (so subskills don’t pop in) */}
+                      <motion.div
+                        className="absolute inset-0 rounded-[20px] bg-black z-10"
+                        style={{
+                          pointerEvents: "none",
+                          left: 0,
+                          width: "100%",
+                          transformOrigin: "left center",
+                        }}
+                        initial={{ x: 0 }}
+                        animate={{ x: startReveal ? "100%" : "0%" }}
+                        exit={{ x: "100%" }}
+                        transition={{
+                          x: {
+                            duration: SKILL_WIPE_DUR,
+                            ease: SKILL_WIPE_EASE,
+                          },
+                        }}
+                      />
+                      <motion.div
+                        className="relative min-h-full z-[11]"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: startReveal ? 1 : 0 }}
+                        transition={{
+                          duration: SKILL_SUBSKILL_FADE_DUR,
+                          ease: [0.22, 1, 0.36, 1],
+                          delay: startReveal ? 0.08 : 0,
+                        }}
+                      >
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            handleBack();
+                          }}
+                          disabled={isFadingOut}
+                          className="font-mono text-[10px] text-white/60 uppercase tracking-wider mb-2 text-left hover:text-white/90 cursor-pointer disabled:pointer-events-none disabled:opacity-70"
+                        >
+                          ← Back
+                        </button>
+                        <h3 className="font-display text-sm font-semibold uppercase tracking-wider text-white leading-tight mb-3">
+                          {data.title}
+                        </h3>
+                        <div className="space-y-2">
+                          {data.categories.map((cat) => (
+                            <div key={cat.title}>
+                              <h4 className="font-mono text-[10px] text-white/80 uppercase tracking-wider mb-0.5">
+                                {cat.title}
+                              </h4>
+                              <ul className="space-y-0.5">
+                                {cat.items.map((item) => (
+                                  <li key={item} className="font-mono text-[10px] text-white/85">
+                                    {item}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ))}
+                        </div>
+                      </motion.div>
+                    </motion.div>
+                    </AnimatePresence>
+                  </>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
 const SkillArsenal = () => {
   const reducedMotion = useReducedMotion();
+  const [expandedCard, setExpandedCard] = useState<SkillCardId | null>(null);
+
+  const handleSelect = useCallback((id: SkillCardId | null) => {
+    setExpandedCard(id);
+  }, []);
 
   return (
     <>
@@ -1938,14 +2142,20 @@ const SkillArsenal = () => {
           <SectionHeader title="SKILLS" align="center" showBar={false} compact />
           <div className="relative w-full mx-auto mt-10 md:mt-14 flex flex-col md:flex-row items-center justify-center gap-8 md:gap-12 max-w-4xl">
             <SkillCardMorph
+              id="core"
               data={SKILLS_DATA.core}
               accentClass="bg-emerald-500"
               reducedMotion={!!reducedMotion}
+              expandedCard={expandedCard}
+              onSelect={handleSelect}
             />
             <SkillCardMorph
+              id="tools"
               data={SKILLS_DATA.tools}
               accentClass="bg-cyan-500"
               reducedMotion={!!reducedMotion}
+              expandedCard={expandedCard}
+              onSelect={handleSelect}
             />
           </div>
         </div>
