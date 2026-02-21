@@ -1891,16 +1891,14 @@ const SkillCardMorph = ({
               : { duration: 2.2, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }
           }
         >
-          {/* flip-layer: rotateY only; explicit origin + translateZ(0) to reduce glitches */}
+          {/* flip-layer: rotateY only; will-change + preserve-3d in CSS */}
           <motion.div
             className="flip-layer"
             style={{
               position: "relative",
               width: "100%",
               height: "100%",
-              transformStyle: "preserve-3d",
               transformOrigin: "50% 50%",
-              backfaceVisibility: "hidden",
             }}
             animate={{ rotateY: isFlipped ? 180 : 0 }}
             transition={{
@@ -1912,18 +1910,8 @@ const SkillCardMorph = ({
               if (isFlipped) setBackFaceRevealed(true);
             }}
           >
-            {/* Front face: existing card JSX unchanged */}
-            <div
-              className="card-face front"
-              style={{
-                position: "absolute",
-                inset: 0,
-                width: "100%",
-                height: "100%",
-                backfaceVisibility: "hidden",
-                WebkitBackfaceVisibility: "hidden",
-              }}
-            >
+            {/* Front face: positioning + backface + translateZ in CSS */}
+            <div className="card-face front">
               <button
                 type="button"
                 className="border-0 bg-transparent p-0 cursor-pointer"
@@ -1957,19 +1945,8 @@ const SkillCardMorph = ({
                 </motion.div>
               </button>
             </div>
-            {/* Back face: rotateY(180deg) + translateZ(-1px) to avoid z-fighting at 90deg */}
-            <div
-              className="card-face back"
-              style={{
-                position: "absolute",
-                inset: 0,
-                width: "100%",
-                height: "100%",
-                backfaceVisibility: "hidden",
-                WebkitBackfaceVisibility: "hidden",
-                transform: "rotateY(180deg) translateZ(-1px)",
-              }}
-            >
+            {/* Back face: positioning + backface + rotateY + translateZ in CSS */}
+            <div className="card-face back">
               <div className="absolute inset-0 flex items-center justify-center rounded-[inherit]">
                 <div
                   className="relative w-96 h-56 rounded-[24px] border-2 border-b-4 border-r-4 border-white bg-black p-1 pl-[3px] pt-[3px] overflow-y-auto no-scrollbar"

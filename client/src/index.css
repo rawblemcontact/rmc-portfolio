@@ -216,4 +216,29 @@
   @media (prefers-reduced-motion: reduce) {
     .skills-node-pulse-once { animation: none; }
   }
+
+  /* ─── Skills 3D flip: prevent midpoint rendering artifacts ───────────────── */
+  .card-wrapper {
+    overflow: hidden;
+  }
+  .flip-layer {
+    will-change: transform;
+    transform-style: preserve-3d;
+  }
+  .card-face.front,
+  .card-face.back {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .card-face.front {
+    transform: translateZ(0.1px);
+  }
+  .card-face.back {
+    transform: rotateY(180deg) translateZ(0.1px);
+  }
 }
