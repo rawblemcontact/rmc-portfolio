@@ -217,28 +217,34 @@
     .skills-node-pulse-once { animation: none; }
   }
 
-  /* ─── Skills 3D flip: prevent midpoint rendering artifacts ───────────────── */
-  .card-wrapper {
-    overflow: hidden;
+  /* ─── Skills 3D flip: hierarchy for no clip + no bleed ────────────────────── */
+  .skills-section {
+    overflow: visible;
+  }
+  .card-slot {
+    overflow: visible;
+  }
+  .perspective-wrapper {
+    perspective: 1100px;
   }
   .flip-layer {
     will-change: transform;
     transform-style: preserve-3d;
   }
-  .card-face.front,
-  .card-face.back {
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
+  .face-front,
+  .face-back {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
   }
-  .card-face.front {
+  .face-front {
     transform: translateZ(0.1px);
   }
-  .card-face.back {
+  .face-back {
     transform: rotateY(180deg) translateZ(0.1px);
   }
 }

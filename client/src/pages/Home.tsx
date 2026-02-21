@@ -1727,6 +1727,8 @@ const MORPH_EASE = [0.2, 0.8, 0.2, 1] as const; // P3R ease-out
 const P3R_STAGGER_MS = 45; // 30–60ms per row
 const PHONE_W = 384;
 const PHONE_H = 224;
+/** Slot height allows float range (0 to -8px) without clipping */
+const CARD_SLOT_HEIGHT = PHONE_H + 20;
 // Expanded panel (portal): overlay uses flexbox so panel is always centered and correctly sized
 const EXPANDED_PANEL_WIDTH = "92vw";
 const EXPANDED_PANEL_MAX_W = 1280;
@@ -1853,8 +1855,9 @@ const SkillsExpandedPortal = ({
 };
 
 /**
- * Skills card: 3D flip in place. Float and hover unchanged.
- * Layers: card-wrapper (perspective) → float-layer (y only) → flip-layer (rotateY only) → front/back faces.
+ * Skills card: stability hierarchy.
+ * skills-section → card-slot (overflow visible, fixed height) → perspective-wrapper → float-layer (translateY only) → flip-layer (rotateY only) → face-front / face-back.
+ * Only face elements are absolutely positioned. No clip on section/slot; floating never cut off.
  */
 const SkillCardMorph = ({
   data,
@@ -1870,20 +1873,29 @@ const SkillCardMorph = ({
 
   return (
     <div
-      className="flex flex-col items-center card-wrapper"
+      className="card-slot flex flex-col items-center justify-center"
       style={{
         width: PHONE_W,
-        height: PHONE_H,
-        borderRadius: "1.5rem",
-        perspective: 1100,
-        perspectiveOrigin: "50% 50%",
+        height: CARD_SLOT_HEIGHT,
       }}
     >
-      <div className="relative flex flex-col overflow-visible" style={{ width: "100%", height: "100%" }}>
-        {/* float-layer: floating idle animation only (translateY); preserve-3d so flip-layer stays smooth */}
+      {/* perspective-wrapper: perspective only; does not clip */}
+      <div
+        className="perspective-wrapper relative"
+        style={{
+          width: PHONE_W,
+          height: PHONE_H,
+          borderRadius: "1.5rem",
+        }}
+      >
+        {/* float-layer: translateY animation only; no rotate, no scale */}
         <motion.div
-          className="absolute inset-0 flex items-center justify-center float-layer"
-          style={{ transformStyle: "preserve-3d" }}
+          className="float-layer relative flex items-center justify-center"
+          style={{
+            width: "100%",
+            height: "100%",
+            transformStyle: "preserve-3d",
+          }}
           animate={{ y: reducedMotion ? 0 : [0, -8] }}
           transition={
             reducedMotion
@@ -1891,11 +1903,10 @@ const SkillCardMorph = ({
               : { duration: 2.2, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }
           }
         >
-          {/* flip-layer: rotateY only; will-change + preserve-3d in CSS */}
+          {/* flip-layer: rotateY animation only; preserve-3d + will-change in CSS */}
           <motion.div
-            className="flip-layer"
+            className="flip-layer relative"
             style={{
-              position: "relative",
               width: "100%",
               height: "100%",
               transformOrigin: "50% 50%",
@@ -1910,8 +1921,8 @@ const SkillCardMorph = ({
               if (isFlipped) setBackFaceRevealed(true);
             }}
           >
-            {/* Front face: positioning + backface + translateZ in CSS */}
-            <div className="card-face front">
+            {/* face-front: undercard + text fade out right as we flip to reduce artifacts */}
+            <div className="face-front">
               <button
                 type="button"
                 className="border-0 bg-transparent p-0 cursor-pointer"
@@ -1922,10 +1933,12 @@ const SkillCardMorph = ({
                 onClick={() => setIsFlipped((prev) => !prev)}
                 aria-label={`Flip card to see ${data.title} details`}
               >
-                <div
+                <motion.div
                   className={`absolute w-96 h-56 rounded-[24px] ${accentClass}`}
                   style={{ transform: "translateZ(-4px) translateY(0)" }}
                   aria-hidden
+                  animate={{ opacity: isFlipped ? 0 : 1 }}
+                  transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
                 />
                 <motion.div
                   initial={{ transform: "translateZ(8px) translateY(-2px)" }}
@@ -1938,37 +1951,52 @@ const SkillCardMorph = ({
                   style={{ transformStyle: "preserve-3d" }}
                 >
                   <div className="relative z-0 h-full w-full overflow-hidden rounded-[20px] bg-black flex items-center justify-center p-3">
-                    <h3 className="font-display text-base font-semibold uppercase tracking-wider text-white text-center leading-tight max-w-full font-normal not-italic">
+                    <motion.h3
+                      className="font-display text-base font-semibold uppercase tracking-wider text-white text-center leading-tight max-w-full font-normal not-italic"
+                      animate={{ opacity: isFlipped ? 0 : 1 }}
+                      transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
+                    >
                       {data.title}
-                    </h3>
+                    </motion.h3>
                   </div>
                 </motion.div>
               </button>
             </div>
-            {/* Back face: positioning + backface + rotateY + translateZ in CSS */}
-            <div className="card-face back">
+            {/* face-back: back face content; positioning in CSS */}
+            <div className="face-back">
               <div className="absolute inset-0 flex items-center justify-center rounded-[inherit]">
                 <div
                   className="relative w-96 h-56 rounded-[24px] border-2 border-b-4 border-r-4 border-white bg-black p-1 pl-[3px] pt-[3px] overflow-y-auto no-scrollbar"
                   style={{ transformStyle: "preserve-3d" }}
                 >
                   <div className="relative z-0 h-full w-full rounded-[20px] bg-black p-4 flex flex-col">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsFlipped(false);
-                        setBackFaceRevealed(false);
-                      }}
-                      className="flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-white/70 hover:text-white border border-white/20 rounded-lg px-2.5 py-1.5 transition-colors duration-200 self-end mb-3"
-                      aria-label="Flip card back"
+                    <motion.div
+                      className="self-end mb-3"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: backFaceRevealed ? 1 : 0 }}
+                      transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
                     >
-                      <ArrowLeft className="w-3.5 h-3.5" />
-                      Back
-                    </button>
-                    <h3 className="font-display text-sm font-semibold uppercase tracking-wider text-white/95 mb-3 text-center">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsFlipped(false);
+                          setBackFaceRevealed(false);
+                        }}
+                        className="flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-white/70 hover:text-white border border-white/20 rounded-lg px-2.5 py-1.5 transition-colors duration-200"
+                        aria-label="Flip card back"
+                      >
+                        <ArrowLeft className="w-3.5 h-3.5" />
+                        Back
+                      </button>
+                    </motion.div>
+                    <motion.h3
+                      className="font-display text-sm font-semibold uppercase tracking-wider text-white/95 mb-3 text-center"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: backFaceRevealed ? 1 : 0 }}
+                      transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+                    >
                       {data.title}
-                    </h3>
-                    {/* Subskill content fades in only after flip animation completes */}
+                    </motion.h3>
                     <motion.div
                       className="grid grid-cols-1 gap-3 text-left"
                       initial={{ opacity: 0 }}
@@ -2008,7 +2036,7 @@ const SkillArsenal = () => {
     <>
       <section
         id="skills"
-        className={`relative flex flex-col bg-black text-white scroll-mt-6 min-h-screen py-16 md:py-20 ${SLIDE}`}
+        className={`skills-section relative flex flex-col bg-black text-white scroll-mt-6 min-h-screen py-16 md:py-20 ${SLIDE}`}
       >
         <SectionGridOverlay />
         <div className="container mx-auto px-6 relative z-10 flex flex-col items-center flex-1 min-h-0 justify-center">
