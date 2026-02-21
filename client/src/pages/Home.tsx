@@ -1732,16 +1732,20 @@ const EXPANDED_OVERLAY_BOTTOM_REM = 1.5;
 type SkillCardId = "core" | "tools";
 
 const STARTUP_DUR = 0.06;
-const FADE_DUR = 0.32;
-const LINGER_MS = 60;
-// Slide-to-center: fast but smooth (ease-out)
+const MICRO_BEAT_MS = 85; // 70–100ms pause between flip complete and expansion
 const SLIDE_TO_CENTER_DUR = 0.28;
-const SLIDE_TO_CENTER_EASE = [0.22, 1, 0.36, 1] as const;
+const SLIDE_TO_CENTER_EASE = [0.4, 0, 0.2, 1] as const;
 const MORPH_EXPAND_DUR = 0.6;
 const MORPH_EXPAND_EASE = [0.4, 0, 0.2, 1] as const;
 const FLIP_DUR = 0.8;
 const FLIP_EASE = [0.4, 0, 0.2, 1] as const;
+const FLIP_ROTATE_PEAK = 145;
 const EXPANDED_HEIGHT = "calc(100vh - 14vh - 3rem)";
+const UNSELECTED_EXIT_DUR = 0.4;
+const UNSELECTED_EXIT_EASE = [0, 0, 0.2, 1] as const;
+const SUBSKILL_STAGGER = 0.1;
+const Z_FLIPPING = 15;
+const Z_ACTIVE_DEFAULT = 10;
 
 type SkillPhase = "idle" | "centering" | "flipping" | "expanded";
 
@@ -1910,18 +1914,20 @@ const SkillCardMorph = ({
           : isActiveCentered
             ? centerX
             : 0,
-        scale: isExpanded ? 1.03 : 1,
+        scale: isOtherExpanded ? 0.98 : isExpanded ? 1.03 : 1,
       }}
       transition={{
         duration: isSlidingToCenter
           ? SLIDE_TO_CENTER_DUR
           : isOtherExpanded
-            ? FADE_DUR
+            ? UNSELECTED_EXIT_DUR
             : dur,
         delay: isOtherExpanded || isSlidingToCenter ? STARTUP_DUR : 0,
         ease: isSlidingToCenter
           ? SLIDE_TO_CENTER_EASE
-          : [0.22, 0.6, 0.36, 1],
+          : isOtherExpanded
+            ? UNSELECTED_EXIT_EASE
+            : MORPH_EXPAND_EASE,
       }}
       onAnimationComplete={() => {
         if (isCentering) onSlideComplete();
@@ -1929,25 +1935,30 @@ const SkillCardMorph = ({
       style={{
         pointerEvents: isExpanded ? "none" : isOtherExpanded ? "none" : "auto",
         position: isOtherExpanded && expandedCard !== null ? "absolute" : "relative",
-        zIndex: activeCard === id ? 10 : 0,
+        zIndex: isFlipping && activeCard === id ? Z_FLIPPING : activeCard === id ? Z_ACTIVE_DEFAULT : 0,
         perspective: 1200,
       }}
     >
       <motion.div
-        layout={false}
+        layout
         className={`relative flex flex-col ${isExpanded ? "overflow-y-auto" : "overflow-visible"}`}
         animate={{
           width: isExpanded ? EXPANDED_PANEL_WIDTH : PHONE_W,
           height: isExpanded ? EXPANDED_HEIGHT : PHONE_H,
-          rotateY: isFlipping ? [0, 160, 0] : 0,
-          scale: 1,
+          rotateY: isFlipping ? [0, FLIP_ROTATE_PEAK, 0] : 0,
+          scale: isFlipping ? [1, 1.03, 1] : 1,
           y: 0,
           borderRadius: isExpanded ? "2.5rem 0 2.5rem 0" : "1.5rem",
         }}
         transition={{
+          layout: { duration: MORPH_EXPAND_DUR, ease: MORPH_EXPAND_EASE },
           width: { duration: isExpanded ? MORPH_EXPAND_DUR : 0.25, ease: MORPH_EXPAND_EASE },
           height: { duration: isExpanded ? MORPH_EXPAND_DUR : 0.25, ease: MORPH_EXPAND_EASE },
           rotateY: {
+            duration: reducedMotion ? 0 : FLIP_DUR,
+            ease: FLIP_EASE,
+          },
+          scale: {
             duration: reducedMotion ? 0 : FLIP_DUR,
             ease: FLIP_EASE,
           },
@@ -1963,6 +1974,7 @@ const SkillCardMorph = ({
           flex: isExpanded ? "1 1 100%" : "0 0 auto",
           transformOrigin: "center center",
           transformStyle: "preserve-3d",
+          ...(isFlipping ? { boxShadow: "0 24px 48px rgba(0,0,0,0.45)" } : {}),
           ...(isExpanded ? { backgroundColor: "#000", maxWidth: EXPANDED_PANEL_MAX_W, border: "2px solid rgba(255,255,255,0.4)", boxSizing: "border-box" } : {}),
         }}
       >
@@ -1980,8 +1992,9 @@ const SkillCardMorph = ({
             <div className="relative z-10 pt-12 pb-6 px-6">
               <motion.h3
                 className="font-display text-sm font-semibold uppercase tracking-wider text-white/95 mb-4 text-center"
-                initial={false}
+                initial={reducedMotion ? false : { opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.32, ease: MORPH_EXPAND_EASE, delay: reducedMotion ? 0 : 0 }}
               >
                 {data.title}
               </motion.h3>
@@ -1990,19 +2003,24 @@ const SkillCardMorph = ({
                   <motion.div
                     key={cat.title}
                     className="border-l border-white/20 pl-4"
-                    initial={false}
+                    initial={reducedMotion ? false : { opacity: 0, y: 12, x: 0 }}
                     animate={{ opacity: 1, y: 0, x: 0 }}
                     transition={{
-                      duration: 0.2,
-                      ease: [0.16, 1, 0.3, 1],
-                      delay: reducedMotion ? 0 : 0.02 * catIdx,
+                      duration: 0.32,
+                      ease: MORPH_EXPAND_EASE,
+                      delay: reducedMotion ? 0 : SUBSKILL_STAGGER * (catIdx + 1),
                     }}
                     whileHover={{ x: 4 }}
                   >
                     <motion.h4
                       className="font-display text-xs uppercase tracking-wider text-white/90 mb-2 font-semibold"
-                      initial={false}
-                      animate={{ opacity: 1 }}
+                      initial={reducedMotion ? false : { opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{
+                        duration: 0.28,
+                        ease: MORPH_EXPAND_EASE,
+                        delay: reducedMotion ? 0 : SUBSKILL_STAGGER * (catIdx + 1) + 0.04,
+                      }}
                     >
                       {cat.title}
                     </motion.h4>
@@ -2011,11 +2029,12 @@ const SkillCardMorph = ({
                         <motion.li
                           key={item}
                           className="font-mono text-xs text-white/85"
-                          initial={false}
-                          animate={{ opacity: 1 }}
+                          initial={reducedMotion ? false : { opacity: 0, y: 12 }}
+                          animate={{ opacity: 1, y: 0 }}
                           transition={{
-                            duration: 0.15,
-                            delay: reducedMotion ? 0 : 0.02 * catIdx + itemIdx * 0.01,
+                            duration: 0.26,
+                            ease: MORPH_EXPAND_EASE,
+                            delay: reducedMotion ? 0 : SUBSKILL_STAGGER * (catIdx + 1) + 0.08 + itemIdx * 0.04,
                           }}
                           whileHover={{ x: 2, opacity: 1 }}
                         >
@@ -2111,14 +2130,11 @@ const SkillArsenal = () => {
 
   const onFlipComplete = useCallback(() => {
     const cardToExpand = activeCard;
-    // Defer so flip has painted at 0° before we swap to expanded content (avoids showing back face / black)
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        setPhase("expanded");
-        setExpandedCard(cardToExpand);
-      });
-    });
-  }, [activeCard]);
+    setTimeout(() => {
+      setPhase("expanded");
+      setExpandedCard(cardToExpand);
+    }, reducedMotion ? 0 : MICRO_BEAT_MS);
+  }, [activeCard, reducedMotion]);
 
   const onBack = useCallback(() => {
     setActiveCard(null);
