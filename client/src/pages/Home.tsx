@@ -1903,7 +1903,9 @@ const SkillCardMorph = ({
               : { duration: 2.2, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }
           }
         >
-          {/* flip-layer: rotateY animation only; preserve-3d + will-change in CSS */}
+          {/* flip-static-wrapper: border-radius + overflow hidden + 1px outline; does not rotate */}
+          <div className="flip-static-wrapper relative w-full h-full">
+          {/* flip-layer: rotateY only; preserve-3d, will-change, translateZ(0) in CSS */}
           <motion.div
             className="flip-layer relative"
             style={{
@@ -1911,7 +1913,7 @@ const SkillCardMorph = ({
               height: "100%",
               transformOrigin: "50% 50%",
             }}
-            animate={{ rotateY: isFlipped ? 180 : 0 }}
+            animate={{ rotateY: isFlipped ? 180 : 0, translateZ: 0 }}
             transition={{
               duration: 0.7,
               ease: [0.4, 0, 0.2, 1],
@@ -1982,7 +1984,8 @@ const SkillCardMorph = ({
                           setIsFlipped(false);
                           setBackFaceRevealed(false);
                         }}
-                        className="flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-white/70 hover:text-white border border-white/20 rounded-lg px-2.5 py-1.5 transition-colors duration-200"
+                        className="flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-white/70 hover:text-white rounded-lg px-2.5 py-1.5 transition-colors duration-200"
+                        style={{ boxShadow: "0 0 0 1px rgba(255,255,255,0.2)" }}
                         aria-label="Flip card back"
                       >
                         <ArrowLeft className="w-3.5 h-3.5" />
@@ -2004,7 +2007,7 @@ const SkillCardMorph = ({
                       transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
                     >
                       {data.categories.map((cat) => (
-                        <div key={cat.title} className="border-l border-white/20 pl-3">
+                        <div key={cat.title} className="pl-3" style={{ boxShadow: "inset 1px 0 0 0 rgba(255,255,255,0.2)" }}>
                           <h4 className="font-display text-xs uppercase tracking-wider text-white/90 mb-1 font-semibold">
                             {cat.title}
                           </h4>
@@ -2023,6 +2026,7 @@ const SkillCardMorph = ({
               </div>
             </div>
           </motion.div>
+          </div>
         </motion.div>
       </div>
     </div>

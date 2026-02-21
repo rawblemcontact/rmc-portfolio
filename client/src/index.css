@@ -227,9 +227,16 @@
   .perspective-wrapper {
     perspective: 1100px;
   }
+  /* Static wrapper: border-radius + overflow hidden + outline; no rotation = no border shimmer */
+  .flip-static-wrapper {
+    overflow: hidden;
+    border-radius: 1.5rem;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12);
+  }
   .flip-layer {
     will-change: transform;
     transform-style: preserve-3d;
+    transform: translateZ(0);
   }
   .face-front,
   .face-back {
