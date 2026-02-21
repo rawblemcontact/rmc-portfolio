@@ -1853,7 +1853,8 @@ const SkillsExpandedPortal = ({
 };
 
 /**
- * Skills card: display only. No click behavior; subskill content kept handy in SKILLS_DATA.
+ * Skills card: 3D flip in place. Float and hover unchanged.
+ * Layers: card-wrapper (perspective) → float-layer (y only) → flip-layer (rotateY only) → front/back faces.
  */
 const SkillCardMorph = ({
   data,
@@ -1864,61 +1865,160 @@ const SkillCardMorph = ({
   accentClass: string;
   reducedMotion: boolean;
 }) => {
+  const [isFlipped, setIsFlipped] = useState(false);
+  const [backFaceRevealed, setBackFaceRevealed] = useState(false);
+
   return (
     <div
-      className="flex flex-col items-center"
+      className="flex flex-col items-center card-wrapper"
       style={{
         width: PHONE_W,
         height: PHONE_H,
         borderRadius: "1.5rem",
-        perspective: 1200,
+        perspective: 1100,
+        perspectiveOrigin: "50% 50%",
       }}
     >
       <div className="relative flex flex-col overflow-visible" style={{ width: "100%", height: "100%" }}>
-        <div className="absolute inset-0 rounded-[inherit]" style={{ backfaceVisibility: "hidden" }}>
+        {/* float-layer: floating idle animation only (translateY); preserve-3d so flip-layer stays smooth */}
+        <motion.div
+          className="absolute inset-0 flex items-center justify-center float-layer"
+          style={{ transformStyle: "preserve-3d" }}
+          animate={{ y: reducedMotion ? 0 : [0, -8] }}
+          transition={
+            reducedMotion
+              ? { duration: 0 }
+              : { duration: 2.2, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }
+          }
+        >
+          {/* flip-layer: rotateY only; explicit origin + translateZ(0) to reduce glitches */}
           <motion.div
-            className="absolute inset-0 flex items-center justify-center"
-            animate={{ y: reducedMotion ? 0 : [0, -8] }}
-            transition={
-              reducedMotion
-                ? { duration: 0 }
-                : { duration: 2.2, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }
-            }
+            className="flip-layer"
+            style={{
+              position: "relative",
+              width: "100%",
+              height: "100%",
+              transformStyle: "preserve-3d",
+              transformOrigin: "50% 50%",
+              backfaceVisibility: "hidden",
+            }}
+            animate={{ rotateY: isFlipped ? 180 : 0 }}
+            transition={{
+              duration: 0.7,
+              ease: [0.4, 0, 0.2, 1],
+              type: "tween",
+            }}
+            onAnimationComplete={() => {
+              if (isFlipped) setBackFaceRevealed(true);
+            }}
           >
+            {/* Front face: existing card JSX unchanged */}
             <div
-              className="border-0 bg-transparent p-0"
-              style={{ transformStyle: "preserve-3d", transform: "rotateY(-30deg) rotateX(15deg)" }}
-              aria-hidden
+              className="card-face front"
+              style={{
+                position: "absolute",
+                inset: 0,
+                width: "100%",
+                height: "100%",
+                backfaceVisibility: "hidden",
+                WebkitBackfaceVisibility: "hidden",
+              }}
             >
-              <div
-                className={`absolute w-96 h-56 rounded-[24px] ${accentClass}`}
-                style={{ transform: "translateZ(-4px) translateY(0)" }}
-                aria-hidden
-              />
-              <motion.div
-                initial={{ transform: "translateZ(8px) translateY(-2px)" }}
-                whileHover={{
-                  transform: "translateZ(40px) translateY(-12px) rotateX(-2deg)",
-                  scale: 1.02,
+              <button
+                type="button"
+                className="border-0 bg-transparent p-0 cursor-pointer"
+                style={{
+                  transformStyle: "preserve-3d",
+                  transform: "rotateY(-30deg) rotateX(15deg)",
                 }}
-                transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-                className="relative w-96 h-56 rounded-[24px] border-2 border-b-4 border-r-4 border-white bg-black p-1 pl-[3px] pt-[3px]"
-                style={{ transformStyle: "preserve-3d" }}
+                onClick={() => setIsFlipped((prev) => !prev)}
+                aria-label={`Flip card to see ${data.title} details`}
               >
-                <div className="relative z-0 h-full w-full overflow-hidden rounded-[20px] bg-black flex items-center justify-center p-3">
-                  <h3 className="font-display text-base font-semibold uppercase tracking-wider text-white text-center leading-tight max-w-full font-normal not-italic">
-                    {data.title}
-                  </h3>
+                <div
+                  className={`absolute w-96 h-56 rounded-[24px] ${accentClass}`}
+                  style={{ transform: "translateZ(-4px) translateY(0)" }}
+                  aria-hidden
+                />
+                <motion.div
+                  initial={{ transform: "translateZ(8px) translateY(-2px)" }}
+                  whileHover={{
+                    transform: "translateZ(40px) translateY(-12px) rotateX(-2deg)",
+                    scale: 1.02,
+                  }}
+                  transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+                  className="relative w-96 h-56 rounded-[24px] border-2 border-b-4 border-r-4 border-white bg-black p-1 pl-[3px] pt-[3px]"
+                  style={{ transformStyle: "preserve-3d" }}
+                >
+                  <div className="relative z-0 h-full w-full overflow-hidden rounded-[20px] bg-black flex items-center justify-center p-3">
+                    <h3 className="font-display text-base font-semibold uppercase tracking-wider text-white text-center leading-tight max-w-full font-normal not-italic">
+                      {data.title}
+                    </h3>
+                  </div>
+                </motion.div>
+              </button>
+            </div>
+            {/* Back face: rotateY(180deg) + translateZ(-1px) to avoid z-fighting at 90deg */}
+            <div
+              className="card-face back"
+              style={{
+                position: "absolute",
+                inset: 0,
+                width: "100%",
+                height: "100%",
+                backfaceVisibility: "hidden",
+                WebkitBackfaceVisibility: "hidden",
+                transform: "rotateY(180deg) translateZ(-1px)",
+              }}
+            >
+              <div className="absolute inset-0 flex items-center justify-center rounded-[inherit]">
+                <div
+                  className="relative w-96 h-56 rounded-[24px] border-2 border-b-4 border-r-4 border-white bg-black p-1 pl-[3px] pt-[3px] overflow-y-auto no-scrollbar"
+                  style={{ transformStyle: "preserve-3d" }}
+                >
+                  <div className="relative z-0 h-full w-full rounded-[20px] bg-black p-4 flex flex-col">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsFlipped(false);
+                        setBackFaceRevealed(false);
+                      }}
+                      className="flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-white/70 hover:text-white border border-white/20 rounded-lg px-2.5 py-1.5 transition-colors duration-200 self-end mb-3"
+                      aria-label="Flip card back"
+                    >
+                      <ArrowLeft className="w-3.5 h-3.5" />
+                      Back
+                    </button>
+                    <h3 className="font-display text-sm font-semibold uppercase tracking-wider text-white/95 mb-3 text-center">
+                      {data.title}
+                    </h3>
+                    {/* Subskill content fades in only after flip animation completes */}
+                    <motion.div
+                      className="grid grid-cols-1 gap-3 text-left"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: backFaceRevealed ? 1 : 0 }}
+                      transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+                    >
+                      {data.categories.map((cat) => (
+                        <div key={cat.title} className="border-l border-white/20 pl-3">
+                          <h4 className="font-display text-xs uppercase tracking-wider text-white/90 mb-1 font-semibold">
+                            {cat.title}
+                          </h4>
+                          <ul className="space-y-0.5">
+                            {cat.items.map((item) => (
+                              <li key={item} className="font-mono text-xs text-white/85">
+                                {item}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                    </motion.div>
+                  </div>
                 </div>
-              </motion.div>
+              </div>
             </div>
           </motion.div>
-        </div>
-        <div
-          className="absolute inset-0 rounded-[inherit] bg-black"
-          style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
-          aria-hidden
-        />
+        </motion.div>
       </div>
     </div>
   );
