@@ -1732,7 +1732,7 @@ const EXPANDED_OVERLAY_BOTTOM_REM = 1.5;
 type SkillCardId = "core" | "tools";
 
 const STARTUP_DUR = 0.06;
-const MICRO_BEAT_MS = 85; // 70–100ms pause between flip complete and expansion
+const MICRO_BEAT_MS = 140; // delay between flip completion and expansion
 const SLIDE_TO_CENTER_DUR = 0.28;
 const SLIDE_TO_CENTER_EASE = [0.4, 0, 0.2, 1] as const;
 const MORPH_EXPAND_DUR = 0.6;
@@ -1904,6 +1904,7 @@ const SkillCardMorph = ({
 
   return (
     <motion.div
+      layout
       className="flex flex-col items-center"
       animate={{
         opacity: isOtherExpanded ? 0 : 1,
@@ -1915,19 +1916,25 @@ const SkillCardMorph = ({
             ? centerX
             : 0,
         scale: isOtherExpanded ? 0.98 : isExpanded ? 1.03 : 1,
+        width: isExpanded ? EXPANDED_PANEL_WIDTH : PHONE_W,
+        height: isExpanded ? EXPANDED_HEIGHT : PHONE_H,
+        borderRadius: isExpanded ? "2.5rem 0 2.5rem 0" : "1.5rem",
       }}
       transition={{
         duration: isSlidingToCenter
           ? SLIDE_TO_CENTER_DUR
           : isOtherExpanded
             ? UNSELECTED_EXIT_DUR
-            : dur,
+            : isExpanded
+              ? MORPH_EXPAND_DUR
+              : dur,
         delay: isOtherExpanded || isSlidingToCenter ? STARTUP_DUR : 0,
         ease: isSlidingToCenter
           ? SLIDE_TO_CENTER_EASE
           : isOtherExpanded
             ? UNSELECTED_EXIT_EASE
             : MORPH_EXPAND_EASE,
+        layout: { duration: MORPH_EXPAND_DUR, ease: MORPH_EXPAND_EASE },
       }}
       onAnimationComplete={() => {
         if (isCentering) onSlideComplete();
@@ -1937,23 +1944,16 @@ const SkillCardMorph = ({
         position: isOtherExpanded && expandedCard !== null ? "absolute" : "relative",
         zIndex: isFlipping && activeCard === id ? Z_FLIPPING : activeCard === id ? Z_ACTIVE_DEFAULT : 0,
         perspective: 1200,
+        ...(isExpanded ? { maxWidth: EXPANDED_PANEL_MAX_W } : {}),
       }}
     >
       <motion.div
-        layout
         className={`relative flex flex-col ${isExpanded ? "overflow-y-auto" : "overflow-visible"}`}
         animate={{
-          width: isExpanded ? EXPANDED_PANEL_WIDTH : PHONE_W,
-          height: isExpanded ? EXPANDED_HEIGHT : PHONE_H,
           rotateY: isFlipping ? [0, FLIP_ROTATE_PEAK, 0] : 0,
           scale: isFlipping ? [1, 1.03, 1] : 1,
-          y: 0,
-          borderRadius: isExpanded ? "2.5rem 0 2.5rem 0" : "1.5rem",
         }}
         transition={{
-          layout: { duration: MORPH_EXPAND_DUR, ease: MORPH_EXPAND_EASE },
-          width: { duration: isExpanded ? MORPH_EXPAND_DUR : 0.25, ease: MORPH_EXPAND_EASE },
-          height: { duration: isExpanded ? MORPH_EXPAND_DUR : 0.25, ease: MORPH_EXPAND_EASE },
           rotateY: {
             duration: reducedMotion ? 0 : FLIP_DUR,
             ease: FLIP_EASE,
@@ -1962,7 +1962,6 @@ const SkillCardMorph = ({
             duration: reducedMotion ? 0 : FLIP_DUR,
             ease: FLIP_EASE,
           },
-          borderRadius: { duration: isExpanded ? MORPH_EXPAND_DUR : 0.25, ease: MORPH_EXPAND_EASE },
         }}
         onAnimationComplete={() => {
           if (isFlipping && !flipCompleteFiredRef.current) {
@@ -1971,11 +1970,12 @@ const SkillCardMorph = ({
           }
         }}
         style={{
-          flex: isExpanded ? "1 1 100%" : "0 0 auto",
+          width: "100%",
+          height: "100%",
           transformOrigin: "center center",
           transformStyle: "preserve-3d",
           ...(isFlipping ? { boxShadow: "0 24px 48px rgba(0,0,0,0.45)" } : {}),
-          ...(isExpanded ? { backgroundColor: "#000", maxWidth: EXPANDED_PANEL_MAX_W, border: "2px solid rgba(255,255,255,0.4)", boxSizing: "border-box" } : {}),
+          ...(isExpanded ? { backgroundColor: "#000", border: "2px solid rgba(255,255,255,0.4)", boxSizing: "border-box" } : {}),
         }}
       >
         {isExpanded ? (
