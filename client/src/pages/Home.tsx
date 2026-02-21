@@ -1857,19 +1857,20 @@ const SkillsExpandedPortal = ({
 // Slide distance so both cards meet at center between them (x-axis only)
 const SKILL_SLIDE_PX = (PHONE_W + 32) / 2; // gap-8 = 32
 const SKILL_SLIDE_DUR = 0.42;
-const SKILL_PAUSE_AFTER_SLIDE = 0.5; // clicked card does no other changes until slide + this pause
-const SKILL_TITLE_FADE_DUR = 0.36; // main card text fades during pause
-const SKILL_SUBSKILL_FADE_DUR = 0.32; // subskill text fades in after main card fade
-const SKILL_WIPE_DUR = 0.52; // P3R transition wipe: 420–720ms
+const SKILL_PAUSE_AFTER_SLIDE = 0.22; // clicked card does no other changes until slide + this pause (shorter gap before subskill)
+const SKILL_TITLE_FADE_DUR = 0.20; // main card text fades during pause
+const SKILL_EXPAND_DUR = 0.48; // organic grow; ease-out so expansion feels smooth
+const SKILL_EXPAND_EASE = [0.33, 1, 0.2, 1] as const; // ease-out cubic
+const SKILL_SUBSKILL_FADE_DUR = 0.24; // subskill text fades in after card expand
+const SKILL_WIPE_DUR = 0.00; // P3R transition wipe: 420–720ms
 const SKILL_WIPE_EASE = [0.45, 0, 0.55, 1] as const; // P3R ease-in-out
-const SKILL_AIR = 0.24; // P3R: new content only after wipe peak // pause between steps so sequence doesn’t feel rushed
-// 2D slant (no 3D): card tilt and undercard offset
-const SKILL_SLANT_DEG = -3;
+const SKILL_AIR = 0; // reduced so subskill text fades in sooner after wipe // P3R: new content only after wipe peak // pause between steps so sequence doesn’t feel rushed
+// Undercard offset (no slant)
 const SKILL_UNDERCARD_OFFSET_X = 8;
 const SKILL_UNDERCARD_OFFSET_Y = 6;
 
 /**
- * Skills card: 2D slanted accent + hover; click → slide to center → overlay wipe (no text clipping) → reveal subskills.
+ * Skills card: accent undercard + hover; click → slide to center → overlay wipe (no text clipping) → reveal subskills.
  */
 const SkillCardMorph = ({
   id,
@@ -1895,7 +1896,6 @@ const SkillCardMorph = ({
   const [slideComplete, setSlideComplete] = useState(false); // slide + pause done → wipe may start
   const [wipeComplete, setWipeComplete] = useState(false);
   const [startReveal, setStartReveal] = useState(false);
-
   useEffect(() => {
     if (!isClicked) {
       setSlideDone(false);
@@ -1957,10 +1957,10 @@ const SkillCardMorph = ({
       animate={{
         x: isExpanding ? slideX : 0,
         opacity: isOther ? 0 : 1,
-        transition: {
-          x: { duration: SKILL_SLIDE_DUR, ease: [0.22, 1, 0.36, 1] },
-          opacity: { duration: isOther ? SKILL_SLIDE_DUR * 0.8 : 0.3, ease: [0.22, 1, 0.36, 1] },
-        },
+      }}
+      transition={{
+        x: { duration: SKILL_SLIDE_DUR, ease: [0.22, 1, 0.36, 1] },
+        opacity: { duration: isOther ? SKILL_SLIDE_DUR * 0.8 : 0.3, ease: [0.22, 1, 0.36, 1] },
       }}
     >
       <div className="relative flex flex-col overflow-visible" style={{ width: "100%", height: "100%" }}>
@@ -1973,30 +1973,27 @@ const SkillCardMorph = ({
               : { duration: 2.2, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }
           }
         >
-          {/* 2D slanted wrapper: rotate only (no perspective/3D) */}
           <div
             className="border-0 bg-transparent p-0 relative w-96 h-56"
-            style={{ transform: `rotate(${SKILL_SLANT_DEG}deg)` }}
           >
-            {/* Under card (accent) — offset for depth, fades with card */}
+            {/* Under card (accent) — offset for depth */}
             <motion.div
-              className={`absolute w-96 h-56 rounded-[24px] ${accentClass}`}
+              className={`absolute inset-0 rounded-[24px] ${accentClass}`}
               style={{
-                left: SKILL_UNDERCARD_OFFSET_X,
-                top: SKILL_UNDERCARD_OFFSET_Y,
+                transform: `translate(${SKILL_UNDERCARD_OFFSET_X}px, ${SKILL_UNDERCARD_OFFSET_Y}px)`,
               }}
               initial={false}
               animate={{ opacity: isOther ? 0 : 1 }}
               transition={{ duration: SKILL_SLIDE_DUR * 0.8 }}
             />
-            {/* Main card: hover lift + scale (2D only) */}
+            {/* Main card: hover lift + scale */}
             <motion.div
               className="relative w-96 h-56 rounded-[24px] border-2 border-b-4 border-r-4 border-white bg-black p-1 pl-[3px] pt-[3px] cursor-pointer"
               style={{ transformOrigin: "center center" }}
               onClick={() => expandedCard === null && onSelect(id)}
               whileHover={
                 expandedCard === null
-                  ? { y: -6, scale: 1.02, rotate: SKILL_SLANT_DEG + 1 }
+                  ? { y: -6, scale: 1.02 }
                   : {}
               }
               transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
@@ -2139,8 +2136,9 @@ const SkillArsenal = () => {
       >
         <SectionGridOverlay />
         <div className="container mx-auto px-6 relative z-10 flex flex-col items-center flex-1 min-h-0 justify-center">
-          <SectionHeader title="SKILLS" align="center" showBar={false} compact />
-          <div className="relative w-full mx-auto mt-10 md:mt-14 flex flex-col md:flex-row items-center justify-center gap-8 md:gap-12 max-w-4xl">
+          <div className="flex flex-col items-center gap-6 md:gap-8 w-full max-w-4xl">
+            <SectionHeader title="SKILLS" align="center" showBar={false} compact />
+            <div className="relative w-full mx-auto mt-10 md:mt-14 flex flex-col md:flex-row items-center justify-center gap-8 md:gap-12">
             <SkillCardMorph
               id="core"
               data={SKILLS_DATA.core}
@@ -2157,6 +2155,7 @@ const SkillArsenal = () => {
               expandedCard={expandedCard}
               onSelect={handleSelect}
             />
+            </div>
           </div>
         </div>
       </section>
