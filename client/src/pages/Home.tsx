@@ -1,6 +1,7 @@
 // Force rebuild: 2024-05-21
 import { motion, AnimatePresence, Variants, useInView, useReducedMotion, useMotionValue, useTransform, animate } from "framer-motion";
 import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { FillIcon } from "@/components/FillIcon";
 import { UserFilledIcon } from "@/components/icons/UserFilledIcon";
@@ -1722,25 +1723,151 @@ const MORPH_EASE = [0.2, 0.8, 0.2, 1] as const; // P3R ease-out
 const P3R_STAGGER_MS = 45; // 30–60ms per row
 const PHONE_W = 384;
 const PHONE_H = 224;
-// Expanded: cover viewport below header, front and center
-const EXPANDED_WIDTH = "92vw";
-const EXPANDED_MAX_W = 1280;
-const EXPANDED_HEIGHT_VH = "72vh";
+// Expanded panel (portal): overlay uses flexbox so panel is always centered and correctly sized
+const EXPANDED_PANEL_WIDTH = "92vw";
+const EXPANDED_PANEL_MAX_W = 1280;
+const EXPANDED_OVERLAY_TOP_VH = 12;
+const EXPANDED_OVERLAY_BOTTOM_REM = 1.5;
 
 type SkillCardId = "core" | "tools";
 
-const STARTUP_DUR = 0.12;
-const FADE_DUR = 0.4;
-const LINGER_MS = 500;
-const EXPAND_DELAY_MS = STARTUP_DUR * 1000 + FADE_DUR * 1000 + LINGER_MS;
+const STARTUP_DUR = 0.06;
+const FADE_DUR = 0.32;
+const LINGER_MS = 60;
+// Slide-to-center: fast but smooth (ease-out)
+const SLIDE_TO_CENTER_DUR = 0.28;
+const SLIDE_TO_CENTER_EASE = [0.22, 1, 0.36, 1] as const;
+const MORPH_EXPAND_DUR = 0.6;
+const MORPH_EXPAND_EASE = [0.4, 0, 0.2, 1] as const;
+const FLIP_DUR = 0.8;
+const FLIP_EASE = [0.4, 0, 0.2, 1] as const;
+const EXPANDED_HEIGHT = "calc(100vh - 14vh - 3rem)";
+
+type SkillPhase = "idle" | "centering" | "flipping" | "expanded";
+
+/** Expanded skills panel rendered in a portal. Overlay uses flexbox so the panel is always centered. */
+const SkillsExpandedPortal = ({
+  expandedCard,
+  onBack,
+  reducedMotion,
+}: {
+  expandedCard: SkillCardId | null;
+  onBack: () => void;
+  reducedMotion: boolean;
+}) => {
+  const data = expandedCard ? SKILLS_DATA[expandedCard] : null;
+  const staggerSec = reducedMotion ? 0 : P3R_STAGGER_MS / 1000;
+
+  const overlay = (
+    <AnimatePresence mode="wait">
+      {expandedCard && data ? (
+        <motion.div
+          key={expandedCard}
+          className="fixed inset-0 z-[45] flex justify-center items-start pointer-events-auto"
+          style={{
+            paddingTop: `${EXPANDED_OVERLAY_TOP_VH}vh`,
+            paddingBottom: `${EXPANDED_OVERLAY_BOTTOM_REM}rem`,
+            paddingLeft: "4vw",
+            paddingRight: "4vw",
+          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <motion.div
+            className="flex-1 flex flex-col min-h-0 rounded-[2.5rem_0_2.5rem_0] border-2 border-white/40 overflow-hidden bg-black"
+            style={{
+              width: EXPANDED_PANEL_WIDTH,
+              maxWidth: EXPANDED_PANEL_MAX_W,
+            }}
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: MORPH_EXPAND_DUR, ease: MORPH_EXPAND_EASE }}
+          >
+          <div className="absolute inset-0 rounded-[inherit] overflow-y-auto border-0" aria-hidden />
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onBack(); }}
+            className="absolute top-3 right-4 z-10 flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-white/70 hover:text-white border border-white/20 rounded-lg px-2.5 py-1.5 transition-colors duration-200"
+            aria-label="Back to skills"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Back
+          </button>
+          <div className="relative z-0 pt-12 pb-6 px-6">
+            <motion.h3
+              className="font-display text-sm font-semibold uppercase tracking-wider text-white/95 mb-4 text-center"
+              initial={reducedMotion ? false : { opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1], delay: reducedMotion ? 0 : 0.12 }}
+            >
+              {data.title}
+            </motion.h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 text-left">
+              {data.categories.map((cat, catIdx) => (
+                <motion.div
+                  key={cat.title}
+                  className="border-l border-white/20 pl-4"
+                  initial={reducedMotion ? false : { opacity: 0, y: 10, x: -8 }}
+                  animate={{ opacity: 1, y: 0, x: 0 }}
+                  transition={{
+                    duration: 0.3,
+                    ease: [0.16, 1, 0.3, 1],
+                    delay: reducedMotion ? 0 : 0.18 + staggerSec * (catIdx + 1),
+                  }}
+                  whileHover={{ x: 4 }}
+                >
+                  <motion.h4
+                    className="font-display text-xs uppercase tracking-wider text-white/90 mb-2 font-semibold"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: reducedMotion ? 0 : 0.18 + staggerSec * (catIdx + 1) + 0.1 }}
+                  >
+                    {cat.title}
+                  </motion.h4>
+                  <ul className="space-y-1">
+                    {cat.items.map((item, itemIdx) => (
+                      <motion.li
+                        key={item}
+                        className="font-mono text-xs text-white/85"
+                        initial={reducedMotion ? false : { opacity: 0, y: 6, x: -4 }}
+                        animate={{ opacity: 1, y: 0, x: 0 }}
+                        transition={{
+                          duration: 0.26,
+                          ease: [0.16, 1, 0.3, 1],
+                          delay: reducedMotion ? 0 : 0.18 + staggerSec * (catIdx + 1) + itemIdx * 0.04 + 0.15,
+                        }}
+                        whileHover={{ x: 2, opacity: 1 }}
+                      >
+                        {item}
+                      </motion.li>
+                    ))}
+                  </ul>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+      ) : null}
+    </AnimatePresence>
+  );
+
+  return createPortal(overlay, document.body);
+};
 
 const SkillCardMorph = ({
   id,
   data,
   activeCard,
   expandedCard,
+  phase,
   onSelect,
   onBack,
+  onSlideComplete,
+  onFlipComplete,
   accentClass,
   reducedMotion,
 }: {
@@ -1748,16 +1875,28 @@ const SkillCardMorph = ({
   data: typeof SKILLS_DATA.core;
   activeCard: SkillCardId | null;
   expandedCard: SkillCardId | null;
+  phase: SkillPhase;
   onSelect: () => void;
   onBack: () => void;
+  onSlideComplete: () => void;
+  onFlipComplete: () => void;
   accentClass: string;
   reducedMotion: boolean;
 }) => {
   const isExpanded = expandedCard === id;
   const isOtherExpanded = activeCard !== null && activeCard !== id;
-  const isSlidingToCenter = activeCard === id && expandedCard === null;
+  const isCentering = phase === "centering" && activeCard === id;
+  const isFlipping = phase === "flipping" && activeCard === id;
+  const isSlidingToCenter = isCentering;
+  const isActiveCentered = activeCard === id && (phase === "centering" || phase === "flipping");
   const dur = reducedMotion ? 0 : MORPH_DUR;
   const staggerSec = reducedMotion ? 0 : P3R_STAGGER_MS / 1000;
+
+  const centerX = id === "core" ? 216 : -216;
+  const flipCompleteFiredRef = useRef(false);
+  useEffect(() => {
+    if (phase !== "flipping") flipCompleteFiredRef.current = false;
+  }, [phase]);
 
   return (
     <motion.div
@@ -1768,60 +1907,67 @@ const SkillCardMorph = ({
           ? id === "core"
             ? 120
             : -120
-          : isSlidingToCenter
-            ? id === "core"
-              ? 216
-              : -216
+          : isActiveCentered
+            ? centerX
             : 0,
         scale: isExpanded ? 1.03 : 1,
       }}
       transition={{
-        duration: isOtherExpanded || isSlidingToCenter ? FADE_DUR : dur,
+        duration: isSlidingToCenter
+          ? SLIDE_TO_CENTER_DUR
+          : isOtherExpanded
+            ? FADE_DUR
+            : dur,
         delay: isOtherExpanded || isSlidingToCenter ? STARTUP_DUR : 0,
-        ease: [0.22, 0.6, 0.36, 1],
+        ease: isSlidingToCenter
+          ? SLIDE_TO_CENTER_EASE
+          : [0.22, 0.6, 0.36, 1],
+      }}
+      onAnimationComplete={() => {
+        if (isCentering) onSlideComplete();
       }}
       style={{
-        pointerEvents: isOtherExpanded ? "none" : "auto",
+        pointerEvents: isExpanded ? "none" : isOtherExpanded ? "none" : "auto",
         position: isOtherExpanded && expandedCard !== null ? "absolute" : "relative",
-        width: isExpanded ? EXPANDED_WIDTH : undefined,
-        maxWidth: isExpanded ? EXPANDED_MAX_W : undefined,
-        minWidth: isExpanded ? 0 : undefined,
         zIndex: activeCard === id ? 10 : 0,
+        perspective: 1200,
       }}
     >
       <motion.div
         layout={false}
-        className="relative overflow-visible flex flex-col"
+        className={`relative flex flex-col ${isExpanded ? "overflow-y-auto" : "overflow-visible"}`}
         animate={{
-          width: isExpanded ? "100%" : PHONE_W,
-          height: isExpanded ? EXPANDED_HEIGHT_VH : PHONE_H,
-          y: isExpanded ? -24 : 0,
+          width: isExpanded ? EXPANDED_PANEL_WIDTH : PHONE_W,
+          height: isExpanded ? EXPANDED_HEIGHT : PHONE_H,
+          rotateY: isFlipping ? [0, 160, 0] : 0,
+          scale: 1,
+          y: 0,
           borderRadius: isExpanded ? "2.5rem 0 2.5rem 0" : "1.5rem",
         }}
         transition={{
-          duration: 0.7,
-          ease: [0.4, 0, 0.2, 1],
+          width: { duration: isExpanded ? MORPH_EXPAND_DUR : 0.25, ease: MORPH_EXPAND_EASE },
+          height: { duration: isExpanded ? MORPH_EXPAND_DUR : 0.25, ease: MORPH_EXPAND_EASE },
+          rotateY: {
+            duration: reducedMotion ? 0 : FLIP_DUR,
+            ease: FLIP_EASE,
+          },
+          borderRadius: { duration: isExpanded ? MORPH_EXPAND_DUR : 0.25, ease: MORPH_EXPAND_EASE },
         }}
-        style={{ flex: isExpanded ? "1 1 100%" : "0 0 auto" }}
+        onAnimationComplete={() => {
+          if (isFlipping && !flipCompleteFiredRef.current) {
+            flipCompleteFiredRef.current = true;
+            onFlipComplete();
+          }
+        }}
+        style={{
+          flex: isExpanded ? "1 1 100%" : "0 0 auto",
+          transformOrigin: "center center",
+          transformStyle: "preserve-3d",
+          ...(isExpanded ? { backgroundColor: "#000", maxWidth: EXPANDED_PANEL_MAX_W, border: "2px solid rgba(255,255,255,0.4)", boxSizing: "border-box" } : {}),
+        }}
       >
         {isExpanded ? (
           <>
-            <div
-              className="absolute inset-0 rounded-[inherit] bg-black overflow-y-auto border-2 border-white/40"
-              style={{ borderRadius: "inherit" }}
-              aria-hidden
-            />
-            <motion.div
-              className={`absolute inset-0 rounded-[inherit] ${accentClass} pointer-events-none`}
-              style={{ borderRadius: "inherit" }}
-              initial={reducedMotion ? { opacity: 0 } : { opacity: 0.88 }}
-              animate={{ opacity: 0 }}
-              transition={{
-                duration: reducedMotion ? 0 : 0.65,
-                ease: [0.4, 0, 0.2, 1],
-              }}
-              aria-hidden
-            />
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); onBack(); }}
@@ -1831,12 +1977,11 @@ const SkillCardMorph = ({
               <ArrowLeft className="w-3.5 h-3.5" />
               Back
             </button>
-            <div className="relative z-0 pt-12 pb-6 px-6">
+            <div className="relative z-10 pt-12 pb-6 px-6">
               <motion.h3
                 className="font-display text-sm font-semibold uppercase tracking-wider text-white/95 mb-4 text-center"
-                initial={reducedMotion ? false : { opacity: 0, y: 6 }}
+                initial={false}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1], delay: reducedMotion ? 0 : 0.12 }}
               >
                 {data.title}
               </motion.h3>
@@ -1845,20 +1990,19 @@ const SkillCardMorph = ({
                   <motion.div
                     key={cat.title}
                     className="border-l border-white/20 pl-4"
-                    initial={reducedMotion ? false : { opacity: 0, y: 10, x: -8 }}
+                    initial={false}
                     animate={{ opacity: 1, y: 0, x: 0 }}
                     transition={{
-                      duration: 0.3,
+                      duration: 0.2,
                       ease: [0.16, 1, 0.3, 1],
-                      delay: reducedMotion ? 0 : 0.18 + staggerSec * (catIdx + 1),
+                      delay: reducedMotion ? 0 : 0.02 * catIdx,
                     }}
                     whileHover={{ x: 4 }}
                   >
-                    <motion.h4 
+                    <motion.h4
                       className="font-display text-xs uppercase tracking-wider text-white/90 mb-2 font-semibold"
-                      initial={{ opacity: 0 }}
+                      initial={false}
                       animate={{ opacity: 1 }}
-                      transition={{ delay: reducedMotion ? 0 : 0.18 + staggerSec * (catIdx + 1) + 0.1 }}
                     >
                       {cat.title}
                     </motion.h4>
@@ -1867,12 +2011,11 @@ const SkillCardMorph = ({
                         <motion.li
                           key={item}
                           className="font-mono text-xs text-white/85"
-                          initial={reducedMotion ? false : { opacity: 0, y: 6, x: -4 }}
-                          animate={{ opacity: 1, y: 0, x: 0 }}
+                          initial={false}
+                          animate={{ opacity: 1 }}
                           transition={{
-                            duration: 0.26,
-                            ease: [0.16, 1, 0.3, 1],
-                            delay: reducedMotion ? 0 : 0.18 + staggerSec * (catIdx + 1) + itemIdx * 0.04 + 0.15,
+                            duration: 0.15,
+                            delay: reducedMotion ? 0 : 0.02 * catIdx + itemIdx * 0.01,
                           }}
                           whileHover={{ x: 2, opacity: 1 }}
                         >
@@ -1887,47 +2030,62 @@ const SkillCardMorph = ({
           </>
         ) : (
           <>
-            <motion.div
-              className="absolute inset-0 flex items-center justify-center"
-              animate={{
-                y: activeCard === null ? [0, -8] : 0,
-              }}
-              transition={
-                activeCard === null
-                  ? { duration: 2.2, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }
-                  : { duration: MORPH_DUR, ease: MORPH_EASE }
-              }
+            {/* Front face: visible at rotateY 0, hidden at 180 (Animata flip pattern) */}
+            <div
+              className="absolute inset-0 rounded-[inherit]"
+              style={{ backfaceVisibility: "hidden" }}
             >
-              <button
-                type="button"
-                className="cursor-pointer border-0 bg-transparent p-0"
-                style={{ transformStyle: "preserve-3d", transform: "rotateY(-30deg) rotateX(15deg)" }}
-                onClick={(e) => { e.preventDefault(); onSelect(); }}
-                aria-label={`Expand ${data.title}`}
+              <motion.div
+                className="absolute inset-0 flex items-center justify-center"
+                animate={{
+                  y: activeCard === null ? [0, -8] : 0,
+                }}
+                transition={
+                  activeCard === null
+                    ? { duration: 2.2, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }
+                    : { duration: MORPH_DUR, ease: MORPH_EASE }
+                }
               >
-                <div
-                  className={`absolute w-96 h-56 rounded-[24px] ${accentClass}`}
-                  style={{ transform: "translateZ(-4px) translateY(0)" }}
-                  aria-hidden
-                />
-                <motion.div
-                  initial={{ transform: "translateZ(8px) translateY(-2px)" }}
-                  whileHover={{ 
-                    transform: "translateZ(40px) translateY(-12px) rotateX(-2deg)",
-                    scale: 1.02,
-                  }}
-                  transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-                  className="relative w-96 h-56 rounded-[24px] border-2 border-b-4 border-r-4 border-white bg-black p-1 pl-[3px] pt-[3px]"
-                  style={{ transformStyle: "preserve-3d" }}
+                <button
+                  type="button"
+                  className="cursor-pointer border-0 bg-transparent p-0"
+                  style={{ transformStyle: "preserve-3d", transform: "rotateY(-30deg) rotateX(15deg)" }}
+                  onClick={(e) => { e.preventDefault(); onSelect(); }}
+                  aria-label={`Expand ${data.title}`}
                 >
-                  <div className="relative z-0 h-full w-full overflow-hidden rounded-[20px] bg-black flex items-center justify-center p-3">
-                    <h3 className="font-display text-base font-semibold uppercase tracking-wider text-white text-center leading-tight max-w-full font-normal not-italic">
-                      {data.title}
-                    </h3>
-                  </div>
-                </motion.div>
-              </button>
-            </motion.div>
+                  <div
+                    className={`absolute w-96 h-56 rounded-[24px] ${accentClass}`}
+                    style={{ transform: "translateZ(-4px) translateY(0)" }}
+                    aria-hidden
+                  />
+                  <motion.div
+                    initial={{ transform: "translateZ(8px) translateY(-2px)" }}
+                    whileHover={{
+                      transform: "translateZ(40px) translateY(-12px) rotateX(-2deg)",
+                      scale: 1.02,
+                    }}
+                    transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+                    className="relative w-96 h-56 rounded-[24px] border-2 border-b-4 border-r-4 border-white bg-black p-1 pl-[3px] pt-[3px]"
+                    style={{ transformStyle: "preserve-3d" }}
+                  >
+                    <div className="relative z-0 h-full w-full overflow-hidden rounded-[20px] bg-black flex items-center justify-center p-3">
+                      <h3 className="font-display text-base font-semibold uppercase tracking-wider text-white text-center leading-tight max-w-full font-normal not-italic">
+                        {data.title}
+                      </h3>
+                    </div>
+                  </motion.div>
+                </button>
+              </motion.div>
+            </div>
+            {/* Back face: pre-rotated 180deg so it shows when container rotates (Animata flip pattern) */}
+            <div
+              className="absolute inset-0 rounded-[inherit] bg-black"
+              style={{
+                backfaceVisibility: "hidden",
+                transform: "rotateY(180deg)",
+              }}
+              aria-hidden
+            />
           </>
         )}
       </motion.div>
@@ -1937,52 +2095,79 @@ const SkillCardMorph = ({
 
 const SkillArsenal = () => {
   const [activeCard, setActiveCard] = useState<SkillCardId | null>(null);
+  const [phase, setPhase] = useState<SkillPhase>("idle");
   const [expandedCard, setExpandedCard] = useState<SkillCardId | null>(null);
   const reducedMotion = useReducedMotion();
 
-  useEffect(() => {
-    if (activeCard !== null) {
-      const t = setTimeout(() => setExpandedCard(activeCard), reducedMotion ? 0 : EXPAND_DELAY_MS);
-      return () => clearTimeout(t);
-    } else {
-      setExpandedCard(null);
-    }
-  }, [activeCard, reducedMotion]);
+  const onSelect = useCallback((id: SkillCardId) => {
+    setActiveCard(id);
+    setPhase("centering");
+    setExpandedCard(null);
+  }, []);
+
+  const onSlideComplete = useCallback(() => {
+    setPhase("flipping");
+  }, []);
+
+  const onFlipComplete = useCallback(() => {
+    const cardToExpand = activeCard;
+    // Defer so flip has painted at 0° before we swap to expanded content (avoids showing back face / black)
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setPhase("expanded");
+        setExpandedCard(cardToExpand);
+      });
+    });
+  }, [activeCard]);
+
+  const onBack = useCallback(() => {
+    setActiveCard(null);
+    setPhase("idle");
+    setExpandedCard(null);
+  }, []);
 
   return (
-    <section
-      id="skills"
-      className={`relative flex flex-col bg-black text-white scroll-mt-6 min-h-screen py-16 md:py-20 ${SLIDE}`}
-    >
-      <SectionGridOverlay />
-      <div
-        className={`container mx-auto px-6 relative z-10 flex flex-col items-center flex-1 min-h-0 ${expandedCard ? "justify-start pt-[12vh]" : "justify-center"}`}
+    <>
+      <section
+        id="skills"
+        className={`relative flex flex-col bg-black text-white scroll-mt-6 min-h-screen py-16 md:py-20 ${SLIDE}`}
       >
-        <SectionHeader title="SKILLS" align="center" showBar={false} compact />
-        <div className={`relative w-full mx-auto mt-10 md:mt-14 flex flex-col md:flex-row items-center justify-center gap-8 md:gap-12 ${expandedCard ? "" : "max-w-4xl"}`}>
-          <SkillCardMorph
-            id="core"
-            data={SKILLS_DATA.core}
-            activeCard={activeCard}
-            expandedCard={expandedCard}
-            onSelect={() => setActiveCard("core")}
-            onBack={() => setActiveCard(null)}
-            accentClass="bg-emerald-500"
-            reducedMotion={!!reducedMotion}
-          />
-          <SkillCardMorph
-            id="tools"
-            data={SKILLS_DATA.tools}
-            activeCard={activeCard}
-            expandedCard={expandedCard}
-            onSelect={() => setActiveCard("tools")}
-            onBack={() => setActiveCard(null)}
-            accentClass="bg-cyan-500"
-            reducedMotion={!!reducedMotion}
-          />
+        <SectionGridOverlay />
+        <div
+          className={`container mx-auto px-6 relative z-10 flex flex-col items-center flex-1 min-h-0 ${expandedCard ? "justify-start pt-[12vh]" : "justify-center"}`}
+        >
+          <SectionHeader title="SKILLS" align="center" showBar={false} compact />
+          <div className={`relative w-full mx-auto mt-10 md:mt-14 flex flex-col md:flex-row items-center justify-center gap-8 md:gap-12 ${expandedCard ? "" : "max-w-4xl"}`}>
+            <SkillCardMorph
+              id="core"
+              data={SKILLS_DATA.core}
+              activeCard={activeCard}
+              expandedCard={expandedCard}
+              phase={phase}
+              onSelect={() => onSelect("core")}
+              onBack={onBack}
+              onSlideComplete={onSlideComplete}
+              onFlipComplete={onFlipComplete}
+              accentClass="bg-emerald-500"
+              reducedMotion={!!reducedMotion}
+            />
+            <SkillCardMorph
+              id="tools"
+              data={SKILLS_DATA.tools}
+              activeCard={activeCard}
+              expandedCard={expandedCard}
+              phase={phase}
+              onSelect={() => onSelect("tools")}
+              onBack={onBack}
+              onSlideComplete={onSlideComplete}
+              onFlipComplete={onFlipComplete}
+              accentClass="bg-cyan-500"
+              reducedMotion={!!reducedMotion}
+            />
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 };
 

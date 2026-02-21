@@ -64,6 +64,14 @@ export default defineConfig({
       strict: true,
       deny: ["**/.*"],
     },
+    headers: {
+      "Cache-Control": "no-store, no-cache, must-revalidate",
+      "Pragma": "no-cache",
+      "Expires": "0",
+    },
+    hmr: {
+      overlay: true,
+    },
   },
   optimizeDeps: {
     // Skip dependency pre-bundling if esbuild fails
