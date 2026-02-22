@@ -224,4 +224,153 @@
   @media (prefers-reduced-motion: reduce) {
     .skills-node-pulse-once { animation: none; }
   }
+
+  /* Back to menu — animated button (dark theme: white text/border, cyan circle) */
+  .animated-button {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 10px 22px;
+    border: 2px solid transparent;
+    font-size: 12px;
+    background-color: inherit;
+    border-radius: 100px;
+    font-weight: 600;
+    color: #fff;
+    box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  .animated-button svg {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    fill: #fff;
+    z-index: 9;
+    transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  .animated-button .arr-1 {
+    right: 12px;
+  }
+  .animated-button .arr-2 {
+    left: -25%;
+  }
+  .animated-button .circle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 14px;
+    height: 14px;
+    background-color: #06b6d4;
+    border-radius: 50%;
+    opacity: 0;
+    transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  .animated-button .text {
+    position: relative;
+    z-index: 1;
+    transform: translateX(-8px);
+    transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  .animated-button:hover {
+    box-shadow: 0 0 0 8px transparent;
+    color: #fff;
+    border-radius: 10px;
+  }
+  .animated-button:hover .arr-1 {
+    right: -25%;
+  }
+  .animated-button:hover .arr-2 {
+    left: 12px;
+  }
+  .animated-button:hover .text {
+    transform: translateX(8px);
+  }
+  .animated-button:hover svg {
+    fill: #fff;
+  }
+  .animated-button:active {
+    scale: 0.95;
+    box-shadow: 0 0 0 3px #06b6d4;
+  }
+  .animated-button:hover .circle {
+    width: 160px;
+    height: 160px;
+    opacity: 1;
+  }
+
+  /* Main skill cards — hover (lift, icon, star, title) */
+  #skills .skills-main-card:hover {
+    transform: translateY(-6px);
+  }
+  #skills .skills-main-card:hover .paperplane {
+    transform: scale(1.07) translateY(-10%) rotate(18deg);
+  }
+  #skills .skills-main-card:hover [data-ai-star] {
+    fill: #f5f5f5;
+  }
+  #skills .skills-main-card:hover [data-card-title-wrap] {
+    transform: scale(1.08);
+  }
+
+  /* Tool pills: favicon logos → white to match Simple Icons */
+  .tool-logo-favicon {
+    height: 22px;
+    filter: brightness(0) invert(1);
+    object-fit: contain;
+  }
+
+  /* Custom URL logos (e.g. Procreate black SVG) — no filter, show as-is */
+  .tool-logo-custom {
+    max-width: unset;
+    max-height: unset;
+    width: 29px;
+    height: 28px;
+    object-fit: contain;
+  }
+
+  /* Subskills — React Aria TagGroup */
+  .subskills-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .subskills-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .subskill-tag {
+    padding: 0.35rem 0.75rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.03em;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    color: rgba(255, 255, 255, 0.85);
+  }
+  .subskill-tag:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+  .subskill-tag-inner {
+    display: inline-block;
+  }
+  .subskill-tag:hover .subskill-tag-inner {
+    transform: none;
+  }
+  .subskill-tag[data-selected],
+  .subskill-tag.selected {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.85);
+  }
+  .subskill-tag:focus-visible {
+    outline: none;
+  }
 }

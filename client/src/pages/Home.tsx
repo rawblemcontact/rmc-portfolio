@@ -31,6 +31,82 @@ import styled from "styled-components";
 import { TiltCard } from "@/components/TiltCard";
 import { WordsPullUp } from "@/components/WordsPullUp";
 import { FloatingPhone } from "@/components/FloatingPhone";
+import { Badge as PillBadge } from "@/components/ui/badge";
+import {
+  SiArc,
+  SiBytedance,
+  SiDavinciresolve,
+  SiHootsuite,
+  SiInstagram,
+  SiTiktok,
+  SiYoutubeshorts,
+} from "@icons-pack/react-simple-icons";
+
+// Tool label -> icon: React component (@icons-pack) or "favicon:domain" for Google favicon (styled to match)
+const TOOL_ICONS: Record<
+  string,
+  | React.ComponentType<{ size?: number; className?: string }>
+  | string
+> = {
+  "Microsoft Office 365": "favicon:microsoft.com",
+  "Adobe Creative Suite": "favicon:adobe.com",
+  "Canva": "favicon:canva.com",
+  "Procreate": "favicon:procreate.com",
+  "Clip Studio Pro": "favicon:clipstudio.net",
+  "DaVinci Resolve": SiDavinciresolve,
+  "CapCut": SiBytedance,
+  "Final Draft": "favicon:finaldraft.com",
+  "Arc Studio": SiArc,
+  "Hootsuite": SiHootsuite,
+  "TikTok Creator Tools": SiTiktok,
+  "Instagram Reels": SiInstagram,
+  "YouTube Shorts": SiYoutubeshorts,
+};
+
+const FAVICON_SIZE = 64; // Google returns better quality at 64+
+
+function ToolIcon({ name, size = 18 }: { name: string; size?: number }) {
+  const icon = TOOL_ICONS[name];
+  if (!icon) return null;
+  if (typeof icon === "string") {
+    if (icon.startsWith("http") || icon.startsWith("/")) {
+      return (
+        <span className="inline-flex shrink-0 items-center justify-center [&>img]:size-6 [&>img]:object-contain">
+          <img
+            src={icon}
+            alt=""
+            width={24}
+            height={24}
+            className="tool-logo-custom block opacity-90"
+          />
+        </span>
+      );
+    }
+    if (icon.startsWith("favicon:")) {
+      const domain = icon.slice(8);
+      return (
+        <img
+          src={`https://www.google.com/s2/favicons?domain=${domain}&sz=${FAVICON_SIZE}`}
+          alt=""
+          width={size}
+          height={size}
+          className="tool-logo-favicon shrink-0 opacity-90"
+        />
+      );
+    }
+    return (
+      <img
+        src={`https://cdn.simpleicons.org/${icon}/ffffff`}
+        alt=""
+        width={size}
+        height={size}
+        className="shrink-0 opacity-90"
+      />
+    );
+  }
+  const Icon = icon;
+  return <Icon size={size} className="opacity-90 shrink-0" />;
+}
 
 // --- ANIMATION VARIANTS ---
 const fadeInUp: Variants = {
@@ -190,6 +266,57 @@ const SECTION_ACCENT_COLOR: Record<string, string> = {
 
 const CMD_HOVER = { duration: 0.25, ease: [0.16, 1, 0.3, 1] as const };
 
+function TextFade({
+  direction,
+  children,
+  className = "",
+  staggerChildren = 0.1,
+}: {
+  direction: "up" | "down";
+  children: React.ReactNode;
+  className?: string;
+  staggerChildren?: number;
+}) {
+  const FADE_VARIANTS = {
+    show: { opacity: 1, y: 0, transition: { type: "spring" as const } },
+    hidden: { opacity: 0, y: direction === "down" ? -18 : 18 },
+  };
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true });
+  return (
+    <motion.div
+      ref={ref}
+      initial="hidden"
+      animate={isInView ? "show" : "hidden"}
+      variants={{
+        hidden: {},
+        show: {
+          transition: { staggerChildren },
+        },
+      }}
+      className={className}
+    >
+      {React.Children.map(children, (child) => {
+        if (!React.isValidElement(child)) return child;
+        const className = (child.props as { className?: string }).className;
+        return typeof className === "string" ? (
+          <motion.div variants={FADE_VARIANTS} className={className}>
+            {child}
+          </motion.div>
+        ) : (
+          <motion.div variants={FADE_VARIANTS}>{child}</motion.div>
+        );
+      })}
+    </motion.div>
+  );
+}
+
+const BackArrowSvg = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24" aria-hidden>
+    <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z" />
+  </svg>
+);
+
 const BackToMenuButton = ({
   show,
   onBack,
@@ -211,17 +338,17 @@ const BackToMenuButton = ({
             bottom: "calc(0.75rem + env(safe-area-inset-bottom))",
           }}
         >
-          <motion.div whileHover={HOVER} whileTap={TAP} transition={SPRING.ui}>
-            <Button
-              type="button"
-              onClick={onBack}
-              aria-label="Back to menu"
-              className="h-10 md:h-11 rounded-full bg-black/55 text-white hover:bg-black/75 border border-white/25 backdrop-blur-md shadow-none px-3.5 md:px-4 font-heading text-[10px] md:text-xs tracking-[0.14em] uppercase flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-            >
-              <ChevronLeft size={18} aria-hidden />
-              Back to menu
-            </Button>
-          </motion.div>
+          <button
+            type="button"
+            onClick={onBack}
+            aria-label="Back to menu"
+            className="animated-button bg-black/55 backdrop-blur-md font-heading text-[9px] md:text-[10px] tracking-[0.12em] uppercase focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+          >
+            <BackArrowSvg className="arr-2" />
+            <span className="text">Back to menu</span>
+            <span className="circle" aria-hidden />
+            <BackArrowSvg className="arr-1" />
+          </button>
         </motion.div>
       )}
     </AnimatePresence>
@@ -347,7 +474,7 @@ const Hero = ({
   return (
     <section id="hero" className={`relative h-screen w-full overflow-hidden bg-black text-white flex items-center p-6 md:p-10 lg:p-14 ${SLIDE}`}>
       <div
-        className="pointer-events-none absolute inset-0 z-0 opacity-[0.03]"
+        className="pointer-events-none absolute inset-0 z-0 opacity-[0.04]"
         style={{ ...gridOverlayStyle, backgroundPosition: `${gridPhase}px ${gridPhase}px` }}
       />
       <div className="relative z-10 w-full max-w-4xl flex flex-col items-start text-left">
@@ -503,7 +630,7 @@ const RainbowMenuSlide = ({
       aria-label="Menu"
     >
       <div
-        className="pointer-events-none absolute inset-0 z-0 opacity-[0.03]"
+        className="pointer-events-none absolute inset-0 z-0 opacity-[0.04]"
         style={{ ...gridOverlayStyle, backgroundPosition: `${gridPhase}px ${gridPhase}px` }}
       />
       <div className="relative z-10 w-full max-w-4xl">
@@ -740,7 +867,7 @@ const SectionGridOverlay = () => {
   const phase = useGridPhase();
   return (
     <div
-      className="pointer-events-none absolute inset-0 z-0 opacity-[0.03]"
+      className="pointer-events-none absolute inset-0 z-0 opacity-[0.04]"
       style={{ ...gridOverlayStyle, backgroundPosition: `${phase}px ${phase}px` }}
       aria-hidden
     />
@@ -1371,6 +1498,19 @@ const SKILLS_DATA = {
 // Core: Writing & Narrative, Digital & Visual Media, Professional Practices + items each.
 // Tools: Design & Productivity, Video & Writing, Social Platforms + items each.
 
+/* Expanded subskill card: same style as CardBlackFace (background, border, radius) */
+const SubskillExpandedCard = styled.div`
+  background: #18181b;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem 2rem 1.5rem;
+  width: 100%;
+  max-width: 52rem;
+  min-height: 0;
+`;
+
 // ─── DIAGONAL CONNECTOR GEOMETRY ─────────────────────────────────────────────
 // Single sharp line: origin = midpoint of top card’s right edge, end = midpoint of bottom card’s left edge.
 // Cards placed with ~35% diagonal separation; line and node use same 0–100 coordinate system.
@@ -1619,39 +1759,22 @@ const SkillsExpandedView = ({
       <div className="w-full">
         <div className="rounded-xl border border-white/10 bg-zinc-800/40 p-6 md:p-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-            {data.categories.map((category, catIdx) => (
-              <motion.div
-                key={category.title}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{
-                  duration: expandDur * 0.9,
-                  ease: SKILLS_EASE,
-                  delay: stagger * catIdx,
-                }}
-                className="border-l border-white/10 pl-4"
-              >
+            {data.categories.map((category) => (
+              <div key={category.title} className="border-l border-white/10 pl-4">
                 <h4 className="font-display text-xs md:text-sm uppercase tracking-[0.06em] text-white/90 mb-2 md:mb-3 font-semibold">
                   {category.title}
                 </h4>
                 <ul className="space-y-1">
-                  {category.items.map((item, itemIdx) => (
-                    <motion.li
+                  {category.items.map((item) => (
+                    <li
                       key={item}
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{
-                        duration: expandDur * 0.75,
-                        ease: SKILLS_EASE,
-                        delay: stagger * catIdx + itemIdx * 0.035,
-                      }}
                       className="font-mono text-[11px] md:text-xs text-white/75 tracking-tight leading-tight"
                     >
                       {item}
-                    </motion.li>
+                    </li>
                   ))}
                 </ul>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
@@ -1681,39 +1804,22 @@ const SkillsExpandedPanel = ({
     >
         <div className="rounded-xl border border-white/10 bg-zinc-800/40 p-6 md:p-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-            {data.categories.map((category, catIdx) => (
-              <motion.div
-                key={category.title}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{
-                  duration: expandDur * 0.9,
-                  ease: SKILLS_EASE,
-                  delay: stagger * catIdx,
-                }}
-                className="border-l border-white/10 pl-4"
-              >
+            {data.categories.map((category) => (
+              <div key={category.title} className="border-l border-white/10 pl-4">
                 <h4 className="font-display text-xs md:text-sm uppercase tracking-[0.06em] text-white/90 mb-2 md:mb-3 font-semibold">
                   {category.title}
                 </h4>
                 <ul className="space-y-1">
-                  {category.items.map((item, itemIdx) => (
-                    <motion.li
+                  {category.items.map((item) => (
+                    <li
                       key={item}
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{
-                        duration: expandDur * 0.75,
-                        ease: SKILLS_EASE,
-                        delay: stagger * catIdx + itemIdx * 0.035,
-                      }}
                       className="font-mono text-[11px] md:text-xs text-white/75 tracking-tight leading-tight"
                     >
                       {item}
-                    </motion.li>
+                    </li>
                   ))}
                 </ul>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
@@ -1862,75 +1968,175 @@ const AI_IDEA_LINE =
 const GEAR_PATH =
   "M128 82a46 46 0 1 0 46 46a46.06 46.06 0 0 0-46-46m0 80a34 34 0 1 1 34-34a34 34 0 0 1-34 34m86-31.16c.06-1.89.06-3.79 0-5.68L229.33 106a6 6 0 0 0 1.11-5.29a105.3 105.3 0 0 0-10.68-25.81a6 6 0 0 0-4.53-3l-24.45-2.71q-1.93-2.07-4-4l-2.72-24.46a6 6 0 0 0-3-4.53a105.7 105.7 0 0 0-25.77-10.66a6 6 0 0 0-5.29 1.14l-19.2 15.37a90 90 0 0 0-5.68 0L106 26.67a6 6 0 0 0-5.29-1.11A105.3 105.3 0 0 0 74.9 36.24a6 6 0 0 0-3 4.53l-2.67 24.45q-2.07 1.94-4 4L40.76 72a6 6 0 0 0-4.53 3a105.7 105.7 0 0 0-10.66 25.77a6 6 0 0 0 1.11 5.23l15.37 19.2a90 90 0 0 0 0 5.68l-15.38 19.17a6 6 0 0 0-1.11 5.29a105.3 105.3 0 0 0 10.68 25.76a6 6 0 0 0 4.53 3l24.45 2.71q1.94 2.07 4 4L72 215.24a6 6 0 0 0 3 4.53a105.7 105.7 0 0 0 25.77 10.66a6 6 0 0 0 5.29-1.11l19.1-15.32c1.89.06 3.79.06 5.68 0l19.21 15.38a6 6 0 0 0 3.75 1.31a6.2 6.2 0 0 0 1.54-.2a105.3 105.3 0 0 0 25.76-10.68a6 6 0 0 0 3-4.53l2.71-24.45q2.07-1.93 4-4l24.46-2.72a6 6 0 0 0 4.53-3a105.5 105.5 0 0 0 10.66-25.77a6 6 0 0 0-1.11-5.29Zm-3.1 41.63l-23.64 2.63a6 6 0 0 0-3.82 2a75 75 0 0 1-6.31 6.31a6 6 0 0 0-2 3.82l-2.63 23.63a94.3 94.3 0 0 1-17.36 7.14l-18.57-14.86a6 6 0 0 0-3.75-1.31h-.36a78 78 0 0 1-8.92 0a6 6 0 0 0-4.11 1.3L100.87 218a94 94 0 0 1-17.34-7.17l-2.63-23.62a6 6 0 0 0-2-3.82a75 75 0 0 1-6.31-6.31a6 6 0 0 0-3.82-2l-23.63-2.63A94.3 94.3 0 0 1 38 155.14l14.86-18.57a6 6 0 0 0 1.3-4.11a78 78 0 0 1 0-8.92a6 6 0 0 0-1.3-4.11L38 100.87a94 94 0 0 1 7.17-17.34l23.62-2.63a6 6 0 0 0 3.82-2a75 75 0 0 1 6.31-6.31a6 6 0 0 0 2-3.82l2.63-23.63A94.3 94.3 0 0 1 100.86 38l18.57 14.86a6 6 0 0 0 4.11 1.3a78 78 0 0 1 8.92 0a6 6 0 0 0 4.11-1.3L155.13 38a94 94 0 0 1 17.34 7.17l2.63 23.64a6 6 0 0 0 2 3.82a75 75 0 0 1 6.31 6.31a6 6 0 0 0 3.82 2l23.63 2.63a94.3 94.3 0 0 1 7.14 17.29l-14.86 18.57a6 6 0 0 0-1.3 4.11a78 78 0 0 1 0 8.92a6 6 0 0 0 1.3 4.11L218 155.13a94 94 0 0 1-7.15 17.34Z";
 
-const SkillArsenal = () => (
-  <section
-    id="skills"
-    className={`relative flex flex-col bg-black text-white scroll-mt-6 min-h-screen py-16 md:py-20 ${SLIDE}`}
-  >
-    <SectionGridOverlay />
-    <div className="container mx-auto px-6 relative z-10 flex flex-col items-center flex-1 min-h-0 justify-center">
-      <div className="flex flex-col items-center gap-6 md:gap-8 w-full max-w-4xl">
-        <SectionHeader title="SKILLS" align="center" showBar={false} compact />
-        <div className="flex flex-wrap justify-center items-center gap-8 mt-10">
-          <motion.div
-            initial={{ y: 40, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0 }}
-          >
-            <UiverseCard>
-              <CardBlackFace>
-                <AiIdeaSvg viewBox="0 0 24 24" className="paperplane">
-                  <path strokeLinecap="round" d={AI_IDEA_PATH_1} />
-                  <path data-ai-star d={AI_IDEA_STAR} />
-                  <path d={AI_IDEA_LINE} />
-                </AiIdeaSvg>
-                <CardTitleSlot>
-                  <span data-card-title-wrap>
-                    <motion.span
-                      className="block font-display text-base font-semibold uppercase tracking-tight text-[#f5f5f5] h-[52px]"
-                      initial={{ y: 12, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
-                    >
-                      CORE COMPETENCIES
-                    </motion.span>
-                  </span>
-                </CardTitleSlot>
-              </CardBlackFace>
-            </UiverseCard>
-          </motion.div>
-          <motion.div
-            initial={{ y: 40, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.18 }}
-          >
-            <UiverseCard>
-              <CardBlackFace>
-                <GearSvg viewBox="0 0 256 256" className="paperplane">
-                  <path fillRule="evenodd" d={GEAR_PATH} />
-                </GearSvg>
-                <CardTitleSlot>
-                  <span data-card-title-wrap>
-                    <motion.span
-                      className="block font-display text-base font-semibold uppercase tracking-tight text-[#f5f5f5] h-[52px]"
-                      initial={{ y: 12, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1], delay: 0.25 }}
-                    >
-                      TOOLS AND TECHNOLOGIES
-                    </motion.span>
-                  </span>
-                </CardTitleSlot>
-              </CardBlackFace>
-            </UiverseCard>
-          </motion.div>
+const SKILLS_EXPAND_EASE = [0.22, 1, 0.36, 1] as const;
+const SKILLS_EXPAND_EXIT_DUR = 0.28;
+const SKILLS_EXPAND_ENTER_DUR = SKILLS_EXPAND_EXIT_DUR * 1.5; // 50% longer fade-in
+
+const SkillArsenal = () => {
+  const [expandedSkill, setExpandedSkill] = useState<"core" | "tools" | null>(null);
+
+  return (
+    <section
+      id="skills"
+      className={`relative flex flex-col bg-black text-white scroll-mt-6 min-h-screen py-16 md:py-20 ${SLIDE}`}
+    >
+      <SectionGridOverlay />
+      <div className="container mx-auto px-6 relative z-10 flex flex-col items-center flex-1 min-h-0 w-full overflow-visible">
+        {/* Header in its own block: relative z-20 so it stays on top when moved; [&>*]:mb-4 brings cards closer */}
+        <div className="relative z-20 flex-none w-full max-w-4xl mt-5 [&>*]:mb-4">
+          <SectionHeader title="SKILLS" align="center" showBar={false} compact />
+        </div>
+        {/* Cards area below header; z-0 so header can overlap when moved */}
+        <div className="relative z-0 flex-1 w-full max-w-4xl flex flex-col justify-center items-center min-h-[420px] overflow-visible">
+          <div className="flex flex-wrap justify-center items-center gap-8 w-full">
+            <AnimatePresence mode="wait">
+              {expandedSkill === null ? (
+                <motion.div
+                  key="main-cards"
+                  className="flex flex-wrap justify-center items-center gap-8 w-full"
+                  initial={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: SKILLS_EXPAND_EXIT_DUR, ease: SKILLS_EXPAND_EASE }}
+                >
+                  <motion.div
+                    initial={{ y: 40, opacity: 0 }}
+                    whileInView={{ y: 0, opacity: 1 }}
+                    viewport={{ once: true, amount: 0.3 }}
+                    transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0 }}
+                    onClick={() => setExpandedSkill("core")}
+                    className="cursor-pointer"
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === "Enter" && setExpandedSkill("core")}
+                    aria-label="Open Core Competencies"
+                  >
+                    <UiverseCard className="skills-main-card">
+                      <CardBlackFace>
+                        <AiIdeaSvg viewBox="0 0 24 24" className="paperplane">
+                          <path strokeLinecap="round" d={AI_IDEA_PATH_1} />
+                          <path data-ai-star d={AI_IDEA_STAR} />
+                          <path d={AI_IDEA_LINE} />
+                        </AiIdeaSvg>
+                        <CardTitleSlot>
+                          <span data-card-title-wrap>
+                            <motion.span
+                              className="block font-display text-base font-semibold uppercase tracking-tight text-[#f5f5f5] h-[52px]"
+                              initial={{ y: 12, opacity: 0 }}
+                              animate={{ y: 0, opacity: 1 }}
+                              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
+                            >
+                              CORE COMPETENCIES
+                            </motion.span>
+                          </span>
+                        </CardTitleSlot>
+                      </CardBlackFace>
+                    </UiverseCard>
+                  </motion.div>
+                  <motion.div
+                    initial={{ y: 40, opacity: 0 }}
+                    whileInView={{ y: 0, opacity: 1 }}
+                    viewport={{ once: true, amount: 0.3 }}
+                    transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.18 }}
+                    onClick={() => setExpandedSkill("tools")}
+                    className="cursor-pointer"
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === "Enter" && setExpandedSkill("tools")}
+                    aria-label="Open Tools and Technologies"
+                  >
+                    <UiverseCard className="skills-main-card">
+                      <CardBlackFace>
+                        <GearSvg viewBox="0 0 256 256" className="paperplane">
+                          <path fillRule="evenodd" d={GEAR_PATH} />
+                        </GearSvg>
+                        <CardTitleSlot>
+                          <span data-card-title-wrap>
+                            <motion.span
+                              className="block font-display text-base font-semibold uppercase tracking-tight text-[#f5f5f5] h-[52px]"
+                              initial={{ y: 12, opacity: 0 }}
+                              animate={{ y: 0, opacity: 1 }}
+                              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1], delay: 0.25 }}
+                            >
+                              TOOLS AND TECHNOLOGIES
+                            </motion.span>
+                          </span>
+                        </CardTitleSlot>
+                      </CardBlackFace>
+                    </UiverseCard>
+                  </motion.div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="expanded"
+                  className="w-full flex justify-center"
+                  initial={{ opacity: 1 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <SubskillExpandedCard>
+                    <div className="flex flex-col gap-0">
+                      {/* Header: technical label + title left, Back right (neo-tokyo + P3R) */}
+                      <div className="flex flex-wrap items-end justify-between gap-4 pb-5 mb-6 border-b border-white/15">
+                        <div className="flex flex-col items-start">
+                          <p className="font-mono text-[10px] md:text-xs text-zinc-500 tracking-[0.2em] uppercase mb-1">
+                            SUBSKILLS // {SKILLS_DATA[expandedSkill].title.replace(/\s+&\s+/, " & ")}
+                          </p>
+                          <h2 className="font-display text-xl md:text-2xl font-semibold uppercase tracking-[0.08em] text-[#f5f5f5] leading-none">
+                            {SKILLS_DATA[expandedSkill].title}
+                          </h2>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setExpandedSkill(null)}
+                          className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-400 hover:text-white border border-white/15 hover:border-white/30 rounded-none px-3 py-2 shrink-0 transition-colors duration-200"
+                          aria-label="Back to skills"
+                        >
+                          <ChevronLeft className="w-3.5 h-3.5 inline-block mr-1.5" aria-hidden />
+                          CLOSE
+                        </Button>
+                      </div>
+                      {/* Category blocks: index + label, divider between */}
+                      {SKILLS_DATA[expandedSkill].categories.map((category, idx) => (
+                        <div
+                          key={category.title}
+                          className={`pl-4 border-l-2 border-cyan-400/50 pb-6 last:pb-0 ${idx === 0 ? "" : "pt-6 mt-6 border-t border-white/15"}`}
+                        >
+                          <div className="flex items-baseline gap-3 mb-3">
+                            <span className="font-mono text-xs text-zinc-500 tabular-nums w-6">
+                              {String(idx + 1).padStart(2, "0")}
+                            </span>
+                            <h4 className="font-display text-xs md:text-sm uppercase tracking-[0.08em] text-white/95 font-semibold">
+                              {category.title}
+                            </h4>
+                          </div>
+                          <div className="flex flex-wrap gap-2" role="list" aria-label={category.title}>
+                            {category.items.map((skill) => (
+                              <PillBadge
+                                key={skill}
+                                variant="pill"
+                                size="lg"
+                                className="font-mono tracking-tight"
+                              >
+                                {skill}
+                              </PillBadge>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </SubskillExpandedCard>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
 
 // --- RESUME COMPONENT ---
 const ResumeView = () => {
