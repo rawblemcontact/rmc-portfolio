@@ -302,7 +302,15 @@
     opacity: 1;
   }
 
-  /* Main skill cards — hover (lift, icon, star, title) */
+  /* Main skill cards — hover (lift, glow, icon, star, title) */
+  #skills .skills-main-card {
+    will-change: transform;
+    transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  #skills .skills-main-card:hover .skills-card-glow {
+    width: 367px;
+    height: 277px;
+  }
   #skills .skills-main-card:hover {
     transform: translateY(-6px);
   }

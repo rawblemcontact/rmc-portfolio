@@ -31,7 +31,6 @@ import styled from "styled-components";
 import { TiltCard } from "@/components/TiltCard";
 import { WordsPullUp } from "@/components/WordsPullUp";
 import { FloatingPhone } from "@/components/FloatingPhone";
-import { Badge as PillBadge } from "@/components/ui/badge";
 import {
   SiArc,
   SiBytedance,
@@ -1498,19 +1497,6 @@ const SKILLS_DATA = {
 // Core: Writing & Narrative, Digital & Visual Media, Professional Practices + items each.
 // Tools: Design & Productivity, Video & Writing, Social Platforms + items each.
 
-/* Expanded subskill card: same style as CardBlackFace (background, border, radius) */
-const SubskillExpandedCard = styled.div`
-  background: #18181b;
-  border: 2px solid rgba(255, 255, 255, 0.12);
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
-  padding: 1.25rem 2rem 1.5rem;
-  width: 100%;
-  max-width: 52rem;
-  min-height: 0;
-`;
-
 // ─── DIAGONAL CONNECTOR GEOMETRY ─────────────────────────────────────────────
 // Single sharp line: origin = midpoint of top card’s right edge, end = midpoint of bottom card’s left edge.
 // Cards placed with ~35% diagonal separation; line and node use same 0–100 coordinate system.
@@ -1522,6 +1508,17 @@ const DIAGONAL_END   = { x: 62, y: 80 };
 const DIAGONAL_MID   = { x: 50, y: 50 };
 const SKILLS_CARD_EASE = [0.22, 1, 0.36, 1] as const;
 const SKILLS_CARD_DUR = 0.22;
+
+const SKILLS_CARD_LAYOUT = {
+  core: {
+    icon: { offsetX: 0, offsetY: -10, size: 84 },
+    title: { offsetY: 28, fontSize: 18 },
+  },
+  tools: {
+    icon: { offsetX: 0, offsetY: -10, size: 90 },
+    title: { offsetY: 28, fontSize: 18 },
+  },
+} as const;
 
 const SkillsWebHooks = ({
   leftLabel,
@@ -1972,9 +1969,51 @@ const SKILLS_EXPAND_EASE = [0.22, 1, 0.36, 1] as const;
 const SKILLS_EXPAND_EXIT_DUR = 0.28;
 const SKILLS_EXPAND_ENTER_DUR = SKILLS_EXPAND_EXIT_DUR * 1.5; // 50% longer fade-in
 
-const SkillArsenal = () => {
-  const [expandedSkill, setExpandedSkill] = useState<"core" | "tools" | null>(null);
+/** Rule-of-thirds overlay for positioning. Set showRuleOfThirds = false when you're done. */
+const showRuleOfThirds = true;
+const RuleOfThirdsOverlay = styled.div`
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  border-radius: inherit;
+  background-image:
+    /* Vertical lines at 1/3 and 2/3 */
+    linear-gradient(
+      to right,
+      transparent calc(33.333% - 0.5px),
+      rgba(255, 255, 255, 0.22) calc(33.333% - 0.5px),
+      rgba(255, 255, 255, 0.22) calc(33.333% + 0.5px),
+      transparent calc(33.333% + 0.5px)
+    ),
+    linear-gradient(
+      to right,
+      transparent calc(66.666% - 0.5px),
+      rgba(255, 255, 255, 0.22) calc(66.666% - 0.5px),
+      rgba(255, 255, 255, 0.22) calc(66.666% + 0.5px),
+      transparent calc(66.666% + 0.5px)
+    ),
+    /* Horizontal lines at 1/3 and 2/3 */
+    linear-gradient(
+      to bottom,
+      transparent calc(33.333% - 0.5px),
+      rgba(255, 255, 255, 0.22) calc(33.333% - 0.5px),
+      rgba(255, 255, 255, 0.22) calc(33.333% + 0.5px),
+      transparent calc(33.333% + 0.5px)
+    ),
+    linear-gradient(
+      to bottom,
+      transparent calc(66.666% - 0.5px),
+      rgba(255, 255, 255, 0.22) calc(66.666% - 0.5px),
+      rgba(255, 255, 255, 0.22) calc(66.666% + 0.5px),
+      transparent calc(66.666% + 0.5px)
+    );
+  background-size: 100% 100%;
+  background-position: 0 0, 0 0, 0 0, 0 0;
+  background-repeat: no-repeat;
+`;
 
+const SkillArsenal = () => {
   return (
     <section
       id="skills"
@@ -1989,148 +2028,109 @@ const SkillArsenal = () => {
         {/* Cards area below header; z-0 so header can overlap when moved */}
         <div className="relative z-0 flex-1 w-full max-w-4xl flex flex-col justify-center items-center min-h-[420px] overflow-visible">
           <div className="flex flex-wrap justify-center items-center gap-8 w-full">
-            <AnimatePresence mode="wait">
-              {expandedSkill === null ? (
-                <motion.div
-                  key="main-cards"
-                  className="flex flex-wrap justify-center items-center gap-8 w-full"
-                  initial={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: SKILLS_EXPAND_EXIT_DUR, ease: SKILLS_EXPAND_EASE }}
-                >
-                  <motion.div
-                    initial={{ y: 40, opacity: 0 }}
-                    whileInView={{ y: 0, opacity: 1 }}
-                    viewport={{ once: true, amount: 0.3 }}
-                    transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0 }}
-                    onClick={() => setExpandedSkill("core")}
-                    className="cursor-pointer"
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => e.key === "Enter" && setExpandedSkill("core")}
-                    aria-label="Open Core Competencies"
-                  >
-                    <UiverseCard className="skills-main-card">
-                      <CardBlackFace>
-                        <AiIdeaSvg viewBox="0 0 24 24" className="paperplane">
-                          <path strokeLinecap="round" d={AI_IDEA_PATH_1} />
-                          <path data-ai-star d={AI_IDEA_STAR} />
-                          <path d={AI_IDEA_LINE} />
-                        </AiIdeaSvg>
-                        <CardTitleSlot>
-                          <span data-card-title-wrap>
-                            <motion.span
-                              className="block font-display text-base font-semibold uppercase tracking-tight text-[#f5f5f5] h-[52px]"
-                              initial={{ y: 12, opacity: 0 }}
-                              animate={{ y: 0, opacity: 1 }}
-                              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
-                            >
-                              CORE COMPETENCIES
-                            </motion.span>
-                          </span>
-                        </CardTitleSlot>
-                      </CardBlackFace>
-                    </UiverseCard>
-                  </motion.div>
-                  <motion.div
-                    initial={{ y: 40, opacity: 0 }}
-                    whileInView={{ y: 0, opacity: 1 }}
-                    viewport={{ once: true, amount: 0.3 }}
-                    transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.18 }}
-                    onClick={() => setExpandedSkill("tools")}
-                    className="cursor-pointer"
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => e.key === "Enter" && setExpandedSkill("tools")}
-                    aria-label="Open Tools and Technologies"
-                  >
-                    <UiverseCard className="skills-main-card">
-                      <CardBlackFace>
-                        <GearSvg viewBox="0 0 256 256" className="paperplane">
-                          <path fillRule="evenodd" d={GEAR_PATH} />
-                        </GearSvg>
-                        <CardTitleSlot>
-                          <span data-card-title-wrap>
-                            <motion.span
-                              className="block font-display text-base font-semibold uppercase tracking-tight text-[#f5f5f5] h-[52px]"
-                              initial={{ y: 12, opacity: 0 }}
-                              animate={{ y: 0, opacity: 1 }}
-                              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1], delay: 0.25 }}
-                            >
-                              TOOLS AND TECHNOLOGIES
-                            </motion.span>
-                          </span>
-                        </CardTitleSlot>
-                      </CardBlackFace>
-                    </UiverseCard>
-                  </motion.div>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="expanded"
-                  className="w-full flex justify-center"
-                  initial={{ opacity: 1 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-                >
-                  <SubskillExpandedCard>
-                    <div className="flex flex-col gap-0">
-                      {/* Header: technical label + title left, Back right (neo-tokyo + P3R) */}
-                      <div className="flex flex-wrap items-end justify-between gap-4 pb-5 mb-6 border-b border-white/15">
-                        <div className="flex flex-col items-start">
-                          <p className="font-mono text-[10px] md:text-xs text-zinc-500 tracking-[0.2em] uppercase mb-1">
-                            SUBSKILLS // {SKILLS_DATA[expandedSkill].title.replace(/\s+&\s+/, " & ")}
-                          </p>
-                          <h2 className="font-display text-xl md:text-2xl font-semibold uppercase tracking-[0.08em] text-[#f5f5f5] leading-none">
-                            {SKILLS_DATA[expandedSkill].title}
-                          </h2>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setExpandedSkill(null)}
-                          className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-400 hover:text-white border border-white/15 hover:border-white/30 rounded-none px-3 py-2 shrink-0 transition-colors duration-200"
-                          aria-label="Back to skills"
+            <motion.div
+              className="flex flex-wrap justify-center items-center gap-8 w-full"
+              initial={{ opacity: 1 }}
+            >
+              <motion.div
+                initial={{ y: 40, opacity: 0 }}
+                whileInView={{ y: 0, opacity: 1 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0 }}
+              >
+                <UiverseCard className="skills-main-card">
+                  <CardBlackFace>
+                    {showRuleOfThirds && <RuleOfThirdsOverlay />}
+                    <span
+                      style={{
+                        transform: `translate(${SKILLS_CARD_LAYOUT.core.icon.offsetX}px, ${SKILLS_CARD_LAYOUT.core.icon.offsetY}px)`,
+                        display: "inline-block",
+                      }}
+                    >
+                      <AiIdeaSvg
+                        viewBox="0 0 24 24"
+                        className="paperplane"
+                        style={{
+                          width: SKILLS_CARD_LAYOUT.core.icon.size,
+                          height: SKILLS_CARD_LAYOUT.core.icon.size,
+                        }}
+                      >
+                        <path strokeLinecap="round" d={AI_IDEA_PATH_1} />
+                        <path data-ai-star d={AI_IDEA_STAR} />
+                        <path d={AI_IDEA_LINE} />
+                      </AiIdeaSvg>
+                    </span>
+                    <CardTitleSlot
+                      style={{
+                        bottom: SKILLS_CARD_LAYOUT.core.title.offsetY,
+                      }}
+                    >
+                      <span data-card-title-wrap>
+                        <motion.span
+                          className="block font-display font-semibold uppercase tracking-tight text-[#f5f5f5] h-[52px]"
+                          style={{
+                            fontSize: `${SKILLS_CARD_LAYOUT.core.title.fontSize}px`,
+                          }}
+                          initial={{ y: 12, opacity: 0 }}
+                          animate={{ y: 0, opacity: 1 }}
+                          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
                         >
-                          <ChevronLeft className="w-3.5 h-3.5 inline-block mr-1.5" aria-hidden />
-                          CLOSE
-                        </Button>
-                      </div>
-                      {/* Category blocks: index + label, divider between */}
-                      {SKILLS_DATA[expandedSkill].categories.map((category, idx) => (
-                        <div
-                          key={category.title}
-                          className={`pl-4 border-l-2 border-cyan-400/50 pb-6 last:pb-0 ${idx === 0 ? "" : "pt-6 mt-6 border-t border-white/15"}`}
+                          CORE COMPETENCIES
+                        </motion.span>
+                      </span>
+                    </CardTitleSlot>
+                  </CardBlackFace>
+                </UiverseCard>
+              </motion.div>
+              <motion.div
+                initial={{ y: 40, opacity: 0 }}
+                whileInView={{ y: 0, opacity: 1 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.18 }}
+              >
+                <UiverseCard className="skills-main-card">
+                  <CardBlackFace>
+                    {showRuleOfThirds && <RuleOfThirdsOverlay />}
+                    <span
+                      style={{
+                        transform: `translate(${SKILLS_CARD_LAYOUT.tools.icon.offsetX}px, ${SKILLS_CARD_LAYOUT.tools.icon.offsetY}px)`,
+                        display: "inline-block",
+                      }}
+                    >
+                      <GearSvg
+                        viewBox="0 0 256 256"
+                        className="paperplane"
+                        style={{
+                          width: SKILLS_CARD_LAYOUT.tools.icon.size,
+                          height: SKILLS_CARD_LAYOUT.tools.icon.size,
+                        }}
+                      >
+                        <path fillRule="evenodd" d={GEAR_PATH} />
+                      </GearSvg>
+                    </span>
+                    <CardTitleSlot
+                      style={{
+                        bottom: SKILLS_CARD_LAYOUT.tools.title.offsetY,
+                      }}
+                    >
+                      <span data-card-title-wrap>
+                        <motion.span
+                          className="block font-display font-semibold uppercase tracking-tight text-[#f5f5f5] h-[52px]"
+                          style={{
+                            fontSize: `${SKILLS_CARD_LAYOUT.tools.title.fontSize}px`,
+                          }}
+                          initial={{ y: 12, opacity: 0 }}
+                          animate={{ y: 0, opacity: 1 }}
+                          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1], delay: 0.25 }}
                         >
-                          <div className="flex items-baseline gap-3 mb-3">
-                            <span className="font-mono text-xs text-zinc-500 tabular-nums w-6">
-                              {String(idx + 1).padStart(2, "0")}
-                            </span>
-                            <h4 className="font-display text-xs md:text-sm uppercase tracking-[0.08em] text-white/95 font-semibold">
-                              {category.title}
-                            </h4>
-                          </div>
-                          <div className="flex flex-wrap gap-2" role="list" aria-label={category.title}>
-                            {category.items.map((skill) => (
-                              <PillBadge
-                                key={skill}
-                                variant="pill"
-                                size="lg"
-                                className="font-mono tracking-tight"
-                              >
-                                {skill}
-                              </PillBadge>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </SubskillExpandedCard>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                          TOOLS AND TECHNOLOGIES
+                        </motion.span>
+                      </span>
+                    </CardTitleSlot>
+                  </CardBlackFace>
+                </UiverseCard>
+              </motion.div>
+            </motion.div>
           </div>
         </div>
       </div>
