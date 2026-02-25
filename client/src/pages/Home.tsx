@@ -28,6 +28,7 @@ import {
   Briefcase
 } from "lucide-react";
 import styled from "styled-components";
+import FSSBackground from "@/components/FSSBackground";
 import { TiltCard } from "@/components/TiltCard";
 import { WordsPullUp } from "@/components/WordsPullUp";
 import { FloatingPhone } from "@/components/FloatingPhone";
@@ -2040,11 +2041,14 @@ const SkillArsenal = () => {
               >
                 <UiverseCard className="skills-main-card">
                   <CardBlackFace>
+                    <FSSBackground style={{ opacity: 0.55, borderRadius: 10 }} />
                     {showRuleOfThirds && <RuleOfThirdsOverlay />}
                     <span
                       style={{
                         transform: `translate(${SKILLS_CARD_LAYOUT.core.icon.offsetX}px, ${SKILLS_CARD_LAYOUT.core.icon.offsetY}px)`,
                         display: "inline-block",
+                        position: "relative",
+                        zIndex: 1,
                       }}
                     >
                       <AiIdeaSvg
@@ -2063,6 +2067,8 @@ const SkillArsenal = () => {
                     <CardTitleSlot
                       style={{
                         bottom: SKILLS_CARD_LAYOUT.core.title.offsetY,
+                        position: "absolute",
+                        zIndex: 1,
                       }}
                     >
                       <span data-card-title-wrap>
@@ -2090,11 +2096,14 @@ const SkillArsenal = () => {
               >
                 <UiverseCard className="skills-main-card">
                   <CardBlackFace>
+                    <FSSBackground style={{ opacity: 0.55, borderRadius: 10 }} />
                     {showRuleOfThirds && <RuleOfThirdsOverlay />}
                     <span
                       style={{
                         transform: `translate(${SKILLS_CARD_LAYOUT.tools.icon.offsetX}px, ${SKILLS_CARD_LAYOUT.tools.icon.offsetY}px)`,
                         display: "inline-block",
+                        position: "relative",
+                        zIndex: 1,
                       }}
                     >
                       <GearSvg
@@ -2111,6 +2120,8 @@ const SkillArsenal = () => {
                     <CardTitleSlot
                       style={{
                         bottom: SKILLS_CARD_LAYOUT.tools.title.offsetY,
+                        position: "absolute",
+                        zIndex: 1,
                       }}
                     >
                       <span data-card-title-wrap>
