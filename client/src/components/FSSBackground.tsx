@@ -316,17 +316,19 @@ interface FSSConfig {
 }
 
 const DEFAULTS: Required<FSSConfig> = {
-  meshAmbient: "#555555",
-  meshDiffuse: "#696969",
-  lightAmbient: "#1abc65",
-  lightDiffuse: "#b4c910",
-  lightCount: 2,
+  // Mesh base color: pure black base with slightly lifted diffuse so facets can catch light
+  meshAmbient: "#000000",
+  meshDiffuse: "#111111",
+  // Lights: neutral greys, stronger than default but not flashing; fewer lights for calmer shimmer
+  lightAmbient: "#848490",
+  lightDiffuse: "#848490",
+  lightCount: 1.5,
   segments: 16,
   slices: 8,
-  meshSpeed: 0.0001,
+  meshSpeed: 0.0000,
   xRange: 0.8,
   yRange: 0.1,
-  zRange: 1.0,
+  zRange: .5,
   depth: 10,
 };
 
@@ -392,12 +394,13 @@ export default function FSSBackground({ className = "", style, config }: FSSBack
       0.2 + Math.random() * 0.8,
       0.2 + Math.random() * 0.8,
     );
-    const LIGHT_SPEED = 0.0002;
-    const LIGHT_Z = 100;
-    const LIGHT_GRAVITY = 500;
+    // Lower speed so shimmer feels slower and less "flashy"
+    const LIGHT_SPEED = 0.00000001;
+    const LIGHT_Z = 50;
+    const LIGHT_GRAVITY = 350;
     const LIGHT_DAMP = 0.95;
     const LIGHT_MIN_DIST = 20;
-    const LIGHT_MAX_DIST = 400;
+    const LIGHT_MAX_DIST = 300;
     const LIGHT_MIN_LIMIT = 10;
 
     const start = Date.now();
@@ -405,26 +408,11 @@ export default function FSSBackground({ className = "", style, config }: FSSBack
     function animate() {
       const now = Date.now() - start;
 
+      // Keep lights fixed in place (no orbital motion), only their intensity changes with the mesh
       V3.copy(bounds, center);
-      V3.set(attractor,
-        bounds[0] * Math.sin(lightStep[0] * now * LIGHT_SPEED),
-        bounds[1] * Math.cos(lightStep[1] * now * LIGHT_SPEED),
-        LIGHT_Z,
-      );
-
+      V3.set(attractor, bounds[0], bounds[1], LIGHT_Z);
       for (const light of lights) {
         light.position[2] = LIGHT_Z;
-        const D = Math.max(LIGHT_MIN_DIST, Math.min(LIGHT_MAX_DIST, V3.distSq(light.position, attractor)));
-        const F = LIGHT_GRAVITY * light.mass / D;
-        V3.sub(light.force, attractor, light.position);
-        V3.norm(light.force);
-        V3.mulS(light.force, F);
-        V3.set(light.acceleration);
-        V3.add(light.acceleration, light.force);
-        V3.add(light.velocity, light.acceleration);
-        V3.mulS(light.velocity, LIGHT_DAMP);
-        V3.limit(light.velocity, LIGHT_MIN_LIMIT, null);
-        V3.add(light.position, light.velocity);
       }
 
       const offset = cfg.depth / 2;

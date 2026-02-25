@@ -28,7 +28,6 @@ import {
   Briefcase
 } from "lucide-react";
 import styled from "styled-components";
-import FSSBackground from "@/components/FSSBackground";
 import { TiltCard } from "@/components/TiltCard";
 import { WordsPullUp } from "@/components/WordsPullUp";
 import { FloatingPhone } from "@/components/FloatingPhone";
@@ -313,7 +312,8 @@ function TextFade({
 
 const BackArrowSvg = ({ className }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24" aria-hidden>
-    <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z" />
+    {/* Left-pointing arrow for "back" */}
+    <path d="M7.8284 11.0001L13.1924 16.3641L11.7782 17.7783L4 10.0001L11.7782 2.22205L13.1924 3.63626L7.8284 9.00011H20V11.0001H7.8284Z" />
   </svg>
 );
 
@@ -369,30 +369,49 @@ const SectionHeader = ({
   color?: string;
   showBar?: boolean;
   compact?: boolean;
-}) => (
-  <div
-    className={`flex flex-col ${align === "center" ? "items-center text-center" : "items-start text-left"} ${
-      compact ? "mb-10" : "mb-16"
-    } relative z-10`}
-  >
-    {showBar && (
-      <motion.div 
-        initial={{ scaleX: 0, originX: align === "center" ? 0.5 : 0 }}
-        whileInView={{ scaleX: 1 }}
-        viewport={{ once: true }}
-        className="bg-cyan-500 h-2 w-24 mb-4"
-      />
-    )}
-    <h2 className={`${compact ? "text-3xl md:text-5xl" : "text-4xl md:text-6xl"} font-display ${color} leading-none tracking-tight -translate-y-0.5`}>
-      <TextShutter text={title} as="span" direction="ltr" duration={0.45} stagger={0.04} split="words" trigger="viewport" />
-    </h2>
-    {subtitle && (
-      <p className="font-heading text-sm md:text-base mt-3 bg-white/10 text-white px-3 py-1 inline-block tracking-[0.18em] uppercase border border-white/15 backdrop-blur-sm">
-        {subtitle}
-      </p>
-    )}
-  </div>
-);
+}) => {
+  const sizeClasses =
+    title === "SKILLS"
+      ? "text-5xl md:text-7xl"
+      : compact
+        ? "text-3xl md:text-5xl"
+        : "text-4xl md:text-6xl";
+
+  return (
+    <div
+      className={`flex flex-col ${align === "center" ? "items-center text-center" : "items-start text-left"} ${
+        compact ? "mb-10" : "mb-16"
+      } relative z-10`}
+    >
+      {showBar && (
+        <motion.div
+          initial={{ scaleX: 0, originX: align === "center" ? 0.5 : 0 }}
+          whileInView={{ scaleX: 1 }}
+          viewport={{ once: true }}
+          className="bg-cyan-500 h-2 w-24 mb-4"
+        />
+      )}
+      <h2
+        className={`${sizeClasses} font-display ${color} leading-none tracking-tight uppercase -translate-y-0.5`}
+      >
+        <TextShutter
+          text={title}
+          as="span"
+          direction="ltr"
+          duration={0.45}
+          stagger={0.04}
+          split="words"
+          trigger="viewport"
+        />
+      </h2>
+      {subtitle && (
+        <p className="font-heading text-sm md:text-base mt-3 bg-white/10 text-white px-3 py-1 inline-block tracking-[0.18em] uppercase border border-white/15 backdrop-blur-sm">
+          {subtitle}
+        </p>
+      )}
+    </div>
+  );
+};
 
 // --- HERO SECTION ---
 const Hero = ({
@@ -1415,18 +1434,6 @@ const SKILLS_HOVER_SHIFT_PX = 8; // Ball travel: increased for more dynamic feel
 const SKILLS_CARD_HOVER_SCALE = 1.04; // More pronounced hover scale
 const SKILLS_CARD_HOVER_Y = -12; // More lift on hover // Ball travel: slower so it’s readable (was 0.5)
 
-// ─── TEXTURE OVERLAY ─────────────────────────────────────────────────────────
-const TextureOverlay = ({ opacity = 0.03 }: { opacity?: number }) => (
-  <div
-    className="absolute inset-0 pointer-events-none"
-    style={{
-      backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.4'/%3E%3C/svg%3E")`,
-      opacity,
-      mixBlendMode: "overlay",
-    }}
-  />
-);
-
 // ─── SKILL CARD DATA ──────────────────────────────────────────────────────────
 const SKILLS_DATA = {
   core: {
@@ -1501,7 +1508,7 @@ const SKILLS_DATA = {
 // ─── DIAGONAL CONNECTOR GEOMETRY ─────────────────────────────────────────────
 // Single sharp line: origin = midpoint of top card’s right edge, end = midpoint of bottom card’s left edge.
 // Cards placed with ~35% diagonal separation; line and node use same 0–100 coordinate system.
-const WEBHOOKS_CORE_ACCENT = "#16a34a";
+const WEBHOOKS_CORE_ACCENT = "#22d3ee";  // cyan accent to replace green
 const WEBHOOKS_TOOLS_ACCENT = "#0891b2";
 const WEBHOOKS_IDLE_BORDER = "rgba(255,255,255,0.25)";
 const DIAGONAL_START = { x: 38, y: 20 };
@@ -1513,12 +1520,17 @@ const SKILLS_CARD_DUR = 0.22;
 const SKILLS_CARD_LAYOUT = {
   core: {
     icon: { offsetX: 0, offsetY: -10, size: 84 },
-    title: { offsetY: 28, fontSize: 18 },
+    title: { offsetY: 28, fontSize: 16 },
   },
   tools: {
     icon: { offsetX: 0, offsetY: -10, size: 90 },
-    title: { offsetY: 28, fontSize: 18 },
+    title: { offsetY: 28, fontSize: 16 },
   },
+} as const;
+
+// Controls vertical positioning of the SKILLS block (header + cards) in rem.
+const SKILLS_LAYOUT = {
+  sectionOffsetRem: 5, // increase to move entire SKILLS block further down
 } as const;
 
 const SkillsWebHooks = ({
@@ -1571,7 +1583,7 @@ const SkillsWebHooks = ({
           className="relative w-full h-[100px] md:h-[116px] rounded-lg overflow-hidden skills-card-diagonal flex items-center justify-center py-6 px-6 text-center transition-shadow duration-300"
           style={{
             boxShadow: hoverTarget === "left" 
-              ? "0 12px 24px -8px rgba(22,163,74,0.3), 0 0 0 1px rgba(22,163,74,0.2)" 
+              ? "0 12px 24px -8px rgba(34,211,238,0.3), 0 0 0 1px rgba(34,211,238,0.2)" 
               : "none",
           }}
         >
@@ -1580,7 +1592,7 @@ const SkillsWebHooks = ({
             animate={{ opacity: hoverTarget === "left" ? 0.12 : 0 }}
             transition={{ duration: cardDur, ease: SKILLS_CARD_EASE }}
             style={{
-              background: "linear-gradient(168deg, rgba(22,163,74,0.2) 0%, transparent 60%)",
+              background: "linear-gradient(168deg, rgba(34,211,238,0.2) 0%, transparent 60%)",
               willChange: "opacity",
             }}
           />
@@ -1742,7 +1754,7 @@ const SkillsExpandedView = ({
         <motion.button
           type="button"
           onClick={onClose}
-          className="flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-white/70 hover:text-white border border-white/20 hover:border-white/40 rounded-lg px-3 py-2 transition-colors duration-200"
+          className="flex items-center gap-2 font-mono text-xs uppercase tracking-wider bg-cyan-500 text-white border border-cyan-500 hover:bg-white hover:text-black hover:border-white rounded-lg px-3 py-2 transition-colors duration-200"
           aria-label="Back to skills"
           whileHover={{ scale: 1.05, x: -2 }}
           whileTap={{ scale: 0.98 }}
@@ -1833,36 +1845,16 @@ const MORPH_EXPAND_DUR = 0.28;
 const MORPH_EXPAND_EASE = [0.22, 1, 0.36, 1] as const;
 const P3R_STAGGER_MS = 45; // 30–60ms per row
 
-/* From Uiverse.io by Adrwaan - exact card, horizontal (landscape), scaled up */
+/* From Uiverse.io by Adrwaan - adapted to match MAIN MENU card style (no extra glow block) */
 const UiverseCard = styled.div`
   position: relative;
   width: 360px;
   height: 270px;
+  border-radius: 10px;
   transition: transform 0.3s ease;
 
   &:hover {
     transform: translateY(-6px);
-  }
-
-  /* Outer glow / backdrop (existing behavior) */
-  &::before {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 360px;
-    height: 270px;
-    background-color: tomato;
-    border-radius: 10px;
-    z-index: -1;
-    transition: all 0.4s;
-    animation: uiverse-card-animate 5s linear infinite;
-  }
-
-  &:hover::before {
-    width: 367px;
-    height: 277px;
   }
 
   &:hover .paperplane {
@@ -1876,13 +1868,6 @@ const UiverseCard = styled.div`
   &:hover [data-card-title-wrap] {
     transform: scale(1.08);
   }
-
-  @keyframes uiverse-card-animate {
-    50% {
-      filter: hue-rotate(350deg);
-    }
-  }
-
 `;
 
 const CardBlackFace = styled.div`
@@ -1892,13 +1877,18 @@ const CardBlackFace = styled.div`
   transform: translate(-50%, -50%);
   width: 364px;
   height: 274px;
-  background: #000000;
-  border: 2px solid #ffffff;
-  border-radius: 10px;
+  /* No card background — just an outline over the global black field */
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 0;
+
+  &:hover {
+    border-color: rgba(255, 255, 255, 0.25);
+  }
 `;
 
 const PaperplaneSvg = styled.svg`
@@ -2020,16 +2010,19 @@ const SkillArsenal = () => {
   return (
     <section
       id="skills"
-      className={`relative flex flex-col bg-black text-white scroll-mt-6 min-h-screen py-16 md:py-20 ${SLIDE}`}
+      className={`relative flex flex-col bg-black text-white scroll-mt-6 min-h-screen py-20 md:py-24 ${SLIDE}`}
     >
       <SectionGridOverlay />
-      <div className="container mx-auto px-6 relative z-10 flex flex-col items-center flex-1 min-h-0 w-full overflow-visible">
-        {/* Header in its own block: relative z-20 so it stays on top when moved; [&>*]:mb-4 brings cards closer */}
-        <div className="relative z-20 flex-none w-full max-w-4xl mt-5 [&>*]:mb-4">
+      <div
+        className="container mx-auto px-6 relative z-10 flex flex-col items-center flex-1 min-h-0 w-full overflow-visible"
+        style={{ transform: `translateY(${SKILLS_LAYOUT.sectionOffsetRem}rem)` }}
+      >
+        {/* Header block */}
+        <div className="relative z-20 flex-none w-full max-w-4xl mt-0 mb-8">
           <SectionHeader title="SKILLS" align="center" showBar={false} compact />
         </div>
-        {/* Cards area below header; z-0 so header can overlap when moved */}
-        <div className="relative z-0 flex-1 w-full max-w-4xl flex flex-col justify-center items-center min-h-[420px] overflow-visible">
+        {/* Cards area below; centered under header and responsive */}
+        <div className="relative z-0 w-full max-w-4xl flex flex-col items-center min-h-[420px] overflow-visible">
           <div className="flex flex-wrap justify-center items-center gap-8 w-full">
             <motion.div
               className="flex flex-wrap justify-center items-center gap-8 w-full"
@@ -2043,7 +2036,6 @@ const SkillArsenal = () => {
               >
                 <UiverseCard className="skills-main-card">
                   <CardBlackFace>
-                    <FSSBackground style={{ opacity: 0.55, borderRadius: 10 }} />
                     {showRuleOfThirds && <RuleOfThirdsOverlay />}
                     <span
                       style={{
@@ -2075,9 +2067,10 @@ const SkillArsenal = () => {
                     >
                       <span data-card-title-wrap>
                         <motion.span
-                          className="block font-display font-semibold uppercase tracking-tight text-[#f5f5f5] h-[52px]"
+                          className="block font-display font-semibold uppercase tracking-[0.12em] text-white h-[52px]"
                           style={{
                             fontSize: `${SKILLS_CARD_LAYOUT.core.title.fontSize}px`,
+                            textShadow: "0 0 10px rgba(0,0,0,0.9)",
                           }}
                           initial={{ y: 12, opacity: 0 }}
                           animate={{ y: 0, opacity: 1 }}
@@ -2098,7 +2091,6 @@ const SkillArsenal = () => {
               >
                 <UiverseCard className="skills-main-card">
                   <CardBlackFace>
-                    <FSSBackground style={{ opacity: 0.55, borderRadius: 10 }} />
                     {showRuleOfThirds && <RuleOfThirdsOverlay />}
                     <span
                       style={{
@@ -2116,7 +2108,8 @@ const SkillArsenal = () => {
                           height: SKILLS_CARD_LAYOUT.tools.icon.size,
                         }}
                       >
-                        <path fillRule="evenodd" d={GEAR_PATH} />
+                        {/* Remove evenodd so inner "hole" fills as well */}
+                        <path d={GEAR_PATH} />
                       </GearSvg>
                     </span>
                     <CardTitleSlot
@@ -2128,9 +2121,10 @@ const SkillArsenal = () => {
                     >
                       <span data-card-title-wrap>
                         <motion.span
-                          className="block font-display font-semibold uppercase tracking-tight text-[#f5f5f5] h-[52px]"
+                          className="block font-display font-semibold uppercase tracking-[0.12em] text-white h-[52px]"
                           style={{
                             fontSize: `${SKILLS_CARD_LAYOUT.tools.title.fontSize}px`,
+                            textShadow: "0 0 10px rgba(0,0,0,0.9)",
                           }}
                           initial={{ y: 12, opacity: 0 }}
                           animate={{ y: 0, opacity: 1 }}
