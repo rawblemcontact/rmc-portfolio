@@ -1843,6 +1843,7 @@ const UiverseCard = styled.div`
     transform: translateY(-6px);
   }
 
+  /* Outer glow / backdrop (existing behavior) */
   &::before {
     content: "";
     position: absolute;
@@ -1880,6 +1881,7 @@ const UiverseCard = styled.div`
       filter: hue-rotate(350deg);
     }
   }
+
 `;
 
 const CardBlackFace = styled.div`
@@ -1889,8 +1891,8 @@ const CardBlackFace = styled.div`
   transform: translate(-50%, -50%);
   width: 364px;
   height: 274px;
-  background: #18181b;
-  border: 2px solid rgba(255, 255, 255, 0.12);
+  background: #000000;
+  border: 2px solid #ffffff;
   border-radius: 10px;
   display: flex;
   justify-content: center;
@@ -1969,8 +1971,8 @@ const SKILLS_EXPAND_EASE = [0.22, 1, 0.36, 1] as const;
 const SKILLS_EXPAND_EXIT_DUR = 0.28;
 const SKILLS_EXPAND_ENTER_DUR = SKILLS_EXPAND_EXIT_DUR * 1.5; // 50% longer fade-in
 
-/** Rule-of-thirds overlay for positioning. Set showRuleOfThirds = false when you're done. */
-const showRuleOfThirds = true;
+/** Rule-of-thirds overlay for positioning. Set showRuleOfThirds = true to show again. */
+const showRuleOfThirds = false;
 const RuleOfThirdsOverlay = styled.div`
   position: absolute;
   inset: 0;
