@@ -1868,6 +1868,12 @@ const UiverseCard = styled.div`
   &:hover [data-card-title-wrap] {
     transform: scale(1.08);
   }
+
+  /* Expanded subskills overlay: span two cards wide, 1.5x height */
+  &.skills-subcard {
+    width: min(100%, 752px);
+    height: 405px;
+  }
 `;
 
 const CardBlackFace = styled.div`
@@ -1886,6 +1892,12 @@ const CardBlackFace = styled.div`
   align-items: center;
   z-index: 0;
   overflow: hidden; /* ensure sheen stays clipped to this card */
+
+  /* Match expanded subskills card footprint */
+  .skills-subcard & {
+    width: min(100%, 760px);
+    height: 412px;
+  }
 
   /* Border-only highlight overlay (keeps existing style, just animates emphasis) */
   &::before {
@@ -2045,6 +2057,8 @@ const RuleOfThirdsOverlay = styled.div`
 `;
 
 const SkillArsenal = () => {
+  const [activeSubskills, setActiveSubskills] = useState<"core" | "tools" | null>(null);
+
   return (
     <section
       id="skills"
@@ -2065,6 +2079,11 @@ const SkillArsenal = () => {
             <motion.div
               className="flex flex-wrap justify-center items-center gap-8 w-full"
               initial={{ opacity: 1 }}
+              animate={{
+                opacity: activeSubskills ? 0 : 1,
+              }}
+              transition={{ duration: MORPH_DUR, ease: MORPH_EASE }}
+              style={{ pointerEvents: activeSubskills ? "none" : "auto" }}
             >
               <motion.div
                 initial={{ y: 40, opacity: 0 }}
@@ -2072,7 +2091,18 @@ const SkillArsenal = () => {
                 viewport={{ once: true, amount: 0.3 }}
                 transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0 }}
               >
-                <UiverseCard className="skills-main-card">
+                <UiverseCard
+                  className="skills-main-card"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setActiveSubskills("core")}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setActiveSubskills("core");
+                    }
+                  }}
+                >
                   <CardBlackFace>
                     {showRuleOfThirds && <RuleOfThirdsOverlay />}
                     <span
@@ -2127,7 +2157,18 @@ const SkillArsenal = () => {
                 viewport={{ once: true, amount: 0.3 }}
                 transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.18 }}
               >
-                <UiverseCard className="skills-main-card">
+                <UiverseCard
+                  className="skills-main-card"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setActiveSubskills("tools")}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setActiveSubskills("tools");
+                    }
+                  }}
+                >
                   <CardBlackFace>
                     {showRuleOfThirds && <RuleOfThirdsOverlay />}
                     <span
@@ -2195,6 +2236,84 @@ const SkillArsenal = () => {
               </motion.div>
             </motion.div>
           </div>
+          <AnimatePresence>
+            {activeSubskills && (
+              <motion.div
+                key="skills-subcard"
+                initial={{ opacity: 0, scale: 0.95, y: 32 }}
+                animate={{ opacity: 1, scale: 1.18, y: -8 }}
+                exit={{ opacity: 0, scale: 1.02, y: 16 }}
+                transition={{ duration: MORPH_EXPAND_DUR, ease: MORPH_EXPAND_EASE }}
+                className="absolute inset-0 flex items-center justify-center pointer-events-auto"
+                onClick={() => setActiveSubskills(null)}
+              >
+                <UiverseCard className="skills-main-card skills-subcard">
+                  <CardBlackFace>
+                    {showRuleOfThirds && <RuleOfThirdsOverlay />}
+                    <div className="relative z-10 px-8 py-6 text-left space-y-4">
+                      <div className="flex items-center justify-between gap-6">
+                        <div className="space-y-1">
+                          <p className="text-[10px] uppercase tracking-[0.25em] text-zinc-400">
+                            SYSTEM // {activeSubskills === "core" ? "CORE SUB-SKILLS" : "TOOLS SUB-SKILLS"}
+                          </p>
+                          <p className="font-display text-lg md:text-xl tracking-[0.14em] uppercase text-white">
+                            {activeSubskills === "core" ? "Execution Detail" : "Operational Stack"}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveSubskills(null);
+                          }}
+                          className="text-[10px] tracking-[0.24em] uppercase text-zinc-400 hover:text-white transition-colors"
+                        >
+                          CLOSE
+                        </button>
+                      </div>
+                      {activeSubskills === "core" ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-[13px] leading-relaxed text-zinc-100">
+                          <ul className="space-y-1.5">
+                            <li>Story structure, pacing, and revision at script and longform scale.</li>
+                            <li>Multi-channel editorial calendars that actually ship on schedule.</li>
+                            <li>Community tone-setting, moderation, and escalation paths.</li>
+                          </ul>
+                          <ul className="space-y-1.5">
+                            <li>Analytics-informed content decisions without losing the human voice.</li>
+                            <li>Cross-functional collaboration with design, video, and growth teams.</li>
+                            <li>Documenting systems so future collaborators can move fast.</li>
+                          </ul>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-[13px] leading-relaxed text-zinc-100">
+                          <div>
+                            <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-400 mb-1">
+                              CREATIVE TOOLCHAIN
+                            </p>
+                            <ul className="space-y-1.5">
+                              <li>Adobe Creative Suite · DaVinci Resolve · CapCut · Canva.</li>
+                              <li>Template systems for repeatable, on-brand motion and layouts.</li>
+                              <li>Versioning habits that keep experiments safe and reversible.</li>
+                            </ul>
+                          </div>
+                          <div>
+                            <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-400 mb-1">
+                              DISTRIBUTION & OPS
+                            </p>
+                            <ul className="space-y-1.5">
+                              <li>Hootsuite, native Instagram/TikTok tools, and Shorts publishing.</li>
+                              <li>Slotting content into weekly/seasonal rhythms without burnout.</li>
+                              <li>Lightweight dashboards to monitor watch-time, saves, and CTR.</li>
+                            </ul>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </CardBlackFace>
+                </UiverseCard>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </section>
