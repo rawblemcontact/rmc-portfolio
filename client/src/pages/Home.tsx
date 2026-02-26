@@ -2272,39 +2272,102 @@ const SkillArsenal = () => {
                         </button>
                       </div>
                       {activeSubskills === "core" ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-[13px] leading-relaxed text-zinc-100">
-                          <ul className="space-y-1.5">
-                            <li>Story structure, pacing, and revision at script and longform scale.</li>
-                            <li>Multi-channel editorial calendars that actually ship on schedule.</li>
-                            <li>Community tone-setting, moderation, and escalation paths.</li>
-                          </ul>
-                          <ul className="space-y-1.5">
-                            <li>Analytics-informed content decisions without losing the human voice.</li>
-                            <li>Cross-functional collaboration with design, video, and growth teams.</li>
-                            <li>Documenting systems so future collaborators can move fast.</li>
-                          </ul>
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-[13px] leading-relaxed text-zinc-100">
-                          <div>
-                            <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-400 mb-1">
-                              CREATIVE TOOLCHAIN
-                            </p>
+                        <div className="space-y-3 text-[13px] leading-relaxed text-zinc-100">
+                          <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-400">
+                            Core Competencies
+                          </p>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <ul className="space-y-1.5">
-                              <li>Adobe Creative Suite · DaVinci Resolve · CapCut · Canva.</li>
-                              <li>Template systems for repeatable, on-brand motion and layouts.</li>
-                              <li>Versioning habits that keep experiments safe and reversible.</li>
+                              {[
+                                "Content Writing",
+                                "Content Editing",
+                                "Proofreading",
+                                "Storytelling",
+                                "Narrative Development",
+                                "Digital Media Coordination",
+                                "Social Media Operations",
+                                "Audience Engagement",
+                              ].map((label) => (
+                                <li key={label} className="flex items-center gap-2">
+                                  <SiArc size={12} className="shrink-0 text-cyan-400 opacity-80" />
+                                  <span>{label}</span>
+                                </li>
+                              ))}
+                            </ul>
+                            <ul className="space-y-1.5">
+                              {[
+                                "Visual Communication",
+                                "Content Production",
+                                "Research",
+                                "Fact-Checking",
+                                "Time Management",
+                                "Team Collaboration",
+                                "Independent Work",
+                              ].map((label) => (
+                                <li key={label} className="flex items-center gap-2">
+                                  <SiArc size={12} className="shrink-0 text-cyan-400 opacity-80" />
+                                  <span>{label}</span>
+                                </li>
+                              ))}
                             </ul>
                           </div>
-                          <div>
-                            <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-400 mb-1">
-                              DISTRIBUTION & OPS
-                            </p>
-                            <ul className="space-y-1.5">
-                              <li>Hootsuite, native Instagram/TikTok tools, and Shorts publishing.</li>
-                              <li>Slotting content into weekly/seasonal rhythms without burnout.</li>
-                              <li>Lightweight dashboards to monitor watch-time, saves, and CTR.</li>
-                            </ul>
+                        </div>
+                      ) : (
+                        <div className="space-y-3 text-[13px] leading-relaxed text-zinc-100">
+                          <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-400">
+                            Tools &amp; Technologies
+                          </p>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                              <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-400 mb-1">
+                                Design &amp; Productivity
+                              </p>
+                              <ul className="space-y-1.5">
+                                {[
+                                  "Microsoft Office 365",
+                                  "Adobe Creative Suite",
+                                  "Canva",
+                                  "Procreate",
+                                  "Clip Studio Pro",
+                                ].map((tool) => (
+                                  <li key={tool} className="flex items-center gap-2">
+                                    <ToolIcon name={tool} size={14} />
+                                    <span>{tool}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                            <div>
+                              <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-400 mb-1">
+                                Video &amp; Writing
+                              </p>
+                              <ul className="space-y-1.5">
+                                {["DaVinci Resolve", "CapCut", "Final Draft", "Arc Studio"].map((tool) => (
+                                  <li key={tool} className="flex items-center gap-2">
+                                    <ToolIcon name={tool} size={14} />
+                                    <span>{tool}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                            <div>
+                              <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-400 mb-1">
+                                Social Platforms
+                              </p>
+                              <ul className="space-y-1.5">
+                                {[
+                                  "Hootsuite",
+                                  "TikTok Creator Tools",
+                                  "Instagram Reels",
+                                  "YouTube Shorts",
+                                ].map((tool) => (
+                                  <li key={tool} className="flex items-center gap-2">
+                                    <ToolIcon name={tool} size={14} />
+                                    <span>{tool}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
                           </div>
                         </div>
                       )}
