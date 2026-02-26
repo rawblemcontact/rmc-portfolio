@@ -325,6 +325,8 @@
     transform: scale(1.08);
   }
 
+  /* (border animation for skills cards intentionally removed) */
+
   /* Tool pills: favicon logos → white to match Simple Icons */
   .tool-logo-favicon {
     height: 22px;

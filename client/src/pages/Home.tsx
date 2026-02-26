@@ -1877,17 +1877,59 @@ const CardBlackFace = styled.div`
   transform: translate(-50%, -50%);
   width: 364px;
   height: 274px;
-  /* No card background — just an outline over the global black field */
-  background: transparent;
+  /* Subtle glassy background over the global black field */
+  background: rgba(0, 0, 0, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 0;
+  overflow: hidden; /* ensure sheen stays clipped to this card */
 
-  &:hover {
-    border-color: rgba(255, 255, 255, 0.25);
+  /* Border-only highlight overlay (keeps existing style, just animates emphasis) */
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  &:hover::before {
+    opacity: 1;
+  }
+
+  /* Sheen wipe overlay on hover (Quiet Turkey–style), preserving existing style */
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: linear-gradient(
+      120deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.03) 35%,
+      rgba(255, 255, 255, 0.16) 47%,
+      rgba(255, 255, 255, 0.16) 53%,
+      rgba(255, 255, 255, 0.03) 65%,
+      transparent 100%
+    );
+    transform: translateX(-140%) skewX(-12deg);
+    opacity: 0;
+    transition:
+      transform 0.75s cubic-bezier(0.19, 1, 0.22, 1),
+      opacity 0.45s cubic-bezier(0.19, 1, 0.22, 1);
+    mix-blend-mode: screen;
+  }
+
+  &:hover::after {
+    transform: translateX(140%) skewX(-12deg);
+    opacity: 1;
   }
 `;
 
@@ -1906,7 +1948,7 @@ const BulbSvg = styled.svg`
 const AiIdeaSvg = styled.svg`
   fill: none;
   stroke: #f5f5f5;
-  stroke-width: 1.5;
+  stroke-width: 1.2;
   stroke-linecap: round;
   stroke-linejoin: round;
   width: 70px;
@@ -1920,10 +1962,7 @@ const AiIdeaSvg = styled.svg`
 const GearSvg = styled.svg`
   width: 70px;
   transition: 0.4s all;
-
-  path {
-    fill: #ffffff;
-  }
+  color: #f5f5f5;
 `;
 
 const CardTitleSlot = styled.div`
@@ -1955,8 +1994,7 @@ const AI_IDEA_STAR =
 const AI_IDEA_LINE =
   "M13.5 19v1c0 .943 0 1.414-.293 1.707S12.443 22 11.5 22s-1.414 0-1.707-.293S9.5 20.943 9.5 20v-1";
 
-const GEAR_PATH =
-  "M128 82a46 46 0 1 0 46 46a46.06 46.06 0 0 0-46-46m0 80a34 34 0 1 1 34-34a34 34 0 0 1-34 34m86-31.16c.06-1.89.06-3.79 0-5.68L229.33 106a6 6 0 0 0 1.11-5.29a105.3 105.3 0 0 0-10.68-25.81a6 6 0 0 0-4.53-3l-24.45-2.71q-1.93-2.07-4-4l-2.72-24.46a6 6 0 0 0-3-4.53a105.7 105.7 0 0 0-25.77-10.66a6 6 0 0 0-5.29 1.14l-19.2 15.37a90 90 0 0 0-5.68 0L106 26.67a6 6 0 0 0-5.29-1.11A105.3 105.3 0 0 0 74.9 36.24a6 6 0 0 0-3 4.53l-2.67 24.45q-2.07 1.94-4 4L40.76 72a6 6 0 0 0-4.53 3a105.7 105.7 0 0 0-10.66 25.77a6 6 0 0 0 1.11 5.23l15.37 19.2a90 90 0 0 0 0 5.68l-15.38 19.17a6 6 0 0 0-1.11 5.29a105.3 105.3 0 0 0 10.68 25.76a6 6 0 0 0 4.53 3l24.45 2.71q1.94 2.07 4 4L72 215.24a6 6 0 0 0 3 4.53a105.7 105.7 0 0 0 25.77 10.66a6 6 0 0 0 5.29-1.11l19.1-15.32c1.89.06 3.79.06 5.68 0l19.21 15.38a6 6 0 0 0 3.75 1.31a6.2 6.2 0 0 0 1.54-.2a105.3 105.3 0 0 0 25.76-10.68a6 6 0 0 0 3-4.53l2.71-24.45q2.07-1.93 4-4l24.46-2.72a6 6 0 0 0 4.53-3a105.5 105.5 0 0 0 10.66-25.77a6 6 0 0 0-1.11-5.29Zm-3.1 41.63l-23.64 2.63a6 6 0 0 0-3.82 2a75 75 0 0 1-6.31 6.31a6 6 0 0 0-2 3.82l-2.63 23.63a94.3 94.3 0 0 1-17.36 7.14l-18.57-14.86a6 6 0 0 0-3.75-1.31h-.36a78 78 0 0 1-8.92 0a6 6 0 0 0-4.11 1.3L100.87 218a94 94 0 0 1-17.34-7.17l-2.63-23.62a6 6 0 0 0-2-3.82a75 75 0 0 1-6.31-6.31a6 6 0 0 0-3.82-2l-23.63-2.63A94.3 94.3 0 0 1 38 155.14l14.86-18.57a6 6 0 0 0 1.3-4.11a78 78 0 0 1 0-8.92a6 6 0 0 0-1.3-4.11L38 100.87a94 94 0 0 1 7.17-17.34l23.62-2.63a6 6 0 0 0 3.82-2a75 75 0 0 1 6.31-6.31a6 6 0 0 0 2-3.82l2.63-23.63A94.3 94.3 0 0 1 100.86 38l18.57 14.86a6 6 0 0 0 4.11 1.3a78 78 0 0 1 8.92 0a6 6 0 0 0 4.11-1.3L155.13 38a94 94 0 0 1 17.34 7.17l2.63 23.64a6 6 0 0 0 2 3.82a75 75 0 0 1 6.31 6.31a6 6 0 0 0 3.82 2l23.63 2.63a94.3 94.3 0 0 1 7.14 17.29l-14.86 18.57a6 6 0 0 0-1.3 4.11a78 78 0 0 1 0 8.92a6 6 0 0 0 1.3 4.11L218 155.13a94 94 0 0 1-7.15 17.34Z";
+
 
 const SKILLS_EXPAND_EASE = [0.22, 1, 0.36, 1] as const;
 const SKILLS_EXPAND_EXIT_DUR = 0.28;
@@ -2108,8 +2146,26 @@ const SkillArsenal = () => {
                           height: SKILLS_CARD_LAYOUT.tools.icon.size,
                         }}
                       >
-                        {/* Remove evenodd so inner "hole" fills as well */}
-                        <path d={GEAR_PATH} />
+                        <rect width="256" height="256" fill="none" />
+                        {/* Gear outline + inner ring, stroke-only (no fill animation) */}
+                        <path
+                          d="M130.05,206.11c-1.34,0-2.69,0-4,0L94,224a104.61,104.61,0,0,1-34.11-19.2l-.12-36c-.71-1.12-1.38-2.25-2-3.41L25.9,147.24a99.15,99.15,0,0,1,0-38.46l31.84-18.1c.65-1.15,1.32-2.29,2-3.41l.16-36A104.58,104.58,0,0,1,94,32l32,17.89c1.34,0,2.69,0,4,0L162,32a104.61,104.61,0,0,1,34.11,19.2l.12,36c.71,1.12,1.38,2.25,2,3.41l31.85,18.14a99.15,99.15,0,0,1,0,38.46l-31.84,18.1c-.65,1.15-1.32,2.29-2,3.41l-.16,36A104.58,104.58,0,0,1,162,224Z"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="11"
+                        />
+                        <circle
+                          cx="128"
+                          cy="128"
+                          r="40"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="11"
+                        />
                       </GearSvg>
                     </span>
                     <CardTitleSlot
