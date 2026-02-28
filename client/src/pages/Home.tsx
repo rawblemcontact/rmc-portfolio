@@ -25,10 +25,13 @@ import {
   ChevronLeft,
   ChevronRight,
   User,
-  Briefcase
+  Briefcase,
+  Monitor,
+  ListOrdered
 } from "lucide-react";
 import styled from "styled-components";
 import { TiltCard } from "@/components/TiltCard";
+import { ExpandCircleButton } from "@/components/ExpandCircleButton";
 import { WordsPullUp } from "@/components/WordsPullUp";
 import { FloatingPhone } from "@/components/FloatingPhone";
 import {
@@ -418,6 +421,8 @@ type TextShutterProps = {
   split?: "words" | "chars" | "none";
   /** "mount" = animate on load; "viewport" = animate when scrolled into view */
   trigger?: "mount" | "viewport";
+  /** When trigger is viewport: if false, animation resets when leaving view so it plays again on re-entry */
+  viewportOnce?: boolean;
 };
 
 const TextShutter = ({
@@ -430,6 +435,7 @@ const TextShutter = ({
   delay = 0,
   split = "words",
   trigger = "mount",
+  viewportOnce = true,
 }: TextShutterProps) => {
   const isLtr = direction === "ltr";
   const closedClip = isLtr ? "inset(0 100% 0 0)" : "inset(0 0 0 100%)";
@@ -455,7 +461,7 @@ const TextShutter = ({
           {...(trigger === "viewport"
             ? {
                 whileInView: { clipPath: openClip },
-                viewport: { once: true, margin: "-40px 0px -40px 0px" },
+                viewport: { once: viewportOnce, margin: "-40px 0px -40px 0px" },
                 transition: transition(i),
               }
             : {
@@ -577,7 +583,7 @@ const BackToMenuButton = ({
           transition={{ duration: DUR.fast, ease: EASE.out }}
           className="fixed z-50"
           style={{
-            left: "calc(0.75rem + env(safe-area-inset-left))",
+            left: "calc(1rem + env(safe-area-inset-left))",
             bottom: "calc(0.75rem + env(safe-area-inset-bottom))",
           }}
         >
@@ -606,6 +612,14 @@ const SectionHeader = ({
   showBar = true,
   compact = false,
   betweenTitleAndSubtitle,
+  className: classNameProp,
+  titleDelay = 0,
+  titleDuration = 0.45,
+  titleStagger = 0.04,
+  viewportOnce = true,
+  slideFade = false,
+  slideFadeDuration,
+  slideFadeDelay = 0,
 }: {
   title: string;
   subtitle?: string;
@@ -614,6 +628,21 @@ const SectionHeader = ({
   showBar?: boolean;
   compact?: boolean;
   betweenTitleAndSubtitle?: React.ReactNode;
+  className?: string;
+  /** Delay (seconds) before title animation starts, e.g. to match another element. */
+  titleDelay?: number;
+  /** Title TextShutter duration (seconds). */
+  titleDuration?: number;
+  /** Title TextShutter stagger (seconds). */
+  titleStagger?: number;
+  /** When true, title TextShutter uses viewport once: false so it resets on leave and plays again on entry. */
+  viewportOnce?: boolean;
+  /** When true, whole header slides up and fades in on entry. */
+  slideFade?: boolean;
+  /** Duration for slideFade (default 0.4). */
+  slideFadeDuration?: number;
+  /** Delay before slideFade starts (seconds). */
+  slideFadeDelay?: number;
 }) => {
   const sizeClasses =
     title === "SKILLS"
@@ -622,12 +651,12 @@ const SectionHeader = ({
         ? "text-3xl md:text-5xl"
         : "text-4xl md:text-6xl";
 
-  return (
-    <div
-      className={`flex flex-col ${align === "center" ? "items-center text-center" : "items-start text-left"} ${
-        compact ? "mb-10" : "mb-16"
-      } relative z-10`}
-    >
+  const baseClass = `flex flex-col ${align === "center" ? "items-center text-center" : "items-start text-left"} ${
+    compact ? "mb-10" : "mb-16"
+  } relative z-10 ${classNameProp ?? ""}`;
+
+  const content = (
+    <>
       {showBar && (
         <motion.div
           initial={{ scaleX: 0, originX: align === "center" ? 0.5 : 0 }}
@@ -643,10 +672,12 @@ const SectionHeader = ({
           text={title}
           as="span"
           direction="ltr"
-          duration={0.45}
-          stagger={0.04}
+          duration={titleDuration}
+          stagger={titleStagger}
           split="words"
           trigger="viewport"
+          delay={titleDelay}
+          viewportOnce={viewportOnce}
         />
       </h2>
       {betweenTitleAndSubtitle && (
@@ -657,8 +688,24 @@ const SectionHeader = ({
           {subtitle}
         </p>
       )}
-    </div>
+    </>
   );
+
+  if (slideFade) {
+    return (
+      <motion.div
+        className={baseClass}
+        initial={{ y: 14, opacity: 0 }}
+        whileInView={{ y: 0, opacity: 1 }}
+        viewport={{ once: viewportOnce, amount: 0.2 }}
+        transition={{ duration: slideFadeDuration ?? 0.4, delay: slideFadeDelay, ease: [0.16, 1, 0.3, 1] }}
+      >
+        {content}
+      </motion.div>
+    );
+  }
+
+  return <div className={baseClass}>{content}</div>;
 };
 
 // --- HERO SECTION ---
@@ -1019,9 +1066,9 @@ const SideNavOverlay = ({
                   type="button"
                   onClick={onClose}
                   aria-label="Close menu"
-                  className="h-12 w-12 rounded-full bg-white text-black hover:bg-black hover:text-white border-2 border-black p-0"
+                  className="h-16 w-16 rounded-full bg-black text-white hover:bg-white hover:text-black border-4 border-black p-0 shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                 >
-                  <X size={22} aria-hidden />
+                  <X size={26} aria-hidden />
                 </Button>
               </motion.div>
             </div>
@@ -1141,63 +1188,146 @@ const SectionGridOverlay = () => {
   );
 };
 
+const RED_LINE_DELAY_MS = 229; // -10%
+const RED_LINE_DURATION_MS = 190; // -10%
+const RED_LINE_COMPLETE_MS = RED_LINE_DELAY_MS + RED_LINE_DURATION_MS;
+/** Fade-in / slide duration for the three buttons (ms). */
+const BUTTON_FADE_DURATION_MS = 486; // -10%
+/** Shutter overlay duration (ms). */
+const SHUTTER_DURATION_MS = 176; // -10%
+/** Summary delay + duration. Buttons start after summary finishes. */
+const SUMMARY_DELAY_S = 0.0455; // -10%
+const SUMMARY_DURATION_S = 0.306; // 0.34 * 0.9
+const BUTTONS_DELAY_AFTER_SUMMARY_MS = 85;
+
 const PhantomProfile = () => {
+  const profileLeftRef = useRef<HTMLDivElement>(null);
   const dividerRef = useRef<HTMLDivElement>(null);
+  const rawblemRef = useRef<HTMLDivElement>(null);
+  const profileLeftInView = useInView(profileLeftRef, { once: false, amount: 0.2 });
   const dividerInView = useInView(dividerRef, { once: false, amount: 0.5 });
+  const rawblemInView = useInView(rawblemRef, { once: false, amount: 0.2 });
+  const [overlayRevealed, setOverlayRevealed] = useState(false);
+  const [overlayEnterCount, setOverlayEnterCount] = useState(0);
+  const [rawblemFloatReady, setRawblemFloatReady] = useState(false);
+  const prevProfileInView = useRef(false);
+
+  useEffect(() => {
+    if (!rawblemInView) setRawblemFloatReady(false);
+  }, [rawblemInView]);
+
+  // Overlay + buttons: reset when section leaves; start only after red line anim completes
+  useEffect(() => {
+    if (profileLeftInView) {
+      if (!prevProfileInView.current) {
+        setOverlayRevealed(false);
+        setOverlayEnterCount((c) => c + 1); // force fresh overlay on each enter
+        prevProfileInView.current = true;
+      }
+      const revealId = window.setTimeout(() => setOverlayRevealed(true), Math.max(0, RED_LINE_COMPLETE_MS - 90));
+      return () => window.clearTimeout(revealId);
+    } else {
+      prevProfileInView.current = false;
+      setOverlayRevealed(false);
+    }
+  }, [profileLeftInView]);
+
   return (
     <section id="profile" className={`relative py-16 md:py-20 pb-12 bg-black text-white scroll-mt-6 ${SLIDE}`}>
       <SectionGridOverlay />
       <div className="container mx-auto px-6 relative z-20">
         <div className="flex flex-col lg:flex-row gap-10 lg:gap-12 items-center lg:items-start">
           <motion.div 
+            ref={profileLeftRef}
             initial={{ opacity: 0, x: -50 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: false, amount: 0.2 }}
-            className="w-full lg:w-1/2 mt-[20%]"
+            transition={{ duration: 0.342, ease: [0.16, 1, 0.3, 1] }}
+            className="w-full lg:w-1/2 lg:min-w-[36rem] lg:shrink-0 mt-[25%]"
           >
              <SectionHeader
+               key={profileLeftInView ? "profile-in" : "profile-out"}
                title="PROFILE"
                color="text-white"
                showBar={false}
                compact
+               className="!mb-5 -mt-[5%] -ml-[3px]"
+               titleDelay={0.152}
+               titleDuration={0.342}
+               titleStagger={0.0216}
+               viewportOnce={false}
+               slideFade
+               slideFadeDuration={0.5}
+               slideFadeDelay={0.3}
              />
              <div
                ref={dividerRef}
-               className="relative border-b border-white/10 w-full max-w-xl mt-4"
+               className="relative w-full max-w-xl mt-1 min-h-[2px]"
              >
                <motion.span
                  aria-hidden
                  className="absolute bottom-0 left-0 right-0 h-[2px] origin-left bg-red-600"
                  initial={false}
                  animate={{ scaleX: dividerInView ? 1 : 0 }}
-                 transition={{ duration: 0.375, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                 transition={{ duration: RED_LINE_DURATION_MS / 1000, delay: RED_LINE_DELAY_MS / 1000, ease: [0.16, 1, 0.3, 1] }}
                />
+            </div>
+            <div
+              className="relative w-full max-w-xl mt-1 overflow-visible min-w-0 min-h-[60px] isolate"
+              style={{ marginLeft: "-20px" }}
+            >
+              <motion.div
+                className="flex flex-nowrap items-center gap-1"
+                initial={{ x: -24, opacity: 0 }}
+                animate={{ x: overlayRevealed ? 0 : -24, opacity: overlayRevealed ? 1 : 0 }}
+                transition={{ duration: BUTTON_FADE_DURATION_MS / 1000, delay: overlayRevealed ? BUTTONS_DELAY_AFTER_SUMMARY_MS / 1000 : 0, ease: [0.16, 1, 0.3, 1] }}
+              >
+               <ExpandCircleButton icon={<FileText size={24} />} expanded>Writer</ExpandCircleButton>
+               <ExpandCircleButton icon={<Monitor size={24} />} expanded>Digital Media</ExpandCircleButton>
+               <ExpandCircleButton icon={<ListOrdered size={24} />} expanded>Content Strategy</ExpandCircleButton>
+              </motion.div>
+              <motion.div
+                key={overlayEnterCount}
+                className="absolute inset-0 z-[20] bg-black pointer-events-none origin-right"
+                initial={{ scaleX: 1 }}
+                animate={{ scaleX: overlayRevealed ? 0 : 1 }}
+                transition={{ duration: SHUTTER_DURATION_MS / 1000, delay: overlayRevealed ? BUTTONS_DELAY_AFTER_SUMMARY_MS / 1000 : 0, ease: "linear" }}
+                aria-hidden
+              />
              </div>
-             <div className="mt-6 max-w-xl">
+             <motion.div
+               className="mt-3 max-w-xl"
+               initial={{ opacity: 0, y: 14 }}
+               animate={{ opacity: overlayRevealed ? 1 : 0, y: overlayRevealed ? 0 : 14 }}
+               transition={{ duration: SUMMARY_DURATION_S, delay: overlayRevealed ? SUMMARY_DELAY_S : 0, ease: [0.16, 1, 0.3, 1] }}
+             >
                <p className="font-heading text-sm tracking-[0.22em] uppercase text-zinc-400 mb-2">SUMMARY</p>
                <p className="font-body text-base md:text-lg text-zinc-300 leading-relaxed">
                  Writer and digital media coordinator focused on interactive content creation and community management. Blends creative storytelling with analytical strategy to drive engagement.
                </p>
-             </div>
+             </motion.div>
           </motion.div>
           
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            whileInView={{ opacity: 1, scale: 1, y: 0 }}
+          <motion.div
+            ref={rawblemRef}
+            initial={{ opacity: 0, x: 48 }}
+            whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: false, amount: 0.2 }}
-            className="w-full lg:w-1/2 flex justify-center mt-6 lg:mt-[17.5%]"
+            transition={{ duration: 0.52, delay: 0, ease: [0.16, 1, 0.3, 1] }}
+            onAnimationComplete={() => rawblemInView && setRawblemFloatReady(true)}
+            className="w-full lg:w-1/2 lg:min-w-0 flex justify-center mt-6 lg:mt-[16%]"
           >
             <div className="w-full max-w-[240px] md:max-w-[300px] aspect-square flex items-center justify-center">
               <motion.img
                 src="/rawblem3.svg"
                 alt="RAWBLEM"
                 className="w-full h-full object-contain"
-                animate={{ y: [0, -8, 0] }}
-                transition={{
-                  duration: 3.2,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
+                animate={{ y: rawblemFloatReady ? [0, -8, 0] : 0 }}
+                transition={
+                  rawblemFloatReady
+                    ? { duration: 3.2, repeat: Infinity, ease: "easeInOut" }
+                    : { duration: 0 }
+                }
               />
             </div>
           </motion.div>
@@ -2894,7 +3024,7 @@ export default function Home() {
     >
       {/* Top-right controls (Resume + Hamburger) */}
       <motion.div
-        className="fixed top-6 right-6 z-50 flex items-center gap-3"
+        className="fixed top-6 right-4 z-50 flex items-center gap-3"
         initial={false}
         animate={{
           opacity: isResumeMode ? 1 : 1,
@@ -2903,19 +3033,6 @@ export default function Home() {
         }}
         transition={SPRING.ui}
       >
-        {!isResumeMode && (currentSlideId !== "menu" || currentSection !== null) && (
-          <motion.div whileTap={TAP} transition={SPRING.ui}>
-            <Button
-              type="button"
-              onClick={() => setIsSideNavOpen(true)}
-              aria-label="Open navigation menu"
-              className="h-16 w-16 rounded-full bg-white text-black hover:bg-black hover:text-white border-4 border-black p-0 shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-            >
-              <Menu size={26} aria-hidden />
-            </Button>
-          </motion.div>
-        )}
-
         <motion.div
           layoutId="resume-button"
           whileTap={TAP}
@@ -2927,13 +3044,26 @@ export default function Home() {
             aria-label={isResumeMode ? "Exit resume mode" : "Enter resume mode"}
             className={`shadow-xl border-4 transition-colors duration-200 font-display text-xl uppercase tracking-widest rounded-full h-16 w-16 p-0 flex items-center justify-center ${
               isResumeMode 
-                ? "bg-black text-white border-white hover:bg-zinc-800" 
-                : "bg-white text-black border-black hover:bg-black hover:text-white"
+                ? "bg-black text-white border-black hover:bg-zinc-800" 
+                : "bg-black text-white border-black hover:bg-white hover:text-black"
             }`}
           >
             {isResumeMode ? <Zap size={24} /> : <FileText size={24} />}
           </Button>
         </motion.div>
+
+        {!isResumeMode && (currentSlideId !== "menu" || currentSection !== null) && (
+          <motion.div whileTap={TAP} transition={SPRING.ui}>
+            <Button
+              type="button"
+              onClick={() => setIsSideNavOpen(true)}
+              aria-label="Open navigation menu"
+              className="h-16 w-16 rounded-full bg-black text-white hover:bg-white hover:text-black border-4 border-black p-0 shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+            >
+              <Menu size={26} aria-hidden />
+            </Button>
+          </motion.div>
+        )}
       </motion.div>
 
       {!isResumeMode && (
