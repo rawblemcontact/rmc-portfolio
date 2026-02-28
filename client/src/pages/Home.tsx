@@ -490,7 +490,7 @@ const NAV_ITEMS: { id: string; label: string; icon: LucideIcon; color: string; s
   { id: "profile", label: "PROFILE", sub: "Summary", icon: User, color: "bg-red-600", microLabel: "OPEN" },
   { id: "projects", label: "PROJECTS", sub: "Projects", icon: Zap, color: "bg-yellow-400", microLabel: "VIEW" },
   { id: "experience", label: "WORK EXPERIENCE", sub: "Career History", icon: Star, color: "bg-blue-600", microLabel: "ENTER" },
-  { id: "social", label: "INVOLVEMENT", sub: "Involvement", icon: Heart, color: "bg-pink-500", microLabel: "VIEW" },
+  { id: "social", label: "COMMUNITY", sub: "Community", icon: Heart, color: "bg-pink-500", microLabel: "VIEW" },
   { id: "skills", label: "SKILLS", sub: "Skills", icon: Briefcase, color: "bg-green-600", microLabel: "OPEN" },
 ];
 
@@ -605,6 +605,7 @@ const SectionHeader = ({
   color = "text-white",
   showBar = true,
   compact = false,
+  betweenTitleAndSubtitle,
 }: {
   title: string;
   subtitle?: string;
@@ -612,6 +613,7 @@ const SectionHeader = ({
   color?: string;
   showBar?: boolean;
   compact?: boolean;
+  betweenTitleAndSubtitle?: React.ReactNode;
 }) => {
   const sizeClasses =
     title === "SKILLS"
@@ -647,8 +649,11 @@ const SectionHeader = ({
           trigger="viewport"
         />
       </h2>
+      {betweenTitleAndSubtitle && (
+        <div className="mt-4">{betweenTitleAndSubtitle}</div>
+      )}
       {subtitle && (
-        <p className="font-heading text-sm md:text-base mt-3 bg-white/10 text-white px-3 py-1 inline-block tracking-[0.18em] uppercase border border-white/15 backdrop-blur-sm">
+        <p className="font-heading text-sm tracking-[0.22em] uppercase text-zinc-400 mt-2">
           {subtitle}
         </p>
       )}
@@ -1137,6 +1142,8 @@ const SectionGridOverlay = () => {
 };
 
 const PhantomProfile = () => {
+  const dividerRef = useRef<HTMLDivElement>(null);
+  const dividerInView = useInView(dividerRef, { once: false, amount: 0.5 });
   return (
     <section id="profile" className={`relative py-16 md:py-20 pb-12 bg-black text-white scroll-mt-6 ${SLIDE}`}>
       <SectionGridOverlay />
@@ -1146,25 +1153,31 @@ const PhantomProfile = () => {
             initial={{ opacity: 0, x: -50 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: false, amount: 0.2 }}
-            className="w-full lg:w-1/2"
+            className="w-full lg:w-1/2 mt-[20%]"
           >
-             <SectionHeader title="PROFESSIONAL PROFILE" subtitle="SUMMARY" color="text-white" showBar={false} compact />
-             
-             <div className="relative">
-                <div className="absolute -left-4 top-4 w-full h-full bg-white/5 border border-white/10"></div>
-                <div className="relative bg-white/5 border-l-8 border-red-600 p-6 md:p-7 shadow-xl p5-shadow">
-                  <p className="font-body text-lg md:text-xl leading-relaxed text-zinc-100 font-medium mb-4">
-                    Communications-focused writer and digital media coordinator with a proven track record in interactive content creation and community management.
-                  </p>
-                  <p className="font-body text-base md:text-lg text-zinc-300 leading-relaxed mb-6">
-                    Expert in blending creative storytelling with analytical strategy to drive engagement. Demonstrated reliability and leadership in high-pressure service environments.
-                  </p>
-                  
-                  <div className="flex flex-wrap gap-3">
-                    <Badge icon={GraduationCap} label="B.A. Writing" sub="University of Victoria" />
-                    <Badge icon={Trophy} label="Distinction" sub="Top Academic Performance" highlight />
-                  </div>
-                </div>
+             <SectionHeader
+               title="PROFILE"
+               color="text-white"
+               showBar={false}
+               compact
+             />
+             <div
+               ref={dividerRef}
+               className="relative border-b border-white/10 w-full max-w-xl mt-4"
+             >
+               <motion.span
+                 aria-hidden
+                 className="absolute bottom-0 left-0 right-0 h-[2px] origin-left bg-red-600"
+                 initial={false}
+                 animate={{ scaleX: dividerInView ? 1 : 0 }}
+                 transition={{ duration: 0.375, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
+               />
+             </div>
+             <div className="mt-6 max-w-xl">
+               <p className="font-heading text-sm tracking-[0.22em] uppercase text-zinc-400 mb-2">SUMMARY</p>
+               <p className="font-body text-base md:text-lg text-zinc-300 leading-relaxed">
+                 Writer and digital media coordinator focused on interactive content creation and community management. Blends creative storytelling with analytical strategy to drive engagement.
+               </p>
              </div>
           </motion.div>
           
@@ -1172,21 +1185,21 @@ const PhantomProfile = () => {
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             whileInView={{ opacity: 1, scale: 1, y: 0 }}
             viewport={{ once: false, amount: 0.2 }}
-            className="w-full lg:w-1/2 flex justify-center mt-6 lg:mt-0"
+            className="w-full lg:w-1/2 flex justify-center mt-6 lg:mt-[17.5%]"
           >
-            {/* Avatar Placeholder Icon */}
-            <TiltCard className="w-full max-w-sm md:max-w-md">
-              <div className="relative aspect-square bg-zinc-950 border-4 border-white/15 overflow-hidden shadow-[12px_12px_0px_0px_rgba(255,255,255,0.06)] flex items-center justify-center">
-                <div className="flex flex-col items-center gap-3 text-zinc-400">
-                  <div className="rounded-full border-4 border-white/20 bg-black/40 p-4 shadow-md">
-                    <User size={72} />
-                  </div>
-                  <span className="font-heading text-sm tracking-[0.2em] uppercase">
-                    Profile Placeholder
-                  </span>
-                </div>
-              </div>
-            </TiltCard>
+            <div className="w-full max-w-[240px] md:max-w-[300px] aspect-square flex items-center justify-center">
+              <motion.img
+                src="/rawblem3.svg"
+                alt="RAWBLEM"
+                className="w-full h-full object-contain"
+                animate={{ y: [0, -8, 0] }}
+                transition={{
+                  duration: 3.2,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              />
+            </div>
           </motion.div>
         </div>
       </div>
@@ -1337,7 +1350,7 @@ const ConfidantExperience = () => {
   );
 };
 
-// --- INVOLVEMENT ---
+// --- COMMUNITY ---
 const SocialLink = () => {
   return (
     <section id="social" className={`relative flex flex-col justify-center py-16 md:py-20 bg-black text-white scroll-mt-6 ${SLIDE}`}>
@@ -1351,7 +1364,7 @@ const SocialLink = () => {
           className="flex flex-col md:flex-row items-center gap-8 mb-12"
         >
            <h2 className="text-5xl md:text-7xl font-display text-white relative z-10">
-             INVOLVEMENT
+             COMMUNITY
            </h2>
            <motion.div
              whileHover={HOVER}
@@ -1370,7 +1383,7 @@ const SocialLink = () => {
             transition={{ duration: 0.55, ease: cardEase, delay: 0.1 }}
             className="rounded-xl bg-zinc-800/60 border border-white/10 p-8 min-h-[200px] w-full max-w-2xl flex items-center justify-center"
           >
-            <p className="text-zinc-500 text-sm">Involvement details coming soon</p>
+            <p className="text-zinc-500 text-sm">Community details coming soon</p>
           </motion.div>
         </div>
       </div>
@@ -2112,10 +2125,16 @@ const UiverseCard = styled.div`
     transform: scale(1.08);
   }
 
-  /* Expanded subskills overlay: span two cards wide, 1.5x height */
+  /* Main skill cards: 10% larger than base */
+  &.skills-main-card {
+    width: 396px;
+    height: 297px;
+  }
+
+  /* Expanded subskills overlay: span two cards wide, 1.5x height (+5% height, pull by bottom) */
   &.skills-subcard {
     width: min(100%, 752px);
-    height: 304px;
+    height: 319px;
   }
 `;
 
@@ -2136,10 +2155,16 @@ const CardBlackFace = styled.div`
   z-index: 0;
   overflow: hidden; /* ensure sheen stays clipped to this card */
 
-  /* Match expanded subskills card footprint */
+  /* Main skill cards: 10% larger inner face */
+  .skills-main-card:not(.skills-subcard) & {
+    width: 400px;
+    height: 301px;
+  }
+
+  /* Match expanded subskills card footprint (+5% height) */
   .skills-subcard & {
     width: min(100%, 760px);
-    height: 310px;
+    height: 326px;
   }
 
   /* Border-only highlight overlay (keeps existing style, just animates emphasis) */
@@ -2326,7 +2351,7 @@ const SkillArsenal = () => {
                 opacity: activeSubskills ? 0 : 1,
               }}
               transition={{ duration: MORPH_DUR, ease: MORPH_EASE }}
-              style={{ pointerEvents: activeSubskills ? "none" : "auto" }}
+              style={{ pointerEvents: activeSubskills ? "none" : "auto", transform: "translateY(5%)" }}
             >
               <motion.div
                 initial={{ y: 40, opacity: 0 }}
@@ -2484,7 +2509,7 @@ const SkillArsenal = () => {
               <motion.div
                 key="skills-subcard"
                 initial={{ opacity: 0, scale: 0.95, y: 32 }}
-                animate={{ opacity: 1, scale: 1.18, y: -8 }}
+                animate={{ opacity: 1, scale: 1.18, y: "-7.5%" }}
                 exit={{ opacity: 0, scale: 1.02, y: 16 }}
                 transition={{ duration: MORPH_EXPAND_DUR, ease: MORPH_EXPAND_EASE }}
                 className="absolute inset-0 flex items-center justify-center pointer-events-auto"
@@ -2493,7 +2518,18 @@ const SkillArsenal = () => {
                 <UiverseCard className="skills-main-card skills-subcard">
                   <CardBlackFace>
                     {showRuleOfThirds && <RuleOfThirdsOverlay />}
-                    <div className="relative z-10 px-6 md:px-8 py-4 text-left space-y-3 max-h-[70vh] overflow-y-auto">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveSubskills(null);
+                      }}
+                      className="absolute top-4 right-4 z-20 px-3 py-2 text-xs font-medium uppercase tracking-wider text-white border border-white/30 bg-white/5 hover:bg-cyan-500 hover:border-cyan-400 hover:text-white rounded-md transition-colors duration-200 shadow-sm"
+                      aria-label="Close subskills"
+                    >
+                      Close
+                    </button>
+                    <div className="relative z-10 px-6 md:px-8 py-4 pt-12 text-left space-y-3 max-h-[70vh] overflow-y-auto">
                       <div className="flex items-center justify-between gap-4 md:gap-6">
                         <div className="space-y-1">
                           <p className="text-[10px] uppercase tracking-[0.25em] text-zinc-400">
@@ -2503,16 +2539,6 @@ const SkillArsenal = () => {
                             {activeSubskills === "core" ? "Execution Detail" : "Operational Stack"}
                           </p>
                         </div>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActiveSubskills(null);
-                          }}
-                          className="text-[10px] tracking-[0.24em] uppercase text-zinc-400 hover:text-white transition-colors"
-                        >
-                          CLOSE
-                        </button>
                       </div>
                       {activeSubskills === "core" ? (
                         <div className="space-y-2.5 text-[12px] md:text-[13px] leading-snug text-zinc-100">
@@ -2643,7 +2669,7 @@ const ResumeView = () => {
 
       {/* Summary */}
       <section className="mb-10">
-        <h2 className="text-2xl font-bold uppercase border-b border-gray-300 pb-2 mb-4">Professional Profile</h2>
+        <h2 className="text-2xl font-bold uppercase border-b border-gray-300 pb-2 mb-4">Profile</h2>
         <p className="leading-relaxed text-gray-800">
           Communications-focused writer and digital media coordinator with a proven track record in interactive content creation and community management. Expert in blending creative storytelling with analytical strategy to drive engagement. Demonstrated reliability and leadership in high-pressure service environments.
         </p>
@@ -2711,9 +2737,9 @@ const ResumeView = () => {
         </div>
       </section>
 
-      {/* Involvement */}
+      {/* Community */}
       <section className="mb-10">
-        <h2 className="text-2xl font-bold uppercase border-b border-gray-300 pb-2 mb-4">Involvement</h2>
+        <h2 className="text-2xl font-bold uppercase border-b border-gray-300 pb-2 mb-4">Community</h2>
         <div className="mb-6">
           <div className="flex justify-between items-baseline mb-2">
             <h3 className="text-xl font-bold">University of Victoria E-Sports Community</h3>

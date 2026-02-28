@@ -252,7 +252,7 @@
     transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
   }
   .animated-button .arr-1 {
-    right: 12px;
+    right: 7px;
   }
   .animated-button .arr-2 {
     left: -25%;
@@ -272,7 +272,7 @@
   .animated-button .text {
     position: relative;
     z-index: 1;
-    transform: translateX(-14px);
+    transform: translateX(-6px);
     transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
   }
   .animated-button:hover {

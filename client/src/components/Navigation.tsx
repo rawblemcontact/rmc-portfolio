@@ -8,7 +8,7 @@ const menuItems = [
   { id: "profile", label: "PROFILE.", icon: User, color: "bg-red-600" },
   { id: "projects", label: "PROJECTS.", icon: Zap, color: "bg-yellow-400" },
   { id: "experience", label: "WORK EXPERIENCE.", icon: Star, color: "bg-blue-600" },
-  { id: "social", label: "INVOLVEMENT.", icon: Heart, color: "bg-pink-500" },
+  { id: "social", label: "COMMUNITY.", icon: Heart, color: "bg-pink-500" },
   { id: "skills", label: "SKILLS.", icon: Briefcase, color: "bg-green-600" },
 ];
 
