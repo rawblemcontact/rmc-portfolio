@@ -1,6 +1,6 @@
 // Force rebuild: 2024-05-21
 import { motion, AnimatePresence, Variants, useInView, useReducedMotion, useMotionValue, useTransform, animate } from "framer-motion";
-import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from "react";
+import React, { createContext, useContext, useEffect, useLayoutEffect, useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { FillIcon } from "@/components/FillIcon";
@@ -43,6 +43,7 @@ import {
   SiHootsuite,
   SiInstagram,
   SiTiktok,
+  SiYoutube,
   SiYoutubeshorts,
 } from "@icons-pack/react-simple-icons";
 import {
@@ -526,6 +527,9 @@ const SECTION_ACCENT_COLOR: Record<string, string> = {
   "project-1": "#facc15",
   "project-2": "#facc15",
   "project-3": "#facc15",
+  "project-4": "#facc15",
+  "project-5": "#facc15",
+  "project-6": "#facc15",
   experience: "#2563eb",
   social: "#ec4899",
   skills: "#16a34a",
@@ -1043,6 +1047,7 @@ const SideNavOverlay = ({
   onNavigate: (id: string) => void;
 }) => {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const gridPhase = useGridPhase();
 
   useEffect(() => {
     if (!open) return;
@@ -1056,23 +1061,49 @@ const SideNavOverlay = ({
   return (
     <AnimatePresence>
       {open && (
-        <>
-          <motion.button
-            type="button"
-            aria-label="Close navigation"
-            className="fixed inset-0 z-40 bg-black/60"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            onClick={onClose}
+        <motion.button
+          key="sidenav-overlay"
+          type="button"
+          aria-label="Close navigation"
+          className="fixed inset-0 z-[50] bg-black"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          onClick={onClose}
+        >
+          <div
+            className="pointer-events-none absolute inset-0 z-0 opacity-[0.04]"
+            style={{ ...gridOverlayStyle, backgroundPosition: `${gridPhase}px ${gridPhase}px` }}
+            aria-hidden
           />
-
-          <motion.nav
+        </motion.button>
+      )}
+      {open && (
+        <motion.div
+          key="sidenav-where-to-next"
+          className="fixed inset-0 md:right-[420px] z-[55] flex items-center justify-center pointer-events-none"
+          initial={false}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.04 }}
+        >
+          <motion.h2
+            initial={{ opacity: 0, y: 72 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.416, ease: [0.027, 0, 0.06, 1], delay: 0.45 }}
+            className="text-4xl md:text-6xl font-display text-white"
+          >
+            WHERE TO NEXT?
+          </motion.h2>
+        </motion.div>
+      )}
+      {open && (
+        <motion.nav
+          key="sidenav-nav"
             aria-label="Navigation"
             role="dialog"
             aria-modal="true"
-            className="fixed inset-y-0 right-0 z-50 w-full max-w-[420px] bg-black border-l-4 border-white/20 p-6 shadow-2xl flex flex-col"
+            className="fixed inset-y-0 right-0 z-[60] w-full max-w-[420px] bg-black border-l-4 border-white/20 p-6 shadow-2xl flex flex-col"
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
@@ -1151,23 +1182,20 @@ const SideNavOverlay = ({
             </div>
 
             <div className="mt-auto pt-8 border-t border-white/10">
-              <div className="flex items-center justify-between mb-4">
+              <div className="mb-4">
                 <span className="text-zinc-400 font-mono text-xs uppercase tracking-widest">
                   CONTACT
                 </span>
-                <span className="text-zinc-500 font-mono text-xs uppercase tracking-widest">
-                  ESC TO CLOSE
-                </span>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 flex-wrap">
                 <motion.a
-                  href="mailto:robbie@example.com"
-                  aria-label="Email"
+                  href="#"
+                  aria-label="YouTube"
                   whileHover={{ y: -3 }}
-                  className="bg-zinc-900/80 p-3 rounded-full text-zinc-300 transition-colors border border-white/10 hover:border-white/30 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                  className="bg-black p-3 rounded-full text-red-500 transition-colors border border-red-500/20 hover:border-red-500/50 hover:text-red-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                 >
-                  <Mail size={18} aria-hidden />
+                  <SiYoutube size={18} aria-hidden className="fill-current" />
                 </motion.a>
                 <motion.a
                   href="https://linkedin.com/in/robbie-mclaughlin"
@@ -1175,9 +1203,17 @@ const SideNavOverlay = ({
                   rel="noopener noreferrer"
                   aria-label="LinkedIn"
                   whileHover={{ y: -3 }}
-                  className="bg-zinc-900/80 p-3 rounded-full text-zinc-300 transition-colors border border-white/10 hover:border-white/30 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                  className="bg-black p-3 rounded-full text-blue-500 transition-colors border border-blue-500/20 hover:border-blue-500/50 hover:text-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                 >
                   <Linkedin size={18} aria-hidden />
+                </motion.a>
+                <motion.a
+                  href="#"
+                  aria-label="TikTok"
+                  whileHover={{ y: -3 }}
+                  className="bg-black p-3 rounded-full text-cyan-500 transition-colors border border-cyan-500/20 hover:border-cyan-500/50 hover:text-cyan-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                >
+                  <SiTiktok size={18} aria-hidden className="fill-current" />
                 </motion.a>
                 <motion.a
                   href="https://instagram.com/"
@@ -1185,14 +1221,21 @@ const SideNavOverlay = ({
                   rel="noopener noreferrer"
                   aria-label="Instagram"
                   whileHover={{ y: -3 }}
-                  className="bg-zinc-900/80 p-3 rounded-full text-zinc-300 transition-colors border border-white/10 hover:border-white/30 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                  className="bg-black p-3 rounded-full text-pink-500 transition-colors border border-pink-500/20 hover:border-pink-500/50 hover:text-pink-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                 >
-                  <Instagram size={18} aria-hidden />
+                  <SiInstagram size={18} aria-hidden className="fill-current" />
+                </motion.a>
+                <motion.a
+                  href="mailto:robbie@example.com"
+                  aria-label="Email"
+                  whileHover={{ y: -3 }}
+                  className="bg-black p-3 rounded-full text-zinc-300 transition-colors border border-white/10 hover:border-white/30 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                >
+                  <Mail size={18} aria-hidden />
                 </motion.a>
               </div>
             </div>
           </motion.nav>
-        </>
       )}
     </AnimatePresence>
   );
@@ -1382,43 +1425,105 @@ const StatRow = ({ label, value }: { label: string; value: string }) => (
   </div>
 );
 
-// --- PROJECTS (stacked cards, all visible and selectable) ---
+// --- PROJECTS (carousel: 6 projects, 3 visible, left/right arrows) ---
 const PROJECT_CARDS = [
   { id: "project-1", label: "Project 1" },
   { id: "project-2", label: "Project 2" },
   { id: "project-3", label: "Project 3" },
+  { id: "project-4", label: "Project 4" },
+  { id: "project-5", label: "Project 5" },
+  { id: "project-6", label: "Project 6" },
 ];
 
 const cardEase = [0.25, 0.46, 0.45, 0.94] as const;
+const TOTAL_PROJECTS = PROJECT_CARDS.length;
+const CAROUSEL_PAGES = TOTAL_PROJECTS - 2; // 4 pages: (1,2,3), (2,3,4), (3,4,5), (4,5,6) then back to 1
 
-const ProjectsStack = ({ onSelect }: { onSelect: (id: string) => void }) => (
-  <div className="flex justify-center items-center py-8 overflow-x-auto overflow-y-hidden">
-    <div className="flex items-end justify-center gap-8 md:gap-12">
-      {PROJECT_CARDS.map((card, index) => (
+const ProjectsStack = ({ onSelect }: { onSelect: (id: string) => void }) => {
+  const [carouselIndex, setCarouselIndex] = useState(0);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [stepPx, setStepPx] = useState(268);
+  const [visibleWidthPx, setVisibleWidthPx] = useState(804); // 3 cards + 2 gaps
+
+  const measureStep = useCallback(() => {
+    const track = trackRef.current;
+    if (!track) return;
+    const card = track.querySelector("[data-carousel-card]") as HTMLElement | null;
+    if (!card) return;
+    const style = window.getComputedStyle(track);
+    const gapPx = parseFloat(style.gap) || 32;
+    const cardWidth = card.offsetWidth;
+    setStepPx(cardWidth + gapPx);
+    setVisibleWidthPx(3 * cardWidth + 2 * gapPx);
+  }, []);
+
+  useLayoutEffect(() => {
+    measureStep();
+    window.addEventListener("resize", measureStep);
+    return () => window.removeEventListener("resize", measureStep);
+  }, [measureStep]);
+
+  const goPrev = () => setCarouselIndex((i) => (i - 1 + CAROUSEL_PAGES) % CAROUSEL_PAGES);
+  const goNext = () => setCarouselIndex((i) => (i + 1) % CAROUSEL_PAGES);
+
+  return (
+    <div className="flex justify-center items-center gap-4 md:gap-6 py-8 overflow-hidden w-full">
+      <motion.button
+        type="button"
+        onClick={goPrev}
+        aria-label="Previous projects"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.98 }}
+        transition={{ duration: 0.2 }}
+        className="flex-shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-full border-2 border-white/20 flex items-center justify-center text-white hover:border-yellow-400/50 hover:text-yellow-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+      >
+        <ChevronLeft size={28} strokeWidth={2} aria-hidden />
+      </motion.button>
+
+      {/* Viewport: exactly 3 cards wide, overflow clips to 3 visible */}
+      <div
+        className="flex items-end overflow-hidden flex-shrink-0"
+        style={{ width: visibleWidthPx, maxWidth: "100%" }}
+      >
         <motion.div
-          key={card.id}
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: false, amount: 0.2 }}
-          transition={{ duration: 0.55, ease: cardEase, delay: index * 0.1 }}
+          ref={trackRef}
+          className="flex items-end gap-8 md:gap-12 flex-shrink-0"
+          style={{ width: "max-content" }}
+          animate={{ x: -carouselIndex * stepPx }}
+          transition={{ type: "spring", stiffness: 300, damping: 35 }}
         >
-          <motion.button
-            type="button"
-            onClick={() => onSelect(card.id)}
-            whileHover={{ y: -5, scale: 1.02 }}
-            whileTap={{ scale: 0.99 }}
-            transition={{ duration: 0.25, ease: cardEase }}
-            className="flex-shrink-0 w-[180px] md:w-[220px] h-[240px] md:h-[280px] rounded-xl bg-zinc-800/70 border-2 border-white/15 flex items-center justify-center shadow-xl hover:border-yellow-400/50 hover:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black relative"
-          >
-            <span className="font-heading text-sm md:text-base text-zinc-400 tracking-[0.14em] uppercase px-4">
-              {card.label}
-            </span>
-          </motion.button>
+            {PROJECT_CARDS.map((card) => (
+              <motion.button
+                key={card.id}
+                data-carousel-card
+                type="button"
+                onClick={() => onSelect(card.id)}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.2, ease: cardEase }}
+                className="flex-shrink-0 w-[180px] md:w-[220px] h-[240px] md:h-[280px] rounded-xl bg-transparent border-2 border-white/15 flex items-center justify-center shadow-xl hover:border-yellow-400/50 hover:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black relative"
+              >
+                <span className="font-heading text-sm md:text-base text-zinc-400 tracking-[0.14em] uppercase px-4 transition-colors duration-200 hover:text-zinc-300">
+                  {card.label}
+                </span>
+            </motion.button>
+          ))}
         </motion.div>
-      ))}
+      </div>
+
+      <motion.button
+        type="button"
+        onClick={goNext}
+        aria-label="Next projects"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.98 }}
+        transition={{ duration: 0.2 }}
+        className="flex-shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-full border-2 border-white/20 flex items-center justify-center text-white hover:border-yellow-400/50 hover:text-yellow-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+      >
+        <ChevronRight size={28} strokeWidth={2} aria-hidden />
+      </motion.button>
     </div>
-  </div>
-);
+  );
+};
 
 const ProjectDetailSlide = ({
   id,
@@ -3641,6 +3746,9 @@ export default function Home() {
                 {currentSection === "project-1" && <ProjectDetailSlide id="project-1" title="Project 1" onBack={() => navigateTo("projects")} />}
                 {currentSection === "project-2" && <ProjectDetailSlide id="project-2" title="Project 2" onBack={() => navigateTo("projects")} />}
                 {currentSection === "project-3" && <ProjectDetailSlide id="project-3" title="Project 3" onBack={() => navigateTo("projects")} />}
+                {currentSection === "project-4" && <ProjectDetailSlide id="project-4" title="Project 4" onBack={() => navigateTo("projects")} />}
+                {currentSection === "project-5" && <ProjectDetailSlide id="project-5" title="Project 5" onBack={() => navigateTo("projects")} />}
+                {currentSection === "project-6" && <ProjectDetailSlide id="project-6" title="Project 6" onBack={() => navigateTo("projects")} />}
                 {currentSection === "experience" && <ConfidantExperience />}
                 {currentSection === "social" && <SocialLink />}
                 {currentSection === "skills" && <SkillArsenal />}
