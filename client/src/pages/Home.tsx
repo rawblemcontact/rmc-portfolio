@@ -24,6 +24,8 @@ import {
   Zap,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
+  ChevronDown,
   User,
   Briefcase,
   Monitor,
@@ -43,6 +45,7 @@ import {
   SiTiktok,
   SiYoutubeshorts,
 } from "@icons-pack/react-simple-icons";
+import { EXPERIENCE_BLOCK_POSITION, EXPERIENCE_BLOCK_POSITION_X, EXP_SNAP_POINTS } from "@/config/experience-position";
 
 function AdobeSuiteIcon({
   size = 18,
@@ -495,9 +498,9 @@ const scrollToId = (id: string, behavior: ScrollBehavior = "smooth") => {
 const NAV_ITEMS: { id: string; label: string; icon: LucideIcon; color: string; sub: string; microLabel: string }[] = [
   { id: "profile", label: "PROFILE", sub: "Summary", icon: User, color: "bg-red-600", microLabel: "OPEN" },
   { id: "projects", label: "PROJECTS", sub: "Projects", icon: Zap, color: "bg-yellow-400", microLabel: "VIEW" },
-  { id: "experience", label: "WORK EXPERIENCE", sub: "Career History", icon: Star, color: "bg-blue-600", microLabel: "ENTER" },
-  { id: "social", label: "COMMUNITY", sub: "Community", icon: Heart, color: "bg-pink-500", microLabel: "VIEW" },
+  { id: "experience", label: "EXPERIENCE", sub: "Career History", icon: Star, color: "bg-blue-600", microLabel: "ENTER" },
   { id: "skills", label: "SKILLS", sub: "Skills", icon: Briefcase, color: "bg-green-600", microLabel: "OPEN" },
+  { id: "social", label: "CONTACT", sub: "Contact", icon: Heart, color: "bg-pink-500", microLabel: "VIEW" },
 ];
 
 // Section id → accent color (hex) for transition panel edge (matches MENU item colors)
@@ -620,6 +623,7 @@ const SectionHeader = ({
   slideFade = false,
   slideFadeDuration,
   slideFadeDelay = 0,
+  titleTrigger = "viewport",
 }: {
   title: string;
   subtitle?: string;
@@ -643,6 +647,8 @@ const SectionHeader = ({
   slideFadeDuration?: number;
   /** Delay before slideFade starts (seconds). */
   slideFadeDelay?: number;
+  /** "mount" = animate once on mount only (no viewport); "viewport" = animate when in view. Use mount to prevent layout shift. */
+  titleTrigger?: "mount" | "viewport";
 }) => {
   const sizeClasses =
     title === "SKILLS"
@@ -675,7 +681,7 @@ const SectionHeader = ({
           duration={titleDuration}
           stagger={titleStagger}
           split="words"
-          trigger="viewport"
+          trigger={titleTrigger}
           delay={titleDelay}
           viewportOnce={viewportOnce}
         />
@@ -830,7 +836,7 @@ const Hero = ({
             transition={{ duration: 0.2, delay: 0.5 }}
             className="font-mono text-[11px] md:text-xs text-zinc-500 tracking-widest uppercase mb-12"
           >
-            Writer / Digital Media / Narrative Systems
+            WRITER / DIGITAL MEDIA / NARRATIVE SYSTEMS
           </motion.p>
 
           <motion.div ref={heroInViewRef} variants={fadeInUp} className="flex items-center">
@@ -950,7 +956,7 @@ const RainbowMenuSlide = ({
       <div className="relative z-10 w-full max-w-4xl">
         <div className="flex items-end justify-between gap-6 mb-10">
           <div>
-            <p className="font-heading text-sm tracking-[0.22em] uppercase text-zinc-400 mb-2">Navigation</p>
+            <p className="font-heading text-sm tracking-[0.22em] uppercase text-zinc-400 mb-2">NAVIGATION</p>
             <h2 className="font-display text-5xl md:text-7xl tracking-tight leading-none">MENU</h2>
           </div>
         </div>
@@ -1058,7 +1064,7 @@ const SideNavOverlay = ({
           >
             <div className="flex items-center justify-between mb-8">
               <div>
-                <p className="font-mono text-xs text-zinc-400 tracking-widest uppercase">Menu</p>
+                <p className="font-mono text-xs text-zinc-400 tracking-widest uppercase">MENU</p>
                 <p className="font-display text-3xl tracking-[0.14em] uppercase leading-none">Navigate</p>
               </div>
               <motion.div whileTap={TAP} transition={SPRING.ui}>
@@ -1131,10 +1137,10 @@ const SideNavOverlay = ({
             <div className="mt-auto pt-8 border-t border-white/10">
               <div className="flex items-center justify-between mb-4">
                 <span className="text-zinc-400 font-mono text-xs uppercase tracking-widest">
-                  Contact
+                  CONTACT
                 </span>
                 <span className="text-zinc-500 font-mono text-xs uppercase tracking-widest">
-                  Esc to close
+                  ESC TO CLOSE
                 </span>
               </div>
 
@@ -1233,7 +1239,7 @@ const PhantomProfile = () => {
   }, [profileLeftInView]);
 
   return (
-    <section id="profile" className={`relative py-16 md:py-20 pb-12 bg-black text-white scroll-mt-6 ${SLIDE}`}>
+    <section id="profile" className={`relative min-h-screen w-full overflow-x-hidden py-16 md:py-20 pb-12 bg-black text-white scroll-mt-6 ${SLIDE}`}>
       <SectionGridOverlay />
       <div className="container mx-auto px-6 relative z-20">
         <div className="flex flex-col lg:flex-row gap-10 lg:gap-12 items-center lg:items-start">
@@ -1355,7 +1361,7 @@ const Badge = ({ icon: Icon, label, sub, highlight = false }: { icon: LucideIcon
 
 const StatRow = ({ label, value }: { label: string; value: string }) => (
   <div className="flex justify-between items-center group border-b border-zinc-800 pb-2 last:border-0">
-    <span className="text-zinc-400 group-hover:text-white transition-colors">{label}</span>
+    <span className="text-zinc-400 uppercase group-hover:text-white transition-colors">{label}</span>
     <span className="text-cyan-400 uppercase">{value}</span>
   </div>
 );
@@ -1407,7 +1413,7 @@ const ProjectDetailSlide = ({
   title: string;
   onBack: () => void;
 }) => (
-  <section id={id} className={`relative py-16 md:py-20 pb-12 bg-black text-white scroll-mt-6 ${SLIDE}`}>
+  <section id={id} className={`relative min-h-screen w-full overflow-x-hidden py-16 md:py-20 pb-12 bg-black text-white scroll-mt-6 ${SLIDE}`}>
     <SectionGridOverlay />
     <div className="container mx-auto px-6 relative z-10">
       <div className="max-w-4xl mx-auto">
@@ -1421,10 +1427,10 @@ const ProjectDetailSlide = ({
         <h2 className="font-display text-3xl md:text-5xl tracking-tight mb-8">{title}</h2>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-xl bg-zinc-800/60 border border-white/10 p-6 min-h-[200px] flex items-center justify-center">
-            <p className="text-zinc-500 text-sm">Project details coming soon</p>
+            <p className="text-zinc-500 text-sm uppercase">PROJECT DETAILS COMING SOON</p>
           </div>
           <div className="rounded-xl bg-zinc-800/60 border border-white/10 p-6 min-h-[200px] flex items-center justify-center">
-            <p className="text-zinc-500 text-sm">Additional content placeholder</p>
+            <p className="text-zinc-500 text-sm uppercase">ADDITIONAL CONTENT PLACEHOLDER</p>
           </div>
         </div>
       </div>
@@ -1433,7 +1439,7 @@ const ProjectDetailSlide = ({
 );
 
 const PalaceProjects = ({ onSelectProject }: { onSelectProject: (id: string) => void }) => (
-  <section id="projects" className={`relative flex flex-col justify-center py-16 md:py-20 bg-black text-white scroll-mt-6 ${SLIDE}`}>
+  <section id="projects" className={`relative flex flex-col justify-center min-h-screen w-full overflow-x-hidden py-16 md:py-20 bg-black text-white scroll-mt-6 ${SLIDE}`}>
     <SectionGridOverlay />
     <div className="container mx-auto px-6 relative z-10">
       <SectionHeader title="SELECTED WORK" subtitle="PROJECTS" align="center" showBar={false} compact />
@@ -1450,40 +1456,303 @@ const ProjectPoint = ({ text }: { text: string }) => (
 );
 
 // --- EXPERIENCE ---
+const EXPERIENCE_DATA = [
+  {
+    role: "Digital Content & Interactive Media Projects",
+    company: "RAWBLEM",
+    location: "Victoria, BC",
+    period: "October 2024 — Present",
+    bullets: [
+      "Created, produced, and distributed digital art and interactive narrative content across short-form video platforms.",
+      "Planned and executed a story-driven interactive project that reached 30,000+ views on TikTok through platform-driven engagement.",
+      "Edited and assembled short-form video using CapCut and DaVinci Resolve, applying timing, transitions, text overlays, animation, and audio synchronization to ensure clarity and pacing.",
+      "Adapted content for TikTok, Instagram Reels, and YouTube Shorts to align with platform-specific formatting standards.",
+      "Scheduled and coordinated content distribution using Hootsuite while monitoring and responding to audience engagement across multiple platforms.",
+      "Managed end-to-end creative workflows independently, from concept and scripting to visual design and audience-driven revision.",
+    ],
+  },
+  {
+    role: "Social Media Coordinator",
+    company: "UVIC E-Sports Community",
+    location: "Victoria, BC",
+    period: "January 2019 — January 2020",
+    bullets: [
+      "Coordinated and managed content across Facebook, Discord, and Twitch in support of a university-affiliated online community.",
+      "Planned, produced, and published promotional content for tournaments, announcements, and community events, contributing to increased engagement.",
+      "Designed visual assets including logos, posters, and branded graphics to support community identity and event promotion.",
+      "Collaborated with organizers and volunteers to ensure consistent messaging and timely updates across platforms.",
+      "Built foundational livestream production experience, and later expanded into independently managing full end-to-end stream configurations using OBS and Streamlabs (scene design, overlays, transitions, and audio routing).",
+      "Assisted with in-person tournament setup, including CRT configuration and station preparation.",
+    ],
+  },
+  {
+    role: "Barista",
+    company: "Starbucks",
+    location: "Victoria, BC",
+    period: "August 2018 — Present",
+    bullets: [
+      "Delivered consistent customer service in a high-volume environment, supporting 200+ customer transactions per shift while maintaining quality and efficiency standards.",
+      "Supported daily operations through clear communication, multitasking, and real-time coordination with team members during peak periods.",
+      "Trained and mentored 5+ new team members, contributing to onboarding, skill development, and team readiness.",
+      "Maintained a strong attendance and reliability record over 6+ years in a fast-paced, team-based setting.",
+      "Resolved customer concerns and service disruptions by applying company policy, leading with empathy and situational awareness.",
+      "Adapted to evolving store procedures, product launches, and operational changes within a continuously shifting retail environment.",
+    ],
+  },
+] as const;
+
+const EXP_FADE_DUR = 0.24; // P3R UI 160–260ms
+const EXP_FADE_EASE = [0.2, 0.8, 0.2, 1] as const;
+
+const EXP_LINE_DURATION_MS = 190;
+const EXP_LINE_DELAY_MS = 229;
+
+const EXPERIENCE_POSITION_KEY = "experience-block-position";
+const EXPERIENCE_POSITION_X_KEY = "experience-block-position-x";
+
+function getStoredExperiencePosition(): number {
+  if (typeof window === "undefined") return EXPERIENCE_BLOCK_POSITION;
+  const stored = window.localStorage.getItem(EXPERIENCE_POSITION_KEY);
+  if (stored === null) return EXPERIENCE_BLOCK_POSITION;
+  const n = Number(stored);
+  return Number.isFinite(n) && n >= 0 && n <= 100 ? n : EXPERIENCE_BLOCK_POSITION;
+}
+
+function getStoredExperiencePositionX(): number {
+  if (typeof window === "undefined") return EXPERIENCE_BLOCK_POSITION_X;
+  const stored = window.localStorage.getItem(EXPERIENCE_POSITION_X_KEY);
+  if (stored === null) return EXPERIENCE_BLOCK_POSITION_X;
+  const n = Number(stored);
+  return Number.isFinite(n) && n >= 0 && n <= 100 ? n : EXPERIENCE_BLOCK_POSITION_X;
+}
+
+const SNAP_PAGE_VH = 51;
+
 const ConfidantExperience = () => {
+  const [position, setPosition] = useState(() =>
+    typeof window !== "undefined" ? getStoredExperiencePosition() : EXPERIENCE_BLOCK_POSITION
+  );
+  const [positionX, setPositionX] = useState(() =>
+    typeof window !== "undefined" ? getStoredExperiencePositionX() : EXPERIENCE_BLOCK_POSITION_X
+  );
+  const headerRef = useRef<HTMLDivElement>(null);
+  const jobListRef = useRef<HTMLDivElement>(null);
+  const [snapIndex, setSnapIndex] = useState(0);
+
+  const scrollToPrev = useCallback(() => {
+    const el = jobListRef.current;
+    if (!el) return;
+    const pagePx = (SNAP_PAGE_VH / 100) * window.innerHeight;
+    el.scrollBy({ top: -pagePx, behavior: "smooth" });
+  }, []);
+  const scrollToNext = useCallback(() => {
+    const el = jobListRef.current;
+    if (!el) return;
+    const pagePx = (SNAP_PAGE_VH / 100) * window.innerHeight;
+    el.scrollBy({ top: pagePx, behavior: "smooth" });
+  }, []);
+
+  useEffect(() => {
+    const el = jobListRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const pagePx = (SNAP_PAGE_VH / 100) * window.innerHeight;
+      const idx = Math.round(el.scrollTop / pagePx);
+      setSnapIndex(Math.max(0, Math.min(idx, EXPERIENCE_DATA.length - 1)));
+    };
+    onScroll();
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const handlePositionChange = (raw: number) => {
+    const value = Math.max(0, Math.min(100, raw));
+    setPosition(value);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(EXPERIENCE_POSITION_KEY, String(value));
+    }
+  };
+
+  const handlePositionXChange = (raw: number) => {
+    const value = Math.max(0, Math.min(100, raw));
+    setPositionX(value);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(EXPERIENCE_POSITION_X_KEY, String(value));
+    }
+  };
+
+  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = Number(e.target.value);
+    setPosition(value);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(EXPERIENCE_POSITION_KEY, String(value));
+    }
+  };
+
+  const handleSliderXChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = Number(e.target.value);
+    setPositionX(value);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(EXPERIENCE_POSITION_X_KEY, String(value));
+    }
+  };
+
+  // Optical alignment: use viewport units (vw/vh) so slider 50 = visual center and left/right/top/bottom match the viewport and rule-of-thirds overlay. Nudge content 0.75% right (buttons stay put).
+  const offsetYVh = ((position - 50) / 50) * 25;
+  const offsetXVw = ((positionX - 50) / 50) * 6;
+  const blockStyle = { transform: `translate(${offsetXVw + 0.75}vw, ${offsetYVh}vh)` };
+
   return (
-    <section id="experience" className={`relative flex flex-col justify-center py-16 md:py-20 bg-black text-white scroll-mt-6 ${SLIDE}`}>
+    <section id="experience" className={`relative flex flex-col h-screen w-full overflow-hidden py-10 md:py-14 bg-black text-white scroll-mt-6 ${SLIDE}`}>
        <SectionGridOverlay />
-       <div className="container mx-auto px-6 relative z-10 flex flex-col items-center">
-         <motion.div
-           initial={{ opacity: 0, y: 40 }}
-           whileInView={{ opacity: 1, y: 0 }}
-           viewport={{ once: false, amount: 0.2 }}
-           transition={{ duration: 0.55, ease: cardEase, delay: 0 }}
+       {/* Centered layout like MAIN MENU: single column, max-width, centered. */}
+       <div className="w-full px-6 md:px-10 relative z-10 flex flex-1 flex-col items-center justify-center min-h-0 overflow-visible">
+         <div
+           className="flex-none flex flex-col w-full max-w-4xl max-h-[78vh] min-h-[360px] my-auto transition-transform duration-150"
+           style={blockStyle}
          >
-           <SectionHeader title="PROFESSIONAL EXPERIENCE" subtitle="CAREER HISTORY" color="text-white" align="center" showBar={false} />
-         </motion.div>
-         
-         <div className="max-w-4xl w-full mx-auto mt-12 flex flex-col items-center">
-              <motion.div
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: false, amount: 0.2 }}
-                transition={{ duration: 0.55, ease: cardEase, delay: 0.1 }}
-                className="rounded-xl bg-zinc-800/60 border border-white/10 p-8 min-h-[200px] w-full max-w-2xl flex items-center justify-center"
-              >
-                <p className="text-zinc-500 text-sm">Experience details coming soon</p>
-              </motion.div>
+         <div ref={headerRef} className="flex-none flex flex-col w-full items-start text-left">
+           <SectionHeader
+             title="CAREER OVERVIEW"
+             color="text-white"
+             align="left"
+             showBar={false}
+             compact
+             className="!mb-5 ml-0 w-full"
+             titleTrigger="mount"
+           />
+           <div className="relative w-full mt-1.5 min-h-[2px]">
+             <span
+               aria-hidden
+               className="absolute bottom-0 left-0 right-0 h-[2.5px] origin-left block w-full rounded-full opacity-90"
+               style={{ backgroundColor: SECTION_ACCENT_COLOR.experience, transform: 'scaleX(1)' }}
+             />
+           </div>
+         </div>
+
+         {/* Job list: each job is exactly 51vh so only two snap points (RAWBLEM, Barista). job’s */}
+         <div
+           ref={jobListRef}
+           className="w-full h-[51vh] min-h-[51vh] mt-4 overflow-y-auto overflow-x-hidden no-scrollbar snap-y snap-mandatory"
+         >
+           {EXPERIENCE_DATA.map((job, idx) => (
+             <article
+               key={idx}
+               className="flex flex-col h-[51vh] min-h-[51vh] shrink-0 overflow-hidden pb-4 border-b border-white/20 last:border-0 last:pb-0 snap-start snap-always"
+             >
+               <header className="mb-3 shrink-0">
+                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                   <span className="font-mono text-xs text-zinc-500 tabular-nums w-8 shrink-0" aria-hidden>{String(idx + 1).padStart(2, "0")}</span>
+                   <h3 className="font-display text-lg md:text-xl font-semibold tracking-tight text-white">{job.role}</h3>
+                   <span className="text-zinc-600" aria-hidden>·</span>
+                   <span className="font-heading text-sm tracking-[0.06em] uppercase text-zinc-400">{job.company}</span>
+                   <span className="text-zinc-600" aria-hidden>·</span>
+                   <span className="font-heading text-sm tracking-[0.06em] uppercase text-zinc-500">{job.location}</span>
+                 </div>
+                 <div className="flex items-baseline gap-x-3 mt-1">
+                   <span className="w-8 shrink-0" aria-hidden />
+                   <time className="font-heading text-xs tracking-[0.08em] uppercase text-zinc-500">{job.period}</time>
+                 </div>
+               </header>
+               <ul className="flex flex-col flex-1 min-h-0 overflow-hidden border-t border-white/15 pt-3 pl-12 list-disc list-outside marker:text-zinc-500 space-y-0.5 text-zinc-300">
+                 {job.bullets.map((bullet, i) => (
+                   <li
+                     key={i}
+                     className="py-1.5 border-b border-white/5 last:border-0 font-body text-sm md:text-base leading-relaxed"
+                   >
+                     {bullet}
+                   </li>
+                 ))}
+               </ul>
+             </article>
+           ))}
+         </div>
+         </div>
+       </div>
+
+       {/* Vertical snap arrows: right side of section, trigger scroll to prev/next job. */}
+       <div
+         className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-3"
+         aria-label="Experience navigation"
+       >
+         <button
+           type="button"
+           onClick={scrollToPrev}
+           disabled={snapIndex <= 0}
+           aria-label="Previous experience"
+           className="flex items-center justify-center w-11 h-11 rounded-full border-2 border-white/20 bg-black/60 text-white/90 hover:border-cyan-400/80 hover:text-cyan-300 hover:bg-white/5 disabled:opacity-40 disabled:pointer-events-none transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+         >
+           <ChevronUp size={22} strokeWidth={2.5} />
+         </button>
+         <button
+           type="button"
+           onClick={scrollToNext}
+           disabled={snapIndex >= EXPERIENCE_DATA.length - 1}
+           aria-label="Next experience"
+           className="flex items-center justify-center w-11 h-11 rounded-full border-2 border-white/20 bg-black/60 text-white/90 hover:border-cyan-400/80 hover:text-cyan-300 hover:bg-white/5 disabled:opacity-40 disabled:pointer-events-none transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+         >
+           <ChevronDown size={22} strokeWidth={2.5} />
+         </button>
+       </div>
+
+       {/* Position sliders: hidden; position data still applied from state/localStorage. Remove "hidden" to show again. */}
+       <div className="hidden absolute bottom-6 left-0 right-0 z-20 px-6 flex flex-col items-center gap-3 pointer-events-none" aria-hidden>
+         <div className="flex flex-col gap-2 w-full max-w-sm">
+           <div className="flex items-center gap-3 w-full">
+             <span className="font-mono text-xs text-zinc-500 uppercase tracking-wider shrink-0 w-16">VERTICAL</span>
+             <input
+               type="range"
+               min={0}
+               max={100}
+               step={1}
+               value={position}
+               onChange={handleSliderChange}
+               aria-label="Vertical position (0–100)"
+               className="flex-1 h-2 rounded-full appearance-none bg-white/10 accent-cyan-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/80 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-cyan-500 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:border-0"
+             />
+             <span className="font-mono text-xs text-zinc-400 tabular-nums w-8 shrink-0">{position}</span>
+           </div>
+           <div className="flex items-center gap-3 w-full">
+             <span className="font-mono text-xs text-zinc-500 uppercase tracking-wider shrink-0 w-16">HORIZONTAL</span>
+             <input
+               type="range"
+               min={0}
+               max={100}
+               step={1}
+               value={positionX}
+               onChange={handleSliderXChange}
+               aria-label="Horizontal position (0–100)"
+               className="flex-1 h-2 rounded-full appearance-none bg-white/10 accent-cyan-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/80 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-cyan-500 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:border-0"
+             />
+             <span className="font-mono text-xs text-zinc-400 tabular-nums w-8 shrink-0">{positionX}</span>
+           </div>
+         </div>
+         <div className="flex items-center gap-1">
+           {EXP_SNAP_POINTS.map((point) => (
+             <button
+               key={point}
+               type="button"
+               onClick={() => handlePositionChange(point)}
+               className={`px-2 py-1 text-xs font-mono border rounded transition-colors ${
+                 position === point
+                   ? "bg-cyan-500/20 border-cyan-500 text-cyan-300"
+                   : "border-white/20 text-zinc-500 hover:border-white/40 hover:text-zinc-400"
+               }`}
+               aria-label={`Snap vertical to ${point}`}
+             >
+               {point}
+             </button>
+           ))}
          </div>
        </div>
     </section>
   );
 };
 
-// --- COMMUNITY ---
+// --- CONTACT ---
 const SocialLink = () => {
   return (
-    <section id="social" className={`relative flex flex-col justify-center py-16 md:py-20 bg-black text-white scroll-mt-6 ${SLIDE}`}>
+    <section id="social" className={`relative flex flex-col justify-center min-h-screen w-full overflow-x-hidden py-16 md:py-20 bg-black text-white scroll-mt-6 ${SLIDE}`}>
       <SectionGridOverlay />
       <div className="container mx-auto px-6 relative z-10 flex flex-col items-center">
         <motion.div
@@ -1494,7 +1763,7 @@ const SocialLink = () => {
           className="flex flex-col md:flex-row items-center gap-8 mb-12"
         >
            <h2 className="text-5xl md:text-7xl font-display text-white relative z-10">
-             COMMUNITY
+             CONTACT
            </h2>
            <motion.div
              whileHover={HOVER}
@@ -1513,7 +1782,7 @@ const SocialLink = () => {
             transition={{ duration: 0.55, ease: cardEase, delay: 0.1 }}
             className="rounded-xl bg-zinc-800/60 border border-white/10 p-8 min-h-[200px] w-full max-w-2xl flex items-center justify-center"
           >
-            <p className="text-zinc-500 text-sm">Community details coming soon</p>
+            <p className="text-zinc-500 text-sm uppercase">CONTACT DETAILS COMING SOON</p>
           </motion.div>
         </div>
       </div>
@@ -2410,8 +2679,8 @@ const SKILLS_EXPAND_EASE = [0.22, 1, 0.36, 1] as const;
 const SKILLS_EXPAND_EXIT_DUR = 0.28;
 const SKILLS_EXPAND_ENTER_DUR = SKILLS_EXPAND_EXIT_DUR * 1.5; // 50% longer fade-in
 
-/** Rule-of-thirds overlay for positioning. Set showRuleOfThirds = true to show again. */
-const showRuleOfThirds = false;
+/** Rule-of-thirds overlay for positioning. Set showRuleOfThirds = true to show on viewport. */
+const showRuleOfThirds = true;
 const RuleOfThirdsOverlay = styled.div`
   position: absolute;
   inset: 0;
@@ -2423,35 +2692,43 @@ const RuleOfThirdsOverlay = styled.div`
     linear-gradient(
       to right,
       transparent calc(33.333% - 0.5px),
-      rgba(255, 255, 255, 0.22) calc(33.333% - 0.5px),
-      rgba(255, 255, 255, 0.22) calc(33.333% + 0.5px),
+      rgba(34, 197, 94, 0.4) calc(33.333% - 0.5px),
+      rgba(34, 197, 94, 0.4) calc(33.333% + 0.5px),
       transparent calc(33.333% + 0.5px)
     ),
     linear-gradient(
       to right,
       transparent calc(66.666% - 0.5px),
-      rgba(255, 255, 255, 0.22) calc(66.666% - 0.5px),
-      rgba(255, 255, 255, 0.22) calc(66.666% + 0.5px),
+      rgba(34, 197, 94, 0.4) calc(66.666% - 0.5px),
+      rgba(34, 197, 94, 0.4) calc(66.666% + 0.5px),
       transparent calc(66.666% + 0.5px)
     ),
     /* Horizontal lines at 1/3 and 2/3 */
     linear-gradient(
       to bottom,
       transparent calc(33.333% - 0.5px),
-      rgba(255, 255, 255, 0.22) calc(33.333% - 0.5px),
-      rgba(255, 255, 255, 0.22) calc(33.333% + 0.5px),
+      rgba(34, 197, 94, 0.4) calc(33.333% - 0.5px),
+      rgba(34, 197, 94, 0.4) calc(33.333% + 0.5px),
       transparent calc(33.333% + 0.5px)
     ),
     linear-gradient(
       to bottom,
       transparent calc(66.666% - 0.5px),
-      rgba(255, 255, 255, 0.22) calc(66.666% - 0.5px),
-      rgba(255, 255, 255, 0.22) calc(66.666% + 0.5px),
+      rgba(34, 197, 94, 0.4) calc(66.666% - 0.5px),
+      rgba(34, 197, 94, 0.4) calc(66.666% + 0.5px),
       transparent calc(66.666% + 0.5px)
     );
   background-size: 100% 100%;
   background-position: 0 0, 0 0, 0 0, 0 0;
   background-repeat: no-repeat;
+`;
+
+/** Fixed viewport rule-of-thirds overlay (above content panels, below top controls z-50). */
+const ViewportRuleOfThirdsOverlay = styled(RuleOfThirdsOverlay)`
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  border-radius: 0;
 `;
 
 const SkillArsenal = () => {
@@ -2460,7 +2737,7 @@ const SkillArsenal = () => {
   return (
     <section
       id="skills"
-      className={`relative flex flex-col bg-black text-white scroll-mt-6 min-h-screen py-20 md:py-24 ${SLIDE}`}
+      className={`relative flex flex-col bg-black text-white scroll-mt-6 min-h-screen w-full overflow-x-hidden py-20 md:py-24 ${SLIDE}`}
     >
       <SectionGridOverlay />
       <div
@@ -3087,6 +3364,9 @@ export default function Home() {
         <div className="fixed inset-0 z-[70] pointer-events-auto" aria-hidden />
       )}
 
+      {/* Rule-of-thirds overlay on viewport (positioning aid) */}
+      {showRuleOfThirds && <ViewportRuleOfThirdsOverlay aria-hidden />}
+
       {isResumeMode ? (
         <motion.div 
           initial={{ opacity: 0, y: 20 }} 
@@ -3261,6 +3541,7 @@ export default function Home() {
                   duration: reduceMotion ? 0.2 : PANEL_TRANSITION.duration,
                   ease: PANEL_TRANSITION.ease,
                 }}
+                className="min-h-screen w-full overflow-x-hidden"
               >
                 {currentSection === "profile" && <PhantomProfile />}
                 {currentSection === "projects" && <PalaceProjects onSelectProject={(id) => navigateTo(id)} />}

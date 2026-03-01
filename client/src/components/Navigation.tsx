@@ -7,9 +7,9 @@ import { HOVER, SPRING, TAP } from "@/lib/motion";
 const menuItems = [
   { id: "profile", label: "PROFILE.", icon: User, color: "bg-red-600" },
   { id: "projects", label: "PROJECTS.", icon: Zap, color: "bg-yellow-400" },
-  { id: "experience", label: "WORK EXPERIENCE.", icon: Star, color: "bg-blue-600" },
-  { id: "social", label: "COMMUNITY.", icon: Heart, color: "bg-pink-500" },
+  { id: "experience", label: "EXPERIENCE.", icon: Star, color: "bg-blue-600" },
   { id: "skills", label: "SKILLS.", icon: Briefcase, color: "bg-green-600" },
+  { id: "social", label: "CONTACT.", icon: Heart, color: "bg-pink-500" },
 ];
 
 export interface NavigationProps {
