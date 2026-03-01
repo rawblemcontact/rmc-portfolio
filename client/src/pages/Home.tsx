@@ -2679,8 +2679,8 @@ const SKILLS_EXPAND_EASE = [0.22, 1, 0.36, 1] as const;
 const SKILLS_EXPAND_EXIT_DUR = 0.28;
 const SKILLS_EXPAND_ENTER_DUR = SKILLS_EXPAND_EXIT_DUR * 1.5; // 50% longer fade-in
 
-/** Rule-of-thirds overlay for positioning. Set showRuleOfThirds = true to show on viewport. */
-const showRuleOfThirds = true;
+/** Rule-of-thirds overlay for positioning. Set showRuleOfThirds = true to show on viewport. Preserved for future use. */
+const showRuleOfThirds = false;
 const RuleOfThirdsOverlay = styled.div`
   position: absolute;
   inset: 0;
