@@ -45,6 +45,22 @@ import {
   SiTiktok,
   SiYoutubeshorts,
 } from "@icons-pack/react-simple-icons";
+import {
+  IconBook,
+  IconCertificate,
+  IconChecklist,
+  IconClock,
+  IconDeviceDesktop,
+  IconEdit,
+  IconFileText,
+  IconPalette,
+  IconPencil,
+  IconSearch,
+  IconShare,
+  IconUser,
+  IconUsers,
+  IconVideo,
+} from "@tabler/icons-react";
 import { EXPERIENCE_BLOCK_POSITION, EXPERIENCE_BLOCK_POSITION_X, EXP_SNAP_POINTS } from "@/config/experience-position";
 
 function AdobeSuiteIcon({
@@ -847,7 +863,7 @@ const Hero = ({
             >
               <Button
                 size="lg"
-                className={`font-display text-xl uppercase tracking-widest h-16 w-48 rounded-full transition-all border-4 group relative ${
+                className={`font-display text-xl uppercase tracking-[0.12em] h-16 w-48 rounded-full transition-all border-4 group relative ${
                   starting ? "overflow-visible" : "overflow-hidden"
                 } ${
                   starting
@@ -1638,7 +1654,7 @@ const ConfidantExperience = () => {
            {EXPERIENCE_DATA.map((job, idx) => (
              <article
                key={idx}
-               className="flex flex-col h-[51vh] min-h-[51vh] shrink-0 overflow-hidden pb-4 border-b border-white/20 last:border-0 last:pb-0 snap-start snap-always"
+               className="flex flex-col h-[51vh] min-h-[51vh] shrink-0 overflow-hidden pb-4 snap-start snap-always"
              >
                <header className="mb-3 shrink-0">
                  <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -1680,7 +1696,7 @@ const ConfidantExperience = () => {
            onClick={scrollToPrev}
            disabled={snapIndex <= 0}
            aria-label="Previous experience"
-           className="flex items-center justify-center w-11 h-11 rounded-full border-2 border-white/20 bg-black/60 text-white/90 hover:border-cyan-400/80 hover:text-cyan-300 hover:bg-white/5 disabled:opacity-40 disabled:pointer-events-none transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+           className="flex items-center justify-center w-11 h-11 rounded-full border-2 border-white/20 bg-black/60 text-white/90 hover:border-blue-600 hover:text-blue-400 hover:bg-white/5 disabled:opacity-40 disabled:pointer-events-none transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
          >
            <ChevronUp size={22} strokeWidth={2.5} />
          </button>
@@ -1689,7 +1705,7 @@ const ConfidantExperience = () => {
            onClick={scrollToNext}
            disabled={snapIndex >= EXPERIENCE_DATA.length - 1}
            aria-label="Next experience"
-           className="flex items-center justify-center w-11 h-11 rounded-full border-2 border-white/20 bg-black/60 text-white/90 hover:border-cyan-400/80 hover:text-cyan-300 hover:bg-white/5 disabled:opacity-40 disabled:pointer-events-none transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+           className="flex items-center justify-center w-11 h-11 rounded-full border-2 border-white/20 bg-black/60 text-white/90 hover:border-blue-600 hover:text-blue-400 hover:bg-white/5 disabled:opacity-40 disabled:pointer-events-none transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
          >
            <ChevronDown size={22} strokeWidth={2.5} />
          </button>
@@ -1749,42 +1765,123 @@ const ConfidantExperience = () => {
   );
 };
 
-// --- CONTACT ---
+// --- CONTACT (Uiverse.io button style by Itskrish01) ---
+const UIVERSE_BUTTON_BASE =
+  "p-5 rounded-full backdrop-blur-lg from-black/60 to-black/40 shadow-lg hover:scale-110 active:scale-95 active:rotate-0 transition-all duration-300 ease-out cursor-pointer group relative overflow-hidden border bg-gradient-to-tr";
+
 const SocialLink = () => {
   return (
     <section id="social" className={`relative flex flex-col justify-center min-h-screen w-full overflow-x-hidden py-16 md:py-20 bg-black text-white scroll-mt-6 ${SLIDE}`}>
       <SectionGridOverlay />
       <div className="container mx-auto px-6 relative z-10 flex flex-col items-center">
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
+        <motion.h2
+          initial={{ opacity: 0, y: 72 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: false, amount: 0.2 }}
-          transition={{ duration: 0.55, ease: cardEase, delay: 0 }}
-          className="flex flex-col md:flex-row items-center gap-8 mb-12"
+          transition={{ duration: 0.416, ease: [0.027, 0, 0.06, 1], delay: 0.4 }}
+          className="text-4xl md:text-6xl font-display text-white relative z-10 mb-12"
         >
-           <h2 className="text-5xl md:text-7xl font-display text-white relative z-10">
-             CONTACT
-           </h2>
-           <motion.div
-             whileHover={HOVER}
-             transition={SPRING.ui}
-             className="bg-pink-500 text-white p-4 rounded-full border-4 border-white shadow-xl"
-           >
-             <Heart size={32} fill="white" />
-           </motion.div>
-        </motion.div>
-        
-        <div className="max-w-4xl w-full flex flex-col items-center">
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false, amount: 0.2 }}
-            transition={{ duration: 0.55, ease: cardEase, delay: 0.1 }}
-            className="rounded-xl bg-zinc-800/60 border border-white/10 p-8 min-h-[200px] w-full max-w-2xl flex items-center justify-center"
+          LET'S TALK.
+        </motion.h2>
+
+        <motion.div
+          variants={{
+            hidden: {},
+            visible: {
+              transition: { staggerChildren: 0.053, delayChildren: 1.16 },
+            },
+          }}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: false, amount: 0.2 }}
+          className="flex flex-wrap justify-center items-center gap-6"
+        >
+          <motion.a
+            href="#"
+            variants={{
+              hidden: { opacity: 0, x: -32 },
+              visible: { opacity: 1, x: 0 },
+            }}
+            transition={{ duration: 0.053, ease: [0.22, 1, 0.36, 1] }}
+            className={`${UIVERSE_BUTTON_BASE} border-red-500/20 hover:rotate-2 hover:border-red-500/50 hover:from-red-500/10 hover:to-black/40`}
+            aria-label="YouTube"
           >
-            <p className="text-zinc-500 text-sm uppercase">CONTACT DETAILS COMING SOON</p>
-          </motion.div>
-        </div>
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-red-400/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
+            <div className="relative z-10">
+              <svg className="w-7 h-7 fill-current text-red-500 group-hover:text-red-400 transition-colors duration-300" viewBox="0 0 576 512" xmlns="http://www.w3.org/2000/svg">
+                <path d="M549.655 124.083c-6.281-23.65-24.787-42.276-48.284-48.597C458.781 64 288 64 288 64S117.22 64 74.629 75.486c-23.497 6.322-42.003 24.947-48.284 48.597-11.412 42.867-11.412 132.305-11.412 132.305s0 89.438 11.412 132.305c6.281 23.65 24.787 41.5 48.284 47.821C117.22 448 288 448 288 448s170.78 0 213.371-11.486c23.497-6.321 42.003-24.171 48.284-47.821 11.412-42.867 11.412-132.305 11.412-132.305s0-89.438-11.412-132.305zm-317.51 213.508V175.185l142.739 81.205-142.739 81.201z" />
+              </svg>
+            </div>
+          </motion.a>
+
+          <motion.a
+            href="#"
+            variants={{
+              hidden: { opacity: 0, x: -32 },
+              visible: { opacity: 1, x: 0 },
+            }}
+            transition={{ duration: 0.053, ease: [0.22, 1, 0.36, 1] }}
+            className={`${UIVERSE_BUTTON_BASE} border-blue-500/20 hover:rotate-2 hover:border-blue-500/50 hover:from-blue-500/10 hover:to-black/40`}
+            aria-label="LinkedIn"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-400/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
+            <div className="relative z-10">
+              <svg className="w-7 h-7 fill-current text-blue-500 group-hover:text-blue-400 transition-colors duration-300" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+              </svg>
+            </div>
+          </motion.a>
+
+          <motion.a
+            href="#"
+            variants={{
+              hidden: { opacity: 0, x: -32 },
+              visible: { opacity: 1, x: 0 },
+            }}
+            transition={{ duration: 0.053, ease: [0.22, 1, 0.36, 1] }}
+            className={`${UIVERSE_BUTTON_BASE} border-cyan-500/20 hover:-rotate-2 hover:border-cyan-500/50 hover:from-cyan-500/10 hover:to-black/40`}
+            aria-label="TikTok"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-400/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
+            <div className="relative z-10">
+              <svg className="w-7 h-7 fill-current text-cyan-500 group-hover:text-cyan-400 transition-colors duration-300" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
+              </svg>
+            </div>
+          </motion.a>
+
+          <motion.a
+            href="#"
+            variants={{
+              hidden: { opacity: 0, x: -32 },
+              visible: { opacity: 1, x: 0 },
+            }}
+            transition={{ duration: 0.053, ease: [0.22, 1, 0.36, 1] }}
+            className={`${UIVERSE_BUTTON_BASE} border-pink-500/20 hover:rotate-2 hover:border-pink-500/50 hover:from-pink-500/10 hover:to-black/40`}
+            aria-label="Instagram"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-pink-400/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
+            <div className="relative z-10 flex items-center justify-center">
+              <Instagram size={28} className="text-pink-500 group-hover:text-pink-400 transition-colors duration-300" strokeWidth={1.5} aria-hidden />
+            </div>
+          </motion.a>
+
+          <motion.a
+            href="#"
+            variants={{
+              hidden: { opacity: 0, x: -32 },
+              visible: { opacity: 1, x: 0 },
+            }}
+            transition={{ duration: 0.053, ease: [0.22, 1, 0.36, 1] }}
+            className={`${UIVERSE_BUTTON_BASE} border-white/10 hover:rotate-3 hover:border-white/30 hover:from-white/10 hover:to-black/40`}
+            aria-label="Email"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
+            <div className="relative z-10 flex items-center justify-center">
+              <Mail size={28} className="text-white group-hover:text-white/90 transition-colors duration-300" strokeWidth={1.5} aria-hidden />
+            </div>
+          </motion.a>
+        </motion.div>
       </div>
     </section>
   );
@@ -2183,6 +2280,27 @@ const SKILLS_CARD_LAYOUT = {
   },
 } as const;
 
+/** Core competencies with matching Tabler Icon (per subskill). See https://tabler.io/icons */
+const CORE_SUBSKILLS_COL1: { label: string; Icon: React.ComponentType<{ size?: number; className?: string }> }[] = [
+  { label: "Content Writing", Icon: IconPencil },
+  { label: "Content Editing", Icon: IconEdit },
+  { label: "Proofreading", Icon: IconChecklist },
+  { label: "Storytelling", Icon: IconBook },
+  { label: "Narrative Development", Icon: IconFileText },
+  { label: "Digital Media Coordination", Icon: IconDeviceDesktop },
+  { label: "Social Media Operations", Icon: IconShare },
+  { label: "Audience Engagement", Icon: IconUsers },
+];
+const CORE_SUBSKILLS_COL2: { label: string; Icon: React.ComponentType<{ size?: number; className?: string }> }[] = [
+  { label: "Visual Communication", Icon: IconPalette },
+  { label: "Content Production", Icon: IconVideo },
+  { label: "Research", Icon: IconSearch },
+  { label: "Fact-Checking", Icon: IconCertificate },
+  { label: "Time Management", Icon: IconClock },
+  { label: "Team Collaboration", Icon: IconUsers },
+  { label: "Independent Work", Icon: IconUser },
+];
+
 // Controls vertical positioning of the SKILLS block (header + cards) in rem.
 const SKILLS_LAYOUT = {
   sectionOffsetRem: 5, // increase to move entire SKILLS block further down
@@ -2530,10 +2648,14 @@ const UiverseCard = styled.div`
     height: 297px;
   }
 
-  /* Expanded subskills overlay: span two cards wide, 1.5x height (+5% height, pull by bottom) */
+  /* Expanded subskills overlay: span two cards wide (+10% from previous) */
   &.skills-subcard {
-    width: min(100%, 752px);
-    height: 319px;
+    width: min(100%, 1034px);
+    height: 439px;
+    /* No hover effect on subskill card */
+    &:hover {
+      transform: none;
+    }
   }
 `;
 
@@ -2544,15 +2666,15 @@ const CardBlackFace = styled.div`
   transform: translate(-50%, -50%);
   width: 364px;
   height: 274px;
-  /* Subtle glassy background over the global black field */
-  background: rgba(0, 0, 0, 0.5);
+  /* No fill — transparent over the global black field */
+  background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 0;
-  overflow: hidden; /* ensure sheen stays clipped to this card */
+  overflow: hidden;
 
   /* Main skill cards: 10% larger inner face */
   .skills-main-card:not(.skills-subcard) & {
@@ -2560,10 +2682,17 @@ const CardBlackFace = styled.div`
     height: 301px;
   }
 
-  /* Match expanded subskills card footprint (+5% height) */
+  /* Match expanded subskills card footprint (+10% from previous) */
   .skills-subcard & {
-    width: min(100%, 760px);
-    height: 326px;
+    width: min(100%, 1045px);
+    height: 449px;
+    align-items: stretch;
+    padding: 0;
+  }
+  .skills-subcard & > div:last-child {
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
   }
 
   /* Border-only highlight overlay (keeps existing style, just animates emphasis) */
@@ -2582,33 +2711,14 @@ const CardBlackFace = styled.div`
     opacity: 1;
   }
 
-  /* Sheen wipe overlay on hover (Quiet Turkey–style), preserving existing style */
-  &::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    pointer-events: none;
-    background: linear-gradient(
-      120deg,
-      transparent 0%,
-      rgba(255, 255, 255, 0.03) 35%,
-      rgba(255, 255, 255, 0.16) 47%,
-      rgba(255, 255, 255, 0.16) 53%,
-      rgba(255, 255, 255, 0.03) 65%,
-      transparent 100%
-    );
-    transform: translateX(-140%) skewX(-12deg);
-    opacity: 0;
-    transition:
-      transform 0.75s cubic-bezier(0.19, 1, 0.22, 1),
-      opacity 0.45s cubic-bezier(0.19, 1, 0.22, 1);
-    mix-blend-mode: screen;
-  }
-
-  &:hover::after {
-    transform: translateX(140%) skewX(-12deg);
-    opacity: 1;
+  /* Subskill card: no border highlight on hover */
+  .skills-subcard & {
+    &::before {
+      opacity: 0;
+    }
+    &:hover::before {
+      opacity: 0;
+    }
   }
 `;
 
@@ -2916,8 +3026,8 @@ const SkillArsenal = () => {
               <motion.div
                 key="skills-subcard"
                 initial={{ opacity: 0, scale: 0.95, y: 32 }}
-                animate={{ opacity: 1, scale: 1.18, y: "-7.5%" }}
-                exit={{ opacity: 0, scale: 1.02, y: 16 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 1, y: 16 }}
                 transition={{ duration: MORPH_EXPAND_DUR, ease: MORPH_EXPAND_EASE }}
                 className="absolute inset-0 flex items-center justify-center pointer-events-auto"
                 onClick={() => setActiveSubskills(null)}
@@ -2936,49 +3046,31 @@ const SkillArsenal = () => {
                     >
                       Close
                     </button>
-                    <div className="relative z-10 px-6 md:px-8 py-4 pt-12 text-left space-y-3 max-h-[70vh] overflow-y-auto">
-                      <div className="flex items-center justify-between gap-4 md:gap-6">
-                        <div className="space-y-1">
-                          <p className="text-[10px] uppercase tracking-[0.25em] text-zinc-400">
-                            SYSTEM // {activeSubskills === "core" ? "CORE SUB-SKILLS" : "TOOLS SUB-SKILLS"}
-                          </p>
-                          <p className="font-display text-lg md:text-xl tracking-[0.14em] uppercase text-white">
-                            {activeSubskills === "core" ? "Execution Detail" : "Operational Stack"}
-                          </p>
-                        </div>
+                    <div className="relative z-10 flex flex-col h-full min-h-0 px-9 md:px-11 py-5 pt-14 pb-5 text-left transform-gpu overflow-hidden" style={{ textRendering: "geometricPrecision" }}>
+                      <div className="flex-shrink-0 space-y-1.5 mb-4">
+                        <p className="text-[13px] uppercase tracking-[0.25em] text-zinc-400">
+                          SYSTEM // {activeSubskills === "core" ? "CORE SUB-SKILLS" : "TOOLS SUB-SKILLS"}
+                        </p>
+                        <p className="font-display text-2xl md:text-3xl tracking-[0.14em] uppercase text-white leading-tight">
+                          {activeSubskills === "core" ? "Execution Detail" : "Operational Stack"}
+                        </p>
                       </div>
+                      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1 -mr-1 pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:[display:none]">
                       {activeSubskills === "core" ? (
-                        <div className="space-y-2.5 text-[12px] md:text-[13px] leading-snug text-zinc-100">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                            <ul className="space-y-1">
-                              {[
-                                "Content Writing",
-                                "Content Editing",
-                                "Proofreading",
-                                "Storytelling",
-                                "Narrative Development",
-                                "Digital Media Coordination",
-                                "Social Media Operations",
-                                "Audience Engagement",
-                              ].map((label) => (
-                                <li key={label} className="flex items-center gap-2">
-                                  <SiArc size={12} className="shrink-0 text-cyan-400 opacity-80" />
+                        <div className="space-y-3 text-base md:text-lg leading-relaxed text-zinc-100 pb-2">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
+                            <ul className="space-y-2">
+                              {CORE_SUBSKILLS_COL1.map(({ label, Icon }) => (
+                                <li key={label} className="flex items-center gap-3">
+                                  <Icon size={17} className="shrink-0 text-cyan-400 opacity-80" />
                                   <span>{label}</span>
                                 </li>
                               ))}
                             </ul>
-                            <ul className="space-y-1">
-                              {[
-                                "Visual Communication",
-                                "Content Production",
-                                "Research",
-                                "Fact-Checking",
-                                "Time Management",
-                                "Team Collaboration",
-                                "Independent Work",
-                              ].map((label) => (
-                                <li key={label} className="flex items-center gap-2">
-                                  <SiArc size={12} className="shrink-0 text-cyan-400 opacity-80" />
+                            <ul className="space-y-2">
+                              {CORE_SUBSKILLS_COL2.map(({ label, Icon }) => (
+                                <li key={label} className="flex items-center gap-3">
+                                  <Icon size={17} className="shrink-0 text-cyan-400 opacity-80" />
                                   <span>{label}</span>
                                 </li>
                               ))}
@@ -2986,13 +3078,13 @@ const SkillArsenal = () => {
                           </div>
                         </div>
                       ) : (
-                        <div className="space-y-2.5 text-[12px] md:text-[13px] leading-snug text-zinc-100">
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+                        <div className="space-y-3 text-base md:text-lg leading-relaxed text-zinc-100 pb-2">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
                             <div>
-                              <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-400 mb-1">
+                              <p className="text-sm uppercase tracking-[0.18em] text-zinc-400 mb-2">
                                 Design &amp; Productivity
                               </p>
-                              <ul className="space-y-1">
+                              <ul className="space-y-2">
                                 {[
                                   "Microsoft Office 365",
                                   "Adobe Creative Suite",
@@ -3000,39 +3092,39 @@ const SkillArsenal = () => {
                                   "Procreate",
                                   "Clip Studio Paint",
                                 ].map((tool) => (
-                                  <li key={tool} className="flex items-center gap-2">
-                                    <ToolIcon name={tool} size={14} />
+                                  <li key={tool} className="flex items-center gap-3">
+                                    <ToolIcon name={tool} size={20} />
                                     <span>{tool}</span>
                                   </li>
                                 ))}
                               </ul>
                             </div>
                             <div>
-                              <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-400 mb-1">
+                              <p className="text-sm uppercase tracking-[0.18em] text-zinc-400 mb-2">
                                 Video &amp; Writing
                               </p>
-                              <ul className="space-y-1">
+                              <ul className="space-y-2">
                                 {["DaVinci Resolve", "CapCut", "Final Draft", "Arc Studio"].map((tool) => (
-                                  <li key={tool} className="flex items-center gap-2">
-                                    <ToolIcon name={tool} size={14} />
+                                  <li key={tool} className="flex items-center gap-3">
+                                    <ToolIcon name={tool} size={20} />
                                     <span>{tool}</span>
                                   </li>
                                 ))}
                               </ul>
                             </div>
                             <div>
-                              <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-400 mb-1">
+                              <p className="text-sm uppercase tracking-[0.18em] text-zinc-400 mb-2">
                                 Social Platforms
                               </p>
-                              <ul className="space-y-1">
+                              <ul className="space-y-2">
                                 {[
                                   "Hootsuite",
                                   "TikTok Creator Tools",
                                   "Instagram Reels",
                                   "YouTube Shorts",
                                 ].map((tool) => (
-                                  <li key={tool} className="flex items-center gap-2">
-                                    <ToolIcon name={tool} size={14} />
+                                  <li key={tool} className="flex items-center gap-3">
+                                    <ToolIcon name={tool} size={20} />
                                     <span>{tool}</span>
                                   </li>
                                 ))}
@@ -3041,6 +3133,7 @@ const SkillArsenal = () => {
                           </div>
                         </div>
                       )}
+                      </div>
                     </div>
                   </CardBlackFace>
                 </UiverseCard>

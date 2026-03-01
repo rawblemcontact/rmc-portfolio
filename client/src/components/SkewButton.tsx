@@ -5,7 +5,7 @@ import styled from "styled-components";
 
 const StyledButton = styled.button<{ $animated?: boolean }>`
   position: relative;
-  background: transparent;
+  background: #fff;
   border: none;
   padding: 10px 20px;
   display: inline-flex;
@@ -31,7 +31,7 @@ const StyledButton = styled.button<{ $animated?: boolean }>`
     background: rgb(20, 20, 20);
     opacity: ${(p) => (p.$animated ? 1 : 0)};
     z-index: 0;
-    transition: right 0.5s ease, opacity 0.5s ease;
+    transition: all 0.5s;
   }
 
   &:hover {
@@ -60,6 +60,7 @@ const SkewInner = styled.span`
   transform: skew(21deg);
   position: relative;
   z-index: 1;
+  white-space: nowrap;
 `;
 
 export interface SkewButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
