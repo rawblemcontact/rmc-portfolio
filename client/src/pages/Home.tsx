@@ -225,9 +225,10 @@ function CapCutIcon({
   return (
     <svg
       viewBox="0 0 147.02681 109.47481"
-      width={size + 2}
-      height={size + 2}
-      className={className}
+      width={size}
+      height={size}
+      className={`block shrink-0 ${className ?? ""}`}
+      preserveAspectRatio="xMidYMid meet"
       xmlns="http://www.w3.org/2000/svg"
     >
       <path
@@ -355,7 +356,7 @@ function ToolIcon({ name, size = 18 }: { name: string; size?: number }) {
           alt=""
           width={size}
           height={size}
-          className="tool-logo-favicon shrink-0 opacity-90"
+          className="tool-logo-favicon block max-h-full max-w-full shrink-0 opacity-90"
         />
       );
     }
@@ -365,12 +366,12 @@ function ToolIcon({ name, size = 18 }: { name: string; size?: number }) {
         alt=""
         width={size}
         height={size}
-        className="shrink-0 opacity-90"
+        className="block max-h-full max-w-full shrink-0 opacity-90"
       />
     );
   }
   const Icon = icon;
-  return <Icon size={size} className="opacity-90 shrink-0" />;
+  return <Icon size={size} className="block shrink-0 opacity-90" />;
 }
 
 // --- ANIMATION VARIANTS ---
@@ -1751,11 +1752,11 @@ const ConfidantExperience = () => {
            </div>
          </div>
 
-         {/* Job list: each job is exactly 51vh so only two snap points (RAWBLEM, Barista). job’s */}
-         <div
-           ref={jobListRef}
-           className="w-full h-[51vh] min-h-[51vh] mt-4 overflow-y-auto overflow-x-hidden no-scrollbar snap-y snap-mandatory"
-         >
+        {/* Job list: each job is exactly 51vh so only two snap points (RAWBLEM, Barista). job’s */}
+        <div
+          ref={jobListRef}
+          className="w-full h-[51vh] min-h-[51vh] mt-4 overflow-y-auto overflow-x-hidden no-scrollbar snap-y snap-mandatory"
+        >
            {EXPERIENCE_DATA.map((job, idx) => (
              <article
                key={idx}
@@ -1775,16 +1776,16 @@ const ConfidantExperience = () => {
                    <time className="font-heading text-xs tracking-[0.08em] uppercase text-zinc-500">{job.period}</time>
                  </div>
                </header>
-               <ul className="flex flex-col flex-1 min-h-0 overflow-hidden border-t border-white/15 pt-3 pl-12 list-disc list-outside marker:text-zinc-500 space-y-0.5 text-zinc-300">
-                 {job.bullets.map((bullet, i) => (
-                   <li
-                     key={i}
-                     className="py-1.5 border-b border-white/5 last:border-0 font-body text-sm md:text-base leading-relaxed"
-                   >
-                     {bullet}
-                   </li>
-                 ))}
-               </ul>
+              <ul className="flex flex-col flex-1 min-h-0 overflow-hidden border-t border-white/15 pt-3 pb-0 pl-12 list-disc list-outside marker:text-zinc-500 space-y-0.5 text-zinc-300">
+                {job.bullets.map((bullet, i) => (
+                  <li
+                    key={i}
+                    className="py-1.5 border-b border-white/5 last:border-white/15 last:pb-1 font-body text-sm md:text-base leading-relaxed"
+                  >
+                    {bullet}
+                  </li>
+                ))}
+              </ul>
              </article>
            ))}
          </div>
@@ -2004,9 +2005,9 @@ const SKILLS_MAJOR_CATEGORIES: {
     id: "core",
     label: "CORE COMPETENCIES",
     panels: [
-      { title: "WRITING & NARRATIVE", titleCase: "Writing & Narrative", subtitle: "Core Competency", items: ["Content Writing", "Content Editing", "Proof reading", "Storytelling", "Narrative Development"] },
-      { title: "DIGITAL & VISUAL MEDIA", titleCase: "Digital & Visual Media", subtitle: "Core Competency", items: ["Digital Media Coordination", "Social Media Operations", "Audience Engagement", "Visual Communication", "Content Production"] },
-      { title: "PROFESSIONAL PRACTICES", titleCase: "Professional Practices", subtitle: "Professional Discipline", items: ["Research", "Fact-Checking", "Time Management", "Team Collaboration", "Independent Work"] },
+      { title: "WRITING & NARRATIVE", titleCase: "Writing & Narrative", subtitle: "Core Competency", items: ["Content Writing", "Content Editing", "Proofreading", "Storytelling", "Narrative Development"] },
+      { title: "SOCIAL & MEDIA", titleCase: "Social & Media", subtitle: "Core Competency", items: ["Digital Media Coordination", "Social Media Operations", "Audience Engagement", "Content Production", "Visual Communication"] },
+      { title: "RESEARCH & COLLABORATION", titleCase: "Research & Collaboration", subtitle: "Professional Discipline", items: ["Research", "Fact-Checking", "Time Management", "Team Collaboration", "Independent Work"] },
     ],
   },
   {
@@ -2301,23 +2302,23 @@ const SKILLS_DATA = {
         items: [
           "Content Writing",
           "Content Editing",
-          "Proof reading",
+          "Proofreading",
           "Storytelling",
           "Narrative Development",
         ],
       },
       {
-        title: "Digital & Visual Media",
+        title: "Social & Media",
         items: [
           "Digital Media Coordination",
           "Social Media Operations",
           "Audience Engagement",
-          "Visual Communication",
           "Content Production",
+          "Visual Communication",
         ],
       },
       {
-        title: "Professional Practices",
+        title: "Research & Collaboration",
         items: [
           "Research",
           "Fact-Checking",
@@ -2359,7 +2360,7 @@ const SKILLS_DATA = {
 };
 
 // Subskill text content (container removed; kept handy — use SKILLS_DATA.core / SKILLS_DATA.tools above)
-// Core: Writing & Narrative, Digital & Visual Media, Professional Practices + items each.
+// Core: Writing & Narrative, Social & Media, Research & Collaboration + items each.
 // Tools: Design & Productivity, Video & Writing, Social Platforms + items each.
 
 // ─── DIAGONAL CONNECTOR GEOMETRY ─────────────────────────────────────────────
@@ -2385,30 +2386,52 @@ const SKILLS_CARD_LAYOUT = {
   },
 } as const;
 
-/** Core competencies with matching Tabler Icon (per subskill). See https://tabler.io/icons */
-const CORE_SUBSKILLS_COL1: { label: string; Icon: React.ComponentType<{ size?: number; className?: string }> }[] = [
-  { label: "Content Writing", Icon: IconPencil },
-  { label: "Content Editing", Icon: IconEdit },
-  { label: "Proofreading", Icon: IconChecklist },
-  { label: "Storytelling", Icon: IconBook },
-  { label: "Narrative Development", Icon: IconFileText },
-  { label: "Digital Media Coordination", Icon: IconDeviceDesktop },
-  { label: "Social Media Operations", Icon: IconShare },
-  { label: "Audience Engagement", Icon: IconUsers },
-];
-const CORE_SUBSKILLS_COL2: { label: string; Icon: React.ComponentType<{ size?: number; className?: string }> }[] = [
-  { label: "Visual Communication", Icon: IconPalette },
-  { label: "Content Production", Icon: IconVideo },
-  { label: "Research", Icon: IconSearch },
-  { label: "Fact-Checking", Icon: IconCertificate },
-  { label: "Time Management", Icon: IconClock },
-  { label: "Team Collaboration", Icon: IconUsers },
-  { label: "Independent Work", Icon: IconUser },
+/** AiIdea / gear in subskills panel header — same artwork as intro cards, scaled to sit with the display title. */
+const SKILLS_SUBSKILL_HEADER_ICON_PX = 44;
+
+type CoreSubskillIcon = React.ComponentType<{ size?: number; className?: string }>;
+
+/** Core competencies: 3 columns (same structure as Operational Stack). Icons: https://tabler.io/icons */
+const CORE_SUBSKILLS_CATEGORIES: {
+  categoryTitle: string;
+  items: { label: string; Icon: CoreSubskillIcon }[];
+}[] = [
+  {
+    categoryTitle: "Writing & Editorial",
+    items: [
+      { label: "Content Writing", Icon: IconPencil },
+      { label: "Content Editing", Icon: IconEdit },
+      { label: "Proofreading", Icon: IconChecklist },
+      { label: "Storytelling", Icon: IconBook },
+      { label: "Narrative Development", Icon: IconFileText },
+    ],
+  },
+  {
+    categoryTitle: "Social & Media",
+    items: [
+      { label: "Digital Media Coordination", Icon: IconDeviceDesktop },
+      { label: "Social Media Operations", Icon: IconShare },
+      { label: "Audience Engagement", Icon: IconUsers },
+      { label: "Content Production", Icon: IconVideo },
+      { label: "Visual Communication", Icon: IconPalette },
+    ],
+  },
+  {
+    categoryTitle: "Research & Collaboration",
+    items: [
+      { label: "Research", Icon: IconSearch },
+      { label: "Fact-Checking", Icon: IconCertificate },
+      { label: "Time Management", Icon: IconClock },
+      { label: "Team Collaboration", Icon: IconUsers },
+      { label: "Independent Work", Icon: IconUser },
+    ],
+  },
 ];
 
 // Controls vertical positioning of the SKILLS block (header + cards) in rem.
 const SKILLS_LAYOUT = {
-  sectionOffsetRem: 5, // increase to move entire SKILLS block further down
+  /** Vertical nudge for the skills block (rem); `0` lets content sit naturally after layout changes */
+  sectionOffsetRem: 0,
 } as const;
 
 const SkillsWebHooks = ({
@@ -2461,7 +2484,7 @@ const SkillsWebHooks = ({
           className="relative w-full h-[100px] md:h-[116px] rounded-lg overflow-hidden skills-card-diagonal flex items-center justify-center py-6 px-6 text-center transition-shadow duration-300"
           style={{
             boxShadow: hoverTarget === "left" 
-              ? "0 12px 24px -8px rgba(34,211,238,0.3), 0 0 0 1px rgba(34,211,238,0.2)" 
+              ? "0 12px 24px -8px rgba(34,211,238,0.3)" 
               : "none",
           }}
         >
@@ -2504,7 +2527,7 @@ const SkillsWebHooks = ({
           className="relative w-full h-[100px] md:h-[116px] rounded-lg overflow-hidden skills-card-diagonal flex items-center justify-center py-6 px-6 text-center transition-shadow duration-300"
           style={{
             boxShadow: hoverTarget === "right" 
-              ? "0 12px 24px -8px rgba(8,145,178,0.3), 0 0 0 1px rgba(8,145,178,0.2)" 
+              ? "0 12px 24px -8px rgba(8,145,178,0.3)" 
               : "none",
           }}
         >
@@ -2723,6 +2746,12 @@ const MORPH_EXPAND_DUR = 0.28;
 const MORPH_EXPAND_EASE = [0.22, 1, 0.36, 1] as const;
 const P3R_STAGGER_MS = 45; // 30–60ms per row
 
+/**
+ * When `true`: Core + Tools intro pair shows first; opening a card reveals sub-skills in the overlay (with Close).
+ * When `false`: Sub-skills show immediately with prev/next carousel arrows (no intro cards).
+ */
+const SKILLS_SHOW_INTRO_PAIR_CARDS = false;
+
 /* From Uiverse.io by Adrwaan - adapted to match MAIN MENU card style (no extra glow block) */
 const UiverseCard = styled.div`
   position: relative;
@@ -2753,10 +2782,10 @@ const UiverseCard = styled.div`
     height: 297px;
   }
 
-  /* Expanded subskills overlay: span two cards wide (+10% from previous) */
+  /* Expanded subskills: sized to sit comfortably centered in the slide */
   &.skills-subcard {
-    width: min(100%, 1034px);
-    height: 439px;
+    width: min(100%, 1180px);
+    height: min(440px, 58vh);
     /* No hover effect on subskill card */
     &:hover {
       transform: none;
@@ -2773,7 +2802,7 @@ const CardBlackFace = styled.div`
   height: 274px;
   /* No fill — transparent over the global black field */
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: none;
   border-radius: 12px;
   display: flex;
   justify-content: center;
@@ -2787,10 +2816,10 @@ const CardBlackFace = styled.div`
     height: 301px;
   }
 
-  /* Match expanded subskills card footprint (+10% from previous) */
+  /* Match expanded subskills card footprint */
   .skills-subcard & {
-    width: min(100%, 1045px);
-    height: 449px;
+    width: min(100%, 1180px);
+    height: min(452px, calc(58vh + 12px));
     align-items: stretch;
     padding: 0;
   }
@@ -2798,32 +2827,6 @@ const CardBlackFace = styled.div`
     width: 100%;
     height: 100%;
     border-radius: inherit;
-  }
-
-  /* Border-only highlight overlay (keeps existing style, just animates emphasis) */
-  &::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    border: 1px solid rgba(255, 255, 255, 0.45);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  &:hover::before {
-    opacity: 1;
-  }
-
-  /* Subskill card: no border highlight on hover */
-  .skills-subcard & {
-    &::before {
-      opacity: 0;
-    }
-    &:hover::before {
-      opacity: 0;
-    }
   }
 `;
 
@@ -2946,305 +2949,514 @@ const ViewportRuleOfThirdsOverlay = styled(RuleOfThirdsOverlay)`
   border-radius: 0;
 `;
 
+/**
+ * Expanded subskills content. Header row: AiIdeaSvg (core) / GearSvg (tools) on the right, aligned
+ * with “Execution Detail” / “Operational Stack”. Removed: `SkillsSourceToggle` toolbar — restore via
+ * git; related hover CSS commented in `index.css`. Intro pair cards still use the same SVGs when
+ * `SKILLS_SHOW_INTRO_PAIR_CARDS` is true.
+ */
+const SkillsSubskillsPanel = ({
+  slide,
+  variant,
+  onClose,
+}: {
+  slide: "core" | "tools";
+  variant: "overlay" | "inline";
+  onClose?: () => void;
+}) => (
+  <UiverseCard
+    className="skills-main-card skills-subcard"
+    onClick={variant === "overlay" ? (e) => e.stopPropagation() : undefined}
+  >
+    <CardBlackFace>
+      {showRuleOfThirds && <RuleOfThirdsOverlay />}
+      {variant === "overlay" && onClose ? (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose();
+          }}
+          className="absolute top-4 right-4 z-20 px-3 py-2 text-xs font-medium uppercase tracking-wider text-white border border-white/30 bg-white/5 hover:bg-cyan-500 hover:border-cyan-400 hover:text-white rounded-md transition-colors duration-200 shadow-sm"
+          aria-label="Close subskills"
+        >
+          Close
+        </button>
+      ) : null}
+      <div
+        className={
+          variant === "overlay"
+            ? "relative z-10 flex flex-col h-full min-h-0 px-10 sm:px-12 md:px-16 lg:px-20 py-5 pt-14 pb-6 text-left transform-gpu overflow-hidden"
+            : "relative z-10 flex flex-col h-full min-h-0 px-8 sm:px-10 md:px-14 lg:px-16 xl:px-20 py-6 sm:py-7 text-left transform-gpu overflow-hidden"
+        }
+        style={{ textRendering: "geometricPrecision" }}
+      >
+        <div className="flex-shrink-0 min-w-0 border-b border-zinc-600/45 pb-4 mb-4">
+          <p className="mb-2 min-w-0 text-[13px] uppercase tracking-[0.25em] text-zinc-400 whitespace-nowrap truncate">
+            SYSTEM // {slide === "core" ? "CORE SUB-SKILLS" : "TOOLS SUB-SKILLS"}
+          </p>
+          <div className="flex min-w-0 flex-row items-end justify-between gap-3 sm:gap-5">
+            <p className="min-w-0 flex-1 font-display text-2xl md:text-3xl tracking-[0.14em] uppercase text-white leading-tight whitespace-nowrap truncate">
+              {slide === "core" ? "Execution Detail" : "Operational Stack"}
+            </p>
+            <div
+              className="skills-subskills-header-icon shrink-0 translate-y-2 sm:translate-y-2.5"
+              aria-hidden
+            >
+              {slide === "core" ? (
+                <span
+                  className="inline-flex"
+                  style={{
+                    transform: `translate(${Math.round(SKILLS_CARD_LAYOUT.core.icon.offsetX * (SKILLS_SUBSKILL_HEADER_ICON_PX / SKILLS_CARD_LAYOUT.core.icon.size))}px, ${Math.round(SKILLS_CARD_LAYOUT.core.icon.offsetY * (SKILLS_SUBSKILL_HEADER_ICON_PX / SKILLS_CARD_LAYOUT.core.icon.size))}px)`,
+                  }}
+                >
+                  <AiIdeaSvg
+                    viewBox="0 0 24 24"
+                    className="paperplane"
+                    style={{
+                      width: SKILLS_SUBSKILL_HEADER_ICON_PX,
+                      height: SKILLS_SUBSKILL_HEADER_ICON_PX,
+                    }}
+                  >
+                    <path strokeLinecap="round" d={AI_IDEA_PATH_1} />
+                    <path data-ai-star d={AI_IDEA_STAR} />
+                    <path d={AI_IDEA_LINE} />
+                  </AiIdeaSvg>
+                </span>
+              ) : (
+                <span
+                  className="inline-flex text-zinc-100"
+                  style={{
+                    transform: `translate(${Math.round(SKILLS_CARD_LAYOUT.tools.icon.offsetX * (SKILLS_SUBSKILL_HEADER_ICON_PX / SKILLS_CARD_LAYOUT.tools.icon.size))}px, ${Math.round(SKILLS_CARD_LAYOUT.tools.icon.offsetY * (SKILLS_SUBSKILL_HEADER_ICON_PX / SKILLS_CARD_LAYOUT.tools.icon.size))}px)`,
+                  }}
+                >
+                  <GearSvg
+                    viewBox="0 0 256 256"
+                    className="paperplane"
+                    style={{
+                      width: SKILLS_SUBSKILL_HEADER_ICON_PX,
+                      height: SKILLS_SUBSKILL_HEADER_ICON_PX,
+                    }}
+                  >
+                    <rect width="256" height="256" fill="none" />
+                    <path
+                      d="M130.05,206.11c-1.34,0-2.69,0-4,0L94,224a104.61,104.61,0,0,1-34.11-19.2l-.12-36c-.71-1.12-1.38-2.25-2-3.41L25.9,147.24a99.15,99.15,0,0,1,0-38.46l31.84-18.1c.65-1.15,1.32-2.29,2-3.41l.16-36A104.58,104.58,0,0,1,94,32l32,17.89c1.34,0,2.69,0,4,0L162,32a104.61,104.61,0,0,1,34.11,19.2l.12,36c.71,1.12,1.38,2.25,2,3.41l31.85,18.14a99.15,99.15,0,0,1,0,38.46l-31.84,18.1c-.65,1.15-1.32,2.29-2,3.41l-.16,36A104.58,104.58,0,0,1,162,224Z"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="11"
+                    />
+                    <circle
+                      cx="128"
+                      cy="128"
+                      r="40"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="11"
+                    />
+                  </GearSvg>
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-2 pb-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:[display:none]">
+          {slide === "core" ? (
+            <div className="space-y-3 text-base md:text-[1.0625rem] leading-relaxed text-zinc-100 pb-2">
+              <div className="grid w-full min-w-0 grid-cols-1 md:grid-cols-3 md:items-start gap-y-8 gap-x-4 md:gap-x-5 lg:gap-x-7 xl:gap-x-8">
+                {CORE_SUBSKILLS_CATEGORIES.map(({ categoryTitle, items }) => (
+                  <div
+                    key={categoryTitle}
+                    className={
+                      categoryTitle === "Research & Collaboration"
+                        ? "flex min-w-min flex-col"
+                        : "flex min-w-0 flex-col"
+                    }
+                  >
+                    <p
+                      className={
+                        categoryTitle === "Research & Collaboration"
+                          ? "mb-3 text-[13px] uppercase tracking-[0.22em] text-zinc-400 whitespace-nowrap"
+                          : "mb-3 min-w-0 text-[13px] uppercase leading-snug tracking-[0.22em] text-zinc-400 break-words"
+                      }
+                      title={categoryTitle}
+                    >
+                      {categoryTitle}
+                    </p>
+                    <ul className="space-y-2.5">
+                      {items.map(({ label, Icon }) => (
+                        <li key={label} className="flex min-w-0 items-start gap-3.5">
+                          <span className="mt-0.5 inline-flex shrink-0">
+                            <Icon size={18} className="text-cyan-400 opacity-80" />
+                          </span>
+                          <span className="min-w-0 truncate" title={label}>
+                            {label}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3 text-base md:text-[1.0625rem] leading-relaxed text-zinc-100 pb-2">
+              <div className="grid w-full min-w-0 grid-cols-1 md:grid-cols-3 md:items-start gap-y-8 gap-x-6 md:gap-x-8 lg:gap-x-10 xl:gap-x-12 [&>*]:min-w-0">
+                <div className="min-w-0 flex flex-col">
+                  <p
+                    className="mb-3 min-w-0 text-[13px] uppercase tracking-[0.22em] text-zinc-400 whitespace-nowrap truncate"
+                    title="Design & Productivity"
+                  >
+                    Design &amp; Productivity
+                  </p>
+                  <ul className="space-y-2.5">
+                    {[
+                      "Microsoft Office 365",
+                      "Adobe Creative Suite",
+                      "Canva",
+                      "Procreate",
+                      "Clip Studio Paint",
+                    ].map((tool) => (
+                      <li key={tool} className="flex min-w-0 items-center gap-3.5">
+                        <span className="inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center">
+                          <ToolIcon name={tool} size={18} />
+                        </span>
+                        <span className="min-w-0 truncate" title={tool}>
+                          {tool}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="min-w-0 flex flex-col">
+                  <p
+                    className="mb-3 min-w-0 text-[13px] uppercase tracking-[0.22em] text-zinc-400 whitespace-nowrap truncate"
+                    title="Video & Writing"
+                  >
+                    Video &amp; Writing
+                  </p>
+                  <ul className="space-y-2.5">
+                    {["DaVinci Resolve", "CapCut", "Final Draft", "Arc Studio"].map((tool) => (
+                      <li key={tool} className="flex min-w-0 items-center gap-3.5">
+                        <span className="inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center">
+                          <ToolIcon name={tool} size={18} />
+                        </span>
+                        <span className="min-w-0 truncate" title={tool}>
+                          {tool}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="min-w-0 flex flex-col">
+                  <p
+                    className="mb-3 min-w-0 text-[13px] uppercase tracking-[0.22em] text-zinc-400 whitespace-nowrap truncate"
+                    title="Social Platforms"
+                  >
+                    Social Platforms
+                  </p>
+                  <ul className="space-y-2.5">
+                    {[
+                      "Hootsuite",
+                      "TikTok Creator Tools",
+                      "Instagram Reels",
+                      "YouTube Shorts",
+                    ].map((tool) => (
+                      <li key={tool} className="flex min-w-0 items-center gap-3.5">
+                        <span className="inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center">
+                          <ToolIcon name={tool} size={18} />
+                        </span>
+                        <span className="min-w-0 truncate" title={tool}>
+                          {tool}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </CardBlackFace>
+  </UiverseCard>
+);
+
 const SkillArsenal = () => {
-  const [activeSubskills, setActiveSubskills] = useState<"core" | "tools" | null>(null);
+  const [activeSubskills, setActiveSubskills] = useState<"core" | "tools" | null>(
+    SKILLS_SHOW_INTRO_PAIR_CARDS ? null : "core",
+  );
+
+  const goSkillsPrev = () =>
+    setActiveSubskills((s) => {
+      if (s === "core") return "tools";
+      if (s === "tools") return "core";
+      return "tools";
+    });
+
+  const goSkillsNext = () =>
+    setActiveSubskills((s) => {
+      if (s === "core") return "tools";
+      if (s === "tools") return "core";
+      return "core";
+    });
 
   return (
     <section
       id="skills"
-      className={`relative flex flex-col bg-black text-white scroll-mt-6 min-h-screen w-full overflow-x-hidden py-20 md:py-24 ${SLIDE}`}
+      className={`relative flex h-full min-h-0 w-full flex-col overflow-x-hidden bg-black text-white scroll-mt-6 ${SLIDE}`}
     >
       <SectionGridOverlay />
       <div
-        className="container mx-auto px-6 relative z-10 flex flex-col items-center flex-1 min-h-0 w-full overflow-visible"
-        style={{ transform: `translateY(${SKILLS_LAYOUT.sectionOffsetRem}rem)` }}
+        className="container relative z-10 mx-auto flex h-full min-h-0 w-full min-w-0 flex-1 flex-col items-center justify-center overflow-visible px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-6 sm:pt-8 sm:pb-8"
+        style={
+          SKILLS_LAYOUT.sectionOffsetRem !== 0
+            ? { transform: `translateY(${SKILLS_LAYOUT.sectionOffsetRem}rem)` }
+            : undefined
+        }
       >
-        {/* Header block */}
-        <div className="relative z-20 flex-none w-full max-w-4xl mt-0 mb-8">
-          <SectionHeader title="SKILLS" align="center" showBar={false} compact />
-        </div>
-        {/* Cards area below; centered under header and responsive */}
-        <div className="relative z-0 w-full max-w-4xl flex flex-col items-center min-h-[420px] overflow-visible">
-          <div className="flex flex-wrap justify-center items-center gap-8 w-full">
-            <motion.div
-              className="flex flex-wrap justify-center items-center gap-8 w-full"
-              initial={{ opacity: 1 }}
-              animate={{
-                opacity: activeSubskills ? 0 : 1,
-              }}
-              transition={{ duration: MORPH_DUR, ease: MORPH_EASE }}
-              style={{ pointerEvents: activeSubskills ? "none" : "auto", transform: "translateY(5%)" }}
-            >
+        {/* Cards area: intro pair (gated) + sub-skills overlay or inline carousel */}
+        <div className="skills-content-shell relative z-0 mx-auto flex w-full min-h-0 min-w-0 max-w-[min(100%,88.75rem)] flex-col items-center justify-center overflow-visible">
+          {SKILLS_SHOW_INTRO_PAIR_CARDS ? (
+            <div className="flex w-full flex-wrap items-center justify-center gap-8">
               <motion.div
-                initial={{ y: 40, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0 }}
+                className="flex w-full flex-wrap items-center justify-center gap-8"
+                initial={{ opacity: 1 }}
+                animate={{
+                  opacity: activeSubskills ? 0 : 1,
+                }}
+                transition={{ duration: MORPH_DUR, ease: MORPH_EASE }}
+                style={{ pointerEvents: activeSubskills ? "none" : "auto" }}
               >
-                <UiverseCard
-                  className="skills-main-card"
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setActiveSubskills("core")}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      setActiveSubskills("core");
-                    }
-                  }}
+                <motion.div
+                  initial={{ y: 40, opacity: 0 }}
+                  whileInView={{ y: 0, opacity: 1 }}
+                  viewport={{ once: true, amount: 0.3 }}
+                  transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0 }}
                 >
-                  <CardBlackFace>
-                    {showRuleOfThirds && <RuleOfThirdsOverlay />}
-                    <span
-                      style={{
-                        transform: `translate(${SKILLS_CARD_LAYOUT.core.icon.offsetX}px, ${SKILLS_CARD_LAYOUT.core.icon.offsetY}px)`,
-                        display: "inline-block",
-                        position: "relative",
-                        zIndex: 1,
-                      }}
-                    >
-                      <AiIdeaSvg
-                        viewBox="0 0 24 24"
-                        className="paperplane"
+                  <UiverseCard
+                    className="skills-main-card"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setActiveSubskills("core")}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setActiveSubskills("core");
+                      }
+                    }}
+                  >
+                    <CardBlackFace>
+                      {showRuleOfThirds && <RuleOfThirdsOverlay />}
+                      <span
                         style={{
-                          width: SKILLS_CARD_LAYOUT.core.icon.size,
-                          height: SKILLS_CARD_LAYOUT.core.icon.size,
+                          transform: `translate(${SKILLS_CARD_LAYOUT.core.icon.offsetX}px, ${SKILLS_CARD_LAYOUT.core.icon.offsetY}px)`,
+                          display: "inline-block",
+                          position: "relative",
+                          zIndex: 1,
                         }}
                       >
-                        <path strokeLinecap="round" d={AI_IDEA_PATH_1} />
-                        <path data-ai-star d={AI_IDEA_STAR} />
-                        <path d={AI_IDEA_LINE} />
-                      </AiIdeaSvg>
-                    </span>
-                    <CardTitleSlot
-                      style={{
-                        bottom: SKILLS_CARD_LAYOUT.core.title.offsetY,
-                        position: "absolute",
-                        zIndex: 1,
-                      }}
-                    >
-                      <span data-card-title-wrap>
-                        <motion.span
-                          className="block font-display font-semibold uppercase tracking-[0.12em] text-white h-[52px]"
+                        <AiIdeaSvg
+                          viewBox="0 0 24 24"
+                          className="paperplane"
                           style={{
-                            fontSize: `${SKILLS_CARD_LAYOUT.core.title.fontSize}px`,
-                            textShadow: "0 0 10px rgba(0,0,0,0.9)",
+                            width: SKILLS_CARD_LAYOUT.core.icon.size,
+                            height: SKILLS_CARD_LAYOUT.core.icon.size,
                           }}
-                          initial={{ y: 12, opacity: 0 }}
-                          animate={{ y: 0, opacity: 1 }}
-                          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
                         >
-                          CORE COMPETENCIES
-                        </motion.span>
+                          <path strokeLinecap="round" d={AI_IDEA_PATH_1} />
+                          <path data-ai-star d={AI_IDEA_STAR} />
+                          <path d={AI_IDEA_LINE} />
+                        </AiIdeaSvg>
                       </span>
-                    </CardTitleSlot>
-                  </CardBlackFace>
-                </UiverseCard>
-              </motion.div>
-              <motion.div
-                initial={{ y: 40, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.18 }}
-              >
-                <UiverseCard
-                  className="skills-main-card"
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setActiveSubskills("tools")}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      setActiveSubskills("tools");
-                    }
-                  }}
-                >
-                  <CardBlackFace>
-                    {showRuleOfThirds && <RuleOfThirdsOverlay />}
-                    <span
-                      style={{
-                        transform: `translate(${SKILLS_CARD_LAYOUT.tools.icon.offsetX}px, ${SKILLS_CARD_LAYOUT.tools.icon.offsetY}px)`,
-                        display: "inline-block",
-                        position: "relative",
-                        zIndex: 1,
-                      }}
-                    >
-                      <GearSvg
-                        viewBox="0 0 256 256"
-                        className="paperplane"
+                      <CardTitleSlot
                         style={{
-                          width: SKILLS_CARD_LAYOUT.tools.icon.size,
-                          height: SKILLS_CARD_LAYOUT.tools.icon.size,
+                          bottom: SKILLS_CARD_LAYOUT.core.title.offsetY,
+                          position: "absolute",
+                          zIndex: 1,
                         }}
                       >
-                        <rect width="256" height="256" fill="none" />
-                        {/* Gear outline + inner ring, stroke-only (no fill animation) */}
-                        <path
-                          d="M130.05,206.11c-1.34,0-2.69,0-4,0L94,224a104.61,104.61,0,0,1-34.11-19.2l-.12-36c-.71-1.12-1.38-2.25-2-3.41L25.9,147.24a99.15,99.15,0,0,1,0-38.46l31.84-18.1c.65-1.15,1.32-2.29,2-3.41l.16-36A104.58,104.58,0,0,1,94,32l32,17.89c1.34,0,2.69,0,4,0L162,32a104.61,104.61,0,0,1,34.11,19.2l.12,36c.71,1.12,1.38,2.25,2,3.41l31.85,18.14a99.15,99.15,0,0,1,0,38.46l-31.84,18.1c-.65,1.15-1.32,2.29-2,3.41l-.16,36A104.58,104.58,0,0,1,162,224Z"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="11"
-                        />
-                        <circle
-                          cx="128"
-                          cy="128"
-                          r="40"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="11"
-                        />
-                      </GearSvg>
-                    </span>
-                    <CardTitleSlot
-                      style={{
-                        bottom: SKILLS_CARD_LAYOUT.tools.title.offsetY,
-                        position: "absolute",
-                        zIndex: 1,
-                      }}
-                    >
-                      <span data-card-title-wrap>
-                        <motion.span
-                          className="block font-display font-semibold uppercase tracking-[0.12em] text-white h-[52px]"
+                        <span data-card-title-wrap>
+                          <motion.span
+                            className="block font-display font-semibold uppercase tracking-[0.12em] text-white h-[52px]"
+                            style={{
+                              fontSize: `${SKILLS_CARD_LAYOUT.core.title.fontSize}px`,
+                              textShadow: "0 0 10px rgba(0,0,0,0.9)",
+                            }}
+                            initial={{ y: 12, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
+                          >
+                            CORE COMPETENCIES
+                          </motion.span>
+                        </span>
+                      </CardTitleSlot>
+                    </CardBlackFace>
+                  </UiverseCard>
+                </motion.div>
+                <motion.div
+                  initial={{ y: 40, opacity: 0 }}
+                  whileInView={{ y: 0, opacity: 1 }}
+                  viewport={{ once: true, amount: 0.3 }}
+                  transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.18 }}
+                >
+                  <UiverseCard
+                    className="skills-main-card"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setActiveSubskills("tools")}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setActiveSubskills("tools");
+                      }
+                    }}
+                  >
+                    <CardBlackFace>
+                      {showRuleOfThirds && <RuleOfThirdsOverlay />}
+                      <span
+                        style={{
+                          transform: `translate(${SKILLS_CARD_LAYOUT.tools.icon.offsetX}px, ${SKILLS_CARD_LAYOUT.tools.icon.offsetY}px)`,
+                          display: "inline-block",
+                          position: "relative",
+                          zIndex: 1,
+                        }}
+                      >
+                        <GearSvg
+                          viewBox="0 0 256 256"
+                          className="paperplane"
                           style={{
-                            fontSize: `${SKILLS_CARD_LAYOUT.tools.title.fontSize}px`,
-                            textShadow: "0 0 10px rgba(0,0,0,0.9)",
+                            width: SKILLS_CARD_LAYOUT.tools.icon.size,
+                            height: SKILLS_CARD_LAYOUT.tools.icon.size,
                           }}
-                          initial={{ y: 12, opacity: 0 }}
-                          animate={{ y: 0, opacity: 1 }}
-                          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1], delay: 0.25 }}
                         >
-                          TOOLS AND TECHNOLOGIES
-                        </motion.span>
+                          <rect width="256" height="256" fill="none" />
+                          {/* Gear outline + inner ring, stroke-only (no fill animation) */}
+                          <path
+                            d="M130.05,206.11c-1.34,0-2.69,0-4,0L94,224a104.61,104.61,0,0,1-34.11-19.2l-.12-36c-.71-1.12-1.38-2.25-2-3.41L25.9,147.24a99.15,99.15,0,0,1,0-38.46l31.84-18.1c.65-1.15,1.32-2.29,2-3.41l.16-36A104.58,104.58,0,0,1,94,32l32,17.89c1.34,0,2.69,0,4,0L162,32a104.61,104.61,0,0,1,34.11,19.2l.12,36c.71,1.12,1.38,2.25,2,3.41l31.85,18.14a99.15,99.15,0,0,1,0,38.46l-31.84,18.1c-.65,1.15-1.32,2.29-2,3.41l-.16,36A104.58,104.58,0,0,1,162,224Z"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="11"
+                          />
+                          <circle
+                            cx="128"
+                            cy="128"
+                            r="40"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="11"
+                          />
+                        </GearSvg>
                       </span>
-                    </CardTitleSlot>
-                  </CardBlackFace>
-                </UiverseCard>
+                      <CardTitleSlot
+                        style={{
+                          bottom: SKILLS_CARD_LAYOUT.tools.title.offsetY,
+                          position: "absolute",
+                          zIndex: 1,
+                        }}
+                      >
+                        <span data-card-title-wrap>
+                          <motion.span
+                            className="block font-display font-semibold uppercase tracking-[0.12em] text-white h-[52px]"
+                            style={{
+                              fontSize: `${SKILLS_CARD_LAYOUT.tools.title.fontSize}px`,
+                              textShadow: "0 0 10px rgba(0,0,0,0.9)",
+                            }}
+                            initial={{ y: 12, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1], delay: 0.25 }}
+                          >
+                            TOOLS AND TECHNOLOGIES
+                          </motion.span>
+                        </span>
+                      </CardTitleSlot>
+                    </CardBlackFace>
+                  </UiverseCard>
+                </motion.div>
               </motion.div>
-            </motion.div>
-          </div>
-          <AnimatePresence>
-            {activeSubskills && (
-              <motion.div
-                key="skills-subcard"
-                initial={{ opacity: 0, scale: 0.95, y: 32 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 1, y: 16 }}
-                transition={{ duration: MORPH_EXPAND_DUR, ease: MORPH_EXPAND_EASE }}
-                className="absolute inset-0 flex items-center justify-center pointer-events-auto"
-                onClick={() => setActiveSubskills(null)}
+            </div>
+          ) : null}
+
+          {!SKILLS_SHOW_INTRO_PAIR_CARDS && activeSubskills ? (
+            <>
+              <div className="skills-carousel-wrap flex w-full min-w-0 max-w-full flex-col items-center justify-center overflow-visible py-2 sm:py-3">
+                <div className="flex w-full min-w-0 max-w-full justify-center px-1 sm:px-2 md:px-4">
+                  <div
+                    className="skills-source-stack flex w-full min-w-0 max-w-[min(100%,1180px)] flex-col"
+                    role="group"
+                    aria-label="Skills detail"
+                  >
+                    <SkillsSubskillsPanel slide={activeSubskills} variant="inline" />
+                  </div>
+                </div>
+              </div>
+              {/* Bottom-right: same inset pattern as BackToMenuButton (fixed + safe-area), mirrored to the right */}
+              <div
+                className="fixed z-50 flex flex-row items-center gap-4 md:gap-5"
+                style={{
+                  right: "calc(1rem + env(safe-area-inset-right))",
+                  bottom: "calc(0.75rem + env(safe-area-inset-bottom))",
+                }}
               >
-                <UiverseCard className="skills-main-card skills-subcard">
-                  <CardBlackFace>
-                    {showRuleOfThirds && <RuleOfThirdsOverlay />}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setActiveSubskills(null);
-                      }}
-                      className="absolute top-4 right-4 z-20 px-3 py-2 text-xs font-medium uppercase tracking-wider text-white border border-white/30 bg-white/5 hover:bg-cyan-500 hover:border-cyan-400 hover:text-white rounded-md transition-colors duration-200 shadow-sm"
-                      aria-label="Close subskills"
-                    >
-                      Close
-                    </button>
-                    <div className="relative z-10 flex flex-col h-full min-h-0 px-9 md:px-11 py-5 pt-14 pb-5 text-left transform-gpu overflow-hidden" style={{ textRendering: "geometricPrecision" }}>
-                      <div className="flex-shrink-0 space-y-1.5 mb-4">
-                        <p className="text-[13px] uppercase tracking-[0.25em] text-zinc-400">
-                          SYSTEM // {activeSubskills === "core" ? "CORE SUB-SKILLS" : "TOOLS SUB-SKILLS"}
-                        </p>
-                        <p className="font-display text-2xl md:text-3xl tracking-[0.14em] uppercase text-white leading-tight">
-                          {activeSubskills === "core" ? "Execution Detail" : "Operational Stack"}
-                        </p>
-                      </div>
-                      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1 -mr-1 pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:[display:none]">
-                      {activeSubskills === "core" ? (
-                        <div className="space-y-3 text-base md:text-lg leading-relaxed text-zinc-100 pb-2">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
-                            <ul className="space-y-2">
-                              {CORE_SUBSKILLS_COL1.map(({ label, Icon }) => (
-                                <li key={label} className="flex items-center gap-3">
-                                  <Icon size={17} className="shrink-0 text-cyan-400 opacity-80" />
-                                  <span>{label}</span>
-                                </li>
-                              ))}
-                            </ul>
-                            <ul className="space-y-2">
-                              {CORE_SUBSKILLS_COL2.map(({ label, Icon }) => (
-                                <li key={label} className="flex items-center gap-3">
-                                  <Icon size={17} className="shrink-0 text-cyan-400 opacity-80" />
-                                  <span>{label}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="space-y-3 text-base md:text-lg leading-relaxed text-zinc-100 pb-2">
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
-                            <div>
-                              <p className="text-sm uppercase tracking-[0.18em] text-zinc-400 mb-2">
-                                Design &amp; Productivity
-                              </p>
-                              <ul className="space-y-2">
-                                {[
-                                  "Microsoft Office 365",
-                                  "Adobe Creative Suite",
-                                  "Canva",
-                                  "Procreate",
-                                  "Clip Studio Paint",
-                                ].map((tool) => (
-                                  <li key={tool} className="flex items-center gap-3">
-                                    <ToolIcon name={tool} size={20} />
-                                    <span>{tool}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                            <div>
-                              <p className="text-sm uppercase tracking-[0.18em] text-zinc-400 mb-2">
-                                Video &amp; Writing
-                              </p>
-                              <ul className="space-y-2">
-                                {["DaVinci Resolve", "CapCut", "Final Draft", "Arc Studio"].map((tool) => (
-                                  <li key={tool} className="flex items-center gap-3">
-                                    <ToolIcon name={tool} size={20} />
-                                    <span>{tool}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                            <div>
-                              <p className="text-sm uppercase tracking-[0.18em] text-zinc-400 mb-2">
-                                Social Platforms
-                              </p>
-                              <ul className="space-y-2">
-                                {[
-                                  "Hootsuite",
-                                  "TikTok Creator Tools",
-                                  "Instagram Reels",
-                                  "YouTube Shorts",
-                                ].map((tool) => (
-                                  <li key={tool} className="flex items-center gap-3">
-                                    <ToolIcon name={tool} size={20} />
-                                    <span>{tool}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                      </div>
-                    </div>
-                  </CardBlackFace>
-                </UiverseCard>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                <motion.button
+                  type="button"
+                  onClick={goSkillsPrev}
+                  aria-label="Previous skills category"
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.97 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-white/25 bg-black/55 text-white backdrop-blur-md md:h-10 md:w-10 hover:border-yellow-400/50 hover:text-yellow-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                >
+                  <ChevronLeft size={18} strokeWidth={2} aria-hidden />
+                </motion.button>
+                <motion.button
+                  type="button"
+                  onClick={goSkillsNext}
+                  aria-label="Next skills category"
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.97 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-white/25 bg-black/55 text-white backdrop-blur-md md:h-10 md:w-10 hover:border-yellow-400/50 hover:text-yellow-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                >
+                  <ChevronRight size={18} strokeWidth={2} aria-hidden />
+                </motion.button>
+              </div>
+            </>
+          ) : (
+            <AnimatePresence>
+              {SKILLS_SHOW_INTRO_PAIR_CARDS && activeSubskills ? (
+                <motion.div
+                  key="skills-subcard"
+                  initial={{ opacity: 0, scale: 0.95, y: 32 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 1, y: 16 }}
+                  transition={{ duration: MORPH_EXPAND_DUR, ease: MORPH_EXPAND_EASE }}
+                  className="absolute inset-0 flex items-center justify-center pointer-events-auto px-4 sm:px-6"
+                  onClick={() => setActiveSubskills(null)}
+                >
+                  <div
+                    role="group"
+                    aria-label="Skills detail"
+                    className="skills-source-stack flex w-full max-w-[min(100%,1180px)] flex-col"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <SkillsSubskillsPanel
+                      slide={activeSubskills}
+                      variant="overlay"
+                      onClose={() => setActiveSubskills(null)}
+                    />
+                  </div>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+          )}
         </div>
       </div>
     </section>
