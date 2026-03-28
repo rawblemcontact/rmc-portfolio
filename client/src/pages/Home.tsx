@@ -134,59 +134,59 @@ function ProcreateIcon({
     >
       <path
         d="m 12.02324,13 c -0.33,0 -0.66,0 -1,0 -0.724,11.524 1.337,20.922 8.785,29.984 4.124,3.754 9.114,5.88 14.215,8.016 0,0.99 0,1.98 0,3 8.109,4.561 16.765,6.544 25.734,8.824 9.247,2.491 16.963,5.814 22.266,14.176 0.847,2.325 1.431,4.583 2,7 0.33,0 0.66,0 1,0 0.74,-11.094 -2.68,-21.544 -10,-30 -8.744,-8.619 -18.865,-12.166 -30.438,-15.375 -11.909,-3.311 -24.128,-8.531 -30.562,-19.625 -1.243,-3.225 -1.243,-3.225 -2,-6 z"
-        fill="#ffffff"
+        fill="currentColor"
       />
       <path
         d="m 47.02324,46 c -1.963,1.875 -3.396,3.783 -5,6 0.785,0.193 1.57,0.387 2.379,0.586 3.209,0.795 6.415,1.604 9.621,2.414 1.237,0.309 2.475,0.619 3.75,0.938 8.228,2.689 15.969,6.844 20.5,14.5 1.712,3.484 3.473583,6.634626 5.456749,9.266294 L 85.02324,84 c 0.584,-8.761 -1.038,-17.536 -6.375,-24.75 -6.544,-6.811 -22.178,-16.819 -31.625,-13.25 z"
-        fill="#ffffff"
+        fill="currentColor"
       />
       <path
         d="m 12.02324,13 c -0.33,0 -0.66,0 -1,0 -0.538,8.571 0.533,15.137 4,23 0.99,-1.32 1.98,-2.64 3,-4 0.784,0.557 1.567,1.114 2.375,1.688 7.44,4.954 15.382,8.57 24.187,10.124 11.168,2.177 20.864,7.202 30.438,13.188 0,-3 0,-3 -1.766,-4.867 -8.823,-7.131 -17.879,-10.516 -28.672,-13.508 -11.909,-3.311 -24.128,-8.531 -30.562,-19.625 -1.243,-3.225 -1.243,-3.225 -2,-6 z"
-        fill="#ffffff"
+        fill="currentColor"
       />
       <path
         d="m 18.02324,31 -2,2 c 0.102,4.495 4.849784,5.049176 7.860784,8.384176 2.887,2.616 3.143216,7.615824 7.139216,7.615824 4,-4.471 4,-4.471 4,-7 l 3,-1 c -0.736,-0.242 -1.472,-0.485 -2.23,-0.734 -5.317,-1.826 -9.553,-3.433 -13.77,-7.266 -1.311,-0.709 -2.638,-1.395 -4,-2 z"
-        fill="#ffffff"
+        fill="currentColor"
       />
       <path
         d="m 39.02324,39 c 0,0.66 0,1.32 0,2 0.609,0.211 1.218,0.422 1.845,0.639 16.073,5.587 16.073,5.587 31.155,13.361 1.327,0.679 2.658,1.35 4,2 -2.548,-6.486 -9.679,-10.337 -15.668,-13.336 -6.902,-2.846 -13.79,-5.041 -21.332,-4.664 z"
-        fill="#ffffff"
+        fill="currentColor"
       />
       <path
         d="m 57.02324,56 c -1.664,0.348 -3.33,0.684 -5,1 0,0.66 0,1.32 0,2 -0.99,0.33 -1.98,0.66 -3,1 0.594,0.15 1.189,0.301 1.801,0.456 2.738,0.704 5.468,1.436 8.199,2.169 0.935,0.236 1.869,0.472 2.832,0.715 5.769,1.573 9.996,3.538 14.609,7.368 1.559,1.292 1.559,1.292 3.559,2.292 -3.594,-8.496 -10.46,-12.728 -18.09,-17.234 -1.91,-0.766 -1.91,-0.766 -4.91,0.234 z"
-        fill="#ffffff"
+        fill="currentColor"
       />
       <path
         d="m 47.02324,46 c -1.963,1.875 -3.396,3.783 -5,6 1.935,0.531 3.873,1.049 5.812,1.562 1.619,0.436 1.619,0.436 3.27,0.879 4.722,0.904 8.629,-1.58 12.918,-3.441 -4.355,-4.8 -10.735,-7.367 -17,-5 z"
-        fill="#ffffff"
+        fill="currentColor"
       />
       <path
         d="m 33.02324,52 c 4.159,4.728 10.47,6.826 16.625,7.25 0.784,-0.082 1.568,-0.165 2.375,-0.25 0,-0.66 0,-1.32 0,-2 2.31,0 4.62,0 7,0 -2.885,-2.885 -6.33,-3.284 -10.188,-4.188 -0.743,-0.19 -1.486,-0.38 -2.251,-0.576 -4.905,-1.165 -8.62,-1.263 -13.561,-0.236 z"
-        fill="#ffffff"
+        fill="currentColor"
       />
       <path
         d="m 22.02324,29 c 0,3.418 0.823,4.878 3.039,7.434 4.266,3.407 9.718,5.22 14.961,6.566 2.402,-0.371 2.402,-0.371 4,-1 -1.65,-0.33 -3.3,-0.66 -5,-1 0,-1.32 0,-2.64 0,-4 -5.61,-2.64 -11.22,-5.28 -17,-8 z m 20,9 c -3,1 -3,1 -3,1 z"
-        fill="#ffffff"
+        fill="currentColor"
       />
       <path
         d="m 54.77324,58.9375 c -1.078,0.009 -2.155,0.018 -3.266,0.027 -0.819,0.012 -1.639,0.024 -2.484,0.035 2.738,1.826 4.348,2.499 7.449,3.29 0.848,0.219 1.695,0.438 2.569,0.664 0.881,0.221 1.762,0.443 2.67,0.672 0.892,0.229 1.785,0.458 2.705,0.695 2.201,0.565 4.403,1.125 6.607,1.679 0,-0.989 0,-1.98 0,-3 -5.811,-3.037 -9.7,-4.133 -16.25,-4.062 z"
-        fill="#ffffff"
+        fill="currentColor"
       />
       <path
         d="m 12.02324,17 c -0.33,0 -0.66,0 -1,0 -0.537,7.115 1.303,12.45 4,19 2,-3 2,-3 3,-6 -0.961,-2.375 -0.961,-2.375 -2.375,-5 -1.432,-2.689 -2.66,-5.104 -3.625,-8 z"
-        fill="#ffffff"
+        fill="currentColor"
       />
       <path
         d="m 73.02324,63 c -0.66,0.33 -1.32,0.66 -2,1 1.517,4.55 5.169,6.501 9,9 -1.668,-3.941 -4.227,-6.789 -7,-10 z"
-        fill="#ffffff"
+        fill="currentColor"
       />
       <path
         d="m 26.955809,47 -2,1 c 6.074,5.059 15.026147,9.417282 18.890147,9.170282 0.68,-0.268 -7.591147,-4.894282 -6.890147,-5.170282 -3.235,-2.156 -6.372,-3.615 -10,-5 z"
-        fill="#ffffff"
+        fill="currentColor"
       />
       <path
         d="m 72.02324,51 c -0.66,0.99 -1.32,1.98 -2,3 1.98,0.99 3.96,1.98 6,3 -1.152,-2.468 -2.048,-4.048 -4,-6 z"
-        fill="#ffffff"
+        fill="currentColor"
       />
     </svg>
   );
@@ -257,11 +257,11 @@ function ArcStudioIcon({
     >
       <path
         d="m 51.384119,20.404801 c 0.5647,2.5583 0.8782,5.2289 0.9072,7.9656 l 4.8196,-0.0066 c -0.0015,-10.5208 -5.6958,-19.69794 -14.1647,-24.59293 4.081,4.67568 7.0283,10.35083 8.4379,16.63393 z m -50.70235625,7.9483 H 16.287219 c 0,-5.9826 4.1546,-11.0234 9.728,-12.3217 -1.9253,-1.7567 -4.2814,-3.0805 -6.8654,-3.7679 -6.628,2.1813 -11.2989502,6.3226 -14.2851402,9.8573 l -0.3435601,0.4129 c -0.11194,0.1366 -0.2213,0.2721 -0.32811,0.4064 l -0.3127599,0.3989 -0.2975201,0.3905 c -0.04832,0.0644 -0.09601,0.1283 -0.1430599,0.1919 l -0.27483,0.3762 -0.25981,0.3655 c -0.08412,0.12 -0.16575,0.238 -0.24492,0.3539 l -0.2301001,0.3413 -0.2153899,0.3278 -0.20079,0.3134 -0.1862701,0.2981 -0.25242,0.4163 -0.22032,0.3765 -0.12921,0.2274 -0.21646,0.3939 -0.16117295,0.3064 z"
-        fill="white"
+        fill="currentColor"
       />
       <path
         d="m 3.6072687,15.767501 c -1.87558,3.793 -2.92017395,8.0828 -2.93026695,12.5948 l 0.106032,-0.2174 0.133735,-0.2605 0.24443995,-0.4532 0.18848,-0.3343 0.22024,-0.3773 0.25234,-0.4171 0.1862301,-0.2987 0.20076,-0.314 0.21536,-0.3285 0.23009,-0.342 0.24491,-0.3546 0.25982,-0.3663 0.2748399,-0.3769 c 0.09413,-0.1274 0.1907701,-0.2564 0.2899601,-0.3868 l 0.3051699,-0.3956 0.3204901,-0.4036 c 2.9536499,-3.6648 7.7804202,-8.18 14.8078202,-10.4917 -1.4297,-0.3801 -2.935,-0.5908 -4.4857,-0.5819 -4.2255,-0.013 -8.0974303,1.5494 -11.0647503,4.1056 z"
-        fill="white"
+        fill="currentColor"
       />
       <defs>
         <linearGradient
@@ -273,8 +273,8 @@ function ArcStudioIcon({
           gradientUnits="userSpaceOnUse"
           gradientTransform="translate(-0.11328125,-0.560699)"
         >
-          <stop stopColor="white" />
-          <stop offset="1" stopColor="white" />
+          <stop stopColor="currentColor" />
+          <stop offset="1" stopColor="currentColor" />
         </linearGradient>
       </defs>
       <path
@@ -356,7 +356,7 @@ function ToolIcon({ name, size = 18 }: { name: string; size?: number }) {
           alt=""
           width={size}
           height={size}
-          className="tool-logo-favicon block max-h-full max-w-full shrink-0 opacity-90"
+          className="skills-tool-icon-menu-green block max-h-full max-w-full shrink-0 opacity-90"
         />
       );
     }
@@ -366,12 +366,12 @@ function ToolIcon({ name, size = 18 }: { name: string; size?: number }) {
         alt=""
         width={size}
         height={size}
-        className="block max-h-full max-w-full shrink-0 opacity-90"
+        className="skills-tool-icon-menu-green block max-h-full max-w-full shrink-0 opacity-90"
       />
     );
   }
   const Icon = icon;
-  return <Icon size={size} className="block shrink-0 opacity-90" />;
+  return <Icon size={size} className="block shrink-0 text-green-600 opacity-90" />;
 }
 
 // --- ANIMATION VARIANTS ---
@@ -508,6 +508,15 @@ const TextShutter = ({
 const SLIDE =
   "no-scrollbar w-screen h-screen flex-shrink-0 snap-start overflow-y-auto overflow-x-hidden overscroll-y-contain";
 
+const SLIDE_NO_Y_SCROLL =
+  "no-scrollbar w-screen h-screen flex-shrink-0 snap-start overflow-y-hidden overflow-x-hidden";
+
+const MOBILE_FLOAT_BOTTOM = "calc(0.75rem + env(safe-area-inset-bottom))";
+const MOBILE_SKILLS_NAV_BOTTOM = "calc(0.75rem + env(safe-area-inset-bottom) + 1px)";
+const MOBILE_FLOAT_LEFT = "calc(1rem + env(safe-area-inset-left))";
+const MOBILE_ROUND_BTN_BASE =
+  "items-center justify-center w-9 h-9 rounded-full border border-white/20 bg-black/60 backdrop-blur-md text-white/90 active:scale-95 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80";
+
 const scrollToId = (id: string, behavior: ScrollBehavior = "smooth") => {
   const el = document.getElementById(id);
   el?.scrollIntoView({ behavior, block: "nearest", inline: "start" });
@@ -605,22 +614,32 @@ const BackToMenuButton = ({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 10 }}
           transition={{ duration: DUR.fast, ease: EASE.out }}
-          className="fixed z-50"
+          className="fixed z-50 max-sm:flex max-sm:h-9 max-sm:w-9 max-sm:items-center max-sm:justify-center"
           style={{
-            left: "calc(1rem + env(safe-area-inset-left))",
-            bottom: "calc(0.75rem + env(safe-area-inset-bottom))",
+            left: MOBILE_FLOAT_LEFT,
+            bottom: MOBILE_FLOAT_BOTTOM,
           }}
         >
+          <div className="hidden sm:block">
+            <button
+              type="button"
+              onClick={onBack}
+              aria-label="Back to menu"
+              className="animated-button bg-black/55 backdrop-blur-md font-heading text-[9px] md:text-[10px] tracking-[0.12em] uppercase focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+            >
+              <BackArrowSvg className="arr-2" />
+              <span className="text">Back to menu</span>
+              <span className="circle" aria-hidden />
+              <BackArrowSvg className="arr-1" />
+            </button>
+          </div>
           <button
             type="button"
             onClick={onBack}
             aria-label="Back to menu"
-            className="animated-button bg-black/55 backdrop-blur-md font-heading text-[9px] md:text-[10px] tracking-[0.12em] uppercase focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+            className={`flex sm:hidden ${MOBILE_ROUND_BTN_BASE}`}
           >
-            <BackArrowSvg className="arr-2" />
-            <span className="text">Back to menu</span>
-            <span className="circle" aria-hidden />
-            <BackArrowSvg className="arr-1" />
+            <BackArrowSvg className="w-4 h-4 fill-white" />
           </button>
         </motion.div>
       )}
@@ -1299,17 +1318,42 @@ const PhantomProfile = () => {
   }, [profileLeftInView]);
 
   return (
-    <section id="profile" className={`relative min-h-screen w-full overflow-x-hidden py-16 md:py-20 pb-12 bg-black text-white scroll-mt-6 ${SLIDE}`}>
+    <section id="profile" className={`relative min-h-screen w-full overflow-x-hidden bg-black text-white scroll-mt-6 ${SLIDE}`}>
       <SectionGridOverlay />
-      <div className="container mx-auto px-6 relative z-20">
+      <div className="container mx-auto px-4 sm:px-6 relative z-20 pt-[24vh] lg:pt-0 pb-16 lg:pb-12">
         <div className="flex flex-col lg:flex-row gap-10 lg:gap-12 items-center lg:items-start">
-          <motion.div 
+
+          <motion.div
+            ref={rawblemRef}
+            initial={{ opacity: 0, y: 32, x: 0 }}
+            whileInView={{ opacity: 1, y: 0, x: 0 }}
+            viewport={{ once: false, amount: 0.2 }}
+            transition={{ duration: 0.52, ease: [0.16, 1, 0.3, 1] }}
+            onAnimationComplete={() => rawblemInView && setRawblemFloatReady(true)}
+            className="lg:order-2 w-full lg:w-2/5 lg:min-w-0 flex justify-center max-lg:-mt-14 sm:max-lg:-mt-16 max-lg:-translate-y-2 lg:translate-y-0 lg:mt-[16%]"
+          >
+            <div className="w-full max-w-[160px] sm:max-w-[220px] md:max-w-[300px] aspect-square flex items-center justify-center">
+              <motion.img
+                src="/rawblem3.svg"
+                alt="RAWBLEM"
+                className="w-full h-full object-contain"
+                animate={{ y: rawblemFloatReady ? [0, -8, 0] : 0 }}
+                transition={
+                  rawblemFloatReady
+                    ? { duration: 3.2, repeat: Infinity, ease: "easeInOut" }
+                    : { duration: 0 }
+                }
+              />
+            </div>
+          </motion.div>
+
+          <motion.div
             ref={profileLeftRef}
-            initial={{ opacity: 0, x: -50 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 30, x: 0 }}
+            whileInView={{ opacity: 1, y: 0, x: 0 }}
             viewport={{ once: false, amount: 0.2 }}
             transition={{ duration: 0.342, ease: [0.16, 1, 0.3, 1] }}
-            className="w-full lg:w-1/2 lg:min-w-[36rem] lg:shrink-0 mt-[25%]"
+            className="lg:order-1 w-full lg:w-3/5 lg:max-w-[38rem] lg:shrink-0 lg:mt-[25%]"
           >
              <SectionHeader
                key={profileLeftInView ? "profile-in" : "profile-out"}
@@ -1317,7 +1361,7 @@ const PhantomProfile = () => {
                color="text-white"
                showBar={false}
                compact
-               className="!mb-5 -mt-[5%] -ml-[3px]"
+               className="!mb-5 max-lg:mt-0 lg:-mt-[5%] -ml-[3px]"
                titleDelay={0.152}
                titleDuration={0.342}
                titleStagger={0.0216}
@@ -1339,18 +1383,17 @@ const PhantomProfile = () => {
                />
             </div>
             <div
-              className="relative w-full max-w-xl mt-1 overflow-visible min-w-0 min-h-[60px] isolate"
-              style={{ marginLeft: "-20px" }}
+              className="relative w-full max-w-xl mt-1 overflow-visible min-w-0 min-h-[48px] sm:min-h-[60px] isolate"
             >
               <motion.div
-                className="flex flex-nowrap items-center gap-1"
+                className="flex flex-wrap sm:flex-nowrap items-center gap-1.5 sm:gap-1"
                 initial={{ x: -24, opacity: 0 }}
                 animate={{ x: overlayRevealed ? 0 : -24, opacity: overlayRevealed ? 1 : 0 }}
                 transition={{ duration: BUTTON_FADE_DURATION_MS / 1000, delay: overlayRevealed ? BUTTONS_DELAY_AFTER_SUMMARY_MS / 1000 : 0, ease: [0.16, 1, 0.3, 1] }}
               >
-               <ExpandCircleButton icon={<FileText size={24} />} expanded>Writer</ExpandCircleButton>
-               <ExpandCircleButton icon={<Monitor size={24} />} expanded>Digital Media</ExpandCircleButton>
-               <ExpandCircleButton icon={<ListOrdered size={24} />} expanded>Content Strategy</ExpandCircleButton>
+               <ExpandCircleButton icon={<FileText size={20} />} expanded>Writer</ExpandCircleButton>
+               <ExpandCircleButton icon={<Monitor size={20} />} expanded>Digital Media</ExpandCircleButton>
+               <ExpandCircleButton icon={<ListOrdered size={20} />} expanded>Content Strategy</ExpandCircleButton>
               </motion.div>
               <motion.div
                 key={overlayEnterCount}
@@ -1368,34 +1411,10 @@ const PhantomProfile = () => {
                transition={{ duration: SUMMARY_DURATION_S, delay: overlayRevealed ? SUMMARY_DELAY_S : 0, ease: [0.16, 1, 0.3, 1] }}
              >
                <p className="font-heading text-sm tracking-[0.22em] uppercase text-zinc-400 mb-2">SUMMARY</p>
-               <p className="font-body text-base md:text-lg text-zinc-300 leading-relaxed">
-                 Writer and digital media coordinator focused on interactive content creation and community management. Blends creative storytelling with analytical strategy to drive engagement.
+               <p className="font-body text-sm sm:text-base md:text-lg text-zinc-300 leading-relaxed">
+                 Communications-focused writer and digital media coordinator with experience producing narrative-driven web content and managing social media workflows across multiple platforms. Bachelor of Arts in Writing (Distinction), University of Victoria.
                </p>
              </motion.div>
-          </motion.div>
-          
-          <motion.div
-            ref={rawblemRef}
-            initial={{ opacity: 0, x: 48 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: false, amount: 0.2 }}
-            transition={{ duration: 0.52, delay: 0, ease: [0.16, 1, 0.3, 1] }}
-            onAnimationComplete={() => rawblemInView && setRawblemFloatReady(true)}
-            className="w-full lg:w-1/2 lg:min-w-0 flex justify-center mt-6 lg:mt-[16%]"
-          >
-            <div className="w-full max-w-[240px] md:max-w-[300px] aspect-square flex items-center justify-center">
-              <motion.img
-                src="/rawblem3.svg"
-                alt="RAWBLEM"
-                className="w-full h-full object-contain"
-                animate={{ y: rawblemFloatReady ? [0, -8, 0] : 0 }}
-                transition={
-                  rawblemFloatReady
-                    ? { duration: 3.2, repeat: Infinity, ease: "easeInOut" }
-                    : { duration: 0 }
-                }
-              />
-            </div>
           </motion.div>
         </div>
       </div>
@@ -1426,7 +1445,7 @@ const StatRow = ({ label, value }: { label: string; value: string }) => (
   </div>
 );
 
-// --- PROJECTS (carousel: 6 projects, 3 visible, left/right arrows) ---
+// --- PROJECTS (responsive carousel with 1-3 visible cards) ---
 const PROJECT_CARDS = [
   { id: "project-1", label: "Project 1" },
   { id: "project-2", label: "Project 2" },
@@ -1438,24 +1457,34 @@ const PROJECT_CARDS = [
 
 const cardEase = [0.25, 0.46, 0.45, 0.94] as const;
 const TOTAL_PROJECTS = PROJECT_CARDS.length;
-const CAROUSEL_PAGES = TOTAL_PROJECTS - 2; // 4 pages: (1,2,3), (2,3,4), (3,4,5), (4,5,6) then back to 1
+
+const getProjectCardsPerView = (viewportWidth: number) => {
+  if (viewportWidth < 640) return 1;
+  if (viewportWidth < 1024) return 2;
+  return 3;
+};
 
 const ProjectsStack = ({ onSelect }: { onSelect: (id: string) => void }) => {
   const [carouselIndex, setCarouselIndex] = useState(0);
   const trackRef = useRef<HTMLDivElement>(null);
+  const [cardsPerView, setCardsPerView] = useState(3);
   const [stepPx, setStepPx] = useState(268);
-  const [visibleWidthPx, setVisibleWidthPx] = useState(804); // 3 cards + 2 gaps
+  const [visibleWidthPx, setVisibleWidthPx] = useState(804);
 
   const measureStep = useCallback(() => {
     const track = trackRef.current;
     if (!track) return;
     const card = track.querySelector("[data-carousel-card]") as HTMLElement | null;
     if (!card) return;
+    const nextCardsPerView = getProjectCardsPerView(window.innerWidth);
     const style = window.getComputedStyle(track);
     const gapPx = parseFloat(style.gap) || 32;
     const cardWidth = card.offsetWidth;
+    setCardsPerView(nextCardsPerView);
     setStepPx(cardWidth + gapPx);
-    setVisibleWidthPx(3 * cardWidth + 2 * gapPx);
+    setVisibleWidthPx(
+      nextCardsPerView * cardWidth + Math.max(nextCardsPerView - 1, 0) * gapPx,
+    );
   }, []);
 
   useLayoutEffect(() => {
@@ -1464,11 +1493,17 @@ const ProjectsStack = ({ onSelect }: { onSelect: (id: string) => void }) => {
     return () => window.removeEventListener("resize", measureStep);
   }, [measureStep]);
 
-  const goPrev = () => setCarouselIndex((i) => (i - 1 + CAROUSEL_PAGES) % CAROUSEL_PAGES);
-  const goNext = () => setCarouselIndex((i) => (i + 1) % CAROUSEL_PAGES);
+  const carouselPages = Math.max(TOTAL_PROJECTS - cardsPerView + 1, 1);
+
+  useEffect(() => {
+    setCarouselIndex((index) => Math.min(index, carouselPages - 1));
+  }, [carouselPages]);
+
+  const goPrev = () => setCarouselIndex((i) => (i - 1 + carouselPages) % carouselPages);
+  const goNext = () => setCarouselIndex((i) => (i + 1) % carouselPages);
 
   return (
-    <div className="flex justify-center items-center gap-4 md:gap-6 py-8 overflow-hidden w-full">
+    <div className="flex justify-center items-center gap-3 md:gap-6 py-8 overflow-hidden w-full">
       <motion.button
         type="button"
         onClick={goPrev}
@@ -1481,7 +1516,7 @@ const ProjectsStack = ({ onSelect }: { onSelect: (id: string) => void }) => {
         <ChevronLeft size={28} strokeWidth={2} aria-hidden />
       </motion.button>
 
-      {/* Viewport: exactly 3 cards wide, overflow clips to 3 visible */}
+      {/* Viewport width adapts to the current cards-per-view count */}
       <div
         className="flex items-end overflow-hidden flex-shrink-0"
         style={{ width: visibleWidthPx, maxWidth: "100%" }}
@@ -1501,7 +1536,7 @@ const ProjectsStack = ({ onSelect }: { onSelect: (id: string) => void }) => {
                 onClick={() => onSelect(card.id)}
                 whileTap={{ scale: 0.98 }}
                 transition={{ duration: 0.2, ease: cardEase }}
-                className="flex-shrink-0 w-[180px] md:w-[220px] h-[240px] md:h-[280px] rounded-xl bg-transparent border-2 border-white/15 flex items-center justify-center shadow-xl hover:border-yellow-400/50 hover:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black relative"
+                className="relative flex-shrink-0 w-[180px] sm:w-[200px] md:w-[220px] h-[240px] md:h-[280px] rounded-xl bg-transparent border-2 border-white/15 flex items-center justify-center shadow-xl hover:border-yellow-400/50 hover:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
               >
                 <span className="font-heading text-sm md:text-base text-zinc-400 tracking-[0.14em] uppercase px-4 transition-colors duration-200 hover:text-zinc-300">
                   {card.label}
@@ -1649,6 +1684,11 @@ function getStoredExperiencePositionX(): number {
 }
 
 const SNAP_PAGE_VH = 51;
+const SNAP_PAGE_VH_MOBILE = 46;
+
+function getSnapVh() {
+  return typeof window !== "undefined" && window.innerWidth < 640 ? SNAP_PAGE_VH_MOBILE : SNAP_PAGE_VH;
+}
 
 const ConfidantExperience = () => {
   const [position, setPosition] = useState(() =>
@@ -1664,13 +1704,13 @@ const ConfidantExperience = () => {
   const scrollToPrev = useCallback(() => {
     const el = jobListRef.current;
     if (!el) return;
-    const pagePx = (SNAP_PAGE_VH / 100) * window.innerHeight;
+    const pagePx = (getSnapVh() / 100) * window.innerHeight;
     el.scrollBy({ top: -pagePx, behavior: "smooth" });
   }, []);
   const scrollToNext = useCallback(() => {
     const el = jobListRef.current;
     if (!el) return;
-    const pagePx = (SNAP_PAGE_VH / 100) * window.innerHeight;
+    const pagePx = (getSnapVh() / 100) * window.innerHeight;
     el.scrollBy({ top: pagePx, behavior: "smooth" });
   }, []);
 
@@ -1678,7 +1718,7 @@ const ConfidantExperience = () => {
     const el = jobListRef.current;
     if (!el) return;
     const onScroll = () => {
-      const pagePx = (SNAP_PAGE_VH / 100) * window.innerHeight;
+      const pagePx = (getSnapVh() / 100) * window.innerHeight;
       const idx = Math.round(el.scrollTop / pagePx);
       setSnapIndex(Math.max(0, Math.min(idx, EXPERIENCE_DATA.length - 1)));
     };
@@ -1719,18 +1759,17 @@ const ConfidantExperience = () => {
     }
   };
 
-  // Optical alignment: use viewport units (vw/vh) so slider 50 = visual center and left/right/top/bottom match the viewport and rule-of-thirds overlay. Nudge content 0.75% right (buttons stay put).
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
   const offsetYVh = ((position - 50) / 50) * 25;
   const offsetXVw = ((positionX - 50) / 50) * 6;
-  const blockStyle = { transform: `translate(${offsetXVw + 0.75}vw, ${offsetYVh}vh)` };
+  const blockStyle = isMobile ? {} : { transform: `translate(${offsetXVw + 0.75}vw, ${offsetYVh}vh)` };
 
   return (
-    <section id="experience" className={`relative flex flex-col h-screen w-full overflow-hidden py-10 md:py-14 bg-black text-white scroll-mt-6 ${SLIDE}`}>
+    <section id="experience" className={`relative flex flex-col h-screen w-full overflow-hidden sm:py-10 md:py-14 bg-black text-white scroll-mt-6 ${SLIDE}`}>
        <SectionGridOverlay />
-       {/* Centered layout like MAIN MENU: single column, max-width, centered. */}
-       <div className="w-full px-6 md:px-10 relative z-10 flex flex-1 flex-col items-center justify-center min-h-0 overflow-visible">
+       <div className="w-full h-full px-5 sm:px-6 md:px-10 relative z-10 flex flex-col items-center justify-center min-h-0">
          <div
-           className="flex-none flex flex-col w-full max-w-4xl max-h-[78vh] min-h-[360px] my-auto transition-transform duration-150"
+           className="flex flex-col w-full max-w-4xl sm:max-h-[78vh] sm:min-h-[360px] transition-transform duration-150"
            style={blockStyle}
          >
          <div ref={headerRef} className="flex-none flex flex-col w-full items-start text-left">
@@ -1740,13 +1779,13 @@ const ConfidantExperience = () => {
              align="left"
              showBar={false}
              compact
-             className="!mb-5 ml-0 w-full"
+             className="!mb-2 sm:!mb-5 ml-0 w-full"
              titleTrigger="mount"
            />
-           <div className="relative w-full mt-1.5 min-h-[2px]">
+           <div className="relative w-full mt-1 sm:mt-1.5 min-h-[2px]">
              <span
                aria-hidden
-               className="absolute bottom-0 left-0 right-0 h-[2.5px] origin-left block w-full rounded-full opacity-90"
+               className="absolute bottom-0 left-0 right-0 h-[2px] sm:h-[2.5px] origin-left block w-full rounded-full opacity-90"
                style={{ backgroundColor: SECTION_ACCENT_COLOR.experience, transform: 'scaleX(1)' }}
              />
            </div>
@@ -1755,46 +1794,75 @@ const ConfidantExperience = () => {
         {/* Job list: each job is exactly 51vh so only two snap points (RAWBLEM, Barista). job’s */}
         <div
           ref={jobListRef}
-          className="w-full h-[51vh] min-h-[51vh] mt-4 overflow-y-auto overflow-x-hidden no-scrollbar snap-y snap-mandatory"
+          className="w-full h-[46vh] sm:h-[51vh] min-h-[46vh] sm:min-h-[51vh] mt-2 sm:mt-4 overflow-y-auto overflow-x-hidden no-scrollbar snap-y snap-mandatory"
         >
            {EXPERIENCE_DATA.map((job, idx) => (
              <article
                key={idx}
-               className="flex flex-col h-[51vh] min-h-[51vh] shrink-0 overflow-hidden pb-4 snap-start snap-always"
+               className="flex flex-col h-[46vh] sm:h-[51vh] min-h-[46vh] sm:min-h-[51vh] shrink-0 pb-2 sm:pb-4 snap-start snap-always"
              >
-               <header className="mb-3 shrink-0">
-                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                   <span className="font-mono text-xs text-zinc-500 tabular-nums w-8 shrink-0" aria-hidden>{String(idx + 1).padStart(2, "0")}</span>
-                   <h3 className="font-display text-lg md:text-xl font-semibold tracking-tight text-white">{job.role}</h3>
-                   <span className="text-zinc-600" aria-hidden>·</span>
-                   <span className="font-heading text-sm tracking-[0.06em] uppercase text-zinc-400">{job.company}</span>
-                   <span className="text-zinc-600" aria-hidden>·</span>
-                   <span className="font-heading text-sm tracking-[0.06em] uppercase text-zinc-500">{job.location}</span>
+               <header className="mb-1.5 sm:mb-3 shrink-0">
+                 <div className="flex flex-wrap items-baseline gap-x-2 sm:gap-x-3 gap-y-0.5 sm:gap-y-1">
+                   <span className="font-mono text-[10px] sm:text-xs text-zinc-500 tabular-nums w-5 sm:w-8 shrink-0" aria-hidden>{String(idx + 1).padStart(2, "0")}</span>
+                   <h3 className="font-display text-[13px] sm:text-lg md:text-xl font-semibold tracking-tight text-white">{job.role}</h3>
                  </div>
-                 <div className="flex items-baseline gap-x-3 mt-1">
-                   <span className="w-8 shrink-0" aria-hidden />
-                   <time className="font-heading text-xs tracking-[0.08em] uppercase text-zinc-500">{job.period}</time>
+                 <div className="flex flex-wrap items-baseline gap-x-2 sm:gap-x-3 gap-y-0.5 mt-0.5">
+                   <span className="w-5 sm:w-8 shrink-0" aria-hidden />
+                   <span className="font-heading text-[10px] sm:text-sm tracking-[0.06em] uppercase text-zinc-400">{job.company}</span>
+                   <span className="text-zinc-600" aria-hidden>·</span>
+                   <span className="font-heading text-[10px] sm:text-sm tracking-[0.06em] uppercase text-zinc-500">{job.location}</span>
+                 </div>
+                 <div className="flex items-baseline gap-x-2 sm:gap-x-3 mt-0.5 sm:mt-1">
+                   <span className="w-5 sm:w-8 shrink-0" aria-hidden />
+                   <time className="font-heading text-[9px] sm:text-xs tracking-[0.08em] uppercase text-zinc-500">{job.period}</time>
                  </div>
                </header>
-              <ul className="flex flex-col flex-1 min-h-0 overflow-hidden border-t border-white/15 pt-3 pb-0 pl-12 list-disc list-outside marker:text-zinc-500 space-y-0.5 text-zinc-300">
-                {job.bullets.map((bullet, i) => (
-                  <li
-                    key={i}
-                    className="py-1.5 border-b border-white/5 last:border-white/15 last:pb-1 font-body text-sm md:text-base leading-relaxed"
-                  >
-                    {bullet}
-                  </li>
-                ))}
-              </ul>
+              <div className="flex flex-col flex-1 min-h-0 overflow-y-auto overflow-x-hidden no-scrollbar border-t border-white/15 pt-1.5 sm:pt-3">
+                <ul className="pl-5 sm:pl-12 list-disc list-outside marker:text-zinc-500 text-zinc-300 border-b border-white/15 pb-1.5 sm:pb-2">
+                  {job.bullets.map((bullet, i) => (
+                    <li
+                      key={i}
+                      className="py-[3px] sm:py-1.5 border-b border-white/5 last:border-b-0 font-body text-[11px] sm:text-sm md:text-base leading-snug sm:leading-relaxed"
+                    >
+                      {bullet}
+                    </li>
+                  ))}
+                </ul>
+              </div>
              </article>
            ))}
+         </div>
+         {/* Mobile: horizontal arrows below content */}
+         <div
+           className="flex sm:hidden items-center justify-center gap-6 mt-3 z-20 flex-none"
+           aria-label="Experience navigation"
+         >
+           <button
+             type="button"
+             onClick={scrollToPrev}
+             disabled={snapIndex <= 0}
+             aria-label="Previous experience"
+             className="flex items-center justify-center w-8 h-8 rounded-full border border-white/20 bg-black/60 text-white/90 disabled:opacity-30 disabled:pointer-events-none transition-colors duration-200"
+           >
+             <ChevronUp size={16} strokeWidth={2.5} />
+           </button>
+           <span className="font-mono text-[10px] text-zinc-500 tabular-nums">{String(snapIndex + 1).padStart(2, "0")} / {String(EXPERIENCE_DATA.length).padStart(2, "0")}</span>
+           <button
+             type="button"
+             onClick={scrollToNext}
+             disabled={snapIndex >= EXPERIENCE_DATA.length - 1}
+             aria-label="Next experience"
+             className="flex items-center justify-center w-8 h-8 rounded-full border border-white/20 bg-black/60 text-white/90 disabled:opacity-30 disabled:pointer-events-none transition-colors duration-200"
+           >
+             <ChevronDown size={16} strokeWidth={2.5} />
+           </button>
          </div>
          </div>
        </div>
 
-       {/* Vertical snap arrows: right side of section, trigger scroll to prev/next job. */}
+       {/* Desktop: vertical arrows on the right side */}
        <div
-         className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-3"
+         className="absolute hidden sm:flex right-4 md:right-8 top-1/2 -translate-y-1/2 z-20 flex-col gap-3"
          aria-label="Experience navigation"
        >
          <button
@@ -2012,9 +2080,9 @@ const SKILLS_MAJOR_CATEGORIES: {
   },
   {
     id: "tools",
-    label: "TOOLS & TECHNOLOGIES",
+    label: "TOOLKIT",
     panels: [
-      { title: "DESIGN & PRODUCTIVITY", titleCase: "Design & Productivity", subtitle: "Tools & Technologies", items: ["Microsoft Office 365", "Adobe Creative Suite", "Canva", "Procreate", "Clip Studio Paint"] },
+      { title: "DESIGN & PRODUCTIVITY", titleCase: "Design & Productivity", subtitle: "Toolkit", items: ["Microsoft Office 365", "Adobe Creative Suite", "Canva", "Procreate", "Clip Studio Paint"] },
       { title: "VIDEO & WRITING", titleCase: "Video & Writing", subtitle: "Production Tools", items: ["DaVinci Resolve", "CapCut", "Final Draft", "Arc Studio"] },
       { title: "SOCIAL PLATFORMS", titleCase: "Social Platforms", subtitle: "Distribution Platforms", items: ["Hootsuite", "TikTok Creator Tools", "Instagram Reels", "YouTube Shorts"] },
     ],
@@ -2330,7 +2398,7 @@ const SKILLS_DATA = {
     ],
   },
   tools: {
-    title: "TOOLS & TECHNOLOGIES",
+    title: "TOOLKIT",
     categories: [
       {
         title: "Design & Productivity",
@@ -2386,8 +2454,8 @@ const SKILLS_CARD_LAYOUT = {
   },
 } as const;
 
-/** AiIdea / gear in subskills panel header — same artwork as intro cards, scaled to sit with the display title. */
-const SKILLS_SUBSKILL_HEADER_ICON_PX = 44;
+/** AiIdea / gear in subskills panel header — same artwork as intro cards, scaled to the SectionHeader-compact title row. */
+const SKILLS_SUBSKILL_HEADER_ICON_PX = 52;
 
 type CoreSubskillIcon = React.ComponentType<{ size?: number; className?: string }>;
 
@@ -2430,7 +2498,7 @@ const CORE_SUBSKILLS_CATEGORIES: {
 
 // Controls vertical positioning of the SKILLS block (header + cards) in rem.
 const SKILLS_LAYOUT = {
-  /** Vertical nudge for the skills block (rem); `0` lets content sit naturally after layout changes */
+  /** Vertical nudge for the skills block (rem); `0` keeps top/bottom balance and viewport-fixed chrome aligned */
   sectionOffsetRem: 0,
 } as const;
 
@@ -2760,10 +2828,18 @@ const UiverseCard = styled.div`
   border-radius: 10px;
   transition: transform 0.3s ease;
 
+  @media (max-width: 639px) {
+    width: min(90vw, 360px);
+    height: auto;
+    min-height: 200px;
+    aspect-ratio: 4 / 3;
+  }
+
   &:hover {
     transform: translateY(-6px);
   }
 
+  /* ICON_HOVER_DISABLED: UiverseCard SVG (idea/gear + star) — restore rules below
   &:hover .paperplane {
     transform: scale(1.07) translateY(-10%) rotate(18deg);
   }
@@ -2771,6 +2847,7 @@ const UiverseCard = styled.div`
   &:hover [data-ai-star] {
     fill: #f5f5f5;
   }
+  */
 
   &:hover [data-card-title-wrap] {
     transform: scale(1.08);
@@ -2780,13 +2857,26 @@ const UiverseCard = styled.div`
   &.skills-main-card {
     width: 396px;
     height: 297px;
+    @media (max-width: 639px) {
+      width: min(90vw, 396px);
+      height: auto;
+      min-height: 220px;
+      aspect-ratio: 4 / 3;
+    }
   }
 
-  /* Expanded subskills: sized to sit comfortably centered in the slide */
+  /* Expanded subskills: grow with content up to cap */
   &.skills-subcard {
     width: min(100%, 1180px);
-    height: min(440px, 58vh);
-    /* No hover effect on subskill card */
+    height: auto;
+    max-height: min(440px, 58vh);
+    overflow: hidden;
+    @media (max-width: 639px) {
+      width: 100%;
+      max-height: min(680px, 90vh);
+      aspect-ratio: unset;
+      min-height: 0;
+    }
     &:hover {
       transform: none;
     }
@@ -2800,7 +2890,6 @@ const CardBlackFace = styled.div`
   transform: translate(-50%, -50%);
   width: 364px;
   height: 274px;
-  /* No fill — transparent over the global black field */
   background: transparent;
   border: none;
   border-radius: 12px;
@@ -2810,22 +2899,40 @@ const CardBlackFace = styled.div`
   z-index: 0;
   overflow: hidden;
 
+  @media (max-width: 639px) {
+    width: calc(100% - 8px);
+    height: calc(100% - 8px);
+  }
+
   /* Main skill cards: 10% larger inner face */
   .skills-main-card:not(.skills-subcard) & {
     width: 400px;
     height: 301px;
+    @media (max-width: 639px) {
+      width: calc(100% - 8px);
+      height: calc(100% - 8px);
+    }
   }
 
-  /* Match expanded subskills card footprint */
+  /* Subskills: in-flow height so card + rules hug content */
   .skills-subcard & {
-    width: min(100%, 1180px);
-    height: min(452px, calc(58vh + 12px));
+    position: relative;
+    top: auto;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    width: 100%;
+    height: auto;
+    transform: none;
     align-items: stretch;
     padding: 0;
   }
   .skills-subcard & > div:last-child {
     width: 100%;
-    height: 100%;
+    min-height: 0;
+    height: auto;
+    display: flex;
+    flex-direction: column;
     border-radius: inherit;
   }
 `;
@@ -2949,9 +3056,60 @@ const ViewportRuleOfThirdsOverlay = styled(RuleOfThirdsOverlay)`
   border-radius: 0;
 `;
 
+const SKILLS_CONTENT_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
+
+/** Stagger inside subskills card: header → scroll body → bottom rule */
+const skillsPanelStaggerParent: Variants = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.09, delayChildren: 0.04 },
+  },
+};
+const skillsPanelStaggerChild: Variants = {
+  hidden: { opacity: 0, y: 16 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.4, ease: SKILLS_CONTENT_EASE },
+  },
+};
+
+/** Stagger around card + flank nav (inline) or intro pair cards */
+const skillsChromeStaggerParent: Variants = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.1, delayChildren: 0.06 },
+  },
+};
+const skillsChromeStaggerChild: Variants = {
+  hidden: { opacity: 0, y: 14 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.38, ease: SKILLS_CONTENT_EASE },
+  },
+};
+
+/** Icon flourish starts this many seconds before the modeled end of the SKILLS slide/fade stack (keep in sync with variants below). */
+const SKILLS_FLOURISH_LEAD_S = 0.5;
+
+/** Footer = 3rd panel stagger child: delayChildren + 2×staggerChildren + duration */
+const SKILLS_PANEL_STAGGER_END_S = 0.04 + 2 * 0.09 + 0.4;
+/** Inline carousel: single chrome stagger child (panel); arrows are outside keyed remount */
+const SKILLS_CHROME_INLINE_STAGGER_END_S = 0.06 + 0.38;
+const SKILLS_INLINE_MOTION_END_S = Math.max(SKILLS_PANEL_STAGGER_END_S, SKILLS_CHROME_INLINE_STAGGER_END_S);
+
+/** Intro: 2nd chrome card; also second card title motion (delay 0.25 + 0.4s) in SkillArsenal */
+const SKILLS_INTRO_CHROME_STAGGER_END_S = 0.06 + 1 * 0.1 + 0.38;
+const SKILLS_INTRO_SECOND_TITLE_END_S = 0.25 + 0.4;
+const SKILLS_INTRO_MOTION_END_S = Math.max(SKILLS_INTRO_CHROME_STAGGER_END_S, SKILLS_INTRO_SECOND_TITLE_END_S);
+
+/** Overlay shell expand vs panel stagger (parallel, same t0) */
+const SKILLS_OVERLAY_MOTION_END_S = Math.max(MORPH_EXPAND_DUR, SKILLS_PANEL_STAGGER_END_S);
+
 /**
  * Expanded subskills content. Header row: AiIdeaSvg (core) / GearSvg (tools) on the right, aligned
- * with “Execution Detail” / “Operational Stack”. Removed: `SkillsSourceToggle` toolbar — restore via
+ * with "Core Competencies" / "Toolkit". Removed: `SkillsSourceToggle` toolbar - restore via
  * git; related hover CSS commented in `index.css`. Intro pair cards still use the same SVGs when
  * `SKILLS_SHOW_INTRO_PAIR_CARDS` is true.
  */
@@ -2983,32 +3141,39 @@ const SkillsSubskillsPanel = ({
           Close
         </button>
       ) : null}
-      <div
+      <motion.div
+        key={slide}
         className={
           variant === "overlay"
-            ? "relative z-10 flex flex-col h-full min-h-0 px-10 sm:px-12 md:px-16 lg:px-20 py-5 pt-14 pb-6 text-left transform-gpu overflow-hidden"
-            : "relative z-10 flex flex-col h-full min-h-0 px-8 sm:px-10 md:px-14 lg:px-16 xl:px-20 py-6 sm:py-7 text-left transform-gpu overflow-hidden"
+            ? "relative z-10 flex min-h-0 max-h-[min(680px,90vh)] sm:max-h-[min(440px,58vh)] flex-col overflow-hidden px-4 sm:px-10 md:px-16 lg:px-20 py-4 pt-12 sm:pt-14 pb-5 sm:pb-6 text-left"
+            : "relative z-10 flex min-h-0 max-h-[min(680px,90vh)] sm:max-h-[min(440px,58vh)] flex-col overflow-hidden px-4 sm:px-8 md:px-14 lg:px-16 xl:px-20 py-2.5 sm:py-6 md:py-7 text-left"
         }
-        style={{ textRendering: "geometricPrecision" }}
+        variants={skillsPanelStaggerParent}
+        initial="hidden"
+        whileInView="show"
+        viewport={{ once: false, amount: 0.08 }}
       >
-        <div className="flex-shrink-0 min-w-0 border-b border-zinc-600/45 pb-4 mb-4">
-          <p className="mb-2 min-w-0 text-[13px] uppercase tracking-[0.25em] text-zinc-400 whitespace-nowrap truncate">
-            SYSTEM // {slide === "core" ? "CORE SUB-SKILLS" : "TOOLS SUB-SKILLS"}
+        <motion.div
+          className="flex flex-shrink-0 flex-col gap-0.5 min-w-0 border-b border-zinc-600/45 pb-2 sm:pb-4 mb-2 sm:mb-4 sm:gap-1.5"
+          variants={skillsPanelStaggerChild}
+        >
+          <p className="min-w-0 text-[11px] sm:text-[13px] uppercase leading-none tracking-[0.2em] sm:tracking-[0.25em] text-zinc-400 whitespace-nowrap truncate">
+            PORTFOLIO // SKILLS
           </p>
-          <div className="flex min-w-0 flex-row items-end justify-between gap-3 sm:gap-5">
-            <p className="min-w-0 flex-1 font-display text-2xl md:text-3xl tracking-[0.14em] uppercase text-white leading-tight whitespace-nowrap truncate">
-              {slide === "core" ? "Execution Detail" : "Operational Stack"}
+          <div className="flex min-w-0 flex-row items-end justify-between gap-2 sm:gap-5">
+            <p className="min-w-0 flex-1 font-display text-xl sm:text-3xl md:text-5xl uppercase tracking-tight text-white leading-none whitespace-nowrap truncate">
+              {slide === "core" ? "Core Competencies" : "Toolkit"}
             </p>
             <div
-              className="skills-subskills-header-icon shrink-0 translate-y-2 sm:translate-y-2.5"
+              className="skills-subskills-header-icon shrink-0 translate-y-1.5 sm:translate-y-4 [&_svg]:!w-[29px] [&_svg]:!h-[29px] sm:[&_svg]:!w-[52px] sm:[&_svg]:!h-[52px]"
               aria-hidden
             >
               {slide === "core" ? (
                 <span
-                  className="inline-flex"
+                  className="inline-flex sm:[transform:var(--icon-offset)]"
                   style={{
-                    transform: `translate(${Math.round(SKILLS_CARD_LAYOUT.core.icon.offsetX * (SKILLS_SUBSKILL_HEADER_ICON_PX / SKILLS_CARD_LAYOUT.core.icon.size))}px, ${Math.round(SKILLS_CARD_LAYOUT.core.icon.offsetY * (SKILLS_SUBSKILL_HEADER_ICON_PX / SKILLS_CARD_LAYOUT.core.icon.size))}px)`,
-                  }}
+                    "--icon-offset": `translate(${Math.round(SKILLS_CARD_LAYOUT.core.icon.offsetX * (SKILLS_SUBSKILL_HEADER_ICON_PX / SKILLS_CARD_LAYOUT.core.icon.size))}px, ${Math.round(SKILLS_CARD_LAYOUT.core.icon.offsetY * (SKILLS_SUBSKILL_HEADER_ICON_PX / SKILLS_CARD_LAYOUT.core.icon.size))}px)`,
+                  } as React.CSSProperties}
                 >
                   <AiIdeaSvg
                     viewBox="0 0 24 24"
@@ -3025,10 +3190,10 @@ const SkillsSubskillsPanel = ({
                 </span>
               ) : (
                 <span
-                  className="inline-flex text-zinc-100"
+                  className="inline-flex text-zinc-100 max-sm:translate-y-[5%] sm:[transform:var(--icon-offset)]"
                   style={{
-                    transform: `translate(${Math.round(SKILLS_CARD_LAYOUT.tools.icon.offsetX * (SKILLS_SUBSKILL_HEADER_ICON_PX / SKILLS_CARD_LAYOUT.tools.icon.size))}px, ${Math.round(SKILLS_CARD_LAYOUT.tools.icon.offsetY * (SKILLS_SUBSKILL_HEADER_ICON_PX / SKILLS_CARD_LAYOUT.tools.icon.size))}px)`,
-                  }}
+                    "--icon-offset": `translate(${Math.round(SKILLS_CARD_LAYOUT.tools.icon.offsetX * (SKILLS_SUBSKILL_HEADER_ICON_PX / SKILLS_CARD_LAYOUT.tools.icon.size))}px, ${Math.round(SKILLS_CARD_LAYOUT.tools.icon.offsetY * (SKILLS_SUBSKILL_HEADER_ICON_PX / SKILLS_CARD_LAYOUT.tools.icon.size)) + Math.round(SKILLS_SUBSKILL_HEADER_ICON_PX * 0.05)}px)`,
+                  } as React.CSSProperties}
                 >
                   <GearSvg
                     viewBox="0 0 256 256"
@@ -3062,11 +3227,21 @@ const SkillsSubskillsPanel = ({
               )}
             </div>
           </div>
-        </div>
-        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-2 pb-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:[display:none]">
+        </motion.div>
+        <motion.div
+          className="relative flex-1 min-h-0"
+          variants={skillsPanelStaggerChild}
+        >
+        <div
+          className={
+            variant === "inline"
+              ? "h-full min-h-0 overflow-y-hidden overflow-x-hidden pr-2 pb-3 sm:pb-2"
+              : "h-full min-h-0 overflow-y-hidden overflow-x-hidden pr-2 pb-8 sm:pb-2"
+          }
+        >
           {slide === "core" ? (
-            <div className="space-y-3 text-base md:text-[1.0625rem] leading-relaxed text-zinc-100 pb-2">
-              <div className="grid w-full min-w-0 grid-cols-1 md:grid-cols-3 md:items-start gap-y-8 gap-x-4 md:gap-x-5 lg:gap-x-7 xl:gap-x-8">
+            <div className="text-sm sm:text-base md:text-[1.0625rem] leading-relaxed text-zinc-100 pb-2 border-b border-zinc-600/45">
+              <div className="grid w-full min-w-0 grid-cols-1 md:grid-cols-3 md:items-start gap-y-3.5 sm:gap-y-8 gap-x-4 md:gap-x-5 lg:gap-x-7 xl:gap-x-8">
                 {CORE_SUBSKILLS_CATEGORIES.map(({ categoryTitle, items }) => (
                   <div
                     key={categoryTitle}
@@ -3079,18 +3254,18 @@ const SkillsSubskillsPanel = ({
                     <p
                       className={
                         categoryTitle === "Research & Collaboration"
-                          ? "mb-3 text-[13px] uppercase tracking-[0.22em] text-zinc-400 whitespace-nowrap"
-                          : "mb-3 min-w-0 text-[13px] uppercase leading-snug tracking-[0.22em] text-zinc-400 break-words"
+                          ? "mb-1.5 sm:mb-3 text-[13px] uppercase tracking-[0.22em] text-zinc-400 whitespace-nowrap"
+                          : "mb-1.5 sm:mb-3 min-w-0 text-[13px] uppercase leading-snug tracking-[0.22em] text-zinc-400 break-words"
                       }
                       title={categoryTitle}
                     >
                       {categoryTitle}
                     </p>
-                    <ul className="space-y-2.5">
+                    <ul className="space-y-1.5 sm:space-y-2.5">
                       {items.map(({ label, Icon }) => (
                         <li key={label} className="flex min-w-0 items-start gap-3.5">
-                          <span className="mt-0.5 inline-flex shrink-0">
-                            <Icon size={18} className="text-cyan-400 opacity-80" />
+                          <span className="mt-0.5 inline-flex h-[22px] w-[22px] shrink-0 items-center justify-center">
+                            <Icon size={22} className="text-green-600 opacity-80" />
                           </span>
                           <span className="min-w-0 truncate" title={label}>
                             {label}
@@ -3103,8 +3278,8 @@ const SkillsSubskillsPanel = ({
               </div>
             </div>
           ) : (
-            <div className="space-y-3 text-base md:text-[1.0625rem] leading-relaxed text-zinc-100 pb-2">
-              <div className="grid w-full min-w-0 grid-cols-1 md:grid-cols-3 md:items-start gap-y-8 gap-x-6 md:gap-x-8 lg:gap-x-10 xl:gap-x-12 [&>*]:min-w-0">
+            <div className="space-y-3 text-sm sm:text-base md:text-[1.0625rem] leading-relaxed text-zinc-100 pb-2 border-b border-zinc-600/45">
+              <div className="grid w-full min-w-0 grid-cols-1 md:grid-cols-3 md:items-start gap-y-6 sm:gap-y-8 gap-x-6 md:gap-x-8 lg:gap-x-10 xl:gap-x-12 [&>*]:min-w-0">
                 <div className="min-w-0 flex flex-col">
                   <p
                     className="mb-3 min-w-0 text-[13px] uppercase tracking-[0.22em] text-zinc-400 whitespace-nowrap truncate"
@@ -3121,8 +3296,8 @@ const SkillsSubskillsPanel = ({
                       "Clip Studio Paint",
                     ].map((tool) => (
                       <li key={tool} className="flex min-w-0 items-center gap-3.5">
-                        <span className="inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center">
-                          <ToolIcon name={tool} size={18} />
+                        <span className="inline-flex h-[22px] w-[22px] shrink-0 items-center justify-center">
+                          <ToolIcon name={tool} size={20} />
                         </span>
                         <span className="min-w-0 truncate" title={tool}>
                           {tool}
@@ -3141,8 +3316,8 @@ const SkillsSubskillsPanel = ({
                   <ul className="space-y-2.5">
                     {["DaVinci Resolve", "CapCut", "Final Draft", "Arc Studio"].map((tool) => (
                       <li key={tool} className="flex min-w-0 items-center gap-3.5">
-                        <span className="inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center">
-                          <ToolIcon name={tool} size={18} />
+                        <span className="inline-flex h-[22px] w-[22px] shrink-0 items-center justify-center">
+                          <ToolIcon name={tool} size={20} />
                         </span>
                         <span className="min-w-0 truncate" title={tool}>
                           {tool}
@@ -3166,8 +3341,8 @@ const SkillsSubskillsPanel = ({
                       "YouTube Shorts",
                     ].map((tool) => (
                       <li key={tool} className="flex min-w-0 items-center gap-3.5">
-                        <span className="inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center">
-                          <ToolIcon name={tool} size={18} />
+                        <span className="inline-flex h-[22px] w-[22px] shrink-0 items-center justify-center">
+                          <ToolIcon name={tool} size={20} />
                         </span>
                         <span className="min-w-0 truncate" title={tool}>
                           {tool}
@@ -3180,7 +3355,10 @@ const SkillsSubskillsPanel = ({
             </div>
           )}
         </div>
-      </div>
+        </motion.div>
+        <div className="shrink-0" aria-hidden />
+        <div className="shrink-0" aria-hidden />
+      </motion.div>
     </CardBlackFace>
   </UiverseCard>
 );
@@ -3188,6 +3366,42 @@ const SkillsSubskillsPanel = ({
 const SkillArsenal = () => {
   const [activeSubskills, setActiveSubskills] = useState<"core" | "tools" | null>(
     SKILLS_SHOW_INTRO_PAIR_CARDS ? null : "core",
+  );
+  const [skillsIconFlourish, setSkillsIconFlourish] = useState(false);
+  const skillsFlourishCommittedRef = useRef(false);
+  const skillsFlourishTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const scheduleSkillsIconFlourish = useCallback((sequenceEndS: number) => {
+    if (skillsFlourishCommittedRef.current) return;
+    if (skillsFlourishTimerRef.current != null) {
+      clearTimeout(skillsFlourishTimerRef.current);
+      skillsFlourishTimerRef.current = null;
+    }
+    const delayMs = Math.max(0, (sequenceEndS - SKILLS_FLOURISH_LEAD_S) * 1000);
+    skillsFlourishTimerRef.current = setTimeout(() => {
+      skillsFlourishTimerRef.current = null;
+      if (skillsFlourishCommittedRef.current) return;
+      skillsFlourishCommittedRef.current = true;
+      setSkillsIconFlourish(true);
+    }, delayMs);
+  }, []);
+
+  useEffect(() => {
+    if (skillsFlourishTimerRef.current != null) {
+      clearTimeout(skillsFlourishTimerRef.current);
+      skillsFlourishTimerRef.current = null;
+    }
+    skillsFlourishCommittedRef.current = false;
+    setSkillsIconFlourish(false);
+  }, [activeSubskills]);
+
+  useEffect(
+    () => () => {
+      if (skillsFlourishTimerRef.current != null) {
+        clearTimeout(skillsFlourishTimerRef.current);
+      }
+    },
+    [],
   );
 
   const goSkillsPrev = () =>
@@ -3207,11 +3421,12 @@ const SkillArsenal = () => {
   return (
     <section
       id="skills"
-      className={`relative flex h-full min-h-0 w-full flex-col overflow-x-hidden bg-black text-white scroll-mt-6 ${SLIDE}`}
+      data-skills-icon-flourish={skillsIconFlourish ? "true" : undefined}
+      className={`relative flex h-full min-h-0 w-full flex-col overflow-x-hidden bg-black text-white scroll-mt-6 ${SLIDE_NO_Y_SCROLL}`}
     >
       <SectionGridOverlay />
       <div
-        className="container relative z-10 mx-auto flex h-full min-h-0 w-full min-w-0 flex-1 flex-col items-center justify-center overflow-visible px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-6 sm:pt-8 sm:pb-8"
+        className="container relative z-10 mx-auto flex h-full min-h-0 w-full min-w-0 flex-1 flex-col items-center justify-center overflow-visible px-4 py-[max(1.25rem,env(safe-area-inset-top),env(safe-area-inset-bottom))] sm:px-6 sm:py-8"
         style={
           SKILLS_LAYOUT.sectionOffsetRem !== 0
             ? { transform: `translateY(${SKILLS_LAYOUT.sectionOffsetRem}rem)` }
@@ -3219,7 +3434,7 @@ const SkillArsenal = () => {
         }
       >
         {/* Cards area: intro pair (gated) + sub-skills overlay or inline carousel */}
-        <div className="skills-content-shell relative z-0 mx-auto flex w-full min-h-0 min-w-0 max-w-[min(100%,88.75rem)] flex-col items-center justify-center overflow-visible">
+        <div className="skills-content-shell relative z-0 mx-auto flex min-h-0 w-full min-w-0 max-w-[min(100%,88.75rem)] flex-1 flex-col items-center justify-center overflow-visible">
           {SKILLS_SHOW_INTRO_PAIR_CARDS ? (
             <div className="flex w-full flex-wrap items-center justify-center gap-8">
               <motion.div
@@ -3232,11 +3447,17 @@ const SkillArsenal = () => {
                 style={{ pointerEvents: activeSubskills ? "none" : "auto" }}
               >
                 <motion.div
-                  initial={{ y: 40, opacity: 0 }}
-                  whileInView={{ y: 0, opacity: 1 }}
-                  viewport={{ once: true, amount: 0.3 }}
-                  transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0 }}
+                  className="flex w-full flex-wrap items-center justify-center gap-8"
+                  variants={skillsChromeStaggerParent}
+                  initial="hidden"
+                  whileInView="show"
+                  viewport={{ once: false, amount: 0.2 }}
+                  onAnimationStart={(def) => {
+                    if (def !== "show") return;
+                    scheduleSkillsIconFlourish(SKILLS_INTRO_MOTION_END_S);
+                  }}
                 >
+                  <motion.div variants={skillsChromeStaggerChild}>
                   <UiverseCard
                     className="skills-main-card"
                     role="button"
@@ -3296,13 +3517,8 @@ const SkillArsenal = () => {
                       </CardTitleSlot>
                     </CardBlackFace>
                   </UiverseCard>
-                </motion.div>
-                <motion.div
-                  initial={{ y: 40, opacity: 0 }}
-                  whileInView={{ y: 0, opacity: 1 }}
-                  viewport={{ once: true, amount: 0.3 }}
-                  transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.18 }}
-                >
+                  </motion.div>
+                  <motion.div variants={skillsChromeStaggerChild}>
                   <UiverseCard
                     className="skills-main-card"
                     role="button"
@@ -3373,62 +3589,110 @@ const SkillArsenal = () => {
                             animate={{ y: 0, opacity: 1 }}
                             transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1], delay: 0.25 }}
                           >
-                            TOOLS AND TECHNOLOGIES
+                            TOOLKIT
                           </motion.span>
                         </span>
                       </CardTitleSlot>
                     </CardBlackFace>
                   </UiverseCard>
+                  </motion.div>
                 </motion.div>
               </motion.div>
             </div>
           ) : null}
 
           {!SKILLS_SHOW_INTRO_PAIR_CARDS && activeSubskills ? (
-            <>
-              <div className="skills-carousel-wrap flex w-full min-w-0 max-w-full flex-col items-center justify-center overflow-visible py-2 sm:py-3">
-                <div className="flex w-full min-w-0 max-w-full justify-center px-1 sm:px-2 md:px-4">
-                  <div
-                    className="skills-source-stack flex w-full min-w-0 max-w-[min(100%,1180px)] flex-col"
-                    role="group"
-                    aria-label="Skills detail"
-                  >
-                    <SkillsSubskillsPanel slide={activeSubskills} variant="inline" />
+            <div className="skills-carousel-wrap flex w-full min-w-0 max-w-full flex-col items-center justify-center overflow-visible py-2 sm:py-3 max-sm:translate-y-8">
+              <div className="flex w-full min-w-0 max-w-full justify-center px-1 sm:px-2 md:px-4">
+                <div
+                  className="skills-source-stack relative flex w-full min-w-0 max-w-[min(100%,1180px)] flex-col max-sm:min-h-[calc(min(680px,90vh)+4.5rem)]"
+                  role="group"
+                  aria-label="Skills detail"
+                >
+                  <div className="w-full min-w-0 max-sm:flex max-sm:min-h-0 max-sm:flex-1 max-sm:flex-col max-sm:justify-center">
+                    <motion.div
+                      key={activeSubskills}
+                      className="w-full min-w-0"
+                      variants={skillsChromeStaggerParent}
+                      initial="hidden"
+                      whileInView="show"
+                      viewport={{ once: false, amount: 0.12 }}
+                      onAnimationStart={(def) => {
+                        if (def !== "show") return;
+                        scheduleSkillsIconFlourish(SKILLS_INLINE_MOTION_END_S);
+                      }}
+                    >
+                      <motion.div variants={skillsChromeStaggerChild} className="w-full min-w-0">
+                        <SkillsSubskillsPanel slide={activeSubskills} variant="inline" />
+                      </motion.div>
+                    </motion.div>
                   </div>
+                  <div className="max-sm:h-[4.5rem] max-sm:shrink-0 sm:hidden" aria-hidden />
+                  {/* Desktop: absolute arrows flanking the card */}
+                  <motion.button
+                    type="button"
+                    onClick={goSkillsPrev}
+                    aria-label="Previous skills category"
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.97 }}
+                    transition={{ duration: 0.2 }}
+                    className="hidden sm:flex pointer-events-auto absolute top-1/2 z-50 h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-black/55 text-white backdrop-blur-md md:h-10 md:w-10 right-full mr-3 md:mr-4 hover:border-green-500/55 hover:text-green-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                  >
+                    <ChevronLeft size={18} strokeWidth={2} aria-hidden />
+                  </motion.button>
+                  <motion.button
+                    type="button"
+                    onClick={goSkillsNext}
+                    aria-label="Next skills category"
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.97 }}
+                    transition={{ duration: 0.2 }}
+                    className="hidden sm:flex pointer-events-auto absolute top-1/2 z-50 h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-black/55 text-white backdrop-blur-md md:h-10 md:w-10 left-full ml-3 md:ml-4 hover:border-green-500/55 hover:text-green-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                  >
+                    <ChevronRight size={18} strokeWidth={2} aria-hidden />
+                  </motion.button>
+
+                  {typeof document !== "undefined"
+                    ? createPortal(
+                        <div
+                          className="sm:hidden pointer-events-none fixed left-0 right-0 z-40 flex h-9 items-center justify-center gap-4 overflow-visible"
+                          style={{ bottom: MOBILE_SKILLS_NAV_BOTTOM }}
+                          role="toolbar"
+                          aria-label="Skills category navigation"
+                        >
+                          <motion.button
+                            type="button"
+                            onClick={goSkillsPrev}
+                            aria-label="Previous skills category"
+                            whileTap={{ scale: 0.95 }}
+                            className={`pointer-events-auto flex ${MOBILE_ROUND_BTN_BASE}`}
+                          >
+                            <ChevronLeft size={18} strokeWidth={2} aria-hidden />
+                          </motion.button>
+                          <div
+                            className="pointer-events-none flex h-9 shrink-0 items-center gap-1 leading-none"
+                            aria-hidden
+                          >
+                            <ChevronDown size={12} className="shrink-0 text-zinc-500 animate-bounce" style={{ animationDuration: "1.8s" }} />
+                            <span className="text-[9px] uppercase tracking-[0.15em] text-zinc-500">Scroll</span>
+                            <ChevronDown size={12} className="shrink-0 text-zinc-500 animate-bounce" style={{ animationDuration: "1.8s" }} />
+                          </div>
+                          <motion.button
+                            type="button"
+                            onClick={goSkillsNext}
+                            aria-label="Next skills category"
+                            whileTap={{ scale: 0.95 }}
+                            className={`pointer-events-auto flex ${MOBILE_ROUND_BTN_BASE}`}
+                          >
+                            <ChevronRight size={18} strokeWidth={2} aria-hidden />
+                          </motion.button>
+                        </div>,
+                        document.body,
+                      )
+                    : null}
                 </div>
               </div>
-              {/* Bottom-right: same inset pattern as BackToMenuButton (fixed + safe-area), mirrored to the right */}
-              <div
-                className="fixed z-50 flex flex-row items-center gap-4 md:gap-5"
-                style={{
-                  right: "calc(1rem + env(safe-area-inset-right))",
-                  bottom: "calc(0.75rem + env(safe-area-inset-bottom))",
-                }}
-              >
-                <motion.button
-                  type="button"
-                  onClick={goSkillsPrev}
-                  aria-label="Previous skills category"
-                  whileHover={{ scale: 1.04 }}
-                  whileTap={{ scale: 0.97 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-white/25 bg-black/55 text-white backdrop-blur-md md:h-10 md:w-10 hover:border-yellow-400/50 hover:text-yellow-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-                >
-                  <ChevronLeft size={18} strokeWidth={2} aria-hidden />
-                </motion.button>
-                <motion.button
-                  type="button"
-                  onClick={goSkillsNext}
-                  aria-label="Next skills category"
-                  whileHover={{ scale: 1.04 }}
-                  whileTap={{ scale: 0.97 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-white/25 bg-black/55 text-white backdrop-blur-md md:h-10 md:w-10 hover:border-yellow-400/50 hover:text-yellow-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-                >
-                  <ChevronRight size={18} strokeWidth={2} aria-hidden />
-                </motion.button>
-              </div>
-            </>
+            </div>
           ) : (
             <AnimatePresence>
               {SKILLS_SHOW_INTRO_PAIR_CARDS && activeSubskills ? (
@@ -3438,6 +3702,9 @@ const SkillArsenal = () => {
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 1, y: 16 }}
                   transition={{ duration: MORPH_EXPAND_DUR, ease: MORPH_EXPAND_EASE }}
+                  onAnimationStart={() => {
+                    scheduleSkillsIconFlourish(SKILLS_OVERLAY_MOTION_END_S);
+                  }}
                   className="absolute inset-0 flex items-center justify-center pointer-events-auto px-4 sm:px-6"
                   onClick={() => setActiveSubskills(null)}
                 >

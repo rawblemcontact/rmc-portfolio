@@ -7,8 +7,8 @@ const StyledBtn = styled.button<{ $expanded?: boolean }>`
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  width: ${(p) => (p.$expanded ? "265px" : "60px")};
-  height: 60px;
+  width: ${(p) => (p.$expanded ? "180px" : "44px")};
+  height: 44px;
   border: none;
   border-radius: ${(p) => (p.$expanded ? "50px" : "50%")};
   cursor: pointer;
@@ -19,8 +19,17 @@ const StyledBtn = styled.button<{ $expanded?: boolean }>`
   box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5);
   background-color: rgba(0, 0, 0, 0.55);
 
+  @media (min-width: 640px) {
+    width: ${(p) => (p.$expanded ? "220px" : "52px")};
+    height: 52px;
+  }
+  @media (min-width: 768px) {
+    width: ${(p) => (p.$expanded ? "265px" : "60px")};
+    height: 60px;
+  }
+
   .sign {
-    width: 60px;
+    width: 44px;
     transition-duration: 0.15s;
     transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
     display: flex;
@@ -28,11 +37,15 @@ const StyledBtn = styled.button<{ $expanded?: boolean }>`
     justify-content: center;
     flex-shrink: 0;
     color: white;
+
+    @media (min-width: 640px) { width: 52px; }
+    @media (min-width: 768px) { width: 60px; }
   }
 
   .sign svg {
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
+    @media (min-width: 768px) { width: 24px; height: 24px; }
   }
 
   .sign svg path {
@@ -44,12 +57,12 @@ const StyledBtn = styled.button<{ $expanded?: boolean }>`
 
   .text {
     position: absolute;
-    left: ${(p) => (p.$expanded ? "52px" : "50%")};
-    right: ${(p) => (p.$expanded ? "14px" : "50%")};
+    left: ${(p) => (p.$expanded ? "38px" : "50%")};
+    right: ${(p) => (p.$expanded ? "10px" : "50%")};
     width: ${(p) => (p.$expanded ? "auto" : "0")};
     opacity: ${(p) => (p.$expanded ? 1 : 0)};
     color: white;
-    font-size: 0.8125rem;
+    font-size: 0.6875rem;
     font-weight: 600;
     text-transform: uppercase;
     transition-duration: 0.15s;
@@ -59,13 +72,26 @@ const StyledBtn = styled.button<{ $expanded?: boolean }>`
     padding-right: 0;
     overflow: visible;
     text-align: left;
+
+    @media (min-width: 640px) {
+      left: ${(p) => (p.$expanded ? "46px" : "50%")};
+      right: ${(p) => (p.$expanded ? "12px" : "50%")};
+      font-size: 0.75rem;
+    }
+    @media (min-width: 768px) {
+      left: ${(p) => (p.$expanded ? "52px" : "50%")};
+      right: ${(p) => (p.$expanded ? "14px" : "50%")};
+      font-size: 0.8125rem;
+    }
   }
 
   &:hover {
-    width: 265px;
+    width: 180px;
     border-radius: 50px;
     transition-duration: 0.15s;
     transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+    @media (min-width: 640px) { width: 220px; }
+    @media (min-width: 768px) { width: 265px; }
   }
 
   &:hover .sign {
@@ -75,14 +101,16 @@ const StyledBtn = styled.button<{ $expanded?: boolean }>`
 
   &:hover .text {
     opacity: 1;
-    left: 52px;
-    right: 14px;
+    left: 38px;
+    right: 10px;
     width: auto;
-    font-size: 0.8125rem;
+    font-size: 0.6875rem;
     transition-duration: 0.15s;
     transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
     padding-left: 0;
     padding-right: 0;
+    @media (min-width: 640px) { left: 46px; right: 12px; font-size: 0.75rem; }
+    @media (min-width: 768px) { left: 52px; right: 14px; font-size: 0.8125rem; }
   }
 
   &:active {
