@@ -27,6 +27,14 @@ const StyledBtn = styled.button<{ $expanded?: boolean }>`
     width: ${(p) => (p.$expanded ? "265px" : "60px")};
     height: 60px;
   }
+  @media (min-width: 1280px) {
+    width: ${(p) => (p.$expanded ? "280px" : "64px")};
+    height: 64px;
+  }
+  @media (min-width: 1536px) {
+    width: ${(p) => (p.$expanded ? "308px" : "70px")};
+    height: 70px;
+  }
 
   .sign {
     width: 44px;
@@ -40,12 +48,16 @@ const StyledBtn = styled.button<{ $expanded?: boolean }>`
 
     @media (min-width: 640px) { width: 52px; }
     @media (min-width: 768px) { width: 60px; }
+    @media (min-width: 1280px) { width: 64px; }
+    @media (min-width: 1536px) { width: 70px; }
   }
 
   .sign svg {
     width: 20px;
     height: 20px;
     @media (min-width: 768px) { width: 24px; height: 24px; }
+    @media (min-width: 1280px) { width: 25px; height: 25px; }
+    @media (min-width: 1536px) { width: 26px; height: 26px; }
   }
 
   .sign svg path {
@@ -83,6 +95,16 @@ const StyledBtn = styled.button<{ $expanded?: boolean }>`
       right: ${(p) => (p.$expanded ? "14px" : "50%")};
       font-size: 0.8125rem;
     }
+    @media (min-width: 1280px) {
+      left: ${(p) => (p.$expanded ? "54px" : "50%")};
+      right: ${(p) => (p.$expanded ? "14px" : "50%")};
+      font-size: 0.8125rem;
+    }
+    @media (min-width: 1536px) {
+      left: ${(p) => (p.$expanded ? "60px" : "50%")};
+      right: ${(p) => (p.$expanded ? "16px" : "50%")};
+      font-size: 0.875rem;
+    }
   }
 
   &:hover {
@@ -92,6 +114,8 @@ const StyledBtn = styled.button<{ $expanded?: boolean }>`
     transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
     @media (min-width: 640px) { width: 220px; }
     @media (min-width: 768px) { width: 265px; }
+    @media (min-width: 1280px) { width: 280px; }
+    @media (min-width: 1536px) { width: 308px; }
   }
 
   &:hover .sign {
@@ -111,6 +135,8 @@ const StyledBtn = styled.button<{ $expanded?: boolean }>`
     padding-right: 0;
     @media (min-width: 640px) { left: 46px; right: 12px; font-size: 0.75rem; }
     @media (min-width: 768px) { left: 52px; right: 14px; font-size: 0.8125rem; }
+    @media (min-width: 1280px) { left: 54px; right: 14px; font-size: 0.8125rem; }
+    @media (min-width: 1536px) { left: 60px; right: 16px; font-size: 0.875rem; }
   }
 
   &:active {

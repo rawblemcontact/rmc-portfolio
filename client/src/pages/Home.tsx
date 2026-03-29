@@ -1,5 +1,7 @@
 // Force rebuild: 2024-05-21
 import { motion, AnimatePresence, Variants, useInView, useReducedMotion, useMotionValue, useTransform, animate } from "framer-motion";
+import useEmblaCarousel from "embla-carousel-react";
+import type { EmblaCarouselType } from "embla-carousel";
 import React, { createContext, useContext, useEffect, useLayoutEffect, useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
@@ -534,12 +536,13 @@ const NAV_ITEMS: { id: string; label: string; icon: LucideIcon; color: string; s
 const SECTION_ACCENT_COLOR: Record<string, string> = {
   profile: "#dc2626",
   projects: "#facc15",
-  "project-1": "#facc15",
-  "project-2": "#facc15",
-  "project-3": "#facc15",
-  "project-4": "#facc15",
-  "project-5": "#facc15",
-  "project-6": "#facc15",
+  "project-rawblem": "#facc15",
+  "project-slaywire": "#facc15",
+  "project-undertale-fhe": "#facc15",
+  "project-portfolio": "#facc15",
+  "project-undertale-proposal": "#facc15",
+  "project-8bit-bumpers": "#facc15",
+  "projects-supporting": "#facc15",
   experience: "#2563eb",
   social: "#ec4899",
   skills: "#16a34a",
@@ -664,6 +667,7 @@ const SectionHeader = ({
   slideFadeDuration,
   slideFadeDelay = 0,
   titleTrigger = "viewport",
+  titleClassName,
 }: {
   title: string;
   subtitle?: string;
@@ -689,6 +693,8 @@ const SectionHeader = ({
   slideFadeDelay?: number;
   /** "mount" = animate once on mount only (no viewport); "viewport" = animate when in view. Use mount to prevent layout shift. */
   titleTrigger?: "mount" | "viewport";
+  /** Extra classes for the title heading (e.g. xl/2xl scale). */
+  titleClassName?: string;
 }) => {
   const sizeClasses =
     title === "SKILLS"
@@ -712,7 +718,7 @@ const SectionHeader = ({
         />
       )}
       <h2
-        className={`${sizeClasses} font-display ${color} leading-none tracking-tight uppercase -translate-y-0.5`}
+        className={`${sizeClasses} ${titleClassName ?? ""} font-display ${color} leading-none tracking-tight uppercase -translate-y-0.5`}
       >
         <TextShutter
           text={title}
@@ -1320,8 +1326,8 @@ const PhantomProfile = () => {
   return (
     <section id="profile" className={`relative min-h-screen w-full overflow-x-hidden bg-black text-white scroll-mt-6 ${SLIDE}`}>
       <SectionGridOverlay />
-      <div className="container mx-auto px-4 sm:px-6 relative z-20 pt-[24vh] lg:pt-0 pb-16 lg:pb-12">
-        <div className="flex flex-col lg:flex-row gap-10 lg:gap-12 items-center lg:items-start">
+      <div className="container mx-auto px-4 sm:px-6 relative z-20 pt-[24vh] lg:pt-0 pb-16 lg:pb-12 lg:min-h-screen lg:flex lg:items-center">
+        <div className="flex w-full flex-col lg:flex-row lg:justify-center gap-20 lg:gap-20 xl:gap-36 2xl:gap-[min(14rem,12vw)] items-center">
 
           <motion.div
             ref={rawblemRef}
@@ -1330,9 +1336,9 @@ const PhantomProfile = () => {
             viewport={{ once: false, amount: 0.2 }}
             transition={{ duration: 0.52, ease: [0.16, 1, 0.3, 1] }}
             onAnimationComplete={() => rawblemInView && setRawblemFloatReady(true)}
-            className="lg:order-2 w-full lg:w-2/5 lg:min-w-0 flex justify-center max-lg:-mt-14 sm:max-lg:-mt-16 max-lg:-translate-y-2 lg:translate-y-0 lg:mt-[16%]"
+            className="lg:order-2 w-full lg:w-auto lg:min-w-0 lg:shrink-0 flex justify-center translate-x-2 max-lg:-mt-14 sm:max-lg:-mt-16 max-lg:-translate-y-2 lg:translate-y-0 lg:mt-0"
           >
-            <div className="w-full max-w-[160px] sm:max-w-[220px] md:max-w-[300px] aspect-square flex items-center justify-center">
+            <div className="w-full max-w-[160px] sm:max-w-[220px] md:max-w-[300px] xl:max-w-[312px] 2xl:max-w-[348px] aspect-square flex items-center justify-center">
               <motion.img
                 src="/rawblem3.svg"
                 alt="RAWBLEM"
@@ -1353,7 +1359,7 @@ const PhantomProfile = () => {
             whileInView={{ opacity: 1, y: 0, x: 0 }}
             viewport={{ once: false, amount: 0.2 }}
             transition={{ duration: 0.342, ease: [0.16, 1, 0.3, 1] }}
-            className="lg:order-1 w-full lg:w-3/5 lg:max-w-[38rem] lg:shrink-0 lg:mt-[25%]"
+            className="lg:order-1 w-full lg:w-auto lg:max-w-[38rem] xl:max-w-[40rem] 2xl:max-w-[44rem] lg:shrink-0 lg:mt-0"
           >
              <SectionHeader
                key={profileLeftInView ? "profile-in" : "profile-out"}
@@ -1361,7 +1367,8 @@ const PhantomProfile = () => {
                color="text-white"
                showBar={false}
                compact
-               className="!mb-5 max-lg:mt-0 lg:-mt-[5%] -ml-[3px]"
+               titleClassName="xl:text-5xl 2xl:text-6xl"
+               className="!mb-5 max-lg:mt-0 lg:mt-0 -ml-[3px]"
                titleDelay={0.152}
                titleDuration={0.342}
                titleStagger={0.0216}
@@ -1372,7 +1379,7 @@ const PhantomProfile = () => {
              />
              <div
                ref={dividerRef}
-               className="relative w-full max-w-xl mt-1 min-h-[2px]"
+               className="relative w-full max-w-xl xl:max-w-2xl 2xl:max-w-2xl mt-1 min-h-[2px]"
              >
                <motion.span
                  aria-hidden
@@ -1383,10 +1390,10 @@ const PhantomProfile = () => {
                />
             </div>
             <div
-              className="relative w-full max-w-xl mt-1 overflow-visible min-w-0 min-h-[48px] sm:min-h-[60px] isolate"
+              className="relative w-full max-w-xl xl:max-w-2xl 2xl:max-w-2xl mt-1 overflow-visible min-w-0 min-h-[48px] sm:min-h-[60px] xl:min-h-[64px] 2xl:min-h-[68px] isolate"
             >
               <motion.div
-                className="flex flex-wrap sm:flex-nowrap items-center gap-1.5 sm:gap-1"
+                className="flex flex-wrap sm:flex-nowrap items-center gap-1.5 sm:gap-1 xl:gap-1.5 2xl:gap-2"
                 initial={{ x: -24, opacity: 0 }}
                 animate={{ x: overlayRevealed ? 0 : -24, opacity: overlayRevealed ? 1 : 0 }}
                 transition={{ duration: BUTTON_FADE_DURATION_MS / 1000, delay: overlayRevealed ? BUTTONS_DELAY_AFTER_SUMMARY_MS / 1000 : 0, ease: [0.16, 1, 0.3, 1] }}
@@ -1405,13 +1412,13 @@ const PhantomProfile = () => {
               />
              </div>
              <motion.div
-               className="mt-3 max-w-xl"
+               className="mt-3 max-w-xl xl:max-w-2xl 2xl:max-w-2xl"
                initial={{ opacity: 0, y: 14 }}
                animate={{ opacity: overlayRevealed ? 1 : 0, y: overlayRevealed ? 0 : 14 }}
                transition={{ duration: SUMMARY_DURATION_S, delay: overlayRevealed ? SUMMARY_DELAY_S : 0, ease: [0.16, 1, 0.3, 1] }}
              >
                <p className="font-heading text-sm tracking-[0.22em] uppercase text-zinc-400 mb-2">SUMMARY</p>
-               <p className="font-body text-sm sm:text-base md:text-lg text-zinc-300 leading-relaxed">
+               <p className="font-body text-sm sm:text-base md:text-lg xl:text-lg 2xl:text-xl text-zinc-300 leading-relaxed">
                  Communications-focused writer and digital media coordinator with experience producing narrative-driven web content and managing social media workflows across multiple platforms. Bachelor of Arts in Writing (Distinction), University of Victoria.
                </p>
              </motion.div>
@@ -1445,115 +1452,265 @@ const StatRow = ({ label, value }: { label: string; value: string }) => (
   </div>
 );
 
-// --- PROJECTS (responsive carousel with 1-3 visible cards) ---
-const PROJECT_CARDS = [
-  { id: "project-1", label: "Project 1" },
-  { id: "project-2", label: "Project 2" },
-  { id: "project-3", label: "Project 3" },
-  { id: "project-4", label: "Project 4" },
-  { id: "project-5", label: "Project 5" },
-  { id: "project-6", label: "Project 6" },
+// --- PROJECTS (responsive carousel: 1 / 2 / 3 visible; cards larger & taller than original) ---
+type ShowcaseProjectCard = {
+  readonly id: string;
+  readonly title: string;
+  readonly tagline: string;
+  readonly thumbnail?: string;
+  readonly thumbnailVideo?: string;
+};
+
+const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
+  {
+    id: "project-rawblem",
+    title: "RAWBLEM",
+    tagline: "Creative brand & short-form content system",
+    thumbnailVideo: "/rawblem-thumbnail.mp4",
+  },
+  {
+    id: "project-8bit-bumpers",
+    title: "8-bit Film Festival bumpers",
+    tagline: "Pixel animation project",
+    thumbnail: "/8bit-festival-thumbnail.jpg",
+  },
+  {
+    id: "project-undertale-fhe",
+    title: "UNDERTALE — Forever Home Edition",
+    tagline: "Game project · GameMaker Studio 2",
+    thumbnail: "/undertale-fhe-thumbnail.png",
+  },
+  {
+    id: "project-portfolio",
+    title: "Portfolio Website",
+    tagline: "React, Vite, Framer Motion",
+    thumbnailVideo: "/portfolio-website-thumbnail-v2.mp4",
+  },
+  {
+    id: "project-slaywire",
+    title: "SLAYWIRE",
+    tagline: "Original graphic novel & narrative IP",
+    thumbnail: "/slaywire-thumbnail.png",
+  },
+  {
+    id: "project-undertale-proposal",
+    title: "EDITS",
+    tagline: "Video project",
+    thumbnailVideo: "/edits-thumbnail.mp4",
+  },
 ];
 
 const cardEase = [0.25, 0.46, 0.45, 0.94] as const;
-const TOTAL_PROJECTS = PROJECT_CARDS.length;
 
-const getProjectCardsPerView = (viewportWidth: number) => {
-  if (viewportWidth < 640) return 1;
-  if (viewportWidth < 1024) return 2;
-  return 3;
-};
+const SUPPORTING_SECONDARY_ITEMS = [
+  'Creative writing portfolio (articles, essays, screenplay — “Audience of One”)',
+  "SLAYWIRE concept art & visual development",
+  "Graphic design projects (posters, infographics — UVic eSports, coursework)",
+  "Livestream production & broadcast setup (OBS / Streamlabs)",
+] as const;
+
+const ARCHIVE_DEPTH_ITEMS = [
+  "Additional writing samples (creative nonfiction, academic work)",
+  "Additional illustration work (concept art, commissions)",
+  "Additional graphic design work",
+] as const;
+
+/** Showcase carousel parallax tween (same idea as Embla “Predefined → Parallax”). */
+const PROJECT_CAROUSEL_TWEEN_FACTOR_BASE = 0.52;
 
 const ProjectsStack = ({ onSelect }: { onSelect: (id: string) => void }) => {
-  const [carouselIndex, setCarouselIndex] = useState(0);
-  const trackRef = useRef<HTMLDivElement>(null);
-  const [cardsPerView, setCardsPerView] = useState(3);
-  const [stepPx, setStepPx] = useState(268);
-  const [visibleWidthPx, setVisibleWidthPx] = useState(804);
+  const reduceMotion = useReducedMotion();
+  const tweenFactor = useRef(0);
+  const tweenRaf = useRef<number>(0);
 
-  const measureStep = useCallback(() => {
-    const track = trackRef.current;
-    if (!track) return;
-    const card = track.querySelector("[data-carousel-card]") as HTMLElement | null;
-    if (!card) return;
-    const nextCardsPerView = getProjectCardsPerView(window.innerWidth);
-    const style = window.getComputedStyle(track);
-    const gapPx = parseFloat(style.gap) || 32;
-    const cardWidth = card.offsetWidth;
-    setCardsPerView(nextCardsPerView);
-    setStepPx(cardWidth + gapPx);
-    setVisibleWidthPx(
-      nextCardsPerView * cardWidth + Math.max(nextCardsPerView - 1, 0) * gapPx,
-    );
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    align: "center",
+    loop: true,
+    skipSnaps: false,
+    dragFree: false,
+    containScroll: false,
+  });
+
+  const [canPrev, setCanPrev] = useState(false);
+  const [canNext, setCanNext] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const setTweenFactor = useCallback((api: EmblaCarouselType) => {
+    tweenFactor.current = PROJECT_CAROUSEL_TWEEN_FACTOR_BASE * api.scrollSnapList().length;
   }, []);
 
-  useLayoutEffect(() => {
-    measureStep();
-    window.addEventListener("resize", measureStep);
-    return () => window.removeEventListener("resize", measureStep);
-  }, [measureStep]);
+  const tweenParallax = useCallback(
+    (api: EmblaCarouselType) => {
+      const slideNodes = api.slideNodes();
+      if (reduceMotion) {
+        slideNodes.forEach((node) => {
+          const inner = node.querySelector("[data-parallax-layer]") as HTMLElement | null;
+          if (inner) inner.style.transform = "translateX(0)";
+        });
+        return;
+      }
+      const engine = api.internalEngine();
+      const scrollProgress = api.scrollProgress();
+      const scrollSnaps = api.scrollSnapList();
 
-  const carouselPages = Math.max(TOTAL_PROJECTS - cardsPerView + 1, 1);
+      slideNodes.forEach((slideNode, i) => {
+        const inner = slideNode.querySelector("[data-parallax-layer]") as HTMLElement | null;
+        if (!inner) return;
+        const diffToTarget = scrollSnaps[i] - scrollProgress;
+        const direction = engine.options.direction === "rtl" ? -1 : 1;
+        const tweenValue = diffToTarget * (-1 * direction * tweenFactor.current);
+        inner.style.transform = `translateX(${tweenValue}%)`;
+      });
+    },
+    [reduceMotion],
+  );
+
+  const scheduleTween = useCallback(() => {
+    if (!emblaApi) return;
+    cancelAnimationFrame(tweenRaf.current);
+    tweenRaf.current = requestAnimationFrame(() => tweenParallax(emblaApi));
+  }, [emblaApi, tweenParallax]);
+
+  const syncCarouselUi = useCallback(() => {
+    if (!emblaApi) return;
+    setSelectedIndex(emblaApi.selectedScrollSnap());
+    setCanPrev(emblaApi.canScrollPrev());
+    setCanNext(emblaApi.canScrollNext());
+  }, [emblaApi]);
 
   useEffect(() => {
-    setCarouselIndex((index) => Math.min(index, carouselPages - 1));
-  }, [carouselPages]);
+    if (!emblaApi) return;
+    setTweenFactor(emblaApi);
+    tweenParallax(emblaApi);
+    syncCarouselUi();
 
-  const goPrev = () => setCarouselIndex((i) => (i - 1 + carouselPages) % carouselPages);
-  const goNext = () => setCarouselIndex((i) => (i + 1) % carouselPages);
+    emblaApi.on("scroll", scheduleTween);
+    emblaApi.on("reInit", setTweenFactor);
+    emblaApi.on("reInit", tweenParallax);
+    emblaApi.on("reInit", syncCarouselUi);
+    emblaApi.on("select", syncCarouselUi);
+
+    return () => {
+      cancelAnimationFrame(tweenRaf.current);
+      emblaApi.off("scroll", scheduleTween);
+      emblaApi.off("reInit", setTweenFactor);
+      emblaApi.off("reInit", tweenParallax);
+      emblaApi.off("reInit", syncCarouselUi);
+      emblaApi.off("select", syncCarouselUi);
+    };
+  }, [emblaApi, scheduleTween, setTweenFactor, tweenParallax, syncCarouselUi]);
 
   return (
-    <div className="flex justify-center items-center gap-3 md:gap-6 py-8 overflow-hidden w-full">
+    <div className="flex justify-center items-center gap-2 sm:gap-3 md:gap-5 lg:gap-6 py-8 px-1 sm:px-2 w-full min-w-0 overflow-x-visible overflow-y-visible">
       <motion.button
         type="button"
-        onClick={goPrev}
+        onClick={() => emblaApi?.scrollPrev()}
+        disabled={!canPrev}
         aria-label="Previous projects"
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.98 }}
         transition={{ duration: 0.2 }}
-        className="flex-shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-full border-2 border-white/20 flex items-center justify-center text-white hover:border-yellow-400/50 hover:text-yellow-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+        className="relative z-[1] flex-shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-full border-2 border-white/20 flex items-center justify-center text-white hover:border-yellow-400/50 hover:text-yellow-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black disabled:opacity-35 disabled:pointer-events-none"
       >
         <ChevronLeft size={28} strokeWidth={2} aria-hidden />
       </motion.button>
 
-      {/* Viewport width adapts to the current cards-per-view count */}
-      <div
-        className="flex items-end overflow-hidden flex-shrink-0"
-        style={{ width: visibleWidthPx, maxWidth: "100%" }}
-      >
-        <motion.div
-          ref={trackRef}
-          className="flex items-end gap-8 md:gap-12 flex-shrink-0"
-          style={{ width: "max-content" }}
-          animate={{ x: -carouselIndex * stepPx }}
-          transition={{ type: "spring", stiffness: 300, damping: 35 }}
-        >
-            {PROJECT_CARDS.map((card) => (
-              <motion.button
+      <div className="min-w-0 max-w-full flex-[1_1_auto] overflow-hidden [--slide-gap:0.875rem] sm:[--slide-gap:1.25rem] md:[--slide-gap:1.5rem]">
+        {/* Padding insets the track so center slide reads as “hero” with neighbors peeking (Embla align: center + %-width slides). */}
+        <div ref={emblaRef} className="overflow-hidden px-2 sm:px-4 md:px-6">
+          <div className="flex items-stretch touch-pan-y [-webkit-touch-callout:none] -ml-[var(--slide-gap)]">
+            {PROJECT_CARDS.map((card, index) => (
+              <div
                 key={card.id}
-                data-carousel-card
-                type="button"
-                onClick={() => onSelect(card.id)}
-                whileTap={{ scale: 0.98 }}
-                transition={{ duration: 0.2, ease: cardEase }}
-                className="relative flex-shrink-0 w-[180px] sm:w-[200px] md:w-[220px] h-[240px] md:h-[280px] rounded-xl bg-transparent border-2 border-white/15 flex items-center justify-center shadow-xl hover:border-yellow-400/50 hover:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                className="min-w-0 shrink-0 grow-0 pl-[var(--slide-gap)] flex-[0_0_80%] sm:flex-[0_0_74%] md:flex-[0_0_70%] lg:flex-[0_0_66%] xl:flex-[0_0_62%] flex justify-center"
               >
-                <span className="font-heading text-sm md:text-base text-zinc-400 tracking-[0.14em] uppercase px-4 transition-colors duration-200 hover:text-zinc-300">
-                  {card.label}
-                </span>
-            </motion.button>
-          ))}
-        </motion.div>
+                <motion.button
+                  type="button"
+                  data-carousel-card
+                  onClick={() => onSelect(card.id)}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ duration: 0.2, ease: cardEase }}
+                  className="group relative w-full h-[276px] sm:h-[304px] md:h-[324px] lg:h-[348px] xl:h-[364px] 2xl:h-[380px] rounded-xl bg-zinc-950/40 border-2 border-white/15 text-center shadow-xl overflow-hidden hover:border-yellow-400/45 hover:bg-zinc-950/70 hover:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                >
+                  <div
+                    data-parallax-layer
+                    className={`h-full will-change-transform ${card.thumbnail || card.thumbnailVideo ? "relative" : "flex min-h-0 flex-col items-center p-4 sm:p-5"}`}
+                  >
+                    {card.thumbnail || card.thumbnailVideo ? (
+                      <>
+                        <div className="absolute inset-y-0 -left-4 -right-4 sm:-left-5 sm:-right-5">
+                          {card.thumbnailVideo ? (
+                            <video
+                              src={card.thumbnailVideo}
+                              autoPlay
+                              muted
+                              loop
+                              playsInline
+                              preload="metadata"
+                              aria-label={`${card.title} preview`}
+                              className="h-full w-full object-cover object-center"
+                            />
+                          ) : (
+                            <img
+                              src={card.thumbnail}
+                              alt={`${card.title} thumbnail`}
+                              loading="lazy"
+                              decoding="async"
+                              className="h-full w-full object-cover object-center"
+                            />
+                          )}
+                        </div>
+                        <div className="absolute inset-x-[-1rem] bottom-0 h-32 bg-gradient-to-t from-black via-black/85 to-transparent sm:inset-x-[-1.25rem]" />
+                        <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
+                          <span
+                            className={`font-display block w-full max-w-full text-left text-[1rem] sm:text-[1.05rem] md:text-lg lg:text-xl xl:text-[1.35rem] leading-snug text-white tracking-tight line-clamp-3 [text-wrap:balance] motion-safe:transition-[opacity,color] motion-safe:duration-300 motion-safe:ease-out ${
+                              index === selectedIndex
+                                ? "opacity-100 group-hover:text-yellow-50"
+                                : "opacity-70 group-hover:text-zinc-100"
+                            }`}
+                          >
+                            {card.title}
+                          </span>
+                          <span className="font-body mt-3 block w-full max-w-full text-left text-xs sm:text-[0.8125rem] md:text-sm lg:text-[0.9375rem] text-zinc-300 leading-relaxed line-clamp-2 border-t border-white/15 pt-3 sm:pt-3.5 transition-colors group-hover:text-white/90">
+                            {card.tagline}
+                          </span>
+                        </div>
+                      </>
+                    ) : null}
+                    {!card.thumbnail && !card.thumbnailVideo ? (
+                      <div className="flex min-h-0 w-full max-w-full flex-1 flex-col justify-between overflow-hidden">
+                        <span
+                          className={`font-display w-full max-w-full text-[1rem] sm:text-[1.05rem] md:text-lg lg:text-xl xl:text-[1.35rem] leading-snug text-white tracking-tight line-clamp-4 [text-wrap:balance] motion-safe:transition-[opacity,color] motion-safe:duration-300 motion-safe:ease-out ${
+                            index === selectedIndex
+                              ? "opacity-100 group-hover:text-yellow-50"
+                              : "opacity-0 pointer-events-none"
+                          }`}
+                          aria-hidden={index !== selectedIndex}
+                        >
+                          {card.title}
+                        </span>
+                        <span className="font-body w-full max-w-full text-xs sm:text-[0.8125rem] md:text-sm lg:text-[0.9375rem] text-zinc-500 leading-relaxed line-clamp-4 border-t border-white/10 pt-3 sm:pt-3.5 transition-colors group-hover:text-zinc-400">
+                          {card.tagline}
+                        </span>
+                      </div>
+                    ) : null}
+                  </div>
+                </motion.button>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       <motion.button
         type="button"
-        onClick={goNext}
+        onClick={() => emblaApi?.scrollNext()}
+        disabled={!canNext}
         aria-label="Next projects"
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.98 }}
         transition={{ duration: 0.2 }}
-        className="flex-shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-full border-2 border-white/20 flex items-center justify-center text-white hover:border-yellow-400/50 hover:text-yellow-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+        className="relative z-[1] flex-shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-full border-2 border-white/20 flex items-center justify-center text-white hover:border-yellow-400/50 hover:text-yellow-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black disabled:opacity-35 disabled:pointer-events-none"
       >
         <ChevronRight size={28} strokeWidth={2} aria-hidden />
       </motion.button>
@@ -1564,10 +1721,12 @@ const ProjectsStack = ({ onSelect }: { onSelect: (id: string) => void }) => {
 const ProjectDetailSlide = ({
   id,
   title,
+  tagline,
   onBack,
 }: {
   id: string;
   title: string;
+  tagline: string;
   onBack: () => void;
 }) => (
   <section id={id} className={`relative min-h-screen w-full overflow-x-hidden py-16 md:py-20 pb-12 bg-black text-white scroll-mt-6 ${SLIDE}`}>
@@ -1581,7 +1740,10 @@ const ProjectDetailSlide = ({
         >
           <ChevronLeft size={20} /> Back to Projects
         </Button>
-        <h2 className="font-display text-3xl md:text-5xl tracking-tight mb-8">{title}</h2>
+        <p className="font-heading text-xs tracking-[0.2em] uppercase text-zinc-500 mb-3">Showcase</p>
+        <h2 className="font-display text-3xl md:text-5xl tracking-tight text-balance">{title}</h2>
+        <p className="mt-4 text-base md:text-lg text-zinc-400 max-w-2xl leading-relaxed">{tagline}</p>
+        <div className="h-px w-full max-w-md bg-white/10 my-10" aria-hidden />
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-xl bg-zinc-800/60 border border-white/10 p-6 min-h-[200px] flex items-center justify-center">
             <p className="text-zinc-500 text-sm uppercase">PROJECT DETAILS COMING SOON</p>
@@ -1595,12 +1757,90 @@ const ProjectDetailSlide = ({
   </section>
 );
 
-const PalaceProjects = ({ onSelectProject }: { onSelectProject: (id: string) => void }) => (
-  <section id="projects" className={`relative flex flex-col justify-center min-h-screen w-full overflow-x-hidden py-16 md:py-20 bg-black text-white scroll-mt-6 ${SLIDE}`}>
+const SupportingProjectsSection = ({ onBack }: { onBack: () => void }) => (
+  <section
+    id="projects-supporting"
+    className={`relative min-h-screen w-full overflow-x-hidden overflow-y-auto py-16 md:py-20 bg-black text-white scroll-mt-6 ${SLIDE}`}
+  >
     <SectionGridOverlay />
-    <div className="container mx-auto px-6 relative z-10">
-      <SectionHeader title="SELECTED WORK" subtitle="PROJECTS" align="center" showBar={false} compact />
+    <div className="container mx-auto px-6 relative z-10 max-w-3xl">
+      <Button
+        variant="ghost"
+        onClick={onBack}
+        className="mb-8 text-zinc-400 hover:text-white flex items-center gap-2 -ml-2"
+      >
+        <ChevronLeft size={20} aria-hidden /> Back to showcase
+      </Button>
+      <p className="font-heading text-xs tracking-[0.22em] uppercase text-zinc-500 mb-2">Projects</p>
+      <h2 className="font-display text-2xl sm:text-3xl md:text-4xl tracking-tight text-white mb-10 text-balance">
+        Supporting, archive & depth
+      </h2>
+
+      <div className="space-y-12">
+        <div>
+          <h3 className="font-heading text-[0.65rem] sm:text-xs tracking-[0.2em] uppercase text-yellow-400/90 mb-4 pb-2 border-b border-yellow-400/25">
+            Projects (supporting / secondary)
+          </h3>
+          <ul className="space-y-3">
+            {SUPPORTING_SECONDARY_ITEMS.map((line) => (
+              <li
+                key={line}
+                className="rounded-lg border border-white/12 bg-zinc-950/50 px-4 py-3.5 font-body text-sm sm:text-base text-zinc-300 leading-snug hover:border-yellow-400/35 hover:bg-zinc-950/80 transition-colors"
+              >
+                {line}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <h3 className="font-heading text-[0.65rem] sm:text-xs tracking-[0.2em] uppercase text-zinc-500 mb-4 pb-2 border-b border-white/15">
+            Projects (archive / depth)
+          </h3>
+          <ul className="space-y-3">
+            {ARCHIVE_DEPTH_ITEMS.map((line) => (
+              <li
+                key={line}
+                className="rounded-lg border border-white/10 bg-zinc-950/40 px-4 py-3.5 font-body text-sm sm:text-base text-zinc-400 leading-snug hover:border-white/20 hover:bg-zinc-950/70 transition-colors"
+              >
+                {line}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+);
+
+const PalaceProjects = ({
+  onSelectProject,
+  onOpenSupporting,
+}: {
+  onSelectProject: (id: string) => void;
+  onOpenSupporting: () => void;
+}) => (
+  <section
+    id="projects"
+    className={`relative flex flex-col justify-center min-h-screen w-full py-16 md:py-20 bg-black text-white scroll-mt-6 ${SLIDE} !overflow-x-visible`}
+  >
+    <SectionGridOverlay />
+    <div className="container mx-auto px-4 sm:px-6 relative z-10 w-full max-w-full min-w-0">
+      <SectionHeader title="SHOWCASE" subtitle="Projects" align="center" showBar={false} compact />
       <ProjectsStack onSelect={onSelectProject} />
+      <div className="mt-10 md:mt-14 flex justify-center px-2">
+        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} transition={{ duration: 0.2 }}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onOpenSupporting}
+            className="border-2 border-white/20 bg-black/40 text-white hover:bg-white/5 hover:border-yellow-400/50 hover:text-yellow-100 rounded-full px-6 py-5 h-auto font-heading text-xs sm:text-sm tracking-[0.18em] uppercase gap-2"
+          >
+            Supporting &amp; archive
+            <ArrowRight className="w-4 h-4 shrink-0 opacity-80" aria-hidden />
+          </Button>
+        </motion.div>
+      </div>
     </div>
   </section>
 );
@@ -4221,13 +4461,26 @@ export default function Home() {
                 className="min-h-screen w-full overflow-x-hidden"
               >
                 {currentSection === "profile" && <PhantomProfile />}
-                {currentSection === "projects" && <PalaceProjects onSelectProject={(id) => navigateTo(id)} />}
-                {currentSection === "project-1" && <ProjectDetailSlide id="project-1" title="Project 1" onBack={() => navigateTo("projects")} />}
-                {currentSection === "project-2" && <ProjectDetailSlide id="project-2" title="Project 2" onBack={() => navigateTo("projects")} />}
-                {currentSection === "project-3" && <ProjectDetailSlide id="project-3" title="Project 3" onBack={() => navigateTo("projects")} />}
-                {currentSection === "project-4" && <ProjectDetailSlide id="project-4" title="Project 4" onBack={() => navigateTo("projects")} />}
-                {currentSection === "project-5" && <ProjectDetailSlide id="project-5" title="Project 5" onBack={() => navigateTo("projects")} />}
-                {currentSection === "project-6" && <ProjectDetailSlide id="project-6" title="Project 6" onBack={() => navigateTo("projects")} />}
+                {currentSection === "projects" && (
+                  <PalaceProjects
+                    onSelectProject={(id) => navigateTo(id)}
+                    onOpenSupporting={() => navigateTo("projects-supporting")}
+                  />
+                )}
+                {currentSection === "projects-supporting" && (
+                  <SupportingProjectsSection onBack={() => navigateTo("projects")} />
+                )}
+                {PROJECT_CARDS.map((card) =>
+                  currentSection === card.id ? (
+                    <ProjectDetailSlide
+                      key={card.id}
+                      id={card.id}
+                      title={card.title}
+                      tagline={card.tagline}
+                      onBack={() => navigateTo("projects")}
+                    />
+                  ) : null,
+                )}
                 {currentSection === "experience" && <ConfidantExperience />}
                 {currentSection === "social" && <SocialLink />}
                 {currentSection === "skills" && <SkillArsenal />}
