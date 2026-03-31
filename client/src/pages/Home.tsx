@@ -1496,7 +1496,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     id: "project-undertale-proposal",
     title: "EDITS",
     tagline: "Video project",
-    thumbnailVideo: "/edits-thumbnail.mp4",
+    thumbnailVideo: "/edits-meme1-online.mp4",
   },
 ];
 
