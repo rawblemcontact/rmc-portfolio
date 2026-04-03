@@ -459,7 +459,8 @@ const TextShutter = ({
   split = "words",
   trigger = "mount",
   viewportOnce = true,
-}: TextShutterProps) => {
+  fade = false,
+}: TextShutterProps & { fade?: boolean }) => {
   const isLtr = direction === "ltr";
   const closedClip = isLtr ? "inset(0 100% 0 0)" : "inset(0 0 0 100%)";
   const openClip = "inset(0 0 0 0)";
@@ -480,20 +481,20 @@ const TextShutter = ({
       {parts.map((part, i) => (
         <motion.span
           key={i}
-          initial={{ clipPath: closedClip }}
+          initial={fade ? { opacity: 0 } : { clipPath: closedClip }}
           {...(trigger === "viewport"
             ? {
-                whileInView: { clipPath: openClip },
+                whileInView: fade ? { opacity: 1 } : { clipPath: openClip },
                 viewport: { once: viewportOnce, margin: "-40px 0px -40px 0px" },
                 transition: transition(i),
               }
             : {
-                animate: { clipPath: openClip },
+                animate: fade ? { opacity: 1 } : { clipPath: openClip },
                 transition: transition(i),
               })}
           style={{
             display: "inline-block",
-            overflow: "hidden",
+            overflow: fade ? "visible" : "hidden",
             verticalAlign: "top",
           }}
         >
@@ -668,6 +669,7 @@ const SectionHeader = ({
   slideFadeDelay = 0,
   titleTrigger = "viewport",
   titleClassName,
+  titleFade = false,
 }: {
   title: string;
   subtitle?: string;
@@ -695,6 +697,8 @@ const SectionHeader = ({
   titleTrigger?: "mount" | "viewport";
   /** Extra classes for the title heading (e.g. xl/2xl scale). */
   titleClassName?: string;
+  /** When true, title animates with a simple fade instead of the clip-path wipe. */
+  titleFade?: boolean;
 }) => {
   const sizeClasses =
     title === "SKILLS"
@@ -730,6 +734,7 @@ const SectionHeader = ({
           trigger={titleTrigger}
           delay={titleDelay}
           viewportOnce={viewportOnce}
+          fade={titleFade}
         />
       </h2>
       {betweenTitleAndSubtitle && (
@@ -2033,11 +2038,9 @@ const PalaceProjects = ({
                 showBar={false}
                 compact
                 titleDelay={gate}
-                titleDuration={0.38}
+                titleDuration={SHOWCASE_CHILD_DUR_S}
                 titleStagger={0.035}
-                slideFade
-                slideFadeDuration={SHOWCASE_CHILD_DUR_S}
-                slideFadeDelay={gate}
+                titleFade
               />
             )}
           </motion.div>
