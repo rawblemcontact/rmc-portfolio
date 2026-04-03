@@ -1459,6 +1459,7 @@ type ShowcaseProjectCard = {
   readonly tagline: string;
   readonly thumbnail?: string;
   readonly thumbnailVideo?: string;
+  readonly poster?: string;
 };
 
 const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
@@ -1467,6 +1468,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     title: "RAWBLEM",
     tagline: "Creative brand & short-form content system",
     thumbnailVideo: "/rawblem-thumbnail.mp4",
+    poster: "/rawblem-thumbnail-poster.jpg",
   },
   {
     id: "project-8bit-bumpers",
@@ -1485,6 +1487,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     title: "Portfolio Website",
     tagline: "React, Vite, Framer Motion",
     thumbnailVideo: "/portfolio-website-thumbnail-v2.mp4",
+    poster: "/portfolio-website-thumbnail-v2-poster.jpg",
   },
   {
     id: "project-slaywire",
@@ -1497,6 +1500,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     title: "EDITS",
     tagline: "Video project",
     thumbnailVideo: "/edits-meme1-online.mp4",
+    poster: "/edits-meme1-online-poster.jpg",
   },
 ];
 
@@ -1517,11 +1521,28 @@ const ARCHIVE_DEPTH_ITEMS = [
 
 /** Showcase carousel parallax tween (same idea as Embla “Predefined → Parallax”). */
 const PROJECT_CAROUSEL_TWEEN_FACTOR_BASE = 0.52;
+const PROJECT_CARD_AUTOPLAY_DELAY_MS = 360;
+const PROJECT_MEDIA_WARMUP_DELAY_MS = 20;
 
-const ProjectsStack = ({ onSelect }: { onSelect: (id: string) => void }) => {
+const SHOWCASE_GATE_S = 0.02;
+const SHOWCASE_STAGGER_S = 0.09;
+const SHOWCASE_CHILD_DUR_S = 0.34;
+const SHOWCASE_EASE = [0.16, 1, 0.3, 1] as const;
+const SHOWCASE_FADE_TOTAL_MS = Math.round((SHOWCASE_GATE_S + SHOWCASE_STAGGER_S + SHOWCASE_CHILD_DUR_S) * 1000);
+
+const ProjectsStack = ({
+  onSelect,
+  focusProjectId = null,
+}: {
+  onSelect: (id: string, el: HTMLElement) => void;
+  focusProjectId?: string | null;
+}) => {
   const reduceMotion = useReducedMotion();
   const tweenFactor = useRef(0);
   const tweenRaf = useRef<number>(0);
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+  const autoplayDelayRef = useRef<number | null>(null);
+  const hasPlayedOnce = useRef(false);
 
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: "center",
@@ -1534,6 +1555,8 @@ const ProjectsStack = ({ onSelect }: { onSelect: (id: string) => void }) => {
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [autoplayIndex, setAutoplayIndex] = useState(-1);
+  const [autoplayGateOpen, setAutoplayGateOpen] = useState(false);
 
   const setTweenFactor = useCallback((api: EmblaCarouselType) => {
     tweenFactor.current = PROJECT_CAROUSEL_TWEEN_FACTOR_BASE * api.scrollSnapList().length;
@@ -1556,6 +1579,12 @@ const ProjectsStack = ({ onSelect }: { onSelect: (id: string) => void }) => {
       slideNodes.forEach((slideNode, i) => {
         const inner = slideNode.querySelector("[data-parallax-layer]") as HTMLElement | null;
         if (!inner) return;
+        // Video previews are more prone to shimmer/bleed with subpixel parallax transforms.
+        // Keep video cards fixed and only parallax static-image cards.
+        if (slideNode.querySelector("video")) {
+          inner.style.transform = "translateX(0)";
+          return;
+        }
         const diffToTarget = scrollSnaps[i] - scrollProgress;
         const direction = engine.options.direction === "rtl" ? -1 : 1;
         const tweenValue = diffToTarget * (-1 * direction * tweenFactor.current);
@@ -1600,6 +1629,82 @@ const ProjectsStack = ({ onSelect }: { onSelect: (id: string) => void }) => {
     };
   }, [emblaApi, scheduleTween, setTweenFactor, tweenParallax, syncCarouselUi]);
 
+  useEffect(() => {
+    if (autoplayDelayRef.current !== null) {
+      window.clearTimeout(autoplayDelayRef.current);
+    }
+
+    setAutoplayGateOpen(false);
+    setAutoplayIndex(-1);
+
+    videoRefs.current.forEach((video) => {
+      if (!video) return;
+      video.pause();
+      video.currentTime = 0;
+    });
+
+    const isFirstPlay = !hasPlayedOnce.current;
+    const delay = reduceMotion
+      ? 0
+      : isFirstPlay
+        ? SHOWCASE_FADE_TOTAL_MS + PROJECT_CARD_AUTOPLAY_DELAY_MS
+        : PROJECT_CARD_AUTOPLAY_DELAY_MS;
+
+    autoplayDelayRef.current = window.setTimeout(() => {
+      hasPlayedOnce.current = true;
+      setAutoplayGateOpen(true);
+    }, delay);
+
+    return () => {
+      if (autoplayDelayRef.current !== null) {
+        window.clearTimeout(autoplayDelayRef.current);
+        autoplayDelayRef.current = null;
+      }
+    };
+  }, [reduceMotion, selectedIndex]);
+
+  useEffect(() => {
+    if (!autoplayGateOpen) return;
+
+    const selectedCard = PROJECT_CARDS[selectedIndex];
+    if (!selectedCard?.thumbnailVideo) return;
+
+    const selectedVideo = videoRefs.current[selectedIndex];
+    if (!selectedVideo) return;
+
+    const unlockAutoplay = () => setAutoplayIndex(selectedIndex);
+
+    // Start as soon as selected preview has enough data to begin playback.
+    if (selectedVideo.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+      unlockAutoplay();
+      return;
+    }
+
+    // Ensure browser starts fetching media for the selected preview.
+    selectedVideo.load();
+    selectedVideo.addEventListener("canplay", unlockAutoplay, { once: true });
+    return () => selectedVideo.removeEventListener("canplay", unlockAutoplay);
+  }, [autoplayGateOpen, selectedIndex]);
+
+  useEffect(() => {
+    videoRefs.current.forEach((video, index) => {
+      if (!video) return;
+
+      if (index === autoplayIndex) {
+        const playPromise = video.play();
+        if (playPromise) {
+          playPromise.catch(() => {
+            // Ignore autoplay rejections from the browser.
+          });
+        }
+        return;
+      }
+
+      video.pause();
+      video.currentTime = 0;
+    });
+  }, [autoplayIndex]);
+
   return (
     <div className="flex justify-center items-center gap-2 sm:gap-3 md:gap-5 lg:gap-6 py-8 px-1 sm:px-2 w-full min-w-0 overflow-x-visible overflow-y-visible">
       <motion.button
@@ -1627,28 +1732,43 @@ const ProjectsStack = ({ onSelect }: { onSelect: (id: string) => void }) => {
                 <motion.button
                   type="button"
                   data-carousel-card
-                  onClick={() => onSelect(card.id)}
+                  onClick={(e) => onSelect(card.id, e.currentTarget)}
                   whileTap={{ scale: 0.98 }}
                   transition={{ duration: 0.2, ease: cardEase }}
-                  className="group relative w-full h-[276px] sm:h-[304px] md:h-[324px] lg:h-[348px] xl:h-[364px] 2xl:h-[380px] rounded-xl bg-zinc-950/40 border-2 border-white/15 text-center shadow-xl overflow-hidden hover:border-yellow-400/45 hover:bg-zinc-950/70 hover:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                  className={`group relative w-full h-[276px] sm:h-[304px] md:h-[324px] lg:h-[348px] xl:h-[364px] 2xl:h-[380px] rounded-none bg-zinc-950/35 text-center overflow-hidden hover:bg-zinc-950/65 hover:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/55 focus-visible:ring-offset-2 focus-visible:ring-offset-black transition-opacity duration-150 ${
+                    focusProjectId && focusProjectId !== card.id ? "opacity-0 pointer-events-none" : "opacity-100"
+                  }`}
                 >
                   <div
+                    className="pointer-events-none absolute inset-0 z-30 border border-zinc-500 transition-colors duration-200 group-hover:border-yellow-400"
+                    aria-hidden
+                  />
+                  <div
                     data-parallax-layer
-                    className={`h-full will-change-transform ${card.thumbnail || card.thumbnailVideo ? "relative" : "flex min-h-0 flex-col items-center p-4 sm:p-5"}`}
+                    className={`h-full will-change-transform ${card.thumbnail || card.thumbnailVideo ? "relative z-0" : "flex min-h-0 flex-col items-center p-4 sm:p-5"}`}
                   >
                     {card.thumbnail || card.thumbnailVideo ? (
                       <>
-                        <div className="absolute inset-y-0 -left-4 -right-4 sm:-left-5 sm:-right-5">
+                        <div
+                          className={
+                            card.thumbnailVideo
+                              ? "absolute inset-0 overflow-hidden"
+                              : "absolute inset-y-0 -left-4 -right-4 sm:-left-5 sm:-right-5"
+                          }
+                        >
                           {card.thumbnailVideo ? (
                             <video
+                              ref={(node) => {
+                                videoRefs.current[index] = node;
+                              }}
                               src={card.thumbnailVideo}
-                              autoPlay
+                              poster={card.poster}
                               muted
                               loop
                               playsInline
-                              preload="metadata"
+                              preload={index === selectedIndex ? "auto" : "none"}
                               aria-label={`${card.title} preview`}
-                              className="h-full w-full object-cover object-center"
+                              className="block h-full w-full object-cover object-center"
                             />
                           ) : (
                             <img
@@ -1660,7 +1780,13 @@ const ProjectsStack = ({ onSelect }: { onSelect: (id: string) => void }) => {
                             />
                           )}
                         </div>
-                        <div className="absolute inset-x-[-1rem] bottom-0 h-32 bg-gradient-to-t from-black via-black/85 to-transparent sm:inset-x-[-1.25rem]" />
+                        <div
+                          className={
+                            card.thumbnailVideo
+                              ? "absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black via-black/85 to-transparent"
+                              : "absolute inset-x-[-1rem] bottom-0 h-32 bg-gradient-to-t from-black via-black/85 to-transparent sm:inset-x-[-1.25rem]"
+                          }
+                        />
                         <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
                           <span
                             className={`font-display block w-full max-w-full text-left text-[1rem] sm:text-[1.05rem] md:text-lg lg:text-xl xl:text-[1.35rem] leading-snug text-white tracking-tight line-clamp-3 [text-wrap:balance] motion-safe:transition-[opacity,color] motion-safe:duration-300 motion-safe:ease-out ${
@@ -1718,45 +1844,6 @@ const ProjectsStack = ({ onSelect }: { onSelect: (id: string) => void }) => {
   );
 };
 
-const ProjectDetailSlide = ({
-  id,
-  title,
-  tagline,
-  onBack,
-}: {
-  id: string;
-  title: string;
-  tagline: string;
-  onBack: () => void;
-}) => (
-  <section id={id} className={`relative min-h-screen w-full overflow-x-hidden py-16 md:py-20 pb-12 bg-black text-white scroll-mt-6 ${SLIDE}`}>
-    <SectionGridOverlay />
-    <div className="container mx-auto px-6 relative z-10">
-      <div className="max-w-4xl mx-auto">
-        <Button
-          variant="ghost"
-          onClick={onBack}
-          className="mb-8 text-zinc-400 hover:text-white flex items-center gap-2"
-        >
-          <ChevronLeft size={20} /> Back to Projects
-        </Button>
-        <p className="font-heading text-xs tracking-[0.2em] uppercase text-zinc-500 mb-3">Showcase</p>
-        <h2 className="font-display text-3xl md:text-5xl tracking-tight text-balance">{title}</h2>
-        <p className="mt-4 text-base md:text-lg text-zinc-400 max-w-2xl leading-relaxed">{tagline}</p>
-        <div className="h-px w-full max-w-md bg-white/10 my-10" aria-hidden />
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-xl bg-zinc-800/60 border border-white/10 p-6 min-h-[200px] flex items-center justify-center">
-            <p className="text-zinc-500 text-sm uppercase">PROJECT DETAILS COMING SOON</p>
-          </div>
-          <div className="rounded-xl bg-zinc-800/60 border border-white/10 p-6 min-h-[200px] flex items-center justify-center">
-            <p className="text-zinc-500 text-sm uppercase">ADDITIONAL CONTENT PLACEHOLDER</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-);
-
 const SupportingProjectsSection = ({ onBack }: { onBack: () => void }) => (
   <section
     id="projects-supporting"
@@ -1813,37 +1900,299 @@ const SupportingProjectsSection = ({ onBack }: { onBack: () => void }) => (
   </section>
 );
 
+type CardRect = { top: number; left: number; width: number; height: number };
+
+/** Renders media content for the detail card (morph overlay and settled view share the same markup). */
+const DetailCardMedia = ({ card }: { card: ShowcaseProjectCard }) => (
+  <div className="h-full w-full">
+    {card.thumbnailVideo ? (
+      <video
+        src={card.thumbnailVideo}
+        poster={card.poster}
+        muted loop autoPlay playsInline preload="auto"
+        className="block h-full w-full object-cover object-center"
+      />
+    ) : (
+      <img src={card.thumbnail} alt={card.title} className="h-full w-full object-cover object-center" />
+    )}
+    <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black via-black/85 to-transparent" />
+    <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
+      <span className="font-display block text-left text-[1rem] sm:text-[1.05rem] md:text-lg xl:text-[1.35rem] leading-snug text-white tracking-tight">{card.title}</span>
+      <span className="font-body mt-3 block text-left text-xs sm:text-[0.8125rem] md:text-sm text-zinc-300 leading-relaxed border-t border-white/15 pt-3">{card.tagline}</span>
+    </div>
+  </div>
+);
+
+const DETAIL_CARD_H = "h-[280px] sm:h-[320px] md:h-[360px] lg:h-[400px]";
+
 const PalaceProjects = ({
   onSelectProject,
   onOpenSupporting,
+  activeProjectId,
+  onBackToCarousel,
+  settled = true,
 }: {
   onSelectProject: (id: string) => void;
   onOpenSupporting: () => void;
-}) => (
-  <section
-    id="projects"
-    className={`relative flex flex-col justify-center min-h-screen w-full py-16 md:py-20 bg-black text-white scroll-mt-6 ${SLIDE} !overflow-x-visible`}
-  >
-    <SectionGridOverlay />
-    <div className="container mx-auto px-4 sm:px-6 relative z-10 w-full max-w-full min-w-0">
-      <SectionHeader title="SHOWCASE" subtitle="Projects" align="center" showBar={false} compact />
-      <ProjectsStack onSelect={onSelectProject} />
-      <div className="mt-10 md:mt-14 flex justify-center px-2">
-        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} transition={{ duration: 0.2 }}>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onOpenSupporting}
-            className="border-2 border-white/20 bg-black/40 text-white hover:bg-white/5 hover:border-yellow-400/50 hover:text-yellow-100 rounded-full px-6 py-5 h-auto font-heading text-xs sm:text-sm tracking-[0.18em] uppercase gap-2"
+  activeProjectId: string | null;
+  onBackToCarousel: () => void;
+  settled?: boolean;
+}) => {
+  const reduceMotion = useReducedMotion();
+  const gate = reduceMotion ? 0 : SHOWCASE_GATE_S;
+  const activeCard = activeProjectId ? PROJECT_CARDS.find((c) => c.id === activeProjectId) ?? null : null;
+
+  const [morphRect, setMorphRect] = useState<CardRect | null>(null);
+  const [targetRect, setTargetRect] = useState<CardRect | null>(null);
+  const [morphDone, setMorphDone] = useState(false);
+  const detailAnchorRef = useRef<HTMLDivElement>(null);
+
+  const morphDur = reduceMotion ? 0.1 : 0.24;
+  const morphEase: [number, number, number, number] = [0.22, 1, 0.36, 1];
+
+  // FLIP animation approach — avoids animating CSS layout properties (width/height)
+  // which Framer Motion wires up via useEffect (after paint), causing a size-flash.
+  // Instead, the flying card is always the DESTINATION size (plain React state →
+  // applied synchronously by React's commit), and scaleX/scaleY (pure transforms)
+  // start at src/dst ratio and animate to 1. All transforms apply before first paint.
+  const mX      = useMotionValue(0);
+  const mY      = useMotionValue(0);
+  const mScaleX = useMotionValue(1);
+  const mScaleY = useMotionValue(1);
+
+  const handleCardClick = useCallback((id: string, el: HTMLElement) => {
+    if (!detailAnchorRef.current) return;
+    const src = el.getBoundingClientRect();
+    const dst = detailAnchorRef.current.getBoundingClientRect();
+
+    // Set all transforms synchronously — before React schedules its render —
+    // so Framer Motion's useLayoutEffect applies them before the first paint.
+    mX.set(src.left);
+    mY.set(src.top);
+    mScaleX.set(src.width  / dst.width);
+    mScaleY.set(src.height / dst.height);
+
+    setMorphRect({ top: src.top,  left: src.left,  width: src.width,  height: src.height });
+    setTargetRect({ top: dst.top, left: dst.left, width: dst.width, height: dst.height });
+    setMorphDone(false);
+    onSelectProject(id);
+  }, [onSelectProject, mX, mY, mScaleX, mScaleY]);
+
+  // Drive transforms to destination once React has committed the state.
+  useEffect(() => {
+    if (!targetRect || !morphRect || morphDone) return;
+    let cancelled = false;
+
+    animate(mX,      targetRect.left,   { duration: morphDur, ease: morphEase });
+    animate(mY,      targetRect.top,    { duration: morphDur, ease: morphEase });
+    animate(mScaleX, 1,                 { duration: morphDur, ease: morphEase });
+    animate(mScaleY, 1, {
+      duration: morphDur,
+      ease: morphEase,
+      onComplete: () => { if (!cancelled) setMorphDone(true); },
+    });
+
+    return () => { cancelled = true; };
+  // Object identity changes each click — that is the correct trigger.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetRect, morphRect]);
+
+  const handleBackToCarousel = useCallback(() => {
+    setMorphRect(null);
+    setTargetRect(null);
+    setMorphDone(false);
+    onBackToCarousel();
+  }, [onBackToCarousel]);
+
+  return (
+    <section
+      id="projects"
+      className={`relative flex flex-col justify-center min-h-screen w-full py-16 md:py-20 bg-black text-white scroll-mt-6 ${SLIDE} !overflow-x-visible`}
+    >
+      <SectionGridOverlay />
+      <div className="container mx-auto px-4 sm:px-6 relative z-10 w-full max-w-full min-w-0">
+
+        {/*
+         * CAROUSEL — always in normal flow so the section keeps its height.
+         * When a card is active we fade it out but DO NOT unmount it so the
+         * container height stays stable for the absolute detail overlay.
+         */}
+        <div
+          aria-hidden={!!activeCard || undefined}
+          className={activeCard ? "pointer-events-none select-none" : ""}
+        >
+          <motion.div
+            animate={{ opacity: activeCard ? 0 : 1 }}
+            transition={{ duration: activeCard ? 0.08 : 0.14 }}
           >
-            Supporting &amp; archive
-            <ArrowRight className="w-4 h-4 shrink-0 opacity-80" aria-hidden />
-          </Button>
-        </motion.div>
+            {settled && (
+              <SectionHeader
+                title="SHOWCASE"
+                subtitle="Projects"
+                align="center"
+                showBar={false}
+                compact
+                titleDelay={gate}
+                titleDuration={0.38}
+                titleStagger={0.035}
+                slideFade
+                slideFadeDuration={SHOWCASE_CHILD_DUR_S}
+                slideFadeDelay={gate}
+              />
+            )}
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            animate={
+              activeCard ? { opacity: 0, y: 0 }
+              : settled  ? { opacity: 1, y: 0 }
+              : { opacity: 0, y: 18 }
+            }
+            transition={{
+              duration: activeCard ? 0.08 : SHOWCASE_CHILD_DUR_S,
+              delay: !activeCard && settled ? gate + SHOWCASE_STAGGER_S : 0,
+              ease: SHOWCASE_EASE,
+            }}
+          >
+            {settled && (
+              <ProjectsStack
+                onSelect={(id, el) => handleCardClick(id, el)}
+                focusProjectId={activeCard?.id ?? null}
+              />
+            )}
+          </motion.div>
+
+          <motion.div
+            className="mt-10 md:mt-14 flex justify-center px-2"
+            initial={{ opacity: 0, y: 14 }}
+            animate={
+              activeCard ? { opacity: 0, y: 0 }
+              : settled  ? { opacity: 1, y: 0 }
+              : { opacity: 0, y: 14 }
+            }
+            transition={{
+              duration: activeCard ? 0.08 : SHOWCASE_CHILD_DUR_S,
+              delay: !activeCard && settled ? gate + SHOWCASE_STAGGER_S * 2 : 0,
+              ease: SHOWCASE_EASE,
+            }}
+          >
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} transition={{ duration: 0.2 }}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onOpenSupporting}
+                className="border-2 border-white/20 bg-black/40 text-white hover:bg-white/5 hover:border-yellow-400/50 hover:text-yellow-100 rounded-full px-6 py-5 h-auto font-heading text-xs sm:text-sm tracking-[0.18em] uppercase gap-2"
+              >
+                Supporting &amp; archive
+                <ArrowRight className="w-4 h-4 shrink-0 opacity-80" aria-hidden />
+              </Button>
+            </motion.div>
+          </motion.div>
+        </div>
+
+        {/*
+         * Permanent measurement anchor — always in the DOM so we can read its
+         * getBoundingClientRect() synchronously at click time (zero RAF delay).
+         * Absolutely positioned so it never affects carousel layout.
+         */}
+        <div
+          ref={detailAnchorRef}
+          className={`absolute top-0 left-0 right-0 mx-auto w-full max-w-[min(100%,56rem)] ${DETAIL_CARD_H} pointer-events-none`}
+          aria-hidden
+          style={{ visibility: "hidden" }}
+        />
+
+        {/*
+         * DETAIL OVERLAY — absolute, sits on top of the (now invisible) carousel.
+         * Uses flex-col so the card + text stack naturally from the container top.
+         */}
+        {activeCard && (
+          <div className="absolute inset-0 flex flex-col items-center">
+            {/* Spacer — same dimensions as the card so detail text flows below it. */}
+            <div className={`w-full max-w-[min(100%,56rem)] shrink-0 ${DETAIL_CARD_H}`} aria-hidden />
+
+            {/* Settled card — card border is instant; media fades in after morph. */}
+            {morphDone && (
+              <div
+                className={`absolute top-0 left-0 right-0 mx-auto w-full max-w-[min(100%,56rem)] ${DETAIL_CARD_H} border border-zinc-500 overflow-hidden`}
+                style={{ background: "#000" }}
+              >
+                <motion.div
+                  className="h-full w-full"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.28, ease: "easeOut" }}
+                >
+                  <DetailCardMedia card={activeCard} />
+                </motion.div>
+              </div>
+            )}
+
+            {/* Detail text */}
+            {morphDone && (
+              <motion.div
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.28, delay: 0.08, ease: SHOWCASE_EASE }}
+                className="w-full max-w-[min(100%,56rem)] mt-7 pb-16"
+              >
+                <p className="font-heading text-xs tracking-[0.22em] uppercase text-zinc-500 mb-2">Project details</p>
+                <h3 className="font-display text-2xl md:text-3xl tracking-tight text-white">{activeCard.title}</h3>
+                <p className="mt-3 text-sm sm:text-base text-zinc-300 leading-relaxed">{activeCard.tagline}</p>
+                <div className="mt-6">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleBackToCarousel}
+                    className="border-2 border-white/20 bg-black/40 text-white hover:bg-white/5 hover:border-yellow-400/50 hover:text-yellow-100 rounded-none px-5 py-3 h-auto font-heading text-xs sm:text-sm tracking-[0.18em] uppercase"
+                  >
+                    Back to carousel
+                  </Button>
+                </div>
+              </motion.div>
+            )}
+          </div>
+        )}
       </div>
-    </div>
-  </section>
-);
+
+      {/*
+       * FLYING CARD — portalled into document.body so it is completely outside
+       * the panel's CSS transform context. Framer Motion keeps transform:translateX(0)
+       * on the panel after slide-in, which (per CSS spec) makes position:fixed
+       * children relative to the panel, not the viewport — causing compositing
+       * layer mismatches and full-screen flicker. The portal removes this entirely.
+       * FLIP technique: destination size set as plain values (React commit, pre-paint);
+       * scaleX/scaleY set synchronously before render via MotionValues.
+       */}
+      {createPortal(
+        <motion.div
+          style={{
+            position: "fixed",
+            overflow: "hidden",
+            border: "1px solid rgb(113 113 122)",
+            background: "#000",
+            zIndex: 9999,
+            top: 0,
+            left: 0,
+            width:  targetRect?.width  ?? 0,
+            height: targetRect?.height ?? 0,
+            x: mX,
+            y: mY,
+            scaleX: mScaleX,
+            scaleY: mScaleY,
+            transformOrigin: "top left",
+            visibility: (activeCard && morphRect && !morphDone) ? "visible" : "hidden",
+            pointerEvents: "none",
+          }}
+        >
+          {/* No media during morph — just the dark card shape moving cleanly */}
+        </motion.div>,
+        document.body,
+      )}
+    </section>
+  );
+};
 
 const ProjectPoint = ({ text }: { text: string }) => (
   <div className="flex items-start">
@@ -4098,12 +4447,19 @@ const ResumeView = () => {
 };
 
 export default function Home() {
+  // Content mask: keeps main content invisible until after first paint so the
+  // background (black) is the only thing visible during JS hydration. No artificial
+  // delay — the state flips on the first effect run (immediately after mount).
+  const [appReady, setAppReady] = useState(false);
+  useEffect(() => { setAppReady(true); }, []);
+
   const [isResumeMode, setIsResumeMode] = useState(false);
   const [isSideNavOpen, setIsSideNavOpen] = useState(false);
   const [currentSection, setCurrentSection] = useState<string | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [transitionTarget, setTransitionTarget] = useState<string | "menu" | null>(null);
   const [menuPanelAtRight, setMenuPanelAtRight] = useState(false);
+  const [panelSettled, setPanelSettled] = useState(false);
   const reduceMotion = useReducedMotion();
   const heroInViewRef = useRef<HTMLDivElement | null>(null);
   const isHeroInView = useInView(heroInViewRef, { margin: "-100px 0px 0px 0px" });
@@ -4111,8 +4467,15 @@ export default function Home() {
   const slideOrder = ["hero", "menu"];
   const [currentSlideId, setCurrentSlideId] = useState<string>("hero");
   const [menuLockedFillId, setMenuLockedFillId] = useState<string | null>(null);
+  const [activeShowcaseProjectId, setActiveShowcaseProjectId] = useState<string | null>(null);
   const prevSlideIdRef = useRef<string>("hero");
   const transitionTimeoutsRef = useRef<number[]>([]);
+  const hasWarmedProjectMediaRef = useRef(false);
+  const projectMediaWarmupRef = useRef<(HTMLImageElement | HTMLVideoElement)[]>([]);
+  const isProjectsPage =
+    currentSection === "projects" ||
+    currentSection === "projects-supporting" ||
+    !!currentSection?.startsWith("project-");
 
   // Single global grid phase so all grid overlays stay in sync (no jolt on panel transition)
   const [gridPhase, setGridPhase] = useState(0);
@@ -4121,6 +4484,57 @@ export default function Home() {
     const id = setInterval(tick, 100);
     return () => clearInterval(id);
   }, []);
+
+  // Preload all SHOWCASE media once on initial mount so card clicks are instant.
+  // Fires after a brief yield to avoid contending with the initial render/paint.
+  useEffect(() => {
+    if (hasWarmedProjectMediaRef.current) return;
+    hasWarmedProjectMediaRef.current = true;
+
+    const timer = window.setTimeout(() => {
+      const handles: (HTMLImageElement | HTMLVideoElement)[] = [];
+
+      PROJECT_CARDS.forEach((card) => {
+        // Static thumbnail image
+        if (card.thumbnail) {
+          const img = new Image();
+          img.decoding = "async";
+          img.src = card.thumbnail;
+          handles.push(img);
+        }
+
+        // Video poster — must be preloaded so the flying card shows it instantly on click
+        if (card.poster) {
+          const img = new Image();
+          img.decoding = "async";
+          img.src = card.poster;
+          handles.push(img);
+        }
+
+        // Video file
+        if (card.thumbnailVideo) {
+          const video = document.createElement("video");
+          video.preload = "auto";
+          video.muted = true;
+          video.playsInline = true;
+          video.src = card.thumbnailVideo;
+          video.load();
+          handles.push(video);
+        }
+      });
+
+      projectMediaWarmupRef.current = handles;
+    }, PROJECT_MEDIA_WARMUP_DELAY_MS);
+
+    return () => window.clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (currentSection !== "projects") {
+      setActiveShowcaseProjectId(null);
+    }
+  }, [currentSection]);
 
   const handleStart = () => {
     scrollToId("menu", reduceMotion ? "auto" : "smooth");
@@ -4132,6 +4546,7 @@ export default function Home() {
 
     if (reduceMotion) {
       setCurrentSection(id === "menu" ? null : id);
+      setPanelSettled(true);
       return;
     }
 
@@ -4153,6 +4568,7 @@ export default function Home() {
         }, PANEL_TRANSITION.duration * 1000)
       );
     } else {
+      setPanelSettled(false);
       setCurrentSection(id);
       setTransitionTarget(id);
       setIsTransitioning(true);
@@ -4160,6 +4576,7 @@ export default function Home() {
         window.setTimeout(() => {
           setIsTransitioning(false);
           setTransitionTarget(null);
+          setPanelSettled(true);
         }, PANEL_TRANSITION.duration * 1000)
       );
     }
@@ -4214,7 +4631,12 @@ export default function Home() {
       className={`selection:bg-cyan-500 selection:text-white transition-colors duration-500 ${
         isResumeMode ? "min-h-screen overflow-x-hidden bg-white" : "h-screen w-screen overflow-hidden"
       }`}
-      style={!isResumeMode ? { backgroundColor: "#0a0a0a", backgroundImage: "none" } : undefined}
+      style={{
+        ...(!isResumeMode ? { backgroundColor: "#0a0a0a", backgroundImage: "none" } : {}),
+        // Instant reveal — avoids a live transition on the root element that can
+        // be retriggered by React Strict Mode's double-mount in development.
+        opacity: appReady ? 1 : 0,
+      }}
     >
       {/* Top-right controls (Resume + Hamburger) */}
       <motion.div
@@ -4306,7 +4728,7 @@ export default function Home() {
               pointerEvents: currentSection && transitionTarget !== "menu" ? "none" : "auto",
               backgroundColor: "#0a0a0a",
               boxShadow:
-                !reduceMotion && (currentSection || transitionTarget) && transitionTarget !== "menu"
+                !reduceMotion && !isProjectsPage && (currentSection || transitionTarget) && transitionTarget !== "menu"
                   ? "inset -16px 0 24px rgba(0,0,0,0.4)"
                   : "none",
             }}
@@ -4393,28 +4815,20 @@ export default function Home() {
                 backgroundColor: "#000",
                 zIndex: currentSection ? 40 : 30,
                 pointerEvents: transitionTarget === "menu" ? "none" : "auto",
-                boxShadow:
-                  currentSection && transitionTarget !== "menu"
-                    ? "-6px 0 20px rgba(0,0,0,0.25)"
-                    : transitionTarget === "menu"
-                      ? "inset -16px 0 24px rgba(0,0,0,0.4)"
-                      : "none",
+                willChange: "transform",
               }}
               aria-label={`Section: ${currentSection}`}
               initial={
                 !reduceMotion && transitionTarget && transitionTarget !== "menu"
-                  ? { opacity: 0.95, x: "100%", clipPath: "inset(0 100% 0 0)" }
+                  ? { x: "100%" }
                   : false
               }
               animate={{
-                opacity: reduceMotion ? 1 : 1,
-                x: reduceMotion ? "0%" : "0%",
-                clipPath:
-                  reduceMotion
-                    ? "inset(0 0 0 0)"
-                    : transitionTarget === "menu"
-                      ? "inset(0 0 0 100%)"
-                      : "inset(0 0 0 0)",
+                x: reduceMotion
+                  ? "0%"
+                  : transitionTarget === "menu"
+                    ? "100%"
+                    : "0%",
               }}
               transition={{
                 duration: reduceMotion ? 0.2 : PANEL_TRANSITION.duration,
@@ -4426,7 +4840,7 @@ export default function Home() {
                   className="absolute left-0 top-0 bottom-0 w-[2px] z-10 pointer-events-none"
                   style={{
                     backgroundColor: SECTION_ACCENT_COLOR[currentSection] ?? "#06b6d4",
-                    boxShadow: accentGlowShadow(SECTION_ACCENT_COLOR[currentSection] ?? "#06b6d4", true),
+                    boxShadow: isProjectsPage ? "none" : accentGlowShadow(SECTION_ACCENT_COLOR[currentSection] ?? "#06b6d4", true),
                   }}
                   aria-hidden
                 />
@@ -4437,7 +4851,7 @@ export default function Home() {
                   style={{
                     backgroundColor: SECTION_ACCENT_COLOR[currentSection] ?? "#06b6d4",
                     transform: "translateX(-2px)",
-                    boxShadow: accentGlowShadow(SECTION_ACCENT_COLOR[currentSection] ?? "#06b6d4", true),
+                    boxShadow: isProjectsPage ? "none" : accentGlowShadow(SECTION_ACCENT_COLOR[currentSection] ?? "#06b6d4", true),
                   }}
                   aria-hidden
                   initial={{ left: "0%" }}
@@ -4463,23 +4877,15 @@ export default function Home() {
                 {currentSection === "profile" && <PhantomProfile />}
                 {currentSection === "projects" && (
                   <PalaceProjects
-                    onSelectProject={(id) => navigateTo(id)}
+                    onSelectProject={setActiveShowcaseProjectId}
                     onOpenSupporting={() => navigateTo("projects-supporting")}
+                    activeProjectId={activeShowcaseProjectId}
+                    onBackToCarousel={() => setActiveShowcaseProjectId(null)}
+                    settled={panelSettled}
                   />
                 )}
                 {currentSection === "projects-supporting" && (
                   <SupportingProjectsSection onBack={() => navigateTo("projects")} />
-                )}
-                {PROJECT_CARDS.map((card) =>
-                  currentSection === card.id ? (
-                    <ProjectDetailSlide
-                      key={card.id}
-                      id={card.id}
-                      title={card.title}
-                      tagline={card.tagline}
-                      onBack={() => navigateTo("projects")}
-                    />
-                  ) : null,
                 )}
                 {currentSection === "experience" && <ConfidantExperience />}
                 {currentSection === "social" && <SocialLink />}
