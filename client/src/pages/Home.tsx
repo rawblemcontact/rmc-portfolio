@@ -2,7 +2,7 @@
 import { motion, AnimatePresence, Variants, useInView, useReducedMotion, useMotionValue, useTransform, animate } from "framer-motion";
 import useEmblaCarousel from "embla-carousel-react";
 import type { EmblaCarouselType } from "embla-carousel";
-import React, { createContext, useContext, useEffect, useLayoutEffect, useState, useRef, useCallback } from "react";
+import React, { createContext, useContext, useEffect, useLayoutEffect, useState, useRef, useCallback, startTransition } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { FillIcon } from "@/components/FillIcon";
@@ -514,9 +514,7 @@ const SLIDE =
 const SLIDE_NO_Y_SCROLL =
   "no-scrollbar w-screen h-screen flex-shrink-0 snap-start overflow-y-hidden overflow-x-hidden";
 
-const MOBILE_FLOAT_BOTTOM = "calc(0.75rem + env(safe-area-inset-bottom))";
 const MOBILE_SKILLS_NAV_BOTTOM = "calc(0.75rem + env(safe-area-inset-bottom) + 1px)";
-const MOBILE_FLOAT_LEFT = "calc(1rem + env(safe-area-inset-left))";
 const MOBILE_ROUND_BTN_BASE =
   "items-center justify-center w-9 h-9 rounded-full border border-white/20 bg-black/60 backdrop-blur-md text-white/90 active:scale-95 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80";
 
@@ -596,60 +594,39 @@ function TextFade({
   );
 }
 
-const BackArrowSvg = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24" aria-hidden>
-    {/* Left-pointing arrow for "back" */}
-    <path d="M7.8284 11.0001L13.1924 16.3641L11.7782 17.7783L4 10.0001L11.7782 2.22205L13.1924 3.63626L7.8284 9.00011H20V11.0001H7.8284Z" />
-  </svg>
-);
-
 const BackToMenuButton = ({
   show,
   onBack,
+  ariaLabel = "Back to menu",
 }: {
   show: boolean;
   onBack: () => void;
-}) => {
-  return (
-    <AnimatePresence>
-      {show && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 10 }}
-          transition={{ duration: DUR.fast, ease: EASE.out }}
-          className="fixed z-50 max-sm:flex max-sm:h-9 max-sm:w-9 max-sm:items-center max-sm:justify-center"
-          style={{
-            left: MOBILE_FLOAT_LEFT,
-            bottom: MOBILE_FLOAT_BOTTOM,
-          }}
-        >
-          <div className="hidden sm:block">
-            <button
-              type="button"
-              onClick={onBack}
-              aria-label="Back to menu"
-              className="animated-button bg-black/55 backdrop-blur-md font-heading text-[9px] md:text-[10px] tracking-[0.12em] uppercase focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-            >
-              <BackArrowSvg className="arr-2" />
-              <span className="text">Back to menu</span>
-              <span className="circle" aria-hidden />
-              <BackArrowSvg className="arr-1" />
-            </button>
-          </div>
-          <button
+  ariaLabel?: string;
+}) => (
+  <AnimatePresence>
+    {show && (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 10 }}
+        transition={{ duration: DUR.fast, ease: EASE.out }}
+        className="fixed top-5 left-3 z-50 sm:top-6 sm:left-4"
+      >
+        <motion.div whileTap={TAP} transition={SPRING.ui}>
+          <Button
             type="button"
             onClick={onBack}
-            aria-label="Back to menu"
-            className={`flex sm:hidden ${MOBILE_ROUND_BTN_BASE}`}
+            size="icon"
+            aria-label={ariaLabel}
+            className="h-14 w-14 min-h-0 min-w-0 rounded-full border-[3px] border-black bg-black p-0 text-white shadow-xl transition-colors duration-200 hover:bg-white hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black [&_svg]:!size-5"
           >
-            <BackArrowSvg className="w-4 h-4 fill-white" />
-          </button>
+            <ArrowLeft size={22} strokeWidth={2} aria-hidden />
+          </Button>
         </motion.div>
-      )}
-    </AnimatePresence>
-  );
-};
+      </motion.div>
+    )}
+  </AnimatePresence>
+);
 
 const SectionHeader = ({
   title,
@@ -1113,7 +1090,7 @@ const SideNavOverlay = ({
       {open && (
         <motion.div
           key="sidenav-where-to-next"
-          className="fixed inset-0 md:right-[420px] z-[55] flex items-center justify-center pointer-events-none"
+          className="fixed inset-0 md:right-[400px] z-[55] flex items-center justify-center pointer-events-none"
           initial={false}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.04 }}
@@ -1134,25 +1111,25 @@ const SideNavOverlay = ({
             aria-label="Navigation"
             role="dialog"
             aria-modal="true"
-            className="fixed inset-y-0 right-0 z-[60] w-full max-w-[420px] bg-black border-l-4 border-white/20 p-6 shadow-2xl flex flex-col"
+            className="fixed inset-y-0 right-0 z-[60] w-full max-w-[380px] sm:max-w-[400px] bg-black border-l-[3px] border-white/20 p-5 sm:p-6 shadow-2xl flex flex-col"
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={SPRING.panel}
           >
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center justify-between mb-6">
               <div>
-                <p className="font-mono text-xs text-zinc-400 tracking-widest uppercase">MENU</p>
-                <p className="font-display text-3xl tracking-[0.14em] uppercase leading-none">Navigate</p>
+                <p className="font-mono text-[0.65rem] sm:text-xs text-zinc-400 tracking-widest uppercase">MENU</p>
+                <p className="font-display text-2xl sm:text-3xl tracking-[0.14em] uppercase leading-none">Navigate</p>
               </div>
               <motion.div whileTap={TAP} transition={SPRING.ui}>
                 <Button
                   type="button"
                   onClick={onClose}
                   aria-label="Close menu"
-                  className="h-16 w-16 rounded-full bg-black text-white hover:bg-white hover:text-black border-4 border-black p-0 shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                  className="h-14 w-14 min-h-0 min-w-0 rounded-full bg-black text-white hover:bg-white hover:text-black border-[3px] border-black p-0 shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black [&_svg]:!size-5"
                 >
-                  <X size={26} aria-hidden />
+                  <X size={22} aria-hidden />
                 </Button>
               </motion.div>
             </div>
@@ -1170,24 +1147,24 @@ const SideNavOverlay = ({
                   onHoverEnd={() => setHoveredId(null)}
                   onFocus={() => setHoveredId(item.id)}
                   onBlur={() => setHoveredId(null)}
-                  className="group relative w-full text-left py-4 border-b border-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black focus-visible:ring-inset"
+                  className="group relative w-full text-left py-3 sm:py-3.5 border-b border-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black focus-visible:ring-inset"
                   whileTap={TAP}
                   transition={SPRING.ui}
                 >
                   <div className="flex items-center justify-between w-full">
                     <div className="flex items-center min-w-0 flex-1">
-                      <span className="font-mono text-xs text-zinc-500 tabular-nums w-8 shrink-0">
+                      <span className="font-mono text-[0.65rem] sm:text-xs text-zinc-500 tabular-nums w-7 shrink-0">
                         {String(idx + 1).padStart(2, "0")}
                       </span>
                       <FillIcon
                         icon={item.icon}
                         filledIcon={item.id === "profile" ? UserFilledIcon : undefined}
                         forceFilled={hoveredId === item.id}
-                        className="w-5 h-5 text-white shrink-0 ml-3"
+                        className="w-4 h-4 md:w-[1.125rem] md:h-[1.125rem] text-white shrink-0 ml-2 md:ml-3"
                         strokeWidth={2.5}
                       />
                       <motion.span
-                        className="font-display text-base tracking-[0.12em] uppercase text-white pl-3 block"
+                        className="font-display text-sm sm:text-base tracking-[0.12em] uppercase text-white pl-2 sm:pl-3 block"
                         animate={{ x: hoveredId === item.id ? 6 : 0 }}
                         transition={CMD_HOVER}
                       >
@@ -1212,21 +1189,21 @@ const SideNavOverlay = ({
               ))}
             </div>
 
-            <div className="mt-auto pt-8 border-t border-white/10">
-              <div className="mb-4">
-                <span className="text-zinc-400 font-mono text-xs uppercase tracking-widest">
+            <div className="mt-auto pt-6 border-t border-white/10">
+              <div className="mb-3">
+                <span className="text-zinc-400 font-mono text-[0.65rem] sm:text-xs uppercase tracking-widest">
                   CONTACT
                 </span>
               </div>
 
-              <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
                 <motion.a
                   href="#"
                   aria-label="YouTube"
                   whileHover={{ y: -3 }}
-                  className="bg-black p-3 rounded-full text-red-500 transition-colors border border-red-500/20 hover:border-red-500/50 hover:text-red-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                  className="bg-black p-2 sm:p-2.5 rounded-full text-red-500 transition-colors border border-red-500/20 hover:border-red-500/50 hover:text-red-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                 >
-                  <SiYoutube size={18} aria-hidden className="fill-current" />
+                  <SiYoutube size={16} aria-hidden className="fill-current" />
                 </motion.a>
                 <motion.a
                   href="https://linkedin.com/in/robbie-mclaughlin"
@@ -1234,17 +1211,17 @@ const SideNavOverlay = ({
                   rel="noopener noreferrer"
                   aria-label="LinkedIn"
                   whileHover={{ y: -3 }}
-                  className="bg-black p-3 rounded-full text-blue-500 transition-colors border border-blue-500/20 hover:border-blue-500/50 hover:text-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                  className="bg-black p-2 sm:p-2.5 rounded-full text-blue-500 transition-colors border border-blue-500/20 hover:border-blue-500/50 hover:text-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                 >
-                  <Linkedin size={18} aria-hidden />
+                  <Linkedin size={16} aria-hidden />
                 </motion.a>
                 <motion.a
                   href="#"
                   aria-label="TikTok"
                   whileHover={{ y: -3 }}
-                  className="bg-black p-3 rounded-full text-cyan-500 transition-colors border border-cyan-500/20 hover:border-cyan-500/50 hover:text-cyan-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                  className="bg-black p-2 sm:p-2.5 rounded-full text-cyan-500 transition-colors border border-cyan-500/20 hover:border-cyan-500/50 hover:text-cyan-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                 >
-                  <SiTiktok size={18} aria-hidden className="fill-current" />
+                  <SiTiktok size={16} aria-hidden className="fill-current" />
                 </motion.a>
                 <motion.a
                   href="https://instagram.com/"
@@ -1252,17 +1229,17 @@ const SideNavOverlay = ({
                   rel="noopener noreferrer"
                   aria-label="Instagram"
                   whileHover={{ y: -3 }}
-                  className="bg-black p-3 rounded-full text-pink-500 transition-colors border border-pink-500/20 hover:border-pink-500/50 hover:text-pink-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                  className="bg-black p-2 sm:p-2.5 rounded-full text-pink-500 transition-colors border border-pink-500/20 hover:border-pink-500/50 hover:text-pink-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                 >
-                  <SiInstagram size={18} aria-hidden className="fill-current" />
+                  <SiInstagram size={16} aria-hidden className="fill-current" />
                 </motion.a>
                 <motion.a
                   href="mailto:robbie@example.com"
                   aria-label="Email"
                   whileHover={{ y: -3 }}
-                  className="bg-black p-3 rounded-full text-zinc-300 transition-colors border border-white/10 hover:border-white/30 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                  className="bg-black p-2 sm:p-2.5 rounded-full text-zinc-300 transition-colors border border-white/10 hover:border-white/30 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                 >
-                  <Mail size={18} aria-hidden />
+                  <Mail size={16} aria-hidden />
                 </motion.a>
               </div>
             </div>
@@ -1384,7 +1361,7 @@ const PhantomProfile = () => {
              />
              <div
                ref={dividerRef}
-               className="relative w-full max-w-xl xl:max-w-2xl 2xl:max-w-2xl mt-1 min-h-[2px]"
+               className="relative w-full max-w-xl xl:max-w-2xl 2xl:max-w-2xl mt-1 min-h-[2px] -ml-[3px]"
              >
                <motion.span
                  aria-hidden
@@ -1395,17 +1372,23 @@ const PhantomProfile = () => {
                />
             </div>
             <div
-              className="relative w-full max-w-xl xl:max-w-2xl 2xl:max-w-2xl mt-1 overflow-visible min-w-0 min-h-[48px] sm:min-h-[60px] xl:min-h-[64px] 2xl:min-h-[68px] isolate"
+              className="relative w-full max-w-xl xl:max-w-2xl 2xl:max-w-2xl mt-1 overflow-visible min-w-0 min-h-[48px] sm:min-h-[60px] xl:min-h-[64px] 2xl:min-h-[68px] isolate -ml-[3px]"
             >
               <motion.div
-                className="flex flex-wrap sm:flex-nowrap items-center gap-1.5 sm:gap-1 xl:gap-1.5 2xl:gap-2"
+                className="-ml-3 flex flex-wrap items-center gap-1.5 sm:flex-nowrap sm:gap-1 sm:-ml-4 md:-ml-5 xl:gap-1.5 2xl:gap-2"
                 initial={{ x: -24, opacity: 0 }}
                 animate={{ x: overlayRevealed ? 0 : -24, opacity: overlayRevealed ? 1 : 0 }}
                 transition={{ duration: BUTTON_FADE_DURATION_MS / 1000, delay: overlayRevealed ? BUTTONS_DELAY_AFTER_SUMMARY_MS / 1000 : 0, ease: [0.16, 1, 0.3, 1] }}
               >
-               <ExpandCircleButton icon={<FileText size={20} />} expanded>Writer</ExpandCircleButton>
-               <ExpandCircleButton icon={<Monitor size={20} />} expanded>Digital Media</ExpandCircleButton>
-               <ExpandCircleButton icon={<ListOrdered size={20} />} expanded>Content Strategy</ExpandCircleButton>
+                <ExpandCircleButton icon={<FileText size={20} />} expanded>
+                  Writer
+                </ExpandCircleButton>
+                <ExpandCircleButton icon={<Monitor size={20} />} expanded>
+                  Digital Media
+                </ExpandCircleButton>
+                <ExpandCircleButton icon={<ListOrdered size={20} />} expanded>
+                  Content Strategy
+                </ExpandCircleButton>
               </motion.div>
               <motion.div
                 key={overlayEnterCount}
@@ -1417,7 +1400,7 @@ const PhantomProfile = () => {
               />
              </div>
              <motion.div
-               className="mt-3 max-w-xl xl:max-w-2xl 2xl:max-w-2xl"
+               className="mt-3 max-w-xl xl:max-w-2xl 2xl:max-w-2xl -ml-[3px]"
                initial={{ opacity: 0, y: 14 }}
                animate={{ opacity: overlayRevealed ? 1 : 0, y: overlayRevealed ? 0 : 14 }}
                transition={{ duration: SUMMARY_DURATION_S, delay: overlayRevealed ? SUMMARY_DELAY_S : 0, ease: [0.16, 1, 0.3, 1] }}
@@ -1465,6 +1448,11 @@ type ShowcaseProjectCard = {
   readonly thumbnail?: string;
   readonly thumbnailVideo?: string;
   readonly poster?: string;
+  /** Detail overlay — fixed section order: Overview, Role, Tools, Impact. */
+  readonly detailOverview?: string;
+  readonly detailRole?: string;
+  readonly detailTools?: readonly string[];
+  readonly detailImpact?: string;
 };
 
 const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
@@ -1474,18 +1462,33 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     tagline: "Creative brand & short-form content system",
     thumbnailVideo: "/rawblem-thumbnail.mp4",
     poster: "/rawblem-thumbnail-poster.jpg",
+    detailOverview:
+      "A focused creative brand built around short-form video and repeatable content beats—treatment, capture, and platform-native packaging.",
+    detailRole: "Sole creator: concept, production, edit, and distribution.",
+    detailTools: ["CapCut", "DaVinci Resolve", "Hootsuite", "TikTok / Reels / Shorts"],
+    detailImpact: "Story-first formats tuned for retention; multi-platform publishing with consistent voice and visual DNA.",
   },
   {
     id: "project-8bit-bumpers",
     title: "8-bit Film Festival bumpers",
     tagline: "Pixel animation project",
     thumbnail: "/8bit-festival-thumbnail.jpg",
+    detailOverview:
+      "Pixel-style bumpers and interstitials for a film festival program—simple loops, readable typography, and arcade-era restraint.",
+    detailRole: "Animation, art direction, and asset delivery for playback.",
+    detailTools: ["Pixel workflow / raster", "Timeline-based editing"],
+    detailImpact: "Clear on-screen branding between screenings without overpowering the main features.",
   },
   {
     id: "project-undertale-fhe",
     title: "UNDERTALE — Forever Home Edition",
     tagline: "Game project · GameMaker Studio 2",
     thumbnail: "/undertale-fhe-thumbnail.png",
+    detailOverview:
+      "A GameMaker Studio 2 project exploring Undertale-inspired tone and structure—rooms, encounters, and narrative pacing as design problems.",
+    detailRole: "Design, implementation, and iteration in GMS2.",
+    detailTools: ["GameMaker Studio 2"],
+    detailImpact: "Hands-on practice shipping playable slices and tightening feel through playtesting.",
   },
   {
     id: "project-portfolio",
@@ -1493,12 +1496,22 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     tagline: "React, Vite, Framer Motion",
     thumbnailVideo: "/portfolio-website-thumbnail-v2.mp4",
     poster: "/portfolio-website-thumbnail-v2-poster.jpg",
+    detailOverview:
+      "A client-side portfolio with motion-forward UI, editorial grids, and careful performance budgets for media-heavy sections.",
+    detailRole: "Design and front-end implementation.",
+    detailTools: ["React", "Vite", "TypeScript", "Tailwind CSS", "Framer Motion"],
+    detailImpact: "Single deployable artifact, fast iteration, and a cohesive Neo‑Tokyo / command UI visual language.",
   },
   {
     id: "project-slaywire",
     title: "SLAYWIRE",
     tagline: "Original graphic novel & narrative IP",
     thumbnail: "/slaywire-thumbnail.png",
+    detailOverview:
+      "Original long-form illustrated narrative—worldbuilding, cast, and visual development for a standalone graphic novel.",
+    detailRole: "Writer, illustrator, and world/visual development.",
+    detailTools: ["Digital illustration", "Layout & print-minded pacing"],
+    detailImpact: "A durable IP bible and finished spreads that support pitching and incremental publishing.",
   },
   {
     id: "project-undertale-proposal",
@@ -1506,6 +1519,11 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     tagline: "Video project",
     thumbnailVideo: "/edits-meme1-online.mp4",
     poster: "/edits-meme1-online-poster.jpg",
+    detailOverview:
+      "Short-form edits built around timing, meme literacy, and platform-native pacing—hooks, captions, and sound-led moments.",
+    detailRole: "Editor and creative director for individual cuts.",
+    detailTools: ["CapCut", "DaVinci Resolve"],
+    detailImpact: "Sharper retention in the first seconds; clearer punchlines and readable on-screen text.",
   },
 ];
 
@@ -1615,8 +1633,19 @@ const ProjectsStack = ({
   useEffect(() => {
     if (!emblaApi) return;
     setTweenFactor(emblaApi);
-    tweenParallax(emblaApi);
-    syncCarouselUi();
+
+    let cancelled = false;
+    const deferInitialSync = () => {
+      requestAnimationFrame(() => {
+        if (cancelled) return;
+        requestAnimationFrame(() => {
+          if (cancelled) return;
+          tweenParallax(emblaApi);
+          syncCarouselUi();
+        });
+      });
+    };
+    deferInitialSync();
 
     emblaApi.on("scroll", scheduleTween);
     emblaApi.on("reInit", setTweenFactor);
@@ -1625,6 +1654,7 @@ const ProjectsStack = ({
     emblaApi.on("select", syncCarouselUi);
 
     return () => {
+      cancelled = true;
       cancelAnimationFrame(tweenRaf.current);
       emblaApi.off("scroll", scheduleTween);
       emblaApi.off("reInit", setTweenFactor);
@@ -1771,7 +1801,7 @@ const ProjectsStack = ({
                               muted
                               loop
                               playsInline
-                              preload={index === selectedIndex ? "auto" : "none"}
+                              preload={index === selectedIndex ? "metadata" : "none"}
                               aria-label={`${card.title} preview`}
                               className="block h-full w-full object-cover object-center"
                             />
@@ -1781,6 +1811,7 @@ const ProjectsStack = ({
                               alt={`${card.title} thumbnail`}
                               loading="lazy"
                               decoding="async"
+                              fetchPriority={index === selectedIndex ? "high" : "low"}
                               className="h-full w-full object-cover object-center"
                             />
                           )}
@@ -1907,40 +1938,76 @@ const SupportingProjectsSection = ({ onBack }: { onBack: () => void }) => (
 
 type CardRect = { top: number; left: number; width: number; height: number };
 
-/** Renders media content for the detail card (morph overlay and settled view share the same markup). */
-const DetailCardMedia = ({ card }: { card: ShowcaseProjectCard }) => (
-  <div className="h-full w-full">
-    {card.thumbnailVideo ? (
-      <video
-        src={card.thumbnailVideo}
-        poster={card.poster}
-        muted loop autoPlay playsInline preload="auto"
-        className="block h-full w-full object-cover object-center"
-      />
-    ) : (
-      <img src={card.thumbnail} alt={card.title} className="h-full w-full object-cover object-center" />
-    )}
-    <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black via-black/85 to-transparent" />
-    <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
-      <span className="font-display block text-left text-[1rem] sm:text-[1.05rem] md:text-lg xl:text-[1.35rem] leading-snug text-white tracking-tight">{card.title}</span>
-      <span className="font-body mt-3 block text-left text-xs sm:text-[0.8125rem] md:text-sm text-zinc-300 leading-relaxed border-t border-white/15 pt-3">{card.tagline}</span>
-    </div>
+/** Full-bleed media for the settled project detail hero (no title/tagline overlay — those live below). */
+const DetailCardMedia = ({ card }: { card: ShowcaseProjectCard }) =>
+  card.thumbnailVideo ? (
+    <video
+      src={card.thumbnailVideo}
+      poster={card.poster}
+      muted
+      loop
+      autoPlay
+      playsInline
+      preload="auto"
+      className="block h-full w-full object-cover object-center"
+    />
+  ) : (
+    <img src={card.thumbnail} alt={card.title} className="h-full w-full object-cover object-center" />
+  );
+
+const showcaseDetailCard =
+  "border border-white/12 bg-zinc-950/50 px-3 py-3 sm:px-4 sm:py-3.5 rounded-none";
+
+const ShowcaseDetailSections = ({ card }: { card: ShowcaseProjectCard }) => (
+  <div className="mt-5 border-t border-white/10 pt-3.5 grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-3">
+    <section className={`${showcaseDetailCard} md:col-span-2`}>
+      <p className="font-heading text-[0.65rem] tracking-[0.2em] uppercase text-yellow-400/90 mb-1.5">OVERVIEW</p>
+      <p className="font-body text-xs sm:text-sm text-zinc-300 leading-snug whitespace-pre-line">
+        {card.detailOverview?.trim() || "—"}
+      </p>
+    </section>
+    <section className={showcaseDetailCard}>
+      <p className="font-heading text-[0.65rem] tracking-[0.2em] uppercase text-yellow-400/90 mb-1.5">ROLE</p>
+      <p className="font-body text-xs sm:text-sm text-zinc-300 leading-snug whitespace-pre-line">
+        {card.detailRole?.trim() || "—"}
+      </p>
+    </section>
+    <section className={`${showcaseDetailCard} md:col-span-2`}>
+      <p className="font-heading text-[0.65rem] tracking-[0.2em] uppercase text-yellow-400/90 mb-1.5">IMPACT</p>
+      <p className="font-body text-xs sm:text-sm text-zinc-300 leading-snug whitespace-pre-line">
+        {card.detailImpact?.trim() || "—"}
+      </p>
+    </section>
+    <section className={showcaseDetailCard}>
+      <p className="font-heading text-[0.65rem] tracking-[0.2em] uppercase text-yellow-400/90 mb-1.5">TOOLS</p>
+      {card.detailTools?.length ? (
+        <ul className="list-disc list-outside space-y-1 pl-4 marker:text-zinc-500">
+          {card.detailTools.map((tool, i) => (
+            <li key={`${tool}-${i}`} className="font-body text-xs sm:text-sm text-zinc-300 leading-snug">
+              {tool}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="font-body text-xs sm:text-sm text-zinc-600">—</p>
+      )}
+    </section>
   </div>
 );
 
-const DETAIL_CARD_H = "h-[280px] sm:h-[320px] md:h-[360px] lg:h-[400px]";
+/** Hero height — room freed by removing the back button; still capped vs. viewport for detail grid below. */
+const DETAIL_CARD_H =
+  "h-[280px] max-h-[40svh] sm:h-[320px] sm:max-h-[38svh] md:h-[370px] md:max-h-[36svh] lg:h-[420px] lg:max-h-[34svh]";
 
 const PalaceProjects = ({
   onSelectProject,
   onOpenSupporting,
   activeProjectId,
-  onBackToCarousel,
   settled = true,
 }: {
   onSelectProject: (id: string) => void;
   onOpenSupporting: () => void;
   activeProjectId: string | null;
-  onBackToCarousel: () => void;
   settled?: boolean;
 }) => {
   const reduceMotion = useReducedMotion();
@@ -1983,6 +2050,14 @@ const PalaceProjects = ({
     onSelectProject(id);
   }, [onSelectProject, mX, mY, mScaleX, mScaleY]);
 
+  // Parent can clear the open project (e.g. global back) — reset FLIP state so the next open is clean.
+  useEffect(() => {
+    if (activeProjectId) return;
+    setMorphRect(null);
+    setTargetRect(null);
+    setMorphDone(false);
+  }, [activeProjectId]);
+
   // Drive transforms to destination once React has committed the state.
   useEffect(() => {
     if (!targetRect || !morphRect || morphDone) return;
@@ -2001,13 +2076,6 @@ const PalaceProjects = ({
   // Object identity changes each click — that is the correct trigger.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetRect, morphRect]);
-
-  const handleBackToCarousel = useCallback(() => {
-    setMorphRect(null);
-    setTargetRect(null);
-    setMorphDone(false);
-    onBackToCarousel();
-  }, [onBackToCarousel]);
 
   return (
     <section
@@ -2112,10 +2180,8 @@ const PalaceProjects = ({
          */}
         {activeCard && (
           <div className="absolute inset-0 flex flex-col items-center">
-            {/* Spacer — same dimensions as the card so detail text flows below it. */}
             <div className={`w-full max-w-[min(100%,56rem)] shrink-0 ${DETAIL_CARD_H}`} aria-hidden />
 
-            {/* Settled card — card border is instant; media fades in after morph. */}
             {morphDone && (
               <div
                 className={`absolute top-0 left-0 right-0 mx-auto w-full max-w-[min(100%,56rem)] ${DETAIL_CARD_H} border border-zinc-500 overflow-hidden`}
@@ -2132,27 +2198,21 @@ const PalaceProjects = ({
               </div>
             )}
 
-            {/* Detail text */}
             {morphDone && (
               <motion.div
                 initial={{ opacity: 0, y: 18 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.28, delay: 0.08, ease: SHOWCASE_EASE }}
-                className="w-full max-w-[min(100%,56rem)] mt-7 pb-16"
+                className="w-full max-w-[min(100%,56rem)] mt-5 pb-8"
               >
-                <p className="font-heading text-xs tracking-[0.22em] uppercase text-zinc-500 mb-2">Project details</p>
-                <h3 className="font-display text-2xl md:text-3xl tracking-tight text-white">{activeCard.title}</h3>
-                <p className="mt-3 text-sm sm:text-base text-zinc-300 leading-relaxed">{activeCard.tagline}</p>
-                <div className="mt-6">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleBackToCarousel}
-                    className="border-2 border-white/20 bg-black/40 text-white hover:bg-white/5 hover:border-yellow-400/50 hover:text-yellow-100 rounded-none px-5 py-3 h-auto font-heading text-xs sm:text-sm tracking-[0.18em] uppercase"
-                  >
-                    Back to carousel
-                  </Button>
-                </div>
+                <p className="font-heading text-[0.65rem] sm:text-xs tracking-[0.2em] uppercase text-yellow-400/90 mb-1.5">
+                  Project details
+                </p>
+                <h3 className="font-display text-xl md:text-2xl tracking-tight text-white leading-tight">
+                  {activeCard.title}
+                </h3>
+                <p className="mt-2 text-xs sm:text-sm text-zinc-300 leading-snug">{activeCard.tagline}</p>
+                <ShowcaseDetailSections card={activeCard} />
               </motion.div>
             )}
           </div>
@@ -4517,7 +4577,8 @@ export default function Home() {
         // Video file
         if (card.thumbnailVideo) {
           const video = document.createElement("video");
-          video.preload = "auto";
+          // metadata only — avoids decoding every preview clip on startup (fights the main thread when opening SHOWCASE soon after load).
+          video.preload = "metadata";
           video.muted = true;
           video.playsInline = true;
           video.src = card.thumbnailVideo;
@@ -4549,7 +4610,7 @@ export default function Home() {
 
     if (reduceMotion) {
       setCurrentSection(id === "menu" ? null : id);
-      setPanelSettled(true);
+      startTransition(() => setPanelSettled(true));
       return;
     }
 
@@ -4579,8 +4640,9 @@ export default function Home() {
         window.setTimeout(() => {
           setIsTransitioning(false);
           setTransitionTarget(null);
-          setPanelSettled(true);
-        }, PANEL_TRANSITION.duration * 1000)
+          // Small gap after the panel transform finishes, then low-priority commit so the browser can paint before Embla + media mount.
+          startTransition(() => setPanelSettled(true));
+        }, PANEL_TRANSITION.duration * 1000 + CONTENT_SETTLE_DELAY * 1000)
       );
     }
   };
@@ -4643,7 +4705,7 @@ export default function Home() {
     >
       {/* Top-right controls (Resume + Hamburger) */}
       <motion.div
-        className="fixed top-6 right-4 z-50 flex items-center gap-3"
+        className="fixed top-5 right-3 sm:top-6 sm:right-4 z-50 flex items-center gap-2 sm:gap-2.5"
         initial={false}
         animate={{
           opacity: isResumeMode ? 1 : 1,
@@ -4659,15 +4721,15 @@ export default function Home() {
         >
           <Button 
             onClick={() => setIsResumeMode(!isResumeMode)}
-            size="lg"
+            size="icon"
             aria-label={isResumeMode ? "Exit resume mode" : "Enter resume mode"}
-            className={`shadow-xl border-4 transition-colors duration-200 font-display text-xl uppercase tracking-widest rounded-full h-16 w-16 p-0 flex items-center justify-center ${
+            className={`shadow-xl border-[3px] transition-colors duration-200 font-display uppercase tracking-widest rounded-full h-14 w-14 min-h-0 min-w-0 p-0 flex items-center justify-center [&_svg]:!size-5 ${
               isResumeMode 
                 ? "bg-black text-white border-black hover:bg-zinc-800" 
                 : "bg-black text-white border-black hover:bg-white hover:text-black"
             }`}
           >
-            {isResumeMode ? <Zap size={24} /> : <FileText size={24} />}
+            {isResumeMode ? <Zap size={20} /> : <FileText size={20} />}
           </Button>
         </motion.div>
 
@@ -4677,9 +4739,9 @@ export default function Home() {
               type="button"
               onClick={() => setIsSideNavOpen(true)}
               aria-label="Open navigation menu"
-              className="h-16 w-16 rounded-full bg-black text-white hover:bg-white hover:text-black border-4 border-black p-0 shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+              className="h-14 w-14 min-h-0 min-w-0 rounded-full bg-black text-white hover:bg-white hover:text-black border-[3px] border-black p-0 shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black [&_svg]:!size-5"
             >
-              <Menu size={26} aria-hidden />
+              <Menu size={22} aria-hidden />
             </Button>
           </motion.div>
         )}
@@ -4697,7 +4759,18 @@ export default function Home() {
       {!isResumeMode && (
         <BackToMenuButton
           show={currentSection !== null}
-          onBack={() => navigateTo("menu")}
+          ariaLabel={
+            currentSection === "projects" && activeShowcaseProjectId
+              ? "Back to showcase"
+              : "Back to menu"
+          }
+          onBack={() => {
+            if (currentSection === "projects" && activeShowcaseProjectId) {
+              setActiveShowcaseProjectId(null);
+              return;
+            }
+            navigateTo("menu");
+          }}
         />
       )}
 
@@ -4883,7 +4956,6 @@ export default function Home() {
                     onSelectProject={setActiveShowcaseProjectId}
                     onOpenSupporting={() => navigateTo("projects-supporting")}
                     activeProjectId={activeShowcaseProjectId}
-                    onBackToCarousel={() => setActiveShowcaseProjectId(null)}
                     settled={panelSettled}
                   />
                 )}
