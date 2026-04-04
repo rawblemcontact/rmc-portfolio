@@ -1528,6 +1528,8 @@ const SHOWCASE_STAGGER_S = 0.09;
 const SHOWCASE_CHILD_DUR_S = 0.34;
 const SHOWCASE_EASE = [0.16, 1, 0.3, 1] as const;
 const SHOWCASE_FADE_TOTAL_MS = Math.round((SHOWCASE_GATE_S + SHOWCASE_STAGGER_S + SHOWCASE_CHILD_DUR_S) * 1000);
+/** Fade when swapping SHOWCASE carousel ↔ Supporting & archive in place */
+const SHOWCASE_SUBROUTE_FADE_S = DUR.fast;
 
 const ProjectsStack = ({
   onSelect,
@@ -1856,20 +1858,13 @@ const ProjectsStack = ({
   );
 };
 
-const SupportingProjectsSection = ({ onBack }: { onBack: () => void }) => (
+const SupportingProjectsSection = () => (
   <section
     id="projects-supporting"
     className={`relative min-h-screen w-full overflow-x-hidden overflow-y-auto py-16 md:py-20 bg-black text-white scroll-mt-6 ${SLIDE}`}
   >
     <SectionGridOverlay />
     <div className="container mx-auto px-6 relative z-10 max-w-3xl">
-      <Button
-        variant="ghost"
-        onClick={onBack}
-        className="mb-8 text-zinc-400 hover:text-white flex items-center gap-2 -ml-2"
-      >
-        <ChevronLeft size={20} aria-hidden /> Back to showcase
-      </Button>
       <p className="font-heading text-xs tracking-[0.22em] uppercase text-zinc-500 mb-2">Projects</p>
       <h2 className="font-display text-2xl sm:text-3xl md:text-4xl tracking-tight text-white mb-10 text-balance">
         Supporting, archive & depth
@@ -4582,6 +4577,17 @@ export default function Home() {
     setIsSideNavOpen(false);
     if (isTransitioning) return;
 
+    // SHOWCASE sub-route: swap carousel ↔ Supporting & archive in place (no panel slide / settle reset).
+    if (
+      (id === "projects" && currentSection === "projects-supporting") ||
+      (id === "projects-supporting" && currentSection === "projects")
+    ) {
+      transitionTimeoutsRef.current.forEach((t) => window.clearTimeout(t));
+      transitionTimeoutsRef.current = [];
+      setCurrentSection(id);
+      return;
+    }
+
     if (reduceMotion) {
       setCurrentSection(id === "menu" ? null : id);
       startTransition(() => setPanelSettled(true));
@@ -4736,11 +4742,17 @@ export default function Home() {
           ariaLabel={
             currentSection === "projects" && activeShowcaseProjectId
               ? "Back to showcase"
-              : "Back to menu"
+              : currentSection === "projects-supporting"
+                ? "Back to showcase"
+                : "Back to menu"
           }
           onBack={() => {
             if (currentSection === "projects" && activeShowcaseProjectId) {
               setActiveShowcaseProjectId(null);
+              return;
+            }
+            if (currentSection === "projects-supporting") {
+              navigateTo("projects");
               return;
             }
             navigateTo("menu");
@@ -4925,16 +4937,50 @@ export default function Home() {
                 className="min-h-screen w-full overflow-x-hidden"
               >
                 {currentSection === "profile" && <PhantomProfile />}
-                {currentSection === "projects" && (
-                  <PalaceProjects
-                    onSelectProject={setActiveShowcaseProjectId}
-                    onOpenSupporting={() => navigateTo("projects-supporting")}
-                    activeProjectId={activeShowcaseProjectId}
-                    settled={panelSettled}
-                  />
-                )}
-                {currentSection === "projects-supporting" && (
-                  <SupportingProjectsSection onBack={() => navigateTo("projects")} />
+                {reduceMotion ? (
+                  <>
+                    {currentSection === "projects" && (
+                      <PalaceProjects
+                        onSelectProject={setActiveShowcaseProjectId}
+                        onOpenSupporting={() => navigateTo("projects-supporting")}
+                        activeProjectId={activeShowcaseProjectId}
+                        settled={panelSettled}
+                      />
+                    )}
+                    {currentSection === "projects-supporting" && <SupportingProjectsSection />}
+                  </>
+                ) : (
+                  <AnimatePresence mode="wait" initial={false}>
+                    {currentSection === "projects" && (
+                      <motion.div
+                        key="projects"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: SHOWCASE_SUBROUTE_FADE_S, ease: EASE.out }}
+                        className="w-full"
+                      >
+                        <PalaceProjects
+                          onSelectProject={setActiveShowcaseProjectId}
+                          onOpenSupporting={() => navigateTo("projects-supporting")}
+                          activeProjectId={activeShowcaseProjectId}
+                          settled={panelSettled}
+                        />
+                      </motion.div>
+                    )}
+                    {currentSection === "projects-supporting" && (
+                      <motion.div
+                        key="projects-supporting"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: SHOWCASE_SUBROUTE_FADE_S, ease: EASE.out }}
+                        className="w-full"
+                      >
+                        <SupportingProjectsSection />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 )}
                 {currentSection === "experience" && <ConfidantExperience />}
                 {currentSection === "social" && <SocialLink />}
