@@ -4796,6 +4796,14 @@ export default function Home() {
       return;
     }
 
+    // Already on SHOWCASE: close project detail or no-op — do not replay panel slide (avoids layout flash).
+    if (id === "projects" && currentSection === "projects") {
+      if (activeShowcaseProjectId) {
+        setActiveShowcaseProjectId(null);
+      }
+      return;
+    }
+
     if (reduceMotion) {
       setCurrentSection(id === "menu" ? null : id);
       startTransition(() => setPanelSettled(true));
