@@ -1382,8 +1382,11 @@ const PhantomProfile = () => {
                transition={{ duration: SUMMARY_DURATION_S, delay: overlayRevealed ? SUMMARY_DELAY_S : 0, ease: [0.16, 1, 0.3, 1] }}
              >
                <p className="font-heading text-sm tracking-[0.22em] uppercase text-zinc-400 mb-2">SUMMARY</p>
-               <p className="font-body text-sm sm:text-base md:text-lg xl:text-lg 2xl:text-xl text-zinc-300 leading-relaxed">
+               <p className="font-body text-sm sm:text-base md:text-lg xl:text-lg 2xl:text-xl text-zinc-300 leading-relaxed mb-4">
                  Communications-focused writer and digital media coordinator with experience producing narrative-driven web content and managing social media workflows across multiple platforms. Bachelor of Arts in Writing (Distinction), University of Victoria.
+               </p>
+               <p className="font-body text-sm sm:text-base md:text-lg xl:text-lg 2xl:text-xl text-zinc-400 leading-relaxed">
+                 Currently developing SLAYWIRE, a narrative-first RPG.
                </p>
              </motion.div>
           </motion.div>
@@ -1520,16 +1523,44 @@ const ARCHIVE_DEPTH_ITEMS = [
 
 /** Showcase carousel parallax tween (same idea as Embla “Predefined → Parallax”). */
 const PROJECT_CAROUSEL_TWEEN_FACTOR_BASE = 0.52;
-const PROJECT_CARD_AUTOPLAY_DELAY_MS = 360;
 const PROJECT_MEDIA_WARMUP_DELAY_MS = 20;
 
-const SHOWCASE_GATE_S = 0.02;
-const SHOWCASE_STAGGER_S = 0.09;
-const SHOWCASE_CHILD_DUR_S = 0.34;
+/** Divide showcase + card→detail durations by this for a uniform speed-up (1.2 → 20% faster). */
+const SHOWCASE_TIME_DIV = 1.2;
+const PROJECT_CARD_AUTOPLAY_DELAY_MS = Math.round(360 / SHOWCASE_TIME_DIV);
+const SHOWCASE_GATE_S = 0.02 / SHOWCASE_TIME_DIV;
+const SHOWCASE_STAGGER_S = 0.09 / SHOWCASE_TIME_DIV;
+const SHOWCASE_CHILD_DUR_S = 0.34 / SHOWCASE_TIME_DIV;
 const SHOWCASE_EASE = [0.16, 1, 0.3, 1] as const;
 const SHOWCASE_FADE_TOTAL_MS = Math.round((SHOWCASE_GATE_S + SHOWCASE_STAGGER_S + SHOWCASE_CHILD_DUR_S) * 1000);
 /** Fade when swapping SHOWCASE carousel ↔ Supporting & archive in place */
 const SHOWCASE_SUBROUTE_FADE_S = DUR.fast;
+/** FLIP morph: carousel card → detail hero (ease matches SHOWCASE_EASE for one continuous feel). */
+const SHOWCASE_CARD_MORPH_DUR_S = 0.36 / SHOWCASE_TIME_DIV;
+/** Carousel chrome fades while the flying card moves — slightly shorter than morph so the handoff reads clean. */
+const SHOWCASE_CARD_OPEN_FADE_S = 0.34 / SHOWCASE_TIME_DIV;
+/** Extra speed for project-detail title + grid fades (÷ on top of SHOWCASE_TIME_DIV). */
+const DETAIL_TEXT_FADE_EXTRA_DIV = 1.12;
+/** Copy below hero: CSS transitions + rAF defer — short opacity, dominant slide. */
+const DETAIL_HDR_OPACITY_MS = Math.round(95 / SHOWCASE_TIME_DIV / DETAIL_TEXT_FADE_EXTRA_DIV);
+const DETAIL_HDR_SLIDE_MS = Math.round(280 / SHOWCASE_TIME_DIV / DETAIL_TEXT_FADE_EXTRA_DIV);
+const DETAIL_HDR_SLIDE_PX = Math.round(22 / SHOWCASE_TIME_DIV);
+const DETAIL_GRID_OPACITY_MS = Math.round(110 / SHOWCASE_TIME_DIV / DETAIL_TEXT_FADE_EXTRA_DIV);
+const DETAIL_GRID_SLIDE_MS = Math.round(300 / SHOWCASE_TIME_DIV / DETAIL_TEXT_FADE_EXTRA_DIV);
+const DETAIL_GRID_SLIDE_PX = Math.round(28 / SHOWCASE_TIME_DIV);
+const DETAIL_ROW1_AFTER_HDR_MS = Math.round(18 / SHOWCASE_TIME_DIV / DETAIL_TEXT_FADE_EXTRA_DIV);
+const DETAIL_ROW2_STAGGER_MS = Math.round(62 / SHOWCASE_TIME_DIV / DETAIL_TEXT_FADE_EXTRA_DIV);
+const DETAIL_FADE_CUBIC = "cubic-bezier(0.4, 0, 0.95, 1)";
+const DETAIL_SLIDE_CUBIC = "cubic-bezier(0.16, 1, 0.32, 1)";
+/** Start grey rule this many ms before FLIP morph completes (timed from morph start). */
+const DETAIL_RULE_LINE_LEAD_MS = Math.round(150 / SHOWCASE_TIME_DIV);
+/** Horizontal rule under project title block: center-out scaleX. */
+const DETAIL_RULE_EXPAND_MS = Math.round(280 / SHOWCASE_TIME_DIV);
+/** Settled hero video/image: opacity ramp after morph (CSS; eases video compositor flash vs. motion.div). */
+const DETAIL_HERO_MEDIA_FADE_MS = Math.round(340 / SHOWCASE_TIME_DIV);
+const DETAIL_HERO_MEDIA_FADE_EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
+/** Align copy schedule with hero fade: ~double-rAF after morph before opacity transition (ms from morph end). */
+const DETAIL_HERO_FADE_START_RAF_PAD_MS = 40;
 
 const ProjectsStack = ({
   onSelect,
@@ -1746,9 +1777,9 @@ const ProjectsStack = ({
                   type="button"
                   data-carousel-card
                   onClick={(e) => onSelect(card.id, e.currentTarget)}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ duration: 0.2, ease: cardEase }}
-                  className={`group relative w-full h-[276px] sm:h-[304px] md:h-[324px] lg:h-[348px] xl:h-[364px] 2xl:h-[380px] rounded-none bg-zinc-950/35 text-center overflow-hidden hover:bg-zinc-950/65 hover:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/55 focus-visible:ring-offset-2 focus-visible:ring-offset-black transition-opacity duration-150 ${
+                  whileTap={{ scale: 0.985 }}
+                  transition={{ duration: 0.28 / SHOWCASE_TIME_DIV, ease: cardEase }}
+                  className={`group relative w-full h-[276px] sm:h-[304px] md:h-[324px] lg:h-[348px] xl:h-[364px] 2xl:h-[380px] rounded-none bg-zinc-950/35 text-center overflow-hidden hover:bg-zinc-950/65 hover:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/55 focus-visible:ring-offset-2 focus-visible:ring-offset-black transition-opacity duration-300 ease-out ${
                     focusProjectId && focusProjectId !== card.id ? "opacity-0 pointer-events-none" : "opacity-100"
                   }`}
                 >
@@ -1927,40 +1958,45 @@ const DetailCardMedia = ({ card }: { card: ShowcaseProjectCard }) =>
   );
 
 const showcaseDetailCard =
-  "border border-white/12 bg-zinc-950/50 px-3 py-3 sm:px-4 sm:py-3.5 rounded-none";
+  "border border-white/12 bg-black/40 px-3 py-3 sm:px-4 sm:py-3.5 rounded-none";
 
-const ShowcaseDetailSections = ({ card }: { card: ShowcaseProjectCard }) => (
-  <div className="mt-5 border-t border-white/10 pt-3.5 grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-3">
+const ShowcaseDetailOverviewRole = ({ card }: { card: ShowcaseProjectCard }) => (
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-3">
     <section className={`${showcaseDetailCard} md:col-span-2`}>
-      <p className="font-heading text-[0.65rem] tracking-[0.2em] uppercase text-yellow-400/90 mb-1.5">OVERVIEW</p>
-      <p className="font-body text-xs sm:text-sm text-zinc-300 leading-snug whitespace-pre-line">
+      <p className="font-heading text-xs tracking-[0.2em] uppercase text-yellow-400/90 mb-1.5">OVERVIEW</p>
+      <p className="font-body text-sm sm:text-base text-zinc-300 leading-snug whitespace-pre-line">
         {card.detailOverview?.trim() || "—"}
       </p>
     </section>
     <section className={showcaseDetailCard}>
-      <p className="font-heading text-[0.65rem] tracking-[0.2em] uppercase text-yellow-400/90 mb-1.5">ROLE</p>
-      <p className="font-body text-xs sm:text-sm text-zinc-300 leading-snug whitespace-pre-line">
+      <p className="font-heading text-xs tracking-[0.2em] uppercase text-yellow-400/90 mb-1.5">ROLE</p>
+      <p className="font-body text-sm sm:text-base text-zinc-300 leading-snug whitespace-pre-line">
         {card.detailRole?.trim() || "—"}
       </p>
     </section>
+  </div>
+);
+
+const ShowcaseDetailImpactTools = ({ card }: { card: ShowcaseProjectCard }) => (
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-3">
     <section className={`${showcaseDetailCard} md:col-span-2`}>
-      <p className="font-heading text-[0.65rem] tracking-[0.2em] uppercase text-yellow-400/90 mb-1.5">IMPACT</p>
-      <p className="font-body text-xs sm:text-sm text-zinc-300 leading-snug whitespace-pre-line">
+      <p className="font-heading text-xs tracking-[0.2em] uppercase text-yellow-400/90 mb-1.5">IMPACT</p>
+      <p className="font-body text-sm sm:text-base text-zinc-300 leading-snug whitespace-pre-line">
         {card.detailImpact?.trim() || "—"}
       </p>
     </section>
     <section className={showcaseDetailCard}>
-      <p className="font-heading text-[0.65rem] tracking-[0.2em] uppercase text-yellow-400/90 mb-1.5">TOOLS</p>
+      <p className="font-heading text-xs tracking-[0.2em] uppercase text-yellow-400/90 mb-1.5">TOOLS</p>
       {card.detailTools?.length ? (
         <ul className="list-disc list-outside space-y-1 pl-4 marker:text-zinc-500">
           {card.detailTools.map((tool, i) => (
-            <li key={`${tool}-${i}`} className="font-body text-xs sm:text-sm text-zinc-300 leading-snug">
+            <li key={`${tool}-${i}`} className="font-body text-sm sm:text-base text-zinc-300 leading-snug">
               {tool}
             </li>
           ))}
         </ul>
       ) : (
-        <p className="font-body text-xs sm:text-sm text-zinc-600">—</p>
+        <p className="font-body text-sm sm:text-base text-zinc-600">—</p>
       )}
     </section>
   </div>
@@ -1988,10 +2024,17 @@ const PalaceProjects = ({
   const [morphRect, setMorphRect] = useState<CardRect | null>(null);
   const [targetRect, setTargetRect] = useState<CardRect | null>(null);
   const [morphDone, setMorphDone] = useState(false);
+  const [detailHdrReveal, setDetailHdrReveal] = useState(false);
+  const [detailRuleReveal, setDetailRuleReveal] = useState(false);
+  const [detailRow1Reveal, setDetailRow1Reveal] = useState(false);
+  const [detailRow2Reveal, setDetailRow2Reveal] = useState(false);
+  const [detailHeroMediaFadeIn, setDetailHeroMediaFadeIn] = useState(false);
+  const detailRevealTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const detailAnchorRef = useRef<HTMLDivElement>(null);
 
-  const morphDur = reduceMotion ? 0.1 : 0.24;
-  const morphEase: [number, number, number, number] = [0.22, 1, 0.36, 1];
+  const morphDur = reduceMotion ? 0.12 / SHOWCASE_TIME_DIV : SHOWCASE_CARD_MORPH_DUR_S;
+  const morphEase = SHOWCASE_EASE;
+  const openContentFadeS = reduceMotion ? 0.14 / SHOWCASE_TIME_DIV : SHOWCASE_CARD_OPEN_FADE_S;
 
   // FLIP animation approach — avoids animating CSS layout properties (width/height)
   // which Framer Motion wires up via useEffect (after paint), causing a size-flash.
@@ -2029,24 +2072,117 @@ const PalaceProjects = ({
     setMorphDone(false);
   }, [activeProjectId]);
 
-  // Drive transforms to destination once React has committed the state.
+  // Hero media: fade in once FLIP morph is complete (double rAF so opacity 0 paints before transition).
   useEffect(() => {
-    if (!targetRect || !morphRect || morphDone) return;
+    if (!morphDone) {
+      setDetailHeroMediaFadeIn(false);
+      return;
+    }
+    if (reduceMotion) {
+      setDetailHeroMediaFadeIn(true);
+      return;
+    }
+    setDetailHeroMediaFadeIn(false);
     let cancelled = false;
+    let raf1 = 0;
+    let raf2 = 0;
+    raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        if (!cancelled) setDetailHeroMediaFadeIn(true);
+      });
+    });
 
-    animate(mX,      targetRect.left,   { duration: morphDur, ease: morphEase });
-    animate(mY,      targetRect.top,    { duration: morphDur, ease: morphEase });
-    animate(mScaleX, 1,                 { duration: morphDur, ease: morphEase });
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+    };
+  }, [morphDone, activeCard?.id, reduceMotion]);
+
+  // FLIP morph + detail copy schedule (timers must survive morphDone — do not key this effect on morphDone).
+  useEffect(() => {
+    if (!targetRect || !morphRect) return;
+    let cancelled = false;
+    const morphMs = Math.round(morphDur * 1000);
+    const chainTimers: ReturnType<typeof setTimeout>[] = [];
+
+    if (!reduceMotion) {
+      const ruleAt = Math.max(0, morphMs - DETAIL_RULE_LINE_LEAD_MS);
+      const afterRuleMs = ruleAt + DETAIL_RULE_EXPAND_MS;
+      const atHalfHeroFadeMs =
+        morphMs +
+        DETAIL_HERO_FADE_START_RAF_PAD_MS +
+        Math.round(DETAIL_HERO_MEDIA_FADE_MS / 2);
+      const headerKickAt = Math.max(afterRuleMs, atHalfHeroFadeMs);
+
+      chainTimers.push(
+        window.setTimeout(() => {
+          if (cancelled) return;
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              if (!cancelled) setDetailRuleReveal(true);
+            });
+          });
+        }, ruleAt),
+      );
+
+      chainTimers.push(
+        window.setTimeout(() => {
+          if (cancelled) return;
+          requestAnimationFrame(() => {
+            if (cancelled) return;
+            setDetailHdrReveal(true);
+            const t1 = window.setTimeout(() => {
+              if (!cancelled) setDetailRow1Reveal(true);
+            }, DETAIL_ROW1_AFTER_HDR_MS);
+            const t2 = window.setTimeout(() => {
+              if (!cancelled) setDetailRow2Reveal(true);
+            }, DETAIL_ROW1_AFTER_HDR_MS + DETAIL_ROW2_STAGGER_MS);
+            detailRevealTimersRef.current = [t1, t2];
+          });
+        }, headerKickAt),
+      );
+    }
+
+    animate(mX, targetRect.left, { duration: morphDur, ease: morphEase });
+    animate(mY, targetRect.top, { duration: morphDur, ease: morphEase });
+    animate(mScaleX, 1, { duration: morphDur, ease: morphEase });
     animate(mScaleY, 1, {
       duration: morphDur,
       ease: morphEase,
-      onComplete: () => { if (!cancelled) setMorphDone(true); },
+      onComplete: () => {
+        if (cancelled) return;
+        setMorphDone(true);
+      },
     });
 
-    return () => { cancelled = true; };
-  // Object identity changes each click — that is the correct trigger.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [targetRect, morphRect]);
+    return () => {
+      cancelled = true;
+      chainTimers.forEach((id) => window.clearTimeout(id));
+      detailRevealTimersRef.current.forEach((id) => window.clearTimeout(id));
+      detailRevealTimersRef.current = [];
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetRect, morphRect, morphDur, reduceMotion]);
+
+  // Reset / reduced-motion reveal when not morphing or when user prefers reduced motion.
+  useEffect(() => {
+    if (!morphDone) {
+      setDetailHdrReveal(false);
+      setDetailRuleReveal(false);
+      setDetailRow1Reveal(false);
+      setDetailRow2Reveal(false);
+      detailRevealTimersRef.current.forEach((id) => window.clearTimeout(id));
+      detailRevealTimersRef.current = [];
+      return;
+    }
+    if (reduceMotion) {
+      setDetailHdrReveal(true);
+      setDetailRuleReveal(true);
+      setDetailRow1Reveal(true);
+      setDetailRow2Reveal(true);
+    }
+  }, [morphDone, activeCard?.id, reduceMotion]);
 
   return (
     <section
@@ -2067,7 +2203,10 @@ const PalaceProjects = ({
         >
           <motion.div
             animate={{ opacity: activeCard ? 0 : 1 }}
-            transition={{ duration: activeCard ? 0.08 : 0.14 }}
+            transition={{
+              duration: activeCard ? openContentFadeS : 0.2,
+              ease: SHOWCASE_EASE,
+            }}
           >
             {settled && (
               <SectionHeader
@@ -2092,7 +2231,7 @@ const PalaceProjects = ({
               : { opacity: 0, y: 18 }
             }
             transition={{
-              duration: activeCard ? 0.08 : SHOWCASE_CHILD_DUR_S,
+              duration: activeCard ? openContentFadeS : SHOWCASE_CHILD_DUR_S,
               delay: !activeCard && settled ? gate + SHOWCASE_STAGGER_S : 0,
               ease: SHOWCASE_EASE,
             }}
@@ -2114,7 +2253,7 @@ const PalaceProjects = ({
               : { opacity: 0, y: 14 }
             }
             transition={{
-              duration: activeCard ? 0.08 : SHOWCASE_CHILD_DUR_S,
+              duration: activeCard ? openContentFadeS : SHOWCASE_CHILD_DUR_S,
               delay: !activeCard && settled ? gate + SHOWCASE_STAGGER_S * 2 : 0,
               ease: SHOWCASE_EASE,
             }}
@@ -2126,7 +2265,7 @@ const PalaceProjects = ({
                 onClick={onOpenSupporting}
                 className="border-2 border-white/20 bg-black/40 text-white hover:bg-white/5 hover:border-yellow-400/50 hover:text-yellow-100 rounded-full px-6 py-5 h-auto font-heading text-xs sm:text-sm tracking-[0.18em] uppercase gap-2"
               >
-                Supporting &amp; archive
+                ARCHIVE
                 <ArrowRight className="w-4 h-4 shrink-0 opacity-80" aria-hidden />
               </Button>
             </motion.div>
@@ -2158,33 +2297,104 @@ const PalaceProjects = ({
                 className={`absolute top-0 left-0 right-0 mx-auto w-full max-w-[min(100%,56rem)] ${DETAIL_CARD_H} border border-zinc-500 overflow-hidden`}
                 style={{ background: "#000" }}
               >
-                <motion.div
+                <div
+                  key={activeCard.id}
                   className="h-full w-full"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.28, ease: "easeOut" }}
+                  style={{
+                    opacity: reduceMotion ? 1 : detailHeroMediaFadeIn ? 1 : 0,
+                    ...(reduceMotion
+                      ? {}
+                      : detailHeroMediaFadeIn
+                        ? {
+                            transitionProperty: "opacity",
+                            transitionDuration: `${DETAIL_HERO_MEDIA_FADE_MS}ms`,
+                            transitionTimingFunction: DETAIL_HERO_MEDIA_FADE_EASE,
+                          }
+                        : {}),
+                  }}
                 >
                   <DetailCardMedia card={activeCard} />
-                </motion.div>
+                </div>
               </div>
             )}
 
-            {morphDone && (
-              <motion.div
-                initial={{ opacity: 0, y: 18 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.28, delay: 0.08, ease: SHOWCASE_EASE }}
-                className="w-full max-w-[min(100%,56rem)] mt-5 pb-8"
-              >
-                <p className="font-heading text-[0.65rem] sm:text-xs tracking-[0.2em] uppercase text-yellow-400/90 mb-1.5">
-                  Project details
-                </p>
-                <h3 className="font-display text-xl md:text-2xl tracking-tight text-white leading-tight">
-                  {activeCard.title}
-                </h3>
-                <p className="mt-2 text-xs sm:text-sm text-zinc-300 leading-snug">{activeCard.tagline}</p>
-                <ShowcaseDetailSections card={activeCard} />
-              </motion.div>
+            {activeCard && morphRect && (
+              <div className="w-full max-w-[min(100%,56rem)] mt-5 pb-8">
+                <div
+                  className="-ml-[3px] flex w-full max-w-full flex-col items-stretch gap-y-2.5 text-left"
+                  style={
+                    reduceMotion
+                      ? { opacity: detailHdrReveal ? 1 : 0 }
+                      : {
+                          opacity: detailHdrReveal ? 1 : 0,
+                          transform: detailHdrReveal
+                            ? "translate3d(0,0,0)"
+                            : `translate3d(0,${DETAIL_HDR_SLIDE_PX}px,0)`,
+                          transition: `opacity ${DETAIL_HDR_OPACITY_MS}ms ${DETAIL_FADE_CUBIC}, transform ${DETAIL_HDR_SLIDE_MS}ms ${DETAIL_SLIDE_CUBIC}`,
+                        }
+                  }
+                >
+                  <p className="m-0 w-full font-heading text-sm sm:text-base leading-none tracking-[0.18em] uppercase text-yellow-400/90">
+                    Project details
+                  </p>
+                  <h3 className="m-0 w-full font-display text-2xl md:text-3xl leading-tight tracking-normal text-white">
+                    {activeCard.title}
+                  </h3>
+                  <p className="m-0 w-full pl-[2px] font-body text-sm sm:text-base leading-snug text-zinc-300">
+                    {activeCard.tagline}
+                  </p>
+                </div>
+                <div className="mt-5 w-full" aria-hidden>
+                  <div
+                    className="mx-auto block h-px w-full max-w-full shrink-0 bg-white/12"
+                    style={{
+                      transform: detailRuleReveal ? "scaleX(1)" : "scaleX(0)",
+                      transformOrigin: "center center",
+                      ...(reduceMotion
+                        ? {}
+                        : detailRuleReveal
+                          ? {
+                              transitionProperty: "transform",
+                              transitionDuration: `${DETAIL_RULE_EXPAND_MS}ms`,
+                              transitionTimingFunction: DETAIL_SLIDE_CUBIC,
+                            }
+                          : {}),
+                    }}
+                  />
+                </div>
+                <div className="pt-3.5 flex flex-col gap-2 sm:gap-3">
+                  <div
+                    style={
+                      reduceMotion
+                        ? { opacity: detailRow1Reveal ? 1 : 0 }
+                        : {
+                            opacity: detailRow1Reveal ? 1 : 0,
+                            transform: detailRow1Reveal
+                              ? "translate3d(0,0,0)"
+                              : `translate3d(0,${DETAIL_GRID_SLIDE_PX}px,0)`,
+                            transition: `opacity ${DETAIL_GRID_OPACITY_MS}ms ${DETAIL_FADE_CUBIC}, transform ${DETAIL_GRID_SLIDE_MS}ms ${DETAIL_SLIDE_CUBIC}`,
+                          }
+                    }
+                  >
+                    <ShowcaseDetailOverviewRole card={activeCard} />
+                  </div>
+                  <div
+                    style={
+                      reduceMotion
+                        ? { opacity: detailRow2Reveal ? 1 : 0 }
+                        : {
+                            opacity: detailRow2Reveal ? 1 : 0,
+                            transform: detailRow2Reveal
+                              ? "translate3d(0,0,0)"
+                              : `translate3d(0,${DETAIL_GRID_SLIDE_PX}px,0)`,
+                            transition: `opacity ${DETAIL_GRID_OPACITY_MS}ms ${DETAIL_FADE_CUBIC}, transform ${DETAIL_GRID_SLIDE_MS}ms ${DETAIL_SLIDE_CUBIC}`,
+                          }
+                    }
+                  >
+                    <ShowcaseDetailImpactTools card={activeCard} />
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         )}
@@ -2445,7 +2655,7 @@ const ConfidantExperience = () => {
                   {job.bullets.map((bullet, i) => (
                     <li
                       key={i}
-                      className="py-[3px] sm:py-1.5 border-b border-white/5 last:border-b-0 font-body text-[11px] sm:text-sm md:text-base leading-snug sm:leading-relaxed"
+                      className="py-[3px] sm:py-1.5 font-body text-[11px] sm:text-sm md:text-base leading-snug sm:leading-relaxed"
                     >
                       {bullet}
                     </li>
@@ -4517,8 +4727,7 @@ export default function Home() {
     return () => clearInterval(id);
   }, []);
 
-  // Preload all SHOWCASE media once on initial mount so card clicks are instant.
-  // Fires after a brief yield to avoid contending with the initial render/paint.
+  // Preload SHOWCASE carousel assets + full detail-hero video buffer (DetailCardMedia uses preload="auto").
   useEffect(() => {
     if (hasWarmedProjectMediaRef.current) return;
     hasWarmedProjectMediaRef.current = true;
@@ -4543,11 +4752,10 @@ export default function Home() {
           handles.push(img);
         }
 
-        // Video file
+        // Video file — auto so detail overlay hero can autoplay smoothly after morph (same URLs as carousel previews).
         if (card.thumbnailVideo) {
           const video = document.createElement("video");
-          // metadata only — avoids decoding every preview clip on startup (fights the main thread when opening SHOWCASE soon after load).
-          video.preload = "metadata";
+          video.preload = "auto";
           video.muted = true;
           video.playsInline = true;
           video.src = card.thumbnailVideo;
