@@ -48,6 +48,7 @@ export default defineConfig({
             }
             if (id.includes("framer-motion")) return "framer-motion";
             if (id.includes("lucide-react")) return "lucide";
+            if (id.includes("pdfjs-dist")) return "pdfjs";
             return "vendor";
           }
         },

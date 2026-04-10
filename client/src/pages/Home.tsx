@@ -19,6 +19,7 @@ import {
   ArrowRight,
   ArrowLeft,
   ExternalLink,
+  Download,
   Menu,
   X,
   LucideIcon,
@@ -38,6 +39,7 @@ import { TiltCard } from "@/components/TiltCard";
 import { ExpandCircleButton } from "@/components/ExpandCircleButton";
 import { WordsPullUp } from "@/components/WordsPullUp";
 import { FloatingPhone } from "@/components/FloatingPhone";
+import { PdfJsDocumentView } from "@/components/PdfJsDocumentView";
 import {
   SiArc,
   SiBytedance,
@@ -574,16 +576,18 @@ const BackToMenuButton = ({
   show,
   onBack,
   ariaLabel = "Back to menu",
+  fadeOut = false,
 }: {
   show: boolean;
   onBack: () => void;
   ariaLabel?: string;
+  fadeOut?: boolean;
 }) => (
   <AnimatePresence>
     {show && (
       <motion.div
         initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
+        animate={{ opacity: fadeOut ? 0 : 1, y: 0 }}
         exit={{ opacity: 0, y: 10 }}
         transition={{ duration: DUR.fast, ease: EASE.out }}
         className="fixed top-5 left-3 z-50 sm:top-6 sm:left-4"
@@ -1508,18 +1512,59 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
 
 const cardEase = [0.25, 0.46, 0.45, 0.94] as const;
 
-const SUPPORTING_SECONDARY_ITEMS = [
-  'Creative writing portfolio (articles, essays, screenplay — “Audience of One”)',
-  "SLAYWIRE concept art & visual development",
-  "Graphic design projects (posters, infographics — UVic eSports, coursework)",
-  "Livestream production & broadcast setup (OBS / Streamlabs)",
-] as const;
+type SupportingArchivePdfItem = {
+  id: string;
+  index: string;
+  title: string;
+  subtitle: string;
+  href: string;
+};
 
-const ARCHIVE_DEPTH_ITEMS = [
-  "Additional writing samples (creative nonfiction, academic work)",
-  "Additional illustration work (concept art, commissions)",
-  "Additional graphic design work",
-] as const;
+/** Creative nonfiction PDFs served from `client/public/cnf/`. */
+const SUPPORTING_ARCHIVE_PDF_ITEMS: SupportingArchivePdfItem[] = [
+  {
+    id: "cnf-article",
+    index: "01",
+    title: "Article",
+    subtitle: "Example 1 — article",
+    href: "/cnf/example-1-article.pdf",
+  },
+  {
+    id: "cnf-media-literary",
+    index: "02",
+    title: "Media literary analysis",
+    subtitle: "Example 2 — media & text",
+    href: "/cnf/example-2-media-literary-analysis.pdf",
+  },
+  {
+    id: "cnf-critical-essay",
+    index: "03",
+    title: "Critical literary essay",
+    subtitle: "Example 3 — critical analysis",
+    href: "/cnf/example-3-critical-literary-essay.pdf",
+  },
+  {
+    id: "cnf-memoir",
+    index: "04",
+    title: "Memoir",
+    subtitle: "Example 4 — memoir",
+    href: "/cnf/example-4-memoir.pdf",
+  },
+  {
+    id: "screenplay-audience-of-one",
+    index: "05",
+    title: "Audience of One",
+    subtitle: "Screenplay — Robbie McLaughlin",
+    href: "/screenplays/audience-of-one-robbie-mclaughlin.pdf",
+  },
+  {
+    id: "screenplay-rock-paper-promise",
+    index: "06",
+    title: "Rock Paper Promise",
+    subtitle: "Screenplay — Robbie McLaughlin",
+    href: "/screenplays/rock-paper-promise-robbie-mclaughlin.pdf",
+  },
+];
 
 /** Showcase carousel parallax tween (same idea as Embla “Predefined → Parallax”). */
 const PROJECT_CAROUSEL_TWEEN_FACTOR_BASE = 0.52;
@@ -1889,54 +1934,385 @@ const ProjectsStack = ({
   );
 };
 
-const SupportingProjectsSection = () => (
-  <section
-    id="projects-supporting"
-    className={`relative min-h-screen w-full overflow-x-hidden overflow-y-auto py-16 md:py-20 bg-black text-white scroll-mt-6 ${SLIDE}`}
-  >
-    <SectionGridOverlay />
-    <div className="container mx-auto px-6 relative z-10 max-w-3xl">
-      <p className="font-heading text-xs tracking-[0.22em] uppercase text-zinc-500 mb-2">Projects</p>
-      <h2 className="font-display text-2xl sm:text-3xl md:text-4xl tracking-tight text-white mb-10 text-balance">
-        Supporting, archive & depth
-      </h2>
+const SupportingProjectsSection = ({
+  onNavTransitionChange,
+}: {
+  onNavTransitionChange?: (active: boolean) => void;
+} = {}) => {
+  const [previewPdf, setPreviewPdf] = useState<SupportingArchivePdfItem | null>(null);
+  const [previewCanAnimate, setPreviewCanAnimate] = useState(false);
+  const [previewLoadingPct, setPreviewLoadingPct] = useState(0);
+  const [previewLoadingTargetPct, setPreviewLoadingTargetPct] = useState(0);
+  const [previewPdfReady, setPreviewPdfReady] = useState(false);
+  const [queuedPreviewPdf, setQueuedPreviewPdf] = useState<SupportingArchivePdfItem | null>(null);
+  const [isPrePreviewFading, setIsPrePreviewFading] = useState(false);
+  const [isPreviewClosing, setIsPreviewClosing] = useState(false);
+  const reduceMotion = useReducedMotion();
+  const preFadeTimerRef = useRef<number | null>(null);
+  const closePreviewTimerRef = useRef<number | null>(null);
+  const readyHoldTimerRef = useRef<number | null>(null);
+  const returnGateTimerRef = useRef<number | null>(null);
 
-      <div className="space-y-12">
-        <div>
+  const PREVIEW_PRE_FADE_S = 0.24;
+  const PREVIEW_HANDOFF_MS = 24;
+  const PREVIEW_CLOSE_FADE_S = 0.34;
+  const PREVIEW_RETURN_GATE_MS = 70;
+  const PREVIEW_READY_HOLD_MS = 32;
+  const PREVIEW_COUNTER_STEP_MS = 6;
+
+  const closePreview = useCallback(() => {
+    // Prevent exiting while loader is still active; allow only after preview is ready.
+    if (previewPdf && !previewCanAnimate && !isPreviewClosing) return;
+
+    if (preFadeTimerRef.current !== null) {
+      window.clearTimeout(preFadeTimerRef.current);
+      preFadeTimerRef.current = null;
+    }
+    if (readyHoldTimerRef.current !== null) {
+      window.clearTimeout(readyHoldTimerRef.current);
+      readyHoldTimerRef.current = null;
+    }
+    if (closePreviewTimerRef.current !== null) {
+      window.clearTimeout(closePreviewTimerRef.current);
+      closePreviewTimerRef.current = null;
+    }
+    if (returnGateTimerRef.current !== null) {
+      window.clearTimeout(returnGateTimerRef.current);
+      returnGateTimerRef.current = null;
+    }
+    if (previewPdf && !reduceMotion) {
+      setIsPreviewClosing(true);
+      closePreviewTimerRef.current = window.setTimeout(() => {
+        setPreviewPdf(null);
+        setPreviewCanAnimate(false);
+        setPreviewPdfReady(false);
+        setPreviewLoadingPct(0);
+        setPreviewLoadingTargetPct(0);
+        returnGateTimerRef.current = window.setTimeout(() => {
+          setIsPreviewClosing(false);
+          returnGateTimerRef.current = null;
+        }, PREVIEW_RETURN_GATE_MS);
+        closePreviewTimerRef.current = null;
+      }, Math.round(PREVIEW_CLOSE_FADE_S * 1000));
+    } else {
+      setPreviewPdf(null);
+      setIsPreviewClosing(false);
+      setPreviewCanAnimate(false);
+      setPreviewPdfReady(false);
+      setPreviewLoadingPct(0);
+      setPreviewLoadingTargetPct(0);
+    }
+    setQueuedPreviewPdf(null);
+    setIsPrePreviewFading(false);
+  }, [isPreviewClosing, previewCanAnimate, previewPdf, reduceMotion]);
+
+  const openPreview = useCallback(
+    (item: SupportingArchivePdfItem) => {
+      if (previewPdf || isPrePreviewFading) return;
+      if (reduceMotion) {
+        setPreviewPdf(item);
+        return;
+      }
+      setQueuedPreviewPdf(item);
+      setIsPrePreviewFading(true);
+    },
+    [isPrePreviewFading, previewPdf, reduceMotion],
+  );
+
+  useEffect(() => {
+    if (previewPdf) {
+      setPreviewCanAnimate(false);
+      setPreviewPdfReady(false);
+      setPreviewLoadingPct(0);
+      // Kick the bar off zero immediately; real progress updates take over.
+      setPreviewLoadingTargetPct(0);
+    }
+  }, [previewPdf]);
+
+  useEffect(() => {
+    if (previewLoadingPct >= previewLoadingTargetPct) return;
+    const id = window.setTimeout(() => {
+      setPreviewLoadingPct((prev) => {
+        const next = prev + 1;
+        return Math.min(next, previewLoadingTargetPct);
+      });
+    }, PREVIEW_COUNTER_STEP_MS);
+    return () => window.clearTimeout(id);
+  }, [previewLoadingPct, previewLoadingTargetPct]);
+
+  useEffect(() => {
+    if (!previewPdfReady || previewCanAnimate) return;
+    if (previewLoadingPct < 100) return;
+    if (reduceMotion) {
+      setPreviewCanAnimate(true);
+      return;
+    }
+    readyHoldTimerRef.current = window.setTimeout(() => {
+      setPreviewCanAnimate(true);
+      readyHoldTimerRef.current = null;
+    }, PREVIEW_READY_HOLD_MS);
+    return () => {
+      if (readyHoldTimerRef.current !== null) {
+        window.clearTimeout(readyHoldTimerRef.current);
+        readyHoldTimerRef.current = null;
+      }
+    };
+  }, [previewCanAnimate, previewLoadingPct, previewPdfReady, reduceMotion]);
+
+  useEffect(() => {
+    if (!isPrePreviewFading || !queuedPreviewPdf) return;
+    preFadeTimerRef.current = window.setTimeout(() => {
+      setPreviewLoadingPct(0);
+      setPreviewLoadingTargetPct(0);
+      setPreviewPdfReady(false);
+      setPreviewPdf(queuedPreviewPdf);
+      setQueuedPreviewPdf(null);
+      preFadeTimerRef.current = window.setTimeout(() => {
+        setIsPrePreviewFading(false);
+        preFadeTimerRef.current = null;
+      }, PREVIEW_HANDOFF_MS);
+    }, Math.round(PREVIEW_PRE_FADE_S * 1000));
+    return () => {
+      if (preFadeTimerRef.current !== null) {
+        window.clearTimeout(preFadeTimerRef.current);
+        preFadeTimerRef.current = null;
+      }
+    };
+  }, [isPrePreviewFading, queuedPreviewPdf]);
+
+  useEffect(() => {
+    if (!previewPdf) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closePreview();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [closePreview, previewPdf]);
+
+  useEffect(
+    () => () => {
+      if (closePreviewTimerRef.current !== null) {
+        window.clearTimeout(closePreviewTimerRef.current);
+        closePreviewTimerRef.current = null;
+      }
+      if (returnGateTimerRef.current !== null) {
+        window.clearTimeout(returnGateTimerRef.current);
+        returnGateTimerRef.current = null;
+      }
+      if (readyHoldTimerRef.current !== null) {
+        window.clearTimeout(readyHoldTimerRef.current);
+        readyHoldTimerRef.current = null;
+      }
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (!previewPdf) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [previewPdf]);
+
+  useEffect(() => {
+    onNavTransitionChange?.(isPrePreviewFading || !!previewPdf || isPreviewClosing);
+    return () => onNavTransitionChange?.(false);
+  }, [isPrePreviewFading, isPreviewClosing, onNavTransitionChange, previewPdf]);
+
+  const rowBtnClass =
+    "group flex w-full items-start gap-3 sm:gap-4 py-4 sm:py-4 pr-1 -mx-1 px-1 text-left transition-[transform,color] duration-200 ease-out motion-safe:group-hover:translate-x-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-sm bg-transparent border-0 cursor-pointer text-inherit";
+
+  return (
+    <section
+      id="projects-supporting"
+      className={`relative min-h-screen w-full overflow-x-hidden overflow-y-auto py-16 md:py-20 bg-black text-white scroll-mt-6 ${SLIDE}`}
+    >
+      <SectionGridOverlay />
+      <motion.div
+        className="container mx-auto px-4 sm:px-6 relative z-10 w-full max-w-full min-w-0 pt-10 md:pt-[3rem]"
+        initial={false}
+        animate={{ opacity: previewPdf || isPrePreviewFading || isPreviewClosing ? 0 : 1 }}
+        transition={{ duration: reduceMotion ? 0 : 0.24, ease: EASE.out }}
+        style={{ pointerEvents: previewPdf || isPrePreviewFading || isPreviewClosing ? "none" : "auto" }}
+      >
+        <SectionHeader
+          title="ARCHIVE"
+          subtitle="Projects"
+          align="center"
+          showBar={false}
+          compact
+          titleFade
+        />
+
+        <div className="mx-auto w-full max-w-[min(100%,56rem)]">
           <h3 className="font-heading text-[0.65rem] sm:text-xs tracking-[0.2em] uppercase text-yellow-400/90 mb-4 pb-2 border-b border-yellow-400/25">
-            Projects (supporting / secondary)
+            Creative nonfiction — PDF
           </h3>
-          <ul className="space-y-3">
-            {SUPPORTING_SECONDARY_ITEMS.map((line) => (
-              <li
-                key={line}
-                className="rounded-lg border border-white/12 bg-zinc-950/50 px-4 py-3.5 font-body text-sm sm:text-base text-zinc-300 leading-snug hover:border-yellow-400/35 hover:bg-zinc-950/80 transition-colors"
-              >
-                {line}
+          <ul className="border-t border-white/10">
+            {SUPPORTING_ARCHIVE_PDF_ITEMS.map((item) => (
+              <li key={item.id} className="border-b border-white/10">
+                <button
+                  type="button"
+                  className={rowBtnClass}
+                  aria-haspopup="dialog"
+                  aria-expanded={previewPdf?.id === item.id}
+                  onClick={() => openPreview(item)}
+                >
+                  <span className="font-mono text-[0.7rem] sm:text-xs text-zinc-500 tabular-nums w-7 shrink-0 pt-0.5">
+                    {item.index}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <span className="font-body text-sm sm:text-base text-zinc-200 group-hover:text-white leading-snug inline-block transition-colors duration-200">
+                      {item.title}
+                    </span>
+                    <span className="block font-body text-xs text-zinc-500 mt-1 leading-snug group-hover:text-zinc-400 transition-colors duration-200">
+                      {item.subtitle}
+                    </span>
+                  </div>
+                  <span className="font-mono text-[0.6rem] sm:text-[0.65rem] tracking-[0.14em] uppercase text-zinc-500 group-hover:text-yellow-400 shrink-0 pt-1 transition-colors duration-200">
+                    VIEW
+                  </span>
+                  <FileText
+                    className="w-4 h-4 shrink-0 text-zinc-500 group-hover:text-yellow-400 mt-0.5 transition-colors duration-200"
+                    aria-hidden
+                  />
+                </button>
               </li>
             ))}
           </ul>
         </div>
+      </motion.div>
 
-        <div>
-          <h3 className="font-heading text-[0.65rem] sm:text-xs tracking-[0.2em] uppercase text-zinc-500 mb-4 pb-2 border-b border-white/15">
-            Projects (archive / depth)
-          </h3>
-          <ul className="space-y-3">
-            {ARCHIVE_DEPTH_ITEMS.map((line) => (
-              <li
-                key={line}
-                className="rounded-lg border border-white/10 bg-zinc-950/40 px-4 py-3.5 font-body text-sm sm:text-base text-zinc-400 leading-snug hover:border-white/20 hover:bg-zinc-950/70 transition-colors"
-              >
-                {line}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    </div>
-  </section>
-);
+      {isPrePreviewFading && (
+        <motion.div
+          className="pointer-events-none fixed inset-0 z-[75] bg-black/45"
+          initial={reduceMotion ? false : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: reduceMotion ? 0 : PREVIEW_PRE_FADE_S, ease: EASE.out }}
+        />
+      )}
+
+      {previewPdf &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="supporting-pdf-preview-title"
+            className="fixed inset-0 z-[80] flex items-center justify-center bg-black p-4 sm:p-6 md:p-8"
+            onClick={closePreview}
+            initial={reduceMotion ? false : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: reduceMotion ? 0 : 0.35, ease: EASE.out }}
+          >
+            <SectionGridOverlay />
+            <AnimatePresence mode="wait" initial={false}>
+              {!previewCanAnimate && (
+                <motion.div
+                  key={`pdf-loader-${previewPdf.id}`}
+                  className="pointer-events-none absolute inset-0 z-[9] flex items-center justify-center"
+                  initial={reduceMotion ? false : { opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={reduceMotion ? undefined : { opacity: 0 }}
+                  transition={{ duration: reduceMotion ? 0 : 0.6, ease: EASE.out }}
+                >
+                  <div className="w-[min(21rem,84%)] rounded-md bg-black/20 px-3.5 py-3">
+                    <div className="flex items-center justify-between font-mono text-[0.67rem] uppercase tracking-[0.12em] text-zinc-300">
+                      <span>Loading PDF…</span>
+                      <span>{previewLoadingPct}%</span>
+                    </div>
+                    <div className="mt-2.5 h-[3px] w-full overflow-hidden bg-white/12">
+                      <div
+                        className="h-full bg-gradient-to-r from-white/45 to-zinc-300/30"
+                        style={{ width: `${previewLoadingPct}%` }}
+                      />
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            <motion.div
+              className="relative z-10 flex max-h-[min(90dvh,920px)] w-full max-w-[min(96vw,72rem)] flex-col overflow-hidden rounded-xl border border-white/[0.12] bg-black shadow-[0_24px_80px_rgba(0,0,0,0.72)] ring-1 ring-white/[0.06]"
+              onClick={(e) => e.stopPropagation()}
+              initial={reduceMotion ? false : { opacity: 0, scaleY: 0.74, y: 0 }}
+              animate={
+                reduceMotion
+                  ? { opacity: 1, scaleY: 1, y: 0 }
+                  : isPreviewClosing
+                    ? { opacity: 0, scaleY: 1, y: 0 }
+                  : previewCanAnimate
+                    ? { opacity: 1, scaleY: 1, y: 0 }
+                    : { opacity: 0, scaleY: 0.74, y: 0 }
+              }
+              transition={{ duration: reduceMotion ? 0 : isPreviewClosing ? PREVIEW_CLOSE_FADE_S : 0.32, ease: EASE.out }}
+              style={{ transformOrigin: "center center" }}
+            >
+              <header className="relative flex shrink-0 items-center justify-between gap-3 border-b border-white/[0.1] bg-black px-4 py-3.5 sm:px-5">
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="outline"
+                  aria-label="Close PDF preview"
+                  onClick={closePreview}
+                  className="h-10 w-10 shrink-0 rounded-full border border-white/18 bg-black text-zinc-100 hover:border-cyan-400/45 hover:bg-zinc-900 hover:text-white"
+                >
+                  <X className="h-4 w-4" aria-hidden />
+                </Button>
+                <div className="pointer-events-none absolute left-1/2 top-1/2 w-[min(62%,26rem)] -translate-x-1/2 -translate-y-1/2 px-2 text-center">
+                  <h2
+                    id="supporting-pdf-preview-title"
+                    className="font-display text-[0.95rem] sm:text-base text-white tracking-tight text-balance leading-snug"
+                  >
+                    {previewPdf.title}
+                  </h2>
+                  <p className="font-body text-[0.7rem] sm:text-xs text-zinc-400 mt-1 leading-snug line-clamp-2">{previewPdf.subtitle}</p>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <a
+                    href={previewPdf.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Open PDF in new tab"
+                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/18 bg-black text-zinc-100 hover:border-cyan-400/45 hover:bg-zinc-900 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/45"
+                  >
+                    <ExternalLink className="h-4 w-4" aria-hidden />
+                  </a>
+                  <a
+                    href={previewPdf.href}
+                    download
+                    aria-label="Download PDF"
+                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/18 bg-black text-zinc-100 hover:border-cyan-400/45 hover:bg-zinc-900 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/45"
+                  >
+                    <Download className="h-4 w-4" aria-hidden />
+                  </a>
+                </div>
+              </header>
+              <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-3 pb-3 pt-2 sm:px-4 sm:pb-4">
+                <PdfJsDocumentView
+                  src={previewPdf.href}
+                  className="rounded-lg border border-white/[0.08] bg-black/20"
+                  onReady={() => {
+                    setPreviewPdfReady(true);
+                    setPreviewLoadingTargetPct(100);
+                  }}
+                  onError={() => {
+                    setPreviewPdfReady(true);
+                    setPreviewLoadingTargetPct(100);
+                  }}
+                  onProgress={(pct) =>
+                    setPreviewLoadingTargetPct((prev) => Math.max(prev, Math.max(0, Math.min(100, pct))))
+                  }
+                />
+              </div>
+            </motion.div>
+          </motion.div>,
+          document.body,
+        )}
+    </section>
+  );
+};
 
 type CardRect = { top: number; left: number; width: number; height: number };
 
@@ -2029,7 +2405,7 @@ const PalaceProjects = ({
   const [detailRow1Reveal, setDetailRow1Reveal] = useState(false);
   const [detailRow2Reveal, setDetailRow2Reveal] = useState(false);
   const [detailHeroMediaFadeIn, setDetailHeroMediaFadeIn] = useState(false);
-  const detailRevealTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const detailRevealTimersRef = useRef<number[]>([]);
   const detailAnchorRef = useRef<HTMLDivElement>(null);
 
   const morphDur = reduceMotion ? 0.12 / SHOWCASE_TIME_DIV : SHOWCASE_CARD_MORPH_DUR_S;
@@ -2104,7 +2480,7 @@ const PalaceProjects = ({
     if (!targetRect || !morphRect) return;
     let cancelled = false;
     const morphMs = Math.round(morphDur * 1000);
-    const chainTimers: ReturnType<typeof setTimeout>[] = [];
+    const chainTimers: number[] = [];
 
     if (!reduceMotion) {
       const ruleAt = Math.max(0, morphMs - DETAIL_RULE_LINE_LEAD_MS);
@@ -4696,6 +5072,7 @@ export default function Home() {
   useEffect(() => { setAppReady(true); }, []);
 
   const [isResumeMode, setIsResumeMode] = useState(false);
+  const [navButtonsFaded, setNavButtonsFaded] = useState(false);
   const [isSideNavOpen, setIsSideNavOpen] = useState(false);
   const [currentSection, setCurrentSection] = useState<string | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -4904,7 +5281,7 @@ export default function Home() {
         className="fixed top-5 right-3 sm:top-6 sm:right-4 z-50 flex items-center gap-2 sm:gap-2.5"
         initial={false}
         animate={{
-          opacity: isResumeMode ? 1 : 1,
+          opacity: navButtonsFaded ? 0 : 1,
           y: 0,
           scale: 1,
         }}
@@ -4955,6 +5332,7 @@ export default function Home() {
       {!isResumeMode && (
         <BackToMenuButton
           show={currentSection !== null}
+          fadeOut={navButtonsFaded}
           ariaLabel={
             currentSection === "projects" && activeShowcaseProjectId
               ? "Back to showcase"
@@ -5163,7 +5541,9 @@ export default function Home() {
                         settled={panelSettled}
                       />
                     )}
-                    {currentSection === "projects-supporting" && <SupportingProjectsSection />}
+                    {currentSection === "projects-supporting" && (
+                      <SupportingProjectsSection onNavTransitionChange={setNavButtonsFaded} />
+                    )}
                   </>
                 ) : (
                   <AnimatePresence mode="wait" initial={false}>
@@ -5193,7 +5573,7 @@ export default function Home() {
                         transition={{ duration: SHOWCASE_SUBROUTE_FADE_S, ease: EASE.out }}
                         className="w-full"
                       >
-                        <SupportingProjectsSection />
+                        <SupportingProjectsSection onNavTransitionChange={setNavButtonsFaded} />
                       </motion.div>
                     )}
                   </AnimatePresence>
