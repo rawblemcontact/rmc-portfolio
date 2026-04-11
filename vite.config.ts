@@ -26,7 +26,7 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      "@": path.resolve(import.meta.dirname, "client", "src"),
+      "@": path.resolve(import.meta.dirname, "src"),
       "@assets": path.resolve(import.meta.dirname, "attached_assets"),
     },
   },
@@ -35,7 +35,6 @@ export default defineConfig({
       plugins: [],
     },
   },
-  root: path.resolve(import.meta.dirname, "client"),
   build: {
     outDir: "dist",
     emptyOutDir: true,
@@ -43,8 +42,11 @@ export default defineConfig({
       output: {
         manualChunks: (id) => {
           if (id.includes("node_modules")) {
-            // React and React-DOM must be in the same chunk to avoid circular dependencies
-            if (id.includes("react-dom") || id.includes("react/") || id.includes("/react")) {
+            if (
+              id.includes("react-dom") ||
+              id.includes("react/") ||
+              id.includes("/react")
+            ) {
               return "react";
             }
             if (id.includes("framer-motion")) return "framer-motion";
@@ -68,18 +70,15 @@ export default defineConfig({
     },
     headers: {
       "Cache-Control": "no-store, no-cache, must-revalidate",
-      "Pragma": "no-cache",
-      "Expires": "0",
+      Pragma: "no-cache",
+      Expires: "0",
     },
     hmr: {
       overlay: true,
     },
   },
   optimizeDeps: {
-    // Skip dependency pre-bundling if esbuild fails
-    // This allows the server to continue even if esbuild has permission issues
     esbuildOptions: {
-      // Try to handle Windows permission issues
       logOverride: { "this-is-undefined-in-esbuild": "silent" },
     },
   },
