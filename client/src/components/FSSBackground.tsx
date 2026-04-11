@@ -349,8 +349,9 @@ export default function FSSBackground({ className = "", style, config }: FSSBack
     if (!canvas) return;
 
     const cfg = { ...DEFAULTS, ...config };
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    const maybeCtx = canvas.getContext("2d");
+    if (!maybeCtx) return;
+    const c2d: CanvasRenderingContext2D = maybeCtx;
 
     const parent = canvas.parentElement!;
     let W = parent.offsetWidth;
@@ -361,7 +362,7 @@ export default function FSSBackground({ className = "", style, config }: FSSBack
 
     const halfW = W * 0.5;
     const halfH = H * 0.5;
-    ctx.setTransform(1, 0, 0, -1, halfW, halfH);
+    c2d.setTransform(1, 0, 0, -1, halfW, halfH);
 
     const scene = makeScene();
     const geo = makePlane(W * 1.8, H * 1.8, cfg.segments, cfg.slices);
@@ -430,23 +431,23 @@ export default function FSSBackground({ className = "", style, config }: FSSBack
       geo.dirty = true;
 
       // render
-      ctx.clearRect(-halfW, -halfH, W, H);
-      ctx.lineJoin = "round";
-      ctx.lineWidth = 1;
+      c2d.clearRect(-halfW, -halfH, W, H);
+      c2d.lineJoin = "round";
+      c2d.lineWidth = 1;
       for (const m of scene.meshes) {
         if (!m.visible) continue;
         m.update(scene.lights, true);
         for (const tri of m.geometry.triangles) {
           const c = tri.color.format();
-          ctx.beginPath();
-          ctx.moveTo(tri.a.position[0], tri.a.position[1]);
-          ctx.lineTo(tri.b.position[0], tri.b.position[1]);
-          ctx.lineTo(tri.c.position[0], tri.c.position[1]);
-          ctx.closePath();
-          ctx.strokeStyle = c;
-          ctx.fillStyle = c;
-          ctx.stroke();
-          ctx.fill();
+          c2d.beginPath();
+          c2d.moveTo(tri.a.position[0], tri.a.position[1]);
+          c2d.lineTo(tri.b.position[0], tri.b.position[1]);
+          c2d.lineTo(tri.c.position[0], tri.c.position[1]);
+          c2d.closePath();
+          c2d.strokeStyle = c;
+          c2d.fillStyle = c;
+          c2d.stroke();
+          c2d.fill();
         }
       }
 

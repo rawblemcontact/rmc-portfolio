@@ -131,7 +131,7 @@ export function PdfJsDocumentView({ src, className = "", maxDpr = 2, onReady, on
           row.appendChild(sheet);
           host.appendChild(row);
 
-          await page.render({ canvasContext: ctx, viewport }).promise;
+          await page.render({ canvasContext: ctx, viewport, canvas }).promise;
         }
         if (!cancelled) {
           setPagesReady(true);

@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 
-const POP_TRANSITION = { duration: 0.28, ease: [0.22, 1, 0.36, 1] };
+const POP_TRANSITION = { duration: 0.28, ease: [0.22, 1, 0.36, 1] as const };
 
 type FloatingPhoneProps = {
   accentClass?: string;

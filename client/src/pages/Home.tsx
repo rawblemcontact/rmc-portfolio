@@ -1505,6 +1505,8 @@ type SupportingArchivePdfItem = {
   title: string;
   subtitle: string;
   href: string;
+  /** Optional display ordering label (e.g. screenplay numbering). */
+  index?: string;
 };
 
 /** Creative nonfiction PDFs — `client/public/cnf/`. */
