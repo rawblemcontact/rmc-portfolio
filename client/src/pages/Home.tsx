@@ -27,8 +27,6 @@ import {
   Zap,
   ChevronLeft,
   ChevronRight,
-  ChevronUp,
-  ChevronDown,
   User,
   Briefcase,
   Monitor,
@@ -39,6 +37,7 @@ import { TiltCard } from "@/components/TiltCard";
 import { ExpandCircleButton } from "@/components/ExpandCircleButton";
 import { WordsPullUp } from "@/components/WordsPullUp";
 import { FloatingPhone } from "@/components/FloatingPhone";
+import { PdfFoldLoader } from "@/components/PdfFoldLoader";
 import { PdfJsDocumentView } from "@/components/PdfJsDocumentView";
 import {
   SiArc,
@@ -66,8 +65,6 @@ import {
   IconUsers,
   IconVideo,
 } from "@tabler/icons-react";
-import { EXPERIENCE_BLOCK_POSITION, EXPERIENCE_BLOCK_POSITION_X, EXP_SNAP_POINTS } from "@/config/experience-position";
-
 function AdobeSuiteIcon({
   size = 18,
   className,
@@ -336,7 +333,7 @@ function ToolIcon({ name, size = 18 }: { name: string; size?: number }) {
           alt=""
           width={size}
           height={size}
-          className="skills-tool-icon-menu-green block max-h-full max-w-full shrink-0 opacity-90"
+          className="skills-tool-icon-subskills block max-h-full max-w-full shrink-0 opacity-90"
         />
       );
     }
@@ -346,7 +343,7 @@ function ToolIcon({ name, size = 18 }: { name: string; size?: number }) {
         alt=""
         width={size}
         height={size}
-        className="skills-tool-icon-menu-green block max-h-full max-w-full shrink-0 opacity-90"
+        className="skills-tool-icon-subskills block max-h-full max-w-full shrink-0 opacity-90"
       />
     );
   }
@@ -491,10 +488,6 @@ const SLIDE =
 
 const SLIDE_NO_Y_SCROLL =
   "no-scrollbar w-screen h-screen flex-shrink-0 snap-start overflow-y-hidden overflow-x-hidden";
-
-const MOBILE_SKILLS_NAV_BOTTOM = "calc(0.75rem + env(safe-area-inset-bottom) + 1px)";
-const MOBILE_ROUND_BTN_BASE =
-  "items-center justify-center w-9 h-9 rounded-full border border-white/20 bg-black/60 backdrop-blur-md text-white/90 active:scale-95 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80";
 
 const scrollToId = (id: string, behavior: ScrollBehavior = "smooth") => {
   const el = document.getElementById(id);
@@ -657,12 +650,7 @@ const SectionHeader = ({
   /** When true, title animates with a simple fade instead of the clip-path wipe. */
   titleFade?: boolean;
 }) => {
-  const sizeClasses =
-    title === "SKILLS"
-      ? "text-5xl md:text-7xl"
-      : compact
-        ? "text-3xl md:text-5xl"
-        : "text-4xl md:text-6xl";
+  const sizeClasses = compact ? "text-3xl md:text-5xl" : "text-4xl md:text-6xl";
 
   const baseClass = `flex flex-col ${align === "center" ? "items-center text-center" : "items-start text-left"} ${
     compact ? "mb-10" : "mb-16"
@@ -1423,7 +1411,7 @@ const StatRow = ({ label, value }: { label: string; value: string }) => (
   </div>
 );
 
-// --- PROJECTS (responsive carousel: 1 / 2 / 3 visible; cards larger & taller than original) ---
+// --- PROJECTS (responsive carousel: 1 slide < lg, 2 slides lg+; cards larger & taller than original) ---
 type ShowcaseProjectCard = {
   readonly id: string;
   readonly title: string;
@@ -1514,57 +1502,97 @@ const cardEase = [0.25, 0.46, 0.45, 0.94] as const;
 
 type SupportingArchivePdfItem = {
   id: string;
-  index: string;
   title: string;
   subtitle: string;
   href: string;
 };
 
-/** Creative nonfiction PDFs served from `client/public/cnf/`. */
+/** Creative nonfiction PDFs — `client/public/cnf/`. */
 const SUPPORTING_ARCHIVE_PDF_ITEMS: SupportingArchivePdfItem[] = [
   {
     id: "cnf-article",
-    index: "01",
     title: "Article",
     subtitle: "Example 1 — article",
     href: "/cnf/example-1-article.pdf",
   },
   {
     id: "cnf-media-literary",
-    index: "02",
     title: "Media literary analysis",
     subtitle: "Example 2 — media & text",
     href: "/cnf/example-2-media-literary-analysis.pdf",
   },
   {
     id: "cnf-critical-essay",
-    index: "03",
     title: "Critical literary essay",
     subtitle: "Example 3 — critical analysis",
     href: "/cnf/example-3-critical-literary-essay.pdf",
   },
   {
     id: "cnf-memoir",
-    index: "04",
     title: "Memoir",
     subtitle: "Example 4 — memoir",
     href: "/cnf/example-4-memoir.pdf",
   },
+];
+
+/** Screenplays — `client/public/screenplays/`. */
+const SCREENPLAY_PDF_ITEMS: SupportingArchivePdfItem[] = [
   {
     id: "screenplay-audience-of-one",
-    index: "05",
     title: "Audience of One",
-    subtitle: "Screenplay — Robbie McLaughlin",
+    subtitle: "Robbie McLaughlin",
     href: "/screenplays/audience-of-one-robbie-mclaughlin.pdf",
   },
   {
     id: "screenplay-rock-paper-promise",
-    index: "06",
+    index: "02",
     title: "Rock Paper Promise",
-    subtitle: "Screenplay — Robbie McLaughlin",
+    subtitle: "Robbie McLaughlin",
     href: "/screenplays/rock-paper-promise-robbie-mclaughlin.pdf",
   },
+  {
+    id: "screenplay-fetch",
+    title: "Fetch",
+    subtitle: "Robbie McLaughlin",
+    href: "/screenplays/fetch.pdf",
+  },
 ];
+
+/** Short graphic novel PDFs — `client/public/short-graphic-novels/`. */
+const SHORT_GRAPHIC_NOVEL_PDF_ITEMS: SupportingArchivePdfItem[] = [
+  {
+    id: "sgn-blossom-ink-bw",
+    title: "Blossom",
+    subtitle: "Ink — black & white",
+    href: "/short-graphic-novels/blossom-ink-bw.pdf",
+  },
+  {
+    id: "sgn-writ405-final",
+    title: "WRIT405",
+    subtitle: "Final revision — Robbie McLaughlin",
+    href: "/short-graphic-novels/writ405-final-revision-robbie-mclaughlin.pdf",
+  },
+  {
+    id: "sgn-blossom-thumbnails",
+    title: "Blossom",
+    subtitle: "Thumbnails — Robbie McLaughlin",
+    href: "/short-graphic-novels/blossom-thumbnails-robbie-mclaughlin.pdf",
+  },
+  {
+    id: "sgn-blossom-pencils",
+    title: "Blossom",
+    subtitle: "Pencils",
+    href: "/short-graphic-novels/blossom-pencils.pdf",
+  },
+];
+
+const SUPPORTING_ARCHIVE_PDF_SECTIONS: { heading: string; items: SupportingArchivePdfItem[] }[] = [
+  { heading: "Creative nonfiction — PDF", items: SUPPORTING_ARCHIVE_PDF_ITEMS },
+  { heading: "Screenplays — PDF", items: SCREENPLAY_PDF_ITEMS },
+  { heading: "Short graphic novels — PDF", items: SHORT_GRAPHIC_NOVEL_PDF_ITEMS },
+];
+
+const archiveRowIndexLabel = (rowIndex: number) => String(rowIndex + 1).padStart(2, "0");
 
 /** Showcase carousel parallax tween (same idea as Embla “Predefined → Parallax”). */
 const PROJECT_CAROUSEL_TWEEN_FACTOR_BASE = 0.52;
@@ -1622,7 +1650,8 @@ const ProjectsStack = ({
   const hasPlayedOnce = useRef(false);
 
   const [emblaRef, emblaApi] = useEmblaCarousel({
-    align: "center",
+    /** `start` keeps a flush left snap so 2-up shows exactly two full cards; `center` offsets scroll and peeks neighbors. */
+    align: "start",
     loop: true,
     skipSnaps: false,
     dragFree: false,
@@ -1795,7 +1824,7 @@ const ProjectsStack = ({
   }, [autoplayIndex]);
 
   return (
-    <div className="flex justify-center items-center gap-2 sm:gap-3 md:gap-5 lg:gap-6 py-8 px-1 sm:px-2 w-full min-w-0 overflow-x-visible overflow-y-visible">
+    <div className="mx-auto flex w-full min-w-0 max-w-[min(100%,56rem)] justify-center items-center gap-2 sm:gap-3 md:gap-5 lg:gap-6 py-8 px-1 sm:px-2 overflow-x-visible overflow-y-visible lg:max-w-[min(100%,72rem)] xl:max-w-[min(100%,84rem)] 2xl:max-w-[min(100%,96rem)]">
       <motion.button
         type="button"
         onClick={() => emblaApi?.scrollPrev()}
@@ -1809,14 +1838,16 @@ const ProjectsStack = ({
         <ChevronLeft size={28} strokeWidth={2} aria-hidden />
       </motion.button>
 
-      <div className="min-w-0 max-w-full flex-[1_1_auto] overflow-hidden [--slide-gap:0.875rem] sm:[--slide-gap:1.25rem] md:[--slide-gap:1.5rem]">
-        {/* Padding insets the track so center slide reads as “hero” with neighbors peeking (Embla align: center + %-width slides). */}
-        <div ref={emblaRef} className="overflow-hidden px-2 sm:px-4 md:px-6">
+      <div className="min-w-0 max-w-full flex-[1_1_auto] overflow-hidden [--slide-gap:0.875rem] sm:[--slide-gap:1.25rem] lg:[--slide-gap:1rem] xl:[--slide-gap:1.125rem]">
+        {/*
+         * Slides: 1× full width < lg; lg+ 2 columns. Embla `align: start` + clip + slightly under-filled halves = no neighbor slivers.
+         */}
+        <div ref={emblaRef} className="overflow-x-clip overflow-y-hidden px-2 sm:px-4 lg:px-2 xl:px-3">
           <div className="flex items-stretch touch-pan-y [-webkit-touch-callout:none] -ml-[var(--slide-gap)]">
             {PROJECT_CARDS.map((card, index) => (
               <div
                 key={card.id}
-                className="min-w-0 shrink-0 grow-0 pl-[var(--slide-gap)] flex-[0_0_80%] sm:flex-[0_0_74%] md:flex-[0_0_70%] lg:flex-[0_0_66%] xl:flex-[0_0_62%] flex justify-center"
+                className="flex min-w-0 shrink-0 grow-0 justify-center pl-[var(--slide-gap)] flex-[0_0_100%] lg:flex-[0_0_calc((100%-4px)/2)]"
               >
                 <motion.button
                   type="button"
@@ -1934,15 +1965,32 @@ const ProjectsStack = ({
   );
 };
 
+/** WRITING SAMPLES + CAREER OVERVIEW — optical scrollbar rail (desktop lg+). */
+const PORTFOLIO_SECTION_SCROLLBAR_VISIBLE_MS = 450;
+const PORTFOLIO_OPTICAL_MIN_VIEWPORT_PX = 1024;
+const PORTFOLIO_OPTICAL_RAIL_BOTTOM_NUDGE_PX = 4;
+const PORTFOLIO_OPTICAL_RAIL_TOP_OUTSET_PX = 5;
+const PORTFOLIO_OPTICAL_RAIL_BOTTOM_OUTSET_PX = 5;
+
+/** True when pointer is in left/right margin of scroll area (empty BG beside centered column). */
+function portfolioOpticalPointerInSideGutter(clientX: number, areaRect: DOMRect): boolean {
+  const w = areaRect.width;
+  if (w <= 0) return false;
+  const x = clientX - areaRect.left;
+  const band = Math.min(w * 0.22, 168);
+  return x < band || x > w - band;
+}
+
 const SupportingProjectsSection = ({
   onNavTransitionChange,
 }: {
   onNavTransitionChange?: (active: boolean) => void;
 } = {}) => {
   const [previewPdf, setPreviewPdf] = useState<SupportingArchivePdfItem | null>(null);
-  const [previewCanAnimate, setPreviewCanAnimate] = useState(false);
-  const [previewLoadingPct, setPreviewLoadingPct] = useState(0);
-  const [previewLoadingTargetPct, setPreviewLoadingTargetPct] = useState(0);
+  /** Full loader overlay (fold + label); fades out first once the PDF is ready. */
+  const [showPdfLoaderOverlay, setShowPdfLoaderOverlay] = useState(true);
+  /** Modal frame + PDF visible only after loader exit completes. */
+  const [showPdfFrame, setShowPdfFrame] = useState(false);
   const [previewPdfReady, setPreviewPdfReady] = useState(false);
   const [queuedPreviewPdf, setQueuedPreviewPdf] = useState<SupportingArchivePdfItem | null>(null);
   const [isPrePreviewFading, setIsPrePreviewFading] = useState(false);
@@ -1952,17 +2000,33 @@ const SupportingProjectsSection = ({
   const closePreviewTimerRef = useRef<number | null>(null);
   const readyHoldTimerRef = useRef<number | null>(null);
   const returnGateTimerRef = useRef<number | null>(null);
+  const archiveScrollHostRef = useRef<HTMLDivElement | null>(null);
+  const archiveScrollAreaRef = useRef<HTMLDivElement | null>(null);
+  const archiveScrollContentRef = useRef<HTMLDivElement | null>(null);
+  const archiveOpticalRailWrapRef = useRef<HTMLDivElement | null>(null);
+  const archiveOpticalTrackRef = useRef<HTMLDivElement | null>(null);
+  const archiveOpticalThumbRef = useRef<HTMLDivElement | null>(null);
+  const archiveFirstYellowRuleRef = useRef<HTMLHeadingElement | null>(null);
+  const archiveScrollHideTimerRef = useRef<number | null>(null);
 
-  const PREVIEW_PRE_FADE_S = 0.24;
-  const PREVIEW_HANDOFF_MS = 24;
+  /** Archive section + dim scrim fade (dialog can mount mid-fade — see mount delay). */
+  const PREVIEW_PRE_FADE_S = 0.16;
+  /** Show PDF modal this soon after click so loader appears before archive fade finishes. */
+  const PREVIEW_PDF_MOUNT_MS = 96;
+  const PREVIEW_HANDOFF_MS = 8;
   const PREVIEW_CLOSE_FADE_S = 0.34;
   const PREVIEW_RETURN_GATE_MS = 70;
   const PREVIEW_READY_HOLD_MS = 32;
-  const PREVIEW_COUNTER_STEP_MS = 6;
+  /** Shell fade; loader fades in after so nested opacity doesn’t hide it. */
+  const PREVIEW_PDF_DIALOG_FADE_S = 0.175;
+  /** Was ~0.41s after mount; halved to tighten gap after archive fades. */
+  const PREVIEW_LOADER_FADE_IN_DELAY_S = PREVIEW_PDF_DIALOG_FADE_S + 0.03;
+  const PREVIEW_LOADER_FADE_IN_S = 0.55;
+  const PREVIEW_LOADER_FADE_OUT_S = 0.6;
 
   const closePreview = useCallback(() => {
     // Prevent exiting while loader is still active; allow only after preview is ready.
-    if (previewPdf && !previewCanAnimate && !isPreviewClosing) return;
+    if (previewPdf && !showPdfFrame && !isPreviewClosing) return;
 
     if (preFadeTimerRef.current !== null) {
       window.clearTimeout(preFadeTimerRef.current);
@@ -1984,10 +2048,9 @@ const SupportingProjectsSection = ({
       setIsPreviewClosing(true);
       closePreviewTimerRef.current = window.setTimeout(() => {
         setPreviewPdf(null);
-        setPreviewCanAnimate(false);
+        setShowPdfLoaderOverlay(true);
+        setShowPdfFrame(false);
         setPreviewPdfReady(false);
-        setPreviewLoadingPct(0);
-        setPreviewLoadingTargetPct(0);
         returnGateTimerRef.current = window.setTimeout(() => {
           setIsPreviewClosing(false);
           returnGateTimerRef.current = null;
@@ -1997,14 +2060,13 @@ const SupportingProjectsSection = ({
     } else {
       setPreviewPdf(null);
       setIsPreviewClosing(false);
-      setPreviewCanAnimate(false);
+      setShowPdfLoaderOverlay(true);
+      setShowPdfFrame(false);
       setPreviewPdfReady(false);
-      setPreviewLoadingPct(0);
-      setPreviewLoadingTargetPct(0);
     }
     setQueuedPreviewPdf(null);
     setIsPrePreviewFading(false);
-  }, [isPreviewClosing, previewCanAnimate, previewPdf, reduceMotion]);
+  }, [isPreviewClosing, showPdfFrame, previewPdf, reduceMotion]);
 
   const openPreview = useCallback(
     (item: SupportingArchivePdfItem) => {
@@ -2021,34 +2083,22 @@ const SupportingProjectsSection = ({
 
   useEffect(() => {
     if (previewPdf) {
-      setPreviewCanAnimate(false);
+      setShowPdfLoaderOverlay(true);
+      setShowPdfFrame(false);
       setPreviewPdfReady(false);
-      setPreviewLoadingPct(0);
-      // Kick the bar off zero immediately; real progress updates take over.
-      setPreviewLoadingTargetPct(0);
     }
   }, [previewPdf]);
 
   useEffect(() => {
-    if (previewLoadingPct >= previewLoadingTargetPct) return;
-    const id = window.setTimeout(() => {
-      setPreviewLoadingPct((prev) => {
-        const next = prev + 1;
-        return Math.min(next, previewLoadingTargetPct);
-      });
-    }, PREVIEW_COUNTER_STEP_MS);
-    return () => window.clearTimeout(id);
-  }, [previewLoadingPct, previewLoadingTargetPct]);
-
-  useEffect(() => {
-    if (!previewPdfReady || previewCanAnimate) return;
-    if (previewLoadingPct < 100) return;
+    if (!previewPdfReady || showPdfFrame) return;
+    if (!showPdfLoaderOverlay) return;
     if (reduceMotion) {
-      setPreviewCanAnimate(true);
+      setShowPdfLoaderOverlay(false);
+      setShowPdfFrame(true);
       return;
     }
     readyHoldTimerRef.current = window.setTimeout(() => {
-      setPreviewCanAnimate(true);
+      setShowPdfLoaderOverlay(false);
       readyHoldTimerRef.current = null;
     }, PREVIEW_READY_HOLD_MS);
     return () => {
@@ -2057,13 +2107,11 @@ const SupportingProjectsSection = ({
         readyHoldTimerRef.current = null;
       }
     };
-  }, [previewCanAnimate, previewLoadingPct, previewPdfReady, reduceMotion]);
+  }, [previewPdfReady, reduceMotion, showPdfFrame, showPdfLoaderOverlay]);
 
   useEffect(() => {
     if (!isPrePreviewFading || !queuedPreviewPdf) return;
     preFadeTimerRef.current = window.setTimeout(() => {
-      setPreviewLoadingPct(0);
-      setPreviewLoadingTargetPct(0);
       setPreviewPdfReady(false);
       setPreviewPdf(queuedPreviewPdf);
       setQueuedPreviewPdf(null);
@@ -2071,7 +2119,7 @@ const SupportingProjectsSection = ({
         setIsPrePreviewFading(false);
         preFadeTimerRef.current = null;
       }, PREVIEW_HANDOFF_MS);
-    }, Math.round(PREVIEW_PRE_FADE_S * 1000));
+    }, PREVIEW_PDF_MOUNT_MS);
     return () => {
       if (preFadeTimerRef.current !== null) {
         window.clearTimeout(preFadeTimerRef.current);
@@ -2103,6 +2151,10 @@ const SupportingProjectsSection = ({
         window.clearTimeout(readyHoldTimerRef.current);
         readyHoldTimerRef.current = null;
       }
+      if (archiveScrollHideTimerRef.current !== null) {
+        window.clearTimeout(archiveScrollHideTimerRef.current);
+        archiveScrollHideTimerRef.current = null;
+      }
     },
     [],
   );
@@ -2122,66 +2174,307 @@ const SupportingProjectsSection = ({
   }, [isPrePreviewFading, isPreviewClosing, onNavTransitionChange, previewPdf]);
 
   const rowBtnClass =
-    "group flex w-full items-start gap-3 sm:gap-4 py-4 sm:py-4 pr-1 -mx-1 px-1 text-left transition-[transform,color] duration-200 ease-out motion-safe:group-hover:translate-x-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-sm bg-transparent border-0 cursor-pointer text-inherit";
+    "group flex w-full items-start gap-3 sm:gap-4 py-4 sm:py-4 pr-1 -mx-1 px-1 text-left transition-[transform,color,background-color] duration-200 ease-out motion-safe:group-hover:translate-x-1.5 bg-black/40 hover:bg-black/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-sm border-0 cursor-pointer text-inherit";
+
+  const updateArchiveOpticalScrollMetrics = useCallback(() => {
+    const scrollEl = archiveScrollAreaRef.current;
+    const trackEl = archiveOpticalTrackRef.current;
+    const thumbEl = archiveOpticalThumbRef.current;
+    const railWrap = archiveOpticalRailWrapRef.current;
+    const hostEl = archiveScrollHostRef.current;
+    if (!scrollEl || !trackEl || !thumbEl) return;
+
+    const opticalActive =
+      typeof window !== "undefined" &&
+      window.matchMedia?.(`(min-width: ${PORTFOLIO_OPTICAL_MIN_VIEWPORT_PX}px)`).matches === true;
+    if (!opticalActive) {
+      if (railWrap) {
+        railWrap.style.top = "";
+        railWrap.style.bottom = "";
+        railWrap.style.right = "";
+        railWrap.style.visibility = "";
+      }
+      thumbEl.style.height = "0px";
+      thumbEl.style.top = "0px";
+      return;
+    }
+
+    if (railWrap) {
+      const firstRuleEl = archiveFirstYellowRuleRef.current;
+      if (hostEl && firstRuleEl) {
+        const hostTop = hostEl.getBoundingClientRect().top;
+        const ruleBottom = firstRuleEl.getBoundingClientRect().bottom;
+        railWrap.style.top = `${Math.max(0, ruleBottom - hostTop - PORTFOLIO_OPTICAL_RAIL_TOP_OUTSET_PX)}px`;
+      } else if (hostEl) {
+        railWrap.style.top = `${Math.max(0, Math.min(56, Math.round(hostEl.clientHeight * 0.06)) - PORTFOLIO_OPTICAL_RAIL_TOP_OUTSET_PX)}px`;
+      } else {
+        railWrap.style.top = "";
+      }
+
+      const cs = getComputedStyle(scrollEl);
+      const paddingBottomPx = parseFloat(cs.paddingBottom) || 0;
+      let bottomPx = Math.max(
+        0,
+        paddingBottomPx - PORTFOLIO_OPTICAL_RAIL_BOTTOM_NUDGE_PX - PORTFOLIO_OPTICAL_RAIL_BOTTOM_OUTSET_PX,
+      );
+      if (hostEl) {
+        const hostH = hostEl.clientHeight;
+        const railTopPx = parseFloat(getComputedStyle(railWrap).top) || 0;
+        const minTrackPx = 48;
+        const maxBottom = Math.max(0, hostH - railTopPx - minTrackPx);
+        bottomPx = Math.min(bottomPx, maxBottom);
+      }
+      railWrap.style.bottom = `${bottomPx}px`;
+
+      const paddingRightPx = parseFloat(cs.paddingRight) || 0;
+      let railW = railWrap.getBoundingClientRect().width;
+      if (railW <= 0) {
+        railW = 8;
+      }
+      railWrap.style.right = `${Math.max(0, (paddingRightPx - railW) / 2)}px`;
+    }
+
+    const { scrollHeight, clientHeight, scrollTop } = scrollEl;
+    const maxScroll = Math.max(0, scrollHeight - clientHeight);
+    const trackH = trackEl.clientHeight;
+    if (maxScroll <= 0 || trackH <= 0) {
+      thumbEl.style.height = "0px";
+      thumbEl.style.top = "0px";
+      if (railWrap) railWrap.style.visibility = "hidden";
+      return;
+    }
+    if (railWrap) railWrap.style.visibility = "";
+    const coarsePointer =
+      typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches === true;
+    const minThumbPx = coarsePointer ? 36 : 28;
+    const thumbH = Math.min(
+      trackH,
+      Math.max(minThumbPx, (clientHeight / scrollHeight) * trackH),
+    );
+    const thumbTravel = Math.max(0, trackH - thumbH);
+    const thumbTop = thumbTravel <= 0 ? 0 : (scrollTop / maxScroll) * thumbTravel;
+    thumbEl.style.height = `${thumbH}px`;
+    thumbEl.style.top = `${thumbTop}px`;
+  }, []);
+
+  useLayoutEffect(() => {
+    const scrollEl = archiveScrollAreaRef.current;
+    const contentEl = archiveScrollContentRef.current;
+    if (!scrollEl) return;
+    const ro = new ResizeObserver(() => {
+      updateArchiveOpticalScrollMetrics();
+    });
+    ro.observe(scrollEl);
+    if (contentEl) ro.observe(contentEl);
+    const vv = typeof window !== "undefined" ? window.visualViewport : null;
+    const onViewportChange = () => {
+      updateArchiveOpticalScrollMetrics();
+    };
+    if (vv) {
+      vv.addEventListener("resize", onViewportChange);
+      vv.addEventListener("scroll", onViewportChange);
+    }
+    window.addEventListener("orientationchange", onViewportChange);
+    const opticalMql =
+      typeof window !== "undefined"
+        ? window.matchMedia(`(min-width: ${PORTFOLIO_OPTICAL_MIN_VIEWPORT_PX}px)`)
+        : null;
+    const onOpticalBreakpoint = () => {
+      updateArchiveOpticalScrollMetrics();
+    };
+    opticalMql?.addEventListener("change", onOpticalBreakpoint);
+    updateArchiveOpticalScrollMetrics();
+    return () => {
+      ro.disconnect();
+      opticalMql?.removeEventListener("change", onOpticalBreakpoint);
+      if (vv) {
+        vv.removeEventListener("resize", onViewportChange);
+        vv.removeEventListener("scroll", onViewportChange);
+      }
+      window.removeEventListener("orientationchange", onViewportChange);
+    };
+  }, [previewPdf, updateArchiveOpticalScrollMetrics]);
+
+  const onArchiveOpticalThumbPointerDown = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (
+        typeof window === "undefined" ||
+        !window.matchMedia?.(`(min-width: ${PORTFOLIO_OPTICAL_MIN_VIEWPORT_PX}px)`).matches
+      ) {
+        return;
+      }
+      const scrollEl = archiveScrollAreaRef.current;
+      const trackEl = archiveOpticalTrackRef.current;
+      const thumbEl = archiveOpticalThumbRef.current;
+      if (!scrollEl || !trackEl || !thumbEl) return;
+      const maxScroll = Math.max(0, scrollEl.scrollHeight - scrollEl.clientHeight);
+      if (maxScroll <= 0) return;
+      const trackH = trackEl.clientHeight;
+      const thumbH = thumbEl.offsetHeight;
+      const thumbTravel = Math.max(0, trackH - thumbH);
+      const startScrollTop = scrollEl.scrollTop;
+      const startY = e.clientY;
+      thumbEl.setPointerCapture(e.pointerId);
+      const onMove = (ev: PointerEvent) => {
+        const dy = ev.clientY - startY;
+        const dScroll = thumbTravel > 0 ? (dy / thumbTravel) * maxScroll : 0;
+        scrollEl.scrollTop = Math.min(maxScroll, Math.max(0, startScrollTop + dScroll));
+        updateArchiveOpticalScrollMetrics();
+      };
+      const onUp = (ev: PointerEvent) => {
+        try {
+          thumbEl.releasePointerCapture(ev.pointerId);
+        } catch {
+          /* released */
+        }
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+      };
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+    },
+    [updateArchiveOpticalScrollMetrics],
+  );
+
+  const revealArchiveOpticalScrollbar = useCallback(() => {
+    const opticalActive =
+      typeof window !== "undefined" &&
+      window.matchMedia?.(`(min-width: ${PORTFOLIO_OPTICAL_MIN_VIEWPORT_PX}px)`).matches === true;
+    const host = archiveScrollHostRef.current;
+    if (!host || !opticalActive) return;
+    host.classList.add("archive-optical-scrollbar-host--visible");
+    if (archiveScrollHideTimerRef.current !== null) {
+      window.clearTimeout(archiveScrollHideTimerRef.current);
+    }
+    archiveScrollHideTimerRef.current = window.setTimeout(() => {
+      host.classList.remove("archive-optical-scrollbar-host--visible");
+      archiveScrollHideTimerRef.current = null;
+    }, PORTFOLIO_SECTION_SCROLLBAR_VISIBLE_MS);
+    updateArchiveOpticalScrollMetrics();
+  }, [updateArchiveOpticalScrollMetrics]);
+
+  const onArchiveListScroll = useCallback(() => {
+    revealArchiveOpticalScrollbar();
+  }, [revealArchiveOpticalScrollbar]);
+
+  const onArchiveScrollAreaPointerMove = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      const el = archiveScrollAreaRef.current;
+      if (!el) return;
+      if (
+        typeof window === "undefined" ||
+        !window.matchMedia?.(`(min-width: ${PORTFOLIO_OPTICAL_MIN_VIEWPORT_PX}px)`).matches
+      ) {
+        return;
+      }
+      if (!portfolioOpticalPointerInSideGutter(e.clientX, el.getBoundingClientRect())) return;
+      revealArchiveOpticalScrollbar();
+    },
+    [revealArchiveOpticalScrollbar],
+  );
 
   return (
     <section
       id="projects-supporting"
-      className={`relative min-h-screen w-full overflow-x-hidden overflow-y-auto py-16 md:py-20 bg-black text-white scroll-mt-6 ${SLIDE}`}
+      className={`relative flex h-[100dvh] max-h-[100dvh] w-full flex-col overflow-x-hidden overflow-hidden bg-black text-white scroll-mt-6 ${SLIDE}`}
     >
       <SectionGridOverlay />
       <motion.div
-        className="container mx-auto px-4 sm:px-6 relative z-10 w-full max-w-full min-w-0 pt-10 md:pt-[3rem]"
+        className="container relative z-10 mx-auto flex min-h-0 w-full max-w-full min-w-0 flex-1 flex-col px-4 sm:px-6 pt-[6.5rem] md:pt-[8rem]"
         initial={false}
         animate={{ opacity: previewPdf || isPrePreviewFading || isPreviewClosing ? 0 : 1 }}
-        transition={{ duration: reduceMotion ? 0 : 0.24, ease: EASE.out }}
+        transition={{ duration: reduceMotion ? 0 : PREVIEW_PRE_FADE_S, ease: EASE.out }}
         style={{ pointerEvents: previewPdf || isPrePreviewFading || isPreviewClosing ? "none" : "auto" }}
       >
-        <SectionHeader
-          title="ARCHIVE"
-          subtitle="Projects"
-          align="center"
-          showBar={false}
-          compact
-          titleFade
-        />
+        <div className="shrink-0">
+          <SectionHeader
+            title="WRITING SAMPLES"
+            subtitle="Projects"
+            align="center"
+            showBar={false}
+            compact
+            titleFade
+          />
+        </div>
 
-        <div className="mx-auto w-full max-w-[min(100%,56rem)]">
-          <h3 className="font-heading text-[0.65rem] sm:text-xs tracking-[0.2em] uppercase text-yellow-400/90 mb-4 pb-2 border-b border-yellow-400/25">
-            Creative nonfiction — PDF
-          </h3>
-          <ul className="border-t border-white/10">
-            {SUPPORTING_ARCHIVE_PDF_ITEMS.map((item) => (
-              <li key={item.id} className="border-b border-white/10">
-                <button
-                  type="button"
-                  className={rowBtnClass}
-                  aria-haspopup="dialog"
-                  aria-expanded={previewPdf?.id === item.id}
-                  onClick={() => openPreview(item)}
+        <div
+          ref={archiveScrollHostRef}
+          className="archive-optical-scrollbar-host relative min-h-0 flex-1 min-w-0"
+        >
+          <div
+            ref={archiveScrollAreaRef}
+            onScroll={onArchiveListScroll}
+            onPointerMove={onArchiveScrollAreaPointerMove}
+            className="no-scrollbar h-full min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain pb-[calc(4rem+env(safe-area-inset-bottom,0px))] md:pb-[calc(5rem+env(safe-area-inset-bottom,0px))] pr-0 lg:pr-[max(2rem,calc(1.75rem+env(safe-area-inset-right,0px)))]"
+          >
+            <div
+              ref={archiveScrollContentRef}
+              className="mx-auto w-full max-w-[min(100%,56rem)] space-y-10 sm:space-y-12 pt-4"
+            >
+            {SUPPORTING_ARCHIVE_PDF_SECTIONS.map((section, sectionIndex) => (
+              <div key={section.heading}>
+                <h3
+                  ref={sectionIndex === 0 ? archiveFirstYellowRuleRef : undefined}
+                  className="font-heading text-[0.65rem] sm:text-xs tracking-[0.2em] uppercase text-yellow-400/90 mb-4 pb-2 border-b border-yellow-400/25"
                 >
-                  <span className="font-mono text-[0.7rem] sm:text-xs text-zinc-500 tabular-nums w-7 shrink-0 pt-0.5">
-                    {item.index}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <span className="font-body text-sm sm:text-base text-zinc-200 group-hover:text-white leading-snug inline-block transition-colors duration-200">
-                      {item.title}
-                    </span>
-                    <span className="block font-body text-xs text-zinc-500 mt-1 leading-snug group-hover:text-zinc-400 transition-colors duration-200">
-                      {item.subtitle}
-                    </span>
-                  </div>
-                  <span className="font-mono text-[0.6rem] sm:text-[0.65rem] tracking-[0.14em] uppercase text-zinc-500 group-hover:text-yellow-400 shrink-0 pt-1 transition-colors duration-200">
-                    VIEW
-                  </span>
-                  <FileText
-                    className="w-4 h-4 shrink-0 text-zinc-500 group-hover:text-yellow-400 mt-0.5 transition-colors duration-200"
-                    aria-hidden
-                  />
-                </button>
-              </li>
+                  {section.heading}
+                </h3>
+                <ul className="supporting-archive-pdf-list">
+                  {section.items.map((item, rowIndex) => (
+                    <li key={item.id} className="supporting-archive-pdf-row">
+                      <button
+                        type="button"
+                        className={rowBtnClass}
+                        aria-haspopup="dialog"
+                        aria-expanded={previewPdf?.id === item.id}
+                        onClick={() => openPreview(item)}
+                      >
+                        <span className="font-mono text-[0.7rem] sm:text-xs text-zinc-500 tabular-nums w-7 shrink-0 pt-0.5">
+                          {archiveRowIndexLabel(rowIndex)}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <span className="font-body text-sm sm:text-base text-zinc-200 group-hover:text-white leading-snug inline-block transition-colors duration-200">
+                            {item.title}
+                          </span>
+                          <span className="block font-body text-xs text-zinc-500 mt-1 leading-snug group-hover:text-zinc-400 transition-colors duration-200">
+                            {item.subtitle}
+                          </span>
+                        </div>
+                        <span className="font-mono text-[0.6rem] sm:text-[0.65rem] tracking-[0.14em] uppercase text-zinc-500 group-hover:text-yellow-400 shrink-0 pt-1 transition-colors duration-200">
+                          VIEW
+                        </span>
+                        <FileText
+                          className="w-4 h-4 shrink-0 text-zinc-500 group-hover:text-yellow-400 mt-0.5 transition-colors duration-200"
+                          aria-hidden
+                        />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ))}
-          </ul>
+            </div>
+          </div>
+          <div
+            ref={archiveOpticalRailWrapRef}
+            className="pointer-events-none absolute top-0 z-[2] hidden w-2 lg:block"
+            aria-hidden
+          >
+            <div
+              ref={archiveOpticalTrackRef}
+              className="archive-optical-scrollbar-track relative h-full w-full rounded-full bg-white/[0.06]"
+            >
+              <div
+                ref={archiveOpticalThumbRef}
+                role="presentation"
+                className="archive-optical-scrollbar-thumb pointer-events-auto absolute left-0 right-0 rounded-full bg-white/[0.14] hover:bg-white/[0.22] motion-safe:transition-colors motion-safe:duration-200"
+                style={{ top: 0, height: 0 }}
+                onPointerDown={onArchiveOpticalThumbPointerDown}
+              />
+            </div>
+          </div>
         </div>
       </motion.div>
 
@@ -2205,31 +2498,54 @@ const SupportingProjectsSection = ({
             onClick={closePreview}
             initial={reduceMotion ? false : { opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: reduceMotion ? 0 : 0.35, ease: EASE.out }}
+            transition={{ duration: reduceMotion ? 0 : PREVIEW_PDF_DIALOG_FADE_S, ease: EASE.out }}
           >
             <SectionGridOverlay />
-            <AnimatePresence mode="wait" initial={false}>
-              {!previewCanAnimate && (
+            {/*
+              PdfJsDocumentView stays mounted in the frame below (opacity 0 until ready) so fetch/render
+              runs in parallel with this overlay — loader fade-in is visual only.
+            */}
+            <AnimatePresence
+              mode="wait"
+              initial={true}
+              onExitComplete={() => {
+                setShowPdfFrame((prev) => (prev ? prev : true));
+              }}
+            >
+              {showPdfLoaderOverlay && (
                 <motion.div
                   key={`pdf-loader-${previewPdf.id}`}
-                  className="pointer-events-none absolute inset-0 z-[9] flex items-center justify-center"
+                  className="pointer-events-none absolute inset-0 z-[9] flex flex-col items-center justify-center gap-11"
                   initial={reduceMotion ? false : { opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  exit={reduceMotion ? undefined : { opacity: 0 }}
-                  transition={{ duration: reduceMotion ? 0 : 0.6, ease: EASE.out }}
+                  exit={
+                    reduceMotion
+                      ? undefined
+                      : {
+                          opacity: 0,
+                          transition: { duration: PREVIEW_LOADER_FADE_OUT_S, ease: EASE.out },
+                        }
+                  }
+                  transition={
+                    reduceMotion
+                      ? { duration: 0 }
+                      : {
+                          delay: PREVIEW_LOADER_FADE_IN_DELAY_S,
+                          duration: PREVIEW_LOADER_FADE_IN_S,
+                          ease: EASE.out,
+                        }
+                  }
+                  aria-busy
+                  aria-live="polite"
                 >
-                  <div className="w-[min(21rem,84%)] rounded-md bg-black/20 px-3.5 py-3">
-                    <div className="flex items-center justify-between font-mono text-[0.67rem] uppercase tracking-[0.12em] text-zinc-300">
-                      <span>Loading PDF…</span>
-                      <span>{previewLoadingPct}%</span>
-                    </div>
-                    <div className="mt-2.5 h-[3px] w-full overflow-hidden bg-white/12">
-                      <div
-                        className="h-full bg-gradient-to-r from-white/45 to-zinc-300/30"
-                        style={{ width: `${previewLoadingPct}%` }}
-                      />
-                    </div>
-                  </div>
+                  <span className="sr-only">Loading PDF…</span>
+                  <PdfFoldLoader className="scale-[1.6] sm:scale-[1.85]" />
+                  <p
+                    className="mt-4 font-body text-[0.58rem] uppercase tracking-[0.14em] text-zinc-500"
+                    aria-hidden
+                  >
+                    Loading PDF…
+                  </p>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -2242,7 +2558,7 @@ const SupportingProjectsSection = ({
                   ? { opacity: 1, scaleY: 1, y: 0 }
                   : isPreviewClosing
                     ? { opacity: 0, scaleY: 1, y: 0 }
-                  : previewCanAnimate
+                  : showPdfFrame
                     ? { opacity: 1, scaleY: 1, y: 0 }
                     : { opacity: 0, scaleY: 0.74, y: 0 }
               }
@@ -2267,7 +2583,9 @@ const SupportingProjectsSection = ({
                   >
                     {previewPdf.title}
                   </h2>
-                  <p className="font-body text-[0.7rem] sm:text-xs text-zinc-400 mt-1 leading-snug line-clamp-2">{previewPdf.subtitle}</p>
+                  <p className="font-body text-[0.7rem] sm:text-xs text-zinc-400 mt-1 leading-snug line-clamp-2">
+                    {previewPdf.subtitle}
+                  </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <a
@@ -2293,17 +2611,8 @@ const SupportingProjectsSection = ({
                 <PdfJsDocumentView
                   src={previewPdf.href}
                   className="rounded-lg border border-white/[0.08] bg-black/20"
-                  onReady={() => {
-                    setPreviewPdfReady(true);
-                    setPreviewLoadingTargetPct(100);
-                  }}
-                  onError={() => {
-                    setPreviewPdfReady(true);
-                    setPreviewLoadingTargetPct(100);
-                  }}
-                  onProgress={(pct) =>
-                    setPreviewLoadingTargetPct((prev) => Math.max(prev, Math.max(0, Math.min(100, pct))))
-                  }
+                  onReady={() => setPreviewPdfReady(true)}
+                  onError={() => setPreviewPdfReady(true)}
                 />
               </div>
             </motion.div>
@@ -2641,7 +2950,7 @@ const PalaceProjects = ({
                 onClick={onOpenSupporting}
                 className="border-2 border-white/20 bg-black/40 text-white hover:bg-white/5 hover:border-yellow-400/50 hover:text-yellow-100 rounded-full px-6 py-5 h-auto font-heading text-xs sm:text-sm tracking-[0.18em] uppercase gap-2"
               >
-                ARCHIVE
+                WRITING SAMPLES
                 <ArrowRight className="w-4 h-4 shrink-0 opacity-80" aria-hidden />
               </Button>
             </motion.div>
@@ -2867,283 +3176,322 @@ const EXPERIENCE_DATA = [
   },
 ] as const;
 
-const EXP_FADE_DUR = 0.24; // P3R UI 160–260ms
-const EXP_FADE_EASE = [0.2, 0.8, 0.2, 1] as const;
-
-const EXP_LINE_DURATION_MS = 190;
-const EXP_LINE_DELAY_MS = 229;
-
-const EXPERIENCE_POSITION_KEY = "experience-block-position";
-const EXPERIENCE_POSITION_X_KEY = "experience-block-position-x";
-
-function getStoredExperiencePosition(): number {
-  if (typeof window === "undefined") return EXPERIENCE_BLOCK_POSITION;
-  const stored = window.localStorage.getItem(EXPERIENCE_POSITION_KEY);
-  if (stored === null) return EXPERIENCE_BLOCK_POSITION;
-  const n = Number(stored);
-  return Number.isFinite(n) && n >= 0 && n <= 100 ? n : EXPERIENCE_BLOCK_POSITION;
-}
-
-function getStoredExperiencePositionX(): number {
-  if (typeof window === "undefined") return EXPERIENCE_BLOCK_POSITION_X;
-  const stored = window.localStorage.getItem(EXPERIENCE_POSITION_X_KEY);
-  if (stored === null) return EXPERIENCE_BLOCK_POSITION_X;
-  const n = Number(stored);
-  return Number.isFinite(n) && n >= 0 && n <= 100 ? n : EXPERIENCE_BLOCK_POSITION_X;
-}
-
-const SNAP_PAGE_VH = 51;
-const SNAP_PAGE_VH_MOBILE = 46;
-
-function getSnapVh() {
-  return typeof window !== "undefined" && window.innerWidth < 640 ? SNAP_PAGE_VH_MOBILE : SNAP_PAGE_VH;
-}
-
 const ConfidantExperience = () => {
-  const [position, setPosition] = useState(() =>
-    typeof window !== "undefined" ? getStoredExperiencePosition() : EXPERIENCE_BLOCK_POSITION
-  );
-  const [positionX, setPositionX] = useState(() =>
-    typeof window !== "undefined" ? getStoredExperiencePositionX() : EXPERIENCE_BLOCK_POSITION_X
-  );
-  const headerRef = useRef<HTMLDivElement>(null);
-  const jobListRef = useRef<HTMLDivElement>(null);
-  const [snapIndex, setSnapIndex] = useState(0);
+  const experienceScrollHostRef = useRef<HTMLDivElement>(null);
+  const experienceScrollAreaRef = useRef<HTMLDivElement>(null);
+  const experienceScrollContentRef = useRef<HTMLDivElement>(null);
+  const experienceOpticalRailWrapRef = useRef<HTMLDivElement>(null);
+  const experienceOpticalTrackRef = useRef<HTMLDivElement>(null);
+  const experienceOpticalThumbRef = useRef<HTMLDivElement>(null);
+  const experienceFirstHeadingRef = useRef<HTMLHeadingElement>(null);
+  const experienceScrollHideTimerRef = useRef<number | null>(null);
 
-  const scrollToPrev = useCallback(() => {
-    const el = jobListRef.current;
-    if (!el) return;
-    const pagePx = (getSnapVh() / 100) * window.innerHeight;
-    el.scrollBy({ top: -pagePx, behavior: "smooth" });
+  const updateExperienceOpticalScrollMetrics = useCallback(() => {
+    const scrollEl = experienceScrollAreaRef.current;
+    const trackEl = experienceOpticalTrackRef.current;
+    const thumbEl = experienceOpticalThumbRef.current;
+    const railWrap = experienceOpticalRailWrapRef.current;
+    const hostEl = experienceScrollHostRef.current;
+    if (!scrollEl || !trackEl || !thumbEl) return;
+
+    const opticalActive =
+      typeof window !== "undefined" &&
+      window.matchMedia?.(`(min-width: ${PORTFOLIO_OPTICAL_MIN_VIEWPORT_PX}px)`).matches === true;
+    if (!opticalActive) {
+      if (railWrap) {
+        railWrap.style.top = "";
+        railWrap.style.bottom = "";
+        railWrap.style.right = "";
+        railWrap.style.visibility = "";
+      }
+      thumbEl.style.height = "0px";
+      thumbEl.style.top = "0px";
+      return;
+    }
+
+    if (railWrap) {
+      const firstRuleEl = experienceFirstHeadingRef.current;
+      if (hostEl && firstRuleEl) {
+        const hostTop = hostEl.getBoundingClientRect().top;
+        const ruleBottom = firstRuleEl.getBoundingClientRect().bottom;
+        railWrap.style.top = `${Math.max(0, ruleBottom - hostTop - PORTFOLIO_OPTICAL_RAIL_TOP_OUTSET_PX)}px`;
+      } else if (hostEl) {
+        railWrap.style.top = `${Math.max(0, Math.min(56, Math.round(hostEl.clientHeight * 0.06)) - PORTFOLIO_OPTICAL_RAIL_TOP_OUTSET_PX)}px`;
+      } else {
+        railWrap.style.top = "";
+      }
+
+      const cs = getComputedStyle(scrollEl);
+      const paddingBottomPx = parseFloat(cs.paddingBottom) || 0;
+      let bottomPx = Math.max(
+        0,
+        paddingBottomPx - PORTFOLIO_OPTICAL_RAIL_BOTTOM_NUDGE_PX - PORTFOLIO_OPTICAL_RAIL_BOTTOM_OUTSET_PX,
+      );
+      if (hostEl) {
+        const hostH = hostEl.clientHeight;
+        const railTopPx = parseFloat(getComputedStyle(railWrap).top) || 0;
+        const minTrackPx = 48;
+        const maxBottom = Math.max(0, hostH - railTopPx - minTrackPx);
+        bottomPx = Math.min(bottomPx, maxBottom);
+      }
+      railWrap.style.bottom = `${bottomPx}px`;
+
+      const paddingRightPx = parseFloat(cs.paddingRight) || 0;
+      let railW = railWrap.getBoundingClientRect().width;
+      if (railW <= 0) {
+        railW = 8;
+      }
+      railWrap.style.right = `${Math.max(0, (paddingRightPx - railW) / 2)}px`;
+    }
+
+    const { scrollHeight, clientHeight, scrollTop } = scrollEl;
+    const maxScroll = Math.max(0, scrollHeight - clientHeight);
+    const trackH = trackEl.clientHeight;
+    if (maxScroll <= 0 || trackH <= 0) {
+      thumbEl.style.height = "0px";
+      thumbEl.style.top = "0px";
+      if (railWrap) railWrap.style.visibility = "hidden";
+      return;
+    }
+    if (railWrap) railWrap.style.visibility = "";
+    const coarsePointer =
+      typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches === true;
+    const minThumbPx = coarsePointer ? 36 : 28;
+    const thumbH = Math.min(
+      trackH,
+      Math.max(minThumbPx, (clientHeight / scrollHeight) * trackH),
+    );
+    const thumbTravel = Math.max(0, trackH - thumbH);
+    const thumbTop = thumbTravel <= 0 ? 0 : (scrollTop / maxScroll) * thumbTravel;
+    thumbEl.style.height = `${thumbH}px`;
+    thumbEl.style.top = `${thumbTop}px`;
   }, []);
-  const scrollToNext = useCallback(() => {
-    const el = jobListRef.current;
-    if (!el) return;
-    const pagePx = (getSnapVh() / 100) * window.innerHeight;
-    el.scrollBy({ top: pagePx, behavior: "smooth" });
-  }, []);
+
+  useLayoutEffect(() => {
+    const scrollEl = experienceScrollAreaRef.current;
+    const contentEl = experienceScrollContentRef.current;
+    if (!scrollEl) return;
+    const ro = new ResizeObserver(() => {
+      updateExperienceOpticalScrollMetrics();
+    });
+    ro.observe(scrollEl);
+    if (contentEl) ro.observe(contentEl);
+    const vv = typeof window !== "undefined" ? window.visualViewport : null;
+    const onViewportChange = () => {
+      updateExperienceOpticalScrollMetrics();
+    };
+    if (vv) {
+      vv.addEventListener("resize", onViewportChange);
+      vv.addEventListener("scroll", onViewportChange);
+    }
+    window.addEventListener("orientationchange", onViewportChange);
+    const opticalMql =
+      typeof window !== "undefined"
+        ? window.matchMedia(`(min-width: ${PORTFOLIO_OPTICAL_MIN_VIEWPORT_PX}px)`)
+        : null;
+    const onOpticalBreakpoint = () => {
+      updateExperienceOpticalScrollMetrics();
+    };
+    opticalMql?.addEventListener("change", onOpticalBreakpoint);
+    updateExperienceOpticalScrollMetrics();
+    return () => {
+      ro.disconnect();
+      opticalMql?.removeEventListener("change", onOpticalBreakpoint);
+      if (vv) {
+        vv.removeEventListener("resize", onViewportChange);
+        vv.removeEventListener("scroll", onViewportChange);
+      }
+      window.removeEventListener("orientationchange", onViewportChange);
+    };
+  }, [updateExperienceOpticalScrollMetrics]);
+
+  const onExperienceOpticalThumbPointerDown = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (
+        typeof window === "undefined" ||
+        !window.matchMedia?.(`(min-width: ${PORTFOLIO_OPTICAL_MIN_VIEWPORT_PX}px)`).matches
+      ) {
+        return;
+      }
+      const scrollEl = experienceScrollAreaRef.current;
+      const trackEl = experienceOpticalTrackRef.current;
+      const thumbEl = experienceOpticalThumbRef.current;
+      if (!scrollEl || !trackEl || !thumbEl) return;
+      const maxScroll = Math.max(0, scrollEl.scrollHeight - scrollEl.clientHeight);
+      if (maxScroll <= 0) return;
+      const trackH = trackEl.clientHeight;
+      const thumbH = thumbEl.offsetHeight;
+      const thumbTravel = Math.max(0, trackH - thumbH);
+      const startScrollTop = scrollEl.scrollTop;
+      const startY = e.clientY;
+      thumbEl.setPointerCapture(e.pointerId);
+      const onMove = (ev: PointerEvent) => {
+        const dy = ev.clientY - startY;
+        const dScroll = thumbTravel > 0 ? (dy / thumbTravel) * maxScroll : 0;
+        scrollEl.scrollTop = Math.min(maxScroll, Math.max(0, startScrollTop + dScroll));
+        updateExperienceOpticalScrollMetrics();
+      };
+      const onUp = (ev: PointerEvent) => {
+        try {
+          thumbEl.releasePointerCapture(ev.pointerId);
+        } catch {
+          /* released */
+        }
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+      };
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+    },
+    [updateExperienceOpticalScrollMetrics],
+  );
+
+  const revealExperienceOpticalScrollbar = useCallback(() => {
+    const opticalActive =
+      typeof window !== "undefined" &&
+      window.matchMedia?.(`(min-width: ${PORTFOLIO_OPTICAL_MIN_VIEWPORT_PX}px)`).matches === true;
+    const host = experienceScrollHostRef.current;
+    if (!host || !opticalActive) return;
+    host.classList.add("archive-optical-scrollbar-host--visible");
+    if (experienceScrollHideTimerRef.current !== null) {
+      window.clearTimeout(experienceScrollHideTimerRef.current);
+    }
+    experienceScrollHideTimerRef.current = window.setTimeout(() => {
+      host.classList.remove("archive-optical-scrollbar-host--visible");
+      experienceScrollHideTimerRef.current = null;
+    }, PORTFOLIO_SECTION_SCROLLBAR_VISIBLE_MS);
+    updateExperienceOpticalScrollMetrics();
+  }, [updateExperienceOpticalScrollMetrics]);
+
+  const onExperienceListScroll = useCallback(() => {
+    revealExperienceOpticalScrollbar();
+  }, [revealExperienceOpticalScrollbar]);
+
+  const onExperienceScrollAreaPointerMove = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      const el = experienceScrollAreaRef.current;
+      if (!el) return;
+      if (
+        typeof window === "undefined" ||
+        !window.matchMedia?.(`(min-width: ${PORTFOLIO_OPTICAL_MIN_VIEWPORT_PX}px)`).matches
+      ) {
+        return;
+      }
+      if (!portfolioOpticalPointerInSideGutter(e.clientX, el.getBoundingClientRect())) return;
+      revealExperienceOpticalScrollbar();
+    },
+    [revealExperienceOpticalScrollbar],
+  );
 
   useEffect(() => {
-    const el = jobListRef.current;
-    if (!el) return;
-    const onScroll = () => {
-      const pagePx = (getSnapVh() / 100) * window.innerHeight;
-      const idx = Math.round(el.scrollTop / pagePx);
-      setSnapIndex(Math.max(0, Math.min(idx, EXPERIENCE_DATA.length - 1)));
+    return () => {
+      if (experienceScrollHideTimerRef.current !== null) {
+        window.clearTimeout(experienceScrollHideTimerRef.current);
+      }
     };
-    onScroll();
-    el.addEventListener("scroll", onScroll, { passive: true });
-    return () => el.removeEventListener("scroll", onScroll);
   }, []);
 
-  const handlePositionChange = (raw: number) => {
-    const value = Math.max(0, Math.min(100, raw));
-    setPosition(value);
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(EXPERIENCE_POSITION_KEY, String(value));
-    }
-  };
-
-  const handlePositionXChange = (raw: number) => {
-    const value = Math.max(0, Math.min(100, raw));
-    setPositionX(value);
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(EXPERIENCE_POSITION_X_KEY, String(value));
-    }
-  };
-
-  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = Number(e.target.value);
-    setPosition(value);
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(EXPERIENCE_POSITION_KEY, String(value));
-    }
-  };
-
-  const handleSliderXChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = Number(e.target.value);
-    setPositionX(value);
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(EXPERIENCE_POSITION_X_KEY, String(value));
-    }
-  };
-
-  const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
-  const offsetYVh = ((position - 50) / 50) * 25;
-  const offsetXVw = ((positionX - 50) / 50) * 6;
-  const blockStyle = isMobile ? {} : { transform: `translate(${offsetXVw + 0.75}vw, ${offsetYVh}vh)` };
-
   return (
-    <section id="experience" className={`relative flex flex-col h-screen w-full overflow-hidden sm:py-10 md:py-14 bg-black text-white scroll-mt-6 ${SLIDE}`}>
-       <SectionGridOverlay />
-       <div className="w-full h-full px-5 sm:px-6 md:px-10 relative z-10 flex flex-col items-center justify-center min-h-0">
-         <div
-           className="flex flex-col w-full max-w-4xl sm:max-h-[78vh] sm:min-h-[360px] transition-transform duration-150"
-           style={blockStyle}
-         >
-         <div ref={headerRef} className="flex-none flex flex-col w-full items-start text-left">
-           <SectionHeader
-             title="CAREER OVERVIEW"
-             color="text-white"
-             align="left"
-             showBar={false}
-             compact
-             className="!mb-2 sm:!mb-5 ml-0 w-full"
-             titleTrigger="mount"
-           />
-           <div className="relative w-full mt-1 sm:mt-1.5 min-h-[2px]">
-             <span
-               aria-hidden
-               className="absolute bottom-0 left-0 right-0 h-[2px] sm:h-[2.5px] origin-left block w-full rounded-full opacity-90"
-               style={{ backgroundColor: SECTION_ACCENT_COLOR.experience, transform: 'scaleX(1)' }}
-             />
-           </div>
-         </div>
+    <section
+      id="experience"
+      className={`relative flex h-[100dvh] max-h-[100dvh] w-full flex-col overflow-x-hidden overflow-hidden bg-black font-body text-white scroll-mt-6 ${SLIDE}`}
+    >
+      <SectionGridOverlay />
+      <div className="container relative z-10 mx-auto flex min-h-0 w-full max-w-full min-w-0 flex-1 flex-col px-4 sm:px-6 pt-[calc(6rem+2px)] md:pt-[calc(7.5rem+2px)]">
+        <div className="shrink-0">
+          <SectionHeader
+            title="CAREER OVERVIEW"
+            subtitle="Experience"
+            align="center"
+            showBar={false}
+            compact
+            titleFade
+            className="!mb-5 sm:!mb-6"
+          />
+        </div>
 
-        {/* Job list: each job is exactly 51vh so only two snap points (RAWBLEM, Barista). job’s */}
         <div
-          ref={jobListRef}
-          className="w-full h-[46vh] sm:h-[51vh] min-h-[46vh] sm:min-h-[51vh] mt-2 sm:mt-4 overflow-y-auto overflow-x-hidden no-scrollbar snap-y snap-mandatory"
+          ref={experienceScrollHostRef}
+          className="archive-optical-scrollbar-host relative mt-4 sm:mt-4 min-h-0 flex-1 min-w-0"
         >
-           {EXPERIENCE_DATA.map((job, idx) => (
-             <article
-               key={idx}
-               className="flex flex-col h-[46vh] sm:h-[51vh] min-h-[46vh] sm:min-h-[51vh] shrink-0 pb-2 sm:pb-4 snap-start snap-always"
-             >
-               <header className="mb-1.5 sm:mb-3 shrink-0">
-                 <div className="flex flex-wrap items-baseline gap-x-2 sm:gap-x-3 gap-y-0.5 sm:gap-y-1">
-                   <span className="font-mono text-[10px] sm:text-xs text-zinc-500 tabular-nums w-5 sm:w-8 shrink-0" aria-hidden>{String(idx + 1).padStart(2, "0")}</span>
-                   <h3 className="font-display text-[13px] sm:text-lg md:text-xl font-semibold tracking-tight text-white">{job.role}</h3>
-                 </div>
-                 <div className="flex flex-wrap items-baseline gap-x-2 sm:gap-x-3 gap-y-0.5 mt-0.5">
-                   <span className="w-5 sm:w-8 shrink-0" aria-hidden />
-                   <span className="font-heading text-[10px] sm:text-sm tracking-[0.06em] uppercase text-zinc-400">{job.company}</span>
-                   <span className="text-zinc-600" aria-hidden>·</span>
-                   <span className="font-heading text-[10px] sm:text-sm tracking-[0.06em] uppercase text-zinc-500">{job.location}</span>
-                 </div>
-                 <div className="flex items-baseline gap-x-2 sm:gap-x-3 mt-0.5 sm:mt-1">
-                   <span className="w-5 sm:w-8 shrink-0" aria-hidden />
-                   <time className="font-heading text-[9px] sm:text-xs tracking-[0.08em] uppercase text-zinc-500">{job.period}</time>
-                 </div>
-               </header>
-              <div className="flex flex-col flex-1 min-h-0 overflow-y-auto overflow-x-hidden no-scrollbar border-t border-white/15 pt-1.5 sm:pt-3">
-                <ul className="pl-5 sm:pl-12 list-disc list-outside marker:text-zinc-500 text-zinc-300 border-b border-white/15 pb-1.5 sm:pb-2">
-                  {job.bullets.map((bullet, i) => (
-                    <li
-                      key={i}
-                      className="py-[3px] sm:py-1.5 font-body text-[11px] sm:text-sm md:text-base leading-snug sm:leading-relaxed"
+          <div
+            ref={experienceScrollAreaRef}
+            onScroll={onExperienceListScroll}
+            onPointerMove={onExperienceScrollAreaPointerMove}
+            className="no-scrollbar h-full min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain pb-[calc(4rem+env(safe-area-inset-bottom,0px))] md:pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] pr-0 lg:pr-[max(2rem,calc(1.75rem+env(safe-area-inset-right,0px)))]"
+          >
+            <div
+              ref={experienceScrollContentRef}
+              className="mx-auto w-full max-w-[min(100%,56rem)] space-y-1 sm:space-y-2 pt-1 sm:pt-2 pb-6 sm:pb-8"
+            >
+              {EXPERIENCE_DATA.map((job, idx) => (
+                <div
+                  key={idx}
+                  className="rounded-sm bg-black/40 px-3 py-4 sm:px-4 sm:py-5 -mx-1 transition-[background-color] duration-200 ease-out hover:bg-black/50"
+                >
+                  <div className="mb-3 sm:mb-4 space-y-1.5 sm:space-y-2">
+                    <h3
+                      ref={idx === 0 ? experienceFirstHeadingRef : undefined}
+                      className="font-display text-[0.9375rem] sm:text-lg md:text-xl font-semibold tracking-tight text-white text-balance leading-snug sm:leading-[1.22] md:leading-[1.18]"
                     >
-                      {bullet}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-             </article>
-           ))}
-         </div>
-         {/* Mobile: horizontal arrows below content */}
-         <div
-           className="flex sm:hidden items-center justify-center gap-6 mt-3 z-20 flex-none"
-           aria-label="Experience navigation"
-         >
-           <button
-             type="button"
-             onClick={scrollToPrev}
-             disabled={snapIndex <= 0}
-             aria-label="Previous experience"
-             className="flex items-center justify-center w-8 h-8 rounded-full border border-white/20 bg-black/60 text-white/90 disabled:opacity-30 disabled:pointer-events-none transition-colors duration-200"
-           >
-             <ChevronUp size={16} strokeWidth={2.5} />
-           </button>
-           <span className="font-mono text-[10px] text-zinc-500 tabular-nums">{String(snapIndex + 1).padStart(2, "0")} / {String(EXPERIENCE_DATA.length).padStart(2, "0")}</span>
-           <button
-             type="button"
-             onClick={scrollToNext}
-             disabled={snapIndex >= EXPERIENCE_DATA.length - 1}
-             aria-label="Next experience"
-             className="flex items-center justify-center w-8 h-8 rounded-full border border-white/20 bg-black/60 text-white/90 disabled:opacity-30 disabled:pointer-events-none transition-colors duration-200"
-           >
-             <ChevronDown size={16} strokeWidth={2.5} />
-           </button>
-         </div>
-         </div>
-       </div>
-
-       {/* Desktop: vertical arrows on the right side */}
-       <div
-         className="absolute hidden sm:flex right-4 md:right-8 top-1/2 -translate-y-1/2 z-20 flex-col gap-3"
-         aria-label="Experience navigation"
-       >
-         <button
-           type="button"
-           onClick={scrollToPrev}
-           disabled={snapIndex <= 0}
-           aria-label="Previous experience"
-           className="flex items-center justify-center w-11 h-11 rounded-full border-2 border-white/20 bg-black/60 text-white/90 hover:border-blue-600 hover:text-blue-400 hover:bg-white/5 disabled:opacity-40 disabled:pointer-events-none transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-         >
-           <ChevronUp size={22} strokeWidth={2.5} />
-         </button>
-         <button
-           type="button"
-           onClick={scrollToNext}
-           disabled={snapIndex >= EXPERIENCE_DATA.length - 1}
-           aria-label="Next experience"
-           className="flex items-center justify-center w-11 h-11 rounded-full border-2 border-white/20 bg-black/60 text-white/90 hover:border-blue-600 hover:text-blue-400 hover:bg-white/5 disabled:opacity-40 disabled:pointer-events-none transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-         >
-           <ChevronDown size={22} strokeWidth={2.5} />
-         </button>
-       </div>
-
-       {/* Position sliders: hidden; position data still applied from state/localStorage. Remove "hidden" to show again. */}
-       <div className="hidden absolute bottom-6 left-0 right-0 z-20 px-6 flex flex-col items-center gap-3 pointer-events-none" aria-hidden>
-         <div className="flex flex-col gap-2 w-full max-w-sm">
-           <div className="flex items-center gap-3 w-full">
-             <span className="font-mono text-xs text-zinc-500 uppercase tracking-wider shrink-0 w-16">VERTICAL</span>
-             <input
-               type="range"
-               min={0}
-               max={100}
-               step={1}
-               value={position}
-               onChange={handleSliderChange}
-               aria-label="Vertical position (0–100)"
-               className="flex-1 h-2 rounded-full appearance-none bg-white/10 accent-cyan-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/80 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-cyan-500 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:border-0"
-             />
-             <span className="font-mono text-xs text-zinc-400 tabular-nums w-8 shrink-0">{position}</span>
-           </div>
-           <div className="flex items-center gap-3 w-full">
-             <span className="font-mono text-xs text-zinc-500 uppercase tracking-wider shrink-0 w-16">HORIZONTAL</span>
-             <input
-               type="range"
-               min={0}
-               max={100}
-               step={1}
-               value={positionX}
-               onChange={handleSliderXChange}
-               aria-label="Horizontal position (0–100)"
-               className="flex-1 h-2 rounded-full appearance-none bg-white/10 accent-cyan-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/80 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-cyan-500 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:border-0"
-             />
-             <span className="font-mono text-xs text-zinc-400 tabular-nums w-8 shrink-0">{positionX}</span>
-           </div>
-         </div>
-         <div className="flex items-center gap-1">
-           {EXP_SNAP_POINTS.map((point) => (
-             <button
-               key={point}
-               type="button"
-               onClick={() => handlePositionChange(point)}
-               className={`px-2 py-1 text-xs font-mono border rounded transition-colors ${
-                 position === point
-                   ? "bg-cyan-500/20 border-cyan-500 text-cyan-300"
-                   : "border-white/20 text-zinc-500 hover:border-white/40 hover:text-zinc-400"
-               }`}
-               aria-label={`Snap vertical to ${point}`}
-             >
-               {point}
-             </button>
-           ))}
-         </div>
-       </div>
+                      {job.role}
+                    </h3>
+                    <div className="flex flex-col gap-1.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4 border-b border-blue-600/20 pb-2 sm:pb-2.5">
+                      <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 sm:gap-x-2.5 gap-y-0.5 leading-snug">
+                        <span className="font-heading text-[10px] sm:text-[0.8125rem] tracking-[0.12em] uppercase text-zinc-200">
+                          {job.company}
+                        </span>
+                        <span className="text-zinc-600 shrink-0 translate-y-px" aria-hidden>
+                          ·
+                        </span>
+                        <span className="font-heading text-[10px] sm:text-[0.8125rem] tracking-[0.1em] uppercase text-zinc-500">
+                          {job.location}
+                        </span>
+                      </div>
+                      <time className="font-body text-[10px] sm:text-[0.8125rem] tracking-[0.12em] uppercase text-zinc-600 tabular-nums leading-snug whitespace-nowrap text-right sm:shrink-0 self-end sm:self-auto">
+                        {job.period}
+                      </time>
+                    </div>
+                  </div>
+                  <ul className="m-0 list-none space-y-1.5 sm:space-y-2 p-0 pl-2 sm:pl-3 md:pl-4">
+                    {job.bullets.map((bullet, i) => (
+                      <li key={i} className="flex gap-2.5 sm:gap-3 items-start">
+                        <span
+                          className="mt-[0.32rem] sm:mt-[0.38rem] size-1 sm:size-1.5 shrink-0 rounded-full bg-zinc-500"
+                          aria-hidden
+                        />
+                        <p className="min-w-0 flex-1 text-left font-body text-sm sm:text-[0.9375rem] text-zinc-300 leading-snug sm:leading-[1.42]">
+                          {bullet}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div
+            ref={experienceOpticalRailWrapRef}
+            className="pointer-events-none absolute top-0 z-[2] hidden w-2 lg:block"
+            aria-hidden
+          >
+            <div
+              ref={experienceOpticalTrackRef}
+              className="archive-optical-scrollbar-track relative h-full w-full rounded-full bg-white/[0.06]"
+            >
+              <div
+                ref={experienceOpticalThumbRef}
+                role="presentation"
+                className="archive-optical-scrollbar-thumb pointer-events-auto absolute left-0 right-0 rounded-full bg-white/[0.14] hover:bg-white/[0.22] motion-safe:transition-colors motion-safe:duration-200"
+                style={{ top: 0, height: 0 }}
+                onPointerDown={onExperienceOpticalThumbPointerDown}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
   );
 };
@@ -4024,9 +4372,15 @@ const P3R_STAGGER_MS = 45; // 30–60ms per row
 
 /**
  * When `true`: Core + Tools intro pair shows first; opening a card reveals sub-skills in the overlay (with Close).
- * When `false`: Sub-skills show immediately with prev/next carousel arrows (no intro cards).
+ * When `false`: Both sub-skills panels show inline together, stacked vertically.
  */
 const SKILLS_SHOW_INTRO_PAIR_CARDS = false;
+
+/**
+ * Lightbulb (`AiIdeaSvg`) + gear (`GearSvg`) on intro pair cards and subskills panel headers.
+ * Set `true` to show them again.
+ */
+const SKILLS_SHOW_IDEA_GEAR_DECOR = false;
 
 /* From Uiverse.io by Adrwaan - adapted to match MAIN MENU card style (no extra glow block) */
 const UiverseCard = styled.div`
@@ -4087,6 +4441,14 @@ const UiverseCard = styled.div`
     }
     &:hover {
       transform: none;
+    }
+  }
+
+  /* Two stacked inline panels: share viewport height (overrides single-card cap above). */
+  &.skills-subcard.skills-subcard-dual {
+    max-height: min(calc(50dvh - 3.75rem), 22rem);
+    @media (max-width: 639px) {
+      max-height: min(calc(50dvh - 3.25rem), 19rem);
     }
   }
 `;
@@ -4316,22 +4678,23 @@ const SKILLS_INTRO_MOTION_END_S = Math.max(SKILLS_INTRO_CHROME_STAGGER_END_S, SK
 const SKILLS_OVERLAY_MOTION_END_S = Math.max(MORPH_EXPAND_DUR, SKILLS_PANEL_STAGGER_END_S);
 
 /**
- * Expanded subskills content. Header row: AiIdeaSvg (core) / GearSvg (tools) on the right, aligned
- * with "Core Competencies" / "Toolkit". Removed: `SkillsSourceToggle` toolbar - restore via
- * git; related hover CSS commented in `index.css`. Intro pair cards still use the same SVGs when
- * `SKILLS_SHOW_INTRO_PAIR_CARDS` is true.
+ * Expanded subskills content. Header row: optional AiIdeaSvg / GearSvg when `SKILLS_SHOW_IDEA_GEAR_DECOR`.
+ * Removed: `SkillsSourceToggle` toolbar - restore via git; related hover CSS commented in `index.css`.
  */
 const SkillsSubskillsPanel = ({
   slide,
   variant,
   onClose,
+  dualInline = false,
 }: {
   slide: "core" | "tools";
   variant: "overlay" | "inline";
   onClose?: () => void;
+  /** Both skills panels visible: tighter max-height + in-card scroll. */
+  dualInline?: boolean;
 }) => (
   <UiverseCard
-    className="skills-main-card skills-subcard"
+    className={`skills-main-card skills-subcard${dualInline ? " skills-subcard-dual" : ""}`}
     onClick={variant === "overlay" ? (e) => e.stopPropagation() : undefined}
   >
     <CardBlackFace>
@@ -4354,7 +4717,9 @@ const SkillsSubskillsPanel = ({
         className={
           variant === "overlay"
             ? "relative z-10 flex min-h-0 max-h-[min(680px,90vh)] sm:max-h-[min(440px,58vh)] flex-col overflow-hidden px-4 sm:px-10 md:px-16 lg:px-20 py-4 pt-12 sm:pt-14 pb-5 sm:pb-6 text-left"
-            : "relative z-10 flex min-h-0 max-h-[min(680px,90vh)] sm:max-h-[min(440px,58vh)] flex-col overflow-hidden px-4 sm:px-8 md:px-14 lg:px-16 xl:px-20 py-2.5 sm:py-6 md:py-7 text-left"
+            : dualInline
+              ? "relative z-10 flex min-h-0 max-h-[min(calc(50dvh-3.75rem),22rem)] max-sm:max-h-[min(calc(50dvh-3.25rem),19rem)] flex-col overflow-hidden px-3 sm:px-6 md:px-10 lg:px-12 py-1.5 sm:py-3 md:py-4 text-left"
+              : "relative z-10 flex min-h-0 max-h-[min(680px,90vh)] sm:max-h-[min(440px,58vh)] flex-col overflow-hidden px-4 sm:px-8 md:px-14 lg:px-16 xl:px-20 py-2.5 sm:py-6 md:py-7 text-left"
         }
         variants={skillsPanelStaggerParent}
         initial="hidden"
@@ -4362,78 +4727,91 @@ const SkillsSubskillsPanel = ({
         viewport={{ once: false, amount: 0.08 }}
       >
         <motion.div
-          className="flex flex-shrink-0 flex-col gap-0.5 min-w-0 border-b border-zinc-600/45 pb-2 sm:pb-4 mb-2 sm:mb-4 sm:gap-1.5"
+          className={
+            dualInline && variant === "inline"
+              ? "flex flex-shrink-0 min-w-0 border-b border-zinc-600/25 pb-1.5 sm:pb-2.5 mb-1.5 sm:mb-2.5"
+              : "flex flex-shrink-0 min-w-0 border-b border-zinc-600/25 pb-2 sm:pb-4 mb-2 sm:mb-4"
+          }
           variants={skillsPanelStaggerChild}
         >
-          <p className="min-w-0 text-[11px] sm:text-[13px] uppercase leading-none tracking-[0.2em] sm:tracking-[0.25em] text-zinc-400 whitespace-nowrap truncate">
-            PORTFOLIO // SKILLS
-          </p>
-          <div className="flex min-w-0 flex-row items-end justify-between gap-2 sm:gap-5">
-            <p className="min-w-0 flex-1 font-display text-xl sm:text-3xl md:text-5xl uppercase tracking-tight text-white leading-none whitespace-nowrap truncate">
+          <div className="flex min-w-0 w-full flex-row items-end justify-between gap-2 sm:gap-5">
+            <p
+              className={
+                dualInline && variant === "inline"
+                  ? "min-w-0 flex-1 font-display text-base sm:text-xl md:text-3xl uppercase tracking-tight text-white leading-none whitespace-nowrap truncate"
+                  : "min-w-0 flex-1 font-display text-lg sm:text-2xl md:text-4xl uppercase tracking-tight text-white leading-none whitespace-nowrap truncate"
+              }
+            >
               {slide === "core" ? "Core Competencies" : "Toolkit"}
             </p>
-            <div
-              className="skills-subskills-header-icon shrink-0 translate-y-1.5 sm:translate-y-4 [&_svg]:!w-[29px] [&_svg]:!h-[29px] sm:[&_svg]:!w-[52px] sm:[&_svg]:!h-[52px]"
-              aria-hidden
-            >
-              {slide === "core" ? (
-                <span
-                  className="inline-flex sm:[transform:var(--icon-offset)]"
-                  style={{
-                    "--icon-offset": `translate(${Math.round(SKILLS_CARD_LAYOUT.core.icon.offsetX * (SKILLS_SUBSKILL_HEADER_ICON_PX / SKILLS_CARD_LAYOUT.core.icon.size))}px, ${Math.round(SKILLS_CARD_LAYOUT.core.icon.offsetY * (SKILLS_SUBSKILL_HEADER_ICON_PX / SKILLS_CARD_LAYOUT.core.icon.size))}px)`,
-                  } as React.CSSProperties}
-                >
-                  <AiIdeaSvg
-                    viewBox="0 0 24 24"
-                    className="paperplane"
+            {SKILLS_SHOW_IDEA_GEAR_DECOR ? (
+              <div
+                className={
+                  dualInline && variant === "inline"
+                    ? "skills-subskills-header-icon shrink-0 translate-y-1 sm:translate-y-2 [&_svg]:!w-[26px] [&_svg]:!h-[26px] sm:[&_svg]:!w-[44px] sm:[&_svg]:!h-[44px]"
+                    : "skills-subskills-header-icon shrink-0 translate-y-1.5 sm:translate-y-4 [&_svg]:!w-[29px] [&_svg]:!h-[29px] sm:[&_svg]:!w-[52px] sm:[&_svg]:!h-[52px]"
+                }
+                aria-hidden
+              >
+                {slide === "core" ? (
+                  <span
+                    className="inline-flex sm:[transform:var(--icon-offset)]"
                     style={{
-                      width: SKILLS_SUBSKILL_HEADER_ICON_PX,
-                      height: SKILLS_SUBSKILL_HEADER_ICON_PX,
-                    }}
+                      "--icon-offset": `translate(${Math.round(SKILLS_CARD_LAYOUT.core.icon.offsetX * (SKILLS_SUBSKILL_HEADER_ICON_PX / SKILLS_CARD_LAYOUT.core.icon.size))}px, ${Math.round(SKILLS_CARD_LAYOUT.core.icon.offsetY * (SKILLS_SUBSKILL_HEADER_ICON_PX / SKILLS_CARD_LAYOUT.core.icon.size))}px)`,
+                    } as React.CSSProperties}
                   >
-                    <path strokeLinecap="round" d={AI_IDEA_PATH_1} />
-                    <path data-ai-star d={AI_IDEA_STAR} />
-                    <path d={AI_IDEA_LINE} />
-                  </AiIdeaSvg>
-                </span>
-              ) : (
-                <span
-                  className="inline-flex text-zinc-100 max-sm:translate-y-[5%] sm:[transform:var(--icon-offset)]"
-                  style={{
-                    "--icon-offset": `translate(${Math.round(SKILLS_CARD_LAYOUT.tools.icon.offsetX * (SKILLS_SUBSKILL_HEADER_ICON_PX / SKILLS_CARD_LAYOUT.tools.icon.size))}px, ${Math.round(SKILLS_CARD_LAYOUT.tools.icon.offsetY * (SKILLS_SUBSKILL_HEADER_ICON_PX / SKILLS_CARD_LAYOUT.tools.icon.size)) + Math.round(SKILLS_SUBSKILL_HEADER_ICON_PX * 0.05)}px)`,
-                  } as React.CSSProperties}
-                >
-                  <GearSvg
-                    viewBox="0 0 256 256"
-                    className="paperplane"
+                    <AiIdeaSvg
+                      viewBox="0 0 24 24"
+                      className="paperplane"
+                      style={{
+                        width: SKILLS_SUBSKILL_HEADER_ICON_PX,
+                        height: SKILLS_SUBSKILL_HEADER_ICON_PX,
+                      }}
+                    >
+                      <path strokeLinecap="round" d={AI_IDEA_PATH_1} />
+                      <path data-ai-star d={AI_IDEA_STAR} />
+                      <path d={AI_IDEA_LINE} />
+                    </AiIdeaSvg>
+                  </span>
+                ) : (
+                  <span
+                    className="inline-flex text-zinc-100 max-sm:translate-y-[5%] sm:[transform:var(--icon-offset)]"
                     style={{
-                      width: SKILLS_SUBSKILL_HEADER_ICON_PX,
-                      height: SKILLS_SUBSKILL_HEADER_ICON_PX,
-                    }}
+                      "--icon-offset": `translate(${Math.round(SKILLS_CARD_LAYOUT.tools.icon.offsetX * (SKILLS_SUBSKILL_HEADER_ICON_PX / SKILLS_CARD_LAYOUT.tools.icon.size))}px, ${Math.round(SKILLS_CARD_LAYOUT.tools.icon.offsetY * (SKILLS_SUBSKILL_HEADER_ICON_PX / SKILLS_CARD_LAYOUT.tools.icon.size)) + Math.round(SKILLS_SUBSKILL_HEADER_ICON_PX * 0.05)}px)`,
+                    } as React.CSSProperties}
                   >
-                    <rect width="256" height="256" fill="none" />
-                    <path
-                      d="M130.05,206.11c-1.34,0-2.69,0-4,0L94,224a104.61,104.61,0,0,1-34.11-19.2l-.12-36c-.71-1.12-1.38-2.25-2-3.41L25.9,147.24a99.15,99.15,0,0,1,0-38.46l31.84-18.1c.65-1.15,1.32-2.29,2-3.41l.16-36A104.58,104.58,0,0,1,94,32l32,17.89c1.34,0,2.69,0,4,0L162,32a104.61,104.61,0,0,1,34.11,19.2l.12,36c.71,1.12,1.38,2.25,2,3.41l31.85,18.14a99.15,99.15,0,0,1,0,38.46l-31.84,18.1c-.65,1.15-1.32,2.29-2,3.41l-.16,36A104.58,104.58,0,0,1,162,224Z"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="11"
-                    />
-                    <circle
-                      cx="128"
-                      cy="128"
-                      r="40"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="11"
-                    />
-                  </GearSvg>
-                </span>
-              )}
-            </div>
+                    <GearSvg
+                      viewBox="0 0 256 256"
+                      className="paperplane"
+                      style={{
+                        width: SKILLS_SUBSKILL_HEADER_ICON_PX,
+                        height: SKILLS_SUBSKILL_HEADER_ICON_PX,
+                      }}
+                    >
+                      <rect width="256" height="256" fill="none" stroke="none" />
+                      <path
+                        d="M130.05,206.11c-1.34,0-2.69,0-4,0L94,224a104.61,104.61,0,0,1-34.11-19.2l-.12-36c-.71-1.12-1.38-2.25-2-3.41L25.9,147.24a99.15,99.15,0,0,1,0-38.46l31.84-18.1c.65-1.15,1.32-2.29,2-3.41l.16-36A104.58,104.58,0,0,1,94,32l32,17.89c1.34,0,2.69,0,4,0L162,32a104.61,104.61,0,0,1,34.11,19.2l.12,36c.71,1.12,1.38,2.25,2,3.41l31.85,18.14a99.15,99.15,0,0,1,0,38.46l-31.84,18.1c-.65,1.15-1.32,2.29-2,3.41l-.16,36A104.58,104.58,0,0,1,162,224Z"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="11"
+                      />
+                      <circle
+                        cx="128"
+                        cy="128"
+                        r="40"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="11"
+                      />
+                    </GearSvg>
+                  </span>
+                )}
+              </div>
+            ) : null}
           </div>
         </motion.div>
         <motion.div
@@ -4443,12 +4821,14 @@ const SkillsSubskillsPanel = ({
         <div
           className={
             variant === "inline"
-              ? "h-full min-h-0 overflow-y-hidden overflow-x-hidden pr-2 pb-3 sm:pb-2"
+              ? dualInline
+                ? "h-full min-h-0 overflow-y-auto overflow-x-hidden pr-2 pb-2 no-scrollbar"
+                : "h-full min-h-0 overflow-y-hidden overflow-x-hidden pr-2 pb-3 sm:pb-2"
               : "h-full min-h-0 overflow-y-hidden overflow-x-hidden pr-2 pb-8 sm:pb-2"
           }
         >
           {slide === "core" ? (
-            <div className="text-sm sm:text-base md:text-[1.0625rem] leading-relaxed text-zinc-100 pb-2 border-b border-zinc-600/45">
+            <div className="text-sm sm:text-base md:text-[1.0625rem] leading-relaxed text-zinc-100 pb-2 border-b border-zinc-600/25">
               <div className="grid w-full min-w-0 grid-cols-1 md:grid-cols-3 md:items-start gap-y-3.5 sm:gap-y-8 gap-x-4 md:gap-x-5 lg:gap-x-7 xl:gap-x-8">
                 {CORE_SUBSKILLS_CATEGORIES.map(({ categoryTitle, items }) => (
                   <div
@@ -4486,7 +4866,7 @@ const SkillsSubskillsPanel = ({
               </div>
             </div>
           ) : (
-            <div className="space-y-3 text-sm sm:text-base md:text-[1.0625rem] leading-relaxed text-zinc-100 pb-2 border-b border-zinc-600/45">
+            <div className="space-y-3 text-sm sm:text-base md:text-[1.0625rem] leading-relaxed text-zinc-100 pb-2 border-b border-zinc-600/25">
               <div className="grid w-full min-w-0 grid-cols-1 md:grid-cols-3 md:items-start gap-y-6 sm:gap-y-8 gap-x-6 md:gap-x-8 lg:gap-x-10 xl:gap-x-12 [&>*]:min-w-0">
                 <div className="min-w-0 flex flex-col">
                   <p
@@ -4571,9 +4951,7 @@ const SkillsSubskillsPanel = ({
 );
 
 const SkillArsenal = () => {
-  const [activeSubskills, setActiveSubskills] = useState<"core" | "tools" | null>(
-    SKILLS_SHOW_INTRO_PAIR_CARDS ? null : "core",
-  );
+  const [activeSubskills, setActiveSubskills] = useState<"core" | "tools" | null>(null);
   const [skillsIconFlourish, setSkillsIconFlourish] = useState(false);
   const skillsFlourishCommittedRef = useRef(false);
   const skillsFlourishTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -4611,20 +4989,6 @@ const SkillArsenal = () => {
     [],
   );
 
-  const goSkillsPrev = () =>
-    setActiveSubskills((s) => {
-      if (s === "core") return "tools";
-      if (s === "tools") return "core";
-      return "tools";
-    });
-
-  const goSkillsNext = () =>
-    setActiveSubskills((s) => {
-      if (s === "core") return "tools";
-      if (s === "tools") return "core";
-      return "core";
-    });
-
   return (
     <section
       id="skills"
@@ -4633,15 +4997,27 @@ const SkillArsenal = () => {
     >
       <SectionGridOverlay />
       <div
-        className="container relative z-10 mx-auto flex h-full min-h-0 w-full min-w-0 flex-1 flex-col items-center justify-center overflow-visible px-4 py-[max(1.25rem,env(safe-area-inset-top),env(safe-area-inset-bottom))] sm:px-6 sm:py-8"
+        className="container relative z-10 mx-auto flex h-full min-h-0 w-full max-w-full min-w-0 flex-1 flex-col overflow-visible px-4 sm:px-6 pt-[calc(5.25rem+2px)] md:pt-[calc(6.25rem+2px)] pb-[max(1rem,env(safe-area-inset-bottom))]"
         style={
           SKILLS_LAYOUT.sectionOffsetRem !== 0
             ? { transform: `translateY(${SKILLS_LAYOUT.sectionOffsetRem}rem)` }
             : undefined
         }
       >
-        {/* Cards area: intro pair (gated) + sub-skills overlay or inline carousel */}
-        <div className="skills-content-shell relative z-0 mx-auto flex min-h-0 w-full min-w-0 max-w-[min(100%,88.75rem)] flex-1 flex-col items-center justify-center overflow-visible">
+        <div className="flex w-full min-h-0 flex-1 flex-col items-center justify-center">
+          <div className="flex w-full min-w-0 max-w-[min(100%,88.75rem)] min-h-0 max-h-full flex-col items-center">
+            <div className="shrink-0 w-full">
+              <SectionHeader
+                title="SKILLS"
+                align="center"
+                showBar={false}
+                compact
+                titleFade
+                className="!mb-3 sm:!mb-4"
+              />
+            </div>
+            {/* Cards area: intro pair (gated) + sub-skills overlay or inline dual panels */}
+            <div className="skills-content-shell relative z-0 w-full min-h-0 flex flex-col items-center justify-center overflow-visible">
           {SKILLS_SHOW_INTRO_PAIR_CARDS ? (
             <div className="flex w-full flex-wrap items-center justify-center gap-8">
               <motion.div
@@ -4679,27 +5055,29 @@ const SkillArsenal = () => {
                   >
                     <CardBlackFace>
                       {showRuleOfThirds && <RuleOfThirdsOverlay />}
-                      <span
-                        style={{
-                          transform: `translate(${SKILLS_CARD_LAYOUT.core.icon.offsetX}px, ${SKILLS_CARD_LAYOUT.core.icon.offsetY}px)`,
-                          display: "inline-block",
-                          position: "relative",
-                          zIndex: 1,
-                        }}
-                      >
-                        <AiIdeaSvg
-                          viewBox="0 0 24 24"
-                          className="paperplane"
+                      {SKILLS_SHOW_IDEA_GEAR_DECOR ? (
+                        <span
                           style={{
-                            width: SKILLS_CARD_LAYOUT.core.icon.size,
-                            height: SKILLS_CARD_LAYOUT.core.icon.size,
+                            transform: `translate(${SKILLS_CARD_LAYOUT.core.icon.offsetX}px, ${SKILLS_CARD_LAYOUT.core.icon.offsetY}px)`,
+                            display: "inline-block",
+                            position: "relative",
+                            zIndex: 1,
                           }}
                         >
-                          <path strokeLinecap="round" d={AI_IDEA_PATH_1} />
-                          <path data-ai-star d={AI_IDEA_STAR} />
-                          <path d={AI_IDEA_LINE} />
-                        </AiIdeaSvg>
-                      </span>
+                          <AiIdeaSvg
+                            viewBox="0 0 24 24"
+                            className="paperplane"
+                            style={{
+                              width: SKILLS_CARD_LAYOUT.core.icon.size,
+                              height: SKILLS_CARD_LAYOUT.core.icon.size,
+                            }}
+                          >
+                            <path strokeLinecap="round" d={AI_IDEA_PATH_1} />
+                            <path data-ai-star d={AI_IDEA_STAR} />
+                            <path d={AI_IDEA_LINE} />
+                          </AiIdeaSvg>
+                        </span>
+                      ) : null}
                       <CardTitleSlot
                         style={{
                           bottom: SKILLS_CARD_LAYOUT.core.title.offsetY,
@@ -4740,44 +5118,46 @@ const SkillArsenal = () => {
                   >
                     <CardBlackFace>
                       {showRuleOfThirds && <RuleOfThirdsOverlay />}
-                      <span
-                        style={{
-                          transform: `translate(${SKILLS_CARD_LAYOUT.tools.icon.offsetX}px, ${SKILLS_CARD_LAYOUT.tools.icon.offsetY}px)`,
-                          display: "inline-block",
-                          position: "relative",
-                          zIndex: 1,
-                        }}
-                      >
-                        <GearSvg
-                          viewBox="0 0 256 256"
-                          className="paperplane"
+                      {SKILLS_SHOW_IDEA_GEAR_DECOR ? (
+                        <span
                           style={{
-                            width: SKILLS_CARD_LAYOUT.tools.icon.size,
-                            height: SKILLS_CARD_LAYOUT.tools.icon.size,
+                            transform: `translate(${SKILLS_CARD_LAYOUT.tools.icon.offsetX}px, ${SKILLS_CARD_LAYOUT.tools.icon.offsetY}px)`,
+                            display: "inline-block",
+                            position: "relative",
+                            zIndex: 1,
                           }}
                         >
-                          <rect width="256" height="256" fill="none" />
-                          {/* Gear outline + inner ring, stroke-only (no fill animation) */}
-                          <path
-                            d="M130.05,206.11c-1.34,0-2.69,0-4,0L94,224a104.61,104.61,0,0,1-34.11-19.2l-.12-36c-.71-1.12-1.38-2.25-2-3.41L25.9,147.24a99.15,99.15,0,0,1,0-38.46l31.84-18.1c.65-1.15,1.32-2.29,2-3.41l.16-36A104.58,104.58,0,0,1,94,32l32,17.89c1.34,0,2.69,0,4,0L162,32a104.61,104.61,0,0,1,34.11,19.2l.12,36c.71,1.12,1.38,2.25,2,3.41l31.85,18.14a99.15,99.15,0,0,1,0,38.46l-31.84,18.1c-.65,1.15-1.32,2.29-2,3.41l-.16,36A104.58,104.58,0,0,1,162,224Z"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="11"
-                          />
-                          <circle
-                            cx="128"
-                            cy="128"
-                            r="40"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="11"
-                          />
-                        </GearSvg>
-                      </span>
+                          <GearSvg
+                            viewBox="0 0 256 256"
+                            className="paperplane"
+                            style={{
+                              width: SKILLS_CARD_LAYOUT.tools.icon.size,
+                              height: SKILLS_CARD_LAYOUT.tools.icon.size,
+                            }}
+                          >
+                            <rect width="256" height="256" fill="none" stroke="none" />
+                            {/* Gear outline + inner ring, stroke-only (no fill animation) */}
+                            <path
+                              d="M130.05,206.11c-1.34,0-2.69,0-4,0L94,224a104.61,104.61,0,0,1-34.11-19.2l-.12-36c-.71-1.12-1.38-2.25-2-3.41L25.9,147.24a99.15,99.15,0,0,1,0-38.46l31.84-18.1c.65-1.15,1.32-2.29,2-3.41l.16-36A104.58,104.58,0,0,1,94,32l32,17.89c1.34,0,2.69,0,4,0L162,32a104.61,104.61,0,0,1,34.11,19.2l.12,36c.71,1.12,1.38,2.25,2,3.41l31.85,18.14a99.15,99.15,0,0,1,0,38.46l-31.84,18.1c-.65,1.15-1.32,2.29-2,3.41l-.16,36A104.58,104.58,0,0,1,162,224Z"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="11"
+                            />
+                            <circle
+                              cx="128"
+                              cy="128"
+                              r="40"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="11"
+                            />
+                          </GearSvg>
+                        </span>
+                      ) : null}
                       <CardTitleSlot
                         style={{
                           bottom: SKILLS_CARD_LAYOUT.tools.title.offsetY,
@@ -4808,96 +5188,29 @@ const SkillArsenal = () => {
             </div>
           ) : null}
 
-          {!SKILLS_SHOW_INTRO_PAIR_CARDS && activeSubskills ? (
-            <div className="skills-carousel-wrap flex w-full min-w-0 max-w-full flex-col items-center justify-center overflow-visible py-2 sm:py-3 max-sm:translate-y-8">
-              <div className="flex w-full min-w-0 max-w-full justify-center px-1 sm:px-2 md:px-4">
-                <div
-                  className="skills-source-stack relative flex w-full min-w-0 max-w-[min(100%,1180px)] flex-col max-sm:min-h-[calc(min(680px,90vh)+4.5rem)]"
+          {!SKILLS_SHOW_INTRO_PAIR_CARDS ? (
+            <div className="skills-carousel-wrap flex w-full min-w-0 max-w-full flex-col items-stretch justify-center overflow-visible py-1 sm:py-2">
+              <div className="flex w-full min-w-0 max-w-full justify-center px-1 sm:px-2 md:px-3">
+                <motion.div
+                  className="skills-source-stack flex w-full min-w-0 max-w-[min(100%,1180px)] flex-col gap-3 sm:gap-4"
                   role="group"
                   aria-label="Skills detail"
+                  variants={skillsChromeStaggerParent}
+                  initial="hidden"
+                  whileInView="show"
+                  viewport={{ once: false, amount: 0.12 }}
+                  onAnimationStart={(def) => {
+                    if (def !== "show") return;
+                    scheduleSkillsIconFlourish(SKILLS_INLINE_MOTION_END_S);
+                  }}
                 >
-                  <div className="w-full min-w-0 max-sm:flex max-sm:min-h-0 max-sm:flex-1 max-sm:flex-col max-sm:justify-center">
-                    <motion.div
-                      key={activeSubskills}
-                      className="w-full min-w-0"
-                      variants={skillsChromeStaggerParent}
-                      initial="hidden"
-                      whileInView="show"
-                      viewport={{ once: false, amount: 0.12 }}
-                      onAnimationStart={(def) => {
-                        if (def !== "show") return;
-                        scheduleSkillsIconFlourish(SKILLS_INLINE_MOTION_END_S);
-                      }}
-                    >
-                      <motion.div variants={skillsChromeStaggerChild} className="w-full min-w-0">
-                        <SkillsSubskillsPanel slide={activeSubskills} variant="inline" />
-                      </motion.div>
-                    </motion.div>
-                  </div>
-                  <div className="max-sm:h-[4.5rem] max-sm:shrink-0 sm:hidden" aria-hidden />
-                  {/* Desktop: absolute arrows flanking the card */}
-                  <motion.button
-                    type="button"
-                    onClick={goSkillsPrev}
-                    aria-label="Previous skills category"
-                    whileHover={{ scale: 1.04 }}
-                    whileTap={{ scale: 0.97 }}
-                    transition={{ duration: 0.2 }}
-                    className="hidden sm:flex pointer-events-auto absolute top-1/2 z-50 h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-black/55 text-white backdrop-blur-md md:h-10 md:w-10 right-full mr-3 md:mr-4 hover:border-green-500/55 hover:text-green-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-                  >
-                    <ChevronLeft size={18} strokeWidth={2} aria-hidden />
-                  </motion.button>
-                  <motion.button
-                    type="button"
-                    onClick={goSkillsNext}
-                    aria-label="Next skills category"
-                    whileHover={{ scale: 1.04 }}
-                    whileTap={{ scale: 0.97 }}
-                    transition={{ duration: 0.2 }}
-                    className="hidden sm:flex pointer-events-auto absolute top-1/2 z-50 h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-black/55 text-white backdrop-blur-md md:h-10 md:w-10 left-full ml-3 md:ml-4 hover:border-green-500/55 hover:text-green-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-                  >
-                    <ChevronRight size={18} strokeWidth={2} aria-hidden />
-                  </motion.button>
-
-                  {typeof document !== "undefined"
-                    ? createPortal(
-                        <div
-                          className="sm:hidden pointer-events-none fixed left-0 right-0 z-40 flex h-9 items-center justify-center gap-4 overflow-visible"
-                          style={{ bottom: MOBILE_SKILLS_NAV_BOTTOM }}
-                          role="toolbar"
-                          aria-label="Skills category navigation"
-                        >
-                          <motion.button
-                            type="button"
-                            onClick={goSkillsPrev}
-                            aria-label="Previous skills category"
-                            whileTap={{ scale: 0.95 }}
-                            className={`pointer-events-auto flex ${MOBILE_ROUND_BTN_BASE}`}
-                          >
-                            <ChevronLeft size={18} strokeWidth={2} aria-hidden />
-                          </motion.button>
-                          <div
-                            className="pointer-events-none flex h-9 shrink-0 items-center gap-1 leading-none"
-                            aria-hidden
-                          >
-                            <ChevronDown size={12} className="shrink-0 text-zinc-500 animate-bounce" style={{ animationDuration: "1.8s" }} />
-                            <span className="text-[9px] uppercase tracking-[0.15em] text-zinc-500">Scroll</span>
-                            <ChevronDown size={12} className="shrink-0 text-zinc-500 animate-bounce" style={{ animationDuration: "1.8s" }} />
-                          </div>
-                          <motion.button
-                            type="button"
-                            onClick={goSkillsNext}
-                            aria-label="Next skills category"
-                            whileTap={{ scale: 0.95 }}
-                            className={`pointer-events-auto flex ${MOBILE_ROUND_BTN_BASE}`}
-                          >
-                            <ChevronRight size={18} strokeWidth={2} aria-hidden />
-                          </motion.button>
-                        </div>,
-                        document.body,
-                      )
-                    : null}
-                </div>
+                  <motion.div variants={skillsChromeStaggerChild} className="w-full min-w-0">
+                    <SkillsSubskillsPanel slide="core" variant="inline" dualInline />
+                  </motion.div>
+                  <motion.div variants={skillsChromeStaggerChild} className="w-full min-w-0">
+                    <SkillsSubskillsPanel slide="tools" variant="inline" dualInline />
+                  </motion.div>
+                </motion.div>
               </div>
             </div>
           ) : (
@@ -4931,6 +5244,8 @@ const SkillArsenal = () => {
               ) : null}
             </AnimatePresence>
           )}
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -5466,12 +5781,17 @@ export default function Home() {
           {/* Section panel: layered black, accent edge when incoming, content settle */}
           {currentSection && (
             <motion.div
-              className="fixed inset-0 overflow-y-auto overflow-x-hidden no-scrollbar"
+              className={`fixed inset-0 overflow-x-hidden no-scrollbar ${
+                currentSection === "projects-supporting" || currentSection === "experience"
+                  ? "overflow-y-hidden"
+                  : "overflow-y-auto"
+              }`}
               style={{
                 backgroundColor: "#000",
                 zIndex: currentSection ? 40 : 30,
                 pointerEvents: transitionTarget === "menu" ? "none" : "auto",
-                willChange: "transform",
+                // Dropping will-change after settle avoids Chromium keeping section text on a blurry GPU layer.
+                willChange: !panelSettled || isTransitioning ? "transform" : "auto",
               }}
               aria-label={`Section: ${currentSection}`}
               initial={
@@ -5518,18 +5838,9 @@ export default function Home() {
                   }}
                 />
               )}
-              <motion.div
-                initial={reduceMotion ? false : { opacity: 1, x: "0%" }}
-                animate={{
-                  opacity: reduceMotion ? 1 : transitionTarget === "menu" ? 0.65 : 1,
-                  x: reduceMotion ? "0%" : transitionTarget === "menu" ? "5%" : "0%",
-                }}
-                transition={{
-                  duration: reduceMotion ? 0.2 : PANEL_TRANSITION.duration,
-                  ease: PANEL_TRANSITION.ease,
-                }}
-                className="min-h-screen w-full overflow-x-hidden"
-              >
+              {/* Plain wrapper: nested Framer x/opacity here put every section (incl. experience) under an extra
+                  transform layer — Chromium rasterizes body text soft. Outer panel motion keeps the slide. */}
+              <div className="min-h-screen w-full overflow-x-hidden">
                 {currentSection === "profile" && <PhantomProfile />}
                 {reduceMotion ? (
                   <>
@@ -5581,7 +5892,7 @@ export default function Home() {
                 {currentSection === "experience" && <ConfidantExperience />}
                 {currentSection === "social" && <SocialLink />}
                 {currentSection === "skills" && <SkillArsenal />}
-              </motion.div>
+              </div>
             </motion.div>
           )}
         </>

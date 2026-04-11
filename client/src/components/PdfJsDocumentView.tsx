@@ -4,6 +4,8 @@ import type { PDFDocumentProxy } from "pdfjs-dist";
 
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
+import { PdfFoldLoader } from "@/components/PdfFoldLoader";
+
 type Props = {
   src: string;
   className?: string;
@@ -11,7 +13,6 @@ type Props = {
   maxDpr?: number;
   onReady?: () => void;
   onError?: () => void;
-  onProgress?: (pct: number) => void;
 };
 
 /** Max CSS width for a page inside the viewer (readability on large screens). */
@@ -21,7 +22,7 @@ const MAX_PAGE_CSS_PX = 920;
  * Renders a PDF with PDF.js in a Google Drive–like layout: gray workspace,
  * centered white sheets with shadow, vertical scroll inside the preview only.
  */
-export function PdfJsDocumentView({ src, className = "", maxDpr = 2, onReady, onError, onProgress }: Props) {
+export function PdfJsDocumentView({ src, className = "", maxDpr = 2, onReady, onError }: Props) {
   const [bindMeasureRef, bounds] = useMeasure({ debounce: { scroll: 0, resize: 120 } });
   const pagesHostRef = useRef<HTMLDivElement | null>(null);
 
@@ -29,7 +30,6 @@ export function PdfJsDocumentView({ src, className = "", maxDpr = 2, onReady, on
   const [loadError, setLoadError] = useState<string | null>(null);
   const [pagesError, setPagesError] = useState<string | null>(null);
   const [pagesReady, setPagesReady] = useState(false);
-  const [loadingPct, setLoadingPct] = useState(0);
 
   const viewportWidth = Math.max(0, Math.floor(bounds.width));
   /** Horizontal breathing room inside the gray viewer. */
@@ -48,27 +48,12 @@ export function PdfJsDocumentView({ src, className = "", maxDpr = 2, onReady, on
     setLoadError(null);
     setPagesError(null);
     setPagesReady(false);
-    setLoadingPct(0);
-    onProgress?.(0);
 
     void (async () => {
       try {
         const pdfjs = await import("pdfjs-dist");
         pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
         const loadingTask = pdfjs.getDocument({ url: src });
-        loadingTask.onProgress = (progressData) => {
-          if (!alive) return;
-          const total = progressData.total || 0;
-          const loaded = progressData.loaded || 0;
-          if (total <= 0) return;
-          // Reserve the final stretch for page painting.
-          const pct = Math.max(0, Math.min(90, Math.round((loaded / total) * 90)));
-          setLoadingPct((prev) => {
-            const next = pct > prev ? pct : prev;
-            onProgress?.(next);
-            return next;
-          });
-        };
         const doc = await loadingTask.promise;
         docToDestroy = doc;
         if (!alive) {
@@ -147,18 +132,8 @@ export function PdfJsDocumentView({ src, className = "", maxDpr = 2, onReady, on
           host.appendChild(row);
 
           await page.render({ canvasContext: ctx, viewport }).promise;
-          if (!cancelled) {
-            const renderPct = 90 + Math.round((pageNum / pdfDoc.numPages) * 10);
-            setLoadingPct((prev) => {
-              const next = renderPct > prev ? renderPct : prev;
-              onProgress?.(next);
-              return next;
-            });
-          }
         }
         if (!cancelled) {
-          setLoadingPct(100);
-          onProgress?.(100);
           setPagesReady(true);
         }
       } catch (e) {
@@ -193,18 +168,8 @@ export function PdfJsDocumentView({ src, className = "", maxDpr = 2, onReady, on
           aria-busy
           aria-live="polite"
         >
-          <div className="w-[min(18rem,78%)] rounded-md border border-white/10 bg-black/25 px-3 py-2.5">
-            <div className="flex items-center justify-between font-mono text-[0.58rem] uppercase tracking-[0.12em] text-zinc-400">
-              <span>Loading PDF…</span>
-              <span>{loadingPct}%</span>
-            </div>
-            <div className="mt-2 h-[2px] w-full overflow-hidden bg-white/10">
-              <div
-                className="h-full bg-cyan-400/70 transition-[width] duration-150 ease-out"
-                style={{ width: `${loadingPct}%` }}
-              />
-            </div>
-          </div>
+          <span className="sr-only">Loading PDF…</span>
+          <PdfFoldLoader className="scale-[1.35] sm:scale-150" />
         </div>
       )}
 

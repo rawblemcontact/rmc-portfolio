@@ -101,7 +101,7 @@
     overflow: visible;
     isolation: isolate;
   }
-  
+
   h1, h2, h3, h4, h5, h6 {
     /* Avoid forcing uppercase/letterspacing globally; apply per-component */
     @apply font-heading;
@@ -131,6 +131,72 @@
   }
   .no-scrollbar::-webkit-scrollbar {
     display: none; /* Chrome/Safari */
+  }
+
+  /* Thin scrollbar: hidden until .subtle-scrollbar--visible (scroll-driven fade-in). */
+  .subtle-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0) transparent;
+    transition: scrollbar-color 0.22s ease;
+  }
+  .subtle-scrollbar.subtle-scrollbar--visible {
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  }
+  .subtle-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .subtle-scrollbar::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+  .subtle-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .subtle-scrollbar::-webkit-scrollbar-thumb {
+    background-color: transparent;
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    transition: background-color 0.22s ease;
+  }
+  .subtle-scrollbar.subtle-scrollbar--visible::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.09);
+  }
+  .subtle-scrollbar.subtle-scrollbar--visible::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.18);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .subtle-scrollbar {
+      scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+      transition: none;
+    }
+    .subtle-scrollbar::-webkit-scrollbar-thumb {
+      background-color: rgba(255, 255, 255, 0.09);
+      transition: none;
+    }
+  }
+
+  /* Archive list: decorative rail only (native bar hidden). Length = top/bottom % on host in TS. */
+  .archive-optical-scrollbar-host .archive-optical-scrollbar-thumb {
+    opacity: 0;
+    transition: opacity 0.22s ease;
+  }
+  .archive-optical-scrollbar-host.archive-optical-scrollbar-host--visible .archive-optical-scrollbar-thumb,
+  .archive-optical-scrollbar-host.archive-optical-scrollbar-host--visible .archive-optical-scrollbar-track {
+    opacity: 1;
+  }
+  .archive-optical-scrollbar-track {
+    opacity: 0;
+    transition: opacity 0.22s ease;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .archive-optical-scrollbar-host .archive-optical-scrollbar-thumb,
+    .archive-optical-scrollbar-host .archive-optical-scrollbar-track {
+      opacity: 1;
+      transition: none;
+    }
   }
 
   .p5-clip-path {
@@ -431,13 +497,21 @@
     object-fit: contain;
   }
 
-  /* Subskills tools list: monochrome imgs → same green as MAIN MENU SKILLS row (Tailwind green-600 / #16a34a) */
-  #skills .skills-tool-icon-menu-green {
+  /* Subskills tools list: monochrome imgs → green-600 (same as MAIN MENU SKILLS row) */
+  #skills .skills-tool-icon-subskills {
     max-height: 22px;
     max-width: 22px;
     object-fit: contain;
     filter: brightness(0) saturate(100%) invert(31%) sepia(92%) saturate(640%) hue-rotate(103deg)
       brightness(93%) contrast(88%);
+  }
+
+  /* Subskills panel header: idea icon only when `SKILLS_SHOW_IDEA_GEAR_DECOR` is true in Home.tsx */
+  #skills .skills-subskills-header-icon svg.paperplane[viewBox="0 0 24 24"] {
+    stroke: rgb(161 161 170);
+  }
+  #skills .skills-subskills-header-icon svg.paperplane[viewBox="0 0 24 24"] [data-ai-star] {
+    fill: rgb(161 161 170);
   }
 
   /* Subskills — React Aria TagGroup */
@@ -482,3 +556,86 @@
     outline: none;
   }
 }
+
+/* PDF fold loader — Uiverse.io by vk-uiux (orange-horse-73) */
+.pdf-fold-loader {
+  position: relative;
+  width: 33px;
+  height: 33px;
+  perspective: 67px;
+  opacity: 0.38;
+}
+.pdf-fold-loader > div {
+  width: 100%;
+  height: 100%;
+  background: #52525b;
+  position: absolute;
+  left: 50%;
+  transform-origin: left;
+  animation: pdf-fold-loader-flip 2s infinite;
+}
+.pdf-fold-loader > div:nth-child(1) {
+  animation-delay: 0.15s;
+}
+.pdf-fold-loader > div:nth-child(2) {
+  animation-delay: 0.3s;
+}
+.pdf-fold-loader > div:nth-child(3) {
+  animation-delay: 0.45s;
+}
+.pdf-fold-loader > div:nth-child(4) {
+  animation-delay: 0.6s;
+}
+.pdf-fold-loader > div:nth-child(5) {
+  animation-delay: 0.75s;
+}
+@keyframes pdf-fold-loader-flip {
+  0% {
+    transform: rotateY(0deg);
+  }
+  50%,
+  80% {
+    transform: rotateY(-180deg);
+  }
+  90%,
+  100% {
+    opacity: 0;
+    transform: rotateY(-180deg);
+  }
+}
+.pdf-fold-loader--static > div {
+  animation: none;
+  opacity: 0;
+}
+.pdf-fold-loader--static > div:first-child {
+  opacity: 1;
+  transform: rotateY(0deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .pdf-fold-loader > div {
+    animation: none;
+    opacity: 0;
+  }
+  .pdf-fold-loader > div:first-child {
+    opacity: 1;
+    transform: rotateY(0deg);
+  }
+}
+
+/* ARCHIVE — PDF list row dividers → yellow on row hover */
+.supporting-archive-pdf-list {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  transition: border-color 0.2s ease-out;
+}
+.supporting-archive-pdf-list:has(> li:first-child:hover) {
+  border-top-color: rgba(250, 204, 21, 0.55);
+}
+.supporting-archive-pdf-row {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: border-color 0.2s ease-out;
+}
+.supporting-archive-pdf-row:hover,
+.supporting-archive-pdf-row:has(+ li:hover) {
+  border-bottom-color: rgba(250, 204, 21, 0.55);
+}
+
