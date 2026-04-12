@@ -579,9 +579,9 @@ const BackToMenuButton = ({
   <AnimatePresence>
     {show && (
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: fadeOut ? 0 : 1, y: 0 }}
-        exit={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0, x: -10 }}
+        animate={{ opacity: fadeOut ? 0 : 1, x: 0 }}
+        exit={{ opacity: 0, x: -10 }}
         transition={{ duration: DUR.fast, ease: EASE.out }}
         className="fixed top-5 left-3 z-50 sm:top-6 sm:left-4"
       >
@@ -713,27 +713,33 @@ const SectionHeader = ({
 // --- HERO SECTION ---
 const Hero = ({
   onStart,
+  onQuickProjects,
   isResumeMode,
   toggleResumeMode,
   heroInViewRef,
   active,
 }: {
   onStart: () => void;
+  onQuickProjects: () => void;
   isResumeMode: boolean;
   toggleResumeMode: () => void;
   heroInViewRef: React.RefObject<HTMLDivElement | null>;
   active: boolean;
 }) => {
   const reduceMotion = useReducedMotion();
-  const [starting, setStarting] = useState(false);
+  const heroSlides = PROJECT_CARDS.slice(0, 5);
+  const initialHeroSlideIndex = Math.max(
+    0,
+    heroSlides.findIndex((slide) => slide.id === "project-undertale-fhe"),
+  );
   const [fontsReady, setFontsReady] = useState(false);
-  const startTimersRef = useRef<number[]>([]);
-  const startBtnRef = useRef<HTMLButtonElement | null>(null);
-  const prevActiveRef = useRef<boolean>(false);
-  const [squareMetrics, setSquareMetrics] = useState<{ size: number; gap: number }>({
-    size: 18,
-    gap: 10,
-  });
+  const [heroMediaReady, setHeroMediaReady] = useState(false);
+  const [heroRevealDelayDone, setHeroRevealDelayDone] = useState(false);
+  const [heroSecondaryReady, setHeroSecondaryReady] = useState(false);
+  const [heroSlideIndex, setHeroSlideIndex] = useState(initialHeroSlideIndex);
+  const [heroSlideDirection, setHeroSlideDirection] = useState<1 | -1>(1);
+  const [heroSlidePaused, setHeroSlidePaused] = useState(false);
+  const heroTouchStartYRef = useRef<number | null>(null);
 
   useEffect(() => {
     const ready = () => setFontsReady(true);
@@ -745,174 +751,331 @@ const Hero = ({
     const fallback = window.setTimeout(ready, 1200);
     return () => {
       window.clearTimeout(fallback);
-      startTimersRef.current.forEach((t) => window.clearTimeout(t));
-      startTimersRef.current = [];
     };
   }, []);
 
-  // Reset only when returning to the hero slide (active false -> true).
-  // This prevents "looping" and also avoids cancelling the click animation.
   useEffect(() => {
-    const wasActive = prevActiveRef.current;
-    if (!wasActive && active) setStarting(false);
-    prevActiveRef.current = active;
+    let cancelled = false;
+    const timers: number[] = [];
+
+    const waitForImage = (src?: string) =>
+      new Promise<void>((resolve) => {
+        if (!src) {
+          resolve();
+          return;
+        }
+        const img = new Image();
+        const done = () => resolve();
+        img.onload = done;
+        img.onerror = done;
+        img.src = src;
+      });
+
+    const waitForVideo = (
+      src?: string,
+      opts?: { preload?: "none" | "metadata" | "auto"; timeoutMs?: number; useLoadedData?: boolean },
+    ) =>
+      new Promise<void>((resolve) => {
+        if (!src) {
+          resolve();
+          return;
+        }
+        const video = document.createElement("video");
+        let settled = false;
+        const finish = () => {
+          if (settled) return;
+          settled = true;
+          video.onloadedmetadata = null;
+          video.onloadeddata = null;
+          video.onerror = null;
+          resolve();
+        };
+        video.preload = opts?.preload ?? "metadata";
+        video.muted = true;
+        video.playsInline = true;
+        video.onloadedmetadata = finish;
+        if (opts?.useLoadedData) video.onloadeddata = finish;
+        video.onerror = finish;
+        video.src = src;
+        video.load();
+        timers.push(window.setTimeout(finish, opts?.timeoutMs ?? 2500));
+      });
+
+    const preloadCriticalHeroMedia = async () => {
+      // Gate only on the first visible slide to avoid heavy startup frame drops.
+      const firstSlide = heroSlides[0];
+      await Promise.allSettled([
+        waitForImage(firstSlide?.poster),
+        waitForImage(firstSlide?.thumbnail),
+        waitForVideo(firstSlide?.thumbnailVideo, {
+          preload: "auto",
+          timeoutMs: 3200,
+          useLoadedData: true,
+        }),
+      ]);
+      if (!cancelled) setHeroMediaReady(true);
+    };
+
+    const warmRemainingHeroMedia = () => {
+      const rest = heroSlides.slice(1);
+      rest.forEach((slide, idx) => {
+        timers.push(
+          window.setTimeout(() => {
+            if (cancelled) return;
+            void waitForImage(slide.poster);
+            void waitForImage(slide.thumbnail);
+            void waitForVideo(slide.thumbnailVideo, { preload: "metadata", timeoutMs: 2200 });
+          }, 600 + idx * 220),
+        );
+      });
+    };
+
+    preloadCriticalHeroMedia();
+    timers.push(window.setTimeout(warmRemainingHeroMedia, 900));
+    timers.push(
+      window.setTimeout(() => {
+        if (!cancelled) setHeroMediaReady(true);
+      }, 4200),
+    );
+
+    return () => {
+      cancelled = true;
+      timers.forEach((id) => window.clearTimeout(id));
+    };
+  }, []);
+
+  const goToHeroSlide = useCallback(
+    (nextIndex: number, direction: 1 | -1) => {
+      if (heroSlides.length < 2) return;
+      const wrapped = (nextIndex + heroSlides.length) % heroSlides.length;
+      setHeroSlideDirection(direction);
+      setHeroSlideIndex(wrapped);
+    },
+    [heroSlides.length],
+  );
+
+  const goToNextHeroSlide = useCallback(
+    () => goToHeroSlide(heroSlideIndex + 1, 1),
+    [goToHeroSlide, heroSlideIndex],
+  );
+
+  const goToPrevHeroSlide = useCallback(
+    () => goToHeroSlide(heroSlideIndex - 1, -1),
+    [goToHeroSlide, heroSlideIndex],
+  );
+
+  useEffect(() => {
+    if (!active) return;
+    if (reduceMotion || heroSlidePaused || heroSlides.length < 2) return;
+    const t = window.setInterval(() => {
+      setHeroSlideDirection(1);
+      setHeroSlideIndex((prev) => (prev + 1) % heroSlides.length);
+    }, 2200);
+    return () => window.clearInterval(t);
+  }, [active, reduceMotion, heroSlidePaused, heroSlides.length]);
+
+  useEffect(() => {
+    if (!active) {
+      setHeroSlidePaused(false);
+    }
   }, [active]);
 
-  const onStartClick = () => {
-    if (starting) return;
-    if (reduceMotion) {
-      onStart();
+  useEffect(() => {
+    const assetsReady = fontsReady && heroMediaReady;
+    if (!assetsReady) {
+      setHeroRevealDelayDone(false);
       return;
     }
+    const t = window.setTimeout(() => setHeroRevealDelayDone(true), 550);
+    return () => window.clearTimeout(t);
+  }, [fontsReady, heroMediaReady]);
 
-    // Compute square sizes relative to the actual button size (true morph feel).
-    const btn = startBtnRef.current;
-    if (btn) {
-      const w = btn.clientWidth;
-      const h = btn.clientHeight;
-      const gap = Math.max(8, Math.round(w * 0.045));
-      const size = Math.max(14, Math.floor(Math.min(h * 0.55, (w - gap * 3) / 4)));
-      setSquareMetrics({ size, gap });
+  useEffect(() => {
+    if (!(fontsReady && heroMediaReady && heroRevealDelayDone)) {
+      setHeroSecondaryReady(false);
+      return;
     }
+    // Slider fade is 0.56s; add a brief pause before title/CTA fade begins.
+    const t = window.setTimeout(() => setHeroSecondaryReady(true), 340);
+    return () => window.clearTimeout(t);
+  }, [fontsReady, heroMediaReady, heroRevealDelayDone]);
 
-    setStarting(true);
-
-    // Let the morph begin, but don't wait for completion.
-    startTimersRef.current.forEach((t) => window.clearTimeout(t));
-    startTimersRef.current = [];
-    startTimersRef.current.push(
-      // Ensure the viewer sees the animation before navigating.
-      window.setTimeout(() => onStart(), 500),
-    );
+  const onStartClick = () => {
+    onStart();
   };
 
   const gridPhase = useGridPhase();
+  const heroReady = fontsReady && heroMediaReady && heroRevealDelayDone;
+  const currentHeroSlide = heroSlides[heroSlideIndex];
   return (
-    <section id="hero" className={`relative h-screen w-full overflow-hidden bg-black text-white flex items-center p-6 md:p-10 lg:p-14 ${SLIDE}`}>
+    <section
+      id="hero"
+      className={`relative h-screen w-full overflow-hidden bg-black text-white ${SLIDE_NO_Y_SCROLL}`}
+    >
       <div
-        className="pointer-events-none absolute inset-0 z-0 opacity-[0.04]"
-        style={{ ...gridOverlayStyle, backgroundPosition: `${gridPhase}px ${gridPhase}px` }}
+        className="pointer-events-none absolute inset-0 z-0 opacity-[0.04] grid-drift-bg"
+        style={gridOverlayStyle}
       />
-      <div className="relative z-10 w-full max-w-4xl flex flex-col items-start text-left">
+      {heroReady && (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.56, ease: [0.22, 1, 0.36, 1] }}
+        className="relative z-[5] mx-auto grid h-full w-full max-w-[1680px] grid-rows-[minmax(0,2fr)_minmax(0,1fr)] px-4 pt-4 pb-5 md:px-6 md:pt-6 md:pb-7 lg:px-8 lg:pt-8 lg:pb-8"
+      >
+        <div className="relative flex min-h-0 items-start justify-center pt-4 md:pt-6 lg:pt-8 pb-6 md:pb-8">
+          <div className="relative mx-auto w-full max-w-[1220px]">
+          <div
+            className="relative h-[clamp(240px,45vh,590px)] md:h-[clamp(280px,49vh,660px)] lg:h-[clamp(320px,54vh,730px)] overflow-hidden rounded-[14px] border border-white/18 bg-zinc-950/85 shadow-[0_36px_88px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.08),inset_0_-40px_70px_rgba(0,0,0,0.52)]"
+            onMouseEnter={() => setHeroSlidePaused(true)}
+            onMouseLeave={() => setHeroSlidePaused(false)}
+            onTouchStart={(e) => {
+              heroTouchStartYRef.current = e.touches[0]?.clientY ?? null;
+            }}
+            onTouchEnd={(e) => {
+              const startY = heroTouchStartYRef.current;
+              const endY = e.changedTouches[0]?.clientY;
+              heroTouchStartYRef.current = null;
+              if (startY == null || endY == null) return;
+              const delta = startY - endY;
+              if (Math.abs(delta) < 34) return;
+              if (delta > 0) goToNextHeroSlide();
+              else goToPrevHeroSlide();
+            }}
+          >
+            <div className="pointer-events-none absolute inset-0 z-30 [mask-image:linear-gradient(to_bottom,transparent,black_12%,black_88%,transparent)]">
+              <div className="h-full w-full border-y border-white/20" />
+            </div>
+            <div className="pointer-events-none absolute inset-0 z-30 rounded-[14px] ring-1 ring-inset ring-white/10" />
+
+            <AnimatePresence initial={false} custom={heroSlideDirection}>
+              <motion.article
+                key={currentHeroSlide.id}
+                custom={heroSlideDirection}
+                initial={{ y: heroSlideDirection > 0 ? "100%" : "-100%" }}
+                animate={{ y: "0%" }}
+                exit={{ y: heroSlideDirection > 0 ? "-100%" : "100%" }}
+                transition={{ duration: reduceMotion ? 0.12 : 0.64, ease: [0.2, 0.9, 0.25, 1] }}
+                className="absolute inset-0 transform-gpu"
+                style={{ willChange: "transform" }}
+              >
+                <motion.div
+                  initial={{ y: heroSlideDirection > 0 ? "6%" : "-6%" }}
+                  animate={{ y: 0 }}
+                  exit={{ y: heroSlideDirection > 0 ? "-6%" : "6%" }}
+                  transition={{ duration: reduceMotion ? 0.12 : 0.64, ease: [0.2, 0.9, 0.25, 1] }}
+                  className="absolute inset-0 transform-gpu"
+                  style={{ willChange: "transform" }}
+                >
+                  {currentHeroSlide.thumbnailVideo ? (
+                    <video
+                      src={currentHeroSlide.thumbnailVideo}
+                      poster={currentHeroSlide.poster}
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      className="h-full w-full object-cover object-center"
+                    />
+                  ) : (
+                    <img
+                      src={currentHeroSlide.thumbnail}
+                      alt={currentHeroSlide.title}
+                      className="h-full w-full object-cover object-center"
+                      loading="eager"
+                    />
+                  )}
+                </motion.div>
+
+              </motion.article>
+            </AnimatePresence>
+
+          </div>
+          </div>
+        </div>
         <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={staggerContainer}
-          className="flex flex-col items-start w-full"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: heroSecondaryReady ? 1 : 0 }}
+          transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
+          className="relative z-40 flex min-h-0 items-stretch pt-0"
         >
           <motion.div
-            variants={{ hidden: { opacity: 1 }, visible: { opacity: 1 } }}
-            className="mb-4"
+            initial="hidden"
+            animate="visible"
+            variants={staggerContainer}
+            className="mx-auto flex h-full w-full max-w-[1220px] flex-col items-center justify-center gap-4.5 md:gap-6 py-[14px] md:py-[22px] px-1"
           >
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: fontsReady ? 1 : 0 }}
-              transition={{ duration: 0.15 }}
-              className="font-mono text-xs md:text-sm text-zinc-500 tracking-[0.2em] uppercase"
-            >
-              <TextShutter text="SYSTEM // PORTFOLIO" direction="rtl" duration={0.3} stagger={0} split="none" delay={0} />
-            </motion.p>
-          </motion.div>
+            <div className="min-w-0 w-full max-w-[min(100%,54rem)] text-center">
+              <motion.div
+                variants={{ hidden: { opacity: 1 }, visible: { opacity: 1 } }}
+                className="mb-2.5 flex justify-center"
+              >
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: fontsReady ? 1 : 0 }}
+                  transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+                  className="font-mono text-[10px] md:text-[11px] text-zinc-400 tracking-[0.19em] uppercase"
+                >
+                  SYSTEM // PORTFOLIO
+                </motion.p>
+              </motion.div>
 
-          <motion.h1
-            variants={{ hidden: { opacity: 1 }, visible: { opacity: 1 } }}
-            className="relative mb-4 font-display text-6xl md:text-8xl lg:text-9xl leading-none tracking-tighter"
-          >
-            <span className="block text-white">
-              <TextShutter text="ROBBIE" as="span" direction="ltr" duration={0.3} stagger={0} split="none" delay={0.32} />
-            </span>
-            <span className="block text-cyan-500">
-              <TextShutter text="MCLAUGHLIN" as="span" direction="rtl" duration={0.3} stagger={0} split="none" delay={0.64} />
-            </span>
-          </motion.h1>
+              <motion.h1
+                variants={{ hidden: { opacity: 1 }, visible: { opacity: 1 } }}
+                className="relative mb-3 font-display text-[clamp(1.82rem,5.7vw,4.75rem)] leading-[0.93] tracking-[-0.01em] uppercase whitespace-normal md:whitespace-nowrap"
+              >
+                <span className="inline-block text-white">
+                  ROBBIE
+                </span>
+                <span className="ml-2 inline-block text-cyan-500 md:ml-3">
+                  MCLAUGHLIN
+                </span>
+              </motion.h1>
 
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: fontsReady ? 1 : 0 }}
-            transition={{ duration: 0.2, delay: 0.5 }}
-            className="font-mono text-[11px] md:text-xs text-zinc-500 tracking-widest uppercase mb-12"
-          >
-            WRITER / DIGITAL MEDIA / NARRATIVE SYSTEMS
-          </motion.p>
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: fontsReady ? 1 : 0 }}
+                transition={{ duration: 0.42, delay: 0.56, ease: [0.22, 1, 0.36, 1] }}
+                className="font-mono text-[10px] md:text-[11px] text-zinc-400 tracking-[0.16em] uppercase"
+              >
+                WRITER / DIGITAL MEDIA / NARRATIVE SYSTEMS
+              </motion.p>
+            </div>
 
-          <motion.div ref={heroInViewRef} variants={fadeInUp} className="flex items-center">
-            <motion.div
-              whileHover={HOVER}
-              whileTap={TAP}
-              transition={SPRING.ui}
-            >
+          <motion.div ref={heroInViewRef} variants={fadeInUp} className="mt-0.5 w-full flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3.5">
+            <motion.div whileHover={HOVER} whileTap={TAP} transition={SPRING.ui}>
               <Button
                 size="lg"
-                className={`font-display text-xl uppercase tracking-[0.12em] h-16 w-48 rounded-full transition-all border-4 group relative ${
-                  starting ? "overflow-visible" : "overflow-hidden"
-                } ${
-                  starting
-                    ? "bg-black text-white border-transparent disabled:opacity-100 disabled:bg-black disabled:text-white"
-                    : "bg-white hover:bg-zinc-200 text-black border-transparent hover:border-cyan-500"
-                }`}
+                className="group relative overflow-hidden font-heading text-[10px] md:text-[11px] uppercase tracking-[0.17em] h-10 md:h-10.5 px-4.5 md:px-5 rounded-[10px] bg-black/45 text-white border border-white/28 hover:bg-black/68 hover:border-white/55 transition-all backdrop-blur-sm"
+                onClick={onQuickProjects}
+              >
+                VIEW PROJECTS <ArrowRight className="w-3 h-3 ml-1.5" aria-hidden />
+              </Button>
+            </motion.div>
+            <motion.div whileHover={HOVER} whileTap={TAP} transition={SPRING.ui}>
+              <Button
+                size="lg"
+                className="font-heading text-[10px] md:text-[11px] uppercase tracking-[0.17em] h-10 md:h-10.5 min-w-[122px] md:min-w-[134px] px-4.5 md:px-5 rounded-[10px] transition-all border group relative overflow-hidden backdrop-blur-sm bg-white text-black border-white/75 hover:bg-cyan-200/95 hover:border-cyan-200"
                 onClick={onStartClick}
-                disabled={starting}
-                ref={startBtnRef}
               >
                 <span className="relative z-10 flex items-center justify-center">
-                  <AnimatePresence mode="wait" initial={false}>
-                    {!starting ? (
-                      <motion.span
-                        key="start-label"
-                        initial={{ opacity: 0, y: 4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -4 }}
-                        transition={{ duration: 0.18, ease: EASE.out }}
-                        className="flex items-center justify-center gap-2"
-                      >
-                        START <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" aria-hidden />
-                      </motion.span>
-                    ) : (
-                      <motion.span
-                        key="start-squares"
-                        initial={false}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.98 }}
-                        transition={{ duration: 0.1, ease: EASE.out }}
-                        className="flex w-full items-center justify-between"
-                        aria-hidden
-                        style={{
-                          paddingInline: Math.max(12, Math.round(squareMetrics.gap * 0.8)),
-                          gap: squareMetrics.gap,
-                        }}
-                      >
-                        {[0, 1, 2, 3].map((i) => (
-                          <motion.span
-                            key={i}
-                            className="bg-white rounded-md transform-gpu"
-                            style={{
-                              width: squareMetrics.size,
-                              height: squareMetrics.size,
-                              willChange: "transform, opacity",
-                            }}
-                            initial={{ y: 12, opacity: 0, rotate: 0 }}
-                            animate={{
-                              y: [12, -16, 0],
-                              rotate: [0, 180],
-                              opacity: [0, 1, 1, 1],
-                            }}
-                            transition={{
-                              duration: 0.34,
-                              delay: i * 0.055,
-                              ease: EASE.out,
-                              times: [0, 0.55, 1],
-                            }}
-                          />
-                        ))}
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
+                  <motion.span
+                    key="start-label"
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
+                    className="flex items-center justify-center gap-1"
+                  >
+                    START <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" aria-hidden />
+                  </motion.span>
                 </span>
               </Button>
             </motion.div>
           </motion.div>
         </motion.div>
-      </div>
+        </motion.div>
+      </motion.div>
+      )}
     </section>
   );
 };
@@ -3514,7 +3677,7 @@ const SocialLink = () => {
           transition={{ duration: 0.416, ease: [0.027, 0, 0.06, 1], delay: 0.4 }}
           className="text-4xl md:text-6xl font-display text-white relative z-10 mb-12"
         >
-          LET'S TALK.
+          LET'S CONNECT!
         </motion.h2>
 
         <motion.div
@@ -5472,6 +5635,12 @@ export default function Home() {
   }, [currentSection]);
 
   const handleStart = () => {
+    const root = slidesRef.current;
+    const menuEl = document.getElementById("menu");
+    if (root && menuEl) {
+      root.scrollTo({ left: menuEl.offsetLeft, behavior: reduceMotion ? "auto" : "smooth" });
+      return;
+    }
     scrollToId("menu", reduceMotion ? "auto" : "smooth");
   };
 
@@ -5604,26 +5773,28 @@ export default function Home() {
         }}
         transition={SPRING.ui}
       >
-        <motion.div
-          layoutId="resume-button"
-          whileTap={TAP}
-          transition={SPRING.ui}
-        >
-          <Button 
-            onClick={() => setIsResumeMode(!isResumeMode)}
-            size="icon"
-            aria-label={isResumeMode ? "Exit resume mode" : "Enter resume mode"}
-            className={`shadow-xl border-[3px] transition-colors duration-200 font-display uppercase tracking-widest rounded-full h-14 w-14 min-h-0 min-w-0 p-0 flex items-center justify-center [&_svg]:!size-5 ${
-              isResumeMode 
-                ? "bg-black text-white border-black hover:bg-zinc-800" 
-                : "bg-black text-white border-black hover:bg-white hover:text-black"
-            }`}
+        {!(currentSlideId === "hero" && currentSection === null && !isResumeMode) && (
+          <motion.div
+            layoutId="resume-button"
+            whileTap={TAP}
+            transition={SPRING.ui}
           >
-            {isResumeMode ? <Zap size={20} /> : <FileText size={20} />}
-          </Button>
-        </motion.div>
+            <Button
+              onClick={() => setIsResumeMode(!isResumeMode)}
+              size="icon"
+              aria-label={isResumeMode ? "Exit resume mode" : "Enter resume mode"}
+              className={`shadow-xl border-[3px] transition-colors duration-200 font-display uppercase tracking-widest rounded-full h-14 w-14 min-h-0 min-w-0 p-0 flex items-center justify-center [&_svg]:!size-5 ${
+                isResumeMode
+                  ? "bg-black text-white border-black hover:bg-zinc-800"
+                  : "bg-black text-white border-black hover:bg-white hover:text-black"
+              }`}
+            >
+              {isResumeMode ? <Zap size={20} /> : <FileText size={20} />}
+            </Button>
+          </motion.div>
+        )}
 
-        {!isResumeMode && (currentSlideId !== "menu" || currentSection !== null) && (
+        {!isResumeMode && !(currentSlideId === "hero" && currentSection === null) && (currentSlideId !== "menu" || currentSection !== null) && (
           <motion.div whileTap={TAP} transition={SPRING.ui}>
             <Button
               type="button"
@@ -5767,6 +5938,7 @@ export default function Home() {
           >
             <Hero 
               onStart={handleStart}
+              onQuickProjects={() => navigateTo("projects")}
               isResumeMode={isResumeMode}
               toggleResumeMode={() => setIsResumeMode(!isResumeMode)}
               heroInViewRef={heroInViewRef}

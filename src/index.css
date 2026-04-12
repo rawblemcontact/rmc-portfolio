@@ -124,6 +124,26 @@
 }
 
 @layer utilities {
+  @keyframes gridDriftSmooth {
+    from {
+      background-position: 0 0;
+    }
+    to {
+      background-position: 48px 48px;
+    }
+  }
+
+  .grid-drift-bg {
+    animation: gridDriftSmooth 12s linear infinite;
+    will-change: background-position;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .grid-drift-bg {
+      animation: none;
+    }
+  }
+
   /* Hide scrollbars but keep scrolling (production polish) */
   .no-scrollbar {
     -ms-overflow-style: none; /* IE/Edge legacy */
