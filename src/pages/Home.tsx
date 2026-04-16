@@ -735,7 +735,8 @@ const Hero = ({
   const [fontsReady, setFontsReady] = useState(false);
   const [heroMediaReady, setHeroMediaReady] = useState(false);
   const [heroRevealDelayDone, setHeroRevealDelayDone] = useState(false);
-  const [heroSecondaryReady, setHeroSecondaryReady] = useState(false);
+  const [sliderPhaseActive, setSliderPhaseActive] = useState(false);
+  const [sliderAnimDone, setSliderAnimDone] = useState(false);
   const [heroSlideIndex, setHeroSlideIndex] = useState(initialHeroSlideIndex);
   const [heroSlideDirection, setHeroSlideDirection] = useState<1 | -1>(1);
   const [heroSlidePaused, setHeroSlidePaused] = useState(false);
@@ -890,15 +891,22 @@ const Hero = ({
     return () => window.clearTimeout(t);
   }, [fontsReady, heroMediaReady]);
 
+  // Reset all animation phases when assets aren't ready.
   useEffect(() => {
     if (!(fontsReady && heroMediaReady && heroRevealDelayDone)) {
-      setHeroSecondaryReady(false);
+      setSliderPhaseActive(false);
+      setSliderAnimDone(false);
       return;
     }
-    // Slider fade is 0.56s; add a brief pause before title/CTA fade begins.
-    const t = window.setTimeout(() => setHeroSecondaryReady(true), 340);
+    if (reduceMotion) {
+      setSliderPhaseActive(true);
+      setSliderAnimDone(true);
+      return;
+    }
+    // Phase 1 text: last element completes at ~0.6s. Hold 0.5s → slider phase at 1.1s.
+    const t = window.setTimeout(() => setSliderPhaseActive(true), 1100);
     return () => window.clearTimeout(t);
-  }, [fontsReady, heroMediaReady, heroRevealDelayDone]);
+  }, [fontsReady, heroMediaReady, heroRevealDelayDone, reduceMotion]);
 
   const onStartClick = () => {
     onStart();
@@ -920,13 +928,28 @@ const Hero = ({
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.56, ease: [0.22, 1, 0.36, 1] }}
-        className="relative z-[5] mx-auto grid h-full w-full max-w-[1680px] grid-rows-[minmax(0,2fr)_minmax(0,1fr)] px-4 pt-4 pb-5 md:px-6 md:pt-6 md:pb-7 lg:px-8 lg:pt-8 lg:pb-8"
+        transition={{ duration: 0.12, ease: [0.22, 1, 0.36, 1] }}
+        className="relative z-[5] mx-auto grid h-full w-full max-w-[1680px] grid-rows-[minmax(0,2fr)_minmax(0,1fr)] px-4 pt-0 pb-4 md:px-6 md:pb-5 lg:px-8 lg:pb-6"
       >
-        <div className="relative flex min-h-0 items-start justify-center pt-4 md:pt-6 lg:pt-8 pb-6 md:pb-8">
-          <div className="relative mx-auto w-full max-w-[1220px]">
-          <div
-            className="relative h-[clamp(240px,45vh,590px)] md:h-[clamp(280px,49vh,660px)] lg:h-[clamp(320px,54vh,730px)] overflow-hidden rounded-[14px] border border-white/18 bg-zinc-950/85 shadow-[0_36px_88px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.08),inset_0_-40px_70px_rgba(0,0,0,0.52)]"
+        <div className="relative flex min-h-0 items-start justify-center">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[calc(100vw+8rem)] md:w-[calc(100vw+12rem)] lg:w-[calc(100vw+18rem)]">
+          {sliderPhaseActive && (
+          <motion.div
+            initial={{ scaleY: 0.022 }}
+            animate={{ scaleY: 1 }}
+            transition={reduceMotion ? { duration: 0 } : { duration: 0.95, ease: [0.16, 1, 0.3, 1], delay: 0.08 }}
+            onAnimationComplete={() => setSliderAnimDone(true)}
+            style={{ transformOrigin: "center center", willChange: "transform" }}
+          >
+          <motion.div
+            className="relative h-[clamp(260px,56vh,620px)] md:h-[clamp(300px,58vh,680px)] lg:h-[clamp(340px,61vh,760px)] overflow-hidden rounded-[14px] bg-black"
+            animate={{
+              boxShadow: sliderAnimDone
+                ? "0 36px 88px rgba(0,0,0,0.6), inset 0 -40px 70px rgba(0,0,0,0.52), 0 0 0 1px rgba(255,255,255,0.07), 0 0 28px 4px rgba(255,255,255,0.04)"
+                : "0 36px 88px rgba(0,0,0,0.6), inset 0 -40px 70px rgba(0,0,0,0.52), 0 0 0 1px rgba(255,255,255,0.07), 0 0 28px 4px rgba(255,255,255,0.02)",
+            }}
+            initial={{ boxShadow: "0 36px 88px rgba(0,0,0,0.6), inset 0 -40px 70px rgba(0,0,0,0.52), 0 0 0 1px rgba(255,255,255,0.07), 0 0 28px 4px rgba(255,255,255,0.02)" }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             onMouseEnter={() => setHeroSlidePaused(true)}
             onMouseLeave={() => setHeroSlidePaused(false)}
             onTouchStart={(e) => {
@@ -943,11 +966,13 @@ const Hero = ({
               else goToPrevHeroSlide();
             }}
           >
-            <div className="pointer-events-none absolute inset-0 z-30 [mask-image:linear-gradient(to_bottom,transparent,black_12%,black_88%,transparent)]">
-              <div className="h-full w-full border-y border-white/20" />
-            </div>
-            <div className="pointer-events-none absolute inset-0 z-30 rounded-[14px] ring-1 ring-inset ring-white/10" />
 
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: sliderAnimDone ? 1 : 0 }}
+              transition={reduceMotion ? { duration: 0 } : { duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+              className="absolute inset-0"
+            >
             <AnimatePresence initial={false} custom={heroSlideDirection}>
               <motion.article
                 key={currentHeroSlide.id}
@@ -989,91 +1014,72 @@ const Hero = ({
 
               </motion.article>
             </AnimatePresence>
+            </motion.div>
 
-          </div>
+          </motion.div>
+          </motion.div>
+          )}
           </div>
         </div>
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: heroSecondaryReady ? 1 : 0 }}
-          transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
-          className="relative z-40 flex min-h-0 items-stretch pt-0"
-        >
+        <div className="relative z-40 flex min-h-0 items-stretch pt-0 overflow-visible">
+          {/* Y-transform wrapper: starts at -22vh (centered on screen) during Phase 1,
+              pushes down to 0 when sliderPhaseActive fires simultaneously with slider open */}
           <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={staggerContainer}
-            className="mx-auto flex h-full w-full max-w-[1220px] flex-col items-center justify-center gap-4.5 md:gap-6 py-[14px] md:py-[22px] px-1"
+            className="mx-auto flex h-full w-full max-w-[1220px] flex-col items-center justify-center gap-3 md:gap-4 py-2 px-1"
+            initial={{ y: "-33vh" }}
+            animate={{ y: sliderPhaseActive ? 0 : "-33vh" }}
+            transition={reduceMotion ? { duration: 0 } : { duration: 0.95, ease: [0.16, 1, 0.3, 1], delay: 0.08 }}
           >
-            <div className="min-w-0 w-full max-w-[min(100%,54rem)] text-center">
-              <motion.div
-                variants={{ hidden: { opacity: 1 }, visible: { opacity: 1 } }}
-                className="mb-2.5 flex justify-center"
-              >
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: fontsReady ? 1 : 0 }}
-                  transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-                  className="font-mono text-[10px] md:text-[11px] text-zinc-400 tracking-[0.19em] uppercase"
-                >
-                  SYSTEM // PORTFOLIO
-                </motion.p>
-              </motion.div>
-
+            <div className="min-w-0 w-full max-w-[min(100%,60rem)] text-center">
               <motion.h1
-                variants={{ hidden: { opacity: 1 }, visible: { opacity: 1 } }}
-                className="relative mb-3 font-display text-[clamp(1.82rem,5.7vw,4.75rem)] leading-[0.93] tracking-[-0.01em] uppercase whitespace-normal md:whitespace-nowrap"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.52, delay: 0.1, ease: EASE.out }}
+                className="relative mb-2.5 font-display text-[clamp(2.1rem,6.4vw,5.5rem)] leading-[0.93] tracking-[-0.01em] uppercase whitespace-normal md:whitespace-nowrap"
+                style={{ textShadow: "0 0 12px rgba(255,255,255,0.10)" }}
               >
-                <span className="inline-block text-white">
-                  ROBBIE
-                </span>
-                <span className="ml-2 inline-block text-cyan-500 md:ml-3">
-                  MCLAUGHLIN
-                </span>
+                <span className="inline-block text-white" style={{ letterSpacing: "0.02em", fontKerning: "none" }}>ROBBIE</span>
+                <span className="ml-2 inline-block md:ml-3 text-white" style={{ letterSpacing: "0.02em", fontKerning: "none" }}>MCLAUGHLIN</span>
               </motion.h1>
 
               <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: fontsReady ? 1 : 0 }}
-                transition={{ duration: 0.42, delay: 0.56, ease: [0.22, 1, 0.36, 1] }}
-                className="font-mono text-[10px] md:text-[11px] text-zinc-400 tracking-[0.16em] uppercase"
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.2, ease: EASE.out }}
+                className="font-mono text-[11px] md:text-[12px] text-zinc-400 tracking-[0.16em] uppercase"
               >
                 WRITER / DIGITAL MEDIA / NARRATIVE SYSTEMS
               </motion.p>
             </div>
 
-          <motion.div ref={heroInViewRef} variants={fadeInUp} className="mt-0.5 w-full flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3.5">
-            <motion.div whileHover={HOVER} whileTap={TAP} transition={SPRING.ui}>
-              <Button
-                size="lg"
-                className="group relative overflow-hidden font-heading text-[10px] md:text-[11px] uppercase tracking-[0.17em] h-10 md:h-10.5 px-4.5 md:px-5 rounded-[10px] bg-black/45 text-white border border-white/28 hover:bg-black/68 hover:border-white/55 transition-all backdrop-blur-sm"
-                onClick={onQuickProjects}
-              >
-                VIEW PROJECTS <ArrowRight className="w-3 h-3 ml-1.5" aria-hidden />
-              </Button>
-            </motion.div>
-            <motion.div whileHover={HOVER} whileTap={TAP} transition={SPRING.ui}>
-              <Button
-                size="lg"
-                className="font-heading text-[10px] md:text-[11px] uppercase tracking-[0.17em] h-10 md:h-10.5 min-w-[122px] md:min-w-[134px] px-4.5 md:px-5 rounded-[10px] transition-all border group relative overflow-hidden backdrop-blur-sm bg-white text-black border-white/75 hover:bg-cyan-200/95 hover:border-cyan-200"
-                onClick={onStartClick}
-              >
-                <span className="relative z-10 flex items-center justify-center">
-                  <motion.span
-                    key="start-label"
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
-                    className="flex items-center justify-center gap-1"
-                  >
-                    START <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" aria-hidden />
-                  </motion.span>
-                </span>
-              </Button>
+            <motion.div
+              ref={heroInViewRef}
+              initial={{ opacity: 0, y: 8 }}
+              animate={sliderAnimDone ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
+              transition={{ duration: 0.42, delay: sliderAnimDone ? 0.15 : 0, ease: EASE.out }}
+              className="mt-0.5 w-full flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3.5"
+            >
+              <motion.div whileHover={HOVER} whileTap={TAP} transition={SPRING.ui}>
+                <Button
+                  size="lg"
+                  className="group relative overflow-hidden font-mono text-[11px] md:text-[12px] uppercase tracking-[0.13em] h-11 px-5 md:px-6 rounded-[3px] bg-transparent text-white border border-white/45 hover:bg-white/8 hover:border-white/75 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black transition-all"
+                  onClick={onQuickProjects}
+                >
+                  VIEW PROJECTS <ArrowRight className="w-3 h-3 ml-1.5 group-hover:translate-x-0.5 transition-transform" aria-hidden />
+                </Button>
+              </motion.div>
+              <motion.div whileHover={HOVER} whileTap={TAP} transition={SPRING.ui}>
+                <Button
+                  size="lg"
+                  className="group relative overflow-hidden font-mono text-[11px] md:text-[12px] uppercase tracking-[0.13em] h-11 min-w-[108px] md:min-w-[120px] px-5 md:px-6 rounded-[3px] bg-white text-black border border-white hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black transition-all"
+                  onClick={onStartClick}
+                >
+                  START <ArrowRight className="w-3.5 h-3.5 ml-1 group-hover:translate-x-1 transition-transform" aria-hidden />
+                </Button>
+              </motion.div>
             </motion.div>
           </motion.div>
-        </motion.div>
-        </motion.div>
+        </div>
       </motion.div>
       )}
     </section>
@@ -1098,7 +1104,7 @@ const RainbowMenuSlide = ({
       setPlayLabels(false);
       return;
     }
-    const t = window.setTimeout(() => setPlayLabels(true), 40);
+    const t = window.setTimeout(() => setPlayLabels(true), 140);
     return () => window.clearTimeout(t);
   }, [active]);
 
@@ -5543,6 +5549,7 @@ const ResumeView = () => {
     </div>
   );
 };
+
 
 export default function Home() {
   // Content mask: keeps main content invisible until after first paint so the
