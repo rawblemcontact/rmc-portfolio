@@ -726,6 +726,20 @@ const Hero = ({
   heroInViewRef: React.RefObject<HTMLDivElement | null>;
   active: boolean;
 }) => {
+  type FocalPoint = { x: number; y: number };
+  const HERO_TUNER_STORAGE_KEY = "hero-slider-tuner-v1";
+  const SHOW_HERO_TUNER = false;
+  const parseFocalPoint = (value?: string): FocalPoint => {
+    if (!value) return { x: 50, y: 50 };
+    const [xRaw, yRaw] = value.split(" ");
+    const x = Number.parseFloat((xRaw ?? "50").replace("%", ""));
+    const y = Number.parseFloat((yRaw ?? "50").replace("%", ""));
+    return {
+      x: Number.isFinite(x) ? x : 50,
+      y: Number.isFinite(y) ? y : 50,
+    };
+  };
+
   const reduceMotion = useReducedMotion();
   const heroSlides = PROJECT_CARDS.slice(0, 5);
   const initialHeroSlideIndex = Math.max(
@@ -740,7 +754,52 @@ const Hero = ({
   const [heroSlideIndex, setHeroSlideIndex] = useState(initialHeroSlideIndex);
   const [heroSlideDirection, setHeroSlideDirection] = useState<1 | -1>(1);
   const [heroSlidePaused, setHeroSlidePaused] = useState(false);
+  const [heroFocalLocked, setHeroFocalLocked] = useState<Record<string, FocalPoint>>(() =>
+    Object.fromEntries(heroSlides.map((slide) => [slide.id, parseFocalPoint(slide.focalPoint)])),
+  );
+  const [heroZoomLocked, setHeroZoomLocked] = useState<Record<string, number>>(() =>
+    Object.fromEntries(heroSlides.map((slide) => [slide.id, slide.zoom ?? 1])),
+  );
+  const [heroFocalOverrides, setHeroFocalOverrides] = useState<Record<string, FocalPoint>>({});
+  const [heroZoomOverrides, setHeroZoomOverrides] = useState<Record<string, number>>({});
+  const [bakeCopied, setBakeCopied] = useState(false);
+  const [defaultsApplied, setDefaultsApplied] = useState(false);
   const heroTouchStartYRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(HERO_TUNER_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as {
+        lockedFocal?: Record<string, FocalPoint>;
+        lockedZoom?: Record<string, number>;
+        focal?: Record<string, FocalPoint>;
+        zoom?: Record<string, number>;
+      };
+      if (parsed.lockedFocal) setHeroFocalLocked(parsed.lockedFocal);
+      if (parsed.lockedZoom) setHeroZoomLocked(parsed.lockedZoom);
+      if (parsed.focal) setHeroFocalOverrides(parsed.focal);
+      if (parsed.zoom) setHeroZoomOverrides(parsed.zoom);
+    } catch {
+      // Ignore malformed localStorage and keep defaults.
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        HERO_TUNER_STORAGE_KEY,
+        JSON.stringify({
+          lockedFocal: heroFocalLocked,
+          lockedZoom: heroZoomLocked,
+          focal: heroFocalOverrides,
+          zoom: heroZoomOverrides,
+        }),
+      );
+    } catch {
+      // Ignore write errors (private mode/quota).
+    }
+  }, [heroFocalLocked, heroZoomLocked, heroFocalOverrides, heroZoomOverrides]);
 
   useEffect(() => {
     const ready = () => setFontsReady(true);
@@ -915,6 +974,53 @@ const Hero = ({
   const gridPhase = useGridPhase();
   const heroReady = fontsReady && heroMediaReady && heroRevealDelayDone;
   const currentHeroSlide = heroSlides[heroSlideIndex];
+  const currentFocal = heroFocalOverrides[currentHeroSlide.id] ?? heroFocalLocked[currentHeroSlide.id] ?? parseFocalPoint(currentHeroSlide.focalPoint);
+  const currentZoom = heroZoomOverrides[currentHeroSlide.id] ?? heroZoomLocked[currentHeroSlide.id] ?? currentHeroSlide.zoom ?? 1;
+  const currentFocalString = `${currentFocal.x}% ${currentFocal.y}%`;
+  const currentFitClass = currentZoom < 1 ? "object-contain" : "object-cover";
+  const bakedHeroCode = heroSlides
+    .map((slide) => {
+      const focal = heroFocalOverrides[slide.id] ?? heroFocalLocked[slide.id] ?? parseFocalPoint(slide.focalPoint);
+      const zoom = heroZoomOverrides[slide.id] ?? heroZoomLocked[slide.id] ?? slide.zoom ?? 1;
+      return `  "${slide.id}": { focalPoint: "${Math.round(focal.x)}% ${Math.round(focal.y)}%", zoom: ${zoom.toFixed(2)} },`;
+    })
+    .join("\n");
+
+  const copyBakeValues = async () => {
+    const payload = [
+      "// Paste these into matching PROJECT_CARDS entries:",
+      "const HERO_BAKED_VALUES = {",
+      bakedHeroCode,
+      "};",
+    ].join("\n");
+
+    try {
+      await navigator.clipboard.writeText(payload);
+      setBakeCopied(true);
+      window.setTimeout(() => setBakeCopied(false), 1400);
+    } catch {
+      setBakeCopied(false);
+    }
+  };
+
+  const applyCurrentAsDefaults = () => {
+    const nextLockedFocal: Record<string, FocalPoint> = {};
+    const nextLockedZoom: Record<string, number> = {};
+
+    heroSlides.forEach((slide) => {
+      const focal = heroFocalOverrides[slide.id] ?? heroFocalLocked[slide.id] ?? parseFocalPoint(slide.focalPoint);
+      const zoom = heroZoomOverrides[slide.id] ?? heroZoomLocked[slide.id] ?? slide.zoom ?? 1;
+      nextLockedFocal[slide.id] = focal;
+      nextLockedZoom[slide.id] = zoom;
+    });
+
+    setHeroFocalLocked(nextLockedFocal);
+    setHeroZoomLocked(nextLockedZoom);
+    setHeroFocalOverrides({});
+    setHeroZoomOverrides({});
+    setDefaultsApplied(true);
+    window.setTimeout(() => setDefaultsApplied(false), 1400);
+  };
   return (
     <section
       id="hero"
@@ -1000,13 +1106,23 @@ const Hero = ({
                       muted
                       loop
                       playsInline
-                      className="h-full w-full object-cover object-center"
+                      className={`h-full w-full ${currentFitClass}`}
+                      style={{
+                        objectPosition: currentFocalString,
+                        transform: `scale(${currentZoom})`,
+                        transformOrigin: currentFocalString,
+                      }}
                     />
                   ) : (
                     <img
                       src={currentHeroSlide.thumbnail}
                       alt={currentHeroSlide.title}
-                      className="h-full w-full object-cover object-center"
+                      className={`h-full w-full ${currentFitClass}`}
+                      style={{
+                        objectPosition: currentFocalString,
+                        transform: `scale(${currentZoom})`,
+                        transformOrigin: currentFocalString,
+                      }}
                       loading="eager"
                     />
                   )}
@@ -1036,10 +1152,14 @@ const Hero = ({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.52, delay: 0.1, ease: EASE.out }}
                 className="relative mb-2.5 font-display text-[clamp(2.1rem,6.4vw,5.5rem)] leading-[0.93] tracking-[-0.01em] uppercase whitespace-normal md:whitespace-nowrap"
-                style={{ textShadow: "0 0 12px rgba(255,255,255,0.10)" }}
+                style={{ textShadow: "0 0 10px rgba(255,255,255,0.075)" }}
               >
-                <span className="inline-block text-white" style={{ letterSpacing: "0.02em", fontKerning: "none" }}>ROBBIE</span>
-                <span className="ml-2 inline-block md:ml-3 text-white" style={{ letterSpacing: "0.02em", fontKerning: "none" }}>MCLAUGHLIN</span>
+                <span className="inline-block text-white" style={{ letterSpacing: "0.02em", fontKerning: "none" }}>
+                  ROBBIE
+                </span>
+                <span className="ml-2 inline-block text-white md:ml-3" style={{ letterSpacing: "0.02em", fontKerning: "none" }}>
+                  MCLAUGHLIN
+                </span>
               </motion.h1>
 
               <motion.p
@@ -1057,29 +1177,113 @@ const Hero = ({
               initial={{ opacity: 0, y: 8 }}
               animate={sliderAnimDone ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
               transition={{ duration: 0.42, delay: sliderAnimDone ? 0.15 : 0, ease: EASE.out }}
-              className="mt-0.5 w-full flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3.5"
+              className="mt-0.5 w-full flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6"
             >
-              <motion.div whileHover={HOVER} whileTap={TAP} transition={SPRING.ui}>
-                <Button
-                  size="lg"
-                  className="group relative overflow-hidden font-mono text-[11px] md:text-[12px] uppercase tracking-[0.13em] h-11 px-5 md:px-6 rounded-[3px] bg-transparent text-white border border-white/45 hover:bg-white/8 hover:border-white/75 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black transition-all"
-                  onClick={onQuickProjects}
-                >
-                  VIEW PROJECTS <ArrowRight className="w-3 h-3 ml-1.5 group-hover:translate-x-0.5 transition-transform" aria-hidden />
-                </Button>
-              </motion.div>
-              <motion.div whileHover={HOVER} whileTap={TAP} transition={SPRING.ui}>
-                <Button
-                  size="lg"
-                  className="group relative overflow-hidden font-mono text-[11px] md:text-[12px] uppercase tracking-[0.13em] h-11 min-w-[108px] md:min-w-[120px] px-5 md:px-6 rounded-[3px] bg-white text-black border border-white hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black transition-all"
-                  onClick={onStartClick}
-                >
-                  START <ArrowRight className="w-3.5 h-3.5 ml-1 group-hover:translate-x-1 transition-transform" aria-hidden />
-                </Button>
-              </motion.div>
+              <motion.button
+                type="button"
+                onClick={onStartClick}
+                className="playstore-button playstore-button--primary font-display"
+                whileHover={{ y: -1 }}
+                whileTap={TAP}
+                transition={SPRING.ui}
+              >
+                <span className="texts inline-flex items-center gap-1.5">
+                  PORTFOLIO
+                  <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+                </span>
+              </motion.button>
             </motion.div>
           </motion.div>
         </div>
+        {SHOW_HERO_TUNER && (
+          <div
+            className="absolute right-3 top-3 z-50 w-[min(90vw,18rem)] rounded border border-white/15 bg-black/85 px-3 py-2.5 backdrop-blur-sm"
+            onMouseEnter={() => setHeroSlidePaused(true)}
+            onMouseLeave={() => setHeroSlidePaused(false)}
+          >
+            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400">Hero crop/zoom tuner</p>
+            <p className="mt-1 truncate font-display text-xs uppercase text-white/95">{currentHeroSlide.title}</p>
+            <div className="mt-2 space-y-2">
+              <label className="block">
+                <span className="mb-1 block font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">
+                  X ({Math.round(currentFocal.x)}%)
+                </span>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={currentFocal.x}
+                  onChange={(e) => {
+                    const nextX = Number(e.target.value);
+                    setHeroFocalOverrides((prev) => ({
+                      ...prev,
+                      [currentHeroSlide.id]: { x: nextX, y: currentFocal.y },
+                    }));
+                  }}
+                  className="h-1.5 w-full accent-zinc-200"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">
+                  Y ({Math.round(currentFocal.y)}%)
+                </span>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={currentFocal.y}
+                  onChange={(e) => {
+                    const nextY = Number(e.target.value);
+                    setHeroFocalOverrides((prev) => ({
+                      ...prev,
+                      [currentHeroSlide.id]: { x: currentFocal.x, y: nextY },
+                    }));
+                  }}
+                  className="h-1.5 w-full accent-zinc-200"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">
+                  Zoom ({currentZoom.toFixed(2)}x)
+                </span>
+                <input
+                  type="range"
+                  min={0.7}
+                  max={1.8}
+                  step={0.01}
+                  value={currentZoom}
+                  onChange={(e) => {
+                    const nextZoom = Number(e.target.value);
+                    setHeroZoomOverrides((prev) => ({
+                      ...prev,
+                      [currentHeroSlide.id]: nextZoom,
+                    }));
+                  }}
+                  className="h-1.5 w-full accent-zinc-200"
+                />
+              </label>
+            </div>
+            <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
+              object-position: {currentFocalString} | zoom: {currentZoom.toFixed(2)}x
+            </p>
+            <div className="mt-2 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={copyBakeValues}
+                className="inline-flex items-center justify-center border border-white/20 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-200 hover:border-white/45 hover:text-white"
+              >
+                {bakeCopied ? "Copied" : "Copy baked values"}
+              </button>
+              <button
+                type="button"
+                onClick={applyCurrentAsDefaults}
+                className="inline-flex items-center justify-center border border-white/20 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-200 hover:border-white/45 hover:text-white"
+              >
+                {defaultsApplied ? "Applied" : "Auto-apply"}
+              </button>
+            </div>
+          </div>
+        )}
       </motion.div>
       )}
     </section>
@@ -1588,6 +1792,10 @@ type ShowcaseProjectCard = {
   readonly thumbnail?: string;
   readonly thumbnailVideo?: string;
   readonly poster?: string;
+  /** Optional crop focus for `object-cover` (e.g. "50% 36%"). */
+  readonly focalPoint?: string;
+  /** Optional per-project hero zoom baseline (1 = default cover scale). */
+  readonly zoom?: number;
   /** Detail overlay — fixed section order: Overview, Role, Tools, Impact. */
   readonly detailOverview?: string;
   readonly detailRole?: string;
@@ -1602,6 +1810,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     tagline: "Creative brand & short-form content system",
     thumbnailVideo: "/rawblem-thumbnail.mp4",
     poster: "/rawblem-thumbnail-poster.jpg",
+    focalPoint: "50% 34%",
     detailOverview:
       "A focused creative brand built around short-form video and repeatable content beats—treatment, capture, and platform-native packaging.",
     detailRole: "Sole creator: concept, production, edit, and distribution.",
@@ -1613,6 +1822,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     title: "8-bit Film Festival bumpers",
     tagline: "Pixel animation project",
     thumbnail: "/8bit-festival-thumbnail.jpg",
+    focalPoint: "50% 42%",
     detailOverview:
       "Pixel-style bumpers and interstitials for a film festival program—simple loops, readable typography, and arcade-era restraint.",
     detailRole: "Animation, art direction, and asset delivery for playback.",
@@ -1624,6 +1834,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     title: "UNDERTALE — Forever Home Edition",
     tagline: "Game project · GameMaker Studio 2",
     thumbnail: "/undertale-fhe-thumbnail.png",
+    focalPoint: "50% 40%",
     detailOverview:
       "A GameMaker Studio 2 project exploring Undertale-inspired tone and structure—rooms, encounters, and narrative pacing as design problems.",
     detailRole: "Design, implementation, and iteration in GMS2.",
@@ -1636,6 +1847,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     tagline: "React, Vite, Framer Motion",
     thumbnailVideo: "/portfolio-website-thumbnail-v2.mp4",
     poster: "/portfolio-website-thumbnail-v2-poster.jpg",
+    focalPoint: "50% 38%",
     detailOverview:
       "A client-side portfolio with motion-forward UI, editorial grids, and careful performance budgets for media-heavy sections.",
     detailRole: "Design and front-end implementation.",
@@ -1647,6 +1859,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     title: "SLAYWIRE",
     tagline: "Original graphic novel & narrative IP",
     thumbnail: "/slaywire-thumbnail.png",
+    focalPoint: "50% 40%",
     detailOverview:
       "Original long-form illustrated narrative—worldbuilding, cast, and visual development for a standalone graphic novel.",
     detailRole: "Writer, illustrator, and world/visual development.",
@@ -1659,6 +1872,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     tagline: "Video project",
     thumbnailVideo: "/edits-meme1-online.mp4",
     poster: "/edits-meme1-online-poster.jpg",
+    focalPoint: "50% 36%",
     detailOverview:
       "Short-form edits built around timing, meme literacy, and platform-native pacing—hooks, captions, and sound-led moments.",
     detailRole: "Editor and creative director for individual cuts.",
@@ -1829,10 +2043,8 @@ const ProjectsStack = ({
     containScroll: false,
   });
 
-  const [canPrev, setCanPrev] = useState(false);
-  const [canNext, setCanNext] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [autoplayIndex, setAutoplayIndex] = useState(-1);
+  const [autoplayIndices, setAutoplayIndices] = useState<number[]>([]);
   const [autoplayGateOpen, setAutoplayGateOpen] = useState(false);
 
   const setTweenFactor = useCallback((api: EmblaCarouselType) => {
@@ -1880,8 +2092,6 @@ const ProjectsStack = ({
   const syncCarouselUi = useCallback(() => {
     if (!emblaApi) return;
     setSelectedIndex(emblaApi.selectedScrollSnap());
-    setCanPrev(emblaApi.canScrollPrev());
-    setCanNext(emblaApi.canScrollNext());
   }, [emblaApi]);
 
   useEffect(() => {
@@ -1924,7 +2134,7 @@ const ProjectsStack = ({
     }
 
     setAutoplayGateOpen(false);
-    setAutoplayIndex(-1);
+    setAutoplayIndices([]);
 
     videoRefs.current.forEach((video) => {
       if (!video) return;
@@ -1954,32 +2164,30 @@ const ProjectsStack = ({
 
   useEffect(() => {
     if (!autoplayGateOpen) return;
+    const syncVisibleAutoplay = () => {
+      if (!emblaApi) {
+        setAutoplayIndices(PROJECT_CARDS[selectedIndex]?.thumbnailVideo ? [selectedIndex] : []);
+        return;
+      }
+      const visible = emblaApi.slidesInView();
+      const playable = visible.filter((idx) => !!PROJECT_CARDS[idx]?.thumbnailVideo);
+      setAutoplayIndices(playable);
+    };
 
-    const selectedCard = PROJECT_CARDS[selectedIndex];
-    if (!selectedCard?.thumbnailVideo) return;
-
-    const selectedVideo = videoRefs.current[selectedIndex];
-    if (!selectedVideo) return;
-
-    const unlockAutoplay = () => setAutoplayIndex(selectedIndex);
-
-    // Start as soon as selected preview has enough data to begin playback.
-    if (selectedVideo.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
-      unlockAutoplay();
-      return;
-    }
-
-    // Ensure browser starts fetching media for the selected preview.
-    selectedVideo.load();
-    selectedVideo.addEventListener("canplay", unlockAutoplay, { once: true });
-    return () => selectedVideo.removeEventListener("canplay", unlockAutoplay);
-  }, [autoplayGateOpen, selectedIndex]);
+    syncVisibleAutoplay();
+    emblaApi?.on("select", syncVisibleAutoplay);
+    emblaApi?.on("reInit", syncVisibleAutoplay);
+    return () => {
+      emblaApi?.off("select", syncVisibleAutoplay);
+      emblaApi?.off("reInit", syncVisibleAutoplay);
+    };
+  }, [autoplayGateOpen, selectedIndex, emblaApi]);
 
   useEffect(() => {
     videoRefs.current.forEach((video, index) => {
       if (!video) return;
 
-      if (index === autoplayIndex) {
+      if (autoplayIndices.includes(index)) {
         const playPromise = video.play();
         if (playPromise) {
           playPromise.catch(() => {
@@ -1992,24 +2200,11 @@ const ProjectsStack = ({
       video.pause();
       video.currentTime = 0;
     });
-  }, [autoplayIndex]);
+  }, [autoplayIndices]);
 
   return (
-    <div className="mx-auto flex w-full min-w-0 max-w-[min(100%,56rem)] justify-center items-center gap-2 sm:gap-3 md:gap-5 lg:gap-6 py-8 px-1 sm:px-2 overflow-x-visible overflow-y-visible lg:max-w-[min(100%,72rem)] xl:max-w-[min(100%,84rem)] 2xl:max-w-[min(100%,96rem)]">
-      <motion.button
-        type="button"
-        onClick={() => emblaApi?.scrollPrev()}
-        disabled={!canPrev}
-        aria-label="Previous projects"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.98 }}
-        transition={{ duration: 0.2 }}
-        className="relative z-[1] flex-shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-full border-2 border-white/20 flex items-center justify-center text-white hover:border-yellow-400/50 hover:text-yellow-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black disabled:opacity-35 disabled:pointer-events-none"
-      >
-        <ChevronLeft size={28} strokeWidth={2} aria-hidden />
-      </motion.button>
-
-      <div className="min-w-0 max-w-full flex-[1_1_auto] overflow-hidden [--slide-gap:0.875rem] sm:[--slide-gap:1.25rem] lg:[--slide-gap:1rem] xl:[--slide-gap:1.125rem]">
+    <div className="mx-auto flex w-full min-w-0 max-w-[min(100%,56rem)] flex-col justify-center items-center py-8 px-1 sm:px-2 overflow-x-visible overflow-y-visible lg:max-w-[min(100%,72rem)] xl:max-w-[min(100%,84rem)] 2xl:max-w-[min(100%,96rem)]">
+      <div className="min-w-0 max-w-full w-full overflow-hidden [--slide-gap:0.875rem] sm:[--slide-gap:1.25rem] lg:[--slide-gap:1rem] xl:[--slide-gap:1.125rem]">
         {/*
          * Slides: 1× full width < lg; lg+ 2 columns. Embla `align: start` + clip + slightly under-filled halves = no neighbor slivers.
          */}
@@ -2059,7 +2254,8 @@ const ProjectsStack = ({
                               playsInline
                               preload={index === selectedIndex ? "metadata" : "none"}
                               aria-label={`${card.title} preview`}
-                              className="block h-full w-full object-cover object-center"
+                              className="block h-full w-full object-cover"
+                              style={{ objectPosition: card.focalPoint ?? "50% 50%" }}
                             />
                           ) : (
                             <img
@@ -2068,7 +2264,8 @@ const ProjectsStack = ({
                               loading="lazy"
                               decoding="async"
                               fetchPriority={index === selectedIndex ? "high" : "low"}
-                              className="h-full w-full object-cover object-center"
+                              className="h-full w-full object-cover"
+                              style={{ objectPosition: card.focalPoint ?? "50% 50%" }}
                             />
                           )}
                         </div>
@@ -2119,19 +2316,22 @@ const ProjectsStack = ({
           </div>
         </div>
       </div>
-
-      <motion.button
-        type="button"
-        onClick={() => emblaApi?.scrollNext()}
-        disabled={!canNext}
-        aria-label="Next projects"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.98 }}
-        transition={{ duration: 0.2 }}
-        className="relative z-[1] flex-shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-full border-2 border-white/20 flex items-center justify-center text-white hover:border-yellow-400/50 hover:text-yellow-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black disabled:opacity-35 disabled:pointer-events-none"
-      >
-        <ChevronRight size={28} strokeWidth={2} aria-hidden />
-      </motion.button>
+      <div className="mt-4 flex items-center justify-center gap-2.5">
+        {(emblaApi?.scrollSnapList() ?? []).map((_, snapIdx) => (
+          <button
+            key={`showcase-dot-${snapIdx}`}
+            type="button"
+            onClick={() => emblaApi?.scrollTo(snapIdx)}
+            aria-label={`Go to slide ${snapIdx + 1}`}
+            aria-current={selectedIndex === snapIdx ? "true" : undefined}
+            className={`h-2.5 w-2.5 rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
+              selectedIndex === snapIdx
+                ? "bg-white scale-110"
+                : "bg-white/35 hover:bg-white/55"
+            }`}
+          />
+        ))}
+      </div>
     </div>
   );
 };
@@ -2796,22 +2996,31 @@ const SupportingProjectsSection = ({
 
 type CardRect = { top: number; left: number; width: number; height: number };
 
-/** Full-bleed media for the settled project detail hero (no title/tagline overlay — those live below). */
-const DetailCardMedia = ({ card }: { card: ShowcaseProjectCard }) =>
-  card.thumbnailVideo ? (
-    <video
-      src={card.thumbnailVideo}
-      poster={card.poster}
-      muted
-      loop
-      autoPlay
-      playsInline
-      preload="auto"
-      className="block h-full w-full object-cover object-center"
-    />
-  ) : (
-    <img src={card.thumbnail} alt={card.title} className="h-full w-full object-cover object-center" />
-  );
+/** Settled project detail hero — full-bleed media with per-project focal crop. */
+const DetailCardMedia = ({ card }: { card: ShowcaseProjectCard }) => (
+  <>
+    {card.thumbnailVideo ? (
+      <video
+        src={card.thumbnailVideo}
+        poster={card.poster}
+        muted
+        loop
+        autoPlay
+        playsInline
+        preload="auto"
+        className="block h-full w-full object-cover"
+        style={{ objectPosition: card.focalPoint ?? "50% 50%" }}
+      />
+    ) : (
+      <img
+        src={card.thumbnail}
+        alt={card.title}
+        className="h-full w-full object-cover"
+        style={{ objectPosition: card.focalPoint ?? "50% 50%" }}
+      />
+    )}
+  </>
+);
 
 const showcaseDetailCard =
   "border border-white/12 bg-black/40 px-3 py-3 sm:px-4 sm:py-3.5 rounded-none";
