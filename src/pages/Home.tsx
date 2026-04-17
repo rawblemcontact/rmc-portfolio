@@ -2204,6 +2204,24 @@ const ProjectsStack = ({
 
   return (
     <div className="mx-auto flex w-full min-w-0 max-w-[min(100%,56rem)] flex-col justify-center items-center py-8 px-1 sm:px-2 overflow-x-visible overflow-y-visible lg:max-w-[min(100%,72rem)] xl:max-w-[min(100%,84rem)] 2xl:max-w-[min(100%,96rem)]">
+      <div className="mb-3 flex w-full items-center justify-end px-2 sm:px-4 lg:px-2 xl:px-3">
+        <div className="flex items-center gap-2.5">
+          {(emblaApi?.scrollSnapList() ?? []).map((_, snapIdx) => (
+            <button
+              key={`showcase-dot-${snapIdx}`}
+              type="button"
+              onClick={() => emblaApi?.scrollTo(snapIdx)}
+              aria-label={`Go to slide ${snapIdx + 1}`}
+              aria-current={selectedIndex === snapIdx ? "true" : undefined}
+              className={`h-2.5 w-2.5 rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
+                selectedIndex === snapIdx
+                  ? "bg-white scale-110"
+                  : "bg-white/35 hover:bg-white/55"
+              }`}
+            />
+          ))}
+        </div>
+      </div>
       <div className="min-w-0 max-w-full w-full overflow-hidden [--slide-gap:0.875rem] sm:[--slide-gap:1.25rem] lg:[--slide-gap:1rem] xl:[--slide-gap:1.125rem]">
         {/*
          * Slides: 1× full width < lg; lg+ 2 columns. Embla `align: start` + clip + slightly under-filled halves = no neighbor slivers.
@@ -2315,22 +2333,6 @@ const ProjectsStack = ({
             ))}
           </div>
         </div>
-      </div>
-      <div className="mt-4 flex items-center justify-center gap-2.5">
-        {(emblaApi?.scrollSnapList() ?? []).map((_, snapIdx) => (
-          <button
-            key={`showcase-dot-${snapIdx}`}
-            type="button"
-            onClick={() => emblaApi?.scrollTo(snapIdx)}
-            aria-label={`Go to slide ${snapIdx + 1}`}
-            aria-current={selectedIndex === snapIdx ? "true" : undefined}
-            className={`h-2.5 w-2.5 rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
-              selectedIndex === snapIdx
-                ? "bg-white scale-110"
-                : "bg-white/35 hover:bg-white/55"
-            }`}
-          />
-        ))}
       </div>
     </div>
   );
