@@ -37,6 +37,8 @@ import { TiltCard } from "../components/TiltCard";
 import { ExpandCircleButton } from "../components/ExpandCircleButton";
 import { WordsPullUp } from "../components/WordsPullUp";
 import { FloatingPhone } from "../components/FloatingPhone";
+import { ShowcaseAttachedTabStrip, type ShowcaseTabId } from "../components/ShowcaseAttachedTabStrip";
+import { FeaturedWritingPdfThumbnail } from "../components/FeaturedWritingPdfThumbnail";
 import { PdfFoldLoader } from "../components/PdfFoldLoader";
 import { PdfJsDocumentView } from "../components/PdfJsDocumentView";
 import {
@@ -591,7 +593,7 @@ const BackToMenuButton = ({
             onClick={onBack}
             size="icon"
             aria-label={ariaLabel}
-            className="h-14 w-14 min-h-0 min-w-0 rounded-full border-[3px] border-black bg-black p-0 text-white shadow-xl transition-colors duration-200 hover:bg-white hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black [&_svg]:!size-5"
+            className="h-14 w-14 min-h-0 min-w-0 rounded-full border-[3px] border-black bg-black p-0 text-white shadow-xl transition-colors duration-200 hover:bg-white hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black [&_svg]:!size-[22px]"
           >
             <ArrowLeft size={22} strokeWidth={2} aria-hidden />
           </Button>
@@ -667,7 +669,7 @@ const SectionHeader = ({
         />
       )}
       <h2
-        className={`${sizeClasses} ${titleClassName ?? ""} font-display ${color} leading-none tracking-tight uppercase -translate-y-0.5`}
+        className={`${sizeClasses} ${titleClassName ?? ""} font-display ${color} leading-[0.95] tracking-[-0.02em] uppercase -translate-y-0.5`}
       >
         <TextShutter
           text={title}
@@ -686,7 +688,7 @@ const SectionHeader = ({
         <div className="mt-4">{betweenTitleAndSubtitle}</div>
       )}
       {subtitle && (
-        <p className="font-heading text-sm tracking-[0.22em] uppercase text-zinc-400 mt-2">
+        <p className="font-heading text-sm tracking-eyebrow leading-snug uppercase text-mono-2/90 mt-1.5">
           {subtitle}
         </p>
       )}
@@ -1151,7 +1153,7 @@ const Hero = ({
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.52, delay: 0.1, ease: EASE.out }}
-                className="relative mb-2.5 font-display text-[clamp(2.1rem,6.4vw,5.5rem)] leading-[0.93] tracking-[-0.01em] uppercase whitespace-normal md:whitespace-nowrap"
+                className="relative mb-2.5 font-display text-[clamp(2.35rem,7vw,6rem)] leading-[0.93] tracking-[-0.02em] uppercase whitespace-normal md:whitespace-nowrap"
                 style={{ textShadow: "0 0 10px rgba(255,255,255,0.075)" }}
               >
                 <span className="inline-block text-white" style={{ letterSpacing: "0.02em", fontKerning: "none" }}>
@@ -1166,7 +1168,7 @@ const Hero = ({
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: 0.2, ease: EASE.out }}
-                className="font-mono text-[11px] md:text-[12px] text-zinc-400 tracking-[0.16em] uppercase"
+                className="font-hero-subheading text-base sm:text-lg leading-snug text-mono-2/90 uppercase"
               >
                 WRITER / DIGITAL MEDIA / NARRATIVE SYSTEMS
               </motion.p>
@@ -1189,7 +1191,7 @@ const Hero = ({
               >
                 <span className="texts inline-flex items-center gap-1.5">
                   PORTFOLIO
-                  <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+                  <ArrowRight className="h-4 w-4" aria-hidden />
                 </span>
               </motion.button>
             </motion.div>
@@ -1201,11 +1203,11 @@ const Hero = ({
             onMouseEnter={() => setHeroSlidePaused(true)}
             onMouseLeave={() => setHeroSlidePaused(false)}
           >
-            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400">Hero crop/zoom tuner</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-mono-2/90">Hero crop/zoom tuner</p>
             <p className="mt-1 truncate font-display text-xs uppercase text-white/95">{currentHeroSlide.title}</p>
             <div className="mt-2 space-y-2">
               <label className="block">
-                <span className="mb-1 block font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">
+                <span className="mb-1 block font-mono text-[10px] uppercase tracking-[0.14em] text-mono-2/70">
                   X ({Math.round(currentFocal.x)}%)
                 </span>
                 <input
@@ -1224,7 +1226,7 @@ const Hero = ({
                 />
               </label>
               <label className="block">
-                <span className="mb-1 block font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">
+                <span className="mb-1 block font-mono text-[10px] uppercase tracking-[0.14em] text-mono-2/70">
                   Y ({Math.round(currentFocal.y)}%)
                 </span>
                 <input
@@ -1243,7 +1245,7 @@ const Hero = ({
                 />
               </label>
               <label className="block">
-                <span className="mb-1 block font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">
+                <span className="mb-1 block font-mono text-[10px] uppercase tracking-[0.14em] text-mono-2/70">
                   Zoom ({currentZoom.toFixed(2)}x)
                 </span>
                 <input
@@ -1263,21 +1265,21 @@ const Hero = ({
                 />
               </label>
             </div>
-            <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
+            <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-mono-2/70">
               object-position: {currentFocalString} | zoom: {currentZoom.toFixed(2)}x
             </p>
             <div className="mt-2 flex items-center gap-2">
               <button
                 type="button"
                 onClick={copyBakeValues}
-                className="inline-flex items-center justify-center border border-white/20 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-200 hover:border-white/45 hover:text-white"
+                className="inline-flex items-center justify-center border border-white/20 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-mono-2 hover:border-white/45 hover:text-white"
               >
                 {bakeCopied ? "Copied" : "Copy baked values"}
               </button>
               <button
                 type="button"
                 onClick={applyCurrentAsDefaults}
-                className="inline-flex items-center justify-center border border-white/20 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-200 hover:border-white/45 hover:text-white"
+                className="inline-flex items-center justify-center border border-white/20 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-mono-2 hover:border-white/45 hover:text-white"
               >
                 {defaultsApplied ? "Applied" : "Auto-apply"}
               </button>
@@ -1325,8 +1327,8 @@ const RainbowMenuSlide = ({
       <div className="relative z-10 w-full max-w-4xl">
         <div className="flex items-end justify-between gap-6 mb-10">
           <div>
-            <p className="font-heading text-sm tracking-[0.22em] uppercase text-zinc-400 mb-2">NAVIGATION</p>
-            <h2 className="font-display text-5xl md:text-7xl tracking-tight leading-none">MENU</h2>
+            <p className="font-heading text-sm tracking-eyebrow leading-snug uppercase text-mono-2/90 mb-1.5">NAVIGATION</p>
+            <h2 className="font-display text-5xl md:text-7xl leading-[0.95] tracking-[-0.02em] uppercase">MENU</h2>
           </div>
         </div>
 
@@ -1346,7 +1348,7 @@ const RainbowMenuSlide = ({
             >
               <div className="flex items-center justify-between w-full">
                 <div className="flex items-center min-w-0 flex-1">
-                  <span className="font-mono text-xs text-zinc-500 tabular-nums w-8 md:w-10 shrink-0">
+                  <span className="font-mono text-xs text-mono-2/70 tabular-nums w-8 md:w-10 shrink-0">
                     {String(idx + 1).padStart(2, "0")}
                   </span>
                   <FillIcon
@@ -1354,10 +1356,10 @@ const RainbowMenuSlide = ({
                     filledIcon={item.id === "profile" ? UserFilledIcon : undefined}
                     forceFilled={lockedFillId === item.id || hoveredId === item.id}
                     className="w-5 h-5 md:w-6 md:h-6 text-white shrink-0 ml-3 md:ml-4"
-                    strokeWidth={2.5}
+                    strokeWidth={1.5}
                   />
                   <motion.span
-                    className="font-display text-lg md:text-xl tracking-[0.12em] uppercase text-white pl-3 md:pl-4 block"
+                    className="font-display text-lg md:text-xl tracking-nav-caps leading-snug uppercase text-white pl-3 md:pl-4 block"
                     animate={{ x: hoveredId === item.id ? 6 : 0 }}
                     transition={CMD_HOVER}
                   >
@@ -1429,24 +1431,6 @@ const SideNavOverlay = ({
         </motion.button>
       )}
       {open && (
-        <motion.div
-          key="sidenav-where-to-next"
-          className="fixed inset-0 md:right-[400px] z-[55] flex items-center justify-center pointer-events-none"
-          initial={false}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.04 }}
-        >
-          <motion.h2
-            initial={{ opacity: 0, y: 72 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.416, ease: [0.027, 0, 0.06, 1], delay: 0.45 }}
-            className="text-4xl md:text-6xl font-display text-white"
-          >
-            WHERE TO NEXT?
-          </motion.h2>
-        </motion.div>
-      )}
-      {open && (
         <motion.nav
           key="sidenav-nav"
             aria-label="Navigation"
@@ -1459,9 +1443,9 @@ const SideNavOverlay = ({
             transition={SPRING.panel}
           >
             <div className="flex items-center justify-between mb-6">
-              <div>
-                <p className="font-mono text-[0.65rem] sm:text-xs text-zinc-400 tracking-widest uppercase">MENU</p>
-                <p className="font-display text-2xl sm:text-3xl tracking-[0.14em] uppercase leading-none">Navigate</p>
+              <div className="flex flex-col gap-y-1.5">
+                <p className="font-mono text-[0.65rem] sm:text-xs text-mono-2/90 tracking-widest uppercase">MENU</p>
+                <p className="font-display text-2xl sm:text-3xl tracking-nav-caps uppercase leading-[0.95]">Navigate</p>
               </div>
               <motion.div whileTap={TAP} transition={SPRING.ui}>
                 <Button
@@ -1470,7 +1454,7 @@ const SideNavOverlay = ({
                   aria-label="Close menu"
                   className="h-14 w-14 min-h-0 min-w-0 rounded-full bg-black text-white hover:bg-white hover:text-black border-[3px] border-black p-0 shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black [&_svg]:!size-5"
                 >
-                  <X size={22} aria-hidden />
+                  <X size={22} strokeWidth={1} aria-hidden />
                 </Button>
               </motion.div>
             </div>
@@ -1494,7 +1478,7 @@ const SideNavOverlay = ({
                 >
                   <div className="flex items-center justify-between w-full">
                     <div className="flex items-center min-w-0 flex-1">
-                      <span className="font-mono text-[0.65rem] sm:text-xs text-zinc-500 tabular-nums w-7 shrink-0">
+                      <span className="font-mono text-[0.65rem] sm:text-xs text-mono-2/70 tabular-nums w-7 shrink-0">
                         {String(idx + 1).padStart(2, "0")}
                       </span>
                       <FillIcon
@@ -1502,10 +1486,10 @@ const SideNavOverlay = ({
                         filledIcon={item.id === "profile" ? UserFilledIcon : undefined}
                         forceFilled={hoveredId === item.id}
                         className="w-4 h-4 md:w-[1.125rem] md:h-[1.125rem] text-white shrink-0 ml-2 md:ml-3"
-                        strokeWidth={2.5}
+                        strokeWidth={1.5}
                       />
                       <motion.span
-                        className="font-display text-sm sm:text-base tracking-[0.12em] uppercase text-white pl-2 sm:pl-3 block"
+                        className="font-display text-sm sm:text-base tracking-nav-caps leading-snug uppercase text-white pl-2 sm:pl-3 block"
                         animate={{ x: hoveredId === item.id ? 6 : 0 }}
                         transition={CMD_HOVER}
                       >
@@ -1532,7 +1516,7 @@ const SideNavOverlay = ({
 
             <div className="mt-auto pt-6 border-t border-white/10">
               <div className="mb-3">
-                <span className="text-zinc-400 font-mono text-[0.65rem] sm:text-xs uppercase tracking-widest">
+                <span className="text-mono-2/90 font-mono text-[0.65rem] sm:text-xs uppercase tracking-widest">
                   CONTACT
                 </span>
               </div>
@@ -1578,7 +1562,7 @@ const SideNavOverlay = ({
                   href="mailto:robbie@example.com"
                   aria-label="Email"
                   whileHover={{ y: -3 }}
-                  className="bg-black p-2 sm:p-2.5 rounded-full text-zinc-300 transition-colors border border-white/10 hover:border-white/30 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                  className="bg-black p-2 sm:p-2.5 rounded-full text-mono-2 transition-colors border border-white/10 hover:border-white/30 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                 >
                   <Mail size={16} aria-hidden />
                 </motion.a>
@@ -1746,11 +1730,11 @@ const PhantomProfile = () => {
                animate={{ opacity: overlayRevealed ? 1 : 0, y: overlayRevealed ? 0 : 14 }}
                transition={{ duration: SUMMARY_DURATION_S, delay: overlayRevealed ? SUMMARY_DELAY_S : 0, ease: [0.16, 1, 0.3, 1] }}
              >
-               <p className="font-heading text-sm tracking-[0.22em] uppercase text-zinc-400 mb-2">SUMMARY</p>
-               <p className="font-body text-sm sm:text-base md:text-lg xl:text-lg 2xl:text-xl text-zinc-300 leading-relaxed mb-4">
+               <p className="font-heading text-sm tracking-eyebrow leading-snug uppercase text-mono-2/90 mb-1.5">SUMMARY</p>
+               <p className="font-body text-sm sm:text-base md:text-lg xl:text-lg 2xl:text-xl text-mono-2 leading-relaxed mb-4">
                  Communications-focused writer and digital media coordinator with experience producing narrative-driven web content and managing social media workflows across multiple platforms. Bachelor of Arts in Writing (Distinction), University of Victoria.
                </p>
-               <p className="font-body text-sm sm:text-base md:text-lg xl:text-lg 2xl:text-xl text-zinc-400 leading-relaxed">
+               <p className="font-body text-sm sm:text-base md:text-lg xl:text-lg 2xl:text-xl text-mono-2/90 leading-relaxed">
                  Currently developing SLAYWIRE, a narrative-first RPG.
                </p>
              </motion.div>
@@ -1779,7 +1763,7 @@ const Badge = ({ icon: Icon, label, sub, highlight = false }: { icon: LucideIcon
 
 const StatRow = ({ label, value }: { label: string; value: string }) => (
   <div className="flex justify-between items-center group border-b border-zinc-800 pb-2 last:border-0">
-    <span className="text-zinc-400 uppercase group-hover:text-white transition-colors">{label}</span>
+    <span className="text-mono-2/90 uppercase group-hover:text-white transition-colors">{label}</span>
     <span className="text-cyan-400 uppercase">{value}</span>
   </div>
 );
@@ -1888,6 +1872,8 @@ type SupportingArchivePdfItem = {
   title: string;
   subtitle: string;
   href: string;
+  /** Short blurb for FEATURED WRITING showcase (optional). */
+  description?: string;
   /** Optional display ordering label (e.g. screenplay numbering). */
   index?: string;
 };
@@ -1899,18 +1885,24 @@ const SUPPORTING_ARCHIVE_PDF_ITEMS: SupportingArchivePdfItem[] = [
     title: "Article",
     subtitle: "Example 1 — article",
     href: "/cnf/example-1-article.pdf",
+    description:
+      "Magazine-style creative nonfiction: structure, voice, and scene craft in a publication-ready article.",
   },
   {
     id: "cnf-media-literary",
     title: "Media literary analysis",
     subtitle: "Example 2 — media & text",
     href: "/cnf/example-2-media-literary-analysis.pdf",
+    description:
+      "Pairs media with written work—examining how form, context, and craft shape meaning across text and screen.",
   },
   {
     id: "cnf-critical-essay",
     title: "Critical literary essay",
     subtitle: "Example 3 — critical analysis",
     href: "/cnf/example-3-critical-literary-essay.pdf",
+    description:
+      "Close reading and argument: a thesis-driven essay that interprets literary texts with evidence and scholarly framing.",
   },
   {
     id: "cnf-memoir",
@@ -1927,6 +1919,8 @@ const SCREENPLAY_PDF_ITEMS: SupportingArchivePdfItem[] = [
     title: "Audience of One",
     subtitle: "Robbie McLaughlin",
     href: "/screenplays/audience-of-one-robbie-mclaughlin.pdf",
+    description:
+      "A short screenplay tuned for pacing, dialogue, and character—formatted and structured like a production-ready spec.",
   },
   {
     id: "screenplay-rock-paper-promise",
@@ -1950,6 +1944,8 @@ const SHORT_GRAPHIC_NOVEL_PDF_ITEMS: SupportingArchivePdfItem[] = [
     title: "Blossom",
     subtitle: "Ink — black & white",
     href: "/short-graphic-novels/blossom-ink-bw.pdf",
+    description:
+      "Inked sequential pages in black and white: line weight, contrast, and panel flow for the graphic-novel short.",
   },
   {
     id: "sgn-writ405-final",
@@ -1976,6 +1972,15 @@ const SUPPORTING_ARCHIVE_PDF_SECTIONS: { heading: string; items: SupportingArchi
   { heading: "Screenplays — PDF", items: SCREENPLAY_PDF_ITEMS },
   { heading: "Short graphic novels — PDF", items: SHORT_GRAPHIC_NOVEL_PDF_ITEMS },
 ];
+
+/** Featured PDF per FEATURED WRITING tab (order matches tab strip). */
+const SHOWCASE_WRITING_TAB_FEATURED: Record<ShowcaseTabId, SupportingArchivePdfItem> = {
+  "tab-1": SUPPORTING_ARCHIVE_PDF_ITEMS.find((x) => x.id === "cnf-article")!,
+  "tab-2": SCREENPLAY_PDF_ITEMS.find((x) => x.id === "screenplay-audience-of-one")!,
+  "tab-3": SHORT_GRAPHIC_NOVEL_PDF_ITEMS.find((x) => x.id === "sgn-blossom-ink-bw")!,
+  "tab-4": SUPPORTING_ARCHIVE_PDF_ITEMS.find((x) => x.id === "cnf-critical-essay")!,
+  "tab-5": SUPPORTING_ARCHIVE_PDF_ITEMS.find((x) => x.id === "cnf-media-literary")!,
+};
 
 const archiveRowIndexLabel = (rowIndex: number) => String(rowIndex + 1).padStart(2, "0");
 
@@ -2019,6 +2024,10 @@ const DETAIL_HERO_MEDIA_FADE_MS = Math.round(340 / SHOWCASE_TIME_DIV);
 const DETAIL_HERO_MEDIA_FADE_EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
 /** Align copy schedule with hero fade: ~double-rAF after morph before opacity transition (ms from morph end). */
 const DETAIL_HERO_FADE_START_RAF_PAD_MS = 40;
+
+/** Match showcase carousel card height (same as motion.button). Capped with svh so SHOWCASE + FEATURED fit one screen with bottom gutter — no scroll. */
+const DETAIL_CARD_H =
+  "h-[min(280px,45svh)] sm:h-[min(308px,48svh)] md:h-[min(328px,50svh)] lg:h-[min(352px,52svh)] xl:h-[min(368px,54svh)] 2xl:h-[min(384px,56svh)]";
 
 const ProjectsStack = ({
   onSelect,
@@ -2203,8 +2212,8 @@ const ProjectsStack = ({
   }, [autoplayIndices]);
 
   return (
-    <div className="mx-auto flex w-full min-w-0 max-w-[min(100%,56rem)] flex-col justify-center items-center py-8 px-1 sm:px-2 overflow-x-visible overflow-y-visible lg:max-w-[min(100%,72rem)] xl:max-w-[min(100%,84rem)] 2xl:max-w-[min(100%,96rem)]">
-      <div className="mb-3 flex w-full items-center justify-end px-2 sm:px-4 lg:px-2 xl:px-3">
+    <div className="mx-auto flex w-full min-w-0 max-w-[min(100%,56rem)] flex-col justify-center items-center pt-2 px-1 pb-0 sm:pt-3 sm:px-2 overflow-x-visible overflow-y-visible lg:max-w-[min(100%,72rem)] xl:max-w-[min(100%,84rem)] 2xl:max-w-[min(100%,96rem)]">
+      <div className="mb-1.5 flex w-full items-center justify-end px-2 sm:px-4 lg:px-2 xl:px-3">
         <div className="flex items-center gap-2.5">
           {(emblaApi?.scrollSnapList() ?? []).map((_, snapIdx) => (
             <button
@@ -2239,14 +2248,10 @@ const ProjectsStack = ({
                   onClick={(e) => onSelect(card.id, e.currentTarget)}
                   whileTap={{ scale: 0.985 }}
                   transition={{ duration: 0.28 / SHOWCASE_TIME_DIV, ease: cardEase }}
-                  className={`group relative w-full h-[276px] sm:h-[304px] md:h-[324px] lg:h-[348px] xl:h-[364px] 2xl:h-[380px] rounded-none bg-zinc-950/35 text-center overflow-hidden hover:bg-zinc-950/65 hover:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/55 focus-visible:ring-offset-2 focus-visible:ring-offset-black transition-opacity duration-300 ease-out ${
+                  className={`group relative w-full ${DETAIL_CARD_H} rounded-[11px] sm:rounded-xl border border-white/[0.09] bg-zinc-950/40 shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)] text-center overflow-hidden transition-[opacity,background-color,border-color] duration-300 ease-out hover:border-yellow-400/40 hover:bg-zinc-950/65 hover:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/35 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
                     focusProjectId && focusProjectId !== card.id ? "opacity-0 pointer-events-none" : "opacity-100"
                   }`}
                 >
-                  <div
-                    className="pointer-events-none absolute inset-0 z-30 border border-zinc-500 transition-colors duration-200 group-hover:border-yellow-400"
-                    aria-hidden
-                  />
                   <div
                     data-parallax-layer
                     className={`h-full will-change-transform ${card.thumbnail || card.thumbnailVideo ? "relative z-0" : "flex min-h-0 flex-col items-center p-4 sm:p-5"}`}
@@ -2299,12 +2304,12 @@ const ProjectsStack = ({
                             className={`font-display block w-full max-w-full text-left text-[1rem] sm:text-[1.05rem] md:text-lg lg:text-xl xl:text-[1.35rem] leading-snug text-white tracking-tight line-clamp-3 [text-wrap:balance] motion-safe:transition-[opacity,color] motion-safe:duration-300 motion-safe:ease-out ${
                               index === selectedIndex
                                 ? "opacity-100 group-hover:text-yellow-50"
-                                : "opacity-70 group-hover:text-zinc-100"
+                                : "opacity-70 group-hover:text-mono-1"
                             }`}
                           >
                             {card.title}
                           </span>
-                          <span className="font-body mt-3 block w-full max-w-full text-left text-xs sm:text-[0.8125rem] md:text-sm lg:text-[0.9375rem] text-zinc-300 leading-relaxed line-clamp-2 border-t border-white/15 pt-3 sm:pt-3.5 transition-colors group-hover:text-white/90">
+                          <span className="font-body mt-3 block w-full max-w-full text-left text-xs sm:text-[0.8125rem] md:text-sm lg:text-[0.9375rem] text-mono-2 leading-relaxed line-clamp-2 border-t border-white/15 pt-3 sm:pt-3.5 transition-colors group-hover:text-white/90">
                             {card.tagline}
                           </span>
                         </div>
@@ -2322,7 +2327,7 @@ const ProjectsStack = ({
                         >
                           {card.title}
                         </span>
-                        <span className="font-body w-full max-w-full text-xs sm:text-[0.8125rem] md:text-sm lg:text-[0.9375rem] text-zinc-500 leading-relaxed line-clamp-4 border-t border-white/10 pt-3 sm:pt-3.5 transition-colors group-hover:text-zinc-400">
+                        <span className="font-body w-full max-w-full text-xs sm:text-[0.8125rem] md:text-sm lg:text-[0.9375rem] text-mono-2/70 leading-relaxed line-clamp-4 border-t border-white/10 pt-3 sm:pt-3.5 transition-colors group-hover:text-mono-2/90">
                           {card.tagline}
                         </span>
                       </div>
@@ -2790,7 +2795,7 @@ const SupportingProjectsSection = ({
               <div key={section.heading}>
                 <h3
                   ref={sectionIndex === 0 ? archiveFirstYellowRuleRef : undefined}
-                  className="font-heading text-[0.65rem] sm:text-xs tracking-[0.2em] uppercase text-yellow-400/90 mb-4 pb-2 border-b border-yellow-400/25"
+                  className="font-heading text-[0.65rem] sm:text-xs tracking-eyebrow leading-snug uppercase text-yellow-400/90 mb-3 pb-2 border-b border-yellow-400/25"
                 >
                   {section.heading}
                 </h3>
@@ -2804,22 +2809,22 @@ const SupportingProjectsSection = ({
                         aria-expanded={previewPdf?.id === item.id}
                         onClick={() => openPreview(item)}
                       >
-                        <span className="font-mono text-[0.7rem] sm:text-xs text-zinc-500 tabular-nums w-7 shrink-0 pt-0.5">
+                        <span className="font-mono text-[0.7rem] sm:text-xs text-mono-2/70 tabular-nums w-7 shrink-0 pt-0.5">
                           {archiveRowIndexLabel(rowIndex)}
                         </span>
                         <div className="min-w-0 flex-1">
-                          <span className="font-body text-sm sm:text-base text-zinc-200 group-hover:text-white leading-snug inline-block transition-colors duration-200">
+                          <span className="font-body text-sm sm:text-base text-mono-2 group-hover:text-white leading-snug inline-block transition-colors duration-200">
                             {item.title}
                           </span>
-                          <span className="block font-body text-xs text-zinc-500 mt-1 leading-snug group-hover:text-zinc-400 transition-colors duration-200">
+                          <span className="block font-body text-xs text-mono-2/70 mt-1 leading-snug group-hover:text-mono-2/90 transition-colors duration-200">
                             {item.subtitle}
                           </span>
                         </div>
-                        <span className="font-mono text-[0.6rem] sm:text-[0.65rem] tracking-[0.14em] uppercase text-zinc-500 group-hover:text-yellow-400 shrink-0 pt-1 transition-colors duration-200">
+                        <span className="font-mono text-[0.6rem] sm:text-[0.65rem] tracking-[0.14em] uppercase text-mono-2/70 group-hover:text-yellow-400 shrink-0 pt-1 transition-colors duration-200">
                           VIEW
                         </span>
                         <FileText
-                          className="w-4 h-4 shrink-0 text-zinc-500 group-hover:text-yellow-400 mt-0.5 transition-colors duration-200"
+                          className="w-4 h-4 shrink-0 text-mono-2/70 group-hover:text-yellow-400 mt-0.5 transition-colors duration-200"
                           aria-hidden
                         />
                       </button>
@@ -2914,7 +2919,7 @@ const SupportingProjectsSection = ({
                   <span className="sr-only">Loading PDF…</span>
                   <PdfFoldLoader className="scale-[1.6] sm:scale-[1.85]" />
                   <p
-                    className="mt-4 font-body text-[0.58rem] uppercase tracking-[0.14em] text-zinc-500"
+                    className="mt-4 font-body text-[0.58rem] uppercase tracking-[0.14em] text-mono-2/70"
                     aria-hidden
                   >
                     Loading PDF…
@@ -2945,7 +2950,7 @@ const SupportingProjectsSection = ({
                   variant="outline"
                   aria-label="Close PDF preview"
                   onClick={closePreview}
-                  className="h-10 w-10 shrink-0 rounded-full border border-white/18 bg-black text-zinc-100 hover:border-cyan-400/45 hover:bg-zinc-900 hover:text-white"
+                  className="h-10 w-10 shrink-0 rounded-full border border-white/18 bg-black text-mono-1 hover:border-cyan-400/45 hover:bg-zinc-900 hover:text-white"
                 >
                   <X className="h-4 w-4" aria-hidden />
                 </Button>
@@ -2956,7 +2961,7 @@ const SupportingProjectsSection = ({
                   >
                     {previewPdf.title}
                   </h2>
-                  <p className="font-body text-[0.7rem] sm:text-xs text-zinc-400 mt-1 leading-snug line-clamp-2">
+                  <p className="font-body text-[0.7rem] sm:text-xs text-mono-2/90 mt-1 leading-snug line-clamp-2">
                     {previewPdf.subtitle}
                   </p>
                 </div>
@@ -2966,7 +2971,7 @@ const SupportingProjectsSection = ({
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="Open PDF in new tab"
-                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/18 bg-black text-zinc-100 hover:border-cyan-400/45 hover:bg-zinc-900 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/45"
+                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/18 bg-black text-mono-1 hover:border-cyan-400/45 hover:bg-zinc-900 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/45"
                   >
                     <ExternalLink className="h-4 w-4" aria-hidden />
                   </a>
@@ -2974,7 +2979,7 @@ const SupportingProjectsSection = ({
                     href={previewPdf.href}
                     download
                     aria-label="Download PDF"
-                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/18 bg-black text-zinc-100 hover:border-cyan-400/45 hover:bg-zinc-900 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/45"
+                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/18 bg-black text-mono-1 hover:border-cyan-400/45 hover:bg-zinc-900 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/45"
                   >
                     <Download className="h-4 w-4" aria-hidden />
                   </a>
@@ -3024,20 +3029,27 @@ const DetailCardMedia = ({ card }: { card: ShowcaseProjectCard }) => (
   </>
 );
 
-const showcaseDetailCard =
-  "border border-white/12 bg-black/40 px-3 py-3 sm:px-4 sm:py-3.5 rounded-none";
+/** Same shell as FEATURED WRITING / showcase slider cards (rounded grey frame). */
+const PROJECT_DETAIL_SURFACE =
+  "rounded-[11px] sm:rounded-xl border border-white/[0.09] shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)]";
+
+/** Same box-shadow + vignette stack as the hero SHOWCASE media slider (final “open” state). */
+const SHOWCASE_SLIDER_MEDIA_BOX_SHADOW =
+  "0 36px 88px rgba(0,0,0,0.6), inset 0 -40px 70px rgba(0,0,0,0.52), 0 0 0 1px rgba(255,255,255,0.07), 0 0 28px 4px rgba(255,255,255,0.04)";
+
+const showcaseDetailCard = `${PROJECT_DETAIL_SURFACE} bg-zinc-950/40 px-3 py-3 sm:px-4 sm:py-3.5`;
 
 const ShowcaseDetailOverviewRole = ({ card }: { card: ShowcaseProjectCard }) => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-3">
     <section className={`${showcaseDetailCard} md:col-span-2`}>
-      <p className="font-heading text-xs tracking-[0.2em] uppercase text-yellow-400/90 mb-1.5">OVERVIEW</p>
-      <p className="font-body text-sm sm:text-base text-zinc-300 leading-snug whitespace-pre-line">
+      <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-yellow-400/90 mb-1.5">OVERVIEW</p>
+      <p className="font-body text-sm sm:text-base text-mono-2 leading-snug whitespace-pre-line">
         {card.detailOverview?.trim() || "—"}
       </p>
     </section>
     <section className={showcaseDetailCard}>
-      <p className="font-heading text-xs tracking-[0.2em] uppercase text-yellow-400/90 mb-1.5">ROLE</p>
-      <p className="font-body text-sm sm:text-base text-zinc-300 leading-snug whitespace-pre-line">
+      <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-yellow-400/90 mb-1.5">ROLE</p>
+      <p className="font-body text-sm sm:text-base text-mono-2 leading-snug whitespace-pre-line">
         {card.detailRole?.trim() || "—"}
       </p>
     </section>
@@ -3047,31 +3059,62 @@ const ShowcaseDetailOverviewRole = ({ card }: { card: ShowcaseProjectCard }) => 
 const ShowcaseDetailImpactTools = ({ card }: { card: ShowcaseProjectCard }) => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-3">
     <section className={`${showcaseDetailCard} md:col-span-2`}>
-      <p className="font-heading text-xs tracking-[0.2em] uppercase text-yellow-400/90 mb-1.5">IMPACT</p>
-      <p className="font-body text-sm sm:text-base text-zinc-300 leading-snug whitespace-pre-line">
+      <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-yellow-400/90 mb-1.5">IMPACT</p>
+      <p className="font-body text-sm sm:text-base text-mono-2 leading-snug whitespace-pre-line">
         {card.detailImpact?.trim() || "—"}
       </p>
     </section>
     <section className={showcaseDetailCard}>
-      <p className="font-heading text-xs tracking-[0.2em] uppercase text-yellow-400/90 mb-1.5">TOOLS</p>
+      <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-yellow-400/90 mb-1.5">TOOLS</p>
       {card.detailTools?.length ? (
-        <ul className="list-disc list-outside space-y-1 pl-4 marker:text-zinc-500">
+        <ul className="ml-1 list-disc list-outside space-y-1 pl-6 sm:pl-7 marker:text-mono-2/70">
           {card.detailTools.map((tool, i) => (
-            <li key={`${tool}-${i}`} className="font-body text-sm sm:text-base text-zinc-300 leading-snug">
+            <li key={`${tool}-${i}`} className="font-body text-sm sm:text-base text-mono-2 leading-snug">
               {tool}
             </li>
           ))}
         </ul>
       ) : (
-        <p className="font-body text-sm sm:text-base text-zinc-600">—</p>
+        <p className="font-body text-sm sm:text-base text-mono-2/55">—</p>
       )}
     </section>
   </div>
 );
 
-/** Hero height — room freed by removing the back button; still capped vs. viewport for detail grid below. */
-const DETAIL_CARD_H =
-  "h-[280px] max-h-[40svh] sm:h-[320px] sm:max-h-[38svh] md:h-[370px] md:max-h-[36svh] lg:h-[420px] lg:max-h-[34svh]";
+function ShowcaseWritingFeaturedPanel({ item }: { item: SupportingArchivePdfItem }) {
+  return (
+    <div className="flex items-start gap-2.5 text-left sm:gap-3">
+      <FeaturedWritingPdfThumbnail pdfSrc={item.href} />
+      <div className="min-w-0 flex-1 space-y-2">
+        <div className="flex items-start justify-between gap-2 sm:gap-3">
+          <div className="min-w-0 space-y-1">
+            <p className="font-display text-lg leading-[1.15] tracking-tight text-white sm:text-xl md:text-2xl md:leading-tight">
+              {item.title}
+            </p>
+            <p className="font-body text-xs leading-snug text-mono-2/75 sm:text-sm">{item.subtitle}</p>
+          </div>
+          <a
+            href={item.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex shrink-0 items-center gap-2 self-start border border-white/12 bg-black/25 px-2.5 py-1.5 font-heading text-[10px] tracking-btn-caps uppercase text-yellow-400/90 transition-colors hover:border-yellow-400/35 hover:text-yellow-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-yellow-400/40 sm:px-3 sm:py-2"
+          >
+            View PDF
+            <ExternalLink className="h-3.5 w-3.5 shrink-0 opacity-80" aria-hidden />
+          </a>
+        </div>
+        {item.description ? (
+          <p
+            className="line-clamp-3 font-body text-sm leading-relaxed text-mono-2/70 sm:text-[0.9375rem] sm:leading-relaxed md:text-base"
+            title={item.description}
+          >
+            {item.description}
+          </p>
+        ) : null}
+      </div>
+    </div>
+  );
+}
 
 const PalaceProjects = ({
   onSelectProject,
@@ -3098,6 +3141,7 @@ const PalaceProjects = ({
   const [detailHeroMediaFadeIn, setDetailHeroMediaFadeIn] = useState(false);
   const detailRevealTimersRef = useRef<number[]>([]);
   const detailAnchorRef = useRef<HTMLDivElement>(null);
+  const [showcaseTabId, setShowcaseTabId] = useState<ShowcaseTabId>("tab-1");
 
   const morphDur = reduceMotion ? 0.12 / SHOWCASE_TIME_DIV : SHOWCASE_CARD_MORPH_DUR_S;
   const morphEase = SHOWCASE_EASE;
@@ -3254,11 +3298,14 @@ const PalaceProjects = ({
   return (
     <section
       id="projects"
-      className={`relative flex flex-col justify-center min-h-screen w-full py-16 md:py-20 bg-black text-white scroll-mt-6 ${SLIDE} !overflow-x-visible`}
+      className="relative flex min-h-full w-full min-w-0 max-w-full flex-col justify-start overflow-x-hidden bg-black pt-16 pb-[max(1.25rem,calc(var(--slide-gap)*1.5),env(safe-area-inset-bottom,0px))] text-white sm:pt-20 md:pt-22 scroll-mt-6 [--slide-gap:0.875rem] sm:[--slide-gap:1.25rem] lg:[--slide-gap:1rem] xl:[--slide-gap:1.125rem]"
     >
       <SectionGridOverlay />
-      <div className="container mx-auto px-4 sm:px-6 relative z-10 w-full max-w-full min-w-0">
-
+      <div className="container relative z-10 mx-auto flex min-h-0 min-w-0 w-full max-w-full flex-1 flex-col px-4 sm:px-6">
+        {/*
+         * Column inherits --slide-gap from #projects. Spacer + section pb = bottom air; overlay scrolls if needed (no clipping).
+         */}
+        <div className="flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-visible">
         {/*
          * CAROUSEL — always in normal flow so the section keeps its height.
          * When a card is active we fade it out but DO NOT unmount it so the
@@ -3266,9 +3313,10 @@ const PalaceProjects = ({
          */}
         <div
           aria-hidden={!!activeCard || undefined}
-          className={activeCard ? "pointer-events-none select-none" : ""}
+          className={`flex min-h-0 w-full flex-1 flex-col ${activeCard ? "pointer-events-none select-none" : ""}`}
         >
           <motion.div
+            className="mt-4 shrink-0 sm:mt-5 md:mt-6"
             animate={{ opacity: activeCard ? 0 : 1 }}
             transition={{
               duration: activeCard ? openContentFadeS : 0.2,
@@ -3291,6 +3339,7 @@ const PalaceProjects = ({
           </motion.div>
 
           <motion.div
+            className="-mt-4 shrink-0 sm:-mt-5 md:-mt-6"
             initial={{ opacity: 0, y: 18 }}
             animate={
               activeCard ? { opacity: 0, y: 0 }
@@ -3311,8 +3360,12 @@ const PalaceProjects = ({
             )}
           </motion.div>
 
+          {/*
+           * Vertical gap above tabs = --slide-gap only (same token as space between slider cards).
+           * ProjectsStack uses pb-0 so gallery bottom padding does not stack with this margin.
+           */}
           <motion.div
-            className="mt-10 md:mt-14 flex justify-center px-2"
+            className="mx-auto mt-[var(--slide-gap,0.875rem)] flex w-full min-w-0 max-w-[min(100%,56rem)] flex-col px-1 sm:px-2 lg:max-w-[min(100%,72rem)] xl:max-w-[min(100%,84rem)] 2xl:max-w-[min(100%,96rem)]"
             initial={{ opacity: 0, y: 14 }}
             animate={
               activeCard ? { opacity: 0, y: 0 }
@@ -3325,18 +3378,28 @@ const PalaceProjects = ({
               ease: SHOWCASE_EASE,
             }}
           >
-            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} transition={{ duration: 0.2 }}>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onOpenSupporting}
-                className="border-2 border-white/20 bg-black/40 text-white hover:bg-white/5 hover:border-yellow-400/50 hover:text-yellow-100 rounded-full px-6 py-5 h-auto font-heading text-xs sm:text-sm tracking-[0.18em] uppercase gap-2"
-              >
-                WRITING SAMPLES
-                <ArrowRight className="w-4 h-4 shrink-0 opacity-80" aria-hidden />
-              </Button>
-            </motion.div>
+            {/*
+             * Same horizontal inset as ProjectsStack outer + embla viewport so folder
+             * card width matches the showcase cards above.
+             */}
+            <div className="flex w-full min-w-0 flex-col px-2 sm:px-4 lg:px-2 xl:px-3">
+              <ShowcaseAttachedTabStrip
+                activeId={showcaseTabId}
+                onTabChange={setShowcaseTabId}
+                onArchives={onOpenSupporting}
+                className="w-full min-w-0"
+                panel={
+                  <ShowcaseWritingFeaturedPanel item={SHOWCASE_WRITING_TAB_FEATURED[showcaseTabId]} />
+                }
+              />
+            </div>
           </motion.div>
+
+          {/*
+           * Leftover viewport height lands here so slide-gap padding stays visible — no scroll.
+           */}
+          <div className="min-h-0 w-full min-w-0 flex-1 basis-0" aria-hidden />
+        </div>
         </div>
 
         {/*
@@ -3361,8 +3424,11 @@ const PalaceProjects = ({
 
             {morphDone && (
               <div
-                className={`absolute top-0 left-0 right-0 mx-auto w-full max-w-[min(100%,56rem)] ${DETAIL_CARD_H} border border-zinc-500 overflow-hidden`}
-                style={{ background: "#000" }}
+                className={`absolute top-0 left-0 right-0 mx-auto w-full max-w-[min(100%,56rem)] ${DETAIL_CARD_H} rounded-[11px] sm:rounded-xl border border-white/[0.09] overflow-hidden`}
+                style={{
+                  background: "#000",
+                  boxShadow: `${SHOWCASE_SLIDER_MEDIA_BOX_SHADOW}, 0 18px 48px -28px rgba(0,0,0,0.9)`,
+                }}
               >
                 <div
                   key={activeCard.id}
@@ -3388,7 +3454,7 @@ const PalaceProjects = ({
             {activeCard && morphRect && (
               <div className="w-full max-w-[min(100%,56rem)] mt-5 pb-8">
                 <div
-                  className="-ml-[3px] flex w-full max-w-full flex-col items-stretch gap-y-2.5 text-left"
+                  className="-ml-[3px] flex w-full max-w-full flex-col items-stretch gap-y-1.5 text-left"
                   style={
                     reduceMotion
                       ? { opacity: detailHdrReveal ? 1 : 0 }
@@ -3401,19 +3467,19 @@ const PalaceProjects = ({
                         }
                   }
                 >
-                  <p className="m-0 w-full font-heading text-sm sm:text-base leading-none tracking-[0.18em] uppercase text-yellow-400/90">
+                  <p className="m-0 w-full font-heading text-sm sm:text-base leading-snug tracking-eyebrow-sm uppercase text-yellow-400/90">
                     Project details
                   </p>
-                  <h3 className="m-0 w-full font-display text-2xl md:text-3xl leading-tight tracking-normal text-white">
+                  <h3 className="m-0 w-full font-display text-2xl md:text-3xl leading-[1.1] tracking-[-0.015em] text-white">
                     {activeCard.title}
                   </h3>
-                  <p className="m-0 w-full pl-[2px] font-body text-sm sm:text-base leading-snug text-zinc-300">
+                  <p className="m-0 w-full pl-[2px] font-body text-sm sm:text-base leading-snug text-mono-2">
                     {activeCard.tagline}
                   </p>
                 </div>
                 <div className="mt-5 w-full" aria-hidden>
                   <div
-                    className="mx-auto block h-px w-full max-w-full shrink-0 bg-white/12"
+                    className="mx-auto block h-px w-full max-w-full shrink-0 bg-white/[0.09]"
                     style={{
                       transform: detailRuleReveal ? "scaleX(1)" : "scaleX(0)",
                       transformOrigin: "center center",
@@ -3481,7 +3547,9 @@ const PalaceProjects = ({
           style={{
             position: "fixed",
             overflow: "hidden",
-            border: "1px solid rgb(113 113 122)",
+            border: "1px solid rgba(255, 255, 255, 0.09)",
+            borderRadius: "12px",
+            boxShadow: "0 18px 48px -28px rgba(0, 0, 0, 0.9)",
             background: "#000",
             zIndex: 9999,
             top: 0,
@@ -3508,7 +3576,7 @@ const PalaceProjects = ({
 const ProjectPoint = ({ text }: { text: string }) => (
   <div className="flex items-start">
     <Star className="w-5 h-5 text-yellow-400 mr-3 mt-1 flex-shrink-0 fill-current" />
-    <span className="font-body text-base md:text-lg text-zinc-300 leading-relaxed">{text}</span>
+    <span className="font-body text-base md:text-lg text-mono-2 leading-relaxed">{text}</span>
   </div>
 );
 
@@ -3816,23 +3884,23 @@ const ConfidantExperience = () => {
                   <div className="mb-3 sm:mb-4 space-y-1.5 sm:space-y-2">
                     <h3
                       ref={idx === 0 ? experienceFirstHeadingRef : undefined}
-                      className="font-display text-[0.9375rem] sm:text-lg md:text-xl font-semibold tracking-tight text-white text-balance leading-snug sm:leading-[1.22] md:leading-[1.18]"
+                      className="font-display text-[0.9375rem] sm:text-lg md:text-xl font-semibold tracking-[-0.015em] text-white text-balance leading-snug sm:leading-[1.22] md:leading-[1.18]"
                     >
                       {job.role}
                     </h3>
                     <div className="flex flex-col gap-1.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4 border-b border-blue-600/20 pb-2 sm:pb-2.5">
                       <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 sm:gap-x-2.5 gap-y-0.5 leading-snug">
-                        <span className="font-heading text-[10px] sm:text-[0.8125rem] tracking-[0.12em] uppercase text-zinc-200">
+                        <span className="font-heading text-[10px] sm:text-[0.8125rem] tracking-eyebrow-sm leading-snug uppercase text-mono-2">
                           {job.company}
                         </span>
-                        <span className="text-zinc-600 shrink-0 translate-y-px" aria-hidden>
+                        <span className="text-mono-2/55 shrink-0 translate-y-px" aria-hidden>
                           ·
                         </span>
-                        <span className="font-heading text-[10px] sm:text-[0.8125rem] tracking-[0.1em] uppercase text-zinc-500">
+                        <span className="font-heading text-[10px] sm:text-[0.8125rem] tracking-eyebrow-sm leading-snug uppercase text-mono-2/70">
                           {job.location}
                         </span>
                       </div>
-                      <time className="font-body text-[10px] sm:text-[0.8125rem] tracking-[0.12em] uppercase text-zinc-600 tabular-nums leading-snug whitespace-nowrap text-right sm:shrink-0 self-end sm:self-auto">
+                      <time className="font-body text-[10px] sm:text-[0.8125rem] tracking-eyebrow-sm uppercase text-mono-2/55 tabular-nums leading-snug whitespace-nowrap text-right sm:shrink-0 self-end sm:self-auto">
                         {job.period}
                       </time>
                     </div>
@@ -3844,7 +3912,7 @@ const ConfidantExperience = () => {
                           className="mt-[0.32rem] sm:mt-[0.38rem] size-1 sm:size-1.5 shrink-0 rounded-full bg-zinc-500"
                           aria-hidden
                         />
-                        <p className="min-w-0 flex-1 text-left font-body text-sm sm:text-[0.9375rem] text-zinc-300 leading-snug sm:leading-[1.42]">
+                        <p className="min-w-0 flex-1 text-left font-body text-sm sm:text-[0.9375rem] text-mono-2 leading-snug sm:leading-[1.42]">
                           {bullet}
                         </p>
                       </li>
@@ -4504,7 +4572,7 @@ const SkillsWebHooks = ({
             }}
           />
           <motion.span 
-            className="relative z-10 font-display text-sm md:text-base font-semibold uppercase tracking-[0.1em] text-white"
+            className="relative z-10 font-display text-sm md:text-base font-semibold uppercase tracking-[0.11em] leading-snug text-white"
             animate={{
               scale: hoverTarget === "left" ? 1.05 : 1,
             }}
@@ -4547,7 +4615,7 @@ const SkillsWebHooks = ({
             }}
           />
           <motion.span 
-            className="relative z-10 font-display text-sm md:text-base font-semibold uppercase tracking-[0.1em] text-white"
+            className="relative z-10 font-display text-sm md:text-base font-semibold uppercase tracking-[0.11em] leading-snug text-white"
             animate={{
               scale: hoverTarget === "right" ? 1.05 : 1,
             }}
@@ -4650,7 +4718,7 @@ const SkillsExpandedView = ({
         className="w-full flex items-center justify-between gap-4 mb-6"
       >
         <motion.h2
-          className="font-display text-2xl md:text-3xl font-semibold uppercase tracking-[0.08em] text-white border-l-4 pl-4"
+          className="font-display text-2xl md:text-3xl font-semibold uppercase tracking-[0.1em] leading-tight text-white border-l-4 pl-4"
           style={{ borderLeftColor: accent }}
           initial={{ borderLeftWidth: 0 }}
           animate={{ borderLeftWidth: 4 }}
@@ -4661,7 +4729,7 @@ const SkillsExpandedView = ({
         <motion.button
           type="button"
           onClick={onClose}
-          className="flex items-center gap-2 font-mono text-xs uppercase tracking-wider bg-cyan-500 text-white border border-cyan-500 hover:bg-white hover:text-black hover:border-white rounded-lg px-3 py-2 transition-colors duration-200"
+          className="flex items-center gap-2 font-heading text-xs uppercase tracking-btn-caps bg-cyan-500 text-white border border-cyan-500 hover:bg-white hover:text-black hover:border-white rounded-lg px-3 py-2 transition-colors duration-200"
           aria-label="Back to skills"
           whileHover={{ scale: 1.05, x: -2 }}
           whileTap={{ scale: 0.98 }}
@@ -4678,7 +4746,7 @@ const SkillsExpandedView = ({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
             {data.categories.map((category) => (
               <div key={category.title} className="border-l border-white/10 pl-4">
-                <h4 className="font-display text-xs md:text-sm uppercase tracking-[0.06em] text-white/90 mb-2 md:mb-3 font-semibold">
+                <h4 className="font-display text-xs md:text-sm uppercase tracking-[0.08em] leading-snug text-white/90 mb-1.5 md:mb-2.5 font-semibold">
                   {category.title}
                 </h4>
                 <ul className="space-y-1">
@@ -4723,7 +4791,7 @@ const SkillsExpandedPanel = ({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
             {data.categories.map((category) => (
               <div key={category.title} className="border-l border-white/10 pl-4">
-                <h4 className="font-display text-xs md:text-sm uppercase tracking-[0.06em] text-white/90 mb-2 md:mb-3 font-semibold">
+                <h4 className="font-display text-xs md:text-sm uppercase tracking-[0.08em] leading-snug text-white/90 mb-1.5 md:mb-2.5 font-semibold">
                   {category.title}
                 </h4>
                 <ul className="space-y-1">
@@ -5088,7 +5156,7 @@ const SkillsSubskillsPanel = ({
             e.stopPropagation();
             onClose();
           }}
-          className="absolute top-4 right-4 z-20 px-3 py-2 text-xs font-medium uppercase tracking-wider text-white border border-white/30 bg-white/5 hover:bg-cyan-500 hover:border-cyan-400 hover:text-white rounded-md transition-colors duration-200 shadow-sm"
+          className="absolute top-4 right-4 z-20 px-3 py-2 text-xs font-heading font-medium uppercase tracking-btn-caps text-white border border-white/30 bg-white/5 hover:bg-cyan-500 hover:border-cyan-400 hover:text-white rounded-md transition-colors duration-200 shadow-sm"
           aria-label="Close subskills"
         >
           Close
@@ -5111,8 +5179,8 @@ const SkillsSubskillsPanel = ({
         <motion.div
           className={
             dualInline && variant === "inline"
-              ? "flex flex-shrink-0 min-w-0 border-b border-zinc-600/25 pb-1.5 sm:pb-2.5 mb-1.5 sm:mb-2.5"
-              : "flex flex-shrink-0 min-w-0 border-b border-zinc-600/25 pb-2 sm:pb-4 mb-2 sm:mb-4"
+              ? "flex flex-shrink-0 min-w-0 border-b border-mono-3/25 pb-1.5 sm:pb-2.5 mb-1.5 sm:mb-2.5"
+              : "flex flex-shrink-0 min-w-0 border-b border-mono-3/25 pb-2 sm:pb-4 mb-2 sm:mb-4"
           }
           variants={skillsPanelStaggerChild}
         >
@@ -5157,7 +5225,7 @@ const SkillsSubskillsPanel = ({
                   </span>
                 ) : (
                   <span
-                    className="inline-flex text-zinc-100 max-sm:translate-y-[5%] sm:[transform:var(--icon-offset)]"
+                    className="inline-flex text-mono-1 max-sm:translate-y-[5%] sm:[transform:var(--icon-offset)]"
                     style={{
                       "--icon-offset": `translate(${Math.round(SKILLS_CARD_LAYOUT.tools.icon.offsetX * (SKILLS_SUBSKILL_HEADER_ICON_PX / SKILLS_CARD_LAYOUT.tools.icon.size))}px, ${Math.round(SKILLS_CARD_LAYOUT.tools.icon.offsetY * (SKILLS_SUBSKILL_HEADER_ICON_PX / SKILLS_CARD_LAYOUT.tools.icon.size)) + Math.round(SKILLS_SUBSKILL_HEADER_ICON_PX * 0.05)}px)`,
                     } as React.CSSProperties}
@@ -5210,7 +5278,7 @@ const SkillsSubskillsPanel = ({
           }
         >
           {slide === "core" ? (
-            <div className="text-sm sm:text-base md:text-[1.0625rem] leading-relaxed text-zinc-100 pb-2 border-b border-zinc-600/25">
+            <div className="text-sm sm:text-base md:text-[1.0625rem] leading-relaxed text-mono-1 pb-2 border-b border-mono-3/25">
               <div className="grid w-full min-w-0 grid-cols-1 md:grid-cols-3 md:items-start gap-y-3.5 sm:gap-y-8 gap-x-4 md:gap-x-5 lg:gap-x-7 xl:gap-x-8">
                 {CORE_SUBSKILLS_CATEGORIES.map(({ categoryTitle, items }) => (
                   <div
@@ -5224,8 +5292,8 @@ const SkillsSubskillsPanel = ({
                     <p
                       className={
                         categoryTitle === "Research & Collaboration"
-                          ? "mb-1.5 sm:mb-3 text-[13px] uppercase tracking-[0.22em] text-zinc-400 whitespace-nowrap"
-                          : "mb-1.5 sm:mb-3 min-w-0 text-[13px] uppercase leading-snug tracking-[0.22em] text-zinc-400 break-words"
+                          ? "mb-1.5 sm:mb-3 text-[13px] font-heading uppercase tracking-eyebrow leading-snug text-mono-2/90 whitespace-nowrap"
+                          : "mb-1.5 sm:mb-3 min-w-0 text-[13px] font-heading uppercase leading-snug tracking-eyebrow text-mono-2/90 break-words"
                       }
                       title={categoryTitle}
                     >
@@ -5248,11 +5316,11 @@ const SkillsSubskillsPanel = ({
               </div>
             </div>
           ) : (
-            <div className="space-y-3 text-sm sm:text-base md:text-[1.0625rem] leading-relaxed text-zinc-100 pb-2 border-b border-zinc-600/25">
+            <div className="space-y-3 text-sm sm:text-base md:text-[1.0625rem] leading-relaxed text-mono-1 pb-2 border-b border-mono-3/25">
               <div className="grid w-full min-w-0 grid-cols-1 md:grid-cols-3 md:items-start gap-y-6 sm:gap-y-8 gap-x-6 md:gap-x-8 lg:gap-x-10 xl:gap-x-12 [&>*]:min-w-0">
                 <div className="min-w-0 flex flex-col">
                   <p
-                    className="mb-3 min-w-0 text-[13px] uppercase tracking-[0.22em] text-zinc-400 whitespace-nowrap truncate"
+                    className="mb-3 min-w-0 text-[13px] font-heading uppercase tracking-eyebrow leading-snug text-mono-2/90 whitespace-nowrap truncate"
                     title="Design & Productivity"
                   >
                     Design &amp; Productivity
@@ -5277,7 +5345,7 @@ const SkillsSubskillsPanel = ({
                 </div>
                 <div className="min-w-0 flex flex-col">
                   <p
-                    className="mb-3 min-w-0 text-[13px] uppercase tracking-[0.22em] text-zinc-400 whitespace-nowrap truncate"
+                    className="mb-3 min-w-0 text-[13px] font-heading uppercase tracking-eyebrow leading-snug text-mono-2/90 whitespace-nowrap truncate"
                     title="Video & Writing"
                   >
                     Video &amp; Writing
@@ -5297,7 +5365,7 @@ const SkillsSubskillsPanel = ({
                 </div>
                 <div className="min-w-0 flex flex-col">
                   <p
-                    className="mb-3 min-w-0 text-[13px] uppercase tracking-[0.22em] text-zinc-400 whitespace-nowrap truncate"
+                    className="mb-3 min-w-0 text-[13px] font-heading uppercase tracking-eyebrow leading-snug text-mono-2/90 whitespace-nowrap truncate"
                     title="Social Platforms"
                   >
                     Social Platforms
@@ -5469,7 +5537,7 @@ const SkillArsenal = () => {
                       >
                         <span data-card-title-wrap>
                           <motion.span
-                            className="block font-display font-semibold uppercase tracking-[0.12em] text-white h-[52px]"
+                            className="block font-display font-semibold uppercase tracking-nav-caps leading-snug text-white h-[52px]"
                             style={{
                               fontSize: `${SKILLS_CARD_LAYOUT.core.title.fontSize}px`,
                               textShadow: "0 0 10px rgba(0,0,0,0.9)",
@@ -5549,7 +5617,7 @@ const SkillArsenal = () => {
                       >
                         <span data-card-title-wrap>
                           <motion.span
-                            className="block font-display font-semibold uppercase tracking-[0.12em] text-white h-[52px]"
+                            className="block font-display font-semibold uppercase tracking-nav-caps leading-snug text-white h-[52px]"
                             style={{
                               fontSize: `${SKILLS_CARD_LAYOUT.tools.title.fontSize}px`,
                               textShadow: "0 0 10px rgba(0,0,0,0.9)",
@@ -6001,7 +6069,7 @@ export default function Home() {
               onClick={() => setIsResumeMode(!isResumeMode)}
               size="icon"
               aria-label={isResumeMode ? "Exit resume mode" : "Enter resume mode"}
-              className={`shadow-xl border-[3px] transition-colors duration-200 font-display uppercase tracking-widest rounded-full h-14 w-14 min-h-0 min-w-0 p-0 flex items-center justify-center [&_svg]:!size-5 ${
+              className={`shadow-xl border-[3px] transition-colors duration-200 font-display rounded-full h-14 w-14 min-h-0 min-w-0 p-0 flex items-center justify-center [&_svg]:!size-5 ${
                 isResumeMode
                   ? "bg-black text-white border-black hover:bg-zinc-800"
                   : "bg-black text-white border-black hover:bg-white hover:text-black"
@@ -6017,10 +6085,11 @@ export default function Home() {
             <Button
               type="button"
               onClick={() => setIsSideNavOpen(true)}
+              size="icon"
               aria-label="Open navigation menu"
-              className="h-14 w-14 min-h-0 min-w-0 rounded-full bg-black text-white hover:bg-white hover:text-black border-[3px] border-black p-0 shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black [&_svg]:!size-5"
+              className="shadow-xl border-[3px] transition-colors duration-200 font-display rounded-full h-14 w-14 min-h-0 min-w-0 p-0 flex items-center justify-center bg-black text-white border-black hover:bg-white hover:text-black [&_svg]:!size-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
             >
-              <Menu size={22} aria-hidden />
+              <Menu size={20} aria-hidden />
             </Button>
           </motion.div>
         )}
@@ -6173,10 +6242,10 @@ export default function Home() {
           {/* Section panel: layered black, accent edge when incoming, content settle */}
           {currentSection && (
             <motion.div
-              className={`fixed inset-0 overflow-x-hidden no-scrollbar ${
+              className={`fixed inset-0 flex min-h-0 flex-col overflow-x-hidden no-scrollbar ${
                 currentSection === "projects-supporting" || currentSection === "experience"
                   ? "overflow-y-hidden"
-                  : "overflow-y-auto"
+                  : "overflow-y-auto overscroll-y-contain [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0"
               }`}
               style={{
                 backgroundColor: "#000",
@@ -6184,6 +6253,9 @@ export default function Home() {
                 pointerEvents: transitionTarget === "menu" ? "none" : "auto",
                 // Dropping will-change after settle avoids Chromium keeping section text on a blurry GPU layer.
                 willChange: !panelSettled || isTransitioning ? "transform" : "auto",
+                ...(currentSection === "projects-supporting" || currentSection === "experience"
+                  ? {}
+                  : { scrollbarWidth: "none", msOverflowStyle: "none" }),
               }}
               aria-label={`Section: ${currentSection}`}
               initial={
@@ -6231,18 +6303,28 @@ export default function Home() {
                 />
               )}
               {/* Plain wrapper: nested Framer x/opacity here put every section (incl. experience) under an extra
-                  transform layer — Chromium rasterizes body text soft. Outer panel motion keeps the slide. */}
-              <div className="min-h-screen w-full overflow-x-hidden">
+                  transform layer — Chromium rasterizes body text soft. Outer panel motion keeps the slide.
+                  flex-1 min-h-0 binds height to the viewport so SHOWCASE flex spacers can resolve (min-h-screen grew unbounded).
+                  Projects: no vertical overflow clip — tall showcase + folder card scroll on the panel (no-scrollbar). */}
+              <div
+                className={
+                  currentSection === "projects"
+                    ? "flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-visible"
+                    : "flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden"
+                }
+              >
                 {currentSection === "profile" && <PhantomProfile />}
                 {reduceMotion ? (
                   <>
                     {currentSection === "projects" && (
-                      <PalaceProjects
-                        onSelectProject={setActiveShowcaseProjectId}
-                        onOpenSupporting={() => navigateTo("projects-supporting")}
-                        activeProjectId={activeShowcaseProjectId}
-                        settled={panelSettled}
-                      />
+                      <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-x-hidden">
+                        <PalaceProjects
+                          onSelectProject={setActiveShowcaseProjectId}
+                          onOpenSupporting={() => navigateTo("projects-supporting")}
+                          activeProjectId={activeShowcaseProjectId}
+                          settled={panelSettled}
+                        />
+                      </div>
                     )}
                     {currentSection === "projects-supporting" && (
                       <SupportingProjectsSection onNavTransitionChange={setNavButtonsFaded} />
@@ -6257,7 +6339,7 @@ export default function Home() {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: SHOWCASE_SUBROUTE_FADE_S, ease: EASE.out }}
-                        className="w-full"
+                        className="flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-x-hidden"
                       >
                         <PalaceProjects
                           onSelectProject={setActiveShowcaseProjectId}

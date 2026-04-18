@@ -175,8 +175,8 @@ export function PdfJsDocumentView({ src, className = "", maxDpr = 2, onReady, on
 
       {showError && (
         <div className="flex min-h-[11rem] flex-col items-center justify-center gap-2.5 bg-[#3c4043]/5 px-4 py-8 text-center">
-          <p className="font-body text-sm text-zinc-200">Could not display this PDF in the browser.</p>
-          <p className="font-mono text-[0.65rem] leading-relaxed text-zinc-500">{showError}</p>
+          <p className="font-body text-sm text-mono-2">Could not display this PDF in the browser.</p>
+          <p className="font-mono text-[0.65rem] leading-relaxed text-mono-2/70">{showError}</p>
         </div>
       )}
 

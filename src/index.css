@@ -45,11 +45,20 @@
   --color-input: var(--color-p3-gray);
   --color-ring: var(--color-p3-cyan);
 
-  /* Typography - Satoshi Bold + Medium */
+  /* Typography — Satoshi; hero subheading uses Inter via `.font-hero-subheading` only */
   --font-display: 'Satoshi', sans-serif;
   --font-heading: 'Satoshi', sans-serif;
   --font-body: 'Satoshi', sans-serif;
   --font-marker: 'Satoshi', sans-serif;
+
+  /* Monochrome UI text (non-accent): do not use for rainbow / branded color spans */
+  --color-mono-0: #ffffff;
+  --color-mono-1: #f3f3f3;
+  --color-mono-2: #e1e1e1;
+  --color-mono-3: #2e2e2e;
+  --color-mono-4: #1b1b1b;
+  --color-mono-5: #141414;
+  --color-mono-6: #000000;
 
   --radius: 0px;
 }
@@ -73,7 +82,7 @@
     display: none;
   }
   body {
-    @apply font-body antialiased text-foreground overflow-x-hidden;
+    @apply font-body antialiased text-mono-2 overflow-x-hidden;
     background-color: #0a0a0a;
     background-image: none !important;
   }
@@ -124,6 +133,30 @@
 }
 
 @layer utilities {
+  /** Inter — hero subheading only; everything else uses Satoshi via `font-body` */
+  .font-hero-subheading {
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    font-weight: 400;
+    letter-spacing: 0.14em;
+  }
+
+  /** Portfolio header rhythm — uppercase labels / eyebrows */
+  .tracking-eyebrow {
+    letter-spacing: 0.2em;
+  }
+  .tracking-eyebrow-sm {
+    letter-spacing: 0.18em;
+  }
+  /** Nav & menu row titles (display caps, mid weight) */
+  .tracking-nav-caps {
+    letter-spacing: 0.14em;
+  }
+  /** Uppercase button labels — same rhythm as eyebrow-sm, explicit line box for CTAs */
+  .tracking-btn-caps {
+    letter-spacing: 0.18em;
+    line-height: 1.25;
+  }
+
   @keyframes gridDriftSmooth {
     from {
       background-position: 0 0;
@@ -221,11 +254,11 @@
   }
 
   .playstore-button .texts {
-    line-height: 1;
+    line-height: 1.2;
     font-weight: 500;
-    font-size: 0.8125rem;
+    font-size: 0.9375rem;
     text-transform: uppercase;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.18em;
     white-space: nowrap;
   }
 
@@ -312,9 +345,13 @@
   .no-scrollbar {
     -ms-overflow-style: none; /* IE/Edge legacy */
     scrollbar-width: none; /* Firefox */
+    scrollbar-color: transparent transparent;
   }
   .no-scrollbar::-webkit-scrollbar {
     display: none; /* Chrome/Safari */
+    width: 0;
+    height: 0;
+    background: transparent;
   }
 
   /* Thin scrollbar: hidden until .subtle-scrollbar--visible (scroll-driven fade-in). */

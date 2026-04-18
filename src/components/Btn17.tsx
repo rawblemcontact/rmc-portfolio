@@ -29,7 +29,8 @@ const StyledBtn = styled.button`
   font-family: inherit;
   font-size: 100%;
   font-weight: 900;
-  line-height: 1.5;
+  line-height: 1.25;
+  letter-spacing: 0.14em;
   margin: 0;
   padding: 0;
   text-transform: uppercase;

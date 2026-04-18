@@ -30,7 +30,7 @@ export function AlignmentSlider({
 }: AlignmentSliderProps) {
   return (
     <div className={`flex items-center gap-3 ${className}`}>
-      <label htmlFor={id} className="font-mono text-xs text-zinc-500 whitespace-nowrap">
+      <label htmlFor={id} className="font-mono text-xs text-mono-2/70 whitespace-nowrap">
         {label}
       </label>
       <input

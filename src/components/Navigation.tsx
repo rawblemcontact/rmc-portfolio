@@ -123,7 +123,7 @@ const Navigation: React.FC<NavigationProps> = ({ isHeroInView = true }) => {
               animate={{ rotate: isOpen ? 90 : 0 }}
               transition={{ type: "spring", stiffness: 200, damping: 20 }}
              >
-                {isOpen ? <X size={32} strokeWidth={3} /> : <Menu size={32} strokeWidth={3} />}
+                {isOpen ? <X size={32} strokeWidth={1} /> : <Menu size={32} strokeWidth={1} />}
              </motion.div>
           </div>
         </Button>
@@ -241,7 +241,7 @@ const Navigation: React.FC<NavigationProps> = ({ isHeroInView = true }) => {
                 })}
               </div>
               
-              <div className="absolute bottom-6 left-6 text-zinc-500 font-mono text-xs md:text-sm">
+              <div className="absolute bottom-6 left-6 text-mono-2/70 font-mono text-xs md:text-sm">
                 <p>ROBBIE MCLAUGHLIN // PORTFOLIO</p>
                 <p>LAST LOGIN: TODAY</p>
               </div>

@@ -77,6 +77,8 @@ const StyledBtn = styled.button<{ $expanded?: boolean }>`
     font-size: 0.6875rem;
     font-weight: 600;
     text-transform: uppercase;
+    letter-spacing: 0.14em;
+    line-height: 1.25;
     transition-duration: 0.15s;
     transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
     white-space: nowrap;

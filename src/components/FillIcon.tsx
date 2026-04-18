@@ -24,7 +24,7 @@ export function FillIcon({
   filledIcon: Filled,
   forceFilled,
   className,
-  strokeWidth = 2.5,
+  strokeWidth = 1.5,
 }: FillIconProps) {
   const controlled = typeof forceFilled === "boolean";
   const fillVariants: Variants = {
