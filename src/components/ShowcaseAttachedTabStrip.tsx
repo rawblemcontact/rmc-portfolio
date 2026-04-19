@@ -13,10 +13,10 @@ const TAB_LABEL: Record<ShowcaseTabId, string> = {
   "tab-5": "Media analysis",
 };
 
-/** Active tab + deck — one surface */
-const TAB_ACTIVE_SURFACE = "bg-zinc-950";
-/** Inactive folder tabs — slightly recessed */
-const TAB_INACTIVE_SURFACE = "bg-zinc-900/55";
+/** Matches Home `SHOWCASE_PANEL_FACE` (1px border + glass, no inset ring). */
+const TAB_ACTIVE_SURFACE = "bg-zinc-950/22";
+/** Inactive tabs — same zinc/black glass as shell (`zinc-900` read muddy vs rail). */
+const TAB_INACTIVE_SURFACE = "bg-zinc-950/14";
 
 /**
  * Panel inset + preview width always follow this tab so switching tabs does not shift
@@ -118,29 +118,30 @@ export function ShowcaseAttachedTabStrip({
     <div className={`flex w-full flex-col ${className}`}>
       <div
         className={[
-          "flex flex-col overflow-hidden rounded-[11px] sm:rounded-xl",
+          "flex min-w-0 w-full max-w-full flex-col overflow-hidden rounded-[11px] sm:rounded-xl",
           "border border-white/[0.09]",
-          "bg-zinc-950/40",
+          "bg-zinc-950/20 backdrop-blur-sm",
           "shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)]",
+          // lg+: match right edge of SHOWCASE cards (slide basis uses (100%-4px)/2 — Home.tsx).
+          "lg:max-w-[calc(100%-4px)]",
         ].join(" ")}
       >
-        <header className="shrink-0 border-b border-white/[0.08] bg-black/30 px-3 py-2.5 text-center sm:px-4 sm:py-3">
-          <h2 className="m-0 font-heading text-sm leading-snug tracking-eyebrow-tight uppercase text-mono-2/90">
+        <header className="shrink-0 border-b border-white/[0.08] bg-black/50 px-3 py-2.5 text-center sm:px-4 sm:py-3">
+          <h2 className="m-0 font-display text-sm font-bold leading-snug tracking-eyebrow-tight uppercase text-white">
             FEATURED WRITING
           </h2>
         </header>
 
-        <div className="relative z-[1] flex shrink-0 flex-col gap-0 border-b border-white/[0.08] bg-black/25 px-3 pt-1.5 sm:flex-row sm:items-end sm:justify-between sm:gap-3 sm:px-4 sm:pt-2">
+        <div className="relative z-[1] flex shrink-0 flex-col gap-0 border-b border-white/[0.08] bg-black/35 px-3 pt-3 sm:flex-row sm:items-end sm:justify-between sm:gap-3 sm:px-4 sm:pt-4">
           <div
             ref={tabListRef}
             role="tablist"
             aria-label="Showcase views"
             onScroll={syncFit}
-            className="flex min-w-0 flex-1 items-end overflow-x-auto overflow-y-visible [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="flex min-w-0 flex-1 items-end gap-0.5 overflow-x-auto overflow-y-visible [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
-            {TAB_ORDER.map((id, index) => {
+            {TAB_ORDER.map((id) => {
               const active = activeId === id;
-              const stackInactive = 4 + index;
               return (
                 <button
                   key={id}
@@ -150,26 +151,25 @@ export function ShowcaseAttachedTabStrip({
                   aria-selected={active}
                   tabIndex={0}
                   onClick={() => onTabChange(id)}
-                  style={{ zIndex: active ? 28 : stackInactive }}
                   className={[
                     "group relative flex shrink-0 items-center justify-center",
+                    active ? "z-[1]" : "z-0",
                     FOLDER_TAB_TOP,
                     "min-w-0 border border-b-0 px-2.5 font-heading text-[10px] sm:text-xs tracking-btn-caps uppercase",
                     "motion-safe:transition-[height,box-shadow,background-color,border-color,color] motion-safe:duration-200 motion-safe:ease-out",
                     "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-yellow-400/30 focus-visible:ring-offset-2 focus-visible:ring-offset-black",
-                    index > 0 ? "-ml-px" : "",
                     active
                       ? [
                           TAB_ACTIVE_SURFACE,
                           "relative h-10 min-h-[2.5rem] sm:h-11 sm:min-h-[2.75rem]",
-                          "border-white/[0.2] text-yellow-400/90",
+                          "border-yellow-400/50 text-yellow-400/95",
                           "shadow-[0_6px_20px_-8px_rgba(0,0,0,0.75),3px_0_10px_-5px_rgba(0,0,0,0.55)]",
                         ].join(" ")
                       : [
                           TAB_INACTIVE_SURFACE,
                           "h-7 min-h-[1.75rem] sm:h-8 sm:min-h-[2rem]",
-                          "border-white/[0.07] text-white/40",
-                          "hover:border-white/[0.11] hover:bg-zinc-900/75 hover:text-white/58",
+                          "border-white/[0.09] text-mono-2/55",
+                          "hover:border-white/[0.14] hover:bg-zinc-950/28 hover:text-mono-2/90",
                         ].join(" "),
                   ].join(" ")}
                 >
@@ -183,11 +183,11 @@ export function ShowcaseAttachedTabStrip({
             <button
               type="button"
               onClick={onArchives}
-              className="group inline-flex items-center gap-1.5 py-1 font-heading text-[10px] sm:text-xs tracking-btn-caps uppercase text-white/38 transition-colors duration-200 ease-out hover:text-yellow-400/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-yellow-400/30 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+              className="group inline-flex items-center gap-1.5 py-1 font-heading text-[10px] sm:text-xs tracking-btn-caps uppercase text-mono-2/55 transition-colors duration-300 ease-out hover:text-yellow-400/95 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-yellow-400/30 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
             >
               MORE
               <ArrowRight
-                className="h-3 w-3 shrink-0 opacity-55 transition-opacity duration-200 ease-out group-hover:opacity-100"
+                className="h-3 w-3 shrink-0 text-mono-2/55 transition-colors duration-300 ease-out group-hover:text-yellow-400/95"
                 strokeWidth={1.75}
                 aria-hidden
               />
@@ -204,10 +204,7 @@ export function ShowcaseAttachedTabStrip({
           aria-label="Featured writing content"
         >
           <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[3] h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
-          {/*
-           * Tight pt so preview + copy sit close under the tab row (was py-3).
-           */}
-          <div ref={bodyPadRef} className="px-3 pt-2 pb-3 sm:px-4 sm:pt-2.5 sm:pb-3.5">
+          <div ref={bodyPadRef} className="px-3 py-3 sm:px-4 sm:py-3.5">
             {/*
              * Inset matches the active tab’s left edge; width fills the folder body so
              * thumbnail + copy are not squeezed to the tab button width (avoids clipping

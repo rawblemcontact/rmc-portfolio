@@ -29,12 +29,9 @@ import {
   ChevronRight,
   User,
   Briefcase,
-  Monitor,
-  ListOrdered
 } from "lucide-react";
 import styled from "styled-components";
 import { TiltCard } from "../components/TiltCard";
-import { ExpandCircleButton } from "../components/ExpandCircleButton";
 import { WordsPullUp } from "../components/WordsPullUp";
 import { FloatingPhone } from "../components/FloatingPhone";
 import { ShowcaseAttachedTabStrip, type ShowcaseTabId } from "../components/ShowcaseAttachedTabStrip";
@@ -1033,7 +1030,7 @@ const Hero = ({
   return (
     <section
       id="hero"
-      className={`relative h-screen w-full overflow-hidden bg-black text-white ${SLIDE_NO_Y_SCROLL}`}
+      className={`relative h-[100svh] w-full overflow-hidden bg-black text-white ${SLIDE_NO_Y_SCROLL}`}
     >
       <div
         className="pointer-events-none absolute inset-0 z-0 opacity-[0.04] grid-drift-bg"
@@ -1044,12 +1041,13 @@ const Hero = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.12, ease: [0.22, 1, 0.36, 1] }}
-        className="relative z-[5] mx-auto grid h-full w-full max-w-[1680px] grid-rows-[minmax(0,2fr)_minmax(0,1fr)] px-4 pt-0 pb-4 md:px-6 md:pb-5 lg:px-8 lg:pb-6"
+        className="relative z-[5] mx-auto grid h-full w-full max-w-[1680px] grid-rows-[minmax(0,2fr)_minmax(0,1fr)] px-4 pt-[max(1rem,env(safe-area-inset-top,0px))] pb-4 md:px-6 md:pt-[max(1.5rem,env(safe-area-inset-top,0px))] md:pb-5 lg:px-8 lg:pt-[max(2rem,env(safe-area-inset-top,0px))] lg:pb-6"
       >
         <div className="relative flex min-h-0 items-start justify-center">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[calc(100vw+8rem)] md:w-[calc(100vw+12rem)] lg:w-[calc(100vw+18rem)]">
+          <div className="absolute inset-x-0 top-0 w-full max-w-full">
           {sliderPhaseActive && (
           <motion.div
+            className="overflow-hidden rounded-[11px] sm:rounded-xl"
             initial={{ scaleY: 0.022 }}
             animate={{ scaleY: 1 }}
             transition={reduceMotion ? { duration: 0 } : { duration: 0.95, ease: [0.16, 1, 0.3, 1], delay: 0.08 }}
@@ -1057,13 +1055,13 @@ const Hero = ({
             style={{ transformOrigin: "center center", willChange: "transform" }}
           >
           <motion.div
-            className="relative h-[clamp(260px,56vh,620px)] md:h-[clamp(300px,58vh,680px)] lg:h-[clamp(340px,61vh,760px)] overflow-hidden rounded-[14px] bg-black"
+            className="relative mx-auto w-full max-w-full h-[clamp(200px,min(52vh,calc(100svh-11rem-max(1rem,env(safe-area-inset-top,0px)))),620px)] md:h-[clamp(240px,min(54vh,calc(100svh-11rem-max(1.5rem,env(safe-area-inset-top,0px)))),680px)] lg:h-[clamp(260px,min(56vh,calc(100svh-12rem-max(2rem,env(safe-area-inset-top,0px)))),760px)] overflow-hidden rounded-[11px] sm:rounded-xl border border-white/[0.09] bg-black"
             animate={{
               boxShadow: sliderAnimDone
-                ? "0 36px 88px rgba(0,0,0,0.6), inset 0 -40px 70px rgba(0,0,0,0.52), 0 0 0 1px rgba(255,255,255,0.07), 0 0 28px 4px rgba(255,255,255,0.04)"
-                : "0 36px 88px rgba(0,0,0,0.6), inset 0 -40px 70px rgba(0,0,0,0.52), 0 0 0 1px rgba(255,255,255,0.07), 0 0 28px 4px rgba(255,255,255,0.02)",
+                ? "0 36px 88px rgba(0,0,0,0.6), inset 0 -40px 70px rgba(0,0,0,0.52), 0 0 28px 4px rgba(255,255,255,0.04)"
+                : "0 36px 88px rgba(0,0,0,0.6), inset 0 -40px 70px rgba(0,0,0,0.52), 0 0 28px 4px rgba(255,255,255,0.02)",
             }}
-            initial={{ boxShadow: "0 36px 88px rgba(0,0,0,0.6), inset 0 -40px 70px rgba(0,0,0,0.52), 0 0 0 1px rgba(255,255,255,0.07), 0 0 28px 4px rgba(255,255,255,0.02)" }}
+            initial={{ boxShadow: "0 36px 88px rgba(0,0,0,0.6), inset 0 -40px 70px rgba(0,0,0,0.52), 0 0 28px 4px rgba(255,255,255,0.02)" }}
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             onMouseEnter={() => setHeroSlidePaused(true)}
             onMouseLeave={() => setHeroSlidePaused(false)}
@@ -1146,27 +1144,27 @@ const Hero = ({
           )}
           </div>
         </div>
-        <div className="relative z-40 flex min-h-0 items-stretch pt-0 overflow-visible">
-          {/* Y-transform wrapper: starts at -22vh (centered on screen) during Phase 1,
-              pushes down to 0 when sliderPhaseActive fires simultaneously with slider open */}
+        <div className="relative z-40 flex min-h-0 flex-col items-center justify-center overflow-visible pt-0">
+          {/* Y-transform wrapper: starts above final position during Phase 1,
+              settles when sliderPhaseActive fires with slider open */}
           <motion.div
-            className="mx-auto flex h-full w-full max-w-[1220px] flex-col items-center justify-center gap-3 md:gap-4 py-2 px-1"
+            className="mx-auto flex h-full w-full max-w-[1220px] flex-col items-center justify-center gap-3 md:gap-4 px-1 py-2 sm:py-3"
             initial={{ y: "-33vh" }}
             animate={{ y: sliderPhaseActive ? 0 : "-33vh" }}
             transition={reduceMotion ? { duration: 0 } : { duration: 0.95, ease: [0.16, 1, 0.3, 1], delay: 0.08 }}
           >
-            <div className="min-w-0 w-full max-w-[min(100%,60rem)] text-center">
+            <div className="mx-auto min-w-0 w-full max-w-[min(100%,60rem)] text-center">
               <motion.h1
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.52, delay: 0.1, ease: EASE.out }}
-                className="relative mb-2.5 font-display text-[clamp(2.35rem,7vw,6rem)] leading-[0.93] tracking-[-0.02em] uppercase whitespace-normal md:whitespace-nowrap"
+                className="relative mb-2.5 flex flex-wrap justify-center gap-x-2 gap-y-1 font-display text-[clamp(2.35rem,7vw,6rem)] leading-[0.93] tracking-[-0.02em] uppercase sm:gap-x-3 md:whitespace-nowrap"
                 style={{ textShadow: "0 0 10px rgba(255,255,255,0.075)" }}
               >
                 <span className="inline-block text-white" style={{ letterSpacing: "0.02em", fontKerning: "none" }}>
                   ROBBIE
                 </span>
-                <span className="ml-2 inline-block text-white md:ml-3" style={{ letterSpacing: "0.02em", fontKerning: "none" }}>
+                <span className="inline-block text-white" style={{ letterSpacing: "0.02em", fontKerning: "none" }}>
                   MCLAUGHLIN
                 </span>
               </motion.h1>
@@ -1612,10 +1610,8 @@ const SectionGridOverlay = ({
 const RED_LINE_DELAY_MS = 229; // -10%
 const RED_LINE_DURATION_MS = 190; // -10%
 const RED_LINE_COMPLETE_MS = RED_LINE_DELAY_MS + RED_LINE_DURATION_MS;
-/** Fade-in / slide duration for the three buttons (ms). */
+/** Fade-in for profile metadata line (ms). */
 const BUTTON_FADE_DURATION_MS = 486; // -10%
-/** Shutter overlay duration (ms). */
-const SHUTTER_DURATION_MS = 176; // -10%
 /** Summary delay + duration. Buttons start after summary finishes. */
 const SUMMARY_DELAY_S = 0.0455; // -10%
 const SUMMARY_DURATION_S = 0.306; // 0.34 * 0.9
@@ -1629,7 +1625,6 @@ const PhantomProfile = () => {
   const dividerInView = useInView(dividerRef, { once: false, amount: 0.5 });
   const rawblemInView = useInView(rawblemRef, { once: false, amount: 0.2 });
   const [overlayRevealed, setOverlayRevealed] = useState(false);
-  const [overlayEnterCount, setOverlayEnterCount] = useState(0);
   const [rawblemFloatReady, setRawblemFloatReady] = useState(false);
   const prevProfileInView = useRef(false);
 
@@ -1642,7 +1637,6 @@ const PhantomProfile = () => {
     if (profileLeftInView) {
       if (!prevProfileInView.current) {
         setOverlayRevealed(false);
-        setOverlayEnterCount((c) => c + 1); // force fresh overlay on each enter
         prevProfileInView.current = true;
       }
       const revealId = window.setTimeout(() => setOverlayRevealed(true), Math.max(0, RED_LINE_COMPLETE_MS - 90));
@@ -1689,7 +1683,7 @@ const PhantomProfile = () => {
             whileInView={{ opacity: 1, y: 0, x: 0 }}
             viewport={{ once: false, amount: 0.2 }}
             transition={{ duration: 0.342, ease: [0.16, 1, 0.3, 1] }}
-            className="lg:order-1 w-full lg:w-auto lg:max-w-[38rem] xl:max-w-[40rem] 2xl:max-w-[44rem] lg:shrink-0 lg:mt-0"
+            className="min-w-0 lg:order-1 w-full lg:w-auto lg:max-w-[38rem] xl:max-w-[40rem] 2xl:max-w-[44rem] lg:shrink-0 lg:mt-0"
           >
              <SectionHeader
                key={profileLeftInView ? "profile-in" : "profile-out"}
@@ -1719,47 +1713,38 @@ const PhantomProfile = () => {
                  transition={{ duration: RED_LINE_DURATION_MS / 1000, delay: RED_LINE_DELAY_MS / 1000, ease: [0.16, 1, 0.3, 1] }}
                />
             </div>
-            <div
-              className="relative w-full max-w-xl xl:max-w-2xl 2xl:max-w-2xl mt-1 overflow-visible min-w-0 min-h-[48px] sm:min-h-[60px] xl:min-h-[64px] 2xl:min-h-[68px] isolate -ml-[3px]"
+            <motion.div
+              className="relative mt-4 sm:mt-5 w-full min-w-0 max-w-xl xl:max-w-2xl 2xl:max-w-2xl -ml-[3px] pe-[max(0.75rem,env(safe-area-inset-right,0px))] sm:pe-4"
+              initial={{ x: -24, opacity: 0 }}
+              animate={{ x: overlayRevealed ? 0 : -24, opacity: overlayRevealed ? 1 : 0 }}
+              transition={{ duration: BUTTON_FADE_DURATION_MS / 1000, delay: overlayRevealed ? BUTTONS_DELAY_AFTER_SUMMARY_MS / 1000 : 0, ease: [0.16, 1, 0.3, 1] }}
             >
-              <motion.div
-                className="-ml-3 flex flex-wrap items-center gap-1.5 sm:flex-nowrap sm:gap-1 sm:-ml-4 md:-ml-5 xl:gap-1.5 2xl:gap-2"
-                initial={{ x: -24, opacity: 0 }}
-                animate={{ x: overlayRevealed ? 0 : -24, opacity: overlayRevealed ? 1 : 0 }}
-                transition={{ duration: BUTTON_FADE_DURATION_MS / 1000, delay: overlayRevealed ? BUTTONS_DELAY_AFTER_SUMMARY_MS / 1000 : 0, ease: [0.16, 1, 0.3, 1] }}
-              >
-                <ExpandCircleButton icon={<FileText size={20} />} expanded>
-                  Writer
-                </ExpandCircleButton>
-                <ExpandCircleButton icon={<Monitor size={20} />} expanded>
-                  Digital Media
-                </ExpandCircleButton>
-                <ExpandCircleButton icon={<ListOrdered size={20} />} expanded>
-                  Content Strategy
-                </ExpandCircleButton>
-              </motion.div>
-              <motion.div
-                key={overlayEnterCount}
-                className="absolute inset-0 z-[20] bg-black pointer-events-none origin-right"
-                initial={{ scaleX: 1 }}
-                animate={{ scaleX: overlayRevealed ? 0 : 1 }}
-                transition={{ duration: SHUTTER_DURATION_MS / 1000, delay: overlayRevealed ? BUTTONS_DELAY_AFTER_SUMMARY_MS / 1000 : 0, ease: "linear" }}
-                aria-hidden
-              />
-             </div>
+              <p className="font-heading w-full min-w-0 max-w-full text-balance text-sm tracking-eyebrow leading-snug uppercase text-mono-2/90 max-sm:whitespace-normal sm:whitespace-nowrap sm:overflow-x-auto sm:overflow-y-visible sm:no-scrollbar">
+                Victoria, BC <span className="text-mono-2/35 mx-0.5 sm:mx-1" aria-hidden>•</span> BA WRITING{" "}
+                <span className="text-mono-2/35 mx-0.5 sm:mx-1" aria-hidden>•</span> DIGITAL MEDIA
+              </p>
+            </motion.div>
              <motion.div
-               className="mt-3 max-w-xl xl:max-w-2xl 2xl:max-w-2xl -ml-[3px]"
+               className="mt-8 max-w-xl sm:mt-9 xl:max-w-2xl 2xl:max-w-2xl -ml-[3px]"
                initial={{ opacity: 0, y: 14 }}
                animate={{ opacity: overlayRevealed ? 1 : 0, y: overlayRevealed ? 0 : 14 }}
                transition={{ duration: SUMMARY_DURATION_S, delay: overlayRevealed ? SUMMARY_DELAY_S : 0, ease: [0.16, 1, 0.3, 1] }}
              >
-               <p className="font-heading text-sm tracking-eyebrow leading-snug uppercase text-mono-2/90 mb-1.5">SUMMARY</p>
+               <p className="font-heading text-sm tracking-eyebrow leading-snug uppercase text-red-500/75 mb-1.5">SUMMARY</p>
                <p className="font-body text-sm sm:text-base md:text-lg xl:text-lg 2xl:text-xl text-mono-2 leading-relaxed mb-4">
-                 Communications-focused writer and digital media coordinator with experience producing narrative-driven web content and managing social media workflows across multiple platforms. Bachelor of Arts in Writing (Distinction), University of Victoria.
+                 Communications-focused writer and digital media coordinator with experience producing narrative-driven web content and managing social media workflows across multiple platforms. Combines narrative storytelling with platform-native content production and distribution. Bachelor of Arts in Writing (Distinction), University of Victoria.
                </p>
-               <p className="font-body text-sm sm:text-base md:text-lg xl:text-lg 2xl:text-xl text-mono-2/90 leading-relaxed">
-                 Currently developing SLAYWIRE, a narrative-first RPG.
-               </p>
+               <p className="font-heading text-sm tracking-eyebrow leading-snug uppercase text-red-500/75 mb-1.5">CURRENT WORK</p>
+               <ul className="font-body text-sm sm:text-base md:text-lg xl:text-lg 2xl:text-xl text-mono-2/90 leading-relaxed mb-4 ml-3 list-disc list-outside space-y-2 pl-6 sm:pl-7 marker:text-mono-2/50">
+                 <li>Currently developing SLAYWIRE, a narrative-first RPG.</li>
+                 <li>
+                   RAWBLEM - Creative brand producing narrative-driven short-form content across TikTok, Instagram Reels, and YouTube Shorts.
+                 </li>
+               </ul>
+               <p className="font-heading text-sm tracking-eyebrow leading-snug uppercase text-red-500/75 mb-1.5">AVAILABILITY</p>
+               <ul className="font-body text-sm sm:text-base md:text-lg xl:text-lg 2xl:text-xl text-mono-2 leading-relaxed ml-3 list-disc list-outside space-y-2 pl-6 sm:pl-7 marker:text-mono-2/50">
+                 <li>Full-Time Content, Communications, or Digital Media roles.</li>
+               </ul>
              </motion.div>
           </motion.div>
         </div>
@@ -2049,7 +2034,7 @@ const DETAIL_HERO_MEDIA_FADE_EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
 /** Align copy schedule with hero fade: ~double-rAF after morph before opacity transition (ms from morph end). */
 const DETAIL_HERO_FADE_START_RAF_PAD_MS = 40;
 
-/** Match showcase carousel card height (same as motion.button). Capped with svh so SHOWCASE + FEATURED fit one screen with bottom gutter — no scroll. */
+/** Match showcase carousel card height (same as `motion.button` project cards). Capped with svh so SHOWCASE + FEATURED fit one screen with bottom gutter — no scroll. */
 const DETAIL_CARD_H =
   "h-[min(280px,45svh)] sm:h-[min(308px,48svh)] md:h-[min(328px,50svh)] lg:h-[min(352px,52svh)] xl:h-[min(368px,54svh)] 2xl:h-[min(384px,56svh)]";
 
@@ -3212,16 +3197,13 @@ const PalaceProjects = ({
   onOpenSupporting,
   onOpenFeaturedPdfInSupporting,
   activeProjectId,
-  settled = true,
 }: {
   onSelectProject: (id: string) => void;
   onOpenSupporting: () => void;
   onOpenFeaturedPdfInSupporting: (item: SupportingArchivePdfItem) => void;
   activeProjectId: string | null;
-  settled?: boolean;
 }) => {
   const reduceMotion = useReducedMotion();
-  const gate = reduceMotion ? 0 : SHOWCASE_GATE_S;
   const activeCard = activeProjectId ? PROJECT_CARDS.find((c) => c.id === activeProjectId) ?? null : null;
 
   const [morphRect, setMorphRect] = useState<CardRect | null>(null);
@@ -3238,7 +3220,6 @@ const PalaceProjects = ({
 
   const morphDur = reduceMotion ? 0.12 / SHOWCASE_TIME_DIV : SHOWCASE_CARD_MORPH_DUR_S;
   const morphEase = SHOWCASE_EASE;
-  const openContentFadeS = reduceMotion ? 0.14 / SHOWCASE_TIME_DIV : SHOWCASE_CARD_OPEN_FADE_S;
 
   // FLIP animation approach — avoids animating CSS layout properties (width/height)
   // which Framer Motion wires up via useEffect (after paint), causing a size-flash.
@@ -3408,70 +3389,35 @@ const PalaceProjects = ({
           aria-hidden={!!activeCard || undefined}
           className={`flex min-h-0 w-full flex-1 flex-col ${activeCard ? "pointer-events-none select-none" : ""}`}
         >
-          <motion.div
-            className="mt-4 shrink-0 sm:mt-5 md:mt-6"
-            animate={{ opacity: activeCard ? 0 : 1 }}
-            transition={{
-              duration: activeCard ? openContentFadeS : 0.2,
-              ease: SHOWCASE_EASE,
-            }}
+          {/* Static copy — no entry motion so layout is stable while the section panel slides in. */}
+          <div
+            className={`mt-4 shrink-0 sm:mt-5 md:mt-6 ${activeCard ? "opacity-0" : "opacity-100"}`}
           >
-            {settled && (
-              <SectionHeader
-                title="SHOWCASE"
-                subtitle="Projects"
-                align="center"
-                showBar={false}
-                compact
-                titleClassName="!text-2xl sm:!text-3xl md:!text-4xl"
-                titleDelay={gate}
-                titleDuration={SHOWCASE_CHILD_DUR_S}
-                titleStagger={0.035}
-                titleFade
-                subtitleTightTracking
-              />
-            )}
-          </motion.div>
+            <div className="relative z-10 mb-10 flex flex-col items-center text-center">
+              <h2 className="font-display text-white !text-2xl leading-[0.95] tracking-[-0.02em] sm:!text-3xl md:!text-4xl uppercase -translate-y-0.5">
+                SHOWCASE
+              </h2>
+              <p className="font-heading mt-1.5 text-sm uppercase leading-snug tracking-eyebrow-tight text-mono-2/90">
+                Projects
+              </p>
+            </div>
+          </div>
 
-          <motion.div
-            className="-mt-4 shrink-0 sm:-mt-5 md:-mt-6"
-            initial={{ opacity: 0, y: 18 }}
-            animate={
-              activeCard ? { opacity: 0, y: 0 }
-              : settled  ? { opacity: 1, y: 0 }
-              : { opacity: 0, y: 18 }
-            }
-            transition={{
-              duration: activeCard ? openContentFadeS : SHOWCASE_CHILD_DUR_S,
-              delay: !activeCard && settled ? gate + SHOWCASE_STAGGER_S : 0,
-              ease: SHOWCASE_EASE,
-            }}
+          <div
+            className={`-mt-4 shrink-0 sm:-mt-5 md:-mt-6 ${activeCard ? "opacity-0" : "opacity-100"}`}
           >
-            {settled && (
-              <ProjectsStack
-                onSelect={(id, el) => handleCardClick(id, el)}
-                focusProjectId={activeCard?.id ?? null}
-              />
-            )}
-          </motion.div>
+            <ProjectsStack
+              onSelect={(id, el) => handleCardClick(id, el)}
+              focusProjectId={activeCard?.id ?? null}
+            />
+          </div>
 
           {/*
            * Vertical gap above tabs = --slide-gap only (same token as space between slider cards).
            * ProjectsStack uses pb-0 so gallery bottom padding does not stack with this margin.
            */}
-          <motion.div
-            className="mx-auto mt-[var(--slide-gap,0.875rem)] flex w-full min-w-0 max-w-[min(100%,56rem)] flex-col px-1 sm:px-2 lg:max-w-[min(100%,72rem)] xl:max-w-[min(100%,84rem)] 2xl:max-w-[min(100%,96rem)]"
-            initial={{ opacity: 0, y: 14 }}
-            animate={
-              activeCard ? { opacity: 0, y: 0 }
-              : settled  ? { opacity: 1, y: 0 }
-              : { opacity: 0, y: 14 }
-            }
-            transition={{
-              duration: activeCard ? openContentFadeS : SHOWCASE_CHILD_DUR_S,
-              delay: !activeCard && settled ? gate + SHOWCASE_STAGGER_S * 2 : 0,
-              ease: SHOWCASE_EASE,
-            }}
+          <div
+            className={`mx-auto mt-[var(--slide-gap,0.875rem)] flex w-full min-w-0 max-w-[min(100%,56rem)] flex-col px-1 sm:px-2 lg:max-w-[min(100%,72rem)] xl:max-w-[min(100%,84rem)] 2xl:max-w-[min(100%,96rem)] ${activeCard ? "opacity-0" : "opacity-100"}`}
           >
             {/*
              * Same horizontal inset as ProjectsStack outer + embla viewport so folder
@@ -3492,7 +3438,7 @@ const PalaceProjects = ({
                 )}
               />
             </div>
-          </motion.div>
+          </div>
 
           {/*
            * Leftover viewport height lands here so slide-gap padding stays visible — no scroll.
@@ -3732,7 +3678,9 @@ const ConfidantExperience = () => {
   const experienceOpticalRailWrapRef = useRef<HTMLDivElement>(null);
   const experienceOpticalTrackRef = useRef<HTMLDivElement>(null);
   const experienceOpticalThumbRef = useRef<HTMLDivElement>(null);
-  const experienceFirstHeadingRef = useRef<HTMLHeadingElement>(null);
+  /** Top / bottom experience cards — optical rail aligns to first card top & last card bottom. */
+  const experienceFirstCardRef = useRef<HTMLDivElement | null>(null);
+  const experienceLastCardRef = useRef<HTMLDivElement | null>(null);
   const experienceScrollHideTimerRef = useRef<number | null>(null);
 
   const updateExperienceOpticalScrollMetrics = useCallback(() => {
@@ -3759,11 +3707,11 @@ const ConfidantExperience = () => {
     }
 
     if (railWrap) {
-      const firstRuleEl = experienceFirstHeadingRef.current;
-      if (hostEl && firstRuleEl) {
+      const firstCardEl = experienceFirstCardRef.current;
+      if (hostEl && firstCardEl) {
         const hostTop = hostEl.getBoundingClientRect().top;
-        const ruleBottom = firstRuleEl.getBoundingClientRect().bottom;
-        railWrap.style.top = `${Math.max(0, ruleBottom - hostTop - PORTFOLIO_OPTICAL_RAIL_TOP_OUTSET_PX)}px`;
+        const cardTop = firstCardEl.getBoundingClientRect().top;
+        railWrap.style.top = `${Math.max(0, cardTop - hostTop)}px`;
       } else if (hostEl) {
         railWrap.style.top = `${Math.max(0, Math.min(56, Math.round(hostEl.clientHeight * 0.06)) - PORTFOLIO_OPTICAL_RAIL_TOP_OUTSET_PX)}px`;
       } else {
@@ -3776,6 +3724,12 @@ const ConfidantExperience = () => {
         0,
         paddingBottomPx - PORTFOLIO_OPTICAL_RAIL_BOTTOM_NUDGE_PX - PORTFOLIO_OPTICAL_RAIL_BOTTOM_OUTSET_PX,
       );
+      const lastCardEl = experienceLastCardRef.current;
+      if (hostEl && lastCardEl) {
+        const hostRect = hostEl.getBoundingClientRect();
+        const lastRect = lastCardEl.getBoundingClientRect();
+        bottomPx = Math.max(0, hostRect.bottom - lastRect.bottom);
+      }
       if (hostEl) {
         const hostH = hostEl.clientHeight;
         const railTopPx = parseFloat(getComputedStyle(railWrap).top) || 0;
@@ -3957,13 +3911,13 @@ const ConfidantExperience = () => {
             showBar={false}
             compact
             titleFade
-            className="!mb-5 sm:!mb-6"
+            className="!mb-6 sm:!mb-8"
           />
         </div>
 
         <div
           ref={experienceScrollHostRef}
-          className="archive-optical-scrollbar-host relative mt-4 sm:mt-4 min-h-0 flex-1 min-w-0"
+          className="archive-optical-scrollbar-host relative mt-2 min-h-0 flex-1 min-w-0 sm:mt-3"
         >
           <div
             ref={experienceScrollAreaRef}
@@ -3973,45 +3927,51 @@ const ConfidantExperience = () => {
           >
             <div
               ref={experienceScrollContentRef}
-              className="mx-auto w-full max-w-[min(100%,56rem)] space-y-1 sm:space-y-2 pt-1 sm:pt-2 pb-6 sm:pb-8"
+              className="mx-auto w-full max-w-[min(100%,48rem)] space-y-8 pt-2 sm:space-y-10 sm:pt-3 pb-8 sm:pb-10"
             >
               {EXPERIENCE_DATA.map((job, idx) => (
                 <div
                   key={idx}
-                  className="rounded-sm bg-black/40 px-3 py-4 sm:px-4 sm:py-5 -mx-1 transition-[background-color] duration-200 ease-out hover:bg-black/50"
+                  ref={(el) => {
+                    if (idx === 0) experienceFirstCardRef.current = el;
+                    if (idx === EXPERIENCE_DATA.length - 1) experienceLastCardRef.current = el;
+                  }}
+                  className="rounded-xl border border-white/[0.05] bg-black/25 px-4 py-5 transition-[background-color,border-color] duration-200 ease-out sm:px-5 sm:py-6 hover:border-white/[0.08] hover:bg-black/35"
                 >
-                  <div className="mb-3 sm:mb-4 space-y-1.5 sm:space-y-2">
-                    <h3
-                      ref={idx === 0 ? experienceFirstHeadingRef : undefined}
-                      className="font-display text-[0.9375rem] sm:text-lg md:text-xl font-semibold tracking-[-0.015em] text-white text-balance leading-snug sm:leading-[1.22] md:leading-[1.18]"
-                    >
-                      {job.role}
-                    </h3>
-                    <div className="flex flex-col gap-1.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4 border-b border-blue-600/20 pb-2 sm:pb-2.5">
-                      <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 sm:gap-x-2.5 gap-y-0.5 leading-snug">
-                        <span className="font-heading text-[10px] sm:text-[0.8125rem] tracking-eyebrow-sm leading-snug uppercase text-mono-2">
-                          {job.company}
-                        </span>
-                        <span className="text-mono-2/55 shrink-0 translate-y-px" aria-hidden>
-                          ·
-                        </span>
-                        <span className="font-heading text-[10px] sm:text-[0.8125rem] tracking-eyebrow-sm leading-snug uppercase text-mono-2/70">
-                          {job.location}
-                        </span>
-                      </div>
-                      <time className="font-body text-[10px] sm:text-[0.8125rem] tracking-eyebrow-sm uppercase text-mono-2/55 tabular-nums leading-snug whitespace-nowrap text-right sm:shrink-0 self-end sm:self-auto">
-                        {job.period}
-                      </time>
+                  <h3
+                    className="font-display text-base font-semibold tracking-[-0.02em] text-white text-balance leading-snug sm:text-lg md:text-xl sm:leading-[1.25] md:leading-snug"
+                  >
+                    {job.role}
+                  </h3>
+                  <div className="mt-3 flex flex-col gap-2 sm:mt-3.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6">
+                    <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5 leading-snug sm:gap-x-2.5">
+                      <span className="font-heading text-[11px] tracking-eyebrow-sm uppercase text-mono-2/88 sm:text-xs sm:tracking-eyebrow-sm">
+                        {job.company}
+                      </span>
+                      <span className="text-mono-2/35 shrink-0 translate-y-px" aria-hidden>
+                        ·
+                      </span>
+                      <span className="font-heading text-[11px] tracking-eyebrow-sm uppercase text-mono-2/60 sm:text-xs sm:tracking-eyebrow-sm">
+                        {job.location}
+                      </span>
                     </div>
+                    <time className="font-body text-[10px] tracking-eyebrow-sm uppercase text-mono-2/45 tabular-nums leading-snug sm:text-[11px] sm:shrink-0 sm:text-right">
+                      {job.period}
+                    </time>
                   </div>
-                  <ul className="m-0 list-none space-y-1.5 sm:space-y-2 p-0 pl-2 sm:pl-3 md:pl-4">
+                  <div className="mt-4 h-px w-full bg-white/[0.08] sm:mt-5" aria-hidden />
+                  <ul className="m-0 mt-4 list-none space-y-2.5 p-0 sm:mt-5 sm:space-y-3">
                     {job.bullets.map((bullet, i) => (
-                      <li key={i} className="flex gap-2.5 sm:gap-3 items-start">
+                      <li
+                        key={i}
+                        className="grid grid-cols-[0.5rem_minmax(0,1fr)] items-start gap-x-3 sm:grid-cols-[0.5rem_minmax(0,1fr)] sm:gap-x-3.5"
+                      >
                         <span
-                          className="mt-[0.32rem] sm:mt-[0.38rem] size-1 sm:size-1.5 shrink-0 rounded-full bg-zinc-500"
+                          className="mt-[0.4rem] size-2 shrink-0 rounded-full sm:mt-[0.45rem]"
+                          style={{ backgroundColor: "rgb(59 130 246 / 0.95)" }}
                           aria-hidden
                         />
-                        <p className="min-w-0 flex-1 text-left font-body text-sm sm:text-[0.9375rem] text-mono-2 leading-snug sm:leading-[1.42]">
+                        <p className="min-w-0 font-body text-sm leading-relaxed text-mono-2/88 sm:text-[0.9375rem] sm:leading-[1.55]">
                           {bullet}
                         </p>
                       </li>
@@ -6079,7 +6039,8 @@ export default function Home() {
         }, PANEL_TRANSITION.duration * 1000)
       );
     } else {
-      setPanelSettled(false);
+      // SHOWCASE (projects): settle immediately so carousel + tabs reserve height and fade with the panel — delayed settle caused a second layout/opacity beat after the slide.
+      setPanelSettled(id === "projects");
       setCurrentSection(id);
       setTransitionTarget(id);
       setIsTransitioning(true);
@@ -6087,8 +6048,9 @@ export default function Home() {
         window.setTimeout(() => {
           setIsTransitioning(false);
           setTransitionTarget(null);
-          // Small gap after the panel transform finishes, then low-priority commit so the browser can paint before Embla + media mount.
-          startTransition(() => setPanelSettled(true));
+          startTransition(() => {
+            if (id !== "projects") setPanelSettled(true);
+          });
         }, PANEL_TRANSITION.duration * 1000 + CONTENT_SETTLE_DELAY * 1000)
       );
     }
@@ -6430,7 +6392,6 @@ export default function Home() {
                           onOpenSupporting={() => navigateTo("projects-supporting")}
                           onOpenFeaturedPdfInSupporting={openFeaturedPdfInSupporting}
                           activeProjectId={activeShowcaseProjectId}
-                          settled={panelSettled}
                         />
                       </div>
                     )}
@@ -6446,12 +6407,8 @@ export default function Home() {
                 ) : (
                   <AnimatePresence mode="wait" initial={false}>
                     {currentSection === "projects" && (
-                      <motion.div
+                      <div
                         key="projects"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: SHOWCASE_SUBROUTE_FADE_S, ease: EASE.out }}
                         className="flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-x-hidden"
                       >
                         <PalaceProjects
@@ -6459,9 +6416,8 @@ export default function Home() {
                           onOpenSupporting={() => navigateTo("projects-supporting")}
                           onOpenFeaturedPdfInSupporting={openFeaturedPdfInSupporting}
                           activeProjectId={activeShowcaseProjectId}
-                          settled={panelSettled}
                         />
-                      </motion.div>
+                      </div>
                     )}
                     {currentSection === "projects-supporting" && (
                       <motion.div

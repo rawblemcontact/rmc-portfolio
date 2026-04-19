@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { FileText } from "lucide-react";
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
@@ -41,6 +41,8 @@ export function FeaturedWritingPdfThumbnail({
     () => dataUrlByKey.get(key) ?? null,
   );
   const [error, setError] = useState(false);
+  const [thumbVisible, setThumbVisible] = useState(false);
+  const imgRef = useRef<HTMLImageElement | null>(null);
 
   useEffect(() => {
     const cached = dataUrlByKey.get(key);
@@ -96,23 +98,50 @@ export function FeaturedWritingPdfThumbnail({
     };
   }, [pdfSrc, key, rasterW, rasterH]);
 
-  const showImg = dataUrl && !error;
+  const showImg = Boolean(dataUrl && !error);
+  const showLoadingShell = !error && (!showImg || !thumbVisible);
+
+  // Fade in on every tab / key change: never flip visible in the same frame as reset (cached imgs skip transition otherwise).
+  useLayoutEffect(() => {
+    if (!dataUrl || error) {
+      setThumbVisible(false);
+      return;
+    }
+    setThumbVisible(false);
+    let cancelled = false;
+    let raf2 = 0;
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        if (cancelled) return;
+        const el = imgRef.current;
+        if (el?.complete && el.naturalWidth > 0) {
+          setThumbVisible(true);
+        }
+      });
+    });
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+    };
+  }, [key, dataUrl, error]);
 
   const interactive = typeof onActivate === "function";
 
   return (
     <div
       className={[
-        "relative shrink-0 overflow-hidden rounded-[10px] border border-white/[0.09] bg-zinc-950/80 shadow-[0_14px_36px_-20px_rgba(0,0,0,0.88)]",
+        "relative shrink-0 overflow-hidden rounded-[10px] border border-white/[0.09] bg-zinc-950/80",
         "ring-1 ring-inset ring-white/[0.04]",
         interactive
-          ? "cursor-pointer transition-[border-color,box-shadow] duration-200 ease-out hover:border-yellow-400/35 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-yellow-400/40 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+          ? "cursor-pointer transition-[border-color] duration-200 ease-out hover:border-yellow-400/35 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-yellow-400/40 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
           : "",
         className,
       ].join(" ")}
       style={{ width: layoutW, height: layoutH, maxWidth: "100%" }}
       role={interactive ? "button" : undefined}
       tabIndex={interactive ? 0 : undefined}
+      aria-busy={showLoadingShell}
       aria-label={interactive ? "Open PDF in viewer" : undefined}
       onClick={interactive ? () => onActivate() : undefined}
       onKeyDown={
@@ -126,38 +155,41 @@ export function FeaturedWritingPdfThumbnail({
           : undefined
       }
     >
-      <div
-        className="pointer-events-none absolute inset-0 z-[2] bg-[linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[length:8px_8px] opacity-[0.35]"
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-1/3 bg-gradient-to-t from-black/55 to-transparent"
-        aria-hidden
-      />
-
-      {showImg ? (
-        <img
-          src={dataUrl}
-          alt=""
-          className="relative z-[1] h-full w-full object-cover object-top"
-          draggable={false}
+      {showLoadingShell ? (
+        <div
+          className="absolute inset-0 z-0 animate-pulse bg-gradient-to-br from-zinc-800/35 via-zinc-900/25 to-zinc-950 motion-reduce:animate-none motion-reduce:opacity-90"
+          aria-hidden
         />
       ) : null}
 
-      {!showImg && !error ? (
-        <div className="absolute inset-0 z-[1] animate-pulse bg-gradient-to-br from-zinc-800/50 via-zinc-900/40 to-black/60" />
+      {showImg && dataUrl ? (
+        <img
+          key={key}
+          ref={imgRef}
+          src={dataUrl}
+          alt=""
+          className={[
+            "relative z-[1] h-full w-full object-cover object-top motion-safe:transition-opacity motion-safe:duration-500 motion-safe:ease-out",
+            thumbVisible ? "opacity-100" : "opacity-0",
+          ].join(" ")}
+          draggable={false}
+          onLoad={() => setThumbVisible(true)}
+        />
+      ) : null}
+
+      {showImg && thumbVisible ? (
+        <div
+          className="pointer-events-none absolute inset-0 z-[2] bg-[linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[length:8px_8px] opacity-[0.35]"
+          aria-hidden
+        />
       ) : null}
 
       {error ? (
-        <div className="absolute inset-0 z-[1] flex flex-col items-center justify-center gap-1.5 bg-black/50 px-2 text-center">
+        <div className="absolute inset-0 z-[3] flex flex-col items-center justify-center gap-1.5 bg-black/50 px-2 text-center">
           <FileText className="h-7 w-7 text-white/25" strokeWidth={1.25} aria-hidden />
           <span className="font-mono text-[8px] uppercase tracking-[0.14em] text-white/35">Preview</span>
         </div>
       ) : null}
-
-      <span className="pointer-events-none absolute bottom-1.5 right-2 z-[3] font-mono text-[9px] tabular-nums tracking-tight text-white/45">
-        01
-      </span>
     </div>
   );
 }

@@ -122,7 +122,7 @@ export function PdfJsDocumentView({ src, className = "", maxDpr = 2, onReady, on
           const sheet = document.createElement("div");
           sheet.className = [
             "inline-block max-w-full overflow-hidden bg-white",
-            "rounded-md",
+            "rounded-xl",
             "shadow-[0_1px_0_rgba(255,255,255,0.06)_inset,0_2px_6px_rgba(0,0,0,0.35),0_12px_28px_rgba(0,0,0,0.45)]",
             "ring-1 ring-black/20",
           ].join(" ");
@@ -174,7 +174,7 @@ export function PdfJsDocumentView({ src, className = "", maxDpr = 2, onReady, on
       )}
 
       {showError && (
-        <div className="flex min-h-[11rem] flex-col items-center justify-center gap-2.5 bg-[#3c4043]/5 px-4 py-8 text-center">
+        <div className="flex min-h-[11rem] flex-col items-center justify-center gap-2.5 rounded-xl bg-[#3c4043]/5 px-4 py-8 text-center">
           <p className="font-body text-sm text-mono-2">Could not display this PDF in the browser.</p>
           <p className="font-mono text-[0.65rem] leading-relaxed text-mono-2/70">{showError}</p>
         </div>
@@ -183,7 +183,7 @@ export function PdfJsDocumentView({ src, className = "", maxDpr = 2, onReady, on
       {!showError && (
         <div
           ref={bindMeasureRef}
-          className="no-scrollbar min-h-0 flex-1 overflow-y-auto overflow-x-hidden scroll-smooth bg-[#3c4043]/5"
+          className="no-scrollbar min-h-0 flex-1 overflow-y-auto overflow-x-hidden scroll-smooth rounded-xl bg-[#3c4043]/5"
           style={{ WebkitOverflowScrolling: "touch", scrollBehavior: "smooth" }}
         >
           <div
