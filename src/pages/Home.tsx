@@ -622,6 +622,7 @@ const SectionHeader = ({
   titleTrigger = "viewport",
   titleClassName,
   titleFade = false,
+  subtitleTightTracking = false,
 }: {
   title: string;
   subtitle?: string;
@@ -651,6 +652,8 @@ const SectionHeader = ({
   titleClassName?: string;
   /** When true, title animates with a simple fade instead of the clip-path wipe. */
   titleFade?: boolean;
+  /** When true, subtitle uses `tracking-eyebrow-tight` instead of `tracking-eyebrow`. */
+  subtitleTightTracking?: boolean;
 }) => {
   const sizeClasses = compact ? "text-3xl md:text-5xl" : "text-4xl md:text-6xl";
 
@@ -688,7 +691,11 @@ const SectionHeader = ({
         <div className="mt-4">{betweenTitleAndSubtitle}</div>
       )}
       {subtitle && (
-        <p className="font-heading text-sm tracking-eyebrow leading-snug uppercase text-mono-2/90 mt-1.5">
+        <p
+          className={`font-heading text-sm leading-snug uppercase text-mono-2/90 mt-1.5 ${
+            subtitleTightTracking ? "tracking-eyebrow-tight" : "tracking-eyebrow"
+          }`}
+        >
           {subtitle}
         </p>
       )}
@@ -1575,14 +1582,30 @@ const SideNavOverlay = ({
 };
 
 // --- PROFILE (About) ---
-const SectionGridOverlay = () => {
+const SectionGridOverlay = ({
+  projectDetailActive = false,
+}: {
+  /** SHOWCASE: slightly recess grid when project detail overlay is open. */
+  projectDetailActive?: boolean;
+} = {}) => {
   const phase = useGridPhase();
   return (
-    <div
-      className="pointer-events-none absolute inset-0 z-0 opacity-[0.04]"
-      style={{ ...gridOverlayStyle, backgroundPosition: `${phase}px ${phase}px` }}
-      aria-hidden
-    />
+    <>
+      <div
+        className={[
+          "pointer-events-none absolute inset-0 z-0 motion-safe:transition-opacity motion-safe:duration-300 motion-safe:ease-out",
+          projectDetailActive ? "opacity-[0.018]" : "opacity-[0.04]",
+        ].join(" ")}
+        style={{ ...gridOverlayStyle, backgroundPosition: `${phase}px ${phase}px` }}
+        aria-hidden
+      />
+      {projectDetailActive ? (
+        <div
+          className="pointer-events-none absolute inset-0 z-0 motion-safe:transition-opacity motion-safe:duration-300 motion-safe:ease-out bg-black/[0.14]"
+          aria-hidden
+        />
+      ) : null}
+    </>
   );
 };
 
@@ -1836,7 +1859,8 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
       "A client-side portfolio with motion-forward UI, editorial grids, and careful performance budgets for media-heavy sections.",
     detailRole: "Design and front-end implementation.",
     detailTools: ["React", "Vite", "TypeScript", "Tailwind CSS", "Framer Motion"],
-    detailImpact: "Single deployable artifact, fast iteration, and a cohesive Neo‑Tokyo / command UI visual language.",
+    detailImpact:
+      "Single deployable artifact, fast iteration, and a cohesive Neo‑Tokyo / command UI visual language.",
   },
   {
     id: "project-slaywire",
@@ -1886,7 +1910,7 @@ const SUPPORTING_ARCHIVE_PDF_ITEMS: SupportingArchivePdfItem[] = [
     subtitle: "Example 1 — article",
     href: "/cnf/example-1-article.pdf",
     description:
-      "Magazine-style creative nonfiction: structure, voice, and scene craft in a publication-ready article.",
+      "Magazine-style creative nonfiction: structure, voice, and scene craft in a publication-ready article. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.",
   },
   {
     id: "cnf-media-literary",
@@ -1894,7 +1918,7 @@ const SUPPORTING_ARCHIVE_PDF_ITEMS: SupportingArchivePdfItem[] = [
     subtitle: "Example 2 — media & text",
     href: "/cnf/example-2-media-literary-analysis.pdf",
     description:
-      "Pairs media with written work—examining how form, context, and craft shape meaning across text and screen.",
+      "Pairs media with written work—examining how form, context, and craft shape meaning across text and screen. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.",
   },
   {
     id: "cnf-critical-essay",
@@ -1920,7 +1944,7 @@ const SCREENPLAY_PDF_ITEMS: SupportingArchivePdfItem[] = [
     subtitle: "Robbie McLaughlin",
     href: "/screenplays/audience-of-one-robbie-mclaughlin.pdf",
     description:
-      "A short screenplay tuned for pacing, dialogue, and character—formatted and structured like a production-ready spec.",
+      "A short screenplay tuned for pacing, dialogue, and character—formatted and structured like a production-ready spec. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.",
   },
   {
     id: "screenplay-rock-paper-promise",
@@ -1945,7 +1969,7 @@ const SHORT_GRAPHIC_NOVEL_PDF_ITEMS: SupportingArchivePdfItem[] = [
     subtitle: "Ink — black & white",
     href: "/short-graphic-novels/blossom-ink-bw.pdf",
     description:
-      "Inked sequential pages in black and white: line weight, contrast, and panel flow for the graphic-novel short.",
+      "Inked sequential pages in black and white: line weight, contrast, and panel flow for the graphic-novel short. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.",
   },
   {
     id: "sgn-writ405-final",
@@ -2213,29 +2237,33 @@ const ProjectsStack = ({
 
   return (
     <div className="mx-auto flex w-full min-w-0 max-w-[min(100%,56rem)] flex-col justify-center items-center pt-2 px-1 pb-0 sm:pt-3 sm:px-2 overflow-x-visible overflow-y-visible lg:max-w-[min(100%,72rem)] xl:max-w-[min(100%,84rem)] 2xl:max-w-[min(100%,96rem)]">
-      <div className="mb-1.5 flex w-full items-center justify-end px-2 sm:px-4 lg:px-2 xl:px-3">
-        <div className="flex items-center gap-2.5">
-          {(emblaApi?.scrollSnapList() ?? []).map((_, snapIdx) => (
-            <button
-              key={`showcase-dot-${snapIdx}`}
-              type="button"
-              onClick={() => emblaApi?.scrollTo(snapIdx)}
-              aria-label={`Go to slide ${snapIdx + 1}`}
-              aria-current={selectedIndex === snapIdx ? "true" : undefined}
-              className={`h-2.5 w-2.5 rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
-                selectedIndex === snapIdx
-                  ? "bg-white scale-110"
-                  : "bg-white/35 hover:bg-white/55"
-              }`}
-            />
-          ))}
+      {/*
+       * Single horizontal inset for dots + viewport so the pager lines up with card side borders (same as FEATURED WRITING below).
+       */}
+      <div className="w-full min-w-0 px-2 sm:px-4 lg:px-2 xl:px-3">
+        <div className="mb-1.5 flex w-full items-center justify-end">
+          <div className="flex -translate-x-1 items-center gap-2.5 sm:-translate-x-1.5 lg:-translate-x-1 xl:-translate-x-1.5">
+            {(emblaApi?.scrollSnapList() ?? []).map((_, snapIdx) => (
+              <button
+                key={`showcase-dot-${snapIdx}`}
+                type="button"
+                onClick={() => emblaApi?.scrollTo(snapIdx)}
+                aria-label={`Go to slide ${snapIdx + 1}`}
+                aria-current={selectedIndex === snapIdx ? "true" : undefined}
+                className={`h-2.5 w-2.5 rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
+                  selectedIndex === snapIdx
+                    ? "bg-white scale-110"
+                    : "bg-white/35 hover:bg-white/55"
+                }`}
+              />
+            ))}
+          </div>
         </div>
-      </div>
-      <div className="min-w-0 max-w-full w-full overflow-hidden [--slide-gap:0.875rem] sm:[--slide-gap:1.25rem] lg:[--slide-gap:1rem] xl:[--slide-gap:1.125rem]">
+        <div className="min-w-0 max-w-full w-full overflow-hidden [--slide-gap:0.875rem] sm:[--slide-gap:1.25rem] lg:[--slide-gap:1rem] xl:[--slide-gap:1.125rem]">
         {/*
          * Slides: 1× full width < lg; lg+ 2 columns. Embla `align: start` + clip + slightly under-filled halves = no neighbor slivers.
          */}
-        <div ref={emblaRef} className="overflow-x-clip overflow-y-hidden px-2 sm:px-4 lg:px-2 xl:px-3">
+        <div ref={emblaRef} className="overflow-x-clip overflow-y-hidden">
           <div className="flex items-stretch touch-pan-y [-webkit-touch-callout:none] -ml-[var(--slide-gap)]">
             {PROJECT_CARDS.map((card, index) => (
               <div
@@ -2338,6 +2366,7 @@ const ProjectsStack = ({
             ))}
           </div>
         </div>
+        </div>
       </div>
     </div>
   );
@@ -2361,8 +2390,16 @@ function portfolioOpticalPointerInSideGutter(clientX: number, areaRect: DOMRect)
 
 const SupportingProjectsSection = ({
   onNavTransitionChange,
+  pendingPdfFromShowcase = null,
+  onPendingPdfFromShowcaseConsumed,
+  onReturnToShowcaseAfterFeaturedPreview,
 }: {
   onNavTransitionChange?: (active: boolean) => void;
+  /** When set (e.g. from FEATURED WRITING VIEW / preview), opens the PDF loader for this item once. */
+  pendingPdfFromShowcase?: SupportingArchivePdfItem | null;
+  onPendingPdfFromShowcaseConsumed?: () => void;
+  /** After closing a PDF that was opened from FEATURED WRITING — go back to SHOWCASE without lingering on this page. */
+  onReturnToShowcaseAfterFeaturedPreview?: () => void;
 } = {}) => {
   const [previewPdf, setPreviewPdf] = useState<SupportingArchivePdfItem | null>(null);
   /** Full loader overlay (fold + label); fades out first once the PDF is ready. */
@@ -2386,6 +2423,7 @@ const SupportingProjectsSection = ({
   const archiveOpticalThumbRef = useRef<HTMLDivElement | null>(null);
   const archiveFirstYellowRuleRef = useRef<HTMLHeadingElement | null>(null);
   const archiveScrollHideTimerRef = useRef<number | null>(null);
+  const openedFeaturedPreviewRef = useRef(false);
 
   /** Archive section + dim scrim fade (dialog can mount mid-fade — see mount delay). */
   const PREVIEW_PRE_FADE_S = 0.16;
@@ -2425,17 +2463,30 @@ const SupportingProjectsSection = ({
     if (previewPdf && !reduceMotion) {
       setIsPreviewClosing(true);
       closePreviewTimerRef.current = window.setTimeout(() => {
+        const returnToShowcase = openedFeaturedPreviewRef.current;
+        if (returnToShowcase) {
+          openedFeaturedPreviewRef.current = false;
+          /** Swap route before clearing PDF so archive never paints; skip return gate (it would reveal WRITING SAMPLES). */
+          onReturnToShowcaseAfterFeaturedPreview?.();
+        }
         setPreviewPdf(null);
         setShowPdfLoaderOverlay(true);
         setShowPdfFrame(false);
         setPreviewPdfReady(false);
-        returnGateTimerRef.current = window.setTimeout(() => {
-          setIsPreviewClosing(false);
-          returnGateTimerRef.current = null;
-        }, PREVIEW_RETURN_GATE_MS);
+        if (!returnToShowcase) {
+          returnGateTimerRef.current = window.setTimeout(() => {
+            setIsPreviewClosing(false);
+            returnGateTimerRef.current = null;
+          }, PREVIEW_RETURN_GATE_MS);
+        }
         closePreviewTimerRef.current = null;
       }, Math.round(PREVIEW_CLOSE_FADE_S * 1000));
     } else {
+      const returnToShowcase = openedFeaturedPreviewRef.current;
+      if (returnToShowcase) {
+        openedFeaturedPreviewRef.current = false;
+        onReturnToShowcaseAfterFeaturedPreview?.();
+      }
       setPreviewPdf(null);
       setIsPreviewClosing(false);
       setShowPdfLoaderOverlay(true);
@@ -2444,11 +2495,18 @@ const SupportingProjectsSection = ({
     }
     setQueuedPreviewPdf(null);
     setIsPrePreviewFading(false);
-  }, [isPreviewClosing, showPdfFrame, previewPdf, reduceMotion]);
+  }, [
+    isPreviewClosing,
+    showPdfFrame,
+    previewPdf,
+    reduceMotion,
+    onReturnToShowcaseAfterFeaturedPreview,
+  ]);
 
   const openPreview = useCallback(
-    (item: SupportingArchivePdfItem) => {
+    (item: SupportingArchivePdfItem, opts?: { fromFeatured?: boolean }) => {
       if (previewPdf || isPrePreviewFading) return;
+      openedFeaturedPreviewRef.current = Boolean(opts?.fromFeatured);
       if (reduceMotion) {
         setPreviewPdf(item);
         return;
@@ -2458,6 +2516,12 @@ const SupportingProjectsSection = ({
     },
     [isPrePreviewFading, previewPdf, reduceMotion],
   );
+
+  useEffect(() => {
+    if (!pendingPdfFromShowcase || !onPendingPdfFromShowcaseConsumed) return;
+    openPreview(pendingPdfFromShowcase, { fromFeatured: true });
+    onPendingPdfFromShowcaseConsumed();
+  }, [pendingPdfFromShowcase, openPreview, onPendingPdfFromShowcaseConsumed]);
 
   useEffect(() => {
     if (previewPdf) {
@@ -2762,9 +2826,17 @@ const SupportingProjectsSection = ({
       <motion.div
         className="container relative z-10 mx-auto flex min-h-0 w-full max-w-full min-w-0 flex-1 flex-col px-4 sm:px-6 pt-[6.5rem] md:pt-[8rem]"
         initial={false}
-        animate={{ opacity: previewPdf || isPrePreviewFading || isPreviewClosing ? 0 : 1 }}
+        animate={{
+          opacity:
+            pendingPdfFromShowcase || previewPdf || isPrePreviewFading || isPreviewClosing ? 0 : 1,
+        }}
         transition={{ duration: reduceMotion ? 0 : PREVIEW_PRE_FADE_S, ease: EASE.out }}
-        style={{ pointerEvents: previewPdf || isPrePreviewFading || isPreviewClosing ? "none" : "auto" }}
+        style={{
+          pointerEvents:
+            pendingPdfFromShowcase || previewPdf || isPrePreviewFading || isPreviewClosing
+              ? "none"
+              : "auto",
+        }}
       >
         <div className="shrink-0">
           <SectionHeader
@@ -2774,6 +2846,7 @@ const SupportingProjectsSection = ({
             showBar={false}
             compact
             titleFade
+            subtitleTightTracking
           />
         </div>
 
@@ -3037,17 +3110,20 @@ const PROJECT_DETAIL_SURFACE =
 const SHOWCASE_SLIDER_MEDIA_BOX_SHADOW =
   "0 36px 88px rgba(0,0,0,0.6), inset 0 -40px 70px rgba(0,0,0,0.52), 0 0 0 1px rgba(255,255,255,0.07), 0 0 28px 4px rgba(255,255,255,0.04)";
 
-const showcaseDetailCard = `${PROJECT_DETAIL_SURFACE} bg-zinc-950/40 px-3 py-3 sm:px-4 sm:py-3.5`;
+/**
+ * Darker than the tab rail — same two-layer idea (black wash over zinc-950) with higher opacity.
+ */
+const showcaseDetailCard = `${PROJECT_DETAIL_SURFACE} px-3 py-3 sm:px-4 sm:py-3.5 [background:linear-gradient(rgb(0_0_0/0.42),rgb(0_0_0/0.42)),linear-gradient(rgb(9_9_11/0.58),rgb(9_9_11/0.58))]`;
 
 const ShowcaseDetailOverviewRole = ({ card }: { card: ShowcaseProjectCard }) => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-3">
-    <section className={`${showcaseDetailCard} md:col-span-2`}>
+    <section className={`${showcaseDetailCard} min-w-0 md:col-span-2`}>
       <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-yellow-400/90 mb-1.5">OVERVIEW</p>
       <p className="font-body text-sm sm:text-base text-mono-2 leading-snug whitespace-pre-line">
         {card.detailOverview?.trim() || "—"}
       </p>
     </section>
-    <section className={showcaseDetailCard}>
+    <section className={`${showcaseDetailCard} min-w-0`}>
       <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-yellow-400/90 mb-1.5">ROLE</p>
       <p className="font-body text-sm sm:text-base text-mono-2 leading-snug whitespace-pre-line">
         {card.detailRole?.trim() || "—"}
@@ -3058,13 +3134,13 @@ const ShowcaseDetailOverviewRole = ({ card }: { card: ShowcaseProjectCard }) => 
 
 const ShowcaseDetailImpactTools = ({ card }: { card: ShowcaseProjectCard }) => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-3">
-    <section className={`${showcaseDetailCard} md:col-span-2`}>
+    <section className={`${showcaseDetailCard} min-w-0 md:col-span-2`}>
       <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-yellow-400/90 mb-1.5">IMPACT</p>
       <p className="font-body text-sm sm:text-base text-mono-2 leading-snug whitespace-pre-line">
         {card.detailImpact?.trim() || "—"}
       </p>
     </section>
-    <section className={showcaseDetailCard}>
+    <section className={`${showcaseDetailCard} min-w-0`}>
       <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-yellow-400/90 mb-1.5">TOOLS</p>
       {card.detailTools?.length ? (
         <ul className="ml-1 list-disc list-outside space-y-1 pl-6 sm:pl-7 marker:text-mono-2/70">
@@ -3081,12 +3157,25 @@ const ShowcaseDetailImpactTools = ({ card }: { card: ShowcaseProjectCard }) => (
   </div>
 );
 
-function ShowcaseWritingFeaturedPanel({ item }: { item: SupportingArchivePdfItem }) {
+function ShowcaseWritingFeaturedPanel({
+  item,
+  previewWidthPx,
+  onOpenPdfInSupporting,
+}: {
+  item: SupportingArchivePdfItem;
+  previewWidthPx: number;
+  onOpenPdfInSupporting: (item: SupportingArchivePdfItem) => void;
+}) {
   return (
-    <div className="flex items-start gap-2.5 text-left sm:gap-3">
-      <FeaturedWritingPdfThumbnail pdfSrc={item.href} />
-      <div className="min-w-0 flex-1 space-y-2">
-        <div className="flex items-start justify-between gap-2 sm:gap-3">
+    <div className="flex w-full min-w-0 max-w-full flex-col gap-3 text-left sm:flex-row sm:items-start sm:gap-4">
+      <FeaturedWritingPdfThumbnail
+        pdfSrc={item.href}
+        widthPx={previewWidthPx}
+        className="shrink-0 self-start"
+        onActivate={() => onOpenPdfInSupporting(item)}
+      />
+      <div className="flex min-h-0 min-w-0 w-full flex-1 flex-col gap-2.5 sm:min-w-0 sm:gap-3">
+        <div className="flex min-w-0 flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
           <div className="min-w-0 space-y-1">
             <p className="font-display text-lg leading-[1.15] tracking-tight text-white sm:text-xl md:text-2xl md:leading-tight">
               {item.title}
@@ -3095,17 +3184,19 @@ function ShowcaseWritingFeaturedPanel({ item }: { item: SupportingArchivePdfItem
           </div>
           <a
             href={item.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex shrink-0 items-center gap-2 self-start border border-white/12 bg-black/25 px-2.5 py-1.5 font-heading text-[10px] tracking-btn-caps uppercase text-yellow-400/90 transition-colors hover:border-yellow-400/35 hover:text-yellow-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-yellow-400/40 sm:px-3 sm:py-2"
+            className="inline-flex w-fit shrink-0 items-center gap-2 self-start rounded-[11px] sm:rounded-xl border border-white/[0.09] bg-zinc-950/40 px-2.5 py-1.5 font-heading text-[10px] sm:text-xs tracking-btn-caps uppercase text-yellow-400/90 shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)] transition-[border-color,background-color,color] duration-300 ease-out hover:border-yellow-400/40 hover:bg-zinc-950/65 hover:text-yellow-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-yellow-400/40 focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:self-center sm:px-3 sm:py-2"
+            onClick={(e) => {
+              e.preventDefault();
+              onOpenPdfInSupporting(item);
+            }}
           >
-            View PDF
+            VIEW
             <ExternalLink className="h-3.5 w-3.5 shrink-0 opacity-80" aria-hidden />
           </a>
         </div>
         {item.description ? (
           <p
-            className="line-clamp-3 font-body text-sm leading-relaxed text-mono-2/70 sm:text-[0.9375rem] sm:leading-relaxed md:text-base"
+            className="line-clamp-3 min-w-0 font-body text-sm leading-relaxed text-mono-2/70 sm:text-[0.9375rem] sm:leading-relaxed md:text-base"
             title={item.description}
           >
             {item.description}
@@ -3119,11 +3210,13 @@ function ShowcaseWritingFeaturedPanel({ item }: { item: SupportingArchivePdfItem
 const PalaceProjects = ({
   onSelectProject,
   onOpenSupporting,
+  onOpenFeaturedPdfInSupporting,
   activeProjectId,
   settled = true,
 }: {
   onSelectProject: (id: string) => void;
   onOpenSupporting: () => void;
+  onOpenFeaturedPdfInSupporting: (item: SupportingArchivePdfItem) => void;
   activeProjectId: string | null;
   settled?: boolean;
 }) => {
@@ -3300,7 +3393,7 @@ const PalaceProjects = ({
       id="projects"
       className="relative flex min-h-full w-full min-w-0 max-w-full flex-col justify-start overflow-x-hidden bg-black pt-16 pb-[max(1.25rem,calc(var(--slide-gap)*1.5),env(safe-area-inset-bottom,0px))] text-white sm:pt-20 md:pt-22 scroll-mt-6 [--slide-gap:0.875rem] sm:[--slide-gap:1.25rem] lg:[--slide-gap:1rem] xl:[--slide-gap:1.125rem]"
     >
-      <SectionGridOverlay />
+      <SectionGridOverlay projectDetailActive={!!activeCard} />
       <div className="container relative z-10 mx-auto flex min-h-0 min-w-0 w-full max-w-full flex-1 flex-col px-4 sm:px-6">
         {/*
          * Column inherits --slide-gap from #projects. Spacer + section pb = bottom air; overlay scrolls if needed (no clipping).
@@ -3330,10 +3423,12 @@ const PalaceProjects = ({
                 align="center"
                 showBar={false}
                 compact
+                titleClassName="!text-2xl sm:!text-3xl md:!text-4xl"
                 titleDelay={gate}
                 titleDuration={SHOWCASE_CHILD_DUR_S}
                 titleStagger={0.035}
                 titleFade
+                subtitleTightTracking
               />
             )}
           </motion.div>
@@ -3388,9 +3483,13 @@ const PalaceProjects = ({
                 onTabChange={setShowcaseTabId}
                 onArchives={onOpenSupporting}
                 className="w-full min-w-0"
-                panel={
-                  <ShowcaseWritingFeaturedPanel item={SHOWCASE_WRITING_TAB_FEATURED[showcaseTabId]} />
-                }
+                panel={({ tabWidthPx }) => (
+                  <ShowcaseWritingFeaturedPanel
+                    item={SHOWCASE_WRITING_TAB_FEATURED[showcaseTabId]}
+                    previewWidthPx={tabWidthPx}
+                    onOpenPdfInSupporting={onOpenFeaturedPdfInSupporting}
+                  />
+                )}
               />
             </div>
           </motion.div>
@@ -5853,6 +5952,9 @@ export default function Home() {
   const [currentSlideId, setCurrentSlideId] = useState<string>("hero");
   const [menuLockedFillId, setMenuLockedFillId] = useState<string | null>(null);
   const [activeShowcaseProjectId, setActiveShowcaseProjectId] = useState<string | null>(null);
+  /** FEATURED WRITING → open this PDF in SupportingProjectsSection loader after navigation. */
+  const [supportingPdfIntent, setSupportingPdfIntent] = useState<SupportingArchivePdfItem | null>(null);
+  const clearSupportingPdfIntent = useCallback(() => setSupportingPdfIntent(null), []);
   const prevSlideIdRef = useRef<string>("hero");
   const transitionTimeoutsRef = useRef<number[]>([]);
   const hasWarmedProjectMediaRef = useRef(false);
@@ -5990,6 +6092,11 @@ export default function Home() {
         }, PANEL_TRANSITION.duration * 1000 + CONTENT_SETTLE_DELAY * 1000)
       );
     }
+  };
+
+  const openFeaturedPdfInSupporting = (item: SupportingArchivePdfItem) => {
+    setSupportingPdfIntent(item);
+    navigateTo("projects-supporting");
   };
 
   useEffect(() => {
@@ -6321,13 +6428,19 @@ export default function Home() {
                         <PalaceProjects
                           onSelectProject={setActiveShowcaseProjectId}
                           onOpenSupporting={() => navigateTo("projects-supporting")}
+                          onOpenFeaturedPdfInSupporting={openFeaturedPdfInSupporting}
                           activeProjectId={activeShowcaseProjectId}
                           settled={panelSettled}
                         />
                       </div>
                     )}
                     {currentSection === "projects-supporting" && (
-                      <SupportingProjectsSection onNavTransitionChange={setNavButtonsFaded} />
+                      <SupportingProjectsSection
+                        onNavTransitionChange={setNavButtonsFaded}
+                        pendingPdfFromShowcase={supportingPdfIntent}
+                        onPendingPdfFromShowcaseConsumed={clearSupportingPdfIntent}
+                        onReturnToShowcaseAfterFeaturedPreview={() => navigateTo("projects")}
+                      />
                     )}
                   </>
                 ) : (
@@ -6344,6 +6457,7 @@ export default function Home() {
                         <PalaceProjects
                           onSelectProject={setActiveShowcaseProjectId}
                           onOpenSupporting={() => navigateTo("projects-supporting")}
+                          onOpenFeaturedPdfInSupporting={openFeaturedPdfInSupporting}
                           activeProjectId={activeShowcaseProjectId}
                           settled={panelSettled}
                         />
@@ -6358,7 +6472,12 @@ export default function Home() {
                         transition={{ duration: SHOWCASE_SUBROUTE_FADE_S, ease: EASE.out }}
                         className="w-full"
                       >
-                        <SupportingProjectsSection onNavTransitionChange={setNavButtonsFaded} />
+                        <SupportingProjectsSection
+                          onNavTransitionChange={setNavButtonsFaded}
+                          pendingPdfFromShowcase={supportingPdfIntent}
+                          onPendingPdfFromShowcaseConsumed={clearSupportingPdfIntent}
+                          onReturnToShowcaseAfterFeaturedPreview={() => navigateTo("projects")}
+                        />
                       </motion.div>
                     )}
                   </AnimatePresence>

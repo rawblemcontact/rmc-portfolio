@@ -144,6 +144,10 @@
   .tracking-eyebrow {
     letter-spacing: 0.2em;
   }
+  /** Tighter caps than `tracking-eyebrow` — showcase PROJECTS / FEATURED WRITING */
+  .tracking-eyebrow-tight {
+    letter-spacing: 0.1em;
+  }
   .tracking-eyebrow-sm {
     letter-spacing: 0.18em;
   }

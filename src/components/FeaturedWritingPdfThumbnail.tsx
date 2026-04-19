@@ -2,26 +2,48 @@ import { useEffect, useState } from "react";
 import { FileText } from "lucide-react";
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
-/** CSS pixels — fixed footprint so layout does not shift (load uses same box as skeleton). */
-const THUMB_W = 120;
-const THUMB_H = 156;
+/** Default height is fixed; width can grow (e.g. to match active tab). */
+const DEFAULT_W = 120;
+const FIXED_H = 156;
 
-const dataUrlBySrc = new Map<string, string>();
+const dataUrlByKey = new Map<string, string>();
+
+function cacheKey(pdfSrc: string, widthPx: number) {
+  return `${pdfSrc}\0${Math.round(widthPx)}`;
+}
 
 type Props = {
   pdfSrc: string;
+  /** Display / raster width in CSS px (e.g. active tab width). */
+  widthPx?: number;
   className?: string;
+  /** Opens PDF in the in-app loader (e.g. FEATURED WRITING). */
+  onActivate?: () => void;
 };
 
 /**
- * First-page raster preview for FEATURED WRITING. Results are cached per PDF URL.
+ * First-page raster preview for FEATURED WRITING. Results are cached per PDF URL + width.
  */
-export function FeaturedWritingPdfThumbnail({ pdfSrc, className = "" }: Props) {
-  const [dataUrl, setDataUrl] = useState<string | null>(() => dataUrlBySrc.get(pdfSrc) ?? null);
+export function FeaturedWritingPdfThumbnail({
+  pdfSrc,
+  widthPx = DEFAULT_W,
+  className = "",
+  onActivate,
+}: Props) {
+  /** Wider tabs stretch width only; height stays FIXED_H. */
+  const layoutW = Math.max(48, Math.min(widthPx, 720));
+  const layoutH = FIXED_H;
+  const rasterW = Math.min(layoutW, 520);
+  const rasterH = FIXED_H;
+  const key = cacheKey(pdfSrc, rasterW);
+
+  const [dataUrl, setDataUrl] = useState<string | null>(
+    () => dataUrlByKey.get(key) ?? null,
+  );
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    const cached = dataUrlBySrc.get(pdfSrc);
+    const cached = dataUrlByKey.get(key);
     if (cached) {
       setDataUrl(cached);
       setError(false);
@@ -45,7 +67,7 @@ export function FeaturedWritingPdfThumbnail({ pdfSrc, className = "" }: Props) {
         const page = await doc.getPage(1);
         const base = page.getViewport({ scale: 1 });
         const dpr = Math.min(typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1, 2);
-        const fit = Math.min(THUMB_W / base.width, THUMB_H / base.height);
+        const fit = Math.min(rasterW / base.width, rasterH / base.height);
         const viewport = page.getViewport({ scale: fit * dpr });
 
         const canvas = document.createElement("canvas");
@@ -62,7 +84,7 @@ export function FeaturedWritingPdfThumbnail({ pdfSrc, className = "" }: Props) {
         if (cancelled) return;
 
         const url = canvas.toDataURL("image/jpeg", 0.84);
-        dataUrlBySrc.set(pdfSrc, url);
+        dataUrlByKey.set(key, url);
         setDataUrl(url);
       } catch {
         if (!cancelled) setError(true);
@@ -72,20 +94,38 @@ export function FeaturedWritingPdfThumbnail({ pdfSrc, className = "" }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [pdfSrc]);
+  }, [pdfSrc, key, rasterW, rasterH]);
 
   const showImg = dataUrl && !error;
+
+  const interactive = typeof onActivate === "function";
 
   return (
     <div
       className={[
         "relative shrink-0 overflow-hidden rounded-[10px] border border-white/[0.09] bg-zinc-950/80 shadow-[0_14px_36px_-20px_rgba(0,0,0,0.88)]",
         "ring-1 ring-inset ring-white/[0.04]",
+        interactive
+          ? "cursor-pointer transition-[border-color,box-shadow] duration-200 ease-out hover:border-yellow-400/35 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-yellow-400/40 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+          : "",
         className,
       ].join(" ")}
-      style={{ width: THUMB_W, height: THUMB_H }}
+      style={{ width: layoutW, height: layoutH, maxWidth: "100%" }}
+      role={interactive ? "button" : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      aria-label={interactive ? "Open PDF in viewer" : undefined}
+      onClick={interactive ? () => onActivate() : undefined}
+      onKeyDown={
+        interactive
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onActivate();
+              }
+            }
+          : undefined
+      }
     >
-      {/* Subtle command-ui grid — thematic, low contrast */}
       <div
         className="pointer-events-none absolute inset-0 z-[2] bg-[linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[length:8px_8px] opacity-[0.35]"
         aria-hidden
