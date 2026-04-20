@@ -1,0 +1,20 @@
+/**
+ * Portfolio accent palette — edit this file to re-theme the whole site.
+ *
+ * - Tailwind `portfolio-*` utilities and `--color-p3-cyan*` read from these vars.
+ * - `SECTION_ACCENT_COLOR` and webhook accents in Home.tsx use the same names
+ *   (e.g. `var(--palette-red)`) so panel edges stay in sync.
+ *
+ * Optional second palette: set on `<html data-palette="alt">` and duplicate the
+ * `:root` block below as `html[data-palette="alt"] { ... }` with new values.
+ */
+:root {
+  /* User neon set → 7 tokens. `orange` = CONTACT (indigo). Extras: #ff8700 Princeton orange, #deff0a lime yellow, #be0aff hyper magenta. */
+  --palette-red: #ff0000;
+  --palette-orange: #580aff;
+  --palette-yellow: #ffd300;
+  --palette-green: #00854d;
+  --palette-green-bright: #00b47a;
+  --palette-blue: #147df5;
+  --palette-blue-bright: #0aefff;
+}

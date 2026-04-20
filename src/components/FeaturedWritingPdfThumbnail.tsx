@@ -134,7 +134,7 @@ export function FeaturedWritingPdfThumbnail({
         "relative shrink-0 overflow-hidden rounded-[10px] border border-white/[0.09] bg-zinc-950/80",
         "ring-1 ring-inset ring-white/[0.04]",
         interactive
-          ? "cursor-pointer transition-[border-color] duration-200 ease-out hover:border-yellow-400/35 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-yellow-400/40 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+          ? "cursor-pointer transition-[border-color] duration-200 ease-out hover:border-portfolio-yellow/35 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-portfolio-yellow/40 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
           : "",
         className,
       ].join(" ")}

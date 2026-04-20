@@ -157,12 +157,12 @@ export function ShowcaseAttachedTabStrip({
                     FOLDER_TAB_TOP,
                     "min-w-0 border border-b-0 px-2.5 font-heading text-[10px] sm:text-xs tracking-btn-caps uppercase",
                     "motion-safe:transition-[height,box-shadow,background-color,border-color,color] motion-safe:duration-200 motion-safe:ease-out",
-                    "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-yellow-400/30 focus-visible:ring-offset-2 focus-visible:ring-offset-black",
+                    "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-portfolio-yellow/30 focus-visible:ring-offset-2 focus-visible:ring-offset-black",
                     active
                       ? [
                           TAB_ACTIVE_SURFACE,
                           "relative h-10 min-h-[2.5rem] sm:h-11 sm:min-h-[2.75rem]",
-                          "border-yellow-400/50 text-yellow-400/95",
+                          "border-portfolio-yellow/50 text-portfolio-yellow/95",
                           "shadow-[0_6px_20px_-8px_rgba(0,0,0,0.75),3px_0_10px_-5px_rgba(0,0,0,0.55)]",
                         ].join(" ")
                       : [
@@ -183,11 +183,11 @@ export function ShowcaseAttachedTabStrip({
             <button
               type="button"
               onClick={onArchives}
-              className="group inline-flex items-center gap-1.5 py-1 font-heading text-[10px] sm:text-xs tracking-btn-caps uppercase text-mono-2/55 transition-colors duration-300 ease-out hover:text-yellow-400/95 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-yellow-400/30 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+              className="group inline-flex items-center gap-1.5 py-1 font-heading text-[10px] sm:text-xs tracking-btn-caps uppercase text-mono-2/55 transition-colors duration-300 ease-out hover:text-portfolio-yellow/95 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-portfolio-yellow/30 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
             >
               MORE
               <ArrowRight
-                className="h-3 w-3 shrink-0 text-mono-2/55 transition-colors duration-300 ease-out group-hover:text-yellow-400/95"
+                className="h-3 w-3 shrink-0 text-mono-2/55 transition-colors duration-300 ease-out group-hover:text-portfolio-yellow/95"
                 strokeWidth={1.75}
                 aria-hidden
               />

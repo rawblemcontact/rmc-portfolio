@@ -1,4 +1,7 @@
+@import "./styles/portfolio-palette.css";
 @import "tailwindcss";
+/* Menu SKILLS row underline — force utility emit (NAV_ITEMS only interpolates class names). */
+@source inline("bg-portfolio-green");
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
@@ -9,9 +12,17 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   
-  /* Persona 3 Palette - Cyan, Tranquility, Youth */
-  --color-p3-cyan: hsl(187 85% 43%);    /* #06B6D4 - Signature Cyan */
-  --color-p3-cyan-bright: hsl(189 94% 53%); /* #22D3EE - Bright Cyan */
+  /* Portfolio accents — values live in src/styles/portfolio-palette.css */
+  --color-portfolio-red: var(--palette-red);
+  --color-portfolio-orange: var(--palette-orange);
+  --color-portfolio-yellow: var(--palette-yellow);
+  --color-portfolio-green: var(--palette-green);
+  --color-portfolio-blue: var(--palette-blue);
+  --color-portfolio-blue-bright: var(--palette-blue-bright);
+
+  /* Shadcn / legacy tokens — signature accent = palette blue */
+  --color-p3-cyan: var(--palette-blue);
+  --color-p3-cyan-bright: var(--palette-blue-bright);
   --color-p3-black: hsl(0 0% 5%);
   --color-p3-dark: hsl(210 20% 10%);    /* Slightly blue-tinted dark */
   --color-p3-white: hsl(0 0% 98%);
@@ -59,6 +70,13 @@
   --color-mono-4: #1b1b1b;
   --color-mono-5: #141414;
   --color-mono-6: #000000;
+
+  /* Skills column eyebrows (e.g. Social & Media): cool grey with a whisper of portfolio green */
+  --color-skills-category-eyebrow: color-mix(
+    in oklch,
+    var(--color-mono-2) 84%,
+    var(--palette-green) 16%
+  );
 
   --radius: 0px;
 }
@@ -722,13 +740,13 @@
     object-fit: contain;
   }
 
-  /* Subskills tools list: monochrome imgs → green-600 (same as MAIN MENU SKILLS row) */
-  #skills .skills-tool-icon-subskills {
+  /* Subskills tools list (+ menu if tool rows use same class): monochrome imgs → match --palette-green */
+  #skills .skills-tool-icon-subskills,
+  #menu .skills-tool-icon-subskills {
     max-height: 22px;
     max-width: 22px;
     object-fit: contain;
-    filter: brightness(0) saturate(100%) invert(31%) sepia(92%) saturate(640%) hue-rotate(103deg)
-      brightness(93%) contrast(88%);
+    filter: invert(42%) sepia(98%) saturate(520%) hue-rotate(116deg) brightness(92%) contrast(99%);
   }
 
   /* Subskills panel header: idea icon only when `SKILLS_SHOW_IDEA_GEAR_DECOR` is true in Home.tsx */

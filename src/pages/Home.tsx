@@ -347,7 +347,7 @@ function ToolIcon({ name, size = 18 }: { name: string; size?: number }) {
     );
   }
   const Icon = icon;
-  return <Icon size={size} className="block shrink-0 text-green-600 opacity-90" />;
+  return <Icon size={size} className="block shrink-0 text-portfolio-green opacity-90" />;
 }
 
 // --- ANIMATION VARIANTS ---
@@ -399,10 +399,15 @@ const ACCENT_GLOW = {
   blur: 12,
   opacity: 0.12,
 };
-function accentGlowShadow(hex: string, active: boolean): string {
+/** Panel edge glow: supports `#rrggbb` or any CSS color (e.g. `var(--palette-blue)`). */
+function accentGlowShadow(color: string, active: boolean): string {
   if (!active) return "none";
-  const hexAlpha = Math.round(ACCENT_GLOW.opacity * 255).toString(16).padStart(2, "0");
-  return `0 0 ${ACCENT_GLOW.blur}px ${hex}${hexAlpha}`;
+  const pct = Math.round(ACCENT_GLOW.opacity * 100);
+  if (color.startsWith("#") && (color.length === 7 || color.length === 9)) {
+    const hexAlpha = Math.round(ACCENT_GLOW.opacity * 255).toString(16).padStart(2, "0");
+    return `0 0 ${ACCENT_GLOW.blur}px ${color.length === 7 ? color + hexAlpha : color}`;
+  }
+  return `0 0 ${ACCENT_GLOW.blur}px color-mix(in srgb, ${color} ${pct}%, transparent)`;
 }
 
 // --- TEXT SHUTTER (Persona-style directional reveal, inspired by The Line Studio / Framer) ---
@@ -494,27 +499,27 @@ const scrollToId = (id: string, behavior: ScrollBehavior = "smooth") => {
 };
 
 const NAV_ITEMS: { id: string; label: string; icon: LucideIcon; color: string; sub: string; microLabel: string }[] = [
-  { id: "profile", label: "PROFILE", sub: "Summary", icon: User, color: "bg-red-600", microLabel: "OPEN" },
-  { id: "projects", label: "PROJECTS", sub: "Projects", icon: Zap, color: "bg-yellow-400", microLabel: "VIEW" },
-  { id: "experience", label: "EXPERIENCE", sub: "Career History", icon: Star, color: "bg-blue-600", microLabel: "ENTER" },
-  { id: "skills", label: "SKILLS", sub: "Skills", icon: Briefcase, color: "bg-green-600", microLabel: "OPEN" },
-  { id: "social", label: "CONTACT", sub: "Contact", icon: Heart, color: "bg-pink-500", microLabel: "VIEW" },
+  { id: "profile", label: "PROFILE", sub: "Summary", icon: User, color: "bg-portfolio-red", microLabel: "OPEN" },
+  { id: "projects", label: "PROJECTS", sub: "Projects", icon: Zap, color: "bg-portfolio-yellow", microLabel: "VIEW" },
+  { id: "experience", label: "EXPERIENCE", sub: "Career History", icon: Star, color: "bg-portfolio-blue", microLabel: "ENTER" },
+  { id: "skills", label: "SKILLS", sub: "Skills", icon: Briefcase, color: "bg-portfolio-green", microLabel: "OPEN" },
+  { id: "social", label: "CONTACT", sub: "Contact", icon: Heart, color: "bg-portfolio-orange", microLabel: "VIEW" },
 ];
 
-// Section id → accent color (hex) for transition panel edge (matches MENU item colors)
+// Section id → panel edge accent (CSS vars from src/styles/portfolio-palette.css)
 const SECTION_ACCENT_COLOR: Record<string, string> = {
-  profile: "#dc2626",
-  projects: "#facc15",
-  "project-rawblem": "#facc15",
-  "project-slaywire": "#facc15",
-  "project-undertale-fhe": "#facc15",
-  "project-portfolio": "#facc15",
-  "project-undertale-proposal": "#facc15",
-  "project-8bit-bumpers": "#facc15",
-  "projects-supporting": "#facc15",
-  experience: "#2563eb",
-  social: "#ec4899",
-  skills: "#16a34a",
+  profile: "var(--palette-red)",
+  projects: "var(--palette-yellow)",
+  "project-rawblem": "var(--palette-yellow)",
+  "project-slaywire": "var(--palette-yellow)",
+  "project-undertale-fhe": "var(--palette-yellow)",
+  "project-portfolio": "var(--palette-yellow)",
+  "project-undertale-proposal": "var(--palette-yellow)",
+  "project-8bit-bumpers": "var(--palette-yellow)",
+  "projects-supporting": "var(--palette-yellow)",
+  experience: "var(--palette-blue)",
+  social: "var(--palette-orange)",
+  skills: "var(--palette-green)",
 };
 
 const CMD_HOVER = { duration: 0.25, ease: [0.16, 1, 0.3, 1] as const };
@@ -665,7 +670,7 @@ const SectionHeader = ({
           initial={{ scaleX: 0, originX: align === "center" ? 0.5 : 0 }}
           whileInView={{ scaleX: 1 }}
           viewport={{ once: true }}
-          className="bg-cyan-500 h-2 w-24 mb-4"
+          className="bg-portfolio-blue h-2 w-24 mb-4"
         />
       )}
       <h2
@@ -1707,7 +1712,7 @@ const PhantomProfile = () => {
              >
                <motion.span
                  aria-hidden
-                 className="absolute bottom-0 left-0 right-0 h-[2px] origin-left bg-red-600"
+                 className="absolute bottom-0 left-0 right-0 h-[2px] origin-left bg-portfolio-red"
                  initial={false}
                  animate={{ scaleX: dividerInView ? 1 : 0 }}
                  transition={{ duration: RED_LINE_DURATION_MS / 1000, delay: RED_LINE_DELAY_MS / 1000, ease: [0.16, 1, 0.3, 1] }}
@@ -1730,18 +1735,18 @@ const PhantomProfile = () => {
                animate={{ opacity: overlayRevealed ? 1 : 0, y: overlayRevealed ? 0 : 14 }}
                transition={{ duration: SUMMARY_DURATION_S, delay: overlayRevealed ? SUMMARY_DELAY_S : 0, ease: [0.16, 1, 0.3, 1] }}
              >
-               <p className="font-heading text-sm tracking-eyebrow leading-snug uppercase text-red-500/75 mb-1.5">SUMMARY</p>
+               <p className="font-heading text-sm tracking-eyebrow leading-snug uppercase text-portfolio-red/75 mb-1.5">SUMMARY</p>
                <p className="font-body text-sm sm:text-base md:text-lg xl:text-lg 2xl:text-xl text-mono-2 leading-relaxed mb-4">
                  Communications-focused writer and digital media coordinator with experience producing narrative-driven web content and managing social media workflows across multiple platforms. Combines narrative storytelling with platform-native content production and distribution. Bachelor of Arts in Writing (Distinction), University of Victoria.
                </p>
-               <p className="font-heading text-sm tracking-eyebrow leading-snug uppercase text-red-500/75 mb-1.5">CURRENT WORK</p>
+               <p className="font-heading text-sm tracking-eyebrow leading-snug uppercase text-portfolio-red/75 mb-1.5">CURRENT WORK</p>
                <ul className="font-body text-sm sm:text-base md:text-lg xl:text-lg 2xl:text-xl text-mono-2/90 leading-relaxed mb-4 ml-3 list-disc list-outside space-y-2 pl-6 sm:pl-7 marker:text-mono-2/50">
                  <li>Currently developing SLAYWIRE, a narrative-first RPG.</li>
                  <li>
                    RAWBLEM - Creative brand producing narrative-driven short-form content across TikTok, Instagram Reels, and YouTube Shorts.
                  </li>
                </ul>
-               <p className="font-heading text-sm tracking-eyebrow leading-snug uppercase text-red-500/75 mb-1.5">AVAILABILITY</p>
+               <p className="font-heading text-sm tracking-eyebrow leading-snug uppercase text-portfolio-red/75 mb-1.5">AVAILABILITY</p>
                <ul className="font-body text-sm sm:text-base md:text-lg xl:text-lg 2xl:text-xl text-mono-2 leading-relaxed ml-3 list-disc list-outside space-y-2 pl-6 sm:pl-7 marker:text-mono-2/50">
                  <li>Full-Time Content, Communications, or Digital Media roles.</li>
                </ul>
@@ -1757,7 +1762,7 @@ const Badge = ({ icon: Icon, label, sub, highlight = false }: { icon: LucideIcon
   <div
     className={`flex items-center gap-3 p-3 border-2 shadow-md ${
       highlight
-        ? 'bg-gradient-to-br from-amber-200 via-amber-300 to-amber-500 border-amber-500 text-black shadow-lg'
+        ? 'bg-gradient-to-br from-portfolio-yellow via-portfolio-orange to-portfolio-red border-portfolio-orange text-black shadow-lg'
         : 'bg-white border-black text-black'
     }`}
   >
@@ -1772,7 +1777,7 @@ const Badge = ({ icon: Icon, label, sub, highlight = false }: { icon: LucideIcon
 const StatRow = ({ label, value }: { label: string; value: string }) => (
   <div className="flex justify-between items-center group border-b border-zinc-800 pb-2 last:border-0">
     <span className="text-mono-2/90 uppercase group-hover:text-white transition-colors">{label}</span>
-    <span className="text-cyan-400 uppercase">{value}</span>
+    <span className="text-portfolio-blue-bright uppercase">{value}</span>
   </div>
 );
 
@@ -2235,7 +2240,7 @@ const ProjectsStack = ({
                 onClick={() => emblaApi?.scrollTo(snapIdx)}
                 aria-label={`Go to slide ${snapIdx + 1}`}
                 aria-current={selectedIndex === snapIdx ? "true" : undefined}
-                className={`h-2.5 w-2.5 rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
+                className={`h-2.5 w-2.5 rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-portfolio-yellow/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
                   selectedIndex === snapIdx
                     ? "bg-white scale-110"
                     : "bg-white/35 hover:bg-white/55"
@@ -2261,7 +2266,7 @@ const ProjectsStack = ({
                   onClick={(e) => onSelect(card.id, e.currentTarget)}
                   whileTap={{ scale: 0.985 }}
                   transition={{ duration: 0.28 / SHOWCASE_TIME_DIV, ease: cardEase }}
-                  className={`group relative w-full ${DETAIL_CARD_H} rounded-[11px] sm:rounded-xl border border-white/[0.09] bg-zinc-950/40 shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)] text-center overflow-hidden transition-[opacity,background-color,border-color] duration-300 ease-out hover:border-yellow-400/40 hover:bg-zinc-950/65 hover:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/35 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
+                  className={`group relative w-full ${DETAIL_CARD_H} rounded-[11px] sm:rounded-xl border border-white/[0.09] bg-zinc-950/40 shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)] text-center overflow-hidden transition-[opacity,background-color,border-color] duration-300 ease-out hover:border-portfolio-yellow/40 hover:bg-zinc-950/65 hover:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-portfolio-yellow/35 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
                     focusProjectId && focusProjectId !== card.id ? "opacity-0 pointer-events-none" : "opacity-100"
                   }`}
                 >
@@ -2316,7 +2321,7 @@ const ProjectsStack = ({
                           <span
                             className={`font-display block w-full max-w-full text-left text-[1rem] sm:text-[1.05rem] md:text-lg lg:text-xl xl:text-[1.35rem] leading-snug text-white tracking-tight line-clamp-3 [text-wrap:balance] motion-safe:transition-[opacity,color] motion-safe:duration-300 motion-safe:ease-out ${
                               index === selectedIndex
-                                ? "opacity-100 group-hover:text-yellow-50"
+                                ? "opacity-100 group-hover:text-portfolio-yellow"
                                 : "opacity-70 group-hover:text-mono-1"
                             }`}
                           >
@@ -2333,7 +2338,7 @@ const ProjectsStack = ({
                         <span
                           className={`font-display w-full max-w-full text-[1rem] sm:text-[1.05rem] md:text-lg lg:text-xl xl:text-[1.35rem] leading-snug text-white tracking-tight line-clamp-4 [text-wrap:balance] motion-safe:transition-[opacity,color] motion-safe:duration-300 motion-safe:ease-out ${
                             index === selectedIndex
-                              ? "opacity-100 group-hover:text-yellow-50"
+                              ? "opacity-100 group-hover:text-portfolio-yellow"
                               : "opacity-0 pointer-events-none"
                           }`}
                           aria-hidden={index !== selectedIndex}
@@ -2601,7 +2606,7 @@ const SupportingProjectsSection = ({
   }, [isPrePreviewFading, isPreviewClosing, onNavTransitionChange, previewPdf]);
 
   const rowBtnClass =
-    "group flex w-full items-start gap-3 sm:gap-4 py-4 sm:py-4 pr-1 -mx-1 px-1 text-left transition-[transform,color,background-color] duration-200 ease-out motion-safe:group-hover:translate-x-1.5 bg-black/40 hover:bg-black/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-sm border-0 cursor-pointer text-inherit";
+    "group flex w-full items-start gap-3 sm:gap-4 py-4 sm:py-4 pr-1 -mx-1 px-1 text-left transition-[transform,color,background-color] duration-200 ease-out motion-safe:group-hover:translate-x-1.5 bg-black/40 hover:bg-black/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-portfolio-blue-bright/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-sm border-0 cursor-pointer text-inherit";
 
   const updateArchiveOpticalScrollMetrics = useCallback(() => {
     const scrollEl = archiveScrollAreaRef.current;
@@ -2853,7 +2858,7 @@ const SupportingProjectsSection = ({
               <div key={section.heading}>
                 <h3
                   ref={sectionIndex === 0 ? archiveFirstYellowRuleRef : undefined}
-                  className="font-heading text-[0.65rem] sm:text-xs tracking-eyebrow leading-snug uppercase text-yellow-400/90 mb-3 pb-2 border-b border-yellow-400/25"
+                  className="font-heading text-[0.65rem] sm:text-xs tracking-eyebrow leading-snug uppercase text-portfolio-yellow/90 mb-3 pb-2 border-b border-portfolio-yellow/25"
                 >
                   {section.heading}
                 </h3>
@@ -2878,11 +2883,11 @@ const SupportingProjectsSection = ({
                             {item.subtitle}
                           </span>
                         </div>
-                        <span className="font-mono text-[0.6rem] sm:text-[0.65rem] tracking-[0.14em] uppercase text-mono-2/70 group-hover:text-yellow-400 shrink-0 pt-1 transition-colors duration-200">
+                        <span className="font-mono text-[0.6rem] sm:text-[0.65rem] tracking-[0.14em] uppercase text-mono-2/70 group-hover:text-portfolio-yellow shrink-0 pt-1 transition-colors duration-200">
                           VIEW
                         </span>
                         <FileText
-                          className="w-4 h-4 shrink-0 text-mono-2/70 group-hover:text-yellow-400 mt-0.5 transition-colors duration-200"
+                          className="w-4 h-4 shrink-0 text-mono-2/70 group-hover:text-portfolio-yellow mt-0.5 transition-colors duration-200"
                           aria-hidden
                         />
                       </button>
@@ -3008,7 +3013,7 @@ const SupportingProjectsSection = ({
                   variant="outline"
                   aria-label="Close PDF preview"
                   onClick={closePreview}
-                  className="h-10 w-10 shrink-0 rounded-full border border-white/18 bg-black text-mono-1 hover:border-cyan-400/45 hover:bg-zinc-900 hover:text-white"
+                  className="h-10 w-10 shrink-0 rounded-full border border-white/18 bg-black text-mono-1 hover:border-portfolio-blue-bright/45 hover:bg-zinc-900 hover:text-white"
                 >
                   <X className="h-4 w-4" aria-hidden />
                 </Button>
@@ -3029,7 +3034,7 @@ const SupportingProjectsSection = ({
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="Open PDF in new tab"
-                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/18 bg-black text-mono-1 hover:border-cyan-400/45 hover:bg-zinc-900 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/45"
+                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/18 bg-black text-mono-1 hover:border-portfolio-blue-bright/45 hover:bg-zinc-900 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-portfolio-blue-bright/45"
                   >
                     <ExternalLink className="h-4 w-4" aria-hidden />
                   </a>
@@ -3037,7 +3042,7 @@ const SupportingProjectsSection = ({
                     href={previewPdf.href}
                     download
                     aria-label="Download PDF"
-                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/18 bg-black text-mono-1 hover:border-cyan-400/45 hover:bg-zinc-900 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/45"
+                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/18 bg-black text-mono-1 hover:border-portfolio-blue-bright/45 hover:bg-zinc-900 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-portfolio-blue-bright/45"
                   >
                     <Download className="h-4 w-4" aria-hidden />
                   </a>
@@ -3100,16 +3105,20 @@ const SHOWCASE_SLIDER_MEDIA_BOX_SHADOW =
  */
 const showcaseDetailCard = `${PROJECT_DETAIL_SURFACE} px-3 py-3 sm:px-4 sm:py-3.5 [background:linear-gradient(rgb(0_0_0/0.42),rgb(0_0_0/0.42)),linear-gradient(rgb(9_9_11/0.58),rgb(9_9_11/0.58))]`;
 
+/** Same frame as project detail insets; darker wash + soft stacked shadow (single box-shadow, two layers). */
+const SKILLS_SUBCATEGORY_CARD_FACE =
+  "rounded-[11px] sm:rounded-xl border border-portfolio-green/25 shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9),0_6px_22px_-10px_rgba(0,0,0,0.52)] [background:linear-gradient(rgb(0_0_0/0.62),rgb(0_0_0/0.62)),linear-gradient(rgb(9_9_11/0.88),rgb(9_9_11/0.88))] transition-[background-color,border-color,box-shadow] duration-300 ease-out hover:border-portfolio-green/50 hover:shadow-[0_22px_52px_-28px_rgba(0,0,0,0.92),0_8px_26px_-10px_rgba(0,0,0,0.55)]";
+
 const ShowcaseDetailOverviewRole = ({ card }: { card: ShowcaseProjectCard }) => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-3">
     <section className={`${showcaseDetailCard} min-w-0 md:col-span-2`}>
-      <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-yellow-400/90 mb-1.5">OVERVIEW</p>
+      <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-portfolio-yellow/90 mb-1.5">OVERVIEW</p>
       <p className="font-body text-sm sm:text-base text-mono-2 leading-snug whitespace-pre-line">
         {card.detailOverview?.trim() || "—"}
       </p>
     </section>
     <section className={`${showcaseDetailCard} min-w-0`}>
-      <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-yellow-400/90 mb-1.5">ROLE</p>
+      <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-portfolio-yellow/90 mb-1.5">ROLE</p>
       <p className="font-body text-sm sm:text-base text-mono-2 leading-snug whitespace-pre-line">
         {card.detailRole?.trim() || "—"}
       </p>
@@ -3120,13 +3129,13 @@ const ShowcaseDetailOverviewRole = ({ card }: { card: ShowcaseProjectCard }) => 
 const ShowcaseDetailImpactTools = ({ card }: { card: ShowcaseProjectCard }) => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-3">
     <section className={`${showcaseDetailCard} min-w-0 md:col-span-2`}>
-      <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-yellow-400/90 mb-1.5">IMPACT</p>
+      <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-portfolio-yellow/90 mb-1.5">IMPACT</p>
       <p className="font-body text-sm sm:text-base text-mono-2 leading-snug whitespace-pre-line">
         {card.detailImpact?.trim() || "—"}
       </p>
     </section>
     <section className={`${showcaseDetailCard} min-w-0`}>
-      <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-yellow-400/90 mb-1.5">TOOLS</p>
+      <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-portfolio-yellow/90 mb-1.5">TOOLS</p>
       {card.detailTools?.length ? (
         <ul className="ml-1 list-disc list-outside space-y-1 pl-6 sm:pl-7 marker:text-mono-2/70">
           {card.detailTools.map((tool, i) => (
@@ -3169,7 +3178,7 @@ function ShowcaseWritingFeaturedPanel({
           </div>
           <a
             href={item.href}
-            className="inline-flex w-fit shrink-0 items-center gap-2 self-start rounded-[11px] sm:rounded-xl border border-white/[0.09] bg-zinc-950/40 px-2.5 py-1.5 font-heading text-[10px] sm:text-xs tracking-btn-caps uppercase text-yellow-400/90 shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)] transition-[border-color,background-color,color] duration-300 ease-out hover:border-yellow-400/40 hover:bg-zinc-950/65 hover:text-yellow-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-yellow-400/40 focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:self-center sm:px-3 sm:py-2"
+            className="inline-flex w-fit shrink-0 items-center gap-2 self-start rounded-[11px] sm:rounded-xl border border-white/[0.09] bg-zinc-950/40 px-2.5 py-1.5 font-heading text-[10px] sm:text-xs tracking-btn-caps uppercase text-portfolio-yellow/90 shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)] transition-[border-color,background-color,color] duration-300 ease-out hover:border-portfolio-yellow/40 hover:bg-zinc-950/65 hover:text-portfolio-yellow focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-portfolio-yellow/40 focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:self-center sm:px-3 sm:py-2"
             onClick={(e) => {
               e.preventDefault();
               onOpenPdfInSupporting(item);
@@ -3512,7 +3521,7 @@ const PalaceProjects = ({
                         }
                   }
                 >
-                  <p className="m-0 w-full font-heading text-sm sm:text-base leading-snug tracking-eyebrow-sm uppercase text-yellow-400/90">
+                  <p className="m-0 w-full font-heading text-sm sm:text-base leading-snug tracking-eyebrow-sm uppercase text-portfolio-yellow/90">
                     Project details
                   </p>
                   <h3 className="m-0 w-full font-display text-2xl md:text-3xl leading-[1.1] tracking-[-0.015em] text-white">
@@ -3620,7 +3629,7 @@ const PalaceProjects = ({
 
 const ProjectPoint = ({ text }: { text: string }) => (
   <div className="flex items-start">
-    <Star className="w-5 h-5 text-yellow-400 mr-3 mt-1 flex-shrink-0 fill-current" />
+    <Star className="w-5 h-5 text-portfolio-yellow mr-3 mt-1 flex-shrink-0 fill-current" />
     <span className="font-body text-base md:text-lg text-mono-2 leading-relaxed">{text}</span>
   </div>
 );
@@ -3968,7 +3977,7 @@ const ConfidantExperience = () => {
                       >
                         <span
                           className="mt-[0.4rem] size-2 shrink-0 rounded-full sm:mt-[0.45rem]"
-                          style={{ backgroundColor: "rgb(59 130 246 / 0.95)" }}
+                          style={{ backgroundColor: "color-mix(in srgb, var(--palette-blue) 95%, transparent)" }}
                           aria-hidden
                         />
                         <p className="min-w-0 font-body text-sm leading-relaxed text-mono-2/88 sm:text-[0.9375rem] sm:leading-[1.55]">
@@ -4499,8 +4508,8 @@ const SKILLS_DATA = {
 // ─── DIAGONAL CONNECTOR GEOMETRY ─────────────────────────────────────────────
 // Single sharp line: origin = midpoint of top card’s right edge, end = midpoint of bottom card’s left edge.
 // Cards placed with ~35% diagonal separation; line and node use same 0–100 coordinate system.
-const WEBHOOKS_CORE_ACCENT = "#22d3ee";  // cyan accent to replace green
-const WEBHOOKS_TOOLS_ACCENT = "#0891b2";
+const WEBHOOKS_CORE_ACCENT = "var(--palette-green)";
+const WEBHOOKS_TOOLS_ACCENT = "var(--palette-blue)";
 const WEBHOOKS_IDLE_BORDER = "rgba(255,255,255,0.25)";
 const DIAGONAL_START = { x: 38, y: 20 };
 const DIAGONAL_END   = { x: 62, y: 80 };
@@ -4788,7 +4797,7 @@ const SkillsExpandedView = ({
         <motion.button
           type="button"
           onClick={onClose}
-          className="flex items-center gap-2 font-heading text-xs uppercase tracking-btn-caps bg-cyan-500 text-white border border-cyan-500 hover:bg-white hover:text-black hover:border-white rounded-lg px-3 py-2 transition-colors duration-200"
+          className="flex items-center gap-2 font-heading text-xs uppercase tracking-btn-caps bg-portfolio-blue text-white border border-portfolio-blue hover:bg-white hover:text-black hover:border-white rounded-lg px-3 py-2 transition-colors duration-200"
           aria-label="Back to skills"
           whileHover={{ scale: 1.05, x: -2 }}
           whileTap={{ scale: 0.98 }}
@@ -4805,14 +4814,14 @@ const SkillsExpandedView = ({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
             {data.categories.map((category) => (
               <div key={category.title} className="border-l border-white/10 pl-4">
-                <h4 className="font-display text-xs md:text-sm uppercase tracking-[0.08em] leading-snug text-white/90 mb-1.5 md:mb-2.5 font-semibold">
+                <h4 className="font-display text-xs md:text-sm uppercase tracking-[0.08em] leading-snug text-white mb-1.5 md:mb-2.5 font-semibold">
                   {category.title}
                 </h4>
                 <ul className="space-y-1">
                   {category.items.map((item) => (
                     <li
                       key={item}
-                      className="font-mono text-[11px] md:text-xs text-white/75 tracking-tight leading-tight"
+                      className="font-mono text-[11px] md:text-xs text-white tracking-tight leading-tight"
                     >
                       {item}
                     </li>
@@ -4850,14 +4859,14 @@ const SkillsExpandedPanel = ({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
             {data.categories.map((category) => (
               <div key={category.title} className="border-l border-white/10 pl-4">
-                <h4 className="font-display text-xs md:text-sm uppercase tracking-[0.08em] leading-snug text-white/90 mb-1.5 md:mb-2.5 font-semibold">
+                <h4 className="font-display text-xs md:text-sm uppercase tracking-[0.08em] leading-snug text-white mb-1.5 md:mb-2.5 font-semibold">
                   {category.title}
                 </h4>
                 <ul className="space-y-1">
                   {category.items.map((item) => (
                     <li
                       key={item}
-                      className="font-mono text-[11px] md:text-xs text-white/75 tracking-tight leading-tight"
+                      className="font-mono text-[11px] md:text-xs text-white tracking-tight leading-tight"
                     >
                       {item}
                     </li>
@@ -5137,6 +5146,25 @@ const ViewportRuleOfThirdsOverlay = styled(RuleOfThirdsOverlay)`
 
 const SKILLS_CONTENT_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
+/** Skills orchestrated reveal (after panel wipe): ms timings + pauses, PROJECT-DETAILS-style; GPU: transform/opacity only. */
+const SKILLS_REVEAL_PAUSE_MS = 51;
+const SKILLS_REVEAL_TITLE_FADE_MS = 191;
+const SKILLS_REVEAL_HEADER_SLIDE_MS = 225;
+const SKILLS_REVEAL_CARD_SLIDE_MS = 200;
+const SKILLS_REVEAL_CARD_STAGGER_MS = 24;
+const SKILLS_REVEAL_HEADER_DELAY_MS = SKILLS_REVEAL_TITLE_FADE_MS + SKILLS_REVEAL_PAUSE_MS;
+const SKILLS_REVEAL_CORE_GRID_DELAY_MS =
+  SKILLS_REVEAL_HEADER_DELAY_MS + SKILLS_REVEAL_HEADER_SLIDE_MS + SKILLS_REVEAL_PAUSE_MS;
+/** Time after core column cards begin before toolkit column cards begin (overlap is intentional; was full core slide+stagger+pause). */
+const SKILLS_REVEAL_TOOLKIT_AFTER_CORE_START_MS = 68;
+const SKILLS_REVEAL_TOOLKIT_GRID_DELAY_MS =
+  SKILLS_REVEAL_CORE_GRID_DELAY_MS + SKILLS_REVEAL_TOOLKIT_AFTER_CORE_START_MS;
+const SKILLS_ORCHESTRATED_END_S =
+  (SKILLS_REVEAL_TOOLKIT_GRID_DELAY_MS +
+    SKILLS_REVEAL_CARD_SLIDE_MS +
+    2 * SKILLS_REVEAL_CARD_STAGGER_MS) /
+  1000;
+
 /** Stagger inside subskills card: header → scroll body → bottom rule */
 const skillsPanelStaggerParent: Variants = {
   hidden: {},
@@ -5174,8 +5202,8 @@ const SKILLS_FLOURISH_LEAD_S = 0.5;
 
 /** Footer = 3rd panel stagger child: delayChildren + 2×staggerChildren + duration */
 const SKILLS_PANEL_STAGGER_END_S = 0.04 + 2 * 0.09 + 0.4;
-/** Inline carousel: single chrome stagger child (panel); arrows are outside keyed remount */
-const SKILLS_CHROME_INLINE_STAGGER_END_S = 0.06 + 0.38;
+/** Inline dual panels: orchestrated reveal end (icon flourish sync). */
+const SKILLS_CHROME_INLINE_STAGGER_END_S = SKILLS_ORCHESTRATED_END_S;
 const SKILLS_INLINE_MOTION_END_S = Math.max(SKILLS_PANEL_STAGGER_END_S, SKILLS_CHROME_INLINE_STAGGER_END_S);
 
 /** Intro: 2nd chrome card; also second card title motion (delay 0.25 + 0.4s) in SkillArsenal */
@@ -5195,13 +5223,26 @@ const SkillsSubskillsPanel = ({
   variant,
   onClose,
   dualInline = false,
+  orchestratedReveal = false,
+  revealActive = false,
+  revealReduceMotion = false,
+  headerRevealDelayMs = 0,
+  gridRevealDelayMs = 0,
 }: {
   slide: "core" | "tools";
   variant: "overlay" | "inline";
   onClose?: () => void;
   /** Both skills panels visible: tighter max-height + in-card scroll. */
   dualInline?: boolean;
-}) => (
+  orchestratedReveal?: boolean;
+  revealActive?: boolean;
+  revealReduceMotion?: boolean;
+  headerRevealDelayMs?: number;
+  gridRevealDelayMs?: number;
+}) => {
+  const isOrchestrated = orchestratedReveal && variant === "inline" && dualInline;
+
+  return (
   <UiverseCard
     className={`skills-main-card skills-subcard${dualInline ? " skills-subcard-dual" : ""}`}
     onClick={variant === "overlay" ? (e) => e.stopPropagation() : undefined}
@@ -5215,7 +5256,7 @@ const SkillsSubskillsPanel = ({
             e.stopPropagation();
             onClose();
           }}
-          className="absolute top-4 right-4 z-20 px-3 py-2 text-xs font-heading font-medium uppercase tracking-btn-caps text-white border border-white/30 bg-white/5 hover:bg-cyan-500 hover:border-cyan-400 hover:text-white rounded-md transition-colors duration-200 shadow-sm"
+          className="absolute top-4 right-4 z-20 px-3 py-2 text-xs font-heading font-medium uppercase tracking-btn-caps text-white border border-white/30 bg-white/5 hover:bg-portfolio-blue hover:border-portfolio-blue-bright hover:text-white rounded-md transition-colors duration-200 shadow-sm"
           aria-label="Close subskills"
         >
           Close
@@ -5230,25 +5271,43 @@ const SkillsSubskillsPanel = ({
               ? "relative z-10 flex min-h-0 max-h-[min(calc(50dvh-3.75rem),22rem)] max-sm:max-h-[min(calc(50dvh-3.25rem),19rem)] flex-col overflow-hidden px-3 sm:px-6 md:px-10 lg:px-12 py-1.5 sm:py-3 md:py-4 text-left"
               : "relative z-10 flex min-h-0 max-h-[min(680px,90vh)] sm:max-h-[min(440px,58vh)] flex-col overflow-hidden px-4 sm:px-8 md:px-14 lg:px-16 xl:px-20 py-2.5 sm:py-6 md:py-7 text-left"
         }
-        variants={skillsPanelStaggerParent}
-        initial="hidden"
-        whileInView="show"
-        viewport={{ once: false, amount: 0.08 }}
+        {...(isOrchestrated
+          ? {}
+          : {
+              variants: skillsPanelStaggerParent,
+              initial: "hidden" as const,
+              whileInView: "show" as const,
+              viewport: { once: false, amount: 0.08 },
+            })}
       >
         <motion.div
           className={
             dualInline && variant === "inline"
-              ? "flex flex-shrink-0 min-w-0 border-b border-mono-3/25 pb-1.5 sm:pb-2.5 mb-1.5 sm:mb-2.5"
-              : "flex flex-shrink-0 min-w-0 border-b border-mono-3/25 pb-2 sm:pb-4 mb-2 sm:mb-4"
+              ? "flex flex-shrink-0 min-w-0 pb-1.5 sm:pb-2.5 mb-1.5 sm:mb-2.5"
+              : "flex flex-shrink-0 min-w-0 pb-2 sm:pb-4 mb-2 sm:mb-4"
           }
-          variants={skillsPanelStaggerChild}
+          {...(isOrchestrated
+            ? {
+                initial: { opacity: 0, x: -40 },
+                animate:
+                  !revealActive
+                    ? { opacity: 0, x: -40 }
+                    : { opacity: 1, x: 0 },
+                transition: {
+                  duration: revealReduceMotion ? 0.01 : SKILLS_REVEAL_HEADER_SLIDE_MS / 1000,
+                  delay: revealReduceMotion ? 0 : headerRevealDelayMs / 1000,
+                  ease: SKILLS_CONTENT_EASE,
+                },
+                style: { willChange: "transform, opacity" },
+              }
+            : { variants: skillsPanelStaggerChild })}
         >
           <div className="flex min-w-0 w-full flex-row items-end justify-between gap-2 sm:gap-5">
             <p
               className={
                 dualInline && variant === "inline"
-                  ? "min-w-0 flex-1 font-display text-base sm:text-xl md:text-3xl uppercase tracking-tight text-white leading-none whitespace-nowrap truncate"
-                  : "min-w-0 flex-1 font-display text-lg sm:text-2xl md:text-4xl uppercase tracking-tight text-white leading-none whitespace-nowrap truncate"
+                  ? "min-w-0 flex-1 text-left font-display font-semibold text-base sm:text-lg md:text-xl uppercase tracking-tight text-white leading-none whitespace-nowrap truncate"
+                  : "min-w-0 flex-1 text-left font-display font-semibold text-lg sm:text-xl md:text-2xl uppercase tracking-tight text-white leading-none whitespace-nowrap truncate"
               }
             >
               {slide === "core" ? "Core Competencies" : "Toolkit"}
@@ -5325,7 +5384,7 @@ const SkillsSubskillsPanel = ({
         </motion.div>
         <motion.div
           className="relative flex-1 min-h-0"
-          variants={skillsPanelStaggerChild}
+          {...(!isOrchestrated ? { variants: skillsPanelStaggerChild } : {})}
         >
         <div
           className={
@@ -5337,116 +5396,173 @@ const SkillsSubskillsPanel = ({
           }
         >
           {slide === "core" ? (
-            <div className="text-sm sm:text-base md:text-[1.0625rem] leading-relaxed text-mono-1 pb-2 border-b border-mono-3/25">
-              <div className="grid w-full min-w-0 grid-cols-1 md:grid-cols-3 md:items-start gap-y-3.5 sm:gap-y-8 gap-x-4 md:gap-x-5 lg:gap-x-7 xl:gap-x-8">
-                {CORE_SUBSKILLS_CATEGORIES.map(({ categoryTitle, items }) => (
-                  <div
-                    key={categoryTitle}
-                    className={
-                      categoryTitle === "Research & Collaboration"
-                        ? "flex min-w-min flex-col"
-                        : "flex min-w-0 flex-col"
-                    }
-                  >
-                    <p
-                      className={
-                        categoryTitle === "Research & Collaboration"
-                          ? "mb-1.5 sm:mb-3 text-[13px] font-heading uppercase tracking-eyebrow leading-snug text-mono-2/90 whitespace-nowrap"
-                          : "mb-1.5 sm:mb-3 min-w-0 text-[13px] font-heading uppercase leading-snug tracking-eyebrow text-mono-2/90 break-words"
-                      }
-                      title={categoryTitle}
-                    >
-                      {categoryTitle}
-                    </p>
-                    <ul className="space-y-1.5 sm:space-y-2.5">
-                      {items.map(({ label, Icon }) => (
-                        <li key={label} className="flex min-w-0 items-start gap-3.5">
-                          <span className="mt-0.5 inline-flex h-[22px] w-[22px] shrink-0 items-center justify-center">
-                            <Icon size={22} className="text-green-600 opacity-80" />
-                          </span>
-                          <span className="min-w-0 truncate" title={label}>
-                            {label}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
+            <div className="text-[14px] sm:text-[15px] leading-[1.55] text-white">
+              <div className="grid w-full min-w-0 grid-cols-1 md:grid-cols-3 md:items-start gap-y-5 sm:gap-y-8 gap-x-6 md:gap-x-8 lg:gap-x-10">
+                {CORE_SUBSKILLS_CATEGORIES.map(({ categoryTitle, items }, index) => {
+                  const columnClass = [
+                    "flex min-w-0 min-h-0 flex-col",
+                    SKILLS_SUBCATEGORY_CARD_FACE,
+                    dualInline
+                      ? "px-2.5 py-2.5 sm:px-3 sm:py-3"
+                      : "px-3 py-3 sm:px-4 sm:py-3.5",
+                  ].join(" ");
+                  const cardInner = (
+                    <>
+                      <p
+                        className="mb-3 w-full min-w-0 pb-2 border-b border-white/[0.06] text-center text-[11px] sm:text-[12px] font-heading font-semibold uppercase leading-snug tracking-eyebrow text-white text-balance"
+                        title={categoryTitle}
+                      >
+                        {categoryTitle}
+                      </p>
+                      <ul className="space-y-2 sm:space-y-3">
+                        {items.map(({ label, Icon }) => (
+                          <li
+                            key={label}
+                            className="group flex min-w-0 items-center gap-3 transition-transform duration-200 ease-out hover:translate-x-[2px]"
+                          >
+                            <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center">
+                              <Icon size={18} className="text-portfolio-green" />
+                            </span>
+                            <span
+                              className="min-w-0 truncate text-white transition-colors duration-200 ease-out"
+                              title={label}
+                            >
+                              {label}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  );
+                  if (isOrchestrated) {
+                    return (
+                      <motion.div
+                        key={categoryTitle}
+                        className={columnClass}
+                        initial={{ opacity: 0, y: 36 }}
+                        animate={
+                          !revealActive
+                            ? { opacity: 0, y: 36 }
+                            : { opacity: 1, y: 0 }
+                        }
+                        transition={{
+                          duration: revealReduceMotion ? 0.01 : SKILLS_REVEAL_CARD_SLIDE_MS / 1000,
+                          delay:
+                            revealReduceMotion
+                              ? 0
+                              : (gridRevealDelayMs + index * SKILLS_REVEAL_CARD_STAGGER_MS) / 1000,
+                          ease: SKILLS_CONTENT_EASE,
+                        }}
+                        style={{ willChange: "transform, opacity" }}
+                      >
+                        {cardInner}
+                      </motion.div>
+                    );
+                  }
+                  return (
+                    <div key={categoryTitle} className={columnClass}>
+                      {cardInner}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           ) : (
-            <div className="space-y-3 text-sm sm:text-base md:text-[1.0625rem] leading-relaxed text-mono-1 pb-2 border-b border-mono-3/25">
-              <div className="grid w-full min-w-0 grid-cols-1 md:grid-cols-3 md:items-start gap-y-6 sm:gap-y-8 gap-x-6 md:gap-x-8 lg:gap-x-10 xl:gap-x-12 [&>*]:min-w-0">
-                <div className="min-w-0 flex flex-col">
-                  <p
-                    className="mb-3 min-w-0 text-[13px] font-heading uppercase tracking-eyebrow leading-snug text-mono-2/90 whitespace-nowrap truncate"
-                    title="Design & Productivity"
-                  >
-                    Design &amp; Productivity
-                  </p>
-                  <ul className="space-y-2.5">
-                    {[
+            <div className="text-[14px] sm:text-[15px] leading-[1.55] text-white">
+              <div className="grid w-full min-w-0 grid-cols-1 md:grid-cols-3 md:items-start gap-y-5 sm:gap-y-8 gap-x-6 md:gap-x-8 lg:gap-x-10 [&>*]:min-w-0">
+                {[
+                  {
+                    title: "Design & Productivity",
+                    label: "Design & Productivity",
+                    items: [
                       "Microsoft Office 365",
                       "Adobe Creative Suite",
                       "Canva",
                       "Procreate",
-                    ].map((tool) => (
-                      <li key={tool} className="flex min-w-0 items-center gap-3.5">
-                        <span className="inline-flex h-[22px] w-[22px] shrink-0 items-center justify-center">
-                          <ToolIcon name={tool} size={20} />
-                        </span>
-                        <span className="min-w-0 truncate" title={tool}>
-                          {tool}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div className="min-w-0 flex flex-col">
-                  <p
-                    className="mb-3 min-w-0 text-[13px] font-heading uppercase tracking-eyebrow leading-snug text-mono-2/90 whitespace-nowrap truncate"
-                    title="Video & Writing"
-                  >
-                    Video &amp; Writing
-                  </p>
-                  <ul className="space-y-2.5">
-                    {["DaVinci Resolve", "CapCut", "Final Draft", "Arc Studio"].map((tool) => (
-                      <li key={tool} className="flex min-w-0 items-center gap-3.5">
-                        <span className="inline-flex h-[22px] w-[22px] shrink-0 items-center justify-center">
-                          <ToolIcon name={tool} size={20} />
-                        </span>
-                        <span className="min-w-0 truncate" title={tool}>
-                          {tool}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div className="min-w-0 flex flex-col">
-                  <p
-                    className="mb-3 min-w-0 text-[13px] font-heading uppercase tracking-eyebrow leading-snug text-mono-2/90 whitespace-nowrap truncate"
-                    title="Social Platforms"
-                  >
-                    Social Platforms
-                  </p>
-                  <ul className="space-y-2.5">
-                    {[
+                    ],
+                  },
+                  {
+                    title: "Video & Writing",
+                    label: "Video & Writing",
+                    items: ["DaVinci Resolve", "CapCut", "Final Draft", "Arc Studio"],
+                  },
+                  {
+                    title: "Social Platforms",
+                    label: "Social Platforms",
+                    items: [
                       "Hootsuite",
                       "TikTok Creator Tools",
                       "Instagram Reels",
                       "YouTube Shorts",
-                    ].map((tool) => (
-                      <li key={tool} className="flex min-w-0 items-center gap-3.5">
-                        <span className="inline-flex h-[22px] w-[22px] shrink-0 items-center justify-center">
-                          <ToolIcon name={tool} size={20} />
-                        </span>
-                        <span className="min-w-0 truncate" title={tool}>
-                          {tool}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                    ],
+                  },
+                ].map(({ title, label, items }, index) => {
+                  const columnClass = [
+                    "min-w-0 flex min-h-0 flex-col",
+                    SKILLS_SUBCATEGORY_CARD_FACE,
+                    dualInline
+                      ? "px-2.5 py-2.5 sm:px-3 sm:py-3"
+                      : "px-3 py-3 sm:px-4 sm:py-3.5",
+                  ].join(" ");
+                  const cardInner = (
+                    <>
+                      <p
+                        className="mb-3 w-full min-w-0 pb-2 border-b border-white/[0.06] text-center text-[11px] sm:text-[12px] font-heading font-semibold uppercase tracking-eyebrow leading-snug text-white text-balance"
+                        title={title}
+                      >
+                        {label}
+                      </p>
+                      <ul className="space-y-2 sm:space-y-3">
+                        {items.map((tool) => (
+                          <li
+                            key={tool}
+                            className="group flex min-w-0 items-center gap-3 transition-transform duration-200 ease-out hover:translate-x-[2px]"
+                          >
+                            <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center">
+                              <ToolIcon name={tool} size={18} />
+                            </span>
+                            <span
+                              className="min-w-0 truncate text-white transition-colors duration-200 ease-out"
+                              title={tool}
+                            >
+                              {tool}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  );
+                  if (isOrchestrated) {
+                    return (
+                      <motion.div
+                        key={title}
+                        className={columnClass}
+                        initial={{ opacity: 0, y: 36 }}
+                        animate={
+                          !revealActive
+                            ? { opacity: 0, y: 36 }
+                            : { opacity: 1, y: 0 }
+                        }
+                        transition={{
+                          duration: revealReduceMotion ? 0.01 : SKILLS_REVEAL_CARD_SLIDE_MS / 1000,
+                          delay:
+                            revealReduceMotion
+                              ? 0
+                              : (gridRevealDelayMs + index * SKILLS_REVEAL_CARD_STAGGER_MS) / 1000,
+                          ease: SKILLS_CONTENT_EASE,
+                        }}
+                        style={{ willChange: "transform, opacity" }}
+                      >
+                        {cardInner}
+                      </motion.div>
+                    );
+                  }
+                  return (
+                    <div key={title} className={columnClass}>
+                      {cardInner}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -5457,13 +5573,23 @@ const SkillsSubskillsPanel = ({
       </motion.div>
     </CardBlackFace>
   </UiverseCard>
-);
+  );
+};
 
-const SkillArsenal = () => {
+const SkillArsenal = ({
+  panelSettled = true,
+  reduceMotion = false,
+}: {
+  /** False until section panel wipe + settle finishes (see `navigateTo` + `CONTENT_SETTLE_DELAY`). */
+  panelSettled?: boolean;
+  reduceMotion?: boolean | null;
+}) => {
   const [activeSubskills, setActiveSubskills] = useState<"core" | "tools" | null>(null);
   const [skillsIconFlourish, setSkillsIconFlourish] = useState(false);
   const skillsFlourishCommittedRef = useRef(false);
   const skillsFlourishTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const revealActive = panelSettled;
+  const revealRm = !!reduceMotion;
 
   const scheduleSkillsIconFlourish = useCallback((sequenceEndS: number) => {
     if (skillsFlourishCommittedRef.current) return;
@@ -5498,6 +5624,11 @@ const SkillArsenal = () => {
     [],
   );
 
+  useEffect(() => {
+    if (!revealActive || revealRm || SKILLS_SHOW_INTRO_PAIR_CARDS) return;
+    scheduleSkillsIconFlourish(SKILLS_INLINE_MOTION_END_S);
+  }, [revealActive, revealRm, scheduleSkillsIconFlourish]);
+
   return (
     <section
       id="skills"
@@ -5506,24 +5637,40 @@ const SkillArsenal = () => {
     >
       <SectionGridOverlay />
       <div
-        className="container relative z-10 mx-auto flex h-full min-h-0 w-full max-w-full min-w-0 flex-1 flex-col overflow-visible px-4 sm:px-6 pt-[calc(5.25rem+2px)] md:pt-[calc(6.25rem+2px)] pb-[max(1rem,env(safe-area-inset-bottom))]"
+        className="container relative z-10 mx-auto flex h-full min-h-0 w-full max-w-full min-w-0 flex-1 flex-col overflow-visible px-4 sm:px-6 pt-[calc(5.25rem+2px)] md:pt-[calc(6.25rem+2px)] pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:pb-8 md:pb-9"
         style={
           SKILLS_LAYOUT.sectionOffsetRem !== 0
             ? { transform: `translateY(${SKILLS_LAYOUT.sectionOffsetRem}rem)` }
             : undefined
         }
       >
-        <div className="flex w-full min-h-0 flex-1 flex-col items-center justify-center">
+        <div className="flex w-full min-h-0 flex-1 flex-col items-center justify-start pt-0 sm:pt-1 md:pt-2">
           <div className="flex w-full min-w-0 max-w-[min(100%,88.75rem)] min-h-0 max-h-full flex-col items-center">
-            <div className="shrink-0 w-full">
-              <SectionHeader
-                title="SKILLS"
-                align="center"
-                showBar={false}
-                compact
-                titleFade
-                className="!mb-3 sm:!mb-4"
-              />
+            <div className="shrink-0 flex w-full justify-center px-1 sm:px-2 md:px-3">
+              <motion.div
+                className="w-full max-w-[min(100%,1180px)]"
+                initial={{ opacity: 0, y: -28 }}
+                animate={
+                  revealActive
+                    ? { opacity: 1, y: 0 }
+                    : { opacity: 0, y: -28 }
+                }
+                transition={{
+                  duration: revealRm ? 0.01 : SKILLS_REVEAL_TITLE_FADE_MS / 1000,
+                  ease: SKILLS_CONTENT_EASE,
+                }}
+                style={{ willChange: "transform, opacity" }}
+              >
+                <SectionHeader
+                  title="SKILLS"
+                  align="center"
+                  showBar={false}
+                  compact
+                  titleFade
+                  titleClassName="font-semibold"
+                  className="!mb-4 sm:!mb-5 md:!mb-6"
+                />
+              </motion.div>
             </div>
             {/* Cards area: intro pair (gated) + sub-skills overlay or inline dual panels */}
             <div className="skills-content-shell relative z-0 w-full min-h-0 flex flex-col items-center justify-center overflow-visible">
@@ -5700,26 +5847,32 @@ const SkillArsenal = () => {
           {!SKILLS_SHOW_INTRO_PAIR_CARDS ? (
             <div className="skills-carousel-wrap flex w-full min-w-0 max-w-full flex-col items-stretch justify-center overflow-visible py-1 sm:py-2">
               <div className="flex w-full min-w-0 max-w-full justify-center px-1 sm:px-2 md:px-3">
-                <motion.div
-                  className="skills-source-stack flex w-full min-w-0 max-w-[min(100%,1180px)] flex-col gap-3 sm:gap-4"
+                <div
+                  className="skills-source-stack flex w-full min-w-0 max-w-[min(100%,1180px)] flex-col gap-4 sm:gap-5 md:gap-6"
                   role="group"
                   aria-label="Skills detail"
-                  variants={skillsChromeStaggerParent}
-                  initial="hidden"
-                  whileInView="show"
-                  viewport={{ once: false, amount: 0.12 }}
-                  onAnimationStart={(def) => {
-                    if (def !== "show") return;
-                    scheduleSkillsIconFlourish(SKILLS_INLINE_MOTION_END_S);
-                  }}
                 >
-                  <motion.div variants={skillsChromeStaggerChild} className="w-full min-w-0">
-                    <SkillsSubskillsPanel slide="core" variant="inline" dualInline />
-                  </motion.div>
-                  <motion.div variants={skillsChromeStaggerChild} className="w-full min-w-0">
-                    <SkillsSubskillsPanel slide="tools" variant="inline" dualInline />
-                  </motion.div>
-                </motion.div>
+                  <SkillsSubskillsPanel
+                    slide="core"
+                    variant="inline"
+                    dualInline
+                    orchestratedReveal
+                    revealActive={revealActive}
+                    revealReduceMotion={revealRm}
+                    headerRevealDelayMs={SKILLS_REVEAL_HEADER_DELAY_MS}
+                    gridRevealDelayMs={SKILLS_REVEAL_CORE_GRID_DELAY_MS}
+                  />
+                  <SkillsSubskillsPanel
+                    slide="tools"
+                    variant="inline"
+                    dualInline
+                    orchestratedReveal
+                    revealActive={revealActive}
+                    revealReduceMotion={revealRm}
+                    headerRevealDelayMs={SKILLS_REVEAL_HEADER_DELAY_MS}
+                    gridRevealDelayMs={SKILLS_REVEAL_TOOLKIT_GRID_DELAY_MS}
+                  />
+                </div>
               </div>
             </div>
           ) : (
@@ -6107,7 +6260,7 @@ export default function Home() {
   return (
     <GridPhaseContext.Provider value={gridPhase}>
     <div
-      className={`selection:bg-cyan-500 selection:text-white transition-colors duration-500 ${
+      className={`selection:bg-portfolio-blue selection:text-white transition-colors duration-500 ${
         isResumeMode ? "min-h-screen overflow-x-hidden bg-white" : "h-screen w-screen overflow-hidden"
       }`}
       style={{
@@ -6348,8 +6501,8 @@ export default function Home() {
                 <div
                   className="absolute left-0 top-0 bottom-0 w-[2px] z-10 pointer-events-none"
                   style={{
-                    backgroundColor: SECTION_ACCENT_COLOR[currentSection] ?? "#06b6d4",
-                    boxShadow: isProjectsPage ? "none" : accentGlowShadow(SECTION_ACCENT_COLOR[currentSection] ?? "#06b6d4", true),
+                    backgroundColor: SECTION_ACCENT_COLOR[currentSection] ?? "var(--palette-blue)",
+                    boxShadow: isProjectsPage ? "none" : accentGlowShadow(SECTION_ACCENT_COLOR[currentSection] ?? "var(--palette-blue)", true),
                   }}
                   aria-hidden
                 />
@@ -6358,9 +6511,9 @@ export default function Home() {
                 <motion.div
                   className="absolute top-0 bottom-0 w-[2px] z-10 pointer-events-none"
                   style={{
-                    backgroundColor: SECTION_ACCENT_COLOR[currentSection] ?? "#06b6d4",
+                    backgroundColor: SECTION_ACCENT_COLOR[currentSection] ?? "var(--palette-blue)",
                     transform: "translateX(-2px)",
-                    boxShadow: isProjectsPage ? "none" : accentGlowShadow(SECTION_ACCENT_COLOR[currentSection] ?? "#06b6d4", true),
+                    boxShadow: isProjectsPage ? "none" : accentGlowShadow(SECTION_ACCENT_COLOR[currentSection] ?? "var(--palette-blue)", true),
                   }}
                   aria-hidden
                   initial={{ left: "0%" }}
@@ -6440,7 +6593,9 @@ export default function Home() {
                 )}
                 {currentSection === "experience" && <ConfidantExperience />}
                 {currentSection === "social" && <SocialLink />}
-                {currentSection === "skills" && <SkillArsenal />}
+                {currentSection === "skills" && (
+                  <SkillArsenal panelSettled={panelSettled} reduceMotion={reduceMotion} />
+                )}
               </div>
             </motion.div>
           )}

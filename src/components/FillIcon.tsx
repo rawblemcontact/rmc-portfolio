@@ -33,14 +33,14 @@ export function FillIcon({
   };
 
   return (
-    <span className="relative inline-flex">
+    <span className="relative inline-flex overflow-hidden">
       {/* Outline */}
       <Icon aria-hidden className={className} strokeWidth={strokeWidth} />
 
       {/* Filled overlay (revealed on hover) */}
       <motion.span
         aria-hidden
-        className="absolute inset-0"
+        className="absolute inset-0 overflow-hidden"
         variants={fillVariants}
         initial={controlled ? "rest" : undefined}
         animate={controlled ? (forceFilled ? "hover" : "rest") : undefined}
@@ -56,4 +56,3 @@ export function FillIcon({
     </span>
   );
 }
-
