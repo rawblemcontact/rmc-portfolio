@@ -498,9 +498,12 @@ const scrollToId = (id: string, behavior: ScrollBehavior = "smooth") => {
   el?.scrollIntoView({ behavior, block: "nearest", inline: "start" });
 };
 
+const PROFILE_ACCENT_SOFT = "color-mix(in srgb, var(--palette-red) 56%, rgb(170 170 170))";
+const PROJECTS_ACCENT_SOFT = "color-mix(in srgb, var(--palette-yellow) 44%, rgb(186 186 186))";
+
 const NAV_ITEMS: { id: string; label: string; icon: LucideIcon; color: string; sub: string; microLabel: string }[] = [
-  { id: "profile", label: "PROFILE", sub: "Summary", icon: User, color: "bg-portfolio-red", microLabel: "OPEN" },
-  { id: "projects", label: "PROJECTS", sub: "Projects", icon: Zap, color: "bg-portfolio-yellow", microLabel: "VIEW" },
+  { id: "profile", label: "PROFILE", sub: "Summary", icon: User, color: "[background-color:color-mix(in_srgb,var(--palette-red)_56%,rgb(170_170_170))]", microLabel: "OPEN" },
+  { id: "projects", label: "PROJECTS", sub: "Projects", icon: Zap, color: "[background-color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))]", microLabel: "VIEW" },
   { id: "experience", label: "EXPERIENCE", sub: "Career History", icon: Star, color: "bg-portfolio-blue", microLabel: "ENTER" },
   { id: "skills", label: "SKILLS", sub: "Skills", icon: Briefcase, color: "bg-portfolio-green", microLabel: "OPEN" },
   { id: "social", label: "CONTACT", sub: "Contact", icon: Heart, color: "bg-portfolio-orange", microLabel: "VIEW" },
@@ -508,15 +511,15 @@ const NAV_ITEMS: { id: string; label: string; icon: LucideIcon; color: string; s
 
 // Section id → panel edge accent (CSS vars from src/styles/portfolio-palette.css)
 const SECTION_ACCENT_COLOR: Record<string, string> = {
-  profile: "var(--palette-red)",
-  projects: "var(--palette-yellow)",
-  "project-rawblem": "var(--palette-yellow)",
-  "project-slaywire": "var(--palette-yellow)",
-  "project-undertale-fhe": "var(--palette-yellow)",
-  "project-portfolio": "var(--palette-yellow)",
-  "project-undertale-proposal": "var(--palette-yellow)",
-  "project-8bit-bumpers": "var(--palette-yellow)",
-  "projects-supporting": "var(--palette-yellow)",
+  profile: PROFILE_ACCENT_SOFT,
+  projects: PROJECTS_ACCENT_SOFT,
+  "project-rawblem": PROJECTS_ACCENT_SOFT,
+  "project-slaywire": PROJECTS_ACCENT_SOFT,
+  "project-undertale-fhe": PROJECTS_ACCENT_SOFT,
+  "project-portfolio": PROJECTS_ACCENT_SOFT,
+  "project-undertale-proposal": PROJECTS_ACCENT_SOFT,
+  "project-8bit-bumpers": PROJECTS_ACCENT_SOFT,
+  "projects-supporting": PROJECTS_ACCENT_SOFT,
   experience: "var(--palette-blue)",
   social: "var(--palette-orange)",
   skills: "var(--palette-green)",
@@ -1712,14 +1715,15 @@ const PhantomProfile = () => {
              >
                <motion.span
                  aria-hidden
-                 className="absolute bottom-0 left-0 right-0 h-[2px] origin-left bg-portfolio-red"
+                className="absolute bottom-0 left-0 right-0 h-[2px] origin-left"
+                style={{ backgroundColor: PROFILE_ACCENT_SOFT }}
                  initial={false}
                  animate={{ scaleX: dividerInView ? 1 : 0 }}
                  transition={{ duration: RED_LINE_DURATION_MS / 1000, delay: RED_LINE_DELAY_MS / 1000, ease: [0.16, 1, 0.3, 1] }}
                />
             </div>
             <motion.div
-              className="relative mt-4 sm:mt-5 w-full min-w-0 max-w-xl xl:max-w-2xl 2xl:max-w-2xl -ml-[3px] pe-[max(0.75rem,env(safe-area-inset-right,0px))] sm:pe-4"
+              className="relative mt-4 sm:mt-5 w-full min-w-0 max-w-xl xl:max-w-2xl 2xl:max-w-2xl -ml-[3px] pe-[max(0.75rem,env(safe-area-inset-right,0px))] sm:pe-4 rounded-[0_0.85rem] border border-white/[0.06] [background:linear-gradient(rgb(0_0_0/0.62),rgb(0_0_0/0.62)),linear-gradient(rgb(9_9_11/0.88),rgb(9_9_11/0.88))] px-3 py-2 shadow-[0_10px_24px_-16px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] sm:px-4 sm:py-2.5"
               initial={{ x: -24, opacity: 0 }}
               animate={{ x: overlayRevealed ? 0 : -24, opacity: overlayRevealed ? 1 : 0 }}
               transition={{ duration: BUTTON_FADE_DURATION_MS / 1000, delay: overlayRevealed ? BUTTONS_DELAY_AFTER_SUMMARY_MS / 1000 : 0, ease: [0.16, 1, 0.3, 1] }}
@@ -1730,23 +1734,23 @@ const PhantomProfile = () => {
               </p>
             </motion.div>
              <motion.div
-               className="mt-8 max-w-xl sm:mt-9 xl:max-w-2xl 2xl:max-w-2xl -ml-[3px]"
+               className="mt-8 max-w-xl sm:mt-9 xl:max-w-2xl 2xl:max-w-2xl -ml-[3px] rounded-[0_1rem] border border-white/[0.06] [background:linear-gradient(rgb(0_0_0/0.62),rgb(0_0_0/0.62)),linear-gradient(rgb(9_9_11/0.88),rgb(9_9_11/0.88))] px-4 py-4 shadow-[0_10px_24px_-16px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] sm:px-5 sm:py-5"
                initial={{ opacity: 0, y: 14 }}
                animate={{ opacity: overlayRevealed ? 1 : 0, y: overlayRevealed ? 0 : 14 }}
                transition={{ duration: SUMMARY_DURATION_S, delay: overlayRevealed ? SUMMARY_DELAY_S : 0, ease: [0.16, 1, 0.3, 1] }}
              >
-               <p className="font-heading text-sm tracking-eyebrow leading-snug uppercase text-portfolio-red/75 mb-1.5">SUMMARY</p>
+               <p className="font-heading text-sm tracking-eyebrow leading-snug uppercase mb-1.5" style={{ color: PROFILE_ACCENT_SOFT }}>SUMMARY</p>
                <p className="font-body text-sm sm:text-base md:text-lg xl:text-lg 2xl:text-xl text-mono-2 leading-relaxed mb-4">
                  Communications-focused writer and digital media coordinator with experience producing narrative-driven web content and managing social media workflows across multiple platforms. Combines narrative storytelling with platform-native content production and distribution. Bachelor of Arts in Writing (Distinction), University of Victoria.
                </p>
-               <p className="font-heading text-sm tracking-eyebrow leading-snug uppercase text-portfolio-red/75 mb-1.5">CURRENT WORK</p>
+               <p className="font-heading text-sm tracking-eyebrow leading-snug uppercase mb-1.5" style={{ color: PROFILE_ACCENT_SOFT }}>CURRENT WORK</p>
                <ul className="font-body text-sm sm:text-base md:text-lg xl:text-lg 2xl:text-xl text-mono-2/90 leading-relaxed mb-4 ml-3 list-disc list-outside space-y-2 pl-6 sm:pl-7 marker:text-mono-2/50">
                  <li>Currently developing SLAYWIRE, a narrative-first RPG.</li>
                  <li>
                    RAWBLEM - Creative brand producing narrative-driven short-form content across TikTok, Instagram Reels, and YouTube Shorts.
                  </li>
                </ul>
-               <p className="font-heading text-sm tracking-eyebrow leading-snug uppercase text-portfolio-red/75 mb-1.5">AVAILABILITY</p>
+               <p className="font-heading text-sm tracking-eyebrow leading-snug uppercase mb-1.5" style={{ color: PROFILE_ACCENT_SOFT }}>AVAILABILITY</p>
                <ul className="font-body text-sm sm:text-base md:text-lg xl:text-lg 2xl:text-xl text-mono-2 leading-relaxed ml-3 list-disc list-outside space-y-2 pl-6 sm:pl-7 marker:text-mono-2/50">
                  <li>Full-Time Content, Communications, or Digital Media roles.</li>
                </ul>
@@ -2240,7 +2244,7 @@ const ProjectsStack = ({
                 onClick={() => emblaApi?.scrollTo(snapIdx)}
                 aria-label={`Go to slide ${snapIdx + 1}`}
                 aria-current={selectedIndex === snapIdx ? "true" : undefined}
-                className={`h-2.5 w-2.5 rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-portfolio-yellow/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
+                className={`h-2.5 w-2.5 rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
                   selectedIndex === snapIdx
                     ? "bg-white scale-110"
                     : "bg-white/35 hover:bg-white/55"
@@ -2266,7 +2270,7 @@ const ProjectsStack = ({
                   onClick={(e) => onSelect(card.id, e.currentTarget)}
                   whileTap={{ scale: 0.985 }}
                   transition={{ duration: 0.28 / SHOWCASE_TIME_DIV, ease: cardEase }}
-                  className={`group relative w-full ${DETAIL_CARD_H} rounded-[11px] sm:rounded-xl border border-white/[0.09] bg-zinc-950/40 shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)] text-center overflow-hidden transition-[opacity,background-color,border-color] duration-300 ease-out hover:border-portfolio-yellow/40 hover:bg-zinc-950/65 hover:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-portfolio-yellow/35 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
+                  className={`group relative w-full ${DETAIL_CARD_H} rounded-[11px] sm:rounded-xl border border-white/[0.09] bg-zinc-950/40 shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)] text-center overflow-hidden transition-[opacity,background-color,border-color] duration-300 ease-out hover:border-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] hover:bg-zinc-950/65 hover:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
                     focusProjectId && focusProjectId !== card.id ? "opacity-0 pointer-events-none" : "opacity-100"
                   }`}
                 >
@@ -2321,7 +2325,7 @@ const ProjectsStack = ({
                           <span
                             className={`font-display block w-full max-w-full text-left text-[1rem] sm:text-[1.05rem] md:text-lg lg:text-xl xl:text-[1.35rem] leading-snug text-white tracking-tight line-clamp-3 [text-wrap:balance] motion-safe:transition-[opacity,color] motion-safe:duration-300 motion-safe:ease-out ${
                               index === selectedIndex
-                                ? "opacity-100 group-hover:text-portfolio-yellow"
+                                ? "opacity-100 group-hover:text-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))]"
                                 : "opacity-70 group-hover:text-mono-1"
                             }`}
                           >
@@ -2338,7 +2342,7 @@ const ProjectsStack = ({
                         <span
                           className={`font-display w-full max-w-full text-[1rem] sm:text-[1.05rem] md:text-lg lg:text-xl xl:text-[1.35rem] leading-snug text-white tracking-tight line-clamp-4 [text-wrap:balance] motion-safe:transition-[opacity,color] motion-safe:duration-300 motion-safe:ease-out ${
                             index === selectedIndex
-                              ? "opacity-100 group-hover:text-portfolio-yellow"
+                              ? "opacity-100 group-hover:text-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))]"
                               : "opacity-0 pointer-events-none"
                           }`}
                           aria-hidden={index !== selectedIndex}
@@ -2858,7 +2862,7 @@ const SupportingProjectsSection = ({
               <div key={section.heading}>
                 <h3
                   ref={sectionIndex === 0 ? archiveFirstYellowRuleRef : undefined}
-                  className="font-heading text-[0.65rem] sm:text-xs tracking-eyebrow leading-snug uppercase text-portfolio-yellow/90 mb-3 pb-2 border-b border-portfolio-yellow/25"
+                  className="font-heading text-[0.65rem] sm:text-xs tracking-eyebrow leading-snug uppercase text-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] mb-3 pb-2 border-b border-[color:color-mix(in_srgb,var(--palette-yellow)_20%,rgb(186_186_186))]"
                 >
                   {section.heading}
                 </h3>
@@ -2883,11 +2887,11 @@ const SupportingProjectsSection = ({
                             {item.subtitle}
                           </span>
                         </div>
-                        <span className="font-mono text-[0.6rem] sm:text-[0.65rem] tracking-[0.14em] uppercase text-mono-2/70 group-hover:text-portfolio-yellow shrink-0 pt-1 transition-colors duration-200">
+                        <span className="font-mono text-[0.6rem] sm:text-[0.65rem] tracking-[0.14em] uppercase text-mono-2/70 group-hover:text-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] shrink-0 pt-1 transition-colors duration-200">
                           VIEW
                         </span>
                         <FileText
-                          className="w-4 h-4 shrink-0 text-mono-2/70 group-hover:text-portfolio-yellow mt-0.5 transition-colors duration-200"
+                          className="w-4 h-4 shrink-0 text-mono-2/70 group-hover:text-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] mt-0.5 transition-colors duration-200"
                           aria-hidden
                         />
                       </button>
@@ -3105,20 +3109,20 @@ const SHOWCASE_SLIDER_MEDIA_BOX_SHADOW =
  */
 const showcaseDetailCard = `${PROJECT_DETAIL_SURFACE} px-3 py-3 sm:px-4 sm:py-3.5 [background:linear-gradient(rgb(0_0_0/0.42),rgb(0_0_0/0.42)),linear-gradient(rgb(9_9_11/0.58),rgb(9_9_11/0.58))]`;
 
-/** Same frame as project detail insets; darker wash + soft stacked shadow (single box-shadow, two layers). */
+/** Same frame as project detail insets; darker wash + soft stacked shadow (single box-shadow, two layers). Corners: sharp TL/BR, rounded TR/BL (StealthWorm reference). */
 const SKILLS_SUBCATEGORY_CARD_FACE =
-  "rounded-[11px] sm:rounded-xl border border-portfolio-green/25 shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9),0_6px_22px_-10px_rgba(0,0,0,0.52)] [background:linear-gradient(rgb(0_0_0/0.62),rgb(0_0_0/0.62)),linear-gradient(rgb(9_9_11/0.88),rgb(9_9_11/0.88))] transition-[background-color,border-color,box-shadow] duration-300 ease-out hover:border-portfolio-green/50 hover:shadow-[0_22px_52px_-28px_rgba(0,0,0,0.92),0_8px_26px_-10px_rgba(0,0,0,0.55)]";
+  "rounded-none border border-portfolio-green/25 shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9),0_6px_22px_-10px_rgba(0,0,0,0.52)] [background:linear-gradient(rgb(0_0_0/0.62),rgb(0_0_0/0.62)),linear-gradient(rgb(9_9_11/0.88),rgb(9_9_11/0.88))] [border-radius:0_0.95rem_0_0.95rem] sm:[border-radius:0_1.05rem_0_1.05rem] transition-[background-color,border-color,box-shadow] duration-300 ease-out hover:border-portfolio-green/50 hover:shadow-[0_22px_52px_-28px_rgba(0,0,0,0.92),0_8px_26px_-10px_rgba(0,0,0,0.55)]";
 
 const ShowcaseDetailOverviewRole = ({ card }: { card: ShowcaseProjectCard }) => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-3">
     <section className={`${showcaseDetailCard} min-w-0 md:col-span-2`}>
-      <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-portfolio-yellow/90 mb-1.5">OVERVIEW</p>
+      <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] mb-1.5">OVERVIEW</p>
       <p className="font-body text-sm sm:text-base text-mono-2 leading-snug whitespace-pre-line">
         {card.detailOverview?.trim() || "—"}
       </p>
     </section>
     <section className={`${showcaseDetailCard} min-w-0`}>
-      <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-portfolio-yellow/90 mb-1.5">ROLE</p>
+      <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] mb-1.5">ROLE</p>
       <p className="font-body text-sm sm:text-base text-mono-2 leading-snug whitespace-pre-line">
         {card.detailRole?.trim() || "—"}
       </p>
@@ -3129,13 +3133,13 @@ const ShowcaseDetailOverviewRole = ({ card }: { card: ShowcaseProjectCard }) => 
 const ShowcaseDetailImpactTools = ({ card }: { card: ShowcaseProjectCard }) => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-3">
     <section className={`${showcaseDetailCard} min-w-0 md:col-span-2`}>
-      <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-portfolio-yellow/90 mb-1.5">IMPACT</p>
+      <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] mb-1.5">IMPACT</p>
       <p className="font-body text-sm sm:text-base text-mono-2 leading-snug whitespace-pre-line">
         {card.detailImpact?.trim() || "—"}
       </p>
     </section>
     <section className={`${showcaseDetailCard} min-w-0`}>
-      <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-portfolio-yellow/90 mb-1.5">TOOLS</p>
+      <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] mb-1.5">TOOLS</p>
       {card.detailTools?.length ? (
         <ul className="ml-1 list-disc list-outside space-y-1 pl-6 sm:pl-7 marker:text-mono-2/70">
           {card.detailTools.map((tool, i) => (
@@ -3178,7 +3182,7 @@ function ShowcaseWritingFeaturedPanel({
           </div>
           <a
             href={item.href}
-            className="inline-flex w-fit shrink-0 items-center gap-2 self-start rounded-[11px] sm:rounded-xl border border-white/[0.09] bg-zinc-950/40 px-2.5 py-1.5 font-heading text-[10px] sm:text-xs tracking-btn-caps uppercase text-portfolio-yellow/90 shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)] transition-[border-color,background-color,color] duration-300 ease-out hover:border-portfolio-yellow/40 hover:bg-zinc-950/65 hover:text-portfolio-yellow focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-portfolio-yellow/40 focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:self-center sm:px-3 sm:py-2"
+            className="inline-flex w-fit shrink-0 items-center gap-2 self-start rounded-[11px] sm:rounded-xl border border-white/[0.09] bg-zinc-950/40 px-2.5 py-1.5 font-heading text-[10px] sm:text-xs tracking-btn-caps uppercase text-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)] transition-[border-color,background-color,color] duration-300 ease-out hover:border-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] hover:bg-zinc-950/65 hover:text-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:self-center sm:px-3 sm:py-2"
             onClick={(e) => {
               e.preventDefault();
               onOpenPdfInSupporting(item);
@@ -3388,7 +3392,7 @@ const PalaceProjects = ({
         {/*
          * Column inherits --slide-gap from #projects. Spacer + section pb = bottom air; overlay scrolls if needed (no clipping).
          */}
-        <div className="flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-visible">
+        <div className="flex min-h-0 flex-1 flex-col justify-center overflow-x-hidden overflow-y-visible">
         {/*
          * CAROUSEL — always in normal flow so the section keeps its height.
          * When a card is active we fade it out but DO NOT unmount it so the
@@ -3398,22 +3402,8 @@ const PalaceProjects = ({
           aria-hidden={!!activeCard || undefined}
           className={`flex min-h-0 w-full flex-1 flex-col ${activeCard ? "pointer-events-none select-none" : ""}`}
         >
-          {/* Static copy — no entry motion so layout is stable while the section panel slides in. */}
           <div
-            className={`mt-4 shrink-0 sm:mt-5 md:mt-6 ${activeCard ? "opacity-0" : "opacity-100"}`}
-          >
-            <div className="relative z-10 mb-10 flex flex-col items-center text-center">
-              <h2 className="font-display text-white !text-2xl leading-[0.95] tracking-[-0.02em] sm:!text-3xl md:!text-4xl uppercase -translate-y-0.5">
-                SHOWCASE
-              </h2>
-              <p className="font-heading mt-1.5 text-sm uppercase leading-snug tracking-eyebrow-tight text-mono-2/90">
-                Projects
-              </p>
-            </div>
-          </div>
-
-          <div
-            className={`-mt-4 shrink-0 sm:-mt-5 md:-mt-6 ${activeCard ? "opacity-0" : "opacity-100"}`}
+            className={`shrink-0 ${activeCard ? "opacity-0" : "opacity-100"}`}
           >
             <ProjectsStack
               onSelect={(id, el) => handleCardClick(id, el)}
@@ -3449,10 +3439,6 @@ const PalaceProjects = ({
             </div>
           </div>
 
-          {/*
-           * Leftover viewport height lands here so slide-gap padding stays visible — no scroll.
-           */}
-          <div className="min-h-0 w-full min-w-0 flex-1 basis-0" aria-hidden />
         </div>
         </div>
 
@@ -3521,7 +3507,7 @@ const PalaceProjects = ({
                         }
                   }
                 >
-                  <p className="m-0 w-full font-heading text-sm sm:text-base leading-snug tracking-eyebrow-sm uppercase text-portfolio-yellow/90">
+                  <p className="m-0 w-full font-heading text-sm sm:text-base leading-snug tracking-eyebrow-sm uppercase text-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))]">
                     Project details
                   </p>
                   <h3 className="m-0 w-full font-display text-2xl md:text-3xl leading-[1.1] tracking-[-0.015em] text-white">
@@ -3629,7 +3615,7 @@ const PalaceProjects = ({
 
 const ProjectPoint = ({ text }: { text: string }) => (
   <div className="flex items-start">
-    <Star className="w-5 h-5 text-portfolio-yellow mr-3 mt-1 flex-shrink-0 fill-current" />
+    <Star className="w-5 h-5 text-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] mr-3 mt-1 flex-shrink-0 fill-current" />
     <span className="font-body text-base md:text-lg text-mono-2 leading-relaxed">{text}</span>
   </div>
 );
@@ -3945,7 +3931,7 @@ const ConfidantExperience = () => {
                     if (idx === 0) experienceFirstCardRef.current = el;
                     if (idx === EXPERIENCE_DATA.length - 1) experienceLastCardRef.current = el;
                   }}
-                  className="rounded-xl border border-white/[0.05] bg-black/25 px-4 py-5 transition-[background-color,border-color] duration-200 ease-out sm:px-5 sm:py-6 hover:border-white/[0.08] hover:bg-black/35"
+                  className="rounded-[0_1rem] border border-portfolio-blue/28 [background:linear-gradient(rgb(0_0_0/0.62),rgb(0_0_0/0.62)),linear-gradient(rgb(9_9_11/0.88),rgb(9_9_11/0.88))] px-4 py-5 shadow-[0_10px_24px_-16px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] transition-[background-color,border-color,box-shadow] duration-200 ease-out sm:px-5 sm:py-6 hover:border-portfolio-blue/46 hover:[background:linear-gradient(rgb(0_0_0/0.62),rgb(0_0_0/0.62)),linear-gradient(rgb(9_9_11/0.88),rgb(9_9_11/0.88))] hover:shadow-[0_14px_30px_-18px_rgba(0,0,0,0.92),inset_0_1px_0_rgba(255,255,255,0.035)]"
                 >
                   <h3
                     className="font-display text-base font-semibold tracking-[-0.02em] text-white text-balance leading-snug sm:text-lg md:text-xl sm:leading-[1.25] md:leading-snug"
@@ -4052,10 +4038,9 @@ const SocialLink = () => {
               visible: { opacity: 1, x: 0 },
             }}
             transition={{ duration: 0.053, ease: [0.22, 1, 0.36, 1] }}
-            className={`${UIVERSE_BUTTON_BASE} border-red-500/20 hover:rotate-2 hover:border-red-500/50 hover:from-red-500/10 hover:to-black/40`}
+            className={`${UIVERSE_BUTTON_BASE} border-white/10 hover:rotate-2 hover:border-white/30`}
             aria-label="YouTube"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-red-400/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
             <div className="relative z-10">
               <svg className="w-7 h-7 fill-current text-red-500 group-hover:text-red-400 transition-colors duration-300" viewBox="0 0 576 512" xmlns="http://www.w3.org/2000/svg">
                 <path d="M549.655 124.083c-6.281-23.65-24.787-42.276-48.284-48.597C458.781 64 288 64 288 64S117.22 64 74.629 75.486c-23.497 6.322-42.003 24.947-48.284 48.597-11.412 42.867-11.412 132.305-11.412 132.305s0 89.438 11.412 132.305c6.281 23.65 24.787 41.5 48.284 47.821C117.22 448 288 448 288 448s170.78 0 213.371-11.486c23.497-6.321 42.003-24.171 48.284-47.821 11.412-42.867 11.412-132.305 11.412-132.305s0-89.438-11.412-132.305zm-317.51 213.508V175.185l142.739 81.205-142.739 81.201z" />
@@ -4070,10 +4055,9 @@ const SocialLink = () => {
               visible: { opacity: 1, x: 0 },
             }}
             transition={{ duration: 0.053, ease: [0.22, 1, 0.36, 1] }}
-            className={`${UIVERSE_BUTTON_BASE} border-blue-500/20 hover:rotate-2 hover:border-blue-500/50 hover:from-blue-500/10 hover:to-black/40`}
+            className={`${UIVERSE_BUTTON_BASE} border-white/10 hover:rotate-2 hover:border-white/30`}
             aria-label="LinkedIn"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-400/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
             <div className="relative z-10">
               <svg className="w-7 h-7 fill-current text-blue-500 group-hover:text-blue-400 transition-colors duration-300" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
@@ -4088,10 +4072,9 @@ const SocialLink = () => {
               visible: { opacity: 1, x: 0 },
             }}
             transition={{ duration: 0.053, ease: [0.22, 1, 0.36, 1] }}
-            className={`${UIVERSE_BUTTON_BASE} border-cyan-500/20 hover:-rotate-2 hover:border-cyan-500/50 hover:from-cyan-500/10 hover:to-black/40`}
+            className={`${UIVERSE_BUTTON_BASE} border-white/10 hover:-rotate-2 hover:border-white/30`}
             aria-label="TikTok"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-400/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
             <div className="relative z-10">
               <svg className="w-7 h-7 fill-current text-cyan-500 group-hover:text-cyan-400 transition-colors duration-300" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
@@ -4106,10 +4089,9 @@ const SocialLink = () => {
               visible: { opacity: 1, x: 0 },
             }}
             transition={{ duration: 0.053, ease: [0.22, 1, 0.36, 1] }}
-            className={`${UIVERSE_BUTTON_BASE} border-pink-500/20 hover:rotate-2 hover:border-pink-500/50 hover:from-pink-500/10 hover:to-black/40`}
+            className={`${UIVERSE_BUTTON_BASE} border-white/10 hover:rotate-2 hover:border-white/30`}
             aria-label="Instagram"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-pink-400/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
             <div className="relative z-10 flex items-center justify-center">
               <Instagram size={28} className="text-pink-500 group-hover:text-pink-400 transition-colors duration-300" strokeWidth={1.5} aria-hidden />
             </div>
@@ -4122,10 +4104,9 @@ const SocialLink = () => {
               visible: { opacity: 1, x: 0 },
             }}
             transition={{ duration: 0.053, ease: [0.22, 1, 0.36, 1] }}
-            className={`${UIVERSE_BUTTON_BASE} border-white/10 hover:rotate-3 hover:border-white/30 hover:from-white/10 hover:to-black/40`}
+            className={`${UIVERSE_BUTTON_BASE} border-white/10 hover:rotate-3 hover:border-white/30`}
             aria-label="Email"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
             <div className="relative z-10 flex items-center justify-center">
               <Mail size={28} className="text-white group-hover:text-white/90 transition-colors duration-300" strokeWidth={1.5} aria-hidden />
             </div>
@@ -4814,7 +4795,7 @@ const SkillsExpandedView = ({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
             {data.categories.map((category) => (
               <div key={category.title} className="border-l border-white/10 pl-4">
-                <h4 className="font-display text-xs md:text-sm uppercase tracking-[0.08em] leading-snug text-white mb-1.5 md:mb-2.5 font-semibold">
+                <h4 className="font-display text-xs md:text-sm uppercase tracking-[0.08em] leading-snug text-emerald-200/55 mb-1.5 md:mb-2.5 font-semibold">
                   {category.title}
                 </h4>
                 <ul className="space-y-1">
@@ -4859,7 +4840,7 @@ const SkillsExpandedPanel = ({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
             {data.categories.map((category) => (
               <div key={category.title} className="border-l border-white/10 pl-4">
-                <h4 className="font-display text-xs md:text-sm uppercase tracking-[0.08em] leading-snug text-white mb-1.5 md:mb-2.5 font-semibold">
+                <h4 className="font-display text-xs md:text-sm uppercase tracking-[0.08em] leading-snug text-emerald-200/55 mb-1.5 md:mb-2.5 font-semibold">
                   {category.title}
                 </h4>
                 <ul className="space-y-1">
@@ -4900,12 +4881,12 @@ const SKILLS_SHOW_INTRO_PAIR_CARDS = false;
  */
 const SKILLS_SHOW_IDEA_GEAR_DECOR = false;
 
-/* From Uiverse.io by Adrwaan - adapted to match MAIN MENU card style (no extra glow block) */
+/* From Uiverse.io by Adrwaan — outer shell; StealthWorm corner grammar (sharp TL/BR, rounded TR/BL). */
 const UiverseCard = styled.div`
   position: relative;
   width: 360px;
   height: 270px;
-  border-radius: 10px;
+  border-radius: 0 2rem;
   transition: transform 0.3s ease;
 
   @media (max-width: 639px) {
@@ -4913,6 +4894,7 @@ const UiverseCard = styled.div`
     height: auto;
     min-height: 200px;
     aspect-ratio: 4 / 3;
+    border-radius: 0 1.35rem;
   }
 
   &:hover {
@@ -4980,7 +4962,7 @@ const CardBlackFace = styled.div`
   height: 274px;
   background: transparent;
   border: none;
-  border-radius: 12px;
+  border-radius: 0 0.8rem;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -4990,6 +4972,7 @@ const CardBlackFace = styled.div`
   @media (max-width: 639px) {
     width: calc(100% - 8px);
     height: calc(100% - 8px);
+    border-radius: 0 0.65rem;
   }
 
   /* Main skill cards: 10% larger inner face */
@@ -5214,6 +5197,49 @@ const SKILLS_INTRO_MOTION_END_S = Math.max(SKILLS_INTRO_CHROME_STAGGER_END_S, SK
 /** Overlay shell expand vs panel stagger (parallel, same t0) */
 const SKILLS_OVERLAY_MOTION_END_S = Math.max(MORPH_EXPAND_DUR, SKILLS_PANEL_STAGGER_END_S);
 
+/** Background marquee (not inside cards): same outline style; runs on its own layer behind panels. */
+type SkillsAmbientBand = "core" | "tools";
+
+const SKILLS_AMBIENT_MARQUEE_COPY: Record<SkillsAmbientBand, string> = {
+  core: "Core · Competencies · Systems · Execution ·",
+  tools: "Toolkit · Stack · Workflow · Production ·",
+};
+
+/** Stacked marquee “wall” behind each skills card band only (not full page). */
+const SKILLS_AMBIENT_WALL_ROW_COUNT = 13;
+/** Horizontal loop copies per row (must match CSS keyframe divisor `skills-panel-marquee-shift-wall`). */
+const SKILLS_AMBIENT_WALL_LOOP_COPIES = 6;
+/** Keep marquee background idea in code but disabled. */
+const SKILLS_SHOW_AMBIENT_MARQUEE_BG = false;
+
+const SkillsAmbientWall = ({ band }: { band: SkillsAmbientBand }) => (
+  <div
+    className="skills-ambient-wall flex h-full min-h-0 w-full min-w-0 flex-col gap-y-1"
+    data-skills-ambient-band={band}
+  >
+    {Array.from({ length: SKILLS_AMBIENT_WALL_ROW_COUNT }, (_, i) => (
+      <div
+        key={`${band}-${i}`}
+        className="skills-ambient-wall-row relative min-h-0 min-w-0 flex-1 basis-0 overflow-hidden"
+      >
+        <div
+          className={`skills-panel-marquee-shell skills-ambient-marquee skills-ambient-wall-cell${
+            band === "tools" ? " skills-panel-marquee-shell--tools" : ""
+          }`}
+        >
+          <div className="skills-panel-marquee-track">
+            {Array.from({ length: SKILLS_AMBIENT_WALL_LOOP_COPIES }, (_, k) => (
+              <span key={k} className="skills-panel-marquee-segment">
+                {SKILLS_AMBIENT_MARQUEE_COPY[band]}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
 /**
  * Expanded subskills content. Header row: optional AiIdeaSvg / GearSvg when `SKILLS_SHOW_IDEA_GEAR_DECOR`.
  * Removed: `SkillsSourceToggle` toolbar - restore via git; related hover CSS commented in `index.css`.
@@ -5266,10 +5292,10 @@ const SkillsSubskillsPanel = ({
         key={slide}
         className={
           variant === "overlay"
-            ? "relative z-10 flex min-h-0 max-h-[min(680px,90vh)] sm:max-h-[min(440px,58vh)] flex-col overflow-hidden px-4 sm:px-10 md:px-16 lg:px-20 py-4 pt-12 sm:pt-14 pb-5 sm:pb-6 text-left"
+            ? "relative z-10 flex min-h-0 max-h-[min(680px,90vh)] sm:max-h-[min(440px,58vh)] flex-col overflow-hidden px-4 sm:px-10 md:px-16 lg:px-20 py-4 pt-12 sm:pt-14 pb-5 sm:pb-6 text-left shadow-[0_0_22px_rgba(0,0,0,0.5),0_0_18px_rgba(34,211,238,0.12)]"
             : dualInline
-              ? "relative z-10 flex min-h-0 max-h-[min(calc(50dvh-3.75rem),22rem)] max-sm:max-h-[min(calc(50dvh-3.25rem),19rem)] flex-col overflow-hidden px-3 sm:px-6 md:px-10 lg:px-12 py-1.5 sm:py-3 md:py-4 text-left"
-              : "relative z-10 flex min-h-0 max-h-[min(680px,90vh)] sm:max-h-[min(440px,58vh)] flex-col overflow-hidden px-4 sm:px-8 md:px-14 lg:px-16 xl:px-20 py-2.5 sm:py-6 md:py-7 text-left"
+              ? "relative z-10 flex min-h-0 max-h-[min(calc(50dvh-3.75rem),22rem)] max-sm:max-h-[min(calc(50dvh-3.25rem),19rem)] flex-col overflow-hidden px-3 sm:px-6 md:px-10 lg:px-12 py-1.5 sm:py-3 md:py-4 text-left shadow-[0_0_18px_rgba(0,0,0,0.45),0_0_14px_rgba(34,211,238,0.1)]"
+              : "relative z-10 flex min-h-0 max-h-[min(680px,90vh)] sm:max-h-[min(440px,58vh)] flex-col overflow-hidden px-4 sm:px-8 md:px-14 lg:px-16 xl:px-20 py-2.5 sm:py-6 md:py-7 text-left shadow-[0_0_22px_rgba(0,0,0,0.5),0_0_18px_rgba(34,211,238,0.12)]"
         }
         {...(isOrchestrated
           ? {}
@@ -5306,8 +5332,8 @@ const SkillsSubskillsPanel = ({
             <p
               className={
                 dualInline && variant === "inline"
-                  ? "min-w-0 flex-1 text-left font-display font-semibold text-base sm:text-lg md:text-xl uppercase tracking-tight text-white leading-none whitespace-nowrap truncate"
-                  : "min-w-0 flex-1 text-left font-display font-semibold text-lg sm:text-xl md:text-2xl uppercase tracking-tight text-white leading-none whitespace-nowrap truncate"
+                  ? "min-w-0 flex-1 text-left font-display font-semibold text-base sm:text-lg md:text-xl uppercase tracking-tight text-white leading-none whitespace-nowrap truncate [text-shadow:0_0_10px_rgba(0,0,0,0.95),0_0_18px_rgba(0,0,0,0.65)] [-webkit-text-stroke:0.2px_rgba(255,255,255,0.2)]"
+                  : "min-w-0 flex-1 text-left font-display font-semibold text-lg sm:text-xl md:text-2xl uppercase tracking-tight text-white leading-none whitespace-nowrap truncate [text-shadow:0_0_12px_rgba(0,0,0,0.98),0_0_20px_rgba(0,0,0,0.68)] [-webkit-text-stroke:0.25px_rgba(255,255,255,0.22)]"
               }
             >
               {slide === "core" ? "Core Competencies" : "Toolkit"}
@@ -5409,7 +5435,7 @@ const SkillsSubskillsPanel = ({
                   const cardInner = (
                     <>
                       <p
-                        className="mb-3 w-full min-w-0 pb-2 border-b border-white/[0.06] text-center text-[11px] sm:text-[12px] font-heading font-semibold uppercase leading-snug tracking-eyebrow text-white text-balance"
+                        className="mb-3 w-full min-w-0 pb-2 border-b border-white/[0.06] text-center text-[11px] sm:text-[12px] font-heading font-semibold uppercase leading-snug tracking-eyebrow text-zinc-300/70 text-balance"
                         title={categoryTitle}
                       >
                         {categoryTitle}
@@ -5507,7 +5533,7 @@ const SkillsSubskillsPanel = ({
                   const cardInner = (
                     <>
                       <p
-                        className="mb-3 w-full min-w-0 pb-2 border-b border-white/[0.06] text-center text-[11px] sm:text-[12px] font-heading font-semibold uppercase tracking-eyebrow leading-snug text-white text-balance"
+                        className="mb-3 w-full min-w-0 pb-2 border-b border-white/[0.06] text-center text-[11px] sm:text-[12px] font-heading font-semibold uppercase tracking-eyebrow leading-snug text-zinc-300/70 text-balance"
                         title={title}
                       >
                         {label}
@@ -5633,7 +5659,7 @@ const SkillArsenal = ({
     <section
       id="skills"
       data-skills-icon-flourish={skillsIconFlourish ? "true" : undefined}
-      className={`relative flex h-full min-h-0 w-full flex-col overflow-x-hidden bg-black text-white scroll-mt-6 ${SLIDE_NO_Y_SCROLL}`}
+      className="no-scrollbar relative flex h-full min-h-0 w-full flex-col overflow-x-hidden overflow-y-visible bg-black text-white scroll-mt-6"
     >
       <SectionGridOverlay />
       <div
@@ -5644,9 +5670,36 @@ const SkillArsenal = ({
             : undefined
         }
       >
-        <div className="flex w-full min-h-0 flex-1 flex-col items-center justify-start pt-0 sm:pt-1 md:pt-2">
+        {!SKILLS_SHOW_INTRO_PAIR_CARDS && SKILLS_SHOW_AMBIENT_MARQUEE_BG ? (
+          <>
+            <div
+              className="skills-ambient-bleed skills-ambient-bleed--above pointer-events-none absolute inset-x-0 top-0 bottom-1/2 z-0 flex justify-center px-1 sm:px-2 md:px-3"
+              aria-hidden
+            >
+              <div
+                className="skills-ambient-bleed-slot relative h-full w-full min-h-0 max-w-[min(100%,1180px)] overflow-hidden [border-radius:0_2rem_0_2rem] max-sm:[border-radius:0_1.35rem_0_1.35rem]"
+                data-skills-ambient-row="core"
+              >
+                <SkillsAmbientWall band="core" />
+              </div>
+            </div>
+            <div
+              className="skills-ambient-bleed skills-ambient-bleed--below pointer-events-none absolute inset-x-0 top-1/2 bottom-0 z-0 flex justify-center px-1 sm:px-2 md:px-3"
+              aria-hidden
+            >
+              <div
+                className="skills-ambient-bleed-slot relative h-full w-full min-h-0 max-w-[min(100%,1180px)] overflow-hidden [border-radius:0_2rem_0_2rem] max-sm:[border-radius:0_1.35rem_0_1.35rem]"
+                data-skills-ambient-row="tools"
+              >
+                <SkillsAmbientWall band="tools" />
+              </div>
+            </div>
+          </>
+        ) : null}
+        <div className="relative z-[2] flex w-full min-h-0 flex-1 flex-col items-center justify-start pt-0 sm:pt-1 md:pt-2">
           <div className="flex w-full min-w-0 max-w-[min(100%,88.75rem)] min-h-0 max-h-full flex-col items-center">
-            <div className="shrink-0 flex w-full justify-center px-1 sm:px-2 md:px-3">
+            <div className="skills-inline-chrome relative flex w-full flex-col items-center">
+            <div className="relative z-[4] flex w-full shrink-0 justify-center px-1 sm:px-2 md:px-3">
               <motion.div
                 className="w-full max-w-[min(100%,1180px)]"
                 initial={{ opacity: 0, y: -28 }}
@@ -5673,7 +5726,7 @@ const SkillArsenal = ({
               </motion.div>
             </div>
             {/* Cards area: intro pair (gated) + sub-skills overlay or inline dual panels */}
-            <div className="skills-content-shell relative z-0 w-full min-h-0 flex flex-col items-center justify-center overflow-visible">
+            <div className="skills-content-shell relative z-[2] w-full min-h-0 flex flex-col items-center justify-center overflow-visible">
           {SKILLS_SHOW_INTRO_PAIR_CARDS ? (
             <div className="flex w-full flex-wrap items-center justify-center gap-8">
               <motion.div
@@ -5848,30 +5901,36 @@ const SkillArsenal = ({
             <div className="skills-carousel-wrap flex w-full min-w-0 max-w-full flex-col items-stretch justify-center overflow-visible py-1 sm:py-2">
               <div className="flex w-full min-w-0 max-w-full justify-center px-1 sm:px-2 md:px-3">
                 <div
-                  className="skills-source-stack flex w-full min-w-0 max-w-[min(100%,1180px)] flex-col gap-4 sm:gap-5 md:gap-6"
+                  className="skills-source-stack relative isolate mx-auto flex w-full min-w-0 max-w-[min(100%,1180px)] flex-col gap-4 sm:gap-5 md:gap-6"
                   role="group"
                   aria-label="Skills detail"
                 >
-                  <SkillsSubskillsPanel
-                    slide="core"
-                    variant="inline"
-                    dualInline
-                    orchestratedReveal
-                    revealActive={revealActive}
-                    revealReduceMotion={revealRm}
-                    headerRevealDelayMs={SKILLS_REVEAL_HEADER_DELAY_MS}
-                    gridRevealDelayMs={SKILLS_REVEAL_CORE_GRID_DELAY_MS}
-                  />
-                  <SkillsSubskillsPanel
-                    slide="tools"
-                    variant="inline"
-                    dualInline
-                    orchestratedReveal
-                    revealActive={revealActive}
-                    revealReduceMotion={revealRm}
-                    headerRevealDelayMs={SKILLS_REVEAL_HEADER_DELAY_MS}
-                    gridRevealDelayMs={SKILLS_REVEAL_TOOLKIT_GRID_DELAY_MS}
-                  />
+                  <div className="relative z-[3] flex min-h-0 w-full -translate-y-1 flex-col gap-4 sm:-translate-y-1.5 sm:gap-5 md:-translate-y-2 md:gap-6">
+                    <div className="min-w-0">
+                      <SkillsSubskillsPanel
+                        slide="core"
+                        variant="inline"
+                        dualInline
+                        orchestratedReveal
+                        revealActive={revealActive}
+                        revealReduceMotion={revealRm}
+                        headerRevealDelayMs={SKILLS_REVEAL_HEADER_DELAY_MS}
+                        gridRevealDelayMs={SKILLS_REVEAL_CORE_GRID_DELAY_MS}
+                      />
+                    </div>
+                    <div className="min-w-0">
+                      <SkillsSubskillsPanel
+                        slide="tools"
+                        variant="inline"
+                        dualInline
+                        orchestratedReveal
+                        revealActive={revealActive}
+                        revealReduceMotion={revealRm}
+                        headerRevealDelayMs={SKILLS_REVEAL_HEADER_DELAY_MS}
+                        gridRevealDelayMs={SKILLS_REVEAL_TOOLKIT_GRID_DELAY_MS}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -5906,6 +5965,7 @@ const SkillArsenal = ({
               ) : null}
             </AnimatePresence>
           )}
+            </div>
             </div>
           </div>
         </div>
@@ -6532,7 +6592,9 @@ export default function Home() {
                 className={
                   currentSection === "projects"
                     ? "flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-visible"
-                    : "flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden"
+                    : currentSection === "skills"
+                      ? "flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-visible"
+                      : "flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden"
                 }
               >
                 {currentSection === "profile" && <PhantomProfile />}

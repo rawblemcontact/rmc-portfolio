@@ -526,6 +526,189 @@
       0 6px 20px rgba(0,0,0,0.4),
       inset 0 1px 0 rgba(255,255,255,0.04);
   }
+
+  /* Skills: ambient marquee layer (behind cards, not inside CardBlackFace; each row animates on its own root) */
+  @keyframes skills-panel-marquee-shift {
+    0% {
+      transform: translate3d(0, -50%, 0);
+    }
+    100% {
+      transform: translate3d(calc(-100% / 3), -50%, 0);
+    }
+  }
+  @keyframes skills-panel-marquee-shift-wall {
+    0% {
+      transform: translate3d(0, -50%, 0);
+    }
+    100% {
+    transform: translate3d(calc(-100% / 6), -50%, 0);
+    }
+  }
+  #skills .skills-panel-marquee-shell {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    border-radius: inherit;
+    opacity: 0.32;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 10%, #000 90%, transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0%, #000 10%, #000 90%, transparent 100%);
+  }
+  #skills .skills-panel-marquee-track {
+    display: flex;
+    width: max-content;
+    position: absolute;
+    left: 0;
+    top: 50%;
+    will-change: transform;
+    animation: skills-panel-marquee-shift 52s linear infinite;
+  }
+  #skills .skills-ambient-wall.flex {
+    justify-content: flex-start;
+  }
+  #skills .skills-ambient-wall-row {
+    min-height: 0;
+  }
+  #skills .skills-ambient-wall-row .skills-panel-marquee-track {
+    animation-name: skills-panel-marquee-shift-wall;
+  }
+  #skills {
+    --skills-marquee-gap-x: 1.05rem;
+  }
+  #skills .skills-panel-marquee-shell.skills-ambient-wall-cell {
+    opacity: 0.1;
+    border: none;
+    outline: none;
+    box-shadow: none;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  #skills .skills-ambient-wall-row .skills-panel-marquee-segment {
+    font-size: clamp(0.75rem, 1.5vw, 1.05rem);
+    line-height: 1;
+    padding-right: var(--skills-marquee-gap-x);
+    letter-spacing: 0.12em;
+    -webkit-text-stroke-width: 0.65px;
+    white-space: nowrap;
+  }
+  #skills .skills-ambient-wall-row:nth-child(even) .skills-panel-marquee-track {
+    animation-direction: reverse;
+  }
+  #skills [data-skills-ambient-row="core"] .skills-ambient-wall-row:nth-child(1) .skills-panel-marquee-track {
+    animation-duration: 40s;
+  }
+  #skills [data-skills-ambient-row="core"] .skills-ambient-wall-row:nth-child(2) .skills-panel-marquee-track {
+    animation-duration: 48s;
+    animation-delay: -5s;
+  }
+  #skills [data-skills-ambient-row="core"] .skills-ambient-wall-row:nth-child(3) .skills-panel-marquee-track {
+    animation-duration: 56s;
+    animation-delay: -11s;
+  }
+  #skills [data-skills-ambient-row="core"] .skills-ambient-wall-row:nth-child(4) .skills-panel-marquee-track {
+    animation-duration: 44s;
+    animation-delay: -3s;
+  }
+  #skills [data-skills-ambient-row="core"] .skills-ambient-wall-row:nth-child(5) .skills-panel-marquee-track {
+    animation-duration: 52s;
+    animation-delay: -8s;
+  }
+  #skills [data-skills-ambient-row="core"] .skills-ambient-wall-row:nth-child(6) .skills-panel-marquee-track {
+    animation-duration: 47s;
+    animation-delay: -4.5s;
+  }
+  #skills [data-skills-ambient-row="core"] .skills-ambient-wall-row:nth-child(7) .skills-panel-marquee-track {
+    animation-duration: 55s;
+    animation-delay: -10s;
+  }
+  #skills [data-skills-ambient-row="core"] .skills-ambient-wall-row:nth-child(8) .skills-panel-marquee-track {
+    animation-duration: 43s;
+    animation-delay: -2.5s;
+  }
+  #skills [data-skills-ambient-row="core"] .skills-ambient-wall-row:nth-child(9) .skills-panel-marquee-track {
+    animation-duration: 51s;
+    animation-delay: -7.5s;
+  }
+  #skills [data-skills-ambient-row="tools"] .skills-ambient-wall-row:nth-child(1) .skills-panel-marquee-track {
+    animation-duration: 46s;
+    animation-delay: -4s;
+  }
+  #skills [data-skills-ambient-row="tools"] .skills-ambient-wall-row:nth-child(2) .skills-panel-marquee-track {
+    animation-duration: 54s;
+    animation-delay: -9s;
+  }
+  #skills [data-skills-ambient-row="tools"] .skills-ambient-wall-row:nth-child(3) .skills-panel-marquee-track {
+    animation-duration: 42s;
+    animation-delay: -2s;
+  }
+  #skills [data-skills-ambient-row="tools"] .skills-ambient-wall-row:nth-child(4) .skills-panel-marquee-track {
+    animation-duration: 50s;
+    animation-delay: -6s;
+  }
+  #skills [data-skills-ambient-row="tools"] .skills-ambient-wall-row:nth-child(5) .skills-panel-marquee-track {
+    animation-duration: 58s;
+    animation-delay: -12s;
+  }
+  #skills [data-skills-ambient-row="tools"] .skills-ambient-wall-row:nth-child(6) .skills-panel-marquee-track {
+    animation-duration: 45s;
+    animation-delay: -3.5s;
+  }
+  #skills [data-skills-ambient-row="tools"] .skills-ambient-wall-row:nth-child(7) .skills-panel-marquee-track {
+    animation-duration: 53s;
+    animation-delay: -8.5s;
+  }
+  #skills [data-skills-ambient-row="tools"] .skills-ambient-wall-row:nth-child(8) .skills-panel-marquee-track {
+    animation-duration: 49s;
+    animation-delay: -5.5s;
+  }
+  #skills [data-skills-ambient-row="tools"] .skills-ambient-wall-row:nth-child(9) .skills-panel-marquee-track {
+    animation-duration: 57s;
+    animation-delay: -11s;
+  }
+  /* Section bleeds: same wall as cards; aligned in #skills .container; softer edge fade only */
+  #skills .skills-ambient-bleed {
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+  }
+  #skills .skills-ambient-bleed .skills-panel-marquee-shell.skills-ambient-wall-cell {
+    opacity: 0.13;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  /* Long flat mid-band so all 9 rows read evenly; soft fade only on the edge toward banner / page bottom */
+  #skills .skills-ambient-bleed--above {
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, #000 5%, #000 100%);
+    mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, #000 5%, #000 100%);
+  }
+  #skills .skills-ambient-bleed--below {
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 95%, rgba(0, 0, 0, 0) 100%);
+    mask-image: linear-gradient(to bottom, #000 0%, #000 95%, rgba(0, 0, 0, 0) 100%);
+  }
+  #skills .skills-panel-marquee-segment {
+    flex-shrink: 0;
+    padding-right: var(--skills-marquee-gap-x);
+    font-family: var(--font-display, ui-sans-serif, system-ui, sans-serif);
+    font-size: clamp(2rem, 5.5vw, 3.35rem);
+    font-weight: 900;
+    line-height: 0.95;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: transparent;
+    -webkit-text-stroke-width: 1px;
+    -webkit-text-stroke-color: rgba(34, 211, 238, 0.12);
+  }
+  #skills .skills-ambient-marquee .skills-panel-marquee-track {
+    filter: blur(0.45px);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #skills .skills-panel-marquee-track {
+      animation: none;
+      transform: translate3d(0, -50%, 0);
+    }
+  }
   .skills-connector-line {
     fill: none;
     stroke-width: 0.6;

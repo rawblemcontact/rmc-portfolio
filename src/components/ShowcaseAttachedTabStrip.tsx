@@ -14,9 +14,9 @@ const TAB_LABEL: Record<ShowcaseTabId, string> = {
 };
 
 /** Matches Home `SHOWCASE_PANEL_FACE` (1px border + glass, no inset ring). */
-const TAB_ACTIVE_SURFACE = "bg-zinc-950/22";
+const TAB_ACTIVE_SURFACE = "bg-zinc-950/38";
 /** Inactive tabs — same zinc/black glass as shell (`zinc-900` read muddy vs rail). */
-const TAB_INACTIVE_SURFACE = "bg-zinc-950/14";
+const TAB_INACTIVE_SURFACE = TAB_ACTIVE_SURFACE;
 
 /**
  * Panel inset + preview width always follow this tab so switching tabs does not shift
@@ -73,8 +73,10 @@ export function ShowcaseAttachedTabStrip({
   panel,
 }: ShowcaseAttachedTabStripProps) {
   const tabListRef = useRef<HTMLDivElement>(null);
+  const tabRailRef = useRef<HTMLDivElement>(null);
   const bodyPadRef = useRef<HTMLDivElement>(null);
   const [tabGeom, setTabGeom] = useState({ ml: 0, w: 0 });
+  const [activeMask, setActiveMask] = useState({ left: 0, width: 0 });
 
   const syncFit = useCallback(() => {
     const el = bodyPadRef.current;
@@ -87,7 +89,19 @@ export function ShowcaseAttachedTabStrip({
     setTabGeom((prev) =>
       prev.ml === next.ml && prev.w === next.w ? prev : next,
     );
-  }, []);
+
+    // Hide the rail divider directly beneath the selected tab.
+    const railEl = tabRailRef.current;
+    const activeTabEl = tabListRef.current?.querySelector<HTMLElement>(`#showcase-tab-${activeId}`);
+    if (!railEl || !activeTabEl) return;
+    const railRect = railEl.getBoundingClientRect();
+    const tabRect = activeTabEl.getBoundingClientRect();
+    const left = Math.max(0, tabRect.left - railRect.left - 1);
+    const width = Math.max(0, tabRect.width + 2);
+    setActiveMask((prev) =>
+      prev.left === left && prev.width === width ? prev : { left, width },
+    );
+  }, [activeId]);
 
   useLayoutEffect(() => {
     syncFit();
@@ -105,7 +119,7 @@ export function ShowcaseAttachedTabStrip({
       ro.disconnect();
       window.removeEventListener("resize", syncFit);
     };
-  }, [syncFit]);
+  }, [syncFit, activeId]);
 
   const tabInsetLeft = tabGeom.ml;
   const tabWidthPx = tabGeom.w > 0 ? tabGeom.w : 120;
@@ -132,7 +146,10 @@ export function ShowcaseAttachedTabStrip({
           </h2>
         </header>
 
-        <div className="relative z-[1] flex shrink-0 flex-col gap-0 border-b border-white/[0.08] bg-black/35 px-3 pt-3 sm:flex-row sm:items-end sm:justify-between sm:gap-3 sm:px-4 sm:pt-4">
+        <div
+          ref={tabRailRef}
+          className="relative z-[1] flex shrink-0 flex-col gap-0 bg-black/35 px-3 pt-3 sm:flex-row sm:items-end sm:justify-between sm:gap-3 sm:px-4 sm:pt-4"
+        >
           <div
             ref={tabListRef}
             role="tablist"
@@ -162,7 +179,7 @@ export function ShowcaseAttachedTabStrip({
                       ? [
                           TAB_ACTIVE_SURFACE,
                           "relative h-10 min-h-[2.5rem] sm:h-11 sm:min-h-[2.75rem]",
-                          "border-portfolio-yellow/50 text-portfolio-yellow/95",
+                          "border-portfolio-yellow/50 text-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))]",
                           "shadow-[0_6px_20px_-8px_rgba(0,0,0,0.75),3px_0_10px_-5px_rgba(0,0,0,0.55)]",
                         ].join(" ")
                       : [
@@ -183,16 +200,26 @@ export function ShowcaseAttachedTabStrip({
             <button
               type="button"
               onClick={onArchives}
-              className="group inline-flex items-center gap-1.5 py-1 font-heading text-[10px] sm:text-xs tracking-btn-caps uppercase text-mono-2/55 transition-colors duration-300 ease-out hover:text-portfolio-yellow/95 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-portfolio-yellow/30 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+              className="group inline-flex items-center gap-1.5 py-1 font-heading text-[10px] sm:text-xs tracking-btn-caps uppercase text-mono-2/55 transition-colors duration-300 ease-out hover:text-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-portfolio-yellow/30 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
             >
               MORE
               <ArrowRight
-                className="h-3 w-3 shrink-0 text-mono-2/55 transition-colors duration-300 ease-out group-hover:text-portfolio-yellow/95"
+                className="h-3 w-3 shrink-0 text-mono-2/55 transition-colors duration-300 ease-out group-hover:text-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))]"
                 strokeWidth={1.75}
                 aria-hidden
               />
             </button>
           </div>
+          <span
+            aria-hidden
+            className="pointer-events-none absolute bottom-0 left-0 z-[1] h-px bg-white/[0.08]"
+            style={{ width: `${Math.max(0, activeMask.left)}px` }}
+          />
+          <span
+            aria-hidden
+            className="pointer-events-none absolute bottom-0 right-0 z-[1] h-px bg-white/[0.08]"
+            style={{ left: `${Math.max(0, activeMask.left + activeMask.width)}px` }}
+          />
         </div>
 
         <div
