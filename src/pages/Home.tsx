@@ -386,12 +386,11 @@ function useGridPhase() {
   return useContext(GridPhaseContext);
 }
 
-const gridOverlayStyle = {
-  backgroundImage: `
-    linear-gradient(to right, rgba(255,255,255,0.4) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255,255,255,0.4) 1px, transparent 1px)
-  `,
+/** WebKit/iOS: thin 1px dual-gradient grids can composite away at ~4% opacity; repeating + webkit size is more reliable. */
+const gridOverlayStyle: React.CSSProperties = {
+  backgroundImage: `repeating-linear-gradient(90deg, rgba(255,255,255,0.38) 0, rgba(255,255,255,0.38) 1px, rgba(255,255,255,0) 1px, rgba(255,255,255,0) ${GRID_CELL_SIZE}px), repeating-linear-gradient(0deg, rgba(255,255,255,0.38) 0, rgba(255,255,255,0.38) 1px, rgba(255,255,255,0) 1px, rgba(255,255,255,0) ${GRID_CELL_SIZE}px)`,
   backgroundSize: `${GRID_CELL_SIZE}px ${GRID_CELL_SIZE}px`,
+  WebkitBackgroundSize: `${GRID_CELL_SIZE}px ${GRID_CELL_SIZE}px`,
 };
 
 // Motion-only glow on leading accent edge: faint light-bleed, 10–15% opacity, 8–16px blur
@@ -1041,7 +1040,7 @@ const Hero = ({
       className={`relative h-[100svh] w-full overflow-hidden bg-black text-white ${SLIDE_NO_Y_SCROLL}`}
     >
       <div
-        className="pointer-events-none absolute inset-0 z-0 opacity-[0.04] grid-drift-bg"
+        className="pointer-events-none absolute inset-0 z-0 grid-drift-bg portfolio-grid-overlay"
         style={gridOverlayStyle}
       />
       {heroReady && (
@@ -1049,7 +1048,7 @@ const Hero = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.12, ease: [0.22, 1, 0.36, 1] }}
-        className="relative z-[5] mx-auto grid h-full w-full max-w-[1680px] grid-rows-[minmax(0,2fr)_minmax(0,1fr)] px-4 pt-[max(1rem,env(safe-area-inset-top,0px))] pb-4 md:px-6 md:pt-[max(1.5rem,env(safe-area-inset-top,0px))] md:pb-5 lg:px-8 lg:pt-[max(2rem,env(safe-area-inset-top,0px))] lg:pb-6"
+        className="relative z-[5] mx-auto grid h-full w-full max-w-[1680px] grid-rows-[minmax(0,2fr)_minmax(0,1fr)] px-4 pt-[max(1rem,env(safe-area-inset-top,0px))] pb-4 md:max-lg:grid-rows-[minmax(0,1.72fr)_minmax(0,1.28fr)] md:px-6 md:pt-[max(1.5rem,env(safe-area-inset-top,0px))] md:pb-5 md:max-lg:px-5 md:max-lg:pt-3 md:max-lg:pb-[max(1.25rem,env(safe-area-inset-bottom,0px))] lg:px-8 lg:pt-[max(2rem,env(safe-area-inset-top,0px))] lg:pb-6"
       >
         <div className="relative flex min-h-0 items-start justify-center">
           <div className="absolute inset-x-0 top-0 w-full max-w-full">
@@ -1063,7 +1062,7 @@ const Hero = ({
             style={{ transformOrigin: "center center", willChange: "transform" }}
           >
           <motion.div
-            className="relative mx-auto w-full max-w-full h-[clamp(200px,min(52vh,calc(100svh-11rem-max(1rem,env(safe-area-inset-top,0px)))),620px)] md:h-[clamp(240px,min(54vh,calc(100svh-11rem-max(1.5rem,env(safe-area-inset-top,0px)))),680px)] lg:h-[clamp(260px,min(56vh,calc(100svh-12rem-max(2rem,env(safe-area-inset-top,0px)))),760px)] overflow-hidden rounded-[11px] sm:rounded-xl border border-white/[0.09] bg-black"
+            className="relative mx-auto w-full max-w-full h-[clamp(200px,min(52vh,calc(100svh-11rem-max(1rem,env(safe-area-inset-top,0px)))),620px)] md:max-lg:h-[clamp(176px,min(36vh,calc(100svh-16.5rem-max(1rem,env(safe-area-inset-top,0px)))),460px)] lg:h-[clamp(240px,min(54vh,calc(100svh-11.5rem-max(1.5rem,env(safe-area-inset-top,0px)))),680px)] xl:h-[clamp(260px,min(56vh,calc(100svh-12rem-max(2rem,env(safe-area-inset-top,0px)))),760px)] overflow-hidden rounded-[11px] sm:rounded-xl border border-white/[0.09] bg-black"
             animate={{
               boxShadow: sliderAnimDone
                 ? "0 36px 88px rgba(0,0,0,0.6), inset 0 -40px 70px rgba(0,0,0,0.52), 0 0 28px 4px rgba(255,255,255,0.04)"
@@ -1156,58 +1155,57 @@ const Hero = ({
           {/* Y-transform wrapper: starts above final position during Phase 1,
               settles when sliderPhaseActive fires with slider open */}
           <motion.div
-            className="mx-auto flex h-full w-full max-w-[1220px] flex-col items-center justify-center gap-3 md:gap-4 px-1 py-2 sm:py-3"
+            className="mx-auto flex h-full w-full max-w-[1220px] flex-col items-center justify-center gap-0 px-1 py-2 sm:px-2 sm:py-3 [@media(min-width:744px)_and_(max-width:1366px)]:pb-5"
             initial={{ y: "-33vh" }}
             animate={{ y: sliderPhaseActive ? 0 : "-33vh" }}
             transition={reduceMotion ? { duration: 0 } : { duration: 0.95, ease: [0.16, 1, 0.3, 1], delay: 0.08 }}
           >
-            <div className="mx-auto min-w-0 w-full max-w-[min(100%,60rem)] text-center">
-              <motion.h1
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.52, delay: 0.1, ease: EASE.out }}
-                className="relative mb-2.5 flex flex-wrap justify-center gap-x-2 gap-y-1 font-display text-[clamp(2.35rem,7vw,6rem)] leading-[0.93] tracking-[-0.02em] uppercase sm:gap-x-3 md:whitespace-nowrap"
-                style={{ textShadow: "0 0 10px rgba(255,255,255,0.075)" }}
-              >
-                <span className="inline-block text-white" style={{ letterSpacing: "0.02em", fontKerning: "none" }}>
-                  ROBBIE
-                </span>
-                <span className="inline-block text-white" style={{ letterSpacing: "0.02em", fontKerning: "none" }}>
-                  MCLAUGHLIN
-                </span>
-              </motion.h1>
-
-              <motion.p
-                initial={{ opacity: 0, y: 5 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.2, ease: EASE.out }}
-                className="font-hero-subheading text-base sm:text-lg leading-snug text-mono-2/90 uppercase"
-              >
-                WRITER / DIGITAL MEDIA / NARRATIVE SYSTEMS
-              </motion.p>
-            </div>
-
-            <motion.div
+            <div
               ref={heroInViewRef}
-              initial={{ opacity: 0, y: 8 }}
-              animate={sliderAnimDone ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
-              transition={{ duration: 0.42, delay: sliderAnimDone ? 0.15 : 0, ease: EASE.out }}
-              className="mt-0.5 w-full flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6"
+              className="-translate-y-3 mx-auto flex w-full max-w-[min(100%,58rem)] flex-col px-1 sm:-translate-y-4 sm:px-2 [@media(min-width:744px)_and_(max-width:1366px)]:-translate-y-6"
             >
-              <motion.button
-                type="button"
-                onClick={onStartClick}
-                className="playstore-button playstore-button--primary font-display"
-                whileHover={{ y: -1 }}
-                whileTap={TAP}
-                transition={SPRING.ui}
-              >
-                <span className="texts inline-flex items-center gap-1.5">
-                  PORTFOLIO
-                  <ArrowRight className="h-4 w-4" aria-hidden />
-                </span>
-              </motion.button>
-            </motion.div>
+              <div className="w-full min-w-0 text-left">
+                <motion.div
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.55, delay: 0.06, ease: EASE.out }}
+                >
+                  <h1 className="m-0 max-w-full font-display [font-kerning:none]">
+                    <span className="block text-[clamp(2.28rem,8.85vw,5.95rem)] font-black uppercase leading-[0.8] tracking-[-0.036em] text-mono-0 sm:leading-[0.78]">
+                      ROBBIE
+                    </span>
+                    <div className="mt-[0.02em] flex min-w-0 items-end justify-between gap-3 sm:gap-5">
+                      <span className="min-w-0 flex-1 text-[clamp(2.28rem,8.85vw,5.95rem)] font-black uppercase leading-[0.8] tracking-[-0.036em] text-mono-0 sm:leading-[0.78]">
+                        MCLAUGHLIN
+                      </span>
+                      <motion.div
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={sliderAnimDone ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
+                        transition={{ duration: 0.42, delay: sliderAnimDone ? 0.15 : 0, ease: EASE.out }}
+                        className="shrink-0 self-end"
+                      >
+                        <motion.button
+                          type="button"
+                          onClick={onStartClick}
+                          className="playstore-button playstore-button--primary box-border !min-h-0 h-[calc(clamp(2.28rem,8.85vw,5.95rem)*0.78)] max-h-[4.85rem] items-center px-5 !py-0 sm:px-7 md:px-8 [&_.texts]:text-[clamp(0.84rem,1.7vw,1rem)] [&_.texts]:tracking-[0.1em] sm:[&_.texts]:text-[clamp(0.9rem,1.55vw,1.08rem)] sm:[&_.texts]:tracking-[0.11em]"
+                          whileHover={{ y: -1 }}
+                          whileTap={TAP}
+                          transition={SPRING.ui}
+                        >
+                          <span className="texts inline-flex items-center gap-2">
+                            PORTFOLIO
+                            <ArrowRight className="h-[1.05em] w-[1.05em] max-h-[1.25rem] max-w-[1.25rem] shrink-0 sm:max-h-[1.35rem] sm:max-w-[1.35rem]" aria-hidden />
+                          </span>
+                        </motion.button>
+                      </motion.div>
+                    </div>
+                  </h1>
+                  <p className="m-0 mt-2.5 max-w-[min(100%,40rem)] pl-[0.2rem] font-display text-[clamp(0.8rem,2.25vw,0.92rem)] font-medium uppercase leading-snug tracking-[0.18em] text-mono-2/88 sm:mt-3 sm:max-w-[46rem] sm:pl-[0.32rem] sm:tracking-[0.2em] md:pl-[0.4rem]">
+                    Writer / digital media / narrative systems
+                  </p>
+                </motion.div>
+              </div>
+            </div>
           </motion.div>
         </div>
         {SHOW_HERO_TUNER && (
@@ -1334,7 +1332,7 @@ const RainbowMenuSlide = ({
       aria-label="Menu"
     >
       <div
-        className="pointer-events-none absolute inset-0 z-0 opacity-[0.04]"
+        className="pointer-events-none absolute inset-0 z-0 portfolio-grid-overlay"
         style={{ ...gridOverlayStyle, backgroundPosition: `${gridPhase}px ${gridPhase}px` }}
       />
       <div className="relative z-10 w-full max-w-4xl">
@@ -1437,7 +1435,7 @@ const SideNavOverlay = ({
           onClick={onClose}
         >
           <div
-            className="pointer-events-none absolute inset-0 z-0 opacity-[0.04]"
+            className="pointer-events-none absolute inset-0 z-0 portfolio-grid-overlay"
             style={{ ...gridOverlayStyle, backgroundPosition: `${gridPhase}px ${gridPhase}px` }}
             aria-hidden
           />
@@ -1599,8 +1597,8 @@ const SectionGridOverlay = ({
     <>
       <div
         className={[
-          "pointer-events-none absolute inset-0 z-0 motion-safe:transition-opacity motion-safe:duration-300 motion-safe:ease-out",
-          projectDetailActive ? "opacity-[0.018]" : "opacity-[0.04]",
+          "pointer-events-none absolute inset-0 z-0 motion-safe:transition-opacity motion-safe:duration-300 motion-safe:ease-out portfolio-grid-overlay",
+          projectDetailActive ? "portfolio-grid-overlay--detail" : "",
         ].join(" ")}
         style={{ ...gridOverlayStyle, backgroundPosition: `${phase}px ${phase}px` }}
         aria-hidden
@@ -1723,7 +1721,7 @@ const PhantomProfile = () => {
                />
             </div>
             <motion.div
-              className="relative mt-4 sm:mt-5 w-full min-w-0 max-w-xl xl:max-w-2xl 2xl:max-w-2xl -ml-[3px] pe-[max(0.75rem,env(safe-area-inset-right,0px))] sm:pe-4 rounded-[0_0.85rem] border border-white/[0.06] [background:linear-gradient(rgb(0_0_0/0.62),rgb(0_0_0/0.62)),linear-gradient(rgb(9_9_11/0.88),rgb(9_9_11/0.88))] px-3 py-2 shadow-[0_10px_24px_-16px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] sm:px-4 sm:py-2.5"
+              className="profile-card-surface relative mt-4 sm:mt-5 w-full min-w-0 max-w-xl xl:max-w-2xl 2xl:max-w-2xl -ml-[3px] pe-[max(0.75rem,env(safe-area-inset-right,0px))] sm:pe-4 rounded-[0_0.85rem] px-3 py-2 sm:px-4 sm:py-2.5"
               initial={{ x: -24, opacity: 0 }}
               animate={{ x: overlayRevealed ? 0 : -24, opacity: overlayRevealed ? 1 : 0 }}
               transition={{ duration: BUTTON_FADE_DURATION_MS / 1000, delay: overlayRevealed ? BUTTONS_DELAY_AFTER_SUMMARY_MS / 1000 : 0, ease: [0.16, 1, 0.3, 1] }}
@@ -1733,8 +1731,8 @@ const PhantomProfile = () => {
                 <span className="text-mono-2/35 mx-0.5 sm:mx-1" aria-hidden>•</span> DIGITAL MEDIA
               </p>
             </motion.div>
-             <motion.div
-               className="mt-8 max-w-xl sm:mt-9 xl:max-w-2xl 2xl:max-w-2xl -ml-[3px] rounded-[0_1rem] border border-white/[0.06] [background:linear-gradient(rgb(0_0_0/0.62),rgb(0_0_0/0.62)),linear-gradient(rgb(9_9_11/0.88),rgb(9_9_11/0.88))] px-4 py-4 shadow-[0_10px_24px_-16px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] sm:px-5 sm:py-5"
+            <motion.div
+              className="profile-card-surface relative mt-8 max-w-xl sm:mt-9 xl:max-w-2xl 2xl:max-w-2xl -ml-[3px] rounded-[0_1rem] px-4 py-4 sm:px-5 sm:py-5"
                initial={{ opacity: 0, y: 14 }}
                animate={{ opacity: overlayRevealed ? 1 : 0, y: overlayRevealed ? 0 : 14 }}
                transition={{ duration: SUMMARY_DURATION_S, delay: overlayRevealed ? SUMMARY_DELAY_S : 0, ease: [0.16, 1, 0.3, 1] }}
@@ -2270,7 +2268,7 @@ const ProjectsStack = ({
                   onClick={(e) => onSelect(card.id, e.currentTarget)}
                   whileTap={{ scale: 0.985 }}
                   transition={{ duration: 0.28 / SHOWCASE_TIME_DIV, ease: cardEase }}
-                  className={`group relative w-full ${DETAIL_CARD_H} rounded-[11px] sm:rounded-xl border border-white/[0.09] bg-zinc-950/40 shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)] text-center overflow-hidden transition-[opacity,background-color,border-color] duration-300 ease-out hover:border-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] hover:bg-zinc-950/65 hover:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
+                  className={`group project-card-surface relative w-full ${DETAIL_CARD_H} rounded-[11px] sm:rounded-xl border border-white/[0.09] shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)] text-center overflow-hidden transition-[opacity,background-color,border-color] duration-300 ease-out hover:border-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] hover:bg-[#0b0d15] hover:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
                     focusProjectId && focusProjectId !== card.id ? "opacity-0 pointer-events-none" : "opacity-100"
                   }`}
                 >
@@ -3098,20 +3096,18 @@ const DetailCardMedia = ({ card }: { card: ShowcaseProjectCard }) => (
 
 /** Same shell as FEATURED WRITING / showcase slider cards (rounded grey frame). */
 const PROJECT_DETAIL_SURFACE =
-  "rounded-[11px] sm:rounded-xl border border-white/[0.09] shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)]";
+  "rounded-[11px] sm:rounded-xl border-0 shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)]";
 
 /** Same box-shadow + vignette stack as the hero SHOWCASE media slider (final “open” state). */
 const SHOWCASE_SLIDER_MEDIA_BOX_SHADOW =
   "0 36px 88px rgba(0,0,0,0.6), inset 0 -40px 70px rgba(0,0,0,0.52), 0 0 0 1px rgba(255,255,255,0.07), 0 0 28px 4px rgba(255,255,255,0.04)";
 
-/**
- * Darker than the tab rail — same two-layer idea (black wash over zinc-950) with higher opacity.
- */
-const showcaseDetailCard = `${PROJECT_DETAIL_SURFACE} px-3 py-3 sm:px-4 sm:py-3.5 [background:linear-gradient(rgb(0_0_0/0.42),rgb(0_0_0/0.42)),linear-gradient(rgb(9_9_11/0.58),rgb(9_9_11/0.58))]`;
+/** Project detail grid cells — same shell + `.project-card-surface` (`#0a0c12` base) as profile cards. */
+const showcaseDetailCard = `${PROJECT_DETAIL_SURFACE} project-card-surface px-3 py-3 sm:px-4 sm:py-3.5`;
 
 /** Same frame as project detail insets; darker wash + soft stacked shadow (single box-shadow, two layers). Corners: sharp TL/BR, rounded TR/BL (StealthWorm reference). */
 const SKILLS_SUBCATEGORY_CARD_FACE =
-  "rounded-none border border-portfolio-green/25 shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9),0_6px_22px_-10px_rgba(0,0,0,0.52)] [background:linear-gradient(rgb(0_0_0/0.62),rgb(0_0_0/0.62)),linear-gradient(rgb(9_9_11/0.88),rgb(9_9_11/0.88))] [border-radius:0_0.95rem_0_0.95rem] sm:[border-radius:0_1.05rem_0_1.05rem] transition-[background-color,border-color,box-shadow] duration-300 ease-out hover:border-portfolio-green/50 hover:shadow-[0_22px_52px_-28px_rgba(0,0,0,0.92),0_8px_26px_-10px_rgba(0,0,0,0.55)]";
+  "skills-card-surface rounded-none border-0 shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9),0_6px_22px_-10px_rgba(0,0,0,0.52)] [border-radius:0_0.95rem_0_0.95rem] sm:[border-radius:0_1.05rem_0_1.05rem] transition-[background-color,box-shadow] duration-300 ease-out hover:bg-[#0b0d15] hover:shadow-[0_22px_52px_-28px_rgba(0,0,0,0.92),0_8px_26px_-10px_rgba(0,0,0,0.55)]";
 
 const ShowcaseDetailOverviewRole = ({ card }: { card: ShowcaseProjectCard }) => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-3">
@@ -3182,7 +3178,7 @@ function ShowcaseWritingFeaturedPanel({
           </div>
           <a
             href={item.href}
-            className="inline-flex w-fit shrink-0 items-center gap-2 self-start rounded-[11px] sm:rounded-xl border border-white/[0.09] bg-zinc-950/40 px-2.5 py-1.5 font-heading text-[10px] sm:text-xs tracking-btn-caps uppercase text-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)] transition-[border-color,background-color,color] duration-300 ease-out hover:border-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] hover:bg-zinc-950/65 hover:text-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:self-center sm:px-3 sm:py-2"
+            className="featured-writing-raised featured-writing-view-cta inline-flex w-fit shrink-0 items-center gap-2 self-start rounded-[11px] sm:rounded-xl border-0 px-2.5 py-1.5 font-heading text-[10px] sm:text-xs tracking-btn-caps uppercase text-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)] transition-[background-color,color] duration-300 ease-out hover:text-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:self-center sm:px-3 sm:py-2"
             onClick={(e) => {
               e.preventDefault();
               onOpenPdfInSupporting(item);
@@ -3464,9 +3460,8 @@ const PalaceProjects = ({
 
             {morphDone && (
               <div
-                className={`absolute top-0 left-0 right-0 mx-auto w-full max-w-[min(100%,56rem)] ${DETAIL_CARD_H} rounded-[11px] sm:rounded-xl border border-white/[0.09] overflow-hidden`}
+                className={`project-card-surface absolute top-0 left-0 right-0 mx-auto w-full max-w-[min(100%,56rem)] ${DETAIL_CARD_H} rounded-[11px] sm:rounded-xl border-0 overflow-hidden`}
                 style={{
-                  background: "#000",
                   boxShadow: `${SHOWCASE_SLIDER_MEDIA_BOX_SHADOW}, 0 18px 48px -28px rgba(0,0,0,0.9)`,
                 }}
               >
@@ -3587,10 +3582,11 @@ const PalaceProjects = ({
           style={{
             position: "fixed",
             overflow: "hidden",
+            // Match the carousel card surface so the FLIP reads continuous.
             border: "1px solid rgba(255, 255, 255, 0.09)",
-            borderRadius: "12px",
+            borderRadius: "11px",
             boxShadow: "0 18px 48px -28px rgba(0, 0, 0, 0.9)",
-            background: "#000",
+            background: "#0a0c12",
             zIndex: 9999,
             top: 0,
             left: 0,
@@ -3931,7 +3927,7 @@ const ConfidantExperience = () => {
                     if (idx === 0) experienceFirstCardRef.current = el;
                     if (idx === EXPERIENCE_DATA.length - 1) experienceLastCardRef.current = el;
                   }}
-                  className="rounded-[0_1rem] border border-portfolio-blue/28 [background:linear-gradient(rgb(0_0_0/0.62),rgb(0_0_0/0.62)),linear-gradient(rgb(9_9_11/0.88),rgb(9_9_11/0.88))] px-4 py-5 shadow-[0_10px_24px_-16px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] transition-[background-color,border-color,box-shadow] duration-200 ease-out sm:px-5 sm:py-6 hover:border-portfolio-blue/46 hover:[background:linear-gradient(rgb(0_0_0/0.62),rgb(0_0_0/0.62)),linear-gradient(rgb(9_9_11/0.88),rgb(9_9_11/0.88))] hover:shadow-[0_14px_30px_-18px_rgba(0,0,0,0.92),inset_0_1px_0_rgba(255,255,255,0.035)]"
+                  className="experience-card-surface rounded-[0_1rem] border-0 px-4 py-5 shadow-[0_10px_24px_-16px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] transition-[background-color,box-shadow] duration-200 ease-out sm:px-5 sm:py-6 hover:bg-[#0b0d15] hover:shadow-[0_14px_30px_-18px_rgba(0,0,0,0.92),inset_0_1px_0_rgba(255,255,255,0.035)]"
                 >
                   <h3
                     className="font-display text-base font-semibold tracking-[-0.02em] text-white text-balance leading-snug sm:text-lg md:text-xl sm:leading-[1.25] md:leading-snug"
@@ -4002,7 +3998,7 @@ const ConfidantExperience = () => {
 
 // --- CONTACT (Uiverse.io button style by Itskrish01) ---
 const UIVERSE_BUTTON_BASE =
-  "p-5 rounded-full backdrop-blur-lg from-black/60 to-black/40 shadow-lg hover:scale-110 active:scale-95 active:rotate-0 transition-all duration-300 ease-out cursor-pointer group relative overflow-hidden border bg-gradient-to-tr";
+  "transform-gpu isolate [backface-visibility:hidden] p-5 rounded-full border bg-gradient-to-tr from-black/60 to-black/40 shadow-lg backdrop-blur-lg [@media(pointer:coarse)]:from-black/[0.88] [@media(pointer:coarse)]:to-black/[0.72] [@media(pointer:coarse)]:shadow-black/50 [@media(pointer:coarse)]:backdrop-blur-none hover:scale-110 [@media(pointer:coarse)]:hover:scale-100 active:scale-95 [@media(pointer:coarse)]:active:scale-100 active:rotate-0 transition-[transform,opacity,box-shadow,border-color] duration-300 ease-out cursor-pointer group relative overflow-hidden";
 
 const SocialLink = () => {
   return (
@@ -4012,7 +4008,7 @@ const SocialLink = () => {
         <motion.h2
           initial={{ opacity: 0, y: 72 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: false, amount: 0.2 }}
+          viewport={{ once: true, amount: 0.2, margin: "0px 0px -8% 0px" }}
           transition={{ duration: 0.416, ease: [0.027, 0, 0.06, 1], delay: 0.4 }}
           className="text-4xl md:text-6xl font-display text-white relative z-10 mb-12"
         >
@@ -4023,12 +4019,12 @@ const SocialLink = () => {
           variants={{
             hidden: {},
             visible: {
-              transition: { staggerChildren: 0.053, delayChildren: 1.16 },
+              transition: { staggerChildren: 0.1, delayChildren: 1.12 },
             },
           }}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: false, amount: 0.2 }}
+          viewport={{ once: true, amount: 0.18, margin: "0px 0px -12% 0px" }}
           className="flex flex-wrap justify-center items-center gap-6"
         >
           <motion.a
@@ -4037,7 +4033,7 @@ const SocialLink = () => {
               hidden: { opacity: 0, x: -32 },
               visible: { opacity: 1, x: 0 },
             }}
-            transition={{ duration: 0.053, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
             className={`${UIVERSE_BUTTON_BASE} border-white/10 hover:rotate-2 hover:border-white/30`}
             aria-label="YouTube"
           >
@@ -4054,7 +4050,7 @@ const SocialLink = () => {
               hidden: { opacity: 0, x: -32 },
               visible: { opacity: 1, x: 0 },
             }}
-            transition={{ duration: 0.053, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
             className={`${UIVERSE_BUTTON_BASE} border-white/10 hover:rotate-2 hover:border-white/30`}
             aria-label="LinkedIn"
           >
@@ -4071,7 +4067,7 @@ const SocialLink = () => {
               hidden: { opacity: 0, x: -32 },
               visible: { opacity: 1, x: 0 },
             }}
-            transition={{ duration: 0.053, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
             className={`${UIVERSE_BUTTON_BASE} border-white/10 hover:-rotate-2 hover:border-white/30`}
             aria-label="TikTok"
           >
@@ -4088,7 +4084,7 @@ const SocialLink = () => {
               hidden: { opacity: 0, x: -32 },
               visible: { opacity: 1, x: 0 },
             }}
-            transition={{ duration: 0.053, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
             className={`${UIVERSE_BUTTON_BASE} border-white/10 hover:rotate-2 hover:border-white/30`}
             aria-label="Instagram"
           >
@@ -4103,7 +4099,7 @@ const SocialLink = () => {
               hidden: { opacity: 0, x: -32 },
               visible: { opacity: 1, x: 0 },
             }}
-            transition={{ duration: 0.053, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
             className={`${UIVERSE_BUTTON_BASE} border-white/10 hover:rotate-3 hover:border-white/30`}
             aria-label="Email"
           >

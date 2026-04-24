@@ -13,10 +13,8 @@ const TAB_LABEL: Record<ShowcaseTabId, string> = {
   "tab-5": "Media analysis",
 };
 
-/** Matches Home `SHOWCASE_PANEL_FACE` (1px border + glass, no inset ring). */
-const TAB_ACTIVE_SURFACE = "bg-zinc-950/38";
-/** Inactive tabs — same zinc/black glass as shell (`zinc-900` read muddy vs rail). */
-const TAB_INACTIVE_SURFACE = TAB_ACTIVE_SURFACE;
+/** Rail, inactive tabs, active tab, and body share one surface (`#0a0c12` — profile card). */
+const TAB_PANEL_SURFACE = "featured-writing-panel";
 
 /**
  * Panel inset + preview width always follow this tab so switching tabs does not shift
@@ -73,10 +71,8 @@ export function ShowcaseAttachedTabStrip({
   panel,
 }: ShowcaseAttachedTabStripProps) {
   const tabListRef = useRef<HTMLDivElement>(null);
-  const tabRailRef = useRef<HTMLDivElement>(null);
   const bodyPadRef = useRef<HTMLDivElement>(null);
   const [tabGeom, setTabGeom] = useState({ ml: 0, w: 0 });
-  const [activeMask, setActiveMask] = useState({ left: 0, width: 0 });
 
   const syncFit = useCallback(() => {
     const el = bodyPadRef.current;
@@ -89,19 +85,7 @@ export function ShowcaseAttachedTabStrip({
     setTabGeom((prev) =>
       prev.ml === next.ml && prev.w === next.w ? prev : next,
     );
-
-    // Hide the rail divider directly beneath the selected tab.
-    const railEl = tabRailRef.current;
-    const activeTabEl = tabListRef.current?.querySelector<HTMLElement>(`#showcase-tab-${activeId}`);
-    if (!railEl || !activeTabEl) return;
-    const railRect = railEl.getBoundingClientRect();
-    const tabRect = activeTabEl.getBoundingClientRect();
-    const left = Math.max(0, tabRect.left - railRect.left - 1);
-    const width = Math.max(0, tabRect.width + 2);
-    setActiveMask((prev) =>
-      prev.left === left && prev.width === width ? prev : { left, width },
-    );
-  }, [activeId]);
+  }, []);
 
   useLayoutEffect(() => {
     syncFit();
@@ -119,7 +103,7 @@ export function ShowcaseAttachedTabStrip({
       ro.disconnect();
       window.removeEventListener("resize", syncFit);
     };
-  }, [syncFit, activeId]);
+  }, [syncFit]);
 
   const tabInsetLeft = tabGeom.ml;
   const tabWidthPx = tabGeom.w > 0 ? tabGeom.w : 120;
@@ -132,24 +116,19 @@ export function ShowcaseAttachedTabStrip({
     <div className={`flex w-full flex-col ${className}`}>
       <div
         className={[
-          "flex min-w-0 w-full max-w-full flex-col overflow-hidden rounded-[11px] sm:rounded-xl",
-          "border border-white/[0.09]",
-          "bg-zinc-950/20 backdrop-blur-sm",
+          "featured-writing-shell flex min-w-0 w-full max-w-full flex-col overflow-hidden rounded-[11px] sm:rounded-xl",
           "shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)]",
           // lg+: match right edge of SHOWCASE cards (slide basis uses (100%-4px)/2 — Home.tsx).
           "lg:max-w-[calc(100%-4px)]",
         ].join(" ")}
       >
-        <header className="shrink-0 border-b border-white/[0.08] bg-black/50 px-3 py-2.5 text-center sm:px-4 sm:py-3">
+        <header className="featured-writing-inner-rule-header shrink-0 bg-transparent px-3 py-2.5 text-center sm:px-4 sm:py-3">
           <h2 className="m-0 font-display text-sm font-bold leading-snug tracking-eyebrow-tight uppercase text-white">
             FEATURED WRITING
           </h2>
         </header>
 
-        <div
-          ref={tabRailRef}
-          className="relative z-[1] flex shrink-0 flex-col gap-0 bg-black/35 px-3 pt-3 sm:flex-row sm:items-end sm:justify-between sm:gap-3 sm:px-4 sm:pt-4"
-        >
+        <div className="featured-writing-panel relative z-[1] flex shrink-0 flex-col gap-0 px-3 pt-3 sm:flex-row sm:items-end sm:justify-between sm:gap-3 sm:px-4 sm:pt-4">
           <div
             ref={tabListRef}
             role="tablist"
@@ -177,16 +156,15 @@ export function ShowcaseAttachedTabStrip({
                     "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-portfolio-yellow/30 focus-visible:ring-offset-2 focus-visible:ring-offset-black",
                     active
                       ? [
-                          TAB_ACTIVE_SURFACE,
+                          TAB_PANEL_SURFACE,
                           "relative h-10 min-h-[2.5rem] sm:h-11 sm:min-h-[2.75rem]",
                           "border-portfolio-yellow/50 text-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))]",
                           "shadow-[0_6px_20px_-8px_rgba(0,0,0,0.75),3px_0_10px_-5px_rgba(0,0,0,0.55)]",
                         ].join(" ")
                       : [
-                          TAB_INACTIVE_SURFACE,
-                          "h-7 min-h-[1.75rem] sm:h-8 sm:min-h-[2rem]",
-                          "border-white/[0.09] text-mono-2/55",
-                          "hover:border-white/[0.14] hover:bg-zinc-950/28 hover:text-mono-2/90",
+                          TAB_PANEL_SURFACE,
+                          "featured-writing-tab-idle-edge h-7 min-h-[1.75rem] sm:h-8 sm:min-h-[2rem]",
+                          "text-mono-2/55 hover:bg-white/[0.04] hover:text-mono-2/90",
                         ].join(" "),
                   ].join(" ")}
                 >
@@ -210,27 +188,16 @@ export function ShowcaseAttachedTabStrip({
               />
             </button>
           </div>
-          <span
-            aria-hidden
-            className="pointer-events-none absolute bottom-0 left-0 z-[1] h-px bg-white/[0.08]"
-            style={{ width: `${Math.max(0, activeMask.left)}px` }}
-          />
-          <span
-            aria-hidden
-            className="pointer-events-none absolute bottom-0 right-0 z-[1] h-px bg-white/[0.08]"
-            style={{ left: `${Math.max(0, activeMask.left + activeMask.width)}px` }}
-          />
         </div>
 
         <div
           className={[
-            "relative z-[2] flex flex-col overflow-x-hidden overflow-y-visible",
-            TAB_ACTIVE_SURFACE,
+            "featured-writing-inner-rule-body-top relative z-[2] flex flex-col overflow-x-hidden overflow-y-visible",
+            TAB_PANEL_SURFACE,
           ].join(" ")}
           role="region"
           aria-label="Featured writing content"
         >
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[3] h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
           <div ref={bodyPadRef} className="px-3 py-3 sm:px-4 sm:py-3.5">
             {/*
              * Inset matches the active tab’s left edge; width fills the folder body so

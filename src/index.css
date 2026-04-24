@@ -193,10 +193,138 @@
     will-change: background-position;
   }
 
+  /**
+   * Hero / section grid overlays: iPadOS WebKit + Brave can drop ultra-faint 1px gradients.
+   * - Slightly higher base opacity + stronger bump on coarse pointers
+   * - Promote compositing layer (translateZ) so the grid actually paints
+   * - Disable will-change on touch (can prevent background paint on some WebKit builds)
+   */
+  .portfolio-grid-overlay {
+    opacity: 0.045;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+
+  .portfolio-grid-overlay--detail {
+    opacity: 0.02;
+  }
+
+  @media (pointer: coarse) {
+    .portfolio-grid-overlay {
+      opacity: 0.095;
+    }
+
+    .portfolio-grid-overlay--detail {
+      opacity: 0.055;
+    }
+
+    .grid-drift-bg {
+      will-change: auto;
+    }
+  }
+
+  /*
+   * iPad / tablet viewports (744px+ includes iPad mini width): grid a touch brighter than phone coarse.
+   * `any-pointer: coarse` (not `pointer: coarse`) so iPad + trackpad / mouse still counts as touch-capable.
+   */
+  @media (min-width: 744px) and (max-width: 1366px) and (any-pointer: coarse) {
+    .portfolio-grid-overlay {
+      opacity: 0.115;
+    }
+
+    .portfolio-grid-overlay--detail {
+      opacity: 0.08;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .grid-drift-bg {
       animation: none;
     }
+  }
+
+  .profile-card-surface {
+    position: relative;
+    z-index: 0;
+    overflow: hidden;
+    border: none;
+    background: #0a0c12;
+    background-image: none;
+    filter: none;
+  }
+
+  /**
+   * Shared card fill — PROJECT shells, EXPERIENCE rows, SKILLS inner faces / subcolumns.
+   * Profile uses `.profile-card-surface` (same hex + layout); these keep their own border / radius / shadow.
+   */
+  .project-card-surface,
+  .experience-card-surface,
+  .skills-card-surface {
+    background: #0a0c12;
+    background-image: none;
+    filter: none;
+  }
+
+  /**
+   * FEATURED WRITING — same stack as profile/project (panel = card surface). shell < panel < raised.
+   */
+  .featured-writing-shell {
+    position: relative;
+    z-index: 0;
+    background: #05070c;
+    background-image: none;
+    filter: none;
+    /* Inner rules + tab edges */
+    --fw-rule-header: rgba(0, 0, 0, 0.5);
+    --fw-rule-body-top: rgba(0, 0, 0, 0.45);
+    --fw-tab-idle: rgba(0, 0, 0, 0.4);
+    --fw-tab-idle-hover: rgba(0, 0, 0, 0.55);
+  }
+
+  .featured-writing-panel {
+    background: #0a0c12;
+    background-image: none;
+    filter: none;
+  }
+
+  .featured-writing-raised {
+    background: #0c0d16;
+    background-image: none;
+    filter: none;
+  }
+
+  .featured-writing-inner-rule-header {
+    border-bottom: 1px solid var(--fw-rule-header);
+  }
+
+  .featured-writing-inner-rule-body-top {
+    border-top: 1px solid var(--fw-rule-body-top);
+  }
+
+  /** Inactive folder tabs — border-color only (width from Tailwind `border border-b-0`). */
+  .featured-writing-tab-idle-edge {
+    border-color: var(--fw-tab-idle);
+  }
+
+  .featured-writing-tab-idle-edge:hover {
+    border-color: var(--fw-tab-idle-hover);
+  }
+
+  /** PDF thumb loading shimmer — matches featured-writing stack */
+  .featured-writing-thumb-loading {
+    background: linear-gradient(
+      to bottom right,
+      rgb(12 13 22 / 0.9),
+      rgb(10 12 18 / 0.7),
+      rgb(5 7 12 / 0.85)
+    );
+  }
+
+  /** VIEW CTA hover wash — pairs with `.featured-writing-raised` */
+  .featured-writing-view-cta:hover {
+    background-color: #0b0d15;
   }
 
   @keyframes hero-cta-primary-pulse {
@@ -520,7 +648,8 @@
   .skills-card-diagonal {
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    background: linear-gradient(168deg, rgba(18,18,18,0.92) 0%, rgba(9,9,9,0.95) 100%);
+    background: #0a0c12;
+    background-image: linear-gradient(168deg, rgba(255, 255, 255, 0.04) 0%, transparent 55%);
     border: none;
     box-shadow:
       0 6px 20px rgba(0,0,0,0.4),

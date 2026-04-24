@@ -131,10 +131,9 @@ export function FeaturedWritingPdfThumbnail({
   return (
     <div
       className={[
-        "relative shrink-0 overflow-hidden rounded-[10px] border border-white/[0.09] bg-zinc-950/80",
-        "ring-1 ring-inset ring-white/[0.04]",
+        "featured-writing-raised relative shrink-0 overflow-hidden rounded-[10px] border-0",
         interactive
-          ? "cursor-pointer transition-[border-color] duration-200 ease-out hover:border-portfolio-yellow/35 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-portfolio-yellow/40 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+          ? "cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-portfolio-yellow/40 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
           : "",
         className,
       ].join(" ")}
@@ -157,7 +156,7 @@ export function FeaturedWritingPdfThumbnail({
     >
       {showLoadingShell ? (
         <div
-          className="absolute inset-0 z-0 animate-pulse bg-gradient-to-br from-zinc-800/35 via-zinc-900/25 to-zinc-950 motion-reduce:animate-none motion-reduce:opacity-90"
+          className="featured-writing-thumb-loading absolute inset-0 z-0 animate-pulse motion-reduce:animate-none motion-reduce:opacity-90"
           aria-hidden
         />
       ) : null}
