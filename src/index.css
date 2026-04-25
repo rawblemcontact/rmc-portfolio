@@ -82,6 +82,15 @@
 }
 
 @layer base {
+  :root {
+    /*
+     * Main card = profile canonical fill. Hover / raised are fixed steps up in lightness;
+     * `.featured-writing-shell` (#05070c) stays darker than main for the header chrome stack.
+     */
+    --portfolio-section-card: #0a0c12;
+    --portfolio-section-card-hover: #0b0d15;
+    --portfolio-section-card-raised: #0c0d16;
+  }
   * {
     @apply border-border;
   }
@@ -190,7 +199,7 @@
 
   .grid-drift-bg {
     animation: gridDriftSmooth 12s linear infinite;
-    will-change: background-position;
+    isolation: isolate;
   }
 
   /**
@@ -199,8 +208,9 @@
    * - Promote compositing layer (translateZ) so the grid actually paints
    * - Disable will-change on touch (can prevent background paint on some WebKit builds)
    */
+  /* Fine pointer (typical PC + mouse): slightly dimmer than touch so desktop reads calmer */
   .portfolio-grid-overlay {
-    opacity: 0.045;
+    opacity: 0.095;
     transform: translateZ(0);
     -webkit-transform: translateZ(0);
     -webkit-backface-visibility: hidden;
@@ -208,20 +218,16 @@
   }
 
   .portfolio-grid-overlay--detail {
-    opacity: 0.02;
+    opacity: 0.048;
   }
 
   @media (pointer: coarse) {
     .portfolio-grid-overlay {
-      opacity: 0.095;
+      opacity: 0.048;
     }
 
     .portfolio-grid-overlay--detail {
-      opacity: 0.055;
-    }
-
-    .grid-drift-bg {
-      will-change: auto;
+      opacity: 0.048;
     }
   }
 
@@ -231,11 +237,11 @@
    */
   @media (min-width: 744px) and (max-width: 1366px) and (any-pointer: coarse) {
     .portfolio-grid-overlay {
-      opacity: 0.115;
+      opacity: 0.17;
     }
 
     .portfolio-grid-overlay--detail {
-      opacity: 0.08;
+      opacity: 0.125;
     }
   }
 
@@ -250,7 +256,7 @@
     z-index: 0;
     overflow: hidden;
     border: none;
-    background: #0a0c12;
+    background: var(--portfolio-section-card);
     background-image: none;
     filter: none;
   }
@@ -262,7 +268,7 @@
   .project-card-surface,
   .experience-card-surface,
   .skills-card-surface {
-    background: #0a0c12;
+    background: var(--portfolio-section-card);
     background-image: none;
     filter: none;
   }
@@ -284,13 +290,13 @@
   }
 
   .featured-writing-panel {
-    background: #0a0c12;
+    background: var(--portfolio-section-card);
     background-image: none;
     filter: none;
   }
 
   .featured-writing-raised {
-    background: #0c0d16;
+    background: var(--portfolio-section-card-raised);
     background-image: none;
     filter: none;
   }
@@ -299,8 +305,24 @@
     border-bottom: 1px solid var(--fw-rule-header);
   }
 
+  /**
+   * Folder seam: 1px rule with a gap under the active tab (skip span from JS:
+   * `--fw-rule-skip-start` / `--fw-rule-skip-end`, px from this box’s left edge).
+   */
   .featured-writing-inner-rule-body-top {
-    border-top: 1px solid var(--fw-rule-body-top);
+    border-top: none;
+    background-repeat: no-repeat;
+    background-size: 100% 1px;
+    background-position: top left;
+    background-image: linear-gradient(
+      to right,
+      var(--fw-rule-body-top) 0,
+      var(--fw-rule-body-top) var(--fw-rule-skip-start, 0px),
+      transparent var(--fw-rule-skip-start, 0px),
+      transparent var(--fw-rule-skip-end, 0px),
+      var(--fw-rule-body-top) var(--fw-rule-skip-end, 0px),
+      var(--fw-rule-body-top) 100%
+    );
   }
 
   /** Inactive folder tabs — border-color only (width from Tailwind `border border-b-0`). */
@@ -322,9 +344,17 @@
     );
   }
 
-  /** VIEW CTA hover wash — pairs with `.featured-writing-raised` */
+  /** VIEW CTA — same fill as `.featured-writing-shell`; hover = yellow border only */
+  .featured-writing-view-cta {
+    background-color: #05070c;
+    background-image: none;
+    filter: none;
+    border: 1px solid transparent;
+  }
+
   .featured-writing-view-cta:hover {
-    background-color: #0b0d15;
+    background-color: #05070c;
+    border-color: color-mix(in srgb, var(--palette-yellow-projects) 48%, rgb(186, 186, 186));
   }
 
   @keyframes hero-cta-primary-pulse {
@@ -648,7 +678,7 @@
   .skills-card-diagonal {
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    background: #0a0c12;
+    background: var(--portfolio-section-card);
     background-image: linear-gradient(168deg, rgba(255, 255, 255, 0.04) 0%, transparent 55%);
     border: none;
     box-shadow:

@@ -1,9 +1,8 @@
 import React, { useCallback, useLayoutEffect, useRef, useState } from "react";
-import { ArrowRight } from "lucide-react";
 
-export type ShowcaseTabId = "tab-1" | "tab-2" | "tab-3" | "tab-4" | "tab-5";
+export type ShowcaseTabId = "tab-1" | "tab-2" | "tab-3" | "tab-4" | "tab-5" | "tab-6";
 
-const TAB_ORDER: ShowcaseTabId[] = ["tab-1", "tab-2", "tab-3", "tab-4", "tab-5"];
+const TAB_ORDER: ShowcaseTabId[] = ["tab-1", "tab-2", "tab-3", "tab-4", "tab-5", "tab-6"];
 
 const TAB_LABEL: Record<ShowcaseTabId, string> = {
   "tab-1": "Content writing",
@@ -11,10 +10,14 @@ const TAB_LABEL: Record<ShowcaseTabId, string> = {
   "tab-3": "Graphic novel",
   "tab-4": "Literary analysis",
   "tab-5": "Media analysis",
+  "tab-6": "Narrative essay",
 };
 
-/** Rail, inactive tabs, active tab, and body share one surface (`#0a0c12` — profile card). */
+/** Rail, inactive tabs, active tab, and body share one surface (same as `--portfolio-section-card` / profile card). */
 const TAB_PANEL_SURFACE = "featured-writing-panel";
+
+/** Active tab: same `color-mix` for border + label (applied via `style` so values stay in sync). */
+const featuredTabSoftYellow = "color-mix(in srgb, var(--palette-yellow-projects) 48%, rgb(186, 186, 186))";
 
 /**
  * Panel inset + preview width always follow this tab so switching tabs does not shift
@@ -51,7 +54,6 @@ function measureTabGeometryForLayout(
 export type ShowcaseAttachedTabStripProps = {
   activeId: ShowcaseTabId;
   onTabChange: (id: ShowcaseTabId) => void;
-  onArchives: () => void;
   /** Optional width wrapper (parent usually sets w-full). */
   className?: string;
   panel?:
@@ -63,15 +65,36 @@ export type ShowcaseAttachedTabStripProps = {
 const FOLDER_TAB_TOP =
   "rounded-t-[7px] sm:rounded-t-[8px]";
 
+function applyBodyRuleGap(bodyTopEl: HTMLElement | null, activeTabId: ShowcaseTabId) {
+  if (!bodyTopEl) return;
+  const tab = bodyTopEl.ownerDocument.getElementById(`showcase-tab-${activeTabId}`) as HTMLElement | null;
+  if (!tab) {
+    bodyTopEl.style.removeProperty("--fw-rule-skip-start");
+    bodyTopEl.style.removeProperty("--fw-rule-skip-end");
+    return;
+  }
+  const br = bodyTopEl.getBoundingClientRect();
+  const tr = tab.getBoundingClientRect();
+  const skipStart = Math.max(0, tr.left - br.left);
+  const skipEnd = Math.min(br.width, tr.right - br.left);
+  if (skipEnd <= skipStart) {
+    bodyTopEl.style.setProperty("--fw-rule-skip-start", "0px");
+    bodyTopEl.style.setProperty("--fw-rule-skip-end", "0px");
+    return;
+  }
+  bodyTopEl.style.setProperty("--fw-rule-skip-start", `${skipStart}px`);
+  bodyTopEl.style.setProperty("--fw-rule-skip-end", `${skipEnd}px`);
+}
+
 export function ShowcaseAttachedTabStrip({
   activeId,
   onTabChange,
-  onArchives,
   className = "",
   panel,
 }: ShowcaseAttachedTabStripProps) {
   const tabListRef = useRef<HTMLDivElement>(null);
   const bodyPadRef = useRef<HTMLDivElement>(null);
+  const bodyRuleTopRef = useRef<HTMLDivElement>(null);
   const [tabGeom, setTabGeom] = useState({ ml: 0, w: 0 });
 
   const syncFit = useCallback(() => {
@@ -85,7 +108,8 @@ export function ShowcaseAttachedTabStrip({
     setTabGeom((prev) =>
       prev.ml === next.ml && prev.w === next.w ? prev : next,
     );
-  }, []);
+    applyBodyRuleGap(bodyRuleTopRef.current, activeId);
+  }, [activeId]);
 
   useLayoutEffect(() => {
     syncFit();
@@ -128,13 +152,13 @@ export function ShowcaseAttachedTabStrip({
           </h2>
         </header>
 
-        <div className="featured-writing-panel relative z-[1] flex shrink-0 flex-col gap-0 px-3 pt-3 sm:flex-row sm:items-end sm:justify-between sm:gap-3 sm:px-4 sm:pt-4">
+        <div className="featured-writing-panel relative flex shrink-0 flex-col gap-0 px-3 pt-3 sm:px-4 sm:pt-4">
           <div
             ref={tabListRef}
             role="tablist"
             aria-label="Showcase views"
             onScroll={syncFit}
-            className="flex min-w-0 flex-1 items-end gap-0.5 overflow-x-auto overflow-y-visible [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="flex min-w-0 w-full items-end gap-0.5 overflow-x-auto overflow-y-visible [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
             {TAB_ORDER.map((id) => {
               const active = activeId === id;
@@ -147,9 +171,13 @@ export function ShowcaseAttachedTabStrip({
                   aria-selected={active}
                   tabIndex={0}
                   onClick={() => onTabChange(id)}
+                  style={
+                    active
+                      ? { borderColor: featuredTabSoftYellow, color: featuredTabSoftYellow }
+                      : undefined
+                  }
                   className={[
                     "group relative flex shrink-0 items-center justify-center",
-                    active ? "z-[1]" : "z-0",
                     FOLDER_TAB_TOP,
                     "min-w-0 border border-b-0 px-2.5 font-heading text-[10px] sm:text-xs tracking-btn-caps uppercase",
                     "motion-safe:transition-[height,box-shadow,background-color,border-color,color] motion-safe:duration-200 motion-safe:ease-out",
@@ -158,13 +186,12 @@ export function ShowcaseAttachedTabStrip({
                       ? [
                           TAB_PANEL_SURFACE,
                           "relative h-10 min-h-[2.5rem] sm:h-11 sm:min-h-[2.75rem]",
-                          "border-portfolio-yellow/50 text-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))]",
                           "shadow-[0_6px_20px_-8px_rgba(0,0,0,0.75),3px_0_10px_-5px_rgba(0,0,0,0.55)]",
                         ].join(" ")
                       : [
                           TAB_PANEL_SURFACE,
                           "featured-writing-tab-idle-edge h-7 min-h-[1.75rem] sm:h-8 sm:min-h-[2rem]",
-                          "text-mono-2/55 hover:bg-white/[0.04] hover:text-mono-2/90",
+                          "text-mono-2/42 hover:bg-white/[0.04] hover:text-mono-2/88",
                         ].join(" "),
                   ].join(" ")}
                 >
@@ -173,26 +200,12 @@ export function ShowcaseAttachedTabStrip({
               );
             })}
           </div>
-
-          <div className="flex shrink-0 justify-end pb-1 sm:pb-1.5">
-            <button
-              type="button"
-              onClick={onArchives}
-              className="group inline-flex items-center gap-1.5 py-1 font-heading text-[10px] sm:text-xs tracking-btn-caps uppercase text-mono-2/55 transition-colors duration-300 ease-out hover:text-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-portfolio-yellow/30 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-            >
-              MORE
-              <ArrowRight
-                className="h-3 w-3 shrink-0 text-mono-2/55 transition-colors duration-300 ease-out group-hover:text-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))]"
-                strokeWidth={1.75}
-                aria-hidden
-              />
-            </button>
-          </div>
         </div>
 
         <div
+          ref={bodyRuleTopRef}
           className={[
-            "featured-writing-inner-rule-body-top relative z-[2] flex flex-col overflow-x-hidden overflow-y-visible",
+            "featured-writing-inner-rule-body-top relative flex flex-col overflow-x-hidden overflow-y-visible",
             TAB_PANEL_SURFACE,
           ].join(" ")}
           role="region"

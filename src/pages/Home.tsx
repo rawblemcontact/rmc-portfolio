@@ -2,7 +2,7 @@
 import { motion, AnimatePresence, Variants, useInView, useReducedMotion, useMotionValue, useTransform, animate } from "framer-motion";
 import useEmblaCarousel from "embla-carousel-react";
 import type { EmblaCarouselType } from "embla-carousel";
-import React, { createContext, useContext, useEffect, useLayoutEffect, useState, useRef, useCallback, startTransition } from "react";
+import React, { useEffect, useLayoutEffect, useState, useRef, useCallback, startTransition } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "../components/ui/button";
 import { FillIcon } from "../components/FillIcon";
@@ -285,13 +285,35 @@ function FinalDraftIcon({
   );
 }
 
+/** Microsoft four-square mark (svgrepo); `currentColor` so it matches `text-portfolio-green` in `ToolIcon`. */
+function MicrosoftOffice365Icon({
+  size = 18,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+    >
+      <path fill="currentColor" d="M2,3h9v9H2V3m9,19H2V13h9v9M21,3v9H12V3h9m0,19H12V13h9Z" />
+    </svg>
+  );
+}
+
 // Tool label -> icon: React component (@icons-pack) or "favicon:domain" for Google favicon (styled to match)
 const TOOL_ICONS: Record<
   string,
   | React.ComponentType<{ size?: number; className?: string }>
   | string
 > = {
-  "Microsoft Office 365": "favicon:microsoft.com",
+  "Microsoft Office 365": MicrosoftOffice365Icon,
   "Adobe Creative Suite": AdobeSuiteIcon,
   "Canva": CanvaIcon,
   "Procreate": ProcreateIcon,
@@ -377,13 +399,26 @@ const PANEL_TRANSITION = {
 };
 const CONTENT_SETTLE_DELAY = 0.06; // 60ms after panel settles
 
-// Shared grid phase so all grid backgrounds stay in sync (no jolt on transition)
+/** Drift duration (seconds) — must match `gridDriftSmooth` in `index.css`. */
 const GRID_DRIFT_DURATION = 12;
 const GRID_CELL_SIZE = 48;
-const GridPhaseContext = createContext<number>(0);
 
-function useGridPhase() {
-  return useContext(GridPhaseContext);
+/** One-shot wall-clock sync per overlay mount — avoids 10Hz React `gridPhase` + full-tree re-renders (flicker). */
+function useGridDriftAnimationDelay(): string {
+  const [delay] = useState(() => `-${(performance.now() / 1000) % GRID_DRIFT_DURATION}s`);
+  return delay;
+}
+
+/** Mount only when side-nav opens so drift delay matches wall clock at open (parent stays mounted). */
+function SideNavGridBackdrop() {
+  const delay = useGridDriftAnimationDelay();
+  return (
+    <div
+      className="pointer-events-none absolute inset-0 z-0 grid-drift-bg portfolio-grid-overlay"
+      style={{ ...gridOverlayStyle, animationDelay: delay }}
+      aria-hidden
+    />
+  );
 }
 
 /** WebKit/iOS: thin 1px dual-gradient grids can composite away at ~4% opacity; repeating + webkit size is more reliable. */
@@ -498,11 +533,11 @@ const scrollToId = (id: string, behavior: ScrollBehavior = "smooth") => {
 };
 
 const PROFILE_ACCENT_SOFT = "color-mix(in srgb, var(--palette-red) 56%, rgb(170 170 170))";
-const PROJECTS_ACCENT_SOFT = "color-mix(in srgb, var(--palette-yellow) 44%, rgb(186 186 186))";
+const PROJECTS_ACCENT_SOFT = "color-mix(in srgb, var(--palette-yellow-projects) 48%, rgb(186 186 186))";
 
 const NAV_ITEMS: { id: string; label: string; icon: LucideIcon; color: string; sub: string; microLabel: string }[] = [
   { id: "profile", label: "PROFILE", sub: "Summary", icon: User, color: "[background-color:color-mix(in_srgb,var(--palette-red)_56%,rgb(170_170_170))]", microLabel: "OPEN" },
-  { id: "projects", label: "PROJECTS", sub: "Projects", icon: Zap, color: "[background-color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))]", microLabel: "VIEW" },
+  { id: "projects", label: "PROJECTS", sub: "Projects", icon: Zap, color: "[background-color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]", microLabel: "VIEW" },
   { id: "experience", label: "EXPERIENCE", sub: "Career History", icon: Star, color: "bg-portfolio-blue", microLabel: "ENTER" },
   { id: "skills", label: "SKILLS", sub: "Skills", icon: Briefcase, color: "bg-portfolio-green", microLabel: "OPEN" },
   { id: "social", label: "CONTACT", sub: "Contact", icon: Heart, color: "bg-portfolio-orange", microLabel: "VIEW" },
@@ -984,7 +1019,7 @@ const Hero = ({
     onStart();
   };
 
-  const gridPhase = useGridPhase();
+  const heroGridDriftDelay = useGridDriftAnimationDelay();
   const heroReady = fontsReady && heroMediaReady && heroRevealDelayDone;
   const currentHeroSlide = heroSlides[heroSlideIndex];
   const currentFocal = heroFocalOverrides[currentHeroSlide.id] ?? heroFocalLocked[currentHeroSlide.id] ?? parseFocalPoint(currentHeroSlide.focalPoint);
@@ -1041,7 +1076,7 @@ const Hero = ({
     >
       <div
         className="pointer-events-none absolute inset-0 z-0 grid-drift-bg portfolio-grid-overlay"
-        style={gridOverlayStyle}
+        style={{ ...gridOverlayStyle, animationDelay: heroGridDriftDelay }}
       />
       {heroReady && (
       <motion.div
@@ -1314,7 +1349,7 @@ const RainbowMenuSlide = ({
 }) => {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [playLabels, setPlayLabels] = useState(false);
-  const gridPhase = useGridPhase();
+  const menuGridDriftDelay = useGridDriftAnimationDelay();
 
   useEffect(() => {
     if (!active) {
@@ -1332,8 +1367,8 @@ const RainbowMenuSlide = ({
       aria-label="Menu"
     >
       <div
-        className="pointer-events-none absolute inset-0 z-0 portfolio-grid-overlay"
-        style={{ ...gridOverlayStyle, backgroundPosition: `${gridPhase}px ${gridPhase}px` }}
+        className="pointer-events-none absolute inset-0 z-0 grid-drift-bg portfolio-grid-overlay"
+        style={{ ...gridOverlayStyle, animationDelay: menuGridDriftDelay }}
       />
       <div className="relative z-10 w-full max-w-4xl">
         <div className="flex items-end justify-between gap-6 mb-10">
@@ -1409,7 +1444,6 @@ const SideNavOverlay = ({
   onNavigate: (id: string) => void;
 }) => {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const gridPhase = useGridPhase();
 
   useEffect(() => {
     if (!open) return;
@@ -1434,11 +1468,7 @@ const SideNavOverlay = ({
           transition={{ duration: 0.2 }}
           onClick={onClose}
         >
-          <div
-            className="pointer-events-none absolute inset-0 z-0 portfolio-grid-overlay"
-            style={{ ...gridOverlayStyle, backgroundPosition: `${gridPhase}px ${gridPhase}px` }}
-            aria-hidden
-          />
+          <SideNavGridBackdrop />
         </motion.button>
       )}
       {open && (
@@ -1592,15 +1622,15 @@ const SectionGridOverlay = ({
   /** SHOWCASE: slightly recess grid when project detail overlay is open. */
   projectDetailActive?: boolean;
 } = {}) => {
-  const phase = useGridPhase();
+  const sectionGridDriftDelay = useGridDriftAnimationDelay();
   return (
     <>
       <div
         className={[
-          "pointer-events-none absolute inset-0 z-0 motion-safe:transition-opacity motion-safe:duration-300 motion-safe:ease-out portfolio-grid-overlay",
+          "pointer-events-none absolute inset-0 z-0 grid-drift-bg portfolio-grid-overlay",
           projectDetailActive ? "portfolio-grid-overlay--detail" : "",
         ].join(" ")}
-        style={{ ...gridOverlayStyle, backgroundPosition: `${phase}px ${phase}px` }}
+        style={{ ...gridOverlayStyle, animationDelay: sectionGridDriftDelay }}
         aria-hidden
       />
       {projectDetailActive ? (
@@ -1922,7 +1952,7 @@ const SUPPORTING_ARCHIVE_PDF_ITEMS: SupportingArchivePdfItem[] = [
   },
   {
     id: "cnf-memoir",
-    title: "Memoir",
+    title: "Creative Nonfiction",
     subtitle: "Example 4 — memoir",
     href: "/cnf/example-4-memoir.pdf",
   },
@@ -1996,6 +2026,10 @@ const SHOWCASE_WRITING_TAB_FEATURED: Record<ShowcaseTabId, SupportingArchivePdfI
   "tab-3": SHORT_GRAPHIC_NOVEL_PDF_ITEMS.find((x) => x.id === "sgn-blossom-ink-bw")!,
   "tab-4": SUPPORTING_ARCHIVE_PDF_ITEMS.find((x) => x.id === "cnf-critical-essay")!,
   "tab-5": SUPPORTING_ARCHIVE_PDF_ITEMS.find((x) => x.id === "cnf-media-literary")!,
+  "tab-6": {
+    ...SUPPORTING_ARCHIVE_PDF_ITEMS.find((x) => x.id === "cnf-memoir")!,
+    title: "CREATIVE NONFICTION",
+  },
 };
 
 const archiveRowIndexLabel = (rowIndex: number) => String(rowIndex + 1).padStart(2, "0");
@@ -2228,12 +2262,12 @@ const ProjectsStack = ({
   }, [autoplayIndices]);
 
   return (
-    <div className="mx-auto flex w-full min-w-0 max-w-[min(100%,56rem)] flex-col justify-center items-center pt-2 px-1 pb-0 sm:pt-3 sm:px-2 overflow-x-visible overflow-y-visible lg:max-w-[min(100%,72rem)] xl:max-w-[min(100%,84rem)] 2xl:max-w-[min(100%,96rem)]">
+    <div className="mx-auto -mt-1 sm:-mt-1.5 flex w-full min-w-0 max-w-[min(100%,56rem)] flex-col justify-center items-center pt-2 px-1 pb-0 sm:pt-3 sm:px-2 overflow-x-visible overflow-y-visible lg:max-w-[min(100%,72rem)] xl:max-w-[min(100%,84rem)] 2xl:max-w-[min(100%,96rem)]">
       {/*
        * Single horizontal inset for dots + viewport so the pager lines up with card side borders (same as FEATURED WRITING below).
        */}
       <div className="w-full min-w-0 px-2 sm:px-4 lg:px-2 xl:px-3">
-        <div className="mb-1.5 flex w-full items-center justify-end">
+        <div className="mb-0 flex w-full -translate-y-1.5 items-center justify-end">
           <div className="flex -translate-x-1 items-center gap-2.5 sm:-translate-x-1.5 lg:-translate-x-1 xl:-translate-x-1.5">
             {(emblaApi?.scrollSnapList() ?? []).map((_, snapIdx) => (
               <button
@@ -2242,7 +2276,7 @@ const ProjectsStack = ({
                 onClick={() => emblaApi?.scrollTo(snapIdx)}
                 aria-label={`Go to slide ${snapIdx + 1}`}
                 aria-current={selectedIndex === snapIdx ? "true" : undefined}
-                className={`h-2.5 w-2.5 rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
+                className={`h-2.5 w-2.5 rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
                   selectedIndex === snapIdx
                     ? "bg-white scale-110"
                     : "bg-white/35 hover:bg-white/55"
@@ -2268,7 +2302,7 @@ const ProjectsStack = ({
                   onClick={(e) => onSelect(card.id, e.currentTarget)}
                   whileTap={{ scale: 0.985 }}
                   transition={{ duration: 0.28 / SHOWCASE_TIME_DIV, ease: cardEase }}
-                  className={`group project-card-surface relative w-full ${DETAIL_CARD_H} rounded-[11px] sm:rounded-xl border border-white/[0.09] shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)] text-center overflow-hidden transition-[opacity,background-color,border-color] duration-300 ease-out hover:border-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] hover:bg-[#0b0d15] hover:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
+                  className={`group project-card-surface relative w-full ${DETAIL_CARD_H} rounded-[11px] sm:rounded-xl border border-white/[0.09] shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)] text-center overflow-hidden transition-[opacity,background-color,border-color] duration-300 ease-out hover:border-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] hover:bg-[var(--portfolio-section-card-hover)] hover:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
                     focusProjectId && focusProjectId !== card.id ? "opacity-0 pointer-events-none" : "opacity-100"
                   }`}
                 >
@@ -2323,7 +2357,7 @@ const ProjectsStack = ({
                           <span
                             className={`font-display block w-full max-w-full text-left text-[1rem] sm:text-[1.05rem] md:text-lg lg:text-xl xl:text-[1.35rem] leading-snug text-white tracking-tight line-clamp-3 [text-wrap:balance] motion-safe:transition-[opacity,color] motion-safe:duration-300 motion-safe:ease-out ${
                               index === selectedIndex
-                                ? "opacity-100 group-hover:text-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))]"
+                                ? "opacity-100 group-hover:text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]"
                                 : "opacity-70 group-hover:text-mono-1"
                             }`}
                           >
@@ -2340,7 +2374,7 @@ const ProjectsStack = ({
                         <span
                           className={`font-display w-full max-w-full text-[1rem] sm:text-[1.05rem] md:text-lg lg:text-xl xl:text-[1.35rem] leading-snug text-white tracking-tight line-clamp-4 [text-wrap:balance] motion-safe:transition-[opacity,color] motion-safe:duration-300 motion-safe:ease-out ${
                             index === selectedIndex
-                              ? "opacity-100 group-hover:text-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))]"
+                              ? "opacity-100 group-hover:text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]"
                               : "opacity-0 pointer-events-none"
                           }`}
                           aria-hidden={index !== selectedIndex}
@@ -2860,7 +2894,7 @@ const SupportingProjectsSection = ({
               <div key={section.heading}>
                 <h3
                   ref={sectionIndex === 0 ? archiveFirstYellowRuleRef : undefined}
-                  className="font-heading text-[0.65rem] sm:text-xs tracking-eyebrow leading-snug uppercase text-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] mb-3 pb-2 border-b border-[color:color-mix(in_srgb,var(--palette-yellow)_20%,rgb(186_186_186))]"
+                  className="font-heading text-[0.65rem] sm:text-xs tracking-eyebrow leading-snug uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] mb-3 pb-2 border-b border-[color:color-mix(in_srgb,var(--palette-yellow-projects)_26%,rgb(186_186_186))]"
                 >
                   {section.heading}
                 </h3>
@@ -2885,11 +2919,11 @@ const SupportingProjectsSection = ({
                             {item.subtitle}
                           </span>
                         </div>
-                        <span className="font-mono text-[0.6rem] sm:text-[0.65rem] tracking-[0.14em] uppercase text-mono-2/70 group-hover:text-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] shrink-0 pt-1 transition-colors duration-200">
+                        <span className="font-mono text-[0.6rem] sm:text-[0.65rem] tracking-[0.14em] uppercase text-mono-2/70 group-hover:text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] shrink-0 pt-1 transition-colors duration-200">
                           VIEW
                         </span>
                         <FileText
-                          className="w-4 h-4 shrink-0 text-mono-2/70 group-hover:text-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] mt-0.5 transition-colors duration-200"
+                          className="w-4 h-4 shrink-0 text-mono-2/70 group-hover:text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] mt-0.5 transition-colors duration-200"
                           aria-hidden
                         />
                       </button>
@@ -3102,23 +3136,30 @@ const PROJECT_DETAIL_SURFACE =
 const SHOWCASE_SLIDER_MEDIA_BOX_SHADOW =
   "0 36px 88px rgba(0,0,0,0.6), inset 0 -40px 70px rgba(0,0,0,0.52), 0 0 0 1px rgba(255,255,255,0.07), 0 0 28px 4px rgba(255,255,255,0.04)";
 
-/** Project detail grid cells — same shell + `.project-card-surface` (`#0a0c12` base) as profile cards. */
+/** Project detail grid cells — same shell + `.project-card-surface` (section card token) as profile cards. */
 const showcaseDetailCard = `${PROJECT_DETAIL_SURFACE} project-card-surface px-3 py-3 sm:px-4 sm:py-3.5`;
 
 /** Same frame as project detail insets; darker wash + soft stacked shadow (single box-shadow, two layers). Corners: sharp TL/BR, rounded TR/BL (StealthWorm reference). */
 const SKILLS_SUBCATEGORY_CARD_FACE =
-  "skills-card-surface rounded-none border-0 shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9),0_6px_22px_-10px_rgba(0,0,0,0.52)] [border-radius:0_0.95rem_0_0.95rem] sm:[border-radius:0_1.05rem_0_1.05rem] transition-[background-color,box-shadow] duration-300 ease-out hover:bg-[#0b0d15] hover:shadow-[0_22px_52px_-28px_rgba(0,0,0,0.92),0_8px_26px_-10px_rgba(0,0,0,0.55)]";
+  "skills-card-surface rounded-none border-0 shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9),0_6px_22px_-10px_rgba(0,0,0,0.52)] [border-radius:0_0.95rem_0_0.95rem] sm:[border-radius:0_1.05rem_0_1.05rem] transition-[background-color,box-shadow] duration-300 ease-out hover:bg-[var(--portfolio-section-card-hover)] hover:shadow-[0_22px_52px_-28px_rgba(0,0,0,0.92),0_8px_26px_-10px_rgba(0,0,0,0.55)]";
+
+/** Row zone behind the 3 subskill cards — solid fill, no border/shadow; radii match `SKILLS_SUBCATEGORY_CARD_FACE`. */
+const SKILLS_ROW_STRIP_BG =
+  "pointer-events-none absolute inset-0 z-0 bg-[#06070a] [border-radius:0_0.95rem_0_0.95rem] sm:[border-radius:0_1.05rem_0_1.05rem]";
+
+/** Inset for cards inside the row zone (strip fills padded box via `absolute inset-0`). */
+const SKILLS_ROW_ZONE_PADDING = "p-2.5 sm:p-3.5 md:p-4 lg:p-5";
 
 const ShowcaseDetailOverviewRole = ({ card }: { card: ShowcaseProjectCard }) => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-3">
     <section className={`${showcaseDetailCard} min-w-0 md:col-span-2`}>
-      <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] mb-1.5">OVERVIEW</p>
+      <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] mb-1.5">OVERVIEW</p>
       <p className="font-body text-sm sm:text-base text-mono-2 leading-snug whitespace-pre-line">
         {card.detailOverview?.trim() || "—"}
       </p>
     </section>
     <section className={`${showcaseDetailCard} min-w-0`}>
-      <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] mb-1.5">ROLE</p>
+      <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] mb-1.5">ROLE</p>
       <p className="font-body text-sm sm:text-base text-mono-2 leading-snug whitespace-pre-line">
         {card.detailRole?.trim() || "—"}
       </p>
@@ -3129,13 +3170,13 @@ const ShowcaseDetailOverviewRole = ({ card }: { card: ShowcaseProjectCard }) => 
 const ShowcaseDetailImpactTools = ({ card }: { card: ShowcaseProjectCard }) => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-3">
     <section className={`${showcaseDetailCard} min-w-0 md:col-span-2`}>
-      <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] mb-1.5">IMPACT</p>
+      <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] mb-1.5">IMPACT</p>
       <p className="font-body text-sm sm:text-base text-mono-2 leading-snug whitespace-pre-line">
         {card.detailImpact?.trim() || "—"}
       </p>
     </section>
     <section className={`${showcaseDetailCard} min-w-0`}>
-      <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] mb-1.5">TOOLS</p>
+      <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] mb-1.5">TOOLS</p>
       {card.detailTools?.length ? (
         <ul className="ml-1 list-disc list-outside space-y-1 pl-6 sm:pl-7 marker:text-mono-2/70">
           {card.detailTools.map((tool, i) => (
@@ -3169,7 +3210,7 @@ function ShowcaseWritingFeaturedPanel({
         onActivate={() => onOpenPdfInSupporting(item)}
       />
       <div className="flex min-h-0 min-w-0 w-full flex-1 flex-col gap-2.5 sm:min-w-0 sm:gap-3">
-        <div className="flex min-w-0 flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+        <div className="flex min-w-0 flex-col gap-2.5 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
           <div className="min-w-0 space-y-1">
             <p className="font-display text-lg leading-[1.15] tracking-tight text-white sm:text-xl md:text-2xl md:leading-tight">
               {item.title}
@@ -3178,7 +3219,7 @@ function ShowcaseWritingFeaturedPanel({
           </div>
           <a
             href={item.href}
-            className="featured-writing-raised featured-writing-view-cta inline-flex w-fit shrink-0 items-center gap-2 self-start rounded-[11px] sm:rounded-xl border-0 px-2.5 py-1.5 font-heading text-[10px] sm:text-xs tracking-btn-caps uppercase text-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)] transition-[background-color,color] duration-300 ease-out hover:text-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:self-center sm:px-3 sm:py-2"
+            className="featured-writing-view-cta inline-flex w-fit shrink-0 items-center gap-2 self-start rounded-[11px] sm:rounded-xl px-2.5 py-1.5 font-heading text-[10px] sm:text-xs tracking-btn-caps uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)] transition-[background-color,color,border-color] duration-300 ease-out hover:text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:mr-[6px] sm:px-3 sm:py-2"
             onClick={(e) => {
               e.preventDefault();
               onOpenPdfInSupporting(item);
@@ -3389,6 +3430,33 @@ const PalaceProjects = ({
          * Column inherits --slide-gap from #projects. Spacer + section pb = bottom air; overlay scrolls if needed (no clipping).
          */}
         <div className="flex min-h-0 flex-1 flex-col justify-center overflow-x-hidden overflow-y-visible">
+          <motion.div
+            className="w-full shrink-0"
+            initial={false}
+            animate={{ opacity: activeCard ? 0 : 1 }}
+            transition={{
+              duration: reduceMotion ? 0 : 0.28,
+              ease: [0.16, 1, 0.3, 1],
+            }}
+            style={{ pointerEvents: activeCard ? "none" : "auto" }}
+          >
+            <SectionHeader
+              title="SHOWCASE"
+              align="center"
+              color="text-white"
+              showBar={false}
+              compact
+              titleClassName="xl:text-5xl 2xl:text-6xl"
+              className="mt-1 sm:mt-1.5 !mb-6 sm:!mb-7 md:!mb-8 w-full shrink-0"
+              titleDelay={0.152}
+              titleDuration={0.342}
+              titleStagger={0.0216}
+              viewportOnce={false}
+              slideFade
+              slideFadeDuration={0.5}
+              slideFadeDelay={0.3}
+            />
+          </motion.div>
         {/*
          * CAROUSEL — always in normal flow so the section keeps its height.
          * When a card is active we fade it out but DO NOT unmount it so the
@@ -3422,7 +3490,6 @@ const PalaceProjects = ({
               <ShowcaseAttachedTabStrip
                 activeId={showcaseTabId}
                 onTabChange={setShowcaseTabId}
-                onArchives={onOpenSupporting}
                 className="w-full min-w-0"
                 panel={({ tabWidthPx }) => (
                   <ShowcaseWritingFeaturedPanel
@@ -3455,7 +3522,7 @@ const PalaceProjects = ({
          * Uses flex-col so the card + text stack naturally from the container top.
          */}
         {activeCard && (
-          <div className="absolute inset-0 flex flex-col items-center">
+          <div className="absolute inset-0 z-20 flex flex-col items-center">
             <div className={`w-full max-w-[min(100%,56rem)] shrink-0 ${DETAIL_CARD_H}`} aria-hidden />
 
             {morphDone && (
@@ -3502,7 +3569,7 @@ const PalaceProjects = ({
                         }
                   }
                 >
-                  <p className="m-0 w-full font-heading text-sm sm:text-base leading-snug tracking-eyebrow-sm uppercase text-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))]">
+                  <p className="m-0 w-full font-heading text-sm sm:text-base leading-snug tracking-eyebrow-sm uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]">
                     Project details
                   </p>
                   <h3 className="m-0 w-full font-display text-2xl md:text-3xl leading-[1.1] tracking-[-0.015em] text-white">
@@ -3586,7 +3653,7 @@ const PalaceProjects = ({
             border: "1px solid rgba(255, 255, 255, 0.09)",
             borderRadius: "11px",
             boxShadow: "0 18px 48px -28px rgba(0, 0, 0, 0.9)",
-            background: "#0a0c12",
+            background: "var(--portfolio-section-card)",
             zIndex: 9999,
             top: 0,
             left: 0,
@@ -3611,7 +3678,7 @@ const PalaceProjects = ({
 
 const ProjectPoint = ({ text }: { text: string }) => (
   <div className="flex items-start">
-    <Star className="w-5 h-5 text-[color:color-mix(in_srgb,var(--palette-yellow)_44%,rgb(186_186_186))] mr-3 mt-1 flex-shrink-0 fill-current" />
+    <Star className="w-5 h-5 text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] mr-3 mt-1 flex-shrink-0 fill-current" />
     <span className="font-body text-base md:text-lg text-mono-2 leading-relaxed">{text}</span>
   </div>
 );
@@ -3897,7 +3964,6 @@ const ConfidantExperience = () => {
         <div className="shrink-0">
           <SectionHeader
             title="CAREER OVERVIEW"
-            subtitle="Experience"
             align="center"
             showBar={false}
             compact
@@ -3927,7 +3993,7 @@ const ConfidantExperience = () => {
                     if (idx === 0) experienceFirstCardRef.current = el;
                     if (idx === EXPERIENCE_DATA.length - 1) experienceLastCardRef.current = el;
                   }}
-                  className="experience-card-surface rounded-[0_1rem] border-0 px-4 py-5 shadow-[0_10px_24px_-16px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] transition-[background-color,box-shadow] duration-200 ease-out sm:px-5 sm:py-6 hover:bg-[#0b0d15] hover:shadow-[0_14px_30px_-18px_rgba(0,0,0,0.92),inset_0_1px_0_rgba(255,255,255,0.035)]"
+                  className="experience-card-surface rounded-[0_1rem] border-0 px-4 py-5 shadow-[0_10px_24px_-16px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] transition-[background-color,box-shadow] duration-200 ease-out sm:px-5 sm:py-6 hover:bg-[var(--portfolio-section-card-hover)] hover:shadow-[0_14px_30px_-18px_rgba(0,0,0,0.92),inset_0_1px_0_rgba(255,255,255,0.035)]"
                 >
                   <h3
                     className="font-display text-base font-semibold tracking-[-0.02em] text-white text-balance leading-snug sm:text-lg md:text-xl sm:leading-[1.25] md:leading-snug"
@@ -5127,6 +5193,8 @@ const SKILLS_CONTENT_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
 /** Skills orchestrated reveal (after panel wipe): ms timings + pauses, PROJECT-DETAILS-style; GPU: transform/opacity only. */
 const SKILLS_REVEAL_PAUSE_MS = 51;
+/** Dual-inline row zone backdrops fade in first; orchestrated SKILLS content waits this long (ms). */
+const SKILLS_REVEAL_ROW_ZONES_LEAD_MS = 280;
 const SKILLS_REVEAL_TITLE_FADE_MS = 191;
 const SKILLS_REVEAL_HEADER_SLIDE_MS = 225;
 const SKILLS_REVEAL_CARD_SLIDE_MS = 200;
@@ -5139,7 +5207,8 @@ const SKILLS_REVEAL_TOOLKIT_AFTER_CORE_START_MS = 68;
 const SKILLS_REVEAL_TOOLKIT_GRID_DELAY_MS =
   SKILLS_REVEAL_CORE_GRID_DELAY_MS + SKILLS_REVEAL_TOOLKIT_AFTER_CORE_START_MS;
 const SKILLS_ORCHESTRATED_END_S =
-  (SKILLS_REVEAL_TOOLKIT_GRID_DELAY_MS +
+  (SKILLS_REVEAL_ROW_ZONES_LEAD_MS +
+    SKILLS_REVEAL_TOOLKIT_GRID_DELAY_MS +
     SKILLS_REVEAL_CARD_SLIDE_MS +
     2 * SKILLS_REVEAL_CARD_STAGGER_MS) /
   1000;
@@ -5264,6 +5333,23 @@ const SkillsSubskillsPanel = ({
 }) => {
   const isOrchestrated = orchestratedReveal && variant === "inline" && dualInline;
 
+  const rowZoneBackdrop =
+    isOrchestrated ? (
+      <motion.div
+        aria-hidden
+        className={SKILLS_ROW_STRIP_BG}
+        initial={{ opacity: 0 }}
+        animate={revealActive ? { opacity: 1 } : { opacity: 0 }}
+        transition={{
+          duration: revealReduceMotion ? 0.01 : SKILLS_REVEAL_ROW_ZONES_LEAD_MS / 1000,
+          ease: SKILLS_CONTENT_EASE,
+        }}
+        style={{ willChange: "opacity" }}
+      />
+    ) : (
+      <div aria-hidden className={SKILLS_ROW_STRIP_BG} />
+    );
+
   return (
   <UiverseCard
     className={`skills-main-card skills-subcard${dualInline ? " skills-subcard-dual" : ""}`}
@@ -5290,7 +5376,7 @@ const SkillsSubskillsPanel = ({
           variant === "overlay"
             ? "relative z-10 flex min-h-0 max-h-[min(680px,90vh)] sm:max-h-[min(440px,58vh)] flex-col overflow-hidden px-4 sm:px-10 md:px-16 lg:px-20 py-4 pt-12 sm:pt-14 pb-5 sm:pb-6 text-left shadow-[0_0_22px_rgba(0,0,0,0.5),0_0_18px_rgba(34,211,238,0.12)]"
             : dualInline
-              ? "relative z-10 flex min-h-0 max-h-[min(calc(50dvh-3.75rem),22rem)] max-sm:max-h-[min(calc(50dvh-3.25rem),19rem)] flex-col overflow-hidden px-3 sm:px-6 md:px-10 lg:px-12 py-1.5 sm:py-3 md:py-4 text-left shadow-[0_0_18px_rgba(0,0,0,0.45),0_0_14px_rgba(34,211,238,0.1)]"
+              ? "relative z-10 flex min-h-0 max-h-[min(calc(50dvh-3.75rem),22rem)] max-sm:max-h-[min(calc(50dvh-3.25rem),19rem)] flex-col overflow-hidden px-3 sm:px-6 md:px-10 lg:px-12 pt-0 pb-1.5 sm:pt-1 sm:pb-3 md:pt-1.5 md:pb-4 text-left shadow-[0_0_18px_rgba(0,0,0,0.45),0_0_14px_rgba(34,211,238,0.1)]"
               : "relative z-10 flex min-h-0 max-h-[min(680px,90vh)] sm:max-h-[min(440px,58vh)] flex-col overflow-hidden px-4 sm:px-8 md:px-14 lg:px-16 xl:px-20 py-2.5 sm:py-6 md:py-7 text-left shadow-[0_0_22px_rgba(0,0,0,0.5),0_0_18px_rgba(34,211,238,0.12)]"
         }
         {...(isOrchestrated
@@ -5305,7 +5391,7 @@ const SkillsSubskillsPanel = ({
         <motion.div
           className={
             dualInline && variant === "inline"
-              ? "flex flex-shrink-0 min-w-0 pb-1.5 sm:pb-2.5 mb-1.5 sm:mb-2.5"
+              ? "flex flex-shrink-0 min-w-0 pb-0 sm:pb-0.5 mb-1.5 sm:mb-2"
               : "flex flex-shrink-0 min-w-0 pb-2 sm:pb-4 mb-2 sm:mb-4"
           }
           {...(isOrchestrated
@@ -5317,7 +5403,10 @@ const SkillsSubskillsPanel = ({
                     : { opacity: 1, x: 0 },
                 transition: {
                   duration: revealReduceMotion ? 0.01 : SKILLS_REVEAL_HEADER_SLIDE_MS / 1000,
-                  delay: revealReduceMotion ? 0 : headerRevealDelayMs / 1000,
+                  delay:
+                    revealReduceMotion
+                      ? 0
+                      : (headerRevealDelayMs + SKILLS_REVEAL_ROW_ZONES_LEAD_MS) / 1000,
                   ease: SKILLS_CONTENT_EASE,
                 },
                 style: { willChange: "transform, opacity" },
@@ -5419,19 +5508,21 @@ const SkillsSubskillsPanel = ({
         >
           {slide === "core" ? (
             <div className="text-[14px] sm:text-[15px] leading-[1.55] text-white">
-              <div className="grid w-full min-w-0 grid-cols-1 md:grid-cols-3 md:items-start gap-y-5 sm:gap-y-8 gap-x-6 md:gap-x-8 lg:gap-x-10">
+              <div className={`relative w-full min-w-0 ${SKILLS_ROW_ZONE_PADDING}`}>
+                {rowZoneBackdrop}
+                <div className="relative z-[1] grid w-full min-w-0 grid-cols-1 md:grid-cols-3 md:items-start gap-y-5 sm:gap-y-7 gap-x-4 md:gap-x-5 lg:gap-x-6">
                 {CORE_SUBSKILLS_CATEGORIES.map(({ categoryTitle, items }, index) => {
                   const columnClass = [
                     "flex min-w-0 min-h-0 flex-col",
                     SKILLS_SUBCATEGORY_CARD_FACE,
                     dualInline
-                      ? "px-2.5 py-2.5 sm:px-3 sm:py-3"
+                      ? "px-3 py-3 sm:px-3.5 sm:py-3.5 md:py-4"
                       : "px-3 py-3 sm:px-4 sm:py-3.5",
                   ].join(" ");
                   const cardInner = (
                     <>
                       <p
-                        className="mb-3 w-full min-w-0 pb-2 border-b border-white/[0.06] text-center text-[11px] sm:text-[12px] font-heading font-semibold uppercase leading-snug tracking-eyebrow text-zinc-300/70 text-balance"
+                        className="mb-3.5 w-full min-w-0 pb-2.5 border-b border-white/[0.06] text-center text-[12px] sm:text-[13px] font-heading font-semibold uppercase leading-snug tracking-eyebrow-tight text-zinc-300/70 max-md:text-balance max-md:whitespace-normal md:whitespace-nowrap"
                         title={categoryTitle}
                       >
                         {categoryTitle}
@@ -5472,7 +5563,10 @@ const SkillsSubskillsPanel = ({
                           delay:
                             revealReduceMotion
                               ? 0
-                              : (gridRevealDelayMs + index * SKILLS_REVEAL_CARD_STAGGER_MS) / 1000,
+                              : (SKILLS_REVEAL_ROW_ZONES_LEAD_MS +
+                                  gridRevealDelayMs +
+                                  index * SKILLS_REVEAL_CARD_STAGGER_MS) /
+                                1000,
                           ease: SKILLS_CONTENT_EASE,
                         }}
                         style={{ willChange: "transform, opacity" }}
@@ -5487,11 +5581,14 @@ const SkillsSubskillsPanel = ({
                     </div>
                   );
                 })}
+                </div>
               </div>
             </div>
           ) : (
             <div className="text-[14px] sm:text-[15px] leading-[1.55] text-white">
-              <div className="grid w-full min-w-0 grid-cols-1 md:grid-cols-3 md:items-start gap-y-5 sm:gap-y-8 gap-x-6 md:gap-x-8 lg:gap-x-10 [&>*]:min-w-0">
+              <div className={`relative w-full min-w-0 ${SKILLS_ROW_ZONE_PADDING}`}>
+                {rowZoneBackdrop}
+                <div className="relative z-[1] grid w-full min-w-0 grid-cols-1 md:grid-cols-3 md:items-start gap-y-5 sm:gap-y-7 gap-x-4 md:gap-x-5 lg:gap-x-6 [&>*]:min-w-0">
                 {[
                   {
                     title: "Design & Productivity",
@@ -5523,13 +5620,13 @@ const SkillsSubskillsPanel = ({
                     "min-w-0 flex min-h-0 flex-col",
                     SKILLS_SUBCATEGORY_CARD_FACE,
                     dualInline
-                      ? "px-2.5 py-2.5 sm:px-3 sm:py-3"
+                      ? "px-3 py-3 sm:px-3.5 sm:py-3.5 md:py-4"
                       : "px-3 py-3 sm:px-4 sm:py-3.5",
                   ].join(" ");
                   const cardInner = (
                     <>
                       <p
-                        className="mb-3 w-full min-w-0 pb-2 border-b border-white/[0.06] text-center text-[11px] sm:text-[12px] font-heading font-semibold uppercase tracking-eyebrow leading-snug text-zinc-300/70 text-balance"
+                        className="mb-3.5 w-full min-w-0 pb-2.5 border-b border-white/[0.06] text-center text-[12px] sm:text-[13px] font-heading font-semibold uppercase leading-snug tracking-eyebrow-tight text-zinc-300/70 max-md:text-balance max-md:whitespace-normal md:whitespace-nowrap"
                         title={title}
                       >
                         {label}
@@ -5570,7 +5667,10 @@ const SkillsSubskillsPanel = ({
                           delay:
                             revealReduceMotion
                               ? 0
-                              : (gridRevealDelayMs + index * SKILLS_REVEAL_CARD_STAGGER_MS) / 1000,
+                              : (SKILLS_REVEAL_ROW_ZONES_LEAD_MS +
+                                  gridRevealDelayMs +
+                                  index * SKILLS_REVEAL_CARD_STAGGER_MS) /
+                                1000,
                           ease: SKILLS_CONTENT_EASE,
                         }}
                         style={{ willChange: "transform, opacity" }}
@@ -5585,6 +5685,7 @@ const SkillsSubskillsPanel = ({
                     </div>
                   );
                 })}
+                </div>
               </div>
             </div>
           )}
@@ -5706,6 +5807,7 @@ const SkillArsenal = ({
                 }
                 transition={{
                   duration: revealRm ? 0.01 : SKILLS_REVEAL_TITLE_FADE_MS / 1000,
+                  delay: revealRm ? 0 : SKILLS_REVEAL_ROW_ZONES_LEAD_MS / 1000,
                   ease: SKILLS_CONTENT_EASE,
                 }}
                 style={{ willChange: "transform, opacity" }}
@@ -6133,14 +6235,6 @@ export default function Home() {
     currentSection === "projects-supporting" ||
     !!currentSection?.startsWith("project-");
 
-  // Single global grid phase so all grid overlays stay in sync (no jolt on panel transition)
-  const [gridPhase, setGridPhase] = useState(0);
-  useEffect(() => {
-    const tick = () => setGridPhase(((performance.now() / 1000) * (GRID_CELL_SIZE / GRID_DRIFT_DURATION)) % GRID_CELL_SIZE);
-    const id = setInterval(tick, 100);
-    return () => clearInterval(id);
-  }, []);
-
   // Preload SHOWCASE carousel assets + full detail-hero video buffer (DetailCardMedia uses preload="auto").
   useEffect(() => {
     if (hasWarmedProjectMediaRef.current) return;
@@ -6314,7 +6408,6 @@ export default function Home() {
   }, [isResumeMode, slideOrder]);
 
   return (
-    <GridPhaseContext.Provider value={gridPhase}>
     <div
       className={`selection:bg-portfolio-blue selection:text-white transition-colors duration-500 ${
         isResumeMode ? "min-h-screen overflow-x-hidden bg-white" : "h-screen w-screen overflow-hidden"
@@ -6660,6 +6753,5 @@ export default function Home() {
         </>
       )}
     </div>
-    </GridPhaseContext.Provider>
   );
 }

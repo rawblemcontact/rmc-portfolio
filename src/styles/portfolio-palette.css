@@ -13,6 +13,8 @@
   --palette-red: #ff0000;
   --palette-orange: #580aff;
   --palette-yellow: #ffd300;
+  /** Showcase / menu “soft gold” motif — a touch more chroma than `--palette-yellow` */
+  --palette-yellow-projects: #ffdc28;
   --palette-green: #00854d;
   --palette-green-bright: #00b47a;
   --palette-blue: #147df5;

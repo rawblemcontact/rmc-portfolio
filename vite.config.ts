@@ -44,6 +44,8 @@ export default defineConfig({
   },
   server: {
     host: "0.0.0.0",
+    port: 5173,
+    strictPort: true,
     allowedHosts: true,
     fs: {
       strict: true,
@@ -54,8 +56,10 @@ export default defineConfig({
       Pragma: "no-cache",
       Expires: "0",
     },
+    // LAN: client must open WS on the same port the browser uses (see server.hmr in Vite docs).
     hmr: {
       overlay: true,
+      clientPort: 5173,
     },
   },
   optimizeDeps: {
