@@ -99,6 +99,8 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
     scroll-behavior: smooth;
+    height: 100%;
+    overflow: hidden;
   }
   @media (prefers-reduced-motion: reduce) {
     html {
@@ -112,11 +114,14 @@
     @apply font-body antialiased text-mono-2 overflow-x-hidden;
     background-color: #0a0a0a;
     background-image: none !important;
+    height: 100%;
+    overflow: hidden;
   }
   /* Force solid backgrounds to eliminate diagonal artifacts (no patterns/gradients) */
   #root {
     background-color: #0a0a0a;
     background-image: none !important;
+    height: 100%;
   }
   [id="profile"],
   [id="experience"],
@@ -597,6 +602,96 @@
     .archive-optical-scrollbar-host .archive-optical-scrollbar-track {
       opacity: 1;
       transition: none;
+    }
+  }
+
+  .career-viewport {
+    --career-card-pad: clamp(14px, 1.45vw, 18px);
+    --career-entry-gap: 22px;
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .career-timeline-shell {
+    display: flex;
+    flex-direction: column;
+    max-width: min(100%, 1030px);
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    /* Match #projects / PalaceProjects container: pt-[calc(5.25rem+2px)] md:pt-[calc(6.25rem+2px)] */
+    padding-top: calc(5.25rem + 2px + env(safe-area-inset-top, 0px));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  }
+
+  @media (min-width: 768px) {
+    .career-timeline-shell {
+      padding-top: calc(6.25rem + 2px + env(safe-area-inset-top, 0px));
+    }
+  }
+
+  .career-timeline-heading {
+    width: min(100%, 760px);
+    margin: 0 auto;
+  }
+
+  .career-timeline-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: visible;
+    overscroll-behavior: contain;
+    padding-bottom: 1rem;
+  }
+
+  .career-timeline-list {
+    width: 100%;
+    max-width: 760px;
+    margin: 0 auto;
+    padding-bottom: 1.5rem;
+  }
+
+  .career-timeline-entry {
+    position: relative;
+    display: block;
+    width: 100%;
+  }
+
+  .career-timeline-entry + .career-timeline-entry {
+    margin-top: var(--career-entry-gap);
+  }
+
+  .career-timeline-card {
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+    max-width: 760px;
+    margin: 0;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    overflow: visible;
+    overscroll-behavior: contain;
+    padding: var(--career-card-pad);
+    transform: none;
+  }
+
+  .career-timeline-card .card-content {
+    max-width: none;
+    width: 100%;
+  }
+
+  @media (max-width: 640px) {
+    .career-timeline-shell {
+      --career-entry-gap: 18px;
     }
   }
 
@@ -1223,4 +1318,3 @@
 .supporting-archive-pdf-row:has(+ li:hover) {
   border-bottom-color: rgba(250, 204, 21, 0.55);
 }
-

@@ -25,8 +25,6 @@ import {
   LucideIcon,
   FileText,
   Zap,
-  ChevronLeft,
-  ChevronRight,
   User,
   Briefcase,
 } from "lucide-react";
@@ -392,18 +390,18 @@ const staggerContainer: Variants = {
   }
 };
 
-// Stacked panel: 380–420ms, decisive, no bounce (anime-tech / Persona-adjacent)
+// Stacked panel: 380?420ms, decisive, no bounce (anime-tech / Persona-adjacent)
 const PANEL_TRANSITION = {
   duration: 0.4,
   ease: [0.65, 0, 0.35, 1] as const, // slightly smoother cubic-bezier
 };
 const CONTENT_SETTLE_DELAY = 0.06; // 60ms after panel settles
 
-/** Drift duration (seconds) — must match `gridDriftSmooth` in `index.css`. */
+/** Drift duration (seconds) ? must match `gridDriftSmooth` in `index.css`. */
 const GRID_DRIFT_DURATION = 12;
 const GRID_CELL_SIZE = 48;
 
-/** One-shot wall-clock sync per overlay mount — avoids 10Hz React `gridPhase` + full-tree re-renders (flicker). */
+/** One-shot wall-clock sync per overlay mount ? avoids 10Hz React `gridPhase` + full-tree re-renders (flicker). */
 function useGridDriftAnimationDelay(): string {
   const [delay] = useState(() => `-${(performance.now() / 1000) % GRID_DRIFT_DURATION}s`);
   return delay;
@@ -428,7 +426,7 @@ const gridOverlayStyle: React.CSSProperties = {
   WebkitBackgroundSize: `${GRID_CELL_SIZE}px ${GRID_CELL_SIZE}px`,
 };
 
-// Motion-only glow on leading accent edge: faint light-bleed, 10–15% opacity, 8–16px blur
+// Motion-only glow on leading accent edge: faint light-bleed, 10?15% opacity, 8?16px blur
 const ACCENT_GLOW = {
   blur: 12,
   opacity: 0.12,
@@ -543,7 +541,7 @@ const NAV_ITEMS: { id: string; label: string; icon: LucideIcon; color: string; s
   { id: "social", label: "CONTACT", sub: "Contact", icon: Heart, color: "bg-portfolio-orange", microLabel: "VIEW" },
 ];
 
-// Section id → panel edge accent (CSS vars from src/styles/portfolio-palette.css)
+// Section id ? panel edge accent (CSS vars from src/styles/portfolio-palette.css)
 const SECTION_ACCENT_COLOR: Record<string, string> = {
   profile: PROFILE_ACCENT_SOFT,
   projects: PROJECTS_ACCENT_SOFT,
@@ -1010,7 +1008,7 @@ const Hero = ({
       setSliderAnimDone(true);
       return;
     }
-    // Phase 1 text: last element completes at ~0.6s. Hold 0.5s → slider phase at 1.1s.
+    // Phase 1 text: last element completes at ~0.6s. Hold 0.5s ? slider phase at 1.1s.
     const t = window.setTimeout(() => setSliderPhaseActive(true), 1100);
     return () => window.clearTimeout(t);
   }, [fontsReady, heroMediaReady, heroRevealDelayDone, reduceMotion]);
@@ -1757,8 +1755,8 @@ const PhantomProfile = () => {
               transition={{ duration: BUTTON_FADE_DURATION_MS / 1000, delay: overlayRevealed ? BUTTONS_DELAY_AFTER_SUMMARY_MS / 1000 : 0, ease: [0.16, 1, 0.3, 1] }}
             >
               <p className="font-heading w-full min-w-0 max-w-full text-balance text-sm tracking-eyebrow leading-snug uppercase text-mono-2/90 max-sm:whitespace-normal sm:whitespace-nowrap sm:overflow-x-auto sm:overflow-y-visible sm:no-scrollbar">
-                Victoria, BC <span className="text-mono-2/35 mx-0.5 sm:mx-1" aria-hidden>•</span> BA WRITING{" "}
-                <span className="text-mono-2/35 mx-0.5 sm:mx-1" aria-hidden>•</span> DIGITAL MEDIA
+                Victoria, BC <span className="text-mono-2/35 mx-0.5 sm:mx-1" aria-hidden>?</span> BA WRITING{" "}
+                <span className="text-mono-2/35 mx-0.5 sm:mx-1" aria-hidden>?</span> DIGITAL MEDIA
               </p>
             </motion.div>
             <motion.div
@@ -1825,7 +1823,7 @@ type ShowcaseProjectCard = {
   readonly focalPoint?: string;
   /** Optional per-project hero zoom baseline (1 = default cover scale). */
   readonly zoom?: number;
-  /** Detail overlay — fixed section order: Overview, Role, Tools, Impact. */
+  /** Detail overlay ? fixed section order: Overview, Role, Tools, Impact. */
   readonly detailOverview?: string;
   readonly detailRole?: string;
   readonly detailTools?: readonly string[];
@@ -1841,7 +1839,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     poster: "/rawblem-thumbnail-poster.jpg",
     focalPoint: "50% 34%",
     detailOverview:
-      "A focused creative brand built around short-form video and repeatable content beats—treatment, capture, and platform-native packaging.",
+      "A focused creative brand built around short-form video and repeatable content beats?treatment, capture, and platform-native packaging.",
     detailRole: "Sole creator: concept, production, edit, and distribution.",
     detailTools: ["CapCut", "DaVinci Resolve", "Hootsuite", "TikTok / Reels / Shorts"],
     detailImpact: "Story-first formats tuned for retention; multi-platform publishing with consistent voice and visual DNA.",
@@ -1853,19 +1851,19 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     thumbnail: "/8bit-festival-thumbnail.jpg",
     focalPoint: "50% 42%",
     detailOverview:
-      "Pixel-style bumpers and interstitials for a film festival program—simple loops, readable typography, and arcade-era restraint.",
+      "Pixel-style bumpers and interstitials for a film festival program?simple loops, readable typography, and arcade-era restraint.",
     detailRole: "Animation, art direction, and asset delivery for playback.",
     detailTools: ["Pixel workflow / raster", "Timeline-based editing"],
     detailImpact: "Clear on-screen branding between screenings without overpowering the main features.",
   },
   {
     id: "project-undertale-fhe",
-    title: "UNDERTALE — Forever Home Edition",
-    tagline: "Game project · GameMaker Studio 2",
+    title: "UNDERTALE ? Forever Home Edition",
+    tagline: "Game project ? GameMaker Studio 2",
     thumbnail: "/undertale-fhe-thumbnail.png",
     focalPoint: "50% 40%",
     detailOverview:
-      "A GameMaker Studio 2 project exploring Undertale-inspired tone and structure—rooms, encounters, and narrative pacing as design problems.",
+      "A GameMaker Studio 2 project exploring Undertale-inspired tone and structure?rooms, encounters, and narrative pacing as design problems.",
     detailRole: "Design, implementation, and iteration in GMS2.",
     detailTools: ["GameMaker Studio 2"],
     detailImpact: "Hands-on practice shipping playable slices and tightening feel through playtesting.",
@@ -1882,7 +1880,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     detailRole: "Design and front-end implementation.",
     detailTools: ["React", "Vite", "TypeScript", "Tailwind CSS", "Framer Motion"],
     detailImpact:
-      "Single deployable artifact, fast iteration, and a cohesive Neo‑Tokyo / command UI visual language.",
+      "Single deployable artifact, fast iteration, and a cohesive Neo?Tokyo / command UI visual language.",
   },
   {
     id: "project-slaywire",
@@ -1891,7 +1889,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     thumbnail: "/slaywire-thumbnail.png",
     focalPoint: "50% 40%",
     detailOverview:
-      "Original long-form illustrated narrative—worldbuilding, cast, and visual development for a standalone graphic novel.",
+      "Original long-form illustrated narrative?worldbuilding, cast, and visual development for a standalone graphic novel.",
     detailRole: "Writer, illustrator, and world/visual development.",
     detailTools: ["Digital illustration", "Layout & print-minded pacing"],
     detailImpact: "A durable IP bible and finished spreads that support pitching and incremental publishing.",
@@ -1904,7 +1902,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     poster: "/edits-meme1-online-poster.jpg",
     focalPoint: "50% 36%",
     detailOverview:
-      "Short-form edits built around timing, meme literacy, and platform-native pacing—hooks, captions, and sound-led moments.",
+      "Short-form edits built around timing, meme literacy, and platform-native pacing?hooks, captions, and sound-led moments.",
     detailRole: "Editor and creative director for individual cuts.",
     detailTools: ["CapCut", "DaVinci Resolve"],
     detailImpact: "Sharper retention in the first seconds; clearer punchlines and readable on-screen text.",
@@ -1924,12 +1922,12 @@ type SupportingArchivePdfItem = {
   index?: string;
 };
 
-/** Creative nonfiction PDFs — `client/public/cnf/`. */
+/** Creative nonfiction PDFs ? `client/public/cnf/`. */
 const SUPPORTING_ARCHIVE_PDF_ITEMS: SupportingArchivePdfItem[] = [
   {
     id: "cnf-article",
     title: "Article",
-    subtitle: "Example 1 — article",
+    subtitle: "Example 1 ? article",
     href: "/cnf/example-1-article.pdf",
     description:
       "Magazine-style creative nonfiction: structure, voice, and scene craft in a publication-ready article. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.",
@@ -1937,15 +1935,15 @@ const SUPPORTING_ARCHIVE_PDF_ITEMS: SupportingArchivePdfItem[] = [
   {
     id: "cnf-media-literary",
     title: "Media literary analysis",
-    subtitle: "Example 2 — media & text",
+    subtitle: "Example 2 ? media & text",
     href: "/cnf/example-2-media-literary-analysis.pdf",
     description:
-      "Pairs media with written work—examining how form, context, and craft shape meaning across text and screen. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.",
+      "Pairs media with written work?examining how form, context, and craft shape meaning across text and screen. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.",
   },
   {
     id: "cnf-critical-essay",
     title: "Critical literary essay",
-    subtitle: "Example 3 — critical analysis",
+    subtitle: "Example 3 ? critical analysis",
     href: "/cnf/example-3-critical-literary-essay.pdf",
     description:
       "Close reading and argument: a thesis-driven essay that interprets literary texts with evidence and scholarly framing.",
@@ -1953,12 +1951,12 @@ const SUPPORTING_ARCHIVE_PDF_ITEMS: SupportingArchivePdfItem[] = [
   {
     id: "cnf-memoir",
     title: "Creative Nonfiction",
-    subtitle: "Example 4 — memoir",
+    subtitle: "Example 4 ? memoir",
     href: "/cnf/example-4-memoir.pdf",
   },
 ];
 
-/** Screenplays — `client/public/screenplays/`. */
+/** Screenplays ? `client/public/screenplays/`. */
 const SCREENPLAY_PDF_ITEMS: SupportingArchivePdfItem[] = [
   {
     id: "screenplay-audience-of-one",
@@ -1966,7 +1964,7 @@ const SCREENPLAY_PDF_ITEMS: SupportingArchivePdfItem[] = [
     subtitle: "Robbie McLaughlin",
     href: "/screenplays/audience-of-one-robbie-mclaughlin.pdf",
     description:
-      "A short screenplay tuned for pacing, dialogue, and character—formatted and structured like a production-ready spec. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.",
+      "A short screenplay tuned for pacing, dialogue, and character?formatted and structured like a production-ready spec. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.",
   },
   {
     id: "screenplay-rock-paper-promise",
@@ -1983,12 +1981,12 @@ const SCREENPLAY_PDF_ITEMS: SupportingArchivePdfItem[] = [
   },
 ];
 
-/** Short graphic novel PDFs — `client/public/short-graphic-novels/`. */
+/** Short graphic novel PDFs ? `client/public/short-graphic-novels/`. */
 const SHORT_GRAPHIC_NOVEL_PDF_ITEMS: SupportingArchivePdfItem[] = [
   {
     id: "sgn-blossom-ink-bw",
     title: "Blossom",
-    subtitle: "Ink — black & white",
+    subtitle: "Ink ? black & white",
     href: "/short-graphic-novels/blossom-ink-bw.pdf",
     description:
       "Inked sequential pages in black and white: line weight, contrast, and panel flow for the graphic-novel short. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.",
@@ -1996,13 +1994,13 @@ const SHORT_GRAPHIC_NOVEL_PDF_ITEMS: SupportingArchivePdfItem[] = [
   {
     id: "sgn-writ405-final",
     title: "WRIT405",
-    subtitle: "Final revision — Robbie McLaughlin",
+    subtitle: "Final revision ? Robbie McLaughlin",
     href: "/short-graphic-novels/writ405-final-revision-robbie-mclaughlin.pdf",
   },
   {
     id: "sgn-blossom-thumbnails",
     title: "Blossom",
-    subtitle: "Thumbnails — Robbie McLaughlin",
+    subtitle: "Thumbnails ? Robbie McLaughlin",
     href: "/short-graphic-novels/blossom-thumbnails-robbie-mclaughlin.pdf",
   },
   {
@@ -2014,9 +2012,9 @@ const SHORT_GRAPHIC_NOVEL_PDF_ITEMS: SupportingArchivePdfItem[] = [
 ];
 
 const SUPPORTING_ARCHIVE_PDF_SECTIONS: { heading: string; items: SupportingArchivePdfItem[] }[] = [
-  { heading: "Creative nonfiction — PDF", items: SUPPORTING_ARCHIVE_PDF_ITEMS },
-  { heading: "Screenplays — PDF", items: SCREENPLAY_PDF_ITEMS },
-  { heading: "Short graphic novels — PDF", items: SHORT_GRAPHIC_NOVEL_PDF_ITEMS },
+  { heading: "Creative nonfiction ? PDF", items: SUPPORTING_ARCHIVE_PDF_ITEMS },
+  { heading: "Screenplays ? PDF", items: SCREENPLAY_PDF_ITEMS },
+  { heading: "Short graphic novels ? PDF", items: SHORT_GRAPHIC_NOVEL_PDF_ITEMS },
 ];
 
 /** Featured PDF per FEATURED WRITING tab (order matches tab strip). */
@@ -2034,11 +2032,11 @@ const SHOWCASE_WRITING_TAB_FEATURED: Record<ShowcaseTabId, SupportingArchivePdfI
 
 const archiveRowIndexLabel = (rowIndex: number) => String(rowIndex + 1).padStart(2, "0");
 
-/** Showcase carousel parallax tween (same idea as Embla “Predefined → Parallax”). */
+/** Showcase carousel parallax tween (same idea as Embla ?Predefined ? Parallax?). */
 const PROJECT_CAROUSEL_TWEEN_FACTOR_BASE = 0.52;
 const PROJECT_MEDIA_WARMUP_DELAY_MS = 20;
 
-/** Divide showcase + card→detail durations by this for a uniform speed-up (1.2 → 20% faster). */
+/** Divide showcase + card?detail durations by this for a uniform speed-up (1.2 ? 20% faster). */
 const SHOWCASE_TIME_DIV = 1.2;
 const PROJECT_CARD_AUTOPLAY_DELAY_MS = Math.round(360 / SHOWCASE_TIME_DIV);
 const SHOWCASE_GATE_S = 0.02 / SHOWCASE_TIME_DIV;
@@ -2046,15 +2044,15 @@ const SHOWCASE_STAGGER_S = 0.09 / SHOWCASE_TIME_DIV;
 const SHOWCASE_CHILD_DUR_S = 0.34 / SHOWCASE_TIME_DIV;
 const SHOWCASE_EASE = [0.16, 1, 0.3, 1] as const;
 const SHOWCASE_FADE_TOTAL_MS = Math.round((SHOWCASE_GATE_S + SHOWCASE_STAGGER_S + SHOWCASE_CHILD_DUR_S) * 1000);
-/** Fade when swapping SHOWCASE carousel ↔ Supporting & archive in place */
+/** Fade when swapping SHOWCASE carousel ? Supporting & archive in place */
 const SHOWCASE_SUBROUTE_FADE_S = DUR.fast;
-/** FLIP morph: carousel card → detail hero (ease matches SHOWCASE_EASE for one continuous feel). */
+/** FLIP morph: carousel card ? detail hero (ease matches SHOWCASE_EASE for one continuous feel). */
 const SHOWCASE_CARD_MORPH_DUR_S = 0.36 / SHOWCASE_TIME_DIV;
-/** Carousel chrome fades while the flying card moves — slightly shorter than morph so the handoff reads clean. */
+/** Carousel chrome fades while the flying card moves ? slightly shorter than morph so the handoff reads clean. */
 const SHOWCASE_CARD_OPEN_FADE_S = 0.34 / SHOWCASE_TIME_DIV;
-/** Extra speed for project-detail title + grid fades (÷ on top of SHOWCASE_TIME_DIV). */
+/** Extra speed for project-detail title + grid fades (? on top of SHOWCASE_TIME_DIV). */
 const DETAIL_TEXT_FADE_EXTRA_DIV = 1.12;
-/** Copy below hero: CSS transitions + rAF defer — short opacity, dominant slide. */
+/** Copy below hero: CSS transitions + rAF defer ? short opacity, dominant slide. */
 const DETAIL_HDR_OPACITY_MS = Math.round(95 / SHOWCASE_TIME_DIV / DETAIL_TEXT_FADE_EXTRA_DIV);
 const DETAIL_HDR_SLIDE_MS = Math.round(280 / SHOWCASE_TIME_DIV / DETAIL_TEXT_FADE_EXTRA_DIV);
 const DETAIL_HDR_SLIDE_PX = Math.round(22 / SHOWCASE_TIME_DIV);
@@ -2075,7 +2073,7 @@ const DETAIL_HERO_MEDIA_FADE_EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
 /** Align copy schedule with hero fade: ~double-rAF after morph before opacity transition (ms from morph end). */
 const DETAIL_HERO_FADE_START_RAF_PAD_MS = 40;
 
-/** Match showcase carousel card height (same as `motion.button` project cards). Capped with svh so SHOWCASE + FEATURED fit one screen with bottom gutter — no scroll. */
+/** Match showcase carousel card height (same as `motion.button` project cards). Capped with svh so SHOWCASE + FEATURED fit one screen with bottom gutter ? no scroll. */
 const DETAIL_CARD_H =
   "h-[min(280px,45svh)] sm:h-[min(308px,48svh)] md:h-[min(328px,50svh)] lg:h-[min(352px,52svh)] xl:h-[min(368px,54svh)] 2xl:h-[min(384px,56svh)]";
 
@@ -2287,7 +2285,7 @@ const ProjectsStack = ({
         </div>
         <div className="min-w-0 max-w-full w-full overflow-hidden [--slide-gap:0.875rem] sm:[--slide-gap:1.25rem] lg:[--slide-gap:1rem] xl:[--slide-gap:1.125rem]">
         {/*
-         * Slides: 1× full width < lg; lg+ 2 columns. Embla `align: start` + clip + slightly under-filled halves = no neighbor slivers.
+         * Slides: 1? full width < lg; lg+ 2 columns. Embla `align: start` + clip + slightly under-filled halves = no neighbor slivers.
          */}
         <div ref={emblaRef} className="overflow-x-clip overflow-y-hidden">
           <div className="flex items-stretch touch-pan-y [-webkit-touch-callout:none] -ml-[var(--slide-gap)]">
@@ -2398,7 +2396,7 @@ const ProjectsStack = ({
   );
 };
 
-/** WRITING SAMPLES + CAREER OVERVIEW — optical scrollbar rail (desktop lg+). */
+/** WRITING SAMPLES + CAREER OVERVIEW ? optical scrollbar rail (desktop lg+). */
 const PORTFOLIO_SECTION_SCROLLBAR_VISIBLE_MS = 450;
 const PORTFOLIO_OPTICAL_MIN_VIEWPORT_PX = 1024;
 const PORTFOLIO_OPTICAL_RAIL_BOTTOM_NUDGE_PX = 4;
@@ -2424,7 +2422,7 @@ const SupportingProjectsSection = ({
   /** When set (e.g. from FEATURED WRITING VIEW / preview), opens the PDF loader for this item once. */
   pendingPdfFromShowcase?: SupportingArchivePdfItem | null;
   onPendingPdfFromShowcaseConsumed?: () => void;
-  /** After closing a PDF that was opened from FEATURED WRITING — go back to SHOWCASE without lingering on this page. */
+  /** After closing a PDF that was opened from FEATURED WRITING ? go back to SHOWCASE without lingering on this page. */
   onReturnToShowcaseAfterFeaturedPreview?: () => void;
 } = {}) => {
   const [previewPdf, setPreviewPdf] = useState<SupportingArchivePdfItem | null>(null);
@@ -2451,7 +2449,7 @@ const SupportingProjectsSection = ({
   const archiveScrollHideTimerRef = useRef<number | null>(null);
   const openedFeaturedPreviewRef = useRef(false);
 
-  /** Archive section + dim scrim fade (dialog can mount mid-fade — see mount delay). */
+  /** Archive section + dim scrim fade (dialog can mount mid-fade ? see mount delay). */
   const PREVIEW_PRE_FADE_S = 0.16;
   /** Show PDF modal this soon after click so loader appears before archive fade finishes. */
   const PREVIEW_PDF_MOUNT_MS = 96;
@@ -2459,7 +2457,7 @@ const SupportingProjectsSection = ({
   const PREVIEW_CLOSE_FADE_S = 0.34;
   const PREVIEW_RETURN_GATE_MS = 70;
   const PREVIEW_READY_HOLD_MS = 32;
-  /** Shell fade; loader fades in after so nested opacity doesn’t hide it. */
+  /** Shell fade; loader fades in after so nested opacity doesn?t hide it. */
   const PREVIEW_PDF_DIALOG_FADE_S = 0.175;
   /** Was ~0.41s after mount; halved to tighten gap after archive fades. */
   const PREVIEW_LOADER_FADE_IN_DELAY_S = PREVIEW_PDF_DIALOG_FADE_S + 0.03;
@@ -2980,7 +2978,7 @@ const SupportingProjectsSection = ({
             <SectionGridOverlay />
             {/*
               PdfJsDocumentView stays mounted in the frame below (opacity 0 until ready) so fetch/render
-              runs in parallel with this overlay — loader fade-in is visual only.
+              runs in parallel with this overlay ? loader fade-in is visual only.
             */}
             <AnimatePresence
               mode="wait"
@@ -3015,13 +3013,13 @@ const SupportingProjectsSection = ({
                   aria-busy
                   aria-live="polite"
                 >
-                  <span className="sr-only">Loading PDF…</span>
+                  <span className="sr-only">Loading PDF?</span>
                   <PdfFoldLoader className="scale-[1.6] sm:scale-[1.85]" />
                   <p
                     className="mt-4 font-body text-[0.58rem] uppercase tracking-[0.14em] text-mono-2/70"
                     aria-hidden
                   >
-                    Loading PDF…
+                    Loading PDF?
                   </p>
                 </motion.div>
               )}
@@ -3102,7 +3100,7 @@ const SupportingProjectsSection = ({
 
 type CardRect = { top: number; left: number; width: number; height: number };
 
-/** Settled project detail hero — full-bleed media with per-project focal crop. */
+/** Settled project detail hero ? full-bleed media with per-project focal crop. */
 const DetailCardMedia = ({ card }: { card: ShowcaseProjectCard }) => (
   <>
     {card.thumbnailVideo ? (
@@ -3132,18 +3130,18 @@ const DetailCardMedia = ({ card }: { card: ShowcaseProjectCard }) => (
 const PROJECT_DETAIL_SURFACE =
   "rounded-[11px] sm:rounded-xl border-0 shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)]";
 
-/** Same box-shadow + vignette stack as the hero SHOWCASE media slider (final “open” state). */
+/** Same box-shadow + vignette stack as the hero SHOWCASE media slider (final ?open? state). */
 const SHOWCASE_SLIDER_MEDIA_BOX_SHADOW =
   "0 36px 88px rgba(0,0,0,0.6), inset 0 -40px 70px rgba(0,0,0,0.52), 0 0 0 1px rgba(255,255,255,0.07), 0 0 28px 4px rgba(255,255,255,0.04)";
 
-/** Project detail grid cells — same shell + `.project-card-surface` (section card token) as profile cards. */
+/** Project detail grid cells ? same shell + `.project-card-surface` (section card token) as profile cards. */
 const showcaseDetailCard = `${PROJECT_DETAIL_SURFACE} project-card-surface px-3 py-3 sm:px-4 sm:py-3.5`;
 
 /** Same frame as project detail insets; darker wash + soft stacked shadow (single box-shadow, two layers). Corners: sharp TL/BR, rounded TR/BL (StealthWorm reference). */
 const SKILLS_SUBCATEGORY_CARD_FACE =
   "skills-card-surface rounded-none border-0 shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9),0_6px_22px_-10px_rgba(0,0,0,0.52)] [border-radius:0_0.95rem_0_0.95rem] sm:[border-radius:0_1.05rem_0_1.05rem] transition-[background-color,box-shadow] duration-300 ease-out hover:bg-[var(--portfolio-section-card-hover)] hover:shadow-[0_22px_52px_-28px_rgba(0,0,0,0.92),0_8px_26px_-10px_rgba(0,0,0,0.55)]";
 
-/** Row zone behind the 3 subskill cards — solid fill, no border/shadow; radii match `SKILLS_SUBCATEGORY_CARD_FACE`. */
+/** Row zone behind the 3 subskill cards ? solid fill, no border/shadow; radii match `SKILLS_SUBCATEGORY_CARD_FACE`. */
 const SKILLS_ROW_STRIP_BG =
   "pointer-events-none absolute inset-0 z-0 bg-[#06070a] [border-radius:0_0.95rem_0_0.95rem] sm:[border-radius:0_1.05rem_0_1.05rem]";
 
@@ -3155,13 +3153,13 @@ const ShowcaseDetailOverviewRole = ({ card }: { card: ShowcaseProjectCard }) => 
     <section className={`${showcaseDetailCard} min-w-0 md:col-span-2`}>
       <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] mb-1.5">OVERVIEW</p>
       <p className="font-body text-sm sm:text-base text-mono-2 leading-snug whitespace-pre-line">
-        {card.detailOverview?.trim() || "—"}
+        {card.detailOverview?.trim() || "?"}
       </p>
     </section>
     <section className={`${showcaseDetailCard} min-w-0`}>
       <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] mb-1.5">ROLE</p>
       <p className="font-body text-sm sm:text-base text-mono-2 leading-snug whitespace-pre-line">
-        {card.detailRole?.trim() || "—"}
+        {card.detailRole?.trim() || "?"}
       </p>
     </section>
   </div>
@@ -3172,7 +3170,7 @@ const ShowcaseDetailImpactTools = ({ card }: { card: ShowcaseProjectCard }) => (
     <section className={`${showcaseDetailCard} min-w-0 md:col-span-2`}>
       <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] mb-1.5">IMPACT</p>
       <p className="font-body text-sm sm:text-base text-mono-2 leading-snug whitespace-pre-line">
-        {card.detailImpact?.trim() || "—"}
+        {card.detailImpact?.trim() || "?"}
       </p>
     </section>
     <section className={`${showcaseDetailCard} min-w-0`}>
@@ -3186,7 +3184,7 @@ const ShowcaseDetailImpactTools = ({ card }: { card: ShowcaseProjectCard }) => (
           ))}
         </ul>
       ) : (
-        <p className="font-body text-sm sm:text-base text-mono-2/55">—</p>
+        <p className="font-body text-sm sm:text-base text-mono-2/55">?</p>
       )}
     </section>
   </div>
@@ -3271,9 +3269,9 @@ const PalaceProjects = ({
   const morphDur = reduceMotion ? 0.12 / SHOWCASE_TIME_DIV : SHOWCASE_CARD_MORPH_DUR_S;
   const morphEase = SHOWCASE_EASE;
 
-  // FLIP animation approach — avoids animating CSS layout properties (width/height)
+  // FLIP animation approach ? avoids animating CSS layout properties (width/height)
   // which Framer Motion wires up via useEffect (after paint), causing a size-flash.
-  // Instead, the flying card is always the DESTINATION size (plain React state →
+  // Instead, the flying card is always the DESTINATION size (plain React state ?
   // applied synchronously by React's commit), and scaleX/scaleY (pure transforms)
   // start at src/dst ratio and animate to 1. All transforms apply before first paint.
   const mX      = useMotionValue(0);
@@ -3286,7 +3284,7 @@ const PalaceProjects = ({
     const src = el.getBoundingClientRect();
     const dst = detailAnchorRef.current.getBoundingClientRect();
 
-    // Set all transforms synchronously — before React schedules its render —
+    // Set all transforms synchronously ? before React schedules its render ?
     // so Framer Motion's useLayoutEffect applies them before the first paint.
     mX.set(src.left);
     mY.set(src.top);
@@ -3299,7 +3297,7 @@ const PalaceProjects = ({
     onSelectProject(id);
   }, [onSelectProject, mX, mY, mScaleX, mScaleY]);
 
-  // Parent can clear the open project (e.g. global back) — reset FLIP state so the next open is clean.
+  // Parent can clear the open project (e.g. global back) ? reset FLIP state so the next open is clean.
   useEffect(() => {
     if (activeProjectId) return;
     setMorphRect(null);
@@ -3334,7 +3332,7 @@ const PalaceProjects = ({
     };
   }, [morphDone, activeCard?.id, reduceMotion]);
 
-  // FLIP morph + detail copy schedule (timers must survive morphDone — do not key this effect on morphDone).
+  // FLIP morph + detail copy schedule (timers must survive morphDone ? do not key this effect on morphDone).
   useEffect(() => {
     if (!targetRect || !morphRect) return;
     let cancelled = false;
@@ -3458,7 +3456,7 @@ const PalaceProjects = ({
             />
           </motion.div>
         {/*
-         * CAROUSEL — always in normal flow so the section keeps its height.
+         * CAROUSEL ? always in normal flow so the section keeps its height.
          * When a card is active we fade it out but DO NOT unmount it so the
          * container height stays stable for the absolute detail overlay.
          */}
@@ -3506,7 +3504,7 @@ const PalaceProjects = ({
         </div>
 
         {/*
-         * Permanent measurement anchor — always in the DOM so we can read its
+         * Permanent measurement anchor ? always in the DOM so we can read its
          * getBoundingClientRect() synchronously at click time (zero RAF delay).
          * Absolutely positioned so it never affects carousel layout.
          */}
@@ -3518,7 +3516,7 @@ const PalaceProjects = ({
         />
 
         {/*
-         * DETAIL OVERLAY — absolute, sits on top of the (now invisible) carousel.
+         * DETAIL OVERLAY ? absolute, sits on top of the (now invisible) carousel.
          * Uses flex-col so the card + text stack naturally from the container top.
          */}
         {activeCard && (
@@ -3636,10 +3634,10 @@ const PalaceProjects = ({
       </div>
 
       {/*
-       * FLYING CARD — portalled into document.body so it is completely outside
+       * FLYING CARD ? portalled into document.body so it is completely outside
        * the panel's CSS transform context. Framer Motion keeps transform:translateX(0)
        * on the panel after slide-in, which (per CSS spec) makes position:fixed
-       * children relative to the panel, not the viewport — causing compositing
+       * children relative to the panel, not the viewport ? causing compositing
        * layer mismatches and full-screen flicker. The portal removes this entirely.
        * FLIP technique: destination size set as plain values (React commit, pre-paint);
        * scaleX/scaleY set synchronously before render via MotionValues.
@@ -3668,7 +3666,7 @@ const PalaceProjects = ({
             pointerEvents: "none",
           }}
         >
-          {/* No media during morph — just the dark card shape moving cleanly */}
+          {/* No media during morph ? just the dark card shape moving cleanly */}
         </motion.div>,
         document.body,
       )}
@@ -3689,7 +3687,7 @@ const EXPERIENCE_DATA = [
     role: "Digital Content & Interactive Media Projects",
     company: "RAWBLEM",
     location: "Victoria, BC",
-    period: "October 2024 — Present",
+    period: "October 2024 ? Present",
     bullets: [
       "Created, produced, and distributed digital art and interactive narrative content across short-form video platforms.",
       "Planned and executed a story-driven interactive project that reached 30,000+ views on TikTok through platform-driven engagement.",
@@ -3703,7 +3701,7 @@ const EXPERIENCE_DATA = [
     role: "Social Media Coordinator",
     company: "UVIC E-Sports Community",
     location: "Victoria, BC",
-    period: "January 2019 — January 2020",
+    period: "January 2019 ? January 2020",
     bullets: [
       "Coordinated and managed content across Facebook, Discord, and Twitch in support of a university-affiliated online community.",
       "Planned, produced, and published promotional content for tournaments, announcements, and community events, contributing to increased engagement.",
@@ -3717,7 +3715,7 @@ const EXPERIENCE_DATA = [
     role: "Barista",
     company: "Starbucks",
     location: "Victoria, BC",
-    period: "August 2018 — Present",
+    period: "August 2018 ? Present",
     bullets: [
       "Delivered consistent customer service in a high-volume environment, supporting 200+ customer transactions per shift while maintaining quality and efficiency standards.",
       "Supported daily operations through clear communication, multitasking, and real-time coordination with team members during peak periods.",
@@ -3730,338 +3728,152 @@ const EXPERIENCE_DATA = [
 ] as const;
 
 const ConfidantExperience = () => {
-  const experienceScrollHostRef = useRef<HTMLDivElement>(null);
-  const experienceScrollAreaRef = useRef<HTMLDivElement>(null);
-  const experienceScrollContentRef = useRef<HTMLDivElement>(null);
-  const experienceOpticalRailWrapRef = useRef<HTMLDivElement>(null);
-  const experienceOpticalTrackRef = useRef<HTMLDivElement>(null);
-  const experienceOpticalThumbRef = useRef<HTMLDivElement>(null);
-  /** Top / bottom experience cards — optical rail aligns to first card top & last card bottom. */
-  const experienceFirstCardRef = useRef<HTMLDivElement | null>(null);
-  const experienceLastCardRef = useRef<HTMLDivElement | null>(null);
-  const experienceScrollHideTimerRef = useRef<number | null>(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const timelineScrollRef = useRef<HTMLDivElement>(null);
+  const timelineEntryRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  const updateExperienceOpticalScrollMetrics = useCallback(() => {
-    const scrollEl = experienceScrollAreaRef.current;
-    const trackEl = experienceOpticalTrackRef.current;
-    const thumbEl = experienceOpticalThumbRef.current;
-    const railWrap = experienceOpticalRailWrapRef.current;
-    const hostEl = experienceScrollHostRef.current;
-    if (!scrollEl || !trackEl || !thumbEl) return;
-
-    const opticalActive =
-      typeof window !== "undefined" &&
-      window.matchMedia?.(`(min-width: ${PORTFOLIO_OPTICAL_MIN_VIEWPORT_PX}px)`).matches === true;
-    if (!opticalActive) {
-      if (railWrap) {
-        railWrap.style.top = "";
-        railWrap.style.bottom = "";
-        railWrap.style.right = "";
-        railWrap.style.visibility = "";
-      }
-      thumbEl.style.height = "0px";
-      thumbEl.style.top = "0px";
-      return;
+  const goToExperienceIndex = useCallback((nextIndex: number) => {
+    const clampedIndex = Math.min(EXPERIENCE_DATA.length - 1, Math.max(0, nextIndex));
+    const scrollEl = timelineScrollRef.current;
+    const entryEl = timelineEntryRefs.current[clampedIndex];
+    setCurrentIndex(clampedIndex);
+    if (scrollEl && entryEl) {
+      const scrollRect = scrollEl.getBoundingClientRect();
+      const entryRect = entryEl.getBoundingClientRect();
+      scrollEl.scrollTo({
+        top: Math.max(0, scrollEl.scrollTop + entryRect.top - scrollRect.top - 16),
+        behavior: "smooth",
+      });
     }
-
-    if (railWrap) {
-      const firstCardEl = experienceFirstCardRef.current;
-      if (hostEl && firstCardEl) {
-        const hostTop = hostEl.getBoundingClientRect().top;
-        const cardTop = firstCardEl.getBoundingClientRect().top;
-        railWrap.style.top = `${Math.max(0, cardTop - hostTop)}px`;
-      } else if (hostEl) {
-        railWrap.style.top = `${Math.max(0, Math.min(56, Math.round(hostEl.clientHeight * 0.06)) - PORTFOLIO_OPTICAL_RAIL_TOP_OUTSET_PX)}px`;
-      } else {
-        railWrap.style.top = "";
-      }
-
-      const cs = getComputedStyle(scrollEl);
-      const paddingBottomPx = parseFloat(cs.paddingBottom) || 0;
-      let bottomPx = Math.max(
-        0,
-        paddingBottomPx - PORTFOLIO_OPTICAL_RAIL_BOTTOM_NUDGE_PX - PORTFOLIO_OPTICAL_RAIL_BOTTOM_OUTSET_PX,
-      );
-      const lastCardEl = experienceLastCardRef.current;
-      if (hostEl && lastCardEl) {
-        const hostRect = hostEl.getBoundingClientRect();
-        const lastRect = lastCardEl.getBoundingClientRect();
-        bottomPx = Math.max(0, hostRect.bottom - lastRect.bottom);
-      }
-      if (hostEl) {
-        const hostH = hostEl.clientHeight;
-        const railTopPx = parseFloat(getComputedStyle(railWrap).top) || 0;
-        const minTrackPx = 48;
-        const maxBottom = Math.max(0, hostH - railTopPx - minTrackPx);
-        bottomPx = Math.min(bottomPx, maxBottom);
-      }
-      railWrap.style.bottom = `${bottomPx}px`;
-
-      const paddingRightPx = parseFloat(cs.paddingRight) || 0;
-      let railW = railWrap.getBoundingClientRect().width;
-      if (railW <= 0) {
-        railW = 8;
-      }
-      railWrap.style.right = `${Math.max(0, (paddingRightPx - railW) / 2)}px`;
-    }
-
-    const { scrollHeight, clientHeight, scrollTop } = scrollEl;
-    const maxScroll = Math.max(0, scrollHeight - clientHeight);
-    const trackH = trackEl.clientHeight;
-    if (maxScroll <= 0 || trackH <= 0) {
-      thumbEl.style.height = "0px";
-      thumbEl.style.top = "0px";
-      if (railWrap) railWrap.style.visibility = "hidden";
-      return;
-    }
-    if (railWrap) railWrap.style.visibility = "";
-    const coarsePointer =
-      typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches === true;
-    const minThumbPx = coarsePointer ? 36 : 28;
-    const thumbH = Math.min(
-      trackH,
-      Math.max(minThumbPx, (clientHeight / scrollHeight) * trackH),
-    );
-    const thumbTravel = Math.max(0, trackH - thumbH);
-    const thumbTop = thumbTravel <= 0 ? 0 : (scrollTop / maxScroll) * thumbTravel;
-    thumbEl.style.height = `${thumbH}px`;
-    thumbEl.style.top = `${thumbTop}px`;
   }, []);
 
-  useLayoutEffect(() => {
-    const scrollEl = experienceScrollAreaRef.current;
-    const contentEl = experienceScrollContentRef.current;
+  const updateActiveTimelineIndex = useCallback(() => {
+    const scrollEl = timelineScrollRef.current;
     if (!scrollEl) return;
-    const ro = new ResizeObserver(() => {
-      updateExperienceOpticalScrollMetrics();
+    const scrollRect = scrollEl.getBoundingClientRect();
+    const targetY = scrollRect.top + scrollEl.clientHeight * 0.28;
+    let closestIndex = 0;
+    let closestDistance = Number.POSITIVE_INFINITY;
+    timelineEntryRefs.current.forEach((entryEl, idx) => {
+      if (!entryEl) return;
+      const distance = Math.abs(entryEl.getBoundingClientRect().top - targetY);
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestIndex = idx;
+      }
     });
-    ro.observe(scrollEl);
-    if (contentEl) ro.observe(contentEl);
-    const vv = typeof window !== "undefined" ? window.visualViewport : null;
-    const onViewportChange = () => {
-      updateExperienceOpticalScrollMetrics();
-    };
-    if (vv) {
-      vv.addEventListener("resize", onViewportChange);
-      vv.addEventListener("scroll", onViewportChange);
-    }
-    window.addEventListener("orientationchange", onViewportChange);
-    const opticalMql =
-      typeof window !== "undefined"
-        ? window.matchMedia(`(min-width: ${PORTFOLIO_OPTICAL_MIN_VIEWPORT_PX}px)`)
-        : null;
-    const onOpticalBreakpoint = () => {
-      updateExperienceOpticalScrollMetrics();
-    };
-    opticalMql?.addEventListener("change", onOpticalBreakpoint);
-    updateExperienceOpticalScrollMetrics();
-    return () => {
-      ro.disconnect();
-      opticalMql?.removeEventListener("change", onOpticalBreakpoint);
-      if (vv) {
-        vv.removeEventListener("resize", onViewportChange);
-        vv.removeEventListener("scroll", onViewportChange);
-      }
-      window.removeEventListener("orientationchange", onViewportChange);
-    };
-  }, [updateExperienceOpticalScrollMetrics]);
-
-  const onExperienceOpticalThumbPointerDown = useCallback(
-    (e: React.PointerEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (
-        typeof window === "undefined" ||
-        !window.matchMedia?.(`(min-width: ${PORTFOLIO_OPTICAL_MIN_VIEWPORT_PX}px)`).matches
-      ) {
-        return;
-      }
-      const scrollEl = experienceScrollAreaRef.current;
-      const trackEl = experienceOpticalTrackRef.current;
-      const thumbEl = experienceOpticalThumbRef.current;
-      if (!scrollEl || !trackEl || !thumbEl) return;
-      const maxScroll = Math.max(0, scrollEl.scrollHeight - scrollEl.clientHeight);
-      if (maxScroll <= 0) return;
-      const trackH = trackEl.clientHeight;
-      const thumbH = thumbEl.offsetHeight;
-      const thumbTravel = Math.max(0, trackH - thumbH);
-      const startScrollTop = scrollEl.scrollTop;
-      const startY = e.clientY;
-      thumbEl.setPointerCapture(e.pointerId);
-      const onMove = (ev: PointerEvent) => {
-        const dy = ev.clientY - startY;
-        const dScroll = thumbTravel > 0 ? (dy / thumbTravel) * maxScroll : 0;
-        scrollEl.scrollTop = Math.min(maxScroll, Math.max(0, startScrollTop + dScroll));
-        updateExperienceOpticalScrollMetrics();
-      };
-      const onUp = (ev: PointerEvent) => {
-        try {
-          thumbEl.releasePointerCapture(ev.pointerId);
-        } catch {
-          /* released */
-        }
-        window.removeEventListener("pointermove", onMove);
-        window.removeEventListener("pointerup", onUp);
-      };
-      window.addEventListener("pointermove", onMove);
-      window.addEventListener("pointerup", onUp);
-    },
-    [updateExperienceOpticalScrollMetrics],
-  );
-
-  const revealExperienceOpticalScrollbar = useCallback(() => {
-    const opticalActive =
-      typeof window !== "undefined" &&
-      window.matchMedia?.(`(min-width: ${PORTFOLIO_OPTICAL_MIN_VIEWPORT_PX}px)`).matches === true;
-    const host = experienceScrollHostRef.current;
-    if (!host || !opticalActive) return;
-    host.classList.add("archive-optical-scrollbar-host--visible");
-    if (experienceScrollHideTimerRef.current !== null) {
-      window.clearTimeout(experienceScrollHideTimerRef.current);
-    }
-    experienceScrollHideTimerRef.current = window.setTimeout(() => {
-      host.classList.remove("archive-optical-scrollbar-host--visible");
-      experienceScrollHideTimerRef.current = null;
-    }, PORTFOLIO_SECTION_SCROLLBAR_VISIBLE_MS);
-    updateExperienceOpticalScrollMetrics();
-  }, [updateExperienceOpticalScrollMetrics]);
-
-  const onExperienceListScroll = useCallback(() => {
-    revealExperienceOpticalScrollbar();
-  }, [revealExperienceOpticalScrollbar]);
-
-  const onExperienceScrollAreaPointerMove = useCallback(
-    (e: React.PointerEvent<HTMLDivElement>) => {
-      const el = experienceScrollAreaRef.current;
-      if (!el) return;
-      if (
-        typeof window === "undefined" ||
-        !window.matchMedia?.(`(min-width: ${PORTFOLIO_OPTICAL_MIN_VIEWPORT_PX}px)`).matches
-      ) {
-        return;
-      }
-      if (!portfolioOpticalPointerInSideGutter(e.clientX, el.getBoundingClientRect())) return;
-      revealExperienceOpticalScrollbar();
-    },
-    [revealExperienceOpticalScrollbar],
-  );
+    setCurrentIndex(closestIndex);
+  }, []);
 
   useEffect(() => {
-    return () => {
-      if (experienceScrollHideTimerRef.current !== null) {
-        window.clearTimeout(experienceScrollHideTimerRef.current);
+    const onKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        target?.matches("input, textarea, select, [contenteditable='true'], [contenteditable='']")
+      ) {
+        return;
+      }
+
+      if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+        e.preventDefault();
+        goToExperienceIndex(currentIndex + 1);
+      }
+      if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+        e.preventDefault();
+        goToExperienceIndex(currentIndex - 1);
       }
     };
-  }, []);
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [currentIndex, goToExperienceIndex]);
 
   return (
     <section
       id="experience"
-      className={`relative flex h-[100dvh] max-h-[100dvh] w-full flex-col overflow-x-hidden overflow-hidden bg-black font-body text-white scroll-mt-6 ${SLIDE}`}
+      className={`career-viewport bg-black font-body text-white ${SLIDE}`}
     >
       <SectionGridOverlay />
-      <div className="container relative z-10 mx-auto flex min-h-0 w-full max-w-full min-w-0 flex-1 flex-col px-4 sm:px-6 pt-[calc(6rem+2px)] md:pt-[calc(7.5rem+2px)]">
-        <div className="shrink-0">
+      <div
+        ref={timelineScrollRef}
+        className="career-timeline-shell no-scrollbar relative z-10 mx-auto flex h-full min-h-0 w-full flex-col px-4 sm:px-6"
+        onScroll={updateActiveTimelineIndex}
+      >
+        <div className="career-timeline-heading">
           <SectionHeader
             title="CAREER OVERVIEW"
             align="center"
+            color="text-white"
             showBar={false}
             compact
             titleFade
-            className="!mb-6 sm:!mb-8"
+            titleClassName="text-xl md:text-3xl xl:text-3xl 2xl:text-4xl"
+            className="mt-1 sm:mt-1.5 !mb-5 sm:!mb-6 md:!mb-7 w-full shrink-0"
           />
         </div>
 
-        <div
-          ref={experienceScrollHostRef}
-          className="archive-optical-scrollbar-host relative mt-2 min-h-0 flex-1 min-w-0 sm:mt-3"
-        >
-          <div
-            ref={experienceScrollAreaRef}
-            onScroll={onExperienceListScroll}
-            onPointerMove={onExperienceScrollAreaPointerMove}
-            className="no-scrollbar h-full min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain pb-[calc(4rem+env(safe-area-inset-bottom,0px))] md:pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] pr-0 lg:pr-[max(2rem,calc(1.75rem+env(safe-area-inset-right,0px)))]"
-          >
-            <div
-              ref={experienceScrollContentRef}
-              className="mx-auto w-full max-w-[min(100%,48rem)] space-y-8 pt-2 sm:space-y-10 sm:pt-3 pb-8 sm:pb-10"
-            >
-              {EXPERIENCE_DATA.map((job, idx) => (
-                <div
-                  key={idx}
-                  ref={(el) => {
-                    if (idx === 0) experienceFirstCardRef.current = el;
-                    if (idx === EXPERIENCE_DATA.length - 1) experienceLastCardRef.current = el;
-                  }}
-                  className="experience-card-surface rounded-[0_1rem] border-0 px-4 py-5 shadow-[0_10px_24px_-16px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] transition-[background-color,box-shadow] duration-200 ease-out sm:px-5 sm:py-6 hover:bg-[var(--portfolio-section-card-hover)] hover:shadow-[0_14px_30px_-18px_rgba(0,0,0,0.92),inset_0_1px_0_rgba(255,255,255,0.035)]"
-                >
-                  <h3
-                    className="font-display text-base font-semibold tracking-[-0.02em] text-white text-balance leading-snug sm:text-lg md:text-xl sm:leading-[1.25] md:leading-snug"
-                  >
-                    {job.role}
-                  </h3>
-                  <div className="mt-3 flex flex-col gap-2 sm:mt-3.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6">
-                    <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5 leading-snug sm:gap-x-2.5">
-                      <span className="font-heading text-[11px] tracking-eyebrow-sm uppercase text-mono-2/88 sm:text-xs sm:tracking-eyebrow-sm">
-                        {job.company}
-                      </span>
-                      <span className="text-mono-2/35 shrink-0 translate-y-px" aria-hidden>
-                        ·
-                      </span>
-                      <span className="font-heading text-[11px] tracking-eyebrow-sm uppercase text-mono-2/60 sm:text-xs sm:tracking-eyebrow-sm">
-                        {job.location}
-                      </span>
-                    </div>
-                    <time className="font-body text-[10px] tracking-eyebrow-sm uppercase text-mono-2/45 tabular-nums leading-snug sm:text-[11px] sm:shrink-0 sm:text-right">
-                      {job.period}
-                    </time>
-                  </div>
-                  <div className="mt-4 h-px w-full bg-white/[0.08] sm:mt-5" aria-hidden />
-                  <ul className="m-0 mt-4 list-none space-y-2.5 p-0 sm:mt-5 sm:space-y-3">
-                    {job.bullets.map((bullet, i) => (
-                      <li
-                        key={i}
-                        className="grid grid-cols-[0.5rem_minmax(0,1fr)] items-start gap-x-3 sm:grid-cols-[0.5rem_minmax(0,1fr)] sm:gap-x-3.5"
-                      >
-                        <span
-                          className="mt-[0.4rem] size-2 shrink-0 rounded-full sm:mt-[0.45rem]"
-                          style={{ backgroundColor: "color-mix(in srgb, var(--palette-blue) 95%, transparent)" }}
-                          aria-hidden
-                        />
-                        <p className="min-w-0 font-body text-sm leading-relaxed text-mono-2/88 sm:text-[0.9375rem] sm:leading-[1.55]">
-                          {bullet}
-                        </p>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div
-            ref={experienceOpticalRailWrapRef}
-            className="pointer-events-none absolute top-0 z-[2] hidden w-2 lg:block"
-            aria-hidden
-          >
-            <div
-              ref={experienceOpticalTrackRef}
-              className="archive-optical-scrollbar-track relative h-full w-full rounded-full bg-white/[0.06]"
-            >
+        <div className="career-timeline-scroll">
+          <div className="career-timeline-list">
+            {EXPERIENCE_DATA.map((job, idx) => (
               <div
-                ref={experienceOpticalThumbRef}
-                role="presentation"
-                className="archive-optical-scrollbar-thumb pointer-events-auto absolute left-0 right-0 rounded-full bg-white/[0.14] hover:bg-white/[0.22] motion-safe:transition-colors motion-safe:duration-200"
-                style={{ top: 0, height: 0 }}
-                onPointerDown={onExperienceOpticalThumbPointerDown}
-              />
-            </div>
+                key={job.role}
+                ref={(el) => {
+                  timelineEntryRefs.current[idx] = el;
+                }}
+                className="career-timeline-entry"
+              >
+                <div
+                  data-career-card
+                  className="card career-timeline-card no-scrollbar experience-card-surface rounded-[0_1rem] border-0 shadow-[0_10px_24px_-16px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] transition-[background-color,box-shadow] duration-200 ease-out hover:bg-[var(--portfolio-section-card-hover)] hover:shadow-[0_14px_30px_-18px_rgba(0,0,0,0.92),inset_0_1px_0_rgba(255,255,255,0.035)]"
+                >
+                  <div className="card-content">
+                    <h3 className="font-display text-base font-bold tracking-[-0.02em] text-white text-balance leading-snug sm:text-lg md:text-lg">
+                      {job.role}
+                    </h3>
+                    <div className="mt-1.5 flex flex-col gap-1 sm:mt-2 sm:flex-row sm:items-baseline sm:justify-between sm:gap-x-5 sm:gap-y-0">
+                      <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5 leading-none sm:gap-x-2">
+                        <span className="font-heading text-[11px] tracking-eyebrow-sm uppercase text-mono-2/88 sm:text-xs sm:tracking-eyebrow-sm">
+                          {job.company}
+                        </span>
+                        <span className="text-mono-2/35 shrink-0 translate-y-px" aria-hidden>
+                          {"\u00b7"}
+                        </span>
+                        <span className="font-heading text-[11px] tracking-eyebrow-sm uppercase text-mono-2/60 sm:text-xs sm:tracking-eyebrow-sm">
+                          {job.location}
+                        </span>
+                      </div>
+                      <time className="font-heading text-[11px] tracking-eyebrow-sm uppercase text-mono-2/45 tabular-nums leading-none sm:shrink-0 sm:text-right sm:text-xs sm:leading-none">
+                        {job.period}
+                      </time>
+                    </div>
+                    <div className="mt-2 h-px w-full bg-white/[0.08] sm:mt-2.5" aria-hidden />
+                    <ul className="m-0 mt-2 flex list-none flex-col gap-1.5 p-0 sm:mt-2.5 sm:gap-1.5">
+                      {job.bullets.map((bullet, i) => (
+                        <li
+                          key={i}
+                          className="grid grid-cols-[0.5rem_minmax(0,1fr)] items-start gap-x-2.5 sm:grid-cols-[0.5rem_minmax(0,1fr)] sm:gap-x-3"
+                        >
+                          <span
+                            className="mt-[0.28rem] size-[7px] shrink-0 rounded-full sm:mt-[0.3rem]"
+                            style={{ backgroundColor: "color-mix(in srgb, var(--palette-blue) 95%, transparent)" }}
+                            aria-hidden
+                          />
+                          <p className="min-w-0 font-body text-[13px] leading-[1.38] text-mono-2/88 sm:text-sm sm:leading-[1.4]">
+                            {bullet}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
     </section>
   );
 };
-
 // --- CONTACT (Uiverse.io button style by Itskrish01) ---
 const UIVERSE_BUTTON_BASE =
   "transform-gpu isolate [backface-visibility:hidden] p-5 rounded-full border bg-gradient-to-tr from-black/60 to-black/40 shadow-lg backdrop-blur-lg [@media(pointer:coarse)]:from-black/[0.88] [@media(pointer:coarse)]:to-black/[0.72] [@media(pointer:coarse)]:shadow-black/50 [@media(pointer:coarse)]:backdrop-blur-none hover:scale-110 [@media(pointer:coarse)]:hover:scale-100 active:scale-95 [@media(pointer:coarse)]:active:scale-100 active:rotate-0 transition-[transform,opacity,box-shadow,border-color] duration-300 ease-out cursor-pointer group relative overflow-hidden";
@@ -4207,7 +4019,7 @@ const SKILLS_MAJOR_CATEGORIES: {
   },
 ];
 
-// ─── SKILLS SYSTEM CONSTANTS ────────────────────────────────────────────────
+// ??? SKILLS SYSTEM CONSTANTS ????????????????????????????????????????????????
 const BRANCH_DRAW_MS = 0.32;
 const BRANCH_EASE: [number, number, number, number] = [0.4, 0, 0.6, 1];
 const SKILLS_DEFAULT_OPACITY = 0.28;
@@ -4217,7 +4029,7 @@ const NODE_R = 2.5;
 const STROKE_CLR = "rgba(255,255,255,0.5)";
 // GRID_CELL_SIZE is already defined globally (line 60)
 
-// ─── CHIP ICON ──────────────────────────────────────────────────────────────
+// ??? CHIP ICON ??????????????????????????????????????????????????????????????
 const ChipIcon = ({ size = 104, className = "" }: { size?: number; className?: string }) => {
   const PIN_COUNT = 6;
   const PIN_LEN = 8;
@@ -4229,7 +4041,7 @@ const ChipIcon = ({ size = 104, className = "" }: { size?: number; className?: s
 
   return (
     <svg viewBox={`0 0 ${size} ${size}`} className={className} width={size} height={size} aria-hidden>
-      {/* Internal grid — subtle, aligned */}
+      {/* Internal grid ? subtle, aligned */}
       <g opacity={0.1}>
         {Array.from({ length: GRID }).map((_, r) =>
           Array.from({ length: GRID }).map((_, c) => (
@@ -4244,7 +4056,7 @@ const ChipIcon = ({ size = 104, className = "" }: { size?: number; className?: s
           ))
         )}
       </g>
-      {/* Chip body — increased contrast */}
+      {/* Chip body ? increased contrast */}
       <rect
         x={BODY_INSET}
         y={BODY_INSET}
@@ -4254,7 +4066,7 @@ const ChipIcon = ({ size = 104, className = "" }: { size?: number; className?: s
         stroke="rgba(255,255,255,0.65)"
         strokeWidth="1"
       />
-      {/* Pins — all four sides, evenly spaced, consistent 1px, precise */}
+      {/* Pins ? all four sides, evenly spaced, consistent 1px, precise */}
       {Array.from({ length: PIN_COUNT }).map((_, i) => {
         const offset = BODY_INSET + pinStep * (i + 1);
         return (
@@ -4270,9 +4082,9 @@ const ChipIcon = ({ size = 104, className = "" }: { size?: number; className?: s
   );
 };
 
-// ─── BRANCH DIAGRAM ─────────────────────────────────────────────────────────
+// ??? BRANCH DIAGRAM ?????????????????????????????????????????????????????????
 // Calculates paths from actual DOM positions using refs, but enforces
-// a calm, symmetrical tree (chip → junction → 3 cards).
+// a calm, symmetrical tree (chip ? junction ? 3 cards).
 const BranchDiagram = ({
   chipRef,
   titleRef,
@@ -4319,13 +4131,13 @@ const BranchDiagram = ({
       y: card.top - container.top,
     }));
 
-    // Trunk: chip → title top, title bottom → junction
+    // Trunk: chip ? title top, title bottom ? junction
     const newTrunk: Segment[] = [
       { x1: cx, y1: chipBottomY, x2: cx, y2: titleTopY },
       { x1: cx, y1: titleBottomY, x2: junctionX, y2: junctionY },
     ];
 
-    // Branches: junction → each card center
+    // Branches: junction ? each card center
     const newBranches: Segment[] = cardCenters.map((pt) => ({
       x1: junctionX,
       y1: junctionY,
@@ -4378,7 +4190,7 @@ const BranchDiagram = ({
       preserveAspectRatio="none"
       aria-hidden
     >
-      {/* Trunk segments: chip → title, title → junction */}
+      {/* Trunk segments: chip ? title, title ? junction */}
       {trunkSegments.map((seg, idx) => (
         <motion.line
           key={`trunk-${idx}`}
@@ -4395,7 +4207,7 @@ const BranchDiagram = ({
         />
       ))}
 
-      {/* Branches: junction → cards (de‑emphasize non‑focused when focusedIndex is set) */}
+      {/* Branches: junction ? cards (de?emphasize non?focused when focusedIndex is set) */}
       {branchSegments.map((seg, idx) => {
         const isDimmed = focusedIndex !== null && idx !== focusedIndex;
         return (
@@ -4468,7 +4280,7 @@ const BranchDiagram = ({
   );
 };
 
-// ─── SKILLS MOTION CONSTANTS (P3R / neo-Tokyo: UI 160–260ms, stagger 30–60ms) ──
+// ??? SKILLS MOTION CONSTANTS (P3R / neo-Tokyo: UI 160?260ms, stagger 30?60ms) ??
 const SKILLS_EASE: [number, number, number, number] = [0.2, 0.8, 0.2, 1]; // ease-out
 const SKILLS_HOVER_DUR = 0.2;   // ~200ms selection feel (smoother)
 const SKILLS_EXPAND_DUR = 0.3;  // panel settle (slightly longer for polish)
@@ -4476,9 +4288,9 @@ const SKILLS_STAGGER = 0.05;    // 50ms per item (more pronounced stagger)
 const SKILLS_UNDERLINE_DUR = 0.24;
 const SKILLS_HOVER_SHIFT_PX = 8; // Ball travel: increased for more dynamic feel
 const SKILLS_CARD_HOVER_SCALE = 1.04; // More pronounced hover scale
-const SKILLS_CARD_HOVER_Y = -12; // More lift on hover // Ball travel: slower so it’s readable (was 0.5)
+const SKILLS_CARD_HOVER_Y = -12; // More lift on hover // Ball travel: slower so it?s readable (was 0.5)
 
-// ─── SKILL CARD DATA ──────────────────────────────────────────────────────────
+// ??? SKILL CARD DATA ??????????????????????????????????????????????????????????
 const SKILLS_DATA = {
   core: {
     title: "CORE COMPETENCIES",
@@ -4544,13 +4356,13 @@ const SKILLS_DATA = {
   },
 };
 
-// Subskill text content (container removed; kept handy — use SKILLS_DATA.core / SKILLS_DATA.tools above)
+// Subskill text content (container removed; kept handy ? use SKILLS_DATA.core / SKILLS_DATA.tools above)
 // Core: Writing & Narrative, Social & Media, Research & Collaboration + items each.
 // Tools: Design & Productivity, Video & Writing, Social Platforms + items each.
 
-// ─── DIAGONAL CONNECTOR GEOMETRY ─────────────────────────────────────────────
-// Single sharp line: origin = midpoint of top card’s right edge, end = midpoint of bottom card’s left edge.
-// Cards placed with ~35% diagonal separation; line and node use same 0–100 coordinate system.
+// ??? DIAGONAL CONNECTOR GEOMETRY ?????????????????????????????????????????????
+// Single sharp line: origin = midpoint of top card?s right edge, end = midpoint of bottom card?s left edge.
+// Cards placed with ~35% diagonal separation; line and node use same 0?100 coordinate system.
 const WEBHOOKS_CORE_ACCENT = "var(--palette-green)";
 const WEBHOOKS_TOOLS_ACCENT = "var(--palette-blue)";
 const WEBHOOKS_IDLE_BORDER = "rgba(255,255,255,0.25)";
@@ -4571,7 +4383,7 @@ const SKILLS_CARD_LAYOUT = {
   },
 } as const;
 
-/** AiIdea / gear in subskills panel header — same artwork as intro cards, scaled to the SectionHeader-compact title row. */
+/** AiIdea / gear in subskills panel header ? same artwork as intro cards, scaled to the SectionHeader-compact title row. */
 const SKILLS_SUBSKILL_HEADER_ICON_PX = 52;
 
 type CoreSubskillIcon = React.ComponentType<{ size?: number; className?: string }>;
@@ -4737,7 +4549,7 @@ const SkillsWebHooks = ({
         </button>
       </motion.div>
 
-      {/* Single connector: origin = top card right-mid, end = bottom card left-mid; 1.5–2px, sharp */}
+      {/* Single connector: origin = top card right-mid, end = bottom card left-mid; 1.5?2px, sharp */}
       <div className="pointer-events-none absolute inset-0 z-10">
         <svg
           className="h-full w-full"
@@ -4790,7 +4602,7 @@ const SkillsWebHooks = ({
   );
 };
 
-// ─── SKILLS EXPANDED VIEW (morphed title + panel; no cards, no line/ball) ──────
+// ??? SKILLS EXPANDED VIEW (morphed title + panel; no cards, no line/ball) ??????
 const SKILLS_VIEW_TRANSITION = { duration: 0.35, ease: [0.2, 0.8, 0.2, 1] as const };
 
 const SkillsExpandedView = ({
@@ -4879,7 +4691,7 @@ const SkillsExpandedView = ({
   );
 };
 
-// ─── SKILLS EXPANDED PANEL (category list only; used when we need just the panel) ─
+// ??? SKILLS EXPANDED PANEL (category list only; used when we need just the panel) ?
 const SkillsExpandedPanel = ({
   data,
   reducedMotion,
@@ -4923,13 +4735,13 @@ const SkillsExpandedPanel = ({
   );
 };
 
-// ─── SKILL ARSENAL (dual-layer: undercard expands, P3R-style reveal) ─────────────
-// P3R motion: UI 160–260ms, ease-out, panel slide + row stagger (30–60ms), y+opacity
+// ??? SKILL ARSENAL (dual-layer: undercard expands, P3R-style reveal) ?????????????
+// P3R motion: UI 160?260ms, ease-out, panel slide + row stagger (30?60ms), y+opacity
 const MORPH_DUR = 0.22;
 const MORPH_EASE = [0.2, 0.8, 0.2, 1] as const; // P3R ease-out
 const MORPH_EXPAND_DUR = 0.28;
 const MORPH_EXPAND_EASE = [0.22, 1, 0.36, 1] as const;
-const P3R_STAGGER_MS = 45; // 30–60ms per row
+const P3R_STAGGER_MS = 45; // 30?60ms per row
 
 /**
  * When `true`: Core + Tools intro pair shows first; opening a card reveals sub-skills in the overlay (with Close).
@@ -4943,7 +4755,7 @@ const SKILLS_SHOW_INTRO_PAIR_CARDS = false;
  */
 const SKILLS_SHOW_IDEA_GEAR_DECOR = false;
 
-/* From Uiverse.io by Adrwaan — outer shell; StealthWorm corner grammar (sharp TL/BR, rounded TR/BL). */
+/* From Uiverse.io by Adrwaan ? outer shell; StealthWorm corner grammar (sharp TL/BR, rounded TR/BL). */
 const UiverseCard = styled.div`
   position: relative;
   width: 360px;
@@ -4963,7 +4775,7 @@ const UiverseCard = styled.div`
     transform: translateY(-6px);
   }
 
-  /* ICON_HOVER_DISABLED: UiverseCard SVG (idea/gear + star) — restore rules below
+  /* ICON_HOVER_DISABLED: UiverseCard SVG (idea/gear + star) ? restore rules below
   &:hover .paperplane {
     transform: scale(1.07) translateY(-10%) rotate(18deg);
   }
@@ -5213,7 +5025,7 @@ const SKILLS_ORCHESTRATED_END_S =
     2 * SKILLS_REVEAL_CARD_STAGGER_MS) /
   1000;
 
-/** Stagger inside subskills card: header → scroll body → bottom rule */
+/** Stagger inside subskills card: header ? scroll body ? bottom rule */
 const skillsPanelStaggerParent: Variants = {
   hidden: {},
   show: {
@@ -5248,7 +5060,7 @@ const skillsChromeStaggerChild: Variants = {
 /** Icon flourish starts this many seconds before the modeled end of the SKILLS slide/fade stack (keep in sync with variants below). */
 const SKILLS_FLOURISH_LEAD_S = 0.5;
 
-/** Footer = 3rd panel stagger child: delayChildren + 2×staggerChildren + duration */
+/** Footer = 3rd panel stagger child: delayChildren + 2?staggerChildren + duration */
 const SKILLS_PANEL_STAGGER_END_S = 0.04 + 2 * 0.09 + 0.4;
 /** Inline dual panels: orchestrated reveal end (icon flourish sync). */
 const SKILLS_CHROME_INLINE_STAGGER_END_S = SKILLS_ORCHESTRATED_END_S;
@@ -5266,11 +5078,11 @@ const SKILLS_OVERLAY_MOTION_END_S = Math.max(MORPH_EXPAND_DUR, SKILLS_PANEL_STAG
 type SkillsAmbientBand = "core" | "tools";
 
 const SKILLS_AMBIENT_MARQUEE_COPY: Record<SkillsAmbientBand, string> = {
-  core: "Core · Competencies · Systems · Execution ·",
-  tools: "Toolkit · Stack · Workflow · Production ·",
+  core: "Core ? Competencies ? Systems ? Execution ?",
+  tools: "Toolkit ? Stack ? Workflow ? Production ?",
 };
 
-/** Stacked marquee “wall” behind each skills card band only (not full page). */
+/** Stacked marquee ?wall? behind each skills card band only (not full page). */
 const SKILLS_AMBIENT_WALL_ROW_COUNT = 13;
 /** Horizontal loop copies per row (must match CSS keyframe divisor `skills-panel-marquee-shift-wall`). */
 const SKILLS_AMBIENT_WALL_LOOP_COPIES = 6;
@@ -6079,7 +5891,7 @@ const ResumeView = () => {
       {/* Header */}
       <header className="border-b-2 border-black pb-8 mb-8">
         <h1 className="text-4xl md:text-5xl font-bold uppercase tracking-tight mb-2">Robbie McLaughlin</h1>
-        <p className="text-xl text-gray-700 mb-4">Writer • Digital Media Coordinator • Content Creator</p>
+        <p className="text-xl text-gray-700 mb-4">Writer ? Digital Media Coordinator ? Content Creator</p>
         <div className="flex flex-wrap gap-4 text-sm font-medium">
           <a href="mailto:robbie@example.com" className="flex items-center gap-2 hover:underline">
             <Mail size={16} /> robbie@example.com
@@ -6135,7 +5947,7 @@ const ResumeView = () => {
         <div className="mb-8">
           <div className="flex justify-between items-baseline mb-2">
             <h3 className="text-xl font-bold">Starbucks</h3>
-            <span className="text-gray-600 font-medium">2018 — Present</span>
+            <span className="text-gray-600 font-medium">2018 ? Present</span>
           </div>
           <p className="italic text-gray-700 mb-3">Barista & Team Member</p>
           <ul className="list-disc list-outside ml-5 space-y-2 text-gray-800">
@@ -6203,7 +6015,7 @@ const ResumeView = () => {
 export default function Home() {
   // Content mask: keeps main content invisible until after first paint so the
   // background (black) is the only thing visible during JS hydration. No artificial
-  // delay — the state flips on the first effect run (immediately after mount).
+  // delay ? the state flips on the first effect run (immediately after mount).
   const [appReady, setAppReady] = useState(false);
   useEffect(() => { setAppReady(true); }, []);
 
@@ -6223,7 +6035,7 @@ export default function Home() {
   const [currentSlideId, setCurrentSlideId] = useState<string>("hero");
   const [menuLockedFillId, setMenuLockedFillId] = useState<string | null>(null);
   const [activeShowcaseProjectId, setActiveShowcaseProjectId] = useState<string | null>(null);
-  /** FEATURED WRITING → open this PDF in SupportingProjectsSection loader after navigation. */
+  /** FEATURED WRITING ? open this PDF in SupportingProjectsSection loader after navigation. */
   const [supportingPdfIntent, setSupportingPdfIntent] = useState<SupportingArchivePdfItem | null>(null);
   const clearSupportingPdfIntent = useCallback(() => setSupportingPdfIntent(null), []);
   const prevSlideIdRef = useRef<string>("hero");
@@ -6252,7 +6064,7 @@ export default function Home() {
           handles.push(img);
         }
 
-        // Video poster — must be preloaded so the flying card shows it instantly on click
+        // Video poster ? must be preloaded so the flying card shows it instantly on click
         if (card.poster) {
           const img = new Image();
           img.decoding = "async";
@@ -6260,7 +6072,7 @@ export default function Home() {
           handles.push(img);
         }
 
-        // Video file — auto so detail overlay hero can autoplay smoothly after morph (same URLs as carousel previews).
+        // Video file ? auto so detail overlay hero can autoplay smoothly after morph (same URLs as carousel previews).
         if (card.thumbnailVideo) {
           const video = document.createElement("video");
           video.preload = "auto";
@@ -6299,7 +6111,7 @@ export default function Home() {
     setIsSideNavOpen(false);
     if (isTransitioning) return;
 
-    // SHOWCASE sub-route: swap carousel ↔ Supporting & archive in place (no panel slide / settle reset).
+    // SHOWCASE sub-route: swap carousel ? Supporting & archive in place (no panel slide / settle reset).
     if (
       (id === "projects" && currentSection === "projects-supporting") ||
       (id === "projects-supporting" && currentSection === "projects")
@@ -6310,7 +6122,7 @@ export default function Home() {
       return;
     }
 
-    // Already on SHOWCASE: close project detail or no-op — do not replay panel slide (avoids layout flash).
+    // Already on SHOWCASE: close project detail or no-op ? do not replay panel slide (avoids layout flash).
     if (id === "projects" && currentSection === "projects") {
       if (activeShowcaseProjectId) {
         setActiveShowcaseProjectId(null);
@@ -6342,7 +6154,7 @@ export default function Home() {
         }, PANEL_TRANSITION.duration * 1000)
       );
     } else {
-      // SHOWCASE (projects): settle immediately so carousel + tabs reserve height and fade with the panel — delayed settle caused a second layout/opacity beat after the slide.
+      // SHOWCASE (projects): settle immediately so carousel + tabs reserve height and fade with the panel ? delayed settle caused a second layout/opacity beat after the slide.
       setPanelSettled(id === "projects");
       setCurrentSection(id);
       setTransitionTarget(id);
@@ -6414,7 +6226,7 @@ export default function Home() {
       }`}
       style={{
         ...(!isResumeMode ? { backgroundColor: "#0a0a0a", backgroundImage: "none" } : {}),
-        // Instant reveal — avoids a live transition on the root element that can
+        // Instant reveal ? avoids a live transition on the root element that can
         // be retriggered by React Strict Mode's double-mount in development.
         opacity: appReady ? 1 : 0,
       }}
@@ -6474,7 +6286,7 @@ export default function Home() {
         />
       )}
 
-      {/* Back to menu — above panels so it stays clickable when viewing a section */}
+      {/* Back to menu ? above panels so it stays clickable when viewing a section */}
       {!isResumeMode && (
         <BackToMenuButton
           show={currentSection !== null}
@@ -6674,9 +6486,9 @@ export default function Home() {
                 />
               )}
               {/* Plain wrapper: nested Framer x/opacity here put every section (incl. experience) under an extra
-                  transform layer — Chromium rasterizes body text soft. Outer panel motion keeps the slide.
+                  transform layer ? Chromium rasterizes body text soft. Outer panel motion keeps the slide.
                   flex-1 min-h-0 binds height to the viewport so SHOWCASE flex spacers can resolve (min-h-screen grew unbounded).
-                  Projects: no vertical overflow clip — tall showcase + folder card scroll on the panel (no-scrollbar). */}
+                  Projects: no vertical overflow clip ? tall showcase + folder card scroll on the panel (no-scrollbar). */}
               <div
                 className={
                   currentSection === "projects"
