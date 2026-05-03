@@ -1220,7 +1220,7 @@ const Hero = ({
                         <motion.button
                           type="button"
                           onClick={onStartClick}
-                          className="playstore-button playstore-button--primary box-border !min-h-0 h-[calc(clamp(2.28rem,8.85vw,5.95rem)*0.78)] max-h-[4.85rem] items-center px-5 !py-0 sm:px-7 md:px-8 [&_.texts]:text-[clamp(0.84rem,1.7vw,1rem)] [&_.texts]:tracking-[0.1em] sm:[&_.texts]:text-[clamp(0.9rem,1.55vw,1.08rem)] sm:[&_.texts]:tracking-[0.11em]"
+                          className="playstore-button playstore-button--primary box-border !min-h-0 h-[calc(clamp(2.28rem,8.85vw,5.95rem)*0.78)] max-h-[4.85rem] items-center px-5 !py-0 sm:px-7 md:px-8 [&_.texts]:text-[clamp(0.84rem,1.7vw,1rem)] [&_.texts]:tracking-[0.1em] sm:[&_.texts]:text-[clamp(0.9rem,1.55vw,1.08rem)]"
                           whileHover={{ y: -1 }}
                           whileTap={TAP}
                           transition={SPRING.ui}
@@ -1233,7 +1233,7 @@ const Hero = ({
                       </motion.div>
                     </div>
                   </h1>
-                  <p className="m-0 mt-2.5 max-w-[min(100%,40rem)] pl-[0.2rem] font-display text-[clamp(0.8rem,2.25vw,0.92rem)] font-medium uppercase leading-snug tracking-[0.18em] text-mono-2/88 sm:mt-3 sm:max-w-[46rem] sm:pl-[0.32rem] sm:tracking-[0.2em] md:pl-[0.4rem]">
+                  <p className="m-0 mt-2.5 max-w-[min(100%,40rem)] pl-[0.2rem] font-display text-[clamp(0.8rem,2.25vw,0.92rem)] font-medium uppercase leading-snug tracking-eyebrow-tight text-mono-2/88 sm:mt-3 sm:max-w-[46rem] sm:pl-[0.32rem] md:pl-[0.4rem]">
                     Writer / digital media / narrative systems
                   </p>
                 </motion.div>
@@ -1371,7 +1371,7 @@ const RainbowMenuSlide = ({
       <div className="relative z-10 w-full max-w-4xl">
         <div className="flex items-end justify-between gap-6 mb-10">
           <div>
-            <p className="font-heading text-sm tracking-eyebrow leading-snug uppercase text-mono-2/90 mb-1.5">NAVIGATION</p>
+            <p className="font-heading text-sm tracking-eyebrow-tight leading-snug uppercase text-mono-2/90 mb-1.5">NAVIGATION</p>
             <h2 className="font-display text-5xl md:text-7xl leading-[0.95] tracking-[-0.02em] uppercase">MENU</h2>
           </div>
         </div>
@@ -1403,7 +1403,7 @@ const RainbowMenuSlide = ({
                     strokeWidth={1.5}
                   />
                   <motion.span
-                    className="font-display text-lg md:text-xl tracking-nav-caps leading-snug uppercase text-white pl-3 md:pl-4 block"
+                    className="font-display text-lg md:text-xl tracking-eyebrow-tight leading-snug uppercase text-white pl-3 md:pl-4 block"
                     animate={{ x: hoveredId === item.id ? 6 : 0 }}
                     transition={CMD_HOVER}
                   >
@@ -1484,7 +1484,7 @@ const SideNavOverlay = ({
             <div className="flex items-center justify-between mb-6">
               <div className="flex flex-col gap-y-1.5">
                 <p className="font-mono text-[0.65rem] sm:text-xs text-mono-2/90 tracking-widest uppercase">MENU</p>
-                <p className="font-display text-2xl sm:text-3xl tracking-nav-caps uppercase leading-[0.95]">Navigate</p>
+                <p className="font-display text-2xl sm:text-3xl tracking-eyebrow-tight uppercase leading-[0.95]">Navigate</p>
               </div>
               <motion.div whileTap={TAP} transition={SPRING.ui}>
                 <Button
@@ -1528,7 +1528,7 @@ const SideNavOverlay = ({
                         strokeWidth={1.5}
                       />
                       <motion.span
-                        className="font-display text-sm sm:text-base tracking-nav-caps leading-snug uppercase text-white pl-2 sm:pl-3 block"
+                        className="font-display text-sm sm:text-base tracking-eyebrow-tight leading-snug uppercase text-white pl-2 sm:pl-3 block"
                         animate={{ x: hoveredId === item.id ? 6 : 0 }}
                         transition={CMD_HOVER}
                       >
@@ -1754,9 +1754,9 @@ const PhantomProfile = () => {
               animate={{ x: overlayRevealed ? 0 : -24, opacity: overlayRevealed ? 1 : 0 }}
               transition={{ duration: BUTTON_FADE_DURATION_MS / 1000, delay: overlayRevealed ? BUTTONS_DELAY_AFTER_SUMMARY_MS / 1000 : 0, ease: [0.16, 1, 0.3, 1] }}
             >
-              <p className="font-heading w-full min-w-0 max-w-full text-balance text-sm tracking-eyebrow leading-snug uppercase text-mono-2/90 max-sm:whitespace-normal sm:whitespace-nowrap sm:overflow-x-auto sm:overflow-y-visible sm:no-scrollbar">
-                Victoria, BC <span className="text-mono-2/35 mx-0.5 sm:mx-1" aria-hidden>?</span> BA WRITING{" "}
-                <span className="text-mono-2/35 mx-0.5 sm:mx-1" aria-hidden>?</span> DIGITAL MEDIA
+              <p className="font-heading w-full min-w-0 max-w-full text-balance text-sm tracking-eyebrow-tight leading-snug uppercase text-mono-2/90 max-sm:whitespace-normal sm:whitespace-nowrap sm:overflow-x-auto sm:overflow-y-visible sm:no-scrollbar">
+                Victoria, BC <span className="text-mono-2/35 mx-0.5 sm:mx-1" aria-hidden>•</span> BA WRITING{" "}
+                <span className="text-mono-2/35 mx-0.5 sm:mx-1" aria-hidden>•</span> DIGITAL MEDIA
               </p>
             </motion.div>
             <motion.div
@@ -1765,18 +1765,18 @@ const PhantomProfile = () => {
                animate={{ opacity: overlayRevealed ? 1 : 0, y: overlayRevealed ? 0 : 14 }}
                transition={{ duration: SUMMARY_DURATION_S, delay: overlayRevealed ? SUMMARY_DELAY_S : 0, ease: [0.16, 1, 0.3, 1] }}
              >
-               <p className="font-heading text-sm tracking-eyebrow leading-snug uppercase mb-1.5" style={{ color: PROFILE_ACCENT_SOFT }}>SUMMARY</p>
+               <p className="font-heading text-sm tracking-eyebrow-tight leading-snug uppercase mb-1.5" style={{ color: PROFILE_ACCENT_SOFT }}>SUMMARY</p>
                <p className="font-body text-sm sm:text-base md:text-lg xl:text-lg 2xl:text-xl text-mono-2 leading-relaxed mb-4">
                  Communications-focused writer and digital media coordinator with experience producing narrative-driven web content and managing social media workflows across multiple platforms. Combines narrative storytelling with platform-native content production and distribution. Bachelor of Arts in Writing (Distinction), University of Victoria.
                </p>
-               <p className="font-heading text-sm tracking-eyebrow leading-snug uppercase mb-1.5" style={{ color: PROFILE_ACCENT_SOFT }}>CURRENT WORK</p>
+               <p className="font-heading text-sm tracking-eyebrow-tight leading-snug uppercase mb-1.5" style={{ color: PROFILE_ACCENT_SOFT }}>CURRENT WORK</p>
                <ul className="font-body text-sm sm:text-base md:text-lg xl:text-lg 2xl:text-xl text-mono-2/90 leading-relaxed mb-4 ml-3 list-disc list-outside space-y-2 pl-6 sm:pl-7 marker:text-mono-2/50">
                  <li>Currently developing SLAYWIRE, a narrative-first RPG.</li>
                  <li>
                    RAWBLEM - Creative brand producing narrative-driven short-form content across TikTok, Instagram Reels, and YouTube Shorts.
                  </li>
                </ul>
-               <p className="font-heading text-sm tracking-eyebrow leading-snug uppercase mb-1.5" style={{ color: PROFILE_ACCENT_SOFT }}>AVAILABILITY</p>
+               <p className="font-heading text-sm tracking-eyebrow-tight leading-snug uppercase mb-1.5" style={{ color: PROFILE_ACCENT_SOFT }}>AVAILABILITY</p>
                <ul className="font-body text-sm sm:text-base md:text-lg xl:text-lg 2xl:text-xl text-mono-2 leading-relaxed ml-3 list-disc list-outside space-y-2 pl-6 sm:pl-7 marker:text-mono-2/50">
                  <li>Full-Time Content, Communications, or Digital Media roles.</li>
                </ul>
@@ -3139,11 +3139,11 @@ const showcaseDetailCard = `${PROJECT_DETAIL_SURFACE} project-card-surface px-3 
 
 /** Same frame as project detail insets; darker wash + soft stacked shadow (single box-shadow, two layers). Corners: sharp TL/BR, rounded TR/BL (StealthWorm reference). */
 const SKILLS_SUBCATEGORY_CARD_FACE =
-  "skills-card-surface rounded-none border-0 shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9),0_6px_22px_-10px_rgba(0,0,0,0.52)] [border-radius:0_0.95rem_0_0.95rem] sm:[border-radius:0_1.05rem_0_1.05rem] transition-[background-color,box-shadow] duration-300 ease-out hover:bg-[var(--portfolio-section-card-hover)] hover:shadow-[0_22px_52px_-28px_rgba(0,0,0,0.92),0_8px_26px_-10px_rgba(0,0,0,0.55)]";
+  "skills-card-surface rounded-[0.95rem] border-0 shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9),0_6px_22px_-10px_rgba(0,0,0,0.52)] sm:rounded-[1.05rem] transition-[background-color,box-shadow] duration-300 ease-out hover:bg-[var(--portfolio-section-card-hover)] hover:shadow-[0_22px_52px_-28px_rgba(0,0,0,0.92),0_8px_26px_-10px_rgba(0,0,0,0.55)]";
 
 /** Row zone behind the 3 subskill cards ? solid fill, no border/shadow; radii match `SKILLS_SUBCATEGORY_CARD_FACE`. */
 const SKILLS_ROW_STRIP_BG =
-  "pointer-events-none absolute inset-0 z-0 bg-[#06070a] [border-radius:0_0.95rem_0_0.95rem] sm:[border-radius:0_1.05rem_0_1.05rem]";
+  "pointer-events-none absolute inset-0 z-0 rounded-[0.95rem] border border-white/[0.09] bg-[#06070a] sm:rounded-[1.05rem]";
 
 /** Inset for cards inside the row zone (strip fills padded box via `absolute inset-0`). */
 const SKILLS_ROW_ZONE_PADDING = "p-2.5 sm:p-3.5 md:p-4 lg:p-5";
@@ -3151,13 +3151,13 @@ const SKILLS_ROW_ZONE_PADDING = "p-2.5 sm:p-3.5 md:p-4 lg:p-5";
 const ShowcaseDetailOverviewRole = ({ card }: { card: ShowcaseProjectCard }) => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-3">
     <section className={`${showcaseDetailCard} min-w-0 md:col-span-2`}>
-      <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] mb-1.5">OVERVIEW</p>
+      <p className="font-heading text-xs tracking-eyebrow-tight leading-snug uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] mb-1.5">OVERVIEW</p>
       <p className="font-body text-sm sm:text-base text-mono-2 leading-snug whitespace-pre-line">
         {card.detailOverview?.trim() || "?"}
       </p>
     </section>
     <section className={`${showcaseDetailCard} min-w-0`}>
-      <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] mb-1.5">ROLE</p>
+      <p className="font-heading text-xs tracking-eyebrow-tight leading-snug uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] mb-1.5">ROLE</p>
       <p className="font-body text-sm sm:text-base text-mono-2 leading-snug whitespace-pre-line">
         {card.detailRole?.trim() || "?"}
       </p>
@@ -3168,13 +3168,13 @@ const ShowcaseDetailOverviewRole = ({ card }: { card: ShowcaseProjectCard }) => 
 const ShowcaseDetailImpactTools = ({ card }: { card: ShowcaseProjectCard }) => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-3">
     <section className={`${showcaseDetailCard} min-w-0 md:col-span-2`}>
-      <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] mb-1.5">IMPACT</p>
+      <p className="font-heading text-xs tracking-eyebrow-tight leading-snug uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] mb-1.5">IMPACT</p>
       <p className="font-body text-sm sm:text-base text-mono-2 leading-snug whitespace-pre-line">
         {card.detailImpact?.trim() || "?"}
       </p>
     </section>
     <section className={`${showcaseDetailCard} min-w-0`}>
-      <p className="font-heading text-xs tracking-eyebrow leading-snug uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] mb-1.5">TOOLS</p>
+      <p className="font-heading text-xs tracking-eyebrow-tight leading-snug uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] mb-1.5">TOOLS</p>
       {card.detailTools?.length ? (
         <ul className="ml-1 list-disc list-outside space-y-1 pl-6 sm:pl-7 marker:text-mono-2/70">
           {card.detailTools.map((tool, i) => (
@@ -3217,7 +3217,7 @@ function ShowcaseWritingFeaturedPanel({
           </div>
           <a
             href={item.href}
-            className="featured-writing-view-cta inline-flex w-fit shrink-0 items-center gap-2 self-start rounded-[11px] sm:rounded-xl px-2.5 py-1.5 font-heading text-[10px] sm:text-xs tracking-btn-caps uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)] transition-[background-color,color,border-color] duration-300 ease-out hover:text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:mr-[6px] sm:px-3 sm:py-2"
+            className="featured-writing-view-cta inline-flex w-fit shrink-0 items-center gap-2 self-start rounded-[11px] sm:rounded-xl px-2.5 py-1.5 font-heading text-[10px] sm:text-xs tracking-eyebrow-tight uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)] transition-[background-color,color,border-color] duration-300 ease-out hover:text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:mr-[6px] sm:px-3 sm:py-2"
             onClick={(e) => {
               e.preventDefault();
               onOpenPdfInSupporting(item);
@@ -3567,7 +3567,7 @@ const PalaceProjects = ({
                         }
                   }
                 >
-                  <p className="m-0 w-full font-heading text-sm sm:text-base leading-snug tracking-eyebrow-sm uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]">
+                  <p className="m-0 w-full font-heading text-sm sm:text-base leading-snug tracking-eyebrow-tight uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]">
                     Project details
                   </p>
                   <h3 className="m-0 w-full font-display text-2xl md:text-3xl leading-[1.1] tracking-[-0.015em] text-white">
@@ -3684,7 +3684,7 @@ const ProjectPoint = ({ text }: { text: string }) => (
 // --- EXPERIENCE ---
 const EXPERIENCE_DATA = [
   {
-    role: "Digital Content & Interactive Media Projects",
+    role: "Digital Content & Interactive Media",
     company: "RAWBLEM",
     location: "Victoria, BC",
     period: "October 2024 ? Present",
@@ -3727,66 +3727,210 @@ const EXPERIENCE_DATA = [
   },
 ] as const;
 
+const CAREER_OVERVIEW_PANEL_BULLETS = {
+  rawblem: [
+    "Created, produced, and distributed digital art and interactive narrative content across short-form video platforms.",
+    "Planned and executed a story-driven interactive project that reached 30,000+ views on TikTok through platform-driven engagement.",
+    "Edited and assembled short-form video using CapCut and DaVinci Resolve, applying timing, transitions, text overlays, animation, and audio synchronization to ensure clarity and pacing.",
+    "Adapted content for TikTok, Instagram Reels, and YouTube Shorts to align with platform-specific formatting standards.",
+    "Scheduled and coordinated content distribution using Hootsuite while monitoring and responding to audience engagement across multiple platforms.",
+    "Managed end-to-end creative workflows independently, from concept and scripting to visual design and audience-driven revision.",
+  ],
+  uvic: [
+    "Coordinated and managed content across Facebook, Discord, and Twitch in support of a university-affiliated online community.",
+    "Planned, produced, and published promotional content for tournaments, announcements, and community events, contributing to increased engagement.",
+    "Designed visual assets including logos, posters, and branded graphics to support community identity and event promotion.",
+    "Collaborated with organizers and volunteers to ensure consistent messaging and timely updates across platforms.",
+    "Built foundational livestream production experience, and later expanded into independently managing full end-to-end stream configurations using OBS and Streamlabs, including scene design, overlays, transitions, and audio routing.",
+    "Assisted with in-person tournament setup, including CRT configuration and station preparation.",
+  ],
+  starbucks: [
+    "Delivered consistent customer service in a high-volume environment, supporting 200+ customer transactions per shift while maintaining quality and efficiency standards.",
+    "Supported daily operations through clear communication, multitasking, and real-time coordination with team members during peak periods.",
+    "Trained and mentored 5+ new team members, contributing to onboarding, skill development, and team readiness.",
+    "Maintained a strong attendance and reliability record over 6+ years in a fast-paced, team-based setting.",
+    "Resolved customer concerns and service disruptions by applying company policy, leading with empathy and situational awareness.",
+    "Adapted to evolving store procedures, product launches, and operational changes within a continuously shifting retail environment.",
+  ],
+  education: [
+    "Awarded Distinction.",
+  ],
+} as const;
+
+const CAREER_OVERVIEW_SKILL_TAGS = {
+  rawblem: ["Content Production", "DaVinci Resolve", "Hootsuite"],
+  uvic: ["Social Media Operations", "Visual Communication", "Team Collaboration"],
+  starbucks: ["Team Collaboration", "Time Management", "Independent Work"],
+  education: ["Content Writing", "Proofreading", "Research"],
+} as const;
+
+const CAREER_OVERVIEW_SKILL_TAG_ICONS: Record<
+  string,
+  React.ComponentType<{ size?: number; className?: string }>
+> = {
+  "Content Production": IconVideo,
+  "DaVinci Resolve": SiDavinciresolve,
+  "Hootsuite": SiHootsuite,
+  "Social Media Operations": IconShare,
+  "Visual Communication": IconPalette,
+  "Team Collaboration": IconUsers,
+  "Time Management": IconClock,
+  "Independent Work": IconUser,
+  "Content Writing": IconPencil,
+  "Proofreading": IconChecklist,
+  "Research": IconSearch,
+};
+
+const ExperienceSkillTag = ({ skill }: { skill: string }) => {
+  const Icon = CAREER_OVERVIEW_SKILL_TAG_ICONS[skill];
+
+  return (
+    <span className="experience-skill-tag">
+      {Icon ? <Icon size={13} className="experience-skill-tag-icon" /> : null}
+      <span>{skill}</span>
+    </span>
+  );
+};
+
 const ConfidantExperience = () => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const timelineScrollRef = useRef<HTMLDivElement>(null);
-  const timelineEntryRefs = useRef<(HTMLDivElement | null)[]>([]);
-
-  const goToExperienceIndex = useCallback((nextIndex: number) => {
-    const clampedIndex = Math.min(EXPERIENCE_DATA.length - 1, Math.max(0, nextIndex));
-    const scrollEl = timelineScrollRef.current;
-    const entryEl = timelineEntryRefs.current[clampedIndex];
-    setCurrentIndex(clampedIndex);
-    if (scrollEl && entryEl) {
-      const scrollRect = scrollEl.getBoundingClientRect();
-      const entryRect = entryEl.getBoundingClientRect();
-      scrollEl.scrollTo({
-        top: Math.max(0, scrollEl.scrollTop + entryRect.top - scrollRect.top - 16),
-        behavior: "smooth",
-      });
-    }
-  }, []);
-
-  const updateActiveTimelineIndex = useCallback(() => {
-    const scrollEl = timelineScrollRef.current;
-    if (!scrollEl) return;
-    const scrollRect = scrollEl.getBoundingClientRect();
-    const targetY = scrollRect.top + scrollEl.clientHeight * 0.28;
-    let closestIndex = 0;
-    let closestDistance = Number.POSITIVE_INFINITY;
-    timelineEntryRefs.current.forEach((entryEl, idx) => {
-      if (!entryEl) return;
-      const distance = Math.abs(entryEl.getBoundingClientRect().top - targetY);
-      if (distance < closestDistance) {
-        closestDistance = distance;
-        closestIndex = idx;
-      }
-    });
-    setCurrentIndex(closestIndex);
-  }, []);
+  const tabsRootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement | null;
-      if (
-        target?.matches("input, textarea, select, [contenteditable='true'], [contenteditable='']")
-      ) {
-        return;
-      }
+    const root = tabsRootRef.current;
+    if (!root) return;
 
-      if (e.key === "ArrowDown" || e.key === "ArrowRight") {
-        e.preventDefault();
-        goToExperienceIndex(currentIndex + 1);
+    // Tab functionality, adapted directly from the provided CodePen logic.
+    const tabButtons = root.querySelectorAll<HTMLElement>(".tab-btn");
+    const tabPanels = root.querySelectorAll<HTMLElement>(".tab-panel");
+    function switchTab(tabId: string | null) {
+      if (!tabId) return;
+      // Remove active class from all buttons and panels
+      tabButtons.forEach((btn) => btn.classList.remove("active"));
+      tabPanels.forEach((panel) => panel.classList.remove("active"));
+      // Add active class to clicked button and corresponding panel
+      const activeButton = root.querySelector<HTMLElement>(`[data-tab="${tabId}"]`);
+      const activePanel = document.getElementById(tabId);
+      if (activeButton && activePanel) {
+        activeButton.classList.add("active");
+        activePanel.classList.add("active");
       }
-      if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
-        e.preventDefault();
-        goToExperienceIndex(currentIndex - 1);
-      }
+    }
+
+    const buttonCleanups: Array<() => void> = [];
+    tabButtons.forEach((button) => {
+      const onClick = function (this: HTMLElement) {
+        const tabId = this.getAttribute("data-tab");
+        switchTab(tabId);
+      };
+      // Keyboard accessibility
+      const onKeyDown = function (this: HTMLElement, e: KeyboardEvent) {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          const tabId = this.getAttribute("data-tab");
+          switchTab(tabId);
+        }
+      };
+      const onMouseEnter = function (this: HTMLElement) {
+        this.style.transform = "translateX(4px)";
+      };
+      const onMouseLeave = function (this: HTMLElement) {
+        this.style.transform = "translateX(0)";
+      };
+
+      button.addEventListener("click", onClick);
+      button.addEventListener("keydown", onKeyDown);
+      button.addEventListener("mouseenter", onMouseEnter);
+      button.addEventListener("mouseleave", onMouseLeave);
+      buttonCleanups.push(() => {
+        button.removeEventListener("click", onClick);
+        button.removeEventListener("keydown", onKeyDown);
+        button.removeEventListener("mouseenter", onMouseEnter);
+        button.removeEventListener("mouseleave", onMouseLeave);
+      });
+    });
+
+    // Toggle switch functionality
+    const toggleSwitches = root.querySelectorAll<HTMLElement>(".toggle-switch");
+    const toggleCleanups: Array<() => void> = [];
+    toggleSwitches.forEach((toggle) => {
+      const onClick = function (this: HTMLElement) {
+        this.classList.toggle("active");
+      };
+      // Keyboard accessibility for toggles
+      toggle.setAttribute("tabindex", "0");
+      toggle.setAttribute("role", "switch");
+      toggle.setAttribute("aria-checked", String(toggle.classList.contains("active")));
+      const onKeyDown = function (this: HTMLElement, e: KeyboardEvent) {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          this.click();
+          this.setAttribute("aria-checked", String(this.classList.contains("active")));
+        }
+      };
+
+      toggle.addEventListener("click", onClick);
+      toggle.addEventListener("keydown", onKeyDown);
+      toggleCleanups.push(() => {
+        toggle.removeEventListener("click", onClick);
+        toggle.removeEventListener("keydown", onKeyDown);
+      });
+    });
+
+    // Animate progress bars on panel switch
+    function animateProgressBars(panel: HTMLElement) {
+      const progressBars = panel.querySelectorAll<HTMLElement>(".progress-fill");
+      progressBars.forEach((bar) => {
+        const width = bar.style.width;
+        bar.style.width = "0%";
+        setTimeout(() => {
+          bar.style.width = width;
+        }, 100);
+      });
+    }
+    // Animate stats on panel switch
+    function animateStats(panel: HTMLElement) {
+      const statValues = panel.querySelectorAll<HTMLElement>(".stat-value");
+      statValues.forEach((stat, index) => {
+        stat.style.opacity = "0";
+        stat.style.transform = "translateY(20px)";
+        setTimeout(() => {
+          stat.style.transition = "all 0.5s ease";
+          stat.style.opacity = "1";
+          stat.style.transform = "translateY(0)";
+        }, index * 100);
+      });
+    }
+    // Observer for panel changes
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (
+          mutation.type === "attributes" &&
+          mutation.attributeName === "class"
+        ) {
+          const panel = mutation.target as HTMLElement;
+          if (panel.classList.contains("active")) {
+            animateProgressBars(panel);
+            animateStats(panel);
+          }
+        }
+      });
+    });
+    tabPanels.forEach((panel) => {
+      observer.observe(panel, { attributes: true });
+    });
+    // Initial animation for the first active panel
+    const initialPanel = root.querySelector<HTMLElement>(".tab-panel.active");
+    if (initialPanel) {
+      animateProgressBars(initialPanel);
+      animateStats(initialPanel);
+    }
+
+    return () => {
+      observer.disconnect();
+      buttonCleanups.forEach((cleanup) => cleanup());
+      toggleCleanups.forEach((cleanup) => cleanup());
     };
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [currentIndex, goToExperienceIndex]);
+  }, []);
 
   return (
     <section
@@ -3794,80 +3938,197 @@ const ConfidantExperience = () => {
       className={`career-viewport bg-black font-body text-white ${SLIDE}`}
     >
       <SectionGridOverlay />
-      <div
-        ref={timelineScrollRef}
-        className="career-timeline-shell no-scrollbar relative z-10 mx-auto flex h-full min-h-0 w-full flex-col px-4 sm:px-6"
-        onScroll={updateActiveTimelineIndex}
-      >
-        <div className="career-timeline-heading">
-          <SectionHeader
-            title="CAREER OVERVIEW"
-            align="center"
-            color="text-white"
-            showBar={false}
-            compact
-            titleFade
-            titleClassName="text-xl md:text-3xl xl:text-3xl 2xl:text-4xl"
-            className="mt-1 sm:mt-1.5 !mb-5 sm:!mb-6 md:!mb-7 w-full shrink-0"
-          />
-        </div>
-
-        <div className="career-timeline-scroll">
-          <div className="career-timeline-list">
-            {EXPERIENCE_DATA.map((job, idx) => (
-              <div
-                key={job.role}
-                ref={(el) => {
-                  timelineEntryRefs.current[idx] = el;
-                }}
-                className="career-timeline-entry"
-              >
-                <div
-                  data-career-card
-                  className="card career-timeline-card no-scrollbar experience-card-surface rounded-[0_1rem] border-0 shadow-[0_10px_24px_-16px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] transition-[background-color,box-shadow] duration-200 ease-out hover:bg-[var(--portfolio-section-card-hover)] hover:shadow-[0_14px_30px_-18px_rgba(0,0,0,0.92),inset_0_1px_0_rgba(255,255,255,0.035)]"
-                >
-                  <div className="card-content">
-                    <h3 className="font-display text-base font-bold tracking-[-0.02em] text-white text-balance leading-snug sm:text-lg md:text-lg">
-                      {job.role}
-                    </h3>
-                    <div className="mt-1.5 flex flex-col gap-1 sm:mt-2 sm:flex-row sm:items-baseline sm:justify-between sm:gap-x-5 sm:gap-y-0">
-                      <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5 leading-none sm:gap-x-2">
-                        <span className="font-heading text-[11px] tracking-eyebrow-sm uppercase text-mono-2/88 sm:text-xs sm:tracking-eyebrow-sm">
-                          {job.company}
-                        </span>
-                        <span className="text-mono-2/35 shrink-0 translate-y-px" aria-hidden>
-                          {"\u00b7"}
-                        </span>
-                        <span className="font-heading text-[11px] tracking-eyebrow-sm uppercase text-mono-2/60 sm:text-xs sm:tracking-eyebrow-sm">
-                          {job.location}
-                        </span>
-                      </div>
-                      <time className="font-heading text-[11px] tracking-eyebrow-sm uppercase text-mono-2/45 tabular-nums leading-none sm:shrink-0 sm:text-right sm:text-xs sm:leading-none">
-                        {job.period}
-                      </time>
-                    </div>
-                    <div className="mt-2 h-px w-full bg-white/[0.08] sm:mt-2.5" aria-hidden />
-                    <ul className="m-0 mt-2 flex list-none flex-col gap-1.5 p-0 sm:mt-2.5 sm:gap-1.5">
-                      {job.bullets.map((bullet, i) => (
-                        <li
-                          key={i}
-                          className="grid grid-cols-[0.5rem_minmax(0,1fr)] items-start gap-x-2.5 sm:grid-cols-[0.5rem_minmax(0,1fr)] sm:gap-x-3"
-                        >
-                          <span
-                            className="mt-[0.28rem] size-[7px] shrink-0 rounded-full sm:mt-[0.3rem]"
-                            style={{ backgroundColor: "color-mix(in srgb, var(--palette-blue) 95%, transparent)" }}
-                            aria-hidden
-                          />
-                          <p className="min-w-0 font-body text-[13px] leading-[1.38] text-mono-2/88 sm:text-sm sm:leading-[1.4]">
-                            {bullet}
-                          </p>
-                        </li>
-                      ))}
-                    </ul>
+      <div ref={tabsRootRef} className="career-overview-shell no-scrollbar">
+        <div className="main-container">
+          {/* Vertical Tabs Navigation */}
+          <nav className="tabs-nav">
+            <div className="nav-header">
+              <h2>Career Overview</h2>
+              <p>EXPERIENCE</p>
+            </div>
+            <button className="tab-btn active" data-tab="rawblem" type="button">
+              <div className="tab-icon">
+                <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+                  <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+                  <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+                  <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+                </svg>
+              </div>
+              <div className="tab-text">
+                <div className="tab-title">Digital Content</div>
+                <div className="tab-subtitle">RAWBLEM</div>
+              </div>
+              <div className="tab-arrow">
+                <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </div>
+            </button>
+            <button className="tab-btn" data-tab="uvic-esports" type="button">
+              <div className="tab-icon">
+                <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="20" x2="18" y2="10"></line>
+                  <line x1="12" y1="20" x2="12" y2="4"></line>
+                  <line x1="6" y1="20" x2="6" y2="14"></line>
+                </svg>
+              </div>
+              <div className="tab-text">
+                <div className="tab-title">Social Media</div>
+                <div className="tab-subtitle">UVIC E-Sports</div>
+              </div>
+              <div className="tab-arrow">
+                <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </div>
+            </button>
+            <button className="tab-btn" data-tab="starbucks" type="button">
+              <div className="tab-icon">
+                <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                </svg>
+              </div>
+              <div className="tab-text">
+                <div className="tab-title">Barista</div>
+                <div className="tab-subtitle">Starbucks</div>
+              </div>
+              <div className="tab-arrow">
+                <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </div>
+            </button>
+            <button className="tab-btn" data-tab="education" type="button">
+              <div className="tab-icon">
+                <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+              </div>
+              <div className="tab-text">
+                <div className="tab-title">Education</div>
+                <div className="tab-subtitle">B.A. Writing</div>
+              </div>
+              <div className="tab-arrow">
+                <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </div>
+            </button>
+          </nav>
+          {/* Tab Content Panels */}
+          <div className="tabs-content">
+            {/* Dashboard Panel */}
+            <div className="tab-panel active no-scrollbar" id="rawblem">
+              <div className="panel-header">
+                <span className="panel-badge">Experience</span>
+                <h1 className="panel-title">{EXPERIENCE_DATA[0].role}</h1>
+                <p className="panel-description">RAWBLEM • Victoria, BC • October 2024 - Present</p>
+                <div className="experience-skill-tags" aria-label="Relevant skills">
+                  {CAREER_OVERVIEW_SKILL_TAGS.rawblem.map((skill) => (
+                    <ExperienceSkillTag skill={skill} key={skill} />
+                  ))}
+                </div>
+              </div>
+              <div className="panel-content">
+                <div className="content-card">
+                  <ul className="feature-list">
+                    {CAREER_OVERVIEW_PANEL_BULLETS.rawblem.map((bullet) => (
+                      <li key={bullet}>
+                        <span>{bullet}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+            {/* Analytics Panel */}
+            <div className="tab-panel no-scrollbar" id="uvic-esports">
+              <div className="panel-header">
+                <span className="panel-badge">Experience</span>
+                <h1 className="panel-title">{EXPERIENCE_DATA[1].role}</h1>
+                <p className="panel-description">UVIC E-Sports Community • Victoria, BC • January 2019 - January 2020</p>
+                <div className="experience-skill-tags" aria-label="Relevant skills">
+                  {CAREER_OVERVIEW_SKILL_TAGS.uvic.map((skill) => (
+                    <ExperienceSkillTag skill={skill} key={skill} />
+                  ))}
+                </div>
+              </div>
+              <div className="panel-content">
+                <div className="content-card">
+                  <ul className="feature-list">
+                    {CAREER_OVERVIEW_PANEL_BULLETS.uvic.map((bullet) => (
+                      <li key={bullet}>
+                        <span>{bullet}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+            {/* Projects Panel */}
+            <div className="tab-panel no-scrollbar" id="starbucks">
+              <div className="panel-header">
+                <span className="panel-badge">Experience</span>
+                <h1 className="panel-title">{EXPERIENCE_DATA[2].role}</h1>
+                <p className="panel-description">Starbucks • Victoria, BC • August 2018 - Present</p>
+                <div className="experience-skill-tags" aria-label="Relevant skills">
+                  {CAREER_OVERVIEW_SKILL_TAGS.starbucks.map((skill) => (
+                    <ExperienceSkillTag skill={skill} key={skill} />
+                  ))}
+                </div>
+              </div>
+              <div className="panel-content">
+                <div className="content-card">
+                  <ul className="feature-list">
+                    {CAREER_OVERVIEW_PANEL_BULLETS.starbucks.map((bullet) => (
+                      <li key={bullet}>
+                        <span>{bullet}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+            {/* Messages Panel */}
+            <div className="tab-panel no-scrollbar" id="education">
+              <div className="panel-header">
+                <span className="panel-badge">Education</span>
+                <h1 className="panel-title">University of Victoria</h1>
+                <p className="panel-description">Bachelor's Degree, Writing • University of Victoria • Victoria, BC • 2024</p>
+                <div className="experience-skill-tags" aria-label="Relevant skills">
+                  {CAREER_OVERVIEW_SKILL_TAGS.education.map((skill) => (
+                    <ExperienceSkillTag skill={skill} key={skill} />
+                  ))}
+                </div>
+              </div>
+              <div className="panel-content">
+                <div className="content-card">
+                  <p className="card-text">University of Victoria / Victoria, BC / 2024</p>
+                  <ul className="feature-list">
+                    {CAREER_OVERVIEW_PANEL_BULLETS.education.map((bullet) => (
+                      <li key={bullet}>
+                        <span>{bullet}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="stats-grid">
+                  <div className="stat-item">
+                    <div className="stat-value">B.A.</div>
+                    <div className="stat-label">Writing</div>
+                  </div>
+                  <div className="stat-item">
+                    <div className="stat-value">UVic</div>
+                    <div className="stat-label">Victoria BC</div>
+                  </div>
+                  <div className="stat-item">
+                    <div className="stat-value">Dist.</div>
+                    <div className="stat-label">Distinction</div>
                   </div>
                 </div>
               </div>
-            ))}
+            </div>
           </div>
         </div>
       </div>
@@ -5162,6 +5423,46 @@ const SkillsSubskillsPanel = ({
       <div aria-hidden className={SKILLS_ROW_STRIP_BG} />
     );
 
+  const sectionHeader = (
+    <motion.div
+      className={
+        dualInline && variant === "inline"
+          ? "relative z-[1] flex flex-shrink-0 min-w-0 pb-0 sm:pb-0.5 mb-1.5 sm:mb-2"
+          : "relative z-[1] flex flex-shrink-0 min-w-0 pb-2 sm:pb-4 mb-2 sm:mb-4"
+      }
+      {...(isOrchestrated
+        ? {
+            initial: { opacity: 0, x: -40 },
+            animate:
+              !revealActive
+                ? { opacity: 0, x: -40 }
+                : { opacity: 1, x: 0 },
+            transition: {
+              duration: revealReduceMotion ? 0.01 : SKILLS_REVEAL_HEADER_SLIDE_MS / 1000,
+              delay:
+                revealReduceMotion
+                  ? 0
+                  : (headerRevealDelayMs + SKILLS_REVEAL_ROW_ZONES_LEAD_MS) / 1000,
+              ease: SKILLS_CONTENT_EASE,
+            },
+            style: { willChange: "transform, opacity" },
+          }
+        : { variants: skillsPanelStaggerChild })}
+    >
+      <div className="flex min-w-0 w-full flex-row items-end justify-between gap-2 sm:gap-5">
+        <p
+          className={
+            dualInline && variant === "inline"
+              ? "min-w-0 flex-1 text-left font-display font-semibold text-sm sm:text-base md:text-lg uppercase tracking-tight text-white leading-none whitespace-nowrap truncate [text-shadow:0_0_10px_rgba(0,0,0,0.95),0_0_18px_rgba(0,0,0,0.65)] [-webkit-text-stroke:0.2px_rgba(255,255,255,0.2)]"
+              : "min-w-0 flex-1 text-left font-display font-semibold text-base sm:text-lg md:text-xl uppercase tracking-tight text-white leading-none whitespace-nowrap truncate [text-shadow:0_0_12px_rgba(0,0,0,0.98),0_0_20px_rgba(0,0,0,0.68)] [-webkit-text-stroke:0.25px_rgba(255,255,255,0.22)]"
+          }
+        >
+          {slide === "core" ? "Core Competencies" : "Toolkit"}
+        </p>
+      </div>
+    </motion.div>
+  );
+
   return (
   <UiverseCard
     className={`skills-main-card skills-subcard${dualInline ? " skills-subcard-dual" : ""}`}
@@ -5203,8 +5504,8 @@ const SkillsSubskillsPanel = ({
         <motion.div
           className={
             dualInline && variant === "inline"
-              ? "flex flex-shrink-0 min-w-0 pb-0 sm:pb-0.5 mb-1.5 sm:mb-2"
-              : "flex flex-shrink-0 min-w-0 pb-2 sm:pb-4 mb-2 sm:mb-4"
+              ? "hidden relative z-[1] flex flex-shrink-0 min-w-0 pb-0 sm:pb-0.5 mb-1.5 sm:mb-2"
+              : "hidden relative z-[1] flex flex-shrink-0 min-w-0 pb-2 sm:pb-4 mb-2 sm:mb-4"
           }
           {...(isOrchestrated
             ? {
@@ -5306,7 +5607,7 @@ const SkillsSubskillsPanel = ({
           </div>
         </motion.div>
         <motion.div
-          className="relative flex-1 min-h-0"
+          className="relative z-[1] flex-1 min-h-0"
           {...(!isOrchestrated ? { variants: skillsPanelStaggerChild } : {})}
         >
         <div
@@ -5322,6 +5623,7 @@ const SkillsSubskillsPanel = ({
             <div className="text-[14px] sm:text-[15px] leading-[1.55] text-white">
               <div className={`relative w-full min-w-0 ${SKILLS_ROW_ZONE_PADDING}`}>
                 {rowZoneBackdrop}
+                {sectionHeader}
                 <div className="relative z-[1] grid w-full min-w-0 grid-cols-1 md:grid-cols-3 md:items-start gap-y-5 sm:gap-y-7 gap-x-4 md:gap-x-5 lg:gap-x-6">
                 {CORE_SUBSKILLS_CATEGORIES.map(({ categoryTitle, items }, index) => {
                   const columnClass = [
@@ -5400,6 +5702,7 @@ const SkillsSubskillsPanel = ({
             <div className="text-[14px] sm:text-[15px] leading-[1.55] text-white">
               <div className={`relative w-full min-w-0 ${SKILLS_ROW_ZONE_PADDING}`}>
                 {rowZoneBackdrop}
+                {sectionHeader}
                 <div className="relative z-[1] grid w-full min-w-0 grid-cols-1 md:grid-cols-3 md:items-start gap-y-5 sm:gap-y-7 gap-x-4 md:gap-x-5 lg:gap-x-6 [&>*]:min-w-0">
                 {[
                   {

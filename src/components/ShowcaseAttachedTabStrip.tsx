@@ -140,14 +140,14 @@ export function ShowcaseAttachedTabStrip({
     <div className={`flex w-full flex-col ${className}`}>
       <div
         className={[
-          "featured-writing-shell flex min-w-0 w-full max-w-full flex-col overflow-hidden rounded-[11px] sm:rounded-xl",
+          "featured-writing-shell flex min-w-0 w-full max-w-full flex-col overflow-hidden rounded-[11px] border border-white/[0.09] sm:rounded-xl",
           "shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)]",
           // lg+: match right edge of SHOWCASE cards (slide basis uses (100%-4px)/2 — Home.tsx).
           "lg:max-w-[calc(100%-4px)]",
         ].join(" ")}
       >
         <header className="featured-writing-inner-rule-header shrink-0 bg-transparent px-3 py-2.5 text-center sm:px-4 sm:py-3">
-          <h2 className="m-0 font-display text-sm font-bold leading-snug tracking-eyebrow-tight uppercase text-white">
+          <h2 className="m-0 font-heading text-[1.1rem] font-bold leading-snug tracking-[-0.02em] text-white">
             FEATURED WRITING
           </h2>
         </header>
@@ -179,7 +179,7 @@ export function ShowcaseAttachedTabStrip({
                   className={[
                     "group relative flex shrink-0 items-center justify-center",
                     FOLDER_TAB_TOP,
-                    "min-w-0 border border-b-0 px-2.5 font-heading text-[10px] sm:text-xs tracking-btn-caps uppercase",
+                    "min-w-0 border border-b-0 px-2.5 font-heading text-[10px] font-bold tracking-[0.04em] uppercase sm:text-xs",
                     "motion-safe:transition-[height,box-shadow,background-color,border-color,color] motion-safe:duration-200 motion-safe:ease-out",
                     "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-portfolio-yellow/30 focus-visible:ring-offset-2 focus-visible:ring-offset-black",
                     active
