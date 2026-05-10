@@ -421,6 +421,7 @@ function SideNavGridBackdrop() {
 
 /** WebKit/iOS: thin 1px dual-gradient grids can composite away at ~4% opacity; repeating + webkit size is more reliable. */
 const gridOverlayStyle: React.CSSProperties = {
+  backgroundColor: "#121212",
   backgroundImage: `repeating-linear-gradient(90deg, rgba(255,255,255,0.38) 0, rgba(255,255,255,0.38) 1px, rgba(255,255,255,0) 1px, rgba(255,255,255,0) ${GRID_CELL_SIZE}px), repeating-linear-gradient(0deg, rgba(255,255,255,0.38) 0, rgba(255,255,255,0.38) 1px, rgba(255,255,255,0) 1px, rgba(255,255,255,0) ${GRID_CELL_SIZE}px)`,
   backgroundSize: `${GRID_CELL_SIZE}px ${GRID_CELL_SIZE}px`,
   WebkitBackgroundSize: `${GRID_CELL_SIZE}px ${GRID_CELL_SIZE}px`,
@@ -1475,7 +1476,7 @@ const SideNavOverlay = ({
             aria-label="Navigation"
             role="dialog"
             aria-modal="true"
-            className="fixed inset-y-0 right-0 z-[60] w-full max-w-[380px] sm:max-w-[400px] bg-black border-l-[3px] border-white/20 p-5 sm:p-6 shadow-2xl flex flex-col"
+            className="side-nav-panel profile-card-surface fixed inset-y-0 right-0 z-[60] w-full max-w-[380px] sm:max-w-[400px] p-5 sm:p-6 shadow-2xl flex flex-col"
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
@@ -1483,8 +1484,10 @@ const SideNavOverlay = ({
           >
             <div className="flex items-center justify-between mb-6">
               <div className="flex flex-col gap-y-1.5">
-                <p className="font-mono text-[0.65rem] sm:text-xs text-mono-2/90 tracking-widest uppercase">MENU</p>
-                <p className="font-display text-2xl sm:text-3xl tracking-eyebrow-tight uppercase leading-[0.95]">Navigate</p>
+                <p className="font-heading text-[9px] sm:text-[10px] tracking-eyebrow-tight leading-snug uppercase text-mono-2/90">
+                  NAVIGATION
+                </p>
+                <p className="font-display text-3xl sm:text-4xl leading-[0.95] tracking-[-0.02em] uppercase">MENU</p>
               </div>
               <motion.div whileTap={TAP} transition={SPRING.ui}>
                 <Button
@@ -1761,26 +1764,26 @@ const PhantomProfile = () => {
             </motion.div>
             <motion.div
               className="profile-card-surface relative mt-8 max-w-xl sm:mt-9 xl:max-w-2xl 2xl:max-w-2xl -ml-[3px] rounded-[0_1rem] px-4 py-4 sm:px-5 sm:py-5"
-               initial={{ opacity: 0, y: 14 }}
-               animate={{ opacity: overlayRevealed ? 1 : 0, y: overlayRevealed ? 0 : 14 }}
-               transition={{ duration: SUMMARY_DURATION_S, delay: overlayRevealed ? SUMMARY_DELAY_S : 0, ease: [0.16, 1, 0.3, 1] }}
-             >
-               <p className="font-heading text-sm tracking-eyebrow-tight leading-snug uppercase mb-1.5" style={{ color: PROFILE_ACCENT_SOFT }}>SUMMARY</p>
-               <p className="font-body text-sm sm:text-base md:text-lg xl:text-lg 2xl:text-xl text-mono-2 leading-relaxed mb-4">
-                 Communications-focused writer and digital media coordinator with experience producing narrative-driven web content and managing social media workflows across multiple platforms. Combines narrative storytelling with platform-native content production and distribution. Bachelor of Arts in Writing (Distinction), University of Victoria.
-               </p>
-               <p className="font-heading text-sm tracking-eyebrow-tight leading-snug uppercase mb-1.5" style={{ color: PROFILE_ACCENT_SOFT }}>CURRENT WORK</p>
-               <ul className="font-body text-sm sm:text-base md:text-lg xl:text-lg 2xl:text-xl text-mono-2/90 leading-relaxed mb-4 ml-3 list-disc list-outside space-y-2 pl-6 sm:pl-7 marker:text-mono-2/50">
-                 <li>Currently developing SLAYWIRE, a narrative-first RPG.</li>
-                 <li>
-                   RAWBLEM - Creative brand producing narrative-driven short-form content across TikTok, Instagram Reels, and YouTube Shorts.
-                 </li>
-               </ul>
-               <p className="font-heading text-sm tracking-eyebrow-tight leading-snug uppercase mb-1.5" style={{ color: PROFILE_ACCENT_SOFT }}>AVAILABILITY</p>
-               <ul className="font-body text-sm sm:text-base md:text-lg xl:text-lg 2xl:text-xl text-mono-2 leading-relaxed ml-3 list-disc list-outside space-y-2 pl-6 sm:pl-7 marker:text-mono-2/50">
-                 <li>Full-Time Content, Communications, or Digital Media roles.</li>
-               </ul>
-             </motion.div>
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: overlayRevealed ? 1 : 0, y: overlayRevealed ? 0 : 14 }}
+              transition={{ duration: SUMMARY_DURATION_S, delay: overlayRevealed ? SUMMARY_DELAY_S : 0, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <p className="font-heading text-sm tracking-eyebrow-tight leading-snug uppercase mb-1.5" style={{ color: PROFILE_ACCENT_SOFT }}>SUMMARY</p>
+              <p className="font-body text-sm sm:text-base md:text-lg xl:text-lg 2xl:text-xl text-mono-2 leading-relaxed mb-4">
+                Communications-focused writer and digital media coordinator with experience producing narrative-driven web content and managing social media workflows across multiple platforms. Combines narrative storytelling with platform-native content production and distribution. Bachelor of Arts in Writing (Distinction), University of Victoria.
+              </p>
+              <p className="font-heading text-sm tracking-eyebrow-tight leading-snug uppercase mb-1.5" style={{ color: PROFILE_ACCENT_SOFT }}>CURRENT WORK</p>
+              <ul className="font-body text-sm sm:text-base md:text-lg xl:text-lg 2xl:text-xl text-mono-2/90 leading-relaxed mb-4 ml-3 list-disc list-outside space-y-2 pl-6 sm:pl-7 marker:text-mono-2/50">
+                <li>Currently developing SLAYWIRE, a narrative-first RPG.</li>
+                <li>
+                  RAWBLEM - Creative brand producing narrative-driven short-form content across TikTok, Instagram Reels, and YouTube Shorts.
+                </li>
+              </ul>
+              <p className="font-heading text-sm tracking-eyebrow-tight leading-snug uppercase mb-1.5" style={{ color: PROFILE_ACCENT_SOFT }}>AVAILABILITY</p>
+              <ul className="font-body text-sm sm:text-base md:text-lg xl:text-lg 2xl:text-xl text-mono-2 leading-relaxed ml-3 list-disc list-outside space-y-2 pl-6 sm:pl-7 marker:text-mono-2/50">
+                <li>Full-Time Content, Communications, or Digital Media roles.</li>
+              </ul>
+            </motion.div>
           </motion.div>
         </div>
       </div>
@@ -3126,24 +3129,24 @@ const DetailCardMedia = ({ card }: { card: ShowcaseProjectCard }) => (
   </>
 );
 
-/** Same shell as FEATURED WRITING / showcase slider cards (rounded grey frame). */
-const PROJECT_DETAIL_SURFACE =
-  "rounded-[11px] sm:rounded-xl border-0 shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)]";
-
 /** Same box-shadow + vignette stack as the hero SHOWCASE media slider (final ?open? state). */
 const SHOWCASE_SLIDER_MEDIA_BOX_SHADOW =
   "0 36px 88px rgba(0,0,0,0.6), inset 0 -40px 70px rgba(0,0,0,0.52), 0 0 0 1px rgba(255,255,255,0.07), 0 0 28px 4px rgba(255,255,255,0.04)";
 
-/** Project detail grid cells ? same shell + `.project-card-surface` (section card token) as profile cards. */
-const showcaseDetailCard = `${PROJECT_DETAIL_SURFACE} project-card-surface px-3 py-3 sm:px-4 sm:py-3.5`;
+/**
+ * Project detail grid cells (OVERVIEW / ROLE / IMPACT / TOOLS) — same surface class + radius pattern as PROFILE
+ * (`profile-card-surface` + explicit `rounded-*` overrides). No extra drop shadow (profile cards are flat glass).
+ */
+const showcaseDetailCard =
+  "profile-card-surface relative rounded-[11px] sm:rounded-xl px-3 py-3 sm:px-4 sm:py-3.5";
 
 /** Same frame as project detail insets; darker wash + soft stacked shadow (single box-shadow, two layers). Corners: sharp TL/BR, rounded TR/BL (StealthWorm reference). */
 const SKILLS_SUBCATEGORY_CARD_FACE =
-  "skills-card-surface rounded-[0.95rem] border-0 shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9),0_6px_22px_-10px_rgba(0,0,0,0.52)] sm:rounded-[1.05rem] transition-[background-color,box-shadow] duration-300 ease-out hover:bg-[var(--portfolio-section-card-hover)] hover:shadow-[0_22px_52px_-28px_rgba(0,0,0,0.92),0_8px_26px_-10px_rgba(0,0,0,0.55)]";
+  "skills-card-surface rounded-[0.95rem] border-0 shadow-[0_8px_32px_rgba(0,0,0,0.35)] sm:rounded-[1.05rem] transition-[background-color,box-shadow] duration-300 ease-out hover:shadow-[0_10px_36px_rgba(0,0,0,0.4)]";
 
 /** Row zone behind the 3 subskill cards ? solid fill, no border/shadow; radii match `SKILLS_SUBCATEGORY_CARD_FACE`. */
 const SKILLS_ROW_STRIP_BG =
-  "pointer-events-none absolute inset-0 z-0 rounded-[0.95rem] border border-white/[0.09] bg-[#06070a] sm:rounded-[1.05rem]";
+  "skills-row-strip-bg pointer-events-none absolute inset-0 z-0 rounded-[0.95rem] border border-white/[0.09] sm:rounded-[1.05rem]";
 
 /** Inset for cards inside the row zone (strip fills padded box via `absolute inset-0`). */
 const SKILLS_ROW_ZONE_PADDING = "p-2.5 sm:p-3.5 md:p-4 lg:p-5";
@@ -3781,12 +3784,12 @@ const CAREER_OVERVIEW_SKILL_TAG_ICONS: Record<
   "Research": IconSearch,
 };
 
-const ExperienceSkillTag = ({ skill }: { skill: string }) => {
+const ExperienceSkillTag = ({ skill, showIcon = true }: { skill: string; showIcon?: boolean }) => {
   const Icon = CAREER_OVERVIEW_SKILL_TAG_ICONS[skill];
 
   return (
     <span className="experience-skill-tag">
-      {Icon ? <Icon size={13} className="experience-skill-tag-icon" /> : null}
+      {showIcon && Icon ? <Icon size={13} className="experience-skill-tag-icon" /> : null}
       <span>{skill}</span>
     </span>
   );
@@ -3939,80 +3942,52 @@ const ConfidantExperience = () => {
     >
       <SectionGridOverlay />
       <div ref={tabsRootRef} className="career-overview-shell no-scrollbar">
-        <div className="main-container">
+        <div className="container mx-auto px-4 sm:px-6">
+        <div className="mx-auto w-full max-w-[1120px]">
+          <SectionHeader
+            title="CAREER OVERVIEW"
+            align="center"
+            color="text-white"
+            showBar={false}
+            compact
+            titleClassName="xl:text-5xl 2xl:text-6xl"
+            className="!mb-5 max-lg:mt-0 lg:mt-0"
+            titleDelay={0.152}
+            titleDuration={0.342}
+            titleStagger={0.0216}
+            viewportOnce={false}
+            slideFade
+            slideFadeDuration={0.5}
+            slideFadeDelay={0.3}
+          />
+          <div className="main-container">
           {/* Vertical Tabs Navigation */}
           <nav className="tabs-nav">
             <div className="nav-header">
-              <h2>Career Overview</h2>
               <p>EXPERIENCE</p>
             </div>
             <button className="tab-btn active" data-tab="rawblem" type="button">
-              <div className="tab-icon">
-                <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="3" width="7" height="7" rx="1"></rect>
-                  <rect x="14" y="3" width="7" height="7" rx="1"></rect>
-                  <rect x="3" y="14" width="7" height="7" rx="1"></rect>
-                  <rect x="14" y="14" width="7" height="7" rx="1"></rect>
-                </svg>
-              </div>
               <div className="tab-text">
                 <div className="tab-title">Digital Content</div>
                 <div className="tab-subtitle">RAWBLEM</div>
               </div>
-              <div className="tab-arrow">
-                <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-              </div>
             </button>
             <button className="tab-btn" data-tab="uvic-esports" type="button">
-              <div className="tab-icon">
-                <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="20" x2="18" y2="10"></line>
-                  <line x1="12" y1="20" x2="12" y2="4"></line>
-                  <line x1="6" y1="20" x2="6" y2="14"></line>
-                </svg>
-              </div>
               <div className="tab-text">
                 <div className="tab-title">Social Media</div>
                 <div className="tab-subtitle">UVIC E-Sports</div>
               </div>
-              <div className="tab-arrow">
-                <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-              </div>
             </button>
             <button className="tab-btn" data-tab="starbucks" type="button">
-              <div className="tab-icon">
-                <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-                </svg>
-              </div>
               <div className="tab-text">
                 <div className="tab-title">Barista</div>
                 <div className="tab-subtitle">Starbucks</div>
               </div>
-              <div className="tab-arrow">
-                <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-              </div>
             </button>
             <button className="tab-btn" data-tab="education" type="button">
-              <div className="tab-icon">
-                <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                </svg>
-              </div>
               <div className="tab-text">
                 <div className="tab-title">Education</div>
                 <div className="tab-subtitle">B.A. Writing</div>
-              </div>
-              <div className="tab-arrow">
-                <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
               </div>
             </button>
           </nav>
@@ -4050,7 +4025,7 @@ const ConfidantExperience = () => {
                 <p className="panel-description">UVIC E-Sports Community • Victoria, BC • January 2019 - January 2020</p>
                 <div className="experience-skill-tags" aria-label="Relevant skills">
                   {CAREER_OVERVIEW_SKILL_TAGS.uvic.map((skill) => (
-                    <ExperienceSkillTag skill={skill} key={skill} />
+                    <ExperienceSkillTag skill={skill} key={skill} showIcon={false} />
                   ))}
                 </div>
               </div>
@@ -4074,7 +4049,7 @@ const ConfidantExperience = () => {
                 <p className="panel-description">Starbucks • Victoria, BC • August 2018 - Present</p>
                 <div className="experience-skill-tags" aria-label="Relevant skills">
                   {CAREER_OVERVIEW_SKILL_TAGS.starbucks.map((skill) => (
-                    <ExperienceSkillTag skill={skill} key={skill} />
+                    <ExperienceSkillTag skill={skill} key={skill} showIcon={false} />
                   ))}
                 </div>
               </div>
@@ -4098,7 +4073,7 @@ const ConfidantExperience = () => {
                 <p className="panel-description">Bachelor's Degree, Writing • University of Victoria • Victoria, BC • 2024</p>
                 <div className="experience-skill-tags" aria-label="Relevant skills">
                   {CAREER_OVERVIEW_SKILL_TAGS.education.map((skill) => (
-                    <ExperienceSkillTag skill={skill} key={skill} />
+                    <ExperienceSkillTag skill={skill} key={skill} showIcon={false} />
                   ))}
                 </div>
               </div>
@@ -4130,6 +4105,8 @@ const ConfidantExperience = () => {
               </div>
             </div>
           </div>
+        </div>
+        </div>
         </div>
       </div>
     </section>
@@ -4930,14 +4907,14 @@ const SkillsExpandedView = ({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
             {data.categories.map((category) => (
               <div key={category.title} className="border-l border-white/10 pl-4">
-                <h4 className="font-display text-xs md:text-sm uppercase tracking-[0.08em] leading-snug text-emerald-200/55 mb-1.5 md:mb-2.5 font-semibold">
+                <h4 className="skills-subcategory-column-title font-display text-xs md:text-sm uppercase tracking-[0.08em] leading-snug !text-zinc-100 mb-1.5 md:mb-2.5 font-semibold">
                   {category.title}
                 </h4>
                 <ul className="space-y-1">
                   {category.items.map((item) => (
                     <li
                       key={item}
-                      className="font-mono text-[11px] md:text-xs text-white tracking-tight leading-tight"
+                      className="font-mono text-[11px] md:text-xs text-zinc-200 tracking-tight leading-tight"
                     >
                       {item}
                     </li>
@@ -4975,14 +4952,14 @@ const SkillsExpandedPanel = ({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
             {data.categories.map((category) => (
               <div key={category.title} className="border-l border-white/10 pl-4">
-                <h4 className="font-display text-xs md:text-sm uppercase tracking-[0.08em] leading-snug text-emerald-200/55 mb-1.5 md:mb-2.5 font-semibold">
+                <h4 className="skills-subcategory-column-title font-display text-xs md:text-sm uppercase tracking-[0.08em] leading-snug !text-zinc-100 mb-1.5 md:mb-2.5 font-semibold">
                   {category.title}
                 </h4>
                 <ul className="space-y-1">
                   {category.items.map((item) => (
                     <li
                       key={item}
-                      className="font-mono text-[11px] md:text-xs text-white tracking-tight leading-tight"
+                      className="font-mono text-[11px] md:text-xs text-zinc-200 tracking-tight leading-tight"
                     >
                       {item}
                     </li>
@@ -5636,7 +5613,7 @@ const SkillsSubskillsPanel = ({
                   const cardInner = (
                     <>
                       <p
-                        className="mb-3.5 w-full min-w-0 pb-2.5 border-b border-white/[0.06] text-center text-[12px] sm:text-[13px] font-heading font-semibold uppercase leading-snug tracking-eyebrow-tight text-zinc-300/70 max-md:text-balance max-md:whitespace-normal md:whitespace-nowrap"
+                        className="skills-subcategory-column-title mb-3.5 w-full min-w-0 pb-2.5 border-b border-white/[0.06] text-center text-[12px] sm:text-[13px] font-heading font-semibold uppercase leading-snug tracking-eyebrow-tight !text-zinc-100 max-md:text-balance max-md:whitespace-normal md:whitespace-nowrap"
                         title={categoryTitle}
                       >
                         {categoryTitle}
@@ -5651,7 +5628,7 @@ const SkillsSubskillsPanel = ({
                               <Icon size={18} className="text-portfolio-green" />
                             </span>
                             <span
-                              className="min-w-0 truncate text-white transition-colors duration-200 ease-out"
+                              className="min-w-0 truncate text-zinc-200 transition-colors duration-200 ease-out"
                               title={label}
                             >
                               {label}
@@ -5741,7 +5718,7 @@ const SkillsSubskillsPanel = ({
                   const cardInner = (
                     <>
                       <p
-                        className="mb-3.5 w-full min-w-0 pb-2.5 border-b border-white/[0.06] text-center text-[12px] sm:text-[13px] font-heading font-semibold uppercase leading-snug tracking-eyebrow-tight text-zinc-300/70 max-md:text-balance max-md:whitespace-normal md:whitespace-nowrap"
+                        className="skills-subcategory-column-title mb-3.5 w-full min-w-0 pb-2.5 border-b border-white/[0.06] text-center text-[12px] sm:text-[13px] font-heading font-semibold uppercase leading-snug tracking-eyebrow-tight !text-zinc-100 max-md:text-balance max-md:whitespace-normal md:whitespace-nowrap"
                         title={title}
                       >
                         {label}
@@ -5756,7 +5733,7 @@ const SkillsSubskillsPanel = ({
                               <ToolIcon name={tool} size={18} />
                             </span>
                             <span
-                              className="min-w-0 truncate text-white transition-colors duration-200 ease-out"
+                              className="min-w-0 truncate text-zinc-200 transition-colors duration-200 ease-out"
                               title={tool}
                             >
                               {tool}
