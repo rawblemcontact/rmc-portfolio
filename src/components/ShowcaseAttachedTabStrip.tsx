@@ -5,12 +5,12 @@ export type ShowcaseTabId = "tab-1" | "tab-2" | "tab-3" | "tab-4" | "tab-5" | "t
 const TAB_ORDER: ShowcaseTabId[] = ["tab-1", "tab-2", "tab-3", "tab-4", "tab-5", "tab-6"];
 
 const TAB_LABEL: Record<ShowcaseTabId, string> = {
-  "tab-1": "Content writing",
+  "tab-1": "Content Writing",
   "tab-2": "Screenplay",
-  "tab-3": "Graphic novel",
-  "tab-4": "Literary analysis",
-  "tab-5": "Media analysis",
-  "tab-6": "Narrative essay",
+  "tab-3": "Graphic Novel",
+  "tab-4": "Literary Analysis",
+  "tab-5": "Media Analysis",
+  "tab-6": "Narrative Essay",
 };
 
 /** Rail, inactive tabs, active tab, and body share one surface (same as `--portfolio-section-card` / profile card). */
@@ -152,13 +152,13 @@ export function ShowcaseAttachedTabStrip({
           </h2>
         </header>
 
-        <div className="featured-writing-panel relative flex shrink-0 flex-col gap-0 px-3 pt-3 sm:px-4 sm:pt-4">
+        <div className="relative flex shrink-0 flex-col gap-0 px-3 pt-3 sm:px-4 sm:pt-4">
           <div
             ref={tabListRef}
             role="tablist"
             aria-label="Showcase views"
             onScroll={syncFit}
-            className="flex min-w-0 w-full items-end gap-0.5 overflow-x-auto overflow-y-visible [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="flex min-w-0 w-full items-end gap-px overflow-x-hidden overflow-y-visible"
           >
             {TAB_ORDER.map((id) => {
               const active = activeId === id;
@@ -173,29 +173,35 @@ export function ShowcaseAttachedTabStrip({
                   onClick={() => onTabChange(id)}
                   style={
                     active
-                      ? { borderColor: featuredTabSoftYellow, color: featuredTabSoftYellow }
+                      ? {
+                          color: featuredTabSoftYellow,
+                          borderTopColor: featuredTabSoftYellow,
+                          borderLeftColor: featuredTabSoftYellow,
+                          borderRightColor: featuredTabSoftYellow,
+                        }
                       : undefined
                   }
                   className={[
-                    "group relative flex shrink-0 items-center justify-center",
+                    "group relative flex min-w-0 flex-1 basis-0 items-center justify-center",
                     FOLDER_TAB_TOP,
-                    "min-w-0 border border-b-0 px-2.5 font-heading text-[10px] font-bold tracking-[0.04em] uppercase sm:text-xs",
+                    "border border-b-0 px-1.5 font-heading text-[13.5px] font-bold tracking-[0.02em] sm:px-2 sm:tracking-[0.03em]",
                     "motion-safe:transition-[height,box-shadow,background-color,border-color,color] motion-safe:duration-200 motion-safe:ease-out",
                     "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-portfolio-yellow/30 focus-visible:ring-offset-2 focus-visible:ring-offset-black",
                     active
                       ? [
-                          TAB_PANEL_SURFACE,
-                          "relative h-10 min-h-[2.5rem] sm:h-11 sm:min-h-[2.75rem]",
-                          "shadow-[0_6px_20px_-8px_rgba(0,0,0,0.75),3px_0_10px_-5px_rgba(0,0,0,0.55)]",
+                          "featured-writing-tab-active",
+                          "relative z-[1] overflow-visible h-10 min-h-[2.5rem] sm:h-11 sm:min-h-[2.75rem]",
                         ].join(" ")
                       : [
                           TAB_PANEL_SURFACE,
-                          "featured-writing-tab-idle-edge h-7 min-h-[1.75rem] sm:h-8 sm:min-h-[2rem]",
-                          "text-mono-2/42 hover:bg-white/[0.04] hover:text-mono-2/88",
+                          "featured-writing-tab-idle-edge h-8 min-h-[2rem] sm:h-9 sm:min-h-[2.25rem]",
+                          "text-mono-2/25 hover:bg-white/[0.04] hover:text-mono-2/88",
                         ].join(" "),
                   ].join(" ")}
                 >
-                  <span className="whitespace-nowrap px-0.5 leading-none">{TAB_LABEL[id]}</span>
+                  <span className="block w-full min-w-0 truncate px-0.5 text-center leading-snug">
+                    {TAB_LABEL[id]}
+                  </span>
                 </button>
               );
             })}

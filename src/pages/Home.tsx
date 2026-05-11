@@ -2079,6 +2079,8 @@ const DETAIL_HERO_FADE_START_RAF_PAD_MS = 40;
 /** Match showcase carousel card height (same as `motion.button` project cards). Capped with svh so SHOWCASE + FEATURED fit one screen with bottom gutter ? no scroll. */
 const DETAIL_CARD_H =
   "h-[min(280px,45svh)] sm:h-[min(308px,48svh)] md:h-[min(328px,50svh)] lg:h-[min(352px,52svh)] xl:h-[min(368px,54svh)] 2xl:h-[min(384px,56svh)]";
+/** SHOWCASE carousel + FEATURED WRITING column cap — widened to align left gutter with PROFILE. */
+const SHOWCASE_COLUMN_MAX = "max-w-[min(100%,58rem)]";
 
 const ProjectsStack = ({
   onSelect,
@@ -2263,7 +2265,7 @@ const ProjectsStack = ({
   }, [autoplayIndices]);
 
   return (
-    <div className="mx-auto -mt-1 sm:-mt-1.5 flex w-full min-w-0 max-w-[min(100%,56rem)] flex-col justify-center items-center pt-2 px-1 pb-0 sm:pt-3 sm:px-2 overflow-x-visible overflow-y-visible lg:max-w-[min(100%,72rem)] xl:max-w-[min(100%,84rem)] 2xl:max-w-[min(100%,96rem)]">
+    <div className={`mx-auto -mt-1 sm:-mt-1.5 flex w-full min-w-0 ${SHOWCASE_COLUMN_MAX} flex-col justify-center items-center pt-2 px-1 pb-0 sm:pt-3 sm:px-2 overflow-x-visible overflow-y-visible`}>
       {/*
        * Single horizontal inset for dots + viewport so the pager lines up with card side borders (same as FEATURED WRITING below).
        */}
@@ -3481,7 +3483,7 @@ const PalaceProjects = ({
            * ProjectsStack uses pb-0 so gallery bottom padding does not stack with this margin.
            */}
           <div
-            className={`mx-auto mt-[var(--slide-gap,0.875rem)] flex w-full min-w-0 max-w-[min(100%,56rem)] flex-col px-1 sm:px-2 lg:max-w-[min(100%,72rem)] xl:max-w-[min(100%,84rem)] 2xl:max-w-[min(100%,96rem)] ${activeCard ? "opacity-0" : "opacity-100"}`}
+            className={`mx-auto mt-[var(--slide-gap,0.875rem)] flex w-full min-w-0 ${SHOWCASE_COLUMN_MAX} flex-col px-1 sm:px-2 ${activeCard ? "opacity-0" : "opacity-100"}`}
           >
             {/*
              * Same horizontal inset as ProjectsStack outer + embla viewport so folder
@@ -3513,7 +3515,7 @@ const PalaceProjects = ({
          */}
         <div
           ref={detailAnchorRef}
-          className={`absolute top-0 left-0 right-0 mx-auto w-full max-w-[min(100%,56rem)] ${DETAIL_CARD_H} pointer-events-none`}
+          className={`absolute top-0 left-0 right-0 mx-auto w-full ${SHOWCASE_COLUMN_MAX} ${DETAIL_CARD_H} pointer-events-none`}
           aria-hidden
           style={{ visibility: "hidden" }}
         />
@@ -3524,11 +3526,11 @@ const PalaceProjects = ({
          */}
         {activeCard && (
           <div className="absolute inset-0 z-20 flex flex-col items-center">
-            <div className={`w-full max-w-[min(100%,56rem)] shrink-0 ${DETAIL_CARD_H}`} aria-hidden />
+            <div className={`w-full ${SHOWCASE_COLUMN_MAX} shrink-0 ${DETAIL_CARD_H}`} aria-hidden />
 
             {morphDone && (
               <div
-                className={`project-card-surface absolute top-0 left-0 right-0 mx-auto w-full max-w-[min(100%,56rem)] ${DETAIL_CARD_H} rounded-[11px] sm:rounded-xl border-0 overflow-hidden`}
+                className={`project-card-surface absolute top-0 left-0 right-0 mx-auto w-full ${SHOWCASE_COLUMN_MAX} ${DETAIL_CARD_H} rounded-[11px] sm:rounded-xl border-0 overflow-hidden`}
                 style={{
                   boxShadow: `${SHOWCASE_SLIDER_MEDIA_BOX_SHADOW}, 0 18px 48px -28px rgba(0,0,0,0.9)`,
                 }}
@@ -3555,7 +3557,7 @@ const PalaceProjects = ({
             )}
 
             {activeCard && morphRect && (
-              <div className="w-full max-w-[min(100%,56rem)] mt-5 pb-8">
+              <div className={`w-full ${SHOWCASE_COLUMN_MAX} mt-5 pb-8`}>
                 <div
                   className="-ml-[3px] flex w-full max-w-full flex-col items-stretch gap-y-1.5 text-left"
                   style={
@@ -3943,29 +3945,16 @@ const ConfidantExperience = () => {
       <SectionGridOverlay />
       <div ref={tabsRootRef} className="career-overview-shell no-scrollbar">
         <div className="container mx-auto px-4 sm:px-6">
-        <div className="mx-auto w-full max-w-[1120px]">
-          <SectionHeader
-            title="CAREER OVERVIEW"
-            align="center"
-            color="text-white"
-            showBar={false}
-            compact
-            titleClassName="xl:text-5xl 2xl:text-6xl"
-            className="!mb-5 max-lg:mt-0 lg:mt-0"
-            titleDelay={0.152}
-            titleDuration={0.342}
-            titleStagger={0.0216}
-            viewportOnce={false}
-            slideFade
-            slideFadeDuration={0.5}
-            slideFadeDelay={0.3}
-          />
+        <div className={`mx-auto w-full ${SHOWCASE_COLUMN_MAX}`}>
+          <div className="px-1 sm:px-2">
+          <div className="px-2 sm:px-4 lg:px-2 xl:px-3">
           <div className="main-container">
+          <div className="nav-header">
+            <p className="career-nav-section-title">Career Overview</p>
+            <p>EXPERIENCE</p>
+          </div>
           {/* Vertical Tabs Navigation */}
           <nav className="tabs-nav">
-            <div className="nav-header">
-              <p>EXPERIENCE</p>
-            </div>
             <button className="tab-btn active" data-tab="rawblem" type="button">
               <div className="tab-text">
                 <div className="tab-title">Digital Content</div>
@@ -3997,8 +3986,11 @@ const ConfidantExperience = () => {
             <div className="tab-panel active no-scrollbar" id="rawblem">
               <div className="panel-header">
                 <span className="panel-badge">Experience</span>
-                <h1 className="panel-title">{EXPERIENCE_DATA[0].role}</h1>
-                <p className="panel-description">RAWBLEM • Victoria, BC • October 2024 - Present</p>
+                <div className="panel-title-row">
+                  <h1 className="panel-title">{EXPERIENCE_DATA[0].role}</h1>
+                  <p className="panel-period">{EXPERIENCE_DATA[0].period.replace(/\s*\?\s*/g, " - ")}</p>
+                </div>
+                <p className="panel-description">{EXPERIENCE_DATA[0].company} • {EXPERIENCE_DATA[0].location}</p>
                 <div className="experience-skill-tags" aria-label="Relevant skills">
                   {CAREER_OVERVIEW_SKILL_TAGS.rawblem.map((skill) => (
                     <ExperienceSkillTag skill={skill} key={skill} />
@@ -4021,8 +4013,11 @@ const ConfidantExperience = () => {
             <div className="tab-panel no-scrollbar" id="uvic-esports">
               <div className="panel-header">
                 <span className="panel-badge">Experience</span>
-                <h1 className="panel-title">{EXPERIENCE_DATA[1].role}</h1>
-                <p className="panel-description">UVIC E-Sports Community • Victoria, BC • January 2019 - January 2020</p>
+                <div className="panel-title-row">
+                  <h1 className="panel-title">{EXPERIENCE_DATA[1].role}</h1>
+                  <p className="panel-period">{EXPERIENCE_DATA[1].period.replace(/\s*\?\s*/g, " - ")}</p>
+                </div>
+                <p className="panel-description">{EXPERIENCE_DATA[1].company} • {EXPERIENCE_DATA[1].location}</p>
                 <div className="experience-skill-tags" aria-label="Relevant skills">
                   {CAREER_OVERVIEW_SKILL_TAGS.uvic.map((skill) => (
                     <ExperienceSkillTag skill={skill} key={skill} showIcon={false} />
@@ -4045,8 +4040,11 @@ const ConfidantExperience = () => {
             <div className="tab-panel no-scrollbar" id="starbucks">
               <div className="panel-header">
                 <span className="panel-badge">Experience</span>
-                <h1 className="panel-title">{EXPERIENCE_DATA[2].role}</h1>
-                <p className="panel-description">Starbucks • Victoria, BC • August 2018 - Present</p>
+                <div className="panel-title-row">
+                  <h1 className="panel-title">{EXPERIENCE_DATA[2].role}</h1>
+                  <p className="panel-period">{EXPERIENCE_DATA[2].period.replace(/\s*\?\s*/g, " - ")}</p>
+                </div>
+                <p className="panel-description">{EXPERIENCE_DATA[2].company} • {EXPERIENCE_DATA[2].location}</p>
                 <div className="experience-skill-tags" aria-label="Relevant skills">
                   {CAREER_OVERVIEW_SKILL_TAGS.starbucks.map((skill) => (
                     <ExperienceSkillTag skill={skill} key={skill} showIcon={false} />
@@ -4069,8 +4067,11 @@ const ConfidantExperience = () => {
             <div className="tab-panel no-scrollbar" id="education">
               <div className="panel-header">
                 <span className="panel-badge">Education</span>
-                <h1 className="panel-title">University of Victoria</h1>
-                <p className="panel-description">Bachelor's Degree, Writing • University of Victoria • Victoria, BC • 2024</p>
+                <div className="panel-title-row">
+                  <h1 className="panel-title">University of Victoria</h1>
+                  <p className="panel-period">2024</p>
+                </div>
+                <p className="panel-description">Bachelor&apos;s Degree, Writing • University of Victoria • Victoria, BC</p>
                 <div className="experience-skill-tags" aria-label="Relevant skills">
                   {CAREER_OVERVIEW_SKILL_TAGS.education.map((skill) => (
                     <ExperienceSkillTag skill={skill} key={skill} showIcon={false} />
@@ -4105,7 +4106,9 @@ const ConfidantExperience = () => {
               </div>
             </div>
           </div>
-        </div>
+          </div>
+          </div>
+          </div>
         </div>
         </div>
       </div>

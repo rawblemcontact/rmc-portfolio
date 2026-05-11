@@ -90,6 +90,8 @@
     --portfolio-section-card: #0a0c12;
     --portfolio-section-card-hover: #0b0d15;
     --portfolio-section-card-raised: #0c0d16;
+    --portfolio-stroke-outer: rgba(255, 255, 255, 0.09);
+    --portfolio-stroke-inner: rgba(255, 255, 255, 0.06);
   }
   * {
     @apply border-border;
@@ -260,7 +262,7 @@
     position: relative;
     z-index: 0;
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.09);
+    border: 1px solid var(--portfolio-stroke-outer);
     border-radius: 1.05rem;
     background: color-mix(in srgb, var(--portfolio-section-card) 8%, transparent);
     background-image: none;
@@ -292,7 +294,7 @@
   }
 
   #skills .skills-card-surface {
-    border: 1px solid rgba(255, 255, 255, 0.09);
+    border: 1px solid var(--portfolio-stroke-outer);
     background: color-mix(in srgb, var(--portfolio-section-card) 8%, transparent);
     background-image: none;
     filter: none;
@@ -363,6 +365,22 @@
       var(--fw-rule-body-top) var(--fw-rule-skip-end, 0px),
       var(--fw-rule-body-top) 100%
     );
+  }
+
+  /** Active folder tab — same single panel fill as the body below (no stacked rail wash). */
+  .featured-writing-tab-active {
+    --fw-tab-active-accent: color-mix(in srgb, var(--palette-yellow-projects) 48%, rgb(186, 186, 186));
+    background: color-mix(in srgb, var(--portfolio-section-card) 8%, transparent);
+    background-image: none;
+    filter: none;
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+    margin-bottom: -1px;
+    border-top-color: var(--fw-tab-active-accent);
+    border-left-color: var(--fw-tab-active-accent);
+    border-right-color: var(--fw-tab-active-accent);
+    border-top-width: 1px;
+    box-shadow: inset 0 1px 0 0 var(--fw-tab-active-accent);
   }
 
   /** Inactive folder tabs — border-color only (width from Tailwind `border border-b-0`). */
@@ -677,7 +695,7 @@
 
   #experience .main-container {
     width: 100%;
-    max-width: 1120px;
+    max-width: none;
     margin: clamp(40px, 5svh, 64px) auto 0;
     background: color-mix(in srgb, var(--portfolio-section-card) 8%, transparent);
     background-image: none;
@@ -685,7 +703,7 @@
     -webkit-backdrop-filter: blur(2px);
     backdrop-filter: blur(2px);
     border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.09);
+    border: 1px solid var(--portfolio-stroke-outer);
     box-shadow: none;
     display: flex;
     overflow: hidden;
@@ -706,24 +724,25 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    border-right: 1px solid var(--portfolio-stroke-inner);
     position: relative;
   }
 
-  #experience .tabs-nav::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 1px;
-    height: 100%;
-    background: rgba(255, 255, 255, 0.08);
+  #experience .nav-header {
+    position: relative;
+    padding: 0 12px 18px;
+    border-bottom: 0;
+    margin-bottom: 12px;
   }
 
-  #experience .nav-header {
-    padding: 0 12px 18px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    margin-bottom: 12px;
+  #experience .nav-header::after {
+    content: "";
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 0;
+    height: 1px;
+    background: var(--portfolio-stroke-inner);
   }
 
   #experience .nav-header h2 {
@@ -734,10 +753,21 @@
     margin-left: -0.04em;
   }
 
-  #experience .nav-header p {
+  #experience .nav-header .career-nav-section-title {
+    margin: 0 0 8px;
+    color: #fff;
+    font-size: clamp(1.02rem, 1.35vw, 1.18rem);
+    font-weight: 800;
+    line-height: 1.08;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  #experience .nav-header p:not(.career-nav-section-title) {
     color: rgba(255, 255, 255, 0.42);
     font-size: 0.68rem;
-    margin-top: 4px;
+    margin-top: 0;
     text-transform: uppercase;
     letter-spacing: 0.1em;
   }
@@ -833,14 +863,14 @@
   #experience .tabs-content {
     flex: 1;
     min-width: 0;
-    padding: 30px 34px;
+    padding: 22px 34px 30px;
     position: relative;
     overflow: hidden;
   }
 
   #experience .tab-panel {
     position: absolute;
-    inset: 24px 30px;
+    inset: 18px 30px 24px;
     display: flex;
     flex-direction: column;
     opacity: 0;
@@ -850,7 +880,7 @@
     overflow-y: hidden;
     overflow-x: hidden;
     overscroll-behavior: contain;
-    padding-top: clamp(34px, 4.6svh, 56px);
+    padding-top: clamp(24px, 3.4svh, 42px);
     padding-right: 4px;
   }
 
@@ -868,7 +898,7 @@
     margin-left: auto;
     margin-bottom: 14px;
     padding-bottom: 14px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid var(--portfolio-stroke-inner);
   }
 
   #experience .panel-badge {
@@ -893,16 +923,44 @@
     display: none;
   }
 
+  #experience .panel-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: clamp(12px, 2vw, 24px);
+    margin-bottom: 10px;
+  }
+
+  #experience .panel-title-row .panel-title {
+    margin-bottom: 0;
+  }
+
   #experience .panel-title {
-    color: #fff;
+    color: rgba(255, 255, 255, 0.86);
     max-width: min(100%, 30ch);
-    font-size: clamp(1.65rem, 2.65vw, 2.28rem);
-    font-weight: 800;
-    line-height: 1.04;
-    letter-spacing: -0.03em;
+    font-size: clamp(1.42rem, 2.1vw, 1.88rem);
+    font-weight: 700;
+    line-height: 1.08;
+    letter-spacing: -0.025em;
     margin-left: -0.04em;
     margin-bottom: 10px;
     text-wrap: balance;
+  }
+
+  #experience .panel-period {
+    flex-shrink: 0;
+    margin: 0;
+    padding-top: 0.22em;
+    font-family: ui-monospace, "SFMono-Regular", "Roboto Mono", monospace;
+    font-size: clamp(0.58rem, 0.8vw, 0.66rem);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.42);
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
   }
 
   #experience .panel-description {
@@ -976,7 +1034,7 @@
     filter: none;
     -webkit-backdrop-filter: blur(2px);
     backdrop-filter: blur(2px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--portfolio-stroke-outer);
     border-radius: 11px;
     padding: clamp(20px, 2.25vw, 30px);
     transition: all 0.4s ease;
@@ -1281,6 +1339,62 @@
     transform: translateX(24px);
   }
 
+  @media (min-width: 901px) {
+    #experience .main-container {
+      display: grid;
+      grid-template-columns: 236px 1fr;
+      grid-template-rows: auto 1fr;
+      background: transparent;
+      background-image: none;
+      filter: none;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      overflow: visible;
+    }
+
+    #experience .nav-header {
+      grid-column: 1;
+      grid-row: 1;
+      padding: 20px 12px 18px;
+      margin: 0 0 12px;
+    }
+
+    #experience .nav-header::after {
+      left: 12px;
+      right: 12px;
+    }
+
+    #experience .tabs-nav {
+      grid-column: 1;
+      grid-row: 2;
+      align-self: stretch;
+      padding: 0 12px 20px;
+      border: 0;
+      border-right: 0;
+      border-radius: 0;
+      background: transparent;
+      background-image: none;
+      filter: none;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+
+    #experience .tabs-content {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+      background: color-mix(in srgb, var(--portfolio-section-card) 8%, transparent);
+      background-image: none;
+      filter: none;
+      -webkit-backdrop-filter: blur(2px);
+      backdrop-filter: blur(2px);
+      border: 1px solid var(--portfolio-stroke-outer);
+      border-radius: 16px;
+    }
+  }
+
   /* Responsive */
   @media (max-width: 900px) {
     #experience .main-container {
@@ -1296,12 +1410,8 @@
       flex-direction: row;
       overflow-x: auto;
       padding: 14px;
-      border-right: none;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    }
-
-    #experience .tabs-nav::before {
-      display: none;
+      border: 0;
+      border-bottom: 1px solid var(--portfolio-stroke-inner);
     }
 
     #experience .nav-header {
@@ -1457,7 +1567,7 @@
     color: rgb(244 244 245);
   }
   #skills .skills-card-diagonal {
-    border: 1px solid rgba(255, 255, 255, 0.09);
+    border: 1px solid var(--portfolio-stroke-outer);
     background: color-mix(in srgb, var(--portfolio-section-card) 8%, transparent);
     background-image: none;
     filter: none;
