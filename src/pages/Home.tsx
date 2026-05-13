@@ -1,5 +1,15 @@
 // Force rebuild: 2024-05-21
-import { motion, AnimatePresence, Variants, useInView, useReducedMotion, useMotionValue, useTransform, animate } from "framer-motion";
+import {
+  motion,
+  AnimatePresence,
+  Variants,
+  useInView,
+  useReducedMotion,
+  useMotionValue,
+  useTransform,
+  animate,
+  motionValue,
+} from "framer-motion";
 import useEmblaCarousel from "embla-carousel-react";
 import type { EmblaCarouselType } from "embla-carousel";
 import React, { useEffect, useLayoutEffect, useState, useRef, useCallback, startTransition } from "react";
@@ -3692,7 +3702,7 @@ const EXPERIENCE_DATA = [
     role: "Digital Content & Interactive Media",
     company: "RAWBLEM",
     location: "Victoria, BC",
-    period: "October 2024 ? Present",
+    period: "2024 - Present",
     bullets: [
       "Created, produced, and distributed digital art and interactive narrative content across short-form video platforms.",
       "Planned and executed a story-driven interactive project that reached 30,000+ views on TikTok through platform-driven engagement.",
@@ -3706,7 +3716,7 @@ const EXPERIENCE_DATA = [
     role: "Social Media Coordinator",
     company: "UVIC E-Sports Community",
     location: "Victoria, BC",
-    period: "January 2019 ? January 2020",
+    period: "2019 - 2020",
     bullets: [
       "Coordinated and managed content across Facebook, Discord, and Twitch in support of a university-affiliated online community.",
       "Planned, produced, and published promotional content for tournaments, announcements, and community events, contributing to increased engagement.",
@@ -3720,7 +3730,7 @@ const EXPERIENCE_DATA = [
     role: "Barista",
     company: "Starbucks",
     location: "Victoria, BC",
-    period: "August 2018 ? Present",
+    period: "2018 - Present",
     bullets: [
       "Delivered consistent customer service in a high-volume environment, supporting 200+ customer transactions per shift while maintaining quality and efficiency standards.",
       "Supported daily operations through clear communication, multitasking, and real-time coordination with team members during peak periods.",
@@ -3762,40 +3772,46 @@ const CAREER_OVERVIEW_PANEL_BULLETS = {
   ],
 } as const;
 
-const CAREER_OVERVIEW_SKILL_TAGS = {
-  rawblem: ["Content Production", "DaVinci Resolve", "Hootsuite"],
-  uvic: ["Social Media Operations", "Visual Communication", "Team Collaboration"],
-  starbucks: ["Team Collaboration", "Time Management", "Independent Work"],
-  education: ["Content Writing", "Proofreading", "Research"],
-} as const;
-
-const CAREER_OVERVIEW_SKILL_TAG_ICONS: Record<
-  string,
-  React.ComponentType<{ size?: number; className?: string }>
-> = {
-  "Content Production": IconVideo,
-  "DaVinci Resolve": SiDavinciresolve,
-  "Hootsuite": SiHootsuite,
-  "Social Media Operations": IconShare,
-  "Visual Communication": IconPalette,
-  "Team Collaboration": IconUsers,
-  "Time Management": IconClock,
-  "Independent Work": IconUser,
-  "Content Writing": IconPencil,
-  "Proofreading": IconChecklist,
-  "Research": IconSearch,
+type CareerOverviewSkillTagRow = {
+  label: string;
+  Icon: React.ComponentType<{ size?: number; className?: string }>;
 };
 
-const ExperienceSkillTag = ({ skill, showIcon = true }: { skill: string; showIcon?: boolean }) => {
-  const Icon = CAREER_OVERVIEW_SKILL_TAG_ICONS[skill];
-
-  return (
-    <span className="experience-skill-tag">
-      {showIcon && Icon ? <Icon size={13} className="experience-skill-tag-icon" /> : null}
-      <span>{skill}</span>
-    </span>
-  );
+/** Explicit label + icon per tab so every section gets the blue SVGs (no string-key lookup). */
+const CAREER_OVERVIEW_SKILL_TAG_ROWS: {
+  rawblem: CareerOverviewSkillTagRow[];
+  uvic: CareerOverviewSkillTagRow[];
+  starbucks: CareerOverviewSkillTagRow[];
+  education: CareerOverviewSkillTagRow[];
+} = {
+  rawblem: [
+    { label: "Content Production", Icon: IconVideo },
+    { label: "DaVinci Resolve", Icon: SiDavinciresolve },
+    { label: "Hootsuite", Icon: SiHootsuite },
+  ],
+  uvic: [
+    { label: "Social Media Operations", Icon: IconShare },
+    { label: "Visual Communication", Icon: IconPalette },
+    { label: "Team Collaboration", Icon: IconUsers },
+  ],
+  starbucks: [
+    { label: "Team Collaboration", Icon: IconUsers },
+    { label: "Time Management", Icon: IconClock },
+    { label: "Independent Work", Icon: IconUser },
+  ],
+  education: [
+    { label: "Content Writing", Icon: IconPencil },
+    { label: "Proofreading", Icon: IconChecklist },
+    { label: "Research", Icon: IconSearch },
+  ],
 };
+
+const ExperienceSkillTag = ({ label, Icon }: CareerOverviewSkillTagRow) => (
+  <span className="experience-skill-tag">
+    <Icon size={13} className="experience-skill-tag-icon" />
+    <span>{label}</span>
+  </span>
+);
 
 const ConfidantExperience = () => {
   const tabsRootRef = useRef<HTMLDivElement>(null);
@@ -3807,18 +3823,180 @@ const ConfidantExperience = () => {
     // Tab functionality, adapted directly from the provided CodePen logic.
     const tabButtons = root.querySelectorAll<HTMLElement>(".tab-btn");
     const tabPanels = root.querySelectorAll<HTMLElement>(".tab-panel");
+    const tabsShellEl = root.querySelector<HTMLElement>(".tabs-content");
+
+    const CAREER_TAB_FADE_MS = 320;
+    const CAREER_TAB_HEIGHT_MS = 380;
+    let tabFadeLocked = false;
+    const tabFadeTimeoutIds: ReturnType<typeof setTimeout>[] = [];
+    /** Single driver so outer + inner heights share one eased curve (no stagger). */
+    let careerTabHeightSync: { stop: () => void } | null = null;
+
+    function stopCareerTabHeightSync() {
+      careerTabHeightSync?.stop();
+      careerTabHeightSync = null;
+    }
+
+    function clearTabFadeTimers() {
+      while (tabFadeTimeoutIds.length) {
+        const id = tabFadeTimeoutIds.pop();
+        if (id !== undefined) window.clearTimeout(id);
+      }
+      stopCareerTabHeightSync();
+    }
+
+    function resetCareerTabFadeLayers() {
+      root.querySelectorAll<HTMLElement>(".career-tabs-content-inner").forEach((el) => {
+        el.classList.remove("career-tabs-dim");
+        el.style.removeProperty("height");
+      });
+      root.querySelectorAll<HTMLElement>(".tab-panel .panel-header").forEach((el) => {
+        el.classList.remove("career-tabs-dim");
+      });
+    }
+
     function switchTab(tabId: string | null) {
       if (!tabId) return;
-      // Remove active class from all buttons and panels
-      tabButtons.forEach((btn) => btn.classList.remove("active"));
-      tabPanels.forEach((panel) => panel.classList.remove("active"));
-      // Add active class to clicked button and corresponding panel
       const activeButton = root.querySelector<HTMLElement>(`[data-tab="${tabId}"]`);
       const activePanel = document.getElementById(tabId);
-      if (activeButton && activePanel) {
+      if (!activeButton || !activePanel) return;
+
+      const currentActivePanel = root.querySelector<HTMLElement>(".tab-panel.active");
+      if (currentActivePanel?.id === tabId) return;
+
+      if (tabFadeLocked) return;
+
+      function applyTabSwitch() {
+        tabButtons.forEach((btn) => btn.classList.remove("active"));
+        tabPanels.forEach((panel) => panel.classList.remove("active"));
         activeButton.classList.add("active");
         activePanel.classList.add("active");
       }
+
+      const outgoingInner = currentActivePanel?.querySelector<HTMLElement>(
+        ".career-tabs-content-inner",
+      );
+      const incomingInner = activePanel.querySelector<HTMLElement>(
+        ".career-tabs-content-inner",
+      );
+      const outgoingHeader = currentActivePanel?.querySelector<HTMLElement>(".panel-header");
+      const incomingHeader = activePanel.querySelector<HTMLElement>(".panel-header");
+
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (
+        reduceMotion ||
+        !tabsShellEl ||
+        !outgoingInner ||
+        !incomingInner
+      ) {
+        stopCareerTabHeightSync();
+        tabsShellEl.style.removeProperty("height");
+        resetCareerTabFadeLayers();
+        applyTabSwitch();
+        return;
+      }
+
+      stopCareerTabHeightSync();
+
+      const fromShellH = Math.max(
+        1,
+        Math.round(tabsShellEl.getBoundingClientRect().height),
+      );
+      const fromInnerH = Math.max(
+        1,
+        Math.round(outgoingInner.getBoundingClientRect().height),
+      );
+      tabsShellEl.style.height = `${fromShellH}px`;
+      outgoingInner.style.height = `${fromInnerH}px`;
+
+      tabFadeLocked = true;
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          outgoingInner.classList.add("career-tabs-dim");
+          outgoingHeader?.classList.add("career-tabs-dim");
+        });
+      });
+
+      tabFadeTimeoutIds.push(
+        window.setTimeout(() => {
+          incomingInner.classList.add("career-tabs-dim");
+          incomingHeader?.classList.add("career-tabs-dim");
+          applyTabSwitch();
+          outgoingInner.classList.remove("career-tabs-dim");
+          outgoingHeader?.classList.remove("career-tabs-dim");
+          outgoingInner.style.removeProperty("height");
+
+          /* FLIP: shell + incoming inner (frosted body only) */
+          tabsShellEl.style.height = "auto";
+          incomingInner.style.height = "auto";
+          const naturalShellH = Math.round(
+            tabsShellEl.getBoundingClientRect().height,
+          );
+          const naturalInnerH = Math.round(
+            incomingInner.getBoundingClientRect().height,
+          );
+          tabsShellEl.style.height = `${fromShellH}px`;
+          incomingInner.style.height = `${fromInnerH}px`;
+          void tabsShellEl.offsetHeight;
+
+          requestAnimationFrame(() => {
+            incomingInner.classList.remove("career-tabs-dim");
+            incomingHeader?.classList.remove("career-tabs-dim");
+
+            if (
+              !naturalShellH ||
+              naturalShellH < 1 ||
+              !naturalInnerH ||
+              naturalInnerH < 1
+            ) {
+              tabsShellEl.style.removeProperty("height");
+              incomingInner.style.removeProperty("height");
+              tabFadeLocked = false;
+              return;
+            }
+
+            const dShell = naturalShellH - fromShellH;
+            const dInner = naturalInnerH - fromInnerH;
+            if (Math.abs(dShell) < 2 && Math.abs(dInner) < 2) {
+              tabsShellEl.style.removeProperty("height");
+              incomingInner.style.removeProperty("height");
+              tabFadeLocked = false;
+              return;
+            }
+
+            const t = motionValue(0);
+            const unsub = t.on("change", (p) => {
+              tabsShellEl.style.height = `${Math.round(fromShellH + dShell * p)}px`;
+              incomingInner.style.height = `${Math.round(fromInnerH + dInner * p)}px`;
+            });
+
+            const finishHeights = () => {
+              unsub();
+              tabsShellEl.style.removeProperty("height");
+              incomingInner.style.removeProperty("height");
+              careerTabHeightSync = null;
+              tabFadeLocked = false;
+            };
+
+            const anim = animate(t, 1, {
+              duration: CAREER_TAB_HEIGHT_MS / 1000,
+              ease: [0.22, 1, 0.36, 1],
+              onComplete: finishHeights,
+            });
+
+            careerTabHeightSync = {
+              stop: () => {
+                anim.stop();
+                unsub();
+                tabsShellEl.style.removeProperty("height");
+                resetCareerTabFadeLayers();
+                careerTabHeightSync = null;
+                tabFadeLocked = false;
+              },
+            };
+          });
+        }, CAREER_TAB_FADE_MS),
+      );
     }
 
     const buttonCleanups: Array<() => void> = [];
@@ -3931,6 +4109,10 @@ const ConfidantExperience = () => {
     }
 
     return () => {
+      clearTabFadeTimers();
+      resetCareerTabFadeLayers();
+      root.querySelector<HTMLElement>(".tabs-content")?.style.removeProperty("height");
+      tabFadeLocked = false;
       observer.disconnect();
       buttonCleanups.forEach((cleanup) => cleanup());
       toggleCleanups.forEach((cleanup) => cleanup());
@@ -3949,6 +4131,7 @@ const ConfidantExperience = () => {
           <div className="px-1 sm:px-2">
           <div className="px-2 sm:px-4 lg:px-2 xl:px-3">
           <div className="main-container">
+          <div className="career-overview-rail">
           <div className="nav-header">
             <p className="career-nav-section-title">Career Overview</p>
             <p>EXPERIENCE</p>
@@ -3980,6 +4163,7 @@ const ConfidantExperience = () => {
               </div>
             </button>
           </nav>
+          </div>
           {/* Tab Content Panels */}
           <div className="tabs-content">
             {/* Dashboard Panel */}
@@ -3988,24 +4172,32 @@ const ConfidantExperience = () => {
                 <span className="panel-badge">Experience</span>
                 <div className="panel-title-row">
                   <h1 className="panel-title">{EXPERIENCE_DATA[0].role}</h1>
-                  <p className="panel-period">{EXPERIENCE_DATA[0].period.replace(/\s*\?\s*/g, " - ")}</p>
+                  <p className="panel-period">{EXPERIENCE_DATA[0].period}</p>
                 </div>
-                <p className="panel-description">{EXPERIENCE_DATA[0].company} • {EXPERIENCE_DATA[0].location}</p>
+                <p className="panel-description">
+                  {EXPERIENCE_DATA[0].company}
+                  <span className="panel-meta-sep" aria-hidden="true">
+                    •
+                  </span>
+                  {EXPERIENCE_DATA[0].location}
+                </p>
                 <div className="experience-skill-tags" aria-label="Relevant skills">
-                  {CAREER_OVERVIEW_SKILL_TAGS.rawblem.map((skill) => (
-                    <ExperienceSkillTag skill={skill} key={skill} />
+                  {CAREER_OVERVIEW_SKILL_TAG_ROWS.rawblem.map((row) => (
+                    <ExperienceSkillTag {...row} key={row.label} />
                   ))}
                 </div>
               </div>
-              <div className="panel-content">
-                <div className="content-card">
-                  <ul className="feature-list">
-                    {CAREER_OVERVIEW_PANEL_BULLETS.rawblem.map((bullet) => (
-                      <li key={bullet}>
-                        <span>{bullet}</span>
-                      </li>
-                    ))}
-                  </ul>
+              <div className="career-tabs-content-inner">
+                <div className="panel-content">
+                  <div className="content-card">
+                    <ul className="feature-list">
+                      {CAREER_OVERVIEW_PANEL_BULLETS.rawblem.map((bullet) => (
+                        <li key={bullet}>
+                          <span>{bullet}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
               </div>
             </div>
@@ -4015,24 +4207,32 @@ const ConfidantExperience = () => {
                 <span className="panel-badge">Experience</span>
                 <div className="panel-title-row">
                   <h1 className="panel-title">{EXPERIENCE_DATA[1].role}</h1>
-                  <p className="panel-period">{EXPERIENCE_DATA[1].period.replace(/\s*\?\s*/g, " - ")}</p>
+                  <p className="panel-period">{EXPERIENCE_DATA[1].period}</p>
                 </div>
-                <p className="panel-description">{EXPERIENCE_DATA[1].company} • {EXPERIENCE_DATA[1].location}</p>
+                <p className="panel-description">
+                  {EXPERIENCE_DATA[1].company}
+                  <span className="panel-meta-sep" aria-hidden="true">
+                    •
+                  </span>
+                  {EXPERIENCE_DATA[1].location}
+                </p>
                 <div className="experience-skill-tags" aria-label="Relevant skills">
-                  {CAREER_OVERVIEW_SKILL_TAGS.uvic.map((skill) => (
-                    <ExperienceSkillTag skill={skill} key={skill} showIcon={false} />
+                  {CAREER_OVERVIEW_SKILL_TAG_ROWS.uvic.map((row) => (
+                    <ExperienceSkillTag {...row} key={row.label} />
                   ))}
                 </div>
               </div>
-              <div className="panel-content">
-                <div className="content-card">
-                  <ul className="feature-list">
-                    {CAREER_OVERVIEW_PANEL_BULLETS.uvic.map((bullet) => (
-                      <li key={bullet}>
-                        <span>{bullet}</span>
-                      </li>
-                    ))}
-                  </ul>
+              <div className="career-tabs-content-inner">
+                <div className="panel-content">
+                  <div className="content-card">
+                    <ul className="feature-list">
+                      {CAREER_OVERVIEW_PANEL_BULLETS.uvic.map((bullet) => (
+                        <li key={bullet}>
+                          <span>{bullet}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
               </div>
             </div>
@@ -4042,24 +4242,32 @@ const ConfidantExperience = () => {
                 <span className="panel-badge">Experience</span>
                 <div className="panel-title-row">
                   <h1 className="panel-title">{EXPERIENCE_DATA[2].role}</h1>
-                  <p className="panel-period">{EXPERIENCE_DATA[2].period.replace(/\s*\?\s*/g, " - ")}</p>
+                  <p className="panel-period">{EXPERIENCE_DATA[2].period}</p>
                 </div>
-                <p className="panel-description">{EXPERIENCE_DATA[2].company} • {EXPERIENCE_DATA[2].location}</p>
+                <p className="panel-description">
+                  {EXPERIENCE_DATA[2].company}
+                  <span className="panel-meta-sep" aria-hidden="true">
+                    •
+                  </span>
+                  {EXPERIENCE_DATA[2].location}
+                </p>
                 <div className="experience-skill-tags" aria-label="Relevant skills">
-                  {CAREER_OVERVIEW_SKILL_TAGS.starbucks.map((skill) => (
-                    <ExperienceSkillTag skill={skill} key={skill} showIcon={false} />
+                  {CAREER_OVERVIEW_SKILL_TAG_ROWS.starbucks.map((row) => (
+                    <ExperienceSkillTag {...row} key={row.label} />
                   ))}
                 </div>
               </div>
-              <div className="panel-content">
-                <div className="content-card">
-                  <ul className="feature-list">
-                    {CAREER_OVERVIEW_PANEL_BULLETS.starbucks.map((bullet) => (
-                      <li key={bullet}>
-                        <span>{bullet}</span>
-                      </li>
-                    ))}
-                  </ul>
+              <div className="career-tabs-content-inner">
+                <div className="panel-content">
+                  <div className="content-card">
+                    <ul className="feature-list">
+                      {CAREER_OVERVIEW_PANEL_BULLETS.starbucks.map((bullet) => (
+                        <li key={bullet}>
+                          <span>{bullet}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
               </div>
             </div>
@@ -4071,36 +4279,48 @@ const ConfidantExperience = () => {
                   <h1 className="panel-title">University of Victoria</h1>
                   <p className="panel-period">2024</p>
                 </div>
-                <p className="panel-description">Bachelor&apos;s Degree, Writing • University of Victoria • Victoria, BC</p>
+                <p className="panel-description">
+                  Bachelor&apos;s Degree, Writing
+                  <span className="panel-meta-sep" aria-hidden="true">
+                    •
+                  </span>
+                  University of Victoria
+                  <span className="panel-meta-sep" aria-hidden="true">
+                    •
+                  </span>
+                  Victoria, BC
+                </p>
                 <div className="experience-skill-tags" aria-label="Relevant skills">
-                  {CAREER_OVERVIEW_SKILL_TAGS.education.map((skill) => (
-                    <ExperienceSkillTag skill={skill} key={skill} showIcon={false} />
+                  {CAREER_OVERVIEW_SKILL_TAG_ROWS.education.map((row) => (
+                    <ExperienceSkillTag {...row} key={row.label} />
                   ))}
                 </div>
               </div>
-              <div className="panel-content">
-                <div className="content-card">
-                  <p className="card-text">University of Victoria / Victoria, BC / 2024</p>
-                  <ul className="feature-list">
-                    {CAREER_OVERVIEW_PANEL_BULLETS.education.map((bullet) => (
-                      <li key={bullet}>
-                        <span>{bullet}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div className="stats-grid">
-                  <div className="stat-item">
-                    <div className="stat-value">B.A.</div>
-                    <div className="stat-label">Writing</div>
+              <div className="career-tabs-content-inner">
+                <div className="panel-content">
+                  <div className="content-card">
+                    <p className="card-text">University of Victoria / Victoria, BC / 2024</p>
+                    <ul className="feature-list">
+                      {CAREER_OVERVIEW_PANEL_BULLETS.education.map((bullet) => (
+                        <li key={bullet}>
+                          <span>{bullet}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <div className="stat-item">
-                    <div className="stat-value">UVic</div>
-                    <div className="stat-label">Victoria BC</div>
-                  </div>
-                  <div className="stat-item">
-                    <div className="stat-value">Dist.</div>
-                    <div className="stat-label">Distinction</div>
+                  <div className="stats-grid">
+                    <div className="stat-item">
+                      <div className="stat-value">B.A.</div>
+                      <div className="stat-label">Writing</div>
+                    </div>
+                    <div className="stat-item">
+                      <div className="stat-value">UVic</div>
+                      <div className="stat-label">Victoria BC</div>
+                    </div>
+                    <div className="stat-item">
+                      <div className="stat-value">Dist.</div>
+                      <div className="stat-label">Distinction</div>
+                    </div>
                   </div>
                 </div>
               </div>

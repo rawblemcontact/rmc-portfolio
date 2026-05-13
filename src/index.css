@@ -859,13 +859,42 @@
     color: rgba(255, 255, 255, 0.62);
   }
 
-  /* Content Area */
+  /* Content Area — outer shell + inner layer; inner opacity fades on tab change (see .career-tabs-content-inner) */
   #experience .tabs-content {
+    --career-overview-content-max: 680px;
     flex: 1;
     min-width: 0;
-    padding: 22px 34px 30px;
+    padding: 22px 28px 28px;
     position: relative;
     overflow: hidden;
+    isolation: isolate;
+  }
+
+  #experience .career-tabs-content-inner {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    transition: opacity 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  #experience .career-tabs-content-inner.career-tabs-dim {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #experience .career-tabs-content-inner {
+      transition: none;
+    }
+
+    #experience .panel-header {
+      transition: none;
+    }
   }
 
   #experience .tab-panel {
@@ -891,14 +920,29 @@
   }
 
   #experience .panel-header {
-    max-width: min(100%, 800px);
+    display: grid;
+    grid-template-columns: minmax(0, min(100%, var(--career-overview-content-max, 680px)));
+    justify-content: start;
+    /* Vertical rhythm between title / meta / skill tags */
+    row-gap: 6px;
+    max-width: min(100%, var(--career-overview-content-max, 680px));
     width: 100%;
     flex: 0 0 auto;
     margin-right: auto;
     margin-left: auto;
-    margin-bottom: 14px;
-    padding-bottom: 14px;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
     border-bottom: 1px solid var(--portfolio-stroke-inner);
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    transition: opacity 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  #experience .panel-header.career-tabs-dim {
+    opacity: 0;
+    pointer-events: none;
   }
 
   #experience .panel-badge {
@@ -926,9 +970,17 @@
   #experience .panel-title-row {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    gap: clamp(12px, 2vw, 24px);
-    margin-bottom: 10px;
+    align-items: first baseline;
+    gap: clamp(11px, 1.75vw, 21px);
+    margin-bottom: 0;
+    /* Floor for wrapped titles — slightly open vs ultra-tight */
+    min-height: calc(1.42 * clamp(1.38rem, 2.05vw, 1.82rem));
+  }
+
+  @supports not (align-items: first baseline) {
+    #experience .panel-title-row {
+      align-items: baseline;
+    }
   }
 
   #experience .panel-title-row .panel-title {
@@ -938,7 +990,7 @@
   #experience .panel-title {
     color: rgba(255, 255, 255, 0.86);
     max-width: min(100%, 30ch);
-    font-size: clamp(1.42rem, 2.1vw, 1.88rem);
+    font-size: clamp(1.38rem, 2.05vw, 1.82rem);
     font-weight: 700;
     line-height: 1.08;
     letter-spacing: -0.025em;
@@ -947,17 +999,17 @@
     text-wrap: balance;
   }
 
+  /* Match .panel-title (role headline) — year / range only, no label styling */
   #experience .panel-period {
     flex-shrink: 0;
     margin: 0;
-    padding-top: 0.22em;
-    font-family: ui-monospace, "SFMono-Regular", "Roboto Mono", monospace;
-    font-size: clamp(0.58rem, 0.8vw, 0.66rem);
+    padding-top: 0;
+    margin-left: -0.04em;
+    color: rgba(255, 255, 255, 0.68);
+    font-size: clamp(1.38rem, 2.05vw, 1.82rem);
     font-weight: 700;
-    line-height: 1.2;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.42);
+    line-height: 1.08;
+    letter-spacing: -0.025em;
     text-align: right;
     white-space: nowrap;
     font-variant-numeric: tabular-nums;
@@ -965,11 +1017,23 @@
 
   #experience .panel-description {
     color: rgba(255, 255, 255, 0.46);
-    font-size: clamp(0.92rem, 1.04vw, 1rem);
-    line-height: 1.35;
+    font-size: clamp(0.93rem, 1.06vw, 1.01rem);
+    line-height: 1.38;
     margin-top: 0;
-    margin-bottom: 12px;
+    margin-bottom: 0;
     text-wrap: balance;
+    /* Modest floor when meta wraps; a bit more air before skill tags */
+    min-height: calc(1.85 * clamp(0.93rem, 1.06vw, 1.01rem));
+  }
+
+  #experience .panel-meta-sep {
+    display: inline;
+    padding: 0 0.36em;
+    color: rgba(255, 255, 255, 0.28);
+    font-weight: 500;
+    font-size: 0.92em;
+    vertical-align: 0.04em;
+    pointer-events: none;
   }
 
   #experience .experience-skill-tags {
@@ -977,6 +1041,8 @@
     flex-wrap: wrap;
     gap: 5px;
     margin-top: 0;
+    margin-bottom: 0;
+    align-content: flex-start;
   }
 
   #experience .experience-skill-tag {
@@ -1011,7 +1077,7 @@
     display: flex;
     gap: 18px;
     width: 100%;
-    max-width: min(100%, 800px);
+    max-width: min(100%, var(--career-overview-content-max, 680px));
     flex: 0 1 auto;
     min-height: 0;
     margin: 0 auto;
@@ -1340,10 +1406,18 @@
   }
 
   @media (min-width: 901px) {
+    /*
+     * Tab panels were position:absolute, so .tabs-content had no in-flow height; grid min-height
+     * + 1fr row stretched the big card. In-flow active panel (like mobile) makes height match content.
+     * Single grid row + .career-overview-rail keeps the left menu from shifting when the right card height changes.
+     */
     #experience .main-container {
       display: grid;
       grid-template-columns: 236px 1fr;
-      grid-template-rows: auto 1fr;
+      grid-template-rows: auto;
+      align-items: start;
+      min-height: auto;
+      max-height: none;
       background: transparent;
       background-image: none;
       filter: none;
@@ -1355,9 +1429,17 @@
       overflow: visible;
     }
 
-    #experience .nav-header {
+    #experience .career-overview-rail {
       grid-column: 1;
       grid-row: 1;
+      display: flex;
+      flex-direction: column;
+      align-self: start;
+      width: 236px;
+      min-width: 236px;
+    }
+
+    #experience .nav-header {
       padding: 20px 12px 18px;
       margin: 0 0 12px;
     }
@@ -1368,9 +1450,6 @@
     }
 
     #experience .tabs-nav {
-      grid-column: 1;
-      grid-row: 2;
-      align-self: stretch;
       padding: 0 12px 20px;
       border: 0;
       border-right: 0;
@@ -1384,14 +1463,39 @@
 
     #experience .tabs-content {
       grid-column: 2;
-      grid-row: 1 / span 2;
-      background: color-mix(in srgb, var(--portfolio-section-card) 8%, transparent);
+      grid-row: 1;
+      align-self: start;
+      overflow: visible;
+      /* Outer shell: light frost so padding/border ring matches other portfolio glass cards */
+      background: color-mix(in srgb, var(--portfolio-section-card) 6%, transparent);
       background-image: none;
       filter: none;
       -webkit-backdrop-filter: blur(2px);
       backdrop-filter: blur(2px);
       border: 1px solid var(--portfolio-stroke-outer);
       border-radius: 16px;
+    }
+
+    #experience .career-tabs-content-inner {
+      -webkit-backdrop-filter: blur(2px);
+      backdrop-filter: blur(2px);
+      background: color-mix(in srgb, var(--portfolio-section-card) 8%, transparent);
+      background-image: none;
+      border-radius: 14px;
+    }
+
+    #experience .tab-panel {
+      position: relative;
+      inset: auto;
+      display: none;
+      transform: none;
+      transition: none;
+      overflow: visible;
+    }
+
+    #experience .tab-panel.active {
+      display: flex;
+      flex-direction: column;
     }
   }
 
