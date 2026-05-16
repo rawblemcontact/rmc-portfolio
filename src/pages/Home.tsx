@@ -3792,10 +3792,10 @@ const CAREER_OVERVIEW_SKILL_TAG_ROWS: {
   uvic: [
     { label: "Social Media Operations", Icon: IconShare },
     { label: "Visual Communication", Icon: IconPalette },
-    { label: "Team Collaboration", Icon: IconUsers },
+    { label: "CapCut", Icon: CapCutIcon },
   ],
   starbucks: [
-    { label: "Team Collaboration", Icon: IconUsers },
+    { label: "CapCut", Icon: CapCutIcon },
     { label: "Time Management", Icon: IconClock },
     { label: "Independent Work", Icon: IconUser },
   ],
@@ -3815,6 +3815,53 @@ const ExperienceSkillTag = ({ label, Icon }: CareerOverviewSkillTagRow) => (
 
 const ConfidantExperience = () => {
   const tabsRootRef = useRef<HTMLDivElement>(null);
+  const reduceMotion = useReducedMotion();
+
+  const experienceEntranceEase = [0.16, 1, 0.3, 1] as const;
+  const experienceCardEntrance: Variants = {
+    hidden: { opacity: reduceMotion ? 1 : 0, y: reduceMotion ? 0 : 24 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        delay: reduceMotion ? 0 : 0.04,
+        duration: reduceMotion ? 0 : 0.56,
+        ease: experienceEntranceEase,
+      },
+    },
+  };
+  const experienceRailHeaderEntrance: Variants = {
+    hidden: { opacity: reduceMotion ? 1 : 0, x: reduceMotion ? 0 : 16 },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: {
+        delay: reduceMotion ? 0 : 0.14,
+        duration: reduceMotion ? 0 : 0.42,
+        ease: experienceEntranceEase,
+      },
+    },
+  };
+  const experienceTabsEntrance: Variants = {
+    hidden: {},
+    visible: {
+      transition: {
+        delayChildren: reduceMotion ? 0 : 0.22,
+        staggerChildren: reduceMotion ? 0 : 0.055,
+      },
+    },
+  };
+  const experienceTabItemEntrance: Variants = {
+    hidden: { opacity: reduceMotion ? 1 : 0, x: reduceMotion ? 0 : 18 },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: {
+        duration: reduceMotion ? 0 : 0.38,
+        ease: experienceEntranceEase,
+      },
+    },
+  };
 
   useEffect(() => {
     const root = tabsRootRef.current;
@@ -4130,42 +4177,49 @@ const ConfidantExperience = () => {
         <div className={`mx-auto w-full ${SHOWCASE_COLUMN_MAX}`}>
           <div className="px-1 sm:px-2">
           <div className="px-2 sm:px-4 lg:px-2 xl:px-3">
-          <div className="main-container">
-          <div className="career-overview-rail">
-          <div className="nav-header">
-            <p className="career-nav-section-title">Career Overview</p>
-            <p>EXPERIENCE</p>
-          </div>
+          <motion.div
+            className="main-container"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.34, margin: "0px 0px -8% 0px" }}
+          >
+          <motion.div className="career-overview-rail">
+          <motion.div className="nav-header" variants={experienceRailHeaderEntrance}>
+            <div className="tab-text">
+              <p className="career-nav-section-subtitle">Experience</p>
+              <p className="career-nav-section-title">Career Overview</p>
+            </div>
+          </motion.div>
           {/* Vertical Tabs Navigation */}
-          <nav className="tabs-nav">
-            <button className="tab-btn active" data-tab="rawblem" type="button">
+          <motion.nav className="tabs-nav" variants={experienceTabsEntrance}>
+            <motion.button className="tab-btn active" data-tab="rawblem" type="button" variants={experienceTabItemEntrance}>
               <div className="tab-text">
                 <div className="tab-title">Digital Content</div>
                 <div className="tab-subtitle">RAWBLEM</div>
               </div>
-            </button>
-            <button className="tab-btn" data-tab="uvic-esports" type="button">
+            </motion.button>
+            <motion.button className="tab-btn" data-tab="uvic-esports" type="button" variants={experienceTabItemEntrance}>
               <div className="tab-text">
                 <div className="tab-title">Social Media</div>
                 <div className="tab-subtitle">UVIC E-Sports</div>
               </div>
-            </button>
-            <button className="tab-btn" data-tab="starbucks" type="button">
+            </motion.button>
+            <motion.button className="tab-btn" data-tab="starbucks" type="button" variants={experienceTabItemEntrance}>
               <div className="tab-text">
                 <div className="tab-title">Barista</div>
                 <div className="tab-subtitle">Starbucks</div>
               </div>
-            </button>
-            <button className="tab-btn" data-tab="education" type="button">
+            </motion.button>
+            <motion.button className="tab-btn" data-tab="education" type="button" variants={experienceTabItemEntrance}>
               <div className="tab-text">
                 <div className="tab-title">Education</div>
                 <div className="tab-subtitle">B.A. Writing</div>
               </div>
-            </button>
-          </nav>
-          </div>
+            </motion.button>
+          </motion.nav>
+          </motion.div>
           {/* Tab Content Panels */}
-          <div className="tabs-content">
+          <motion.div className="tabs-content" variants={experienceCardEntrance}>
             {/* Dashboard Panel */}
             <div className="tab-panel active no-scrollbar" id="rawblem">
               <div className="panel-header">
@@ -4325,8 +4379,8 @@ const ConfidantExperience = () => {
                 </div>
               </div>
             </div>
-          </div>
-          </div>
+          </motion.div>
+          </motion.div>
           </div>
           </div>
         </div>
