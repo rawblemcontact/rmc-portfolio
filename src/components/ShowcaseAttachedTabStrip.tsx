@@ -25,6 +25,9 @@ const featuredTabSoftYellow = "color-mix(in srgb, var(--palette-yellow-projects)
  */
 const LAYOUT_ANCHOR_TAB_ID: ShowcaseTabId = "tab-1";
 
+/** Equal inset above, left, and below the PDF preview within the anchor tab column. */
+export const FEATURED_WRITING_PREVIEW_GUTTER_PX = 8;
+
 function measureTabGeometryForLayout(
   bodyEl: HTMLElement,
   tabListEl: HTMLElement | null,
@@ -41,12 +44,12 @@ function measureTabGeometryForLayout(
   const contentLeft = br.left + pl;
   const contentWidth = Math.max(0, br.width - pl - pr);
   const tr = tab.getBoundingClientRect();
-  let ml = tr.left - contentLeft;
-  let w = tr.width;
-  if (ml < 0) ml = 0;
-  if (w < 1) w = 0;
+  const tabLeft = tr.left - contentLeft;
+  const tabRight = tr.right - contentLeft;
+  const ml = Math.max(0, tabLeft);
+  let w = Math.max(0, tabRight - ml);
   if (ml + w > contentWidth) {
-    w = Math.max(1, contentWidth - ml);
+    w = Math.max(0, contentWidth - ml);
   }
   return { ml, w };
 }
@@ -58,33 +61,19 @@ export type ShowcaseAttachedTabStripProps = {
   className?: string;
   panel?:
     | React.ReactNode
-    | ((ctx: { tabWidthPx: number; tabInsetLeftPx: number }) => React.ReactNode);
+    | ((ctx: {
+        /** Full anchor-tab width for the preview column. */
+        previewColumnWidthPx: number;
+        /** PDF preview width inside the column gutters. */
+        previewWidthPx: number;
+        tabInsetLeftPx: number;
+        previewGutterPx: number;
+      }) => React.ReactNode);
 };
 
-/** Folder tab shape: rounded top on every tab; shared bottom edge. */
+/** Folder tab shape: rounded top on every tab; the active tab overlaps the body border by 1px. */
 const FOLDER_TAB_TOP =
   "rounded-t-[7px] sm:rounded-t-[8px]";
-
-function applyBodyRuleGap(bodyTopEl: HTMLElement | null, activeTabId: ShowcaseTabId) {
-  if (!bodyTopEl) return;
-  const tab = bodyTopEl.ownerDocument.getElementById(`showcase-tab-${activeTabId}`) as HTMLElement | null;
-  if (!tab) {
-    bodyTopEl.style.removeProperty("--fw-rule-skip-start");
-    bodyTopEl.style.removeProperty("--fw-rule-skip-end");
-    return;
-  }
-  const br = bodyTopEl.getBoundingClientRect();
-  const tr = tab.getBoundingClientRect();
-  const skipStart = Math.max(0, tr.left - br.left);
-  const skipEnd = Math.min(br.width, tr.right - br.left);
-  if (skipEnd <= skipStart) {
-    bodyTopEl.style.setProperty("--fw-rule-skip-start", "0px");
-    bodyTopEl.style.setProperty("--fw-rule-skip-end", "0px");
-    return;
-  }
-  bodyTopEl.style.setProperty("--fw-rule-skip-start", `${skipStart}px`);
-  bodyTopEl.style.setProperty("--fw-rule-skip-end", `${skipEnd}px`);
-}
 
 export function ShowcaseAttachedTabStrip({
   activeId,
@@ -94,7 +83,6 @@ export function ShowcaseAttachedTabStrip({
 }: ShowcaseAttachedTabStripProps) {
   const tabListRef = useRef<HTMLDivElement>(null);
   const bodyPadRef = useRef<HTMLDivElement>(null);
-  const bodyRuleTopRef = useRef<HTMLDivElement>(null);
   const [tabGeom, setTabGeom] = useState({ ml: 0, w: 0 });
 
   const syncFit = useCallback(() => {
@@ -108,8 +96,7 @@ export function ShowcaseAttachedTabStrip({
     setTabGeom((prev) =>
       prev.ml === next.ml && prev.w === next.w ? prev : next,
     );
-    applyBodyRuleGap(bodyRuleTopRef.current, activeId);
-  }, [activeId]);
+  }, []);
 
   useLayoutEffect(() => {
     syncFit();
@@ -130,107 +117,106 @@ export function ShowcaseAttachedTabStrip({
   }, [syncFit]);
 
   const tabInsetLeft = tabGeom.ml;
-  const tabWidthPx = tabGeom.w > 0 ? tabGeom.w : 120;
+  const previewGutterPx = FEATURED_WRITING_PREVIEW_GUTTER_PX;
+  const previewColumnWidthPx =
+    tabGeom.w > 0 ? Math.floor(tabGeom.w) : 128;
+  const previewWidthPx = Math.max(
+    48,
+    previewColumnWidthPx - previewGutterPx * 2,
+  );
   const resolvedPanel =
     typeof panel === "function"
-      ? panel({ tabWidthPx, tabInsetLeftPx: tabInsetLeft })
+      ? panel({
+          previewColumnWidthPx,
+          previewWidthPx,
+          tabInsetLeftPx: tabInsetLeft,
+          previewGutterPx,
+        })
       : panel;
 
   return (
     <div className={`flex w-full flex-col ${className}`}>
       <div
         className={[
-          "featured-writing-shell flex min-w-0 w-full max-w-full flex-col overflow-hidden rounded-[11px] border border-white/[0.09] sm:rounded-xl",
-          "shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)]",
-          // lg+: match right edge of SHOWCASE cards (slide basis uses (100%-4px)/2 — Home.tsx).
-          "lg:max-w-[calc(100%-4px)]",
+          "featured-writing-shell flex min-w-0 w-full max-w-full flex-col",
         ].join(" ")}
       >
-        <header className="featured-writing-inner-rule-header shrink-0 bg-transparent px-3 py-2.5 text-center sm:px-4 sm:py-3">
-          <h2 className="m-0 font-heading text-[1.1rem] font-bold leading-snug tracking-[-0.02em] text-white">
-            FEATURED WRITING
-          </h2>
-        </header>
-
-        <div className="relative flex shrink-0 flex-col gap-0 px-3 pt-3 sm:px-4 sm:pt-4">
-          <div
-            ref={tabListRef}
-            role="tablist"
-            aria-label="Showcase views"
-            onScroll={syncFit}
-            className="flex min-w-0 w-full items-end gap-px overflow-x-hidden overflow-y-visible"
-          >
-            {TAB_ORDER.map((id) => {
-              const active = activeId === id;
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  role="tab"
-                  id={`showcase-tab-${id}`}
-                  aria-selected={active}
-                  tabIndex={0}
-                  onClick={() => onTabChange(id)}
-                  style={
-                    active
-                      ? {
-                          color: featuredTabSoftYellow,
-                          borderTopColor: featuredTabSoftYellow,
-                          borderLeftColor: featuredTabSoftYellow,
-                          borderRightColor: featuredTabSoftYellow,
-                        }
-                      : undefined
-                  }
-                  className={[
-                    "group relative flex min-w-0 flex-1 basis-0 items-center justify-center",
-                    FOLDER_TAB_TOP,
-                    "border border-b-0 px-1.5 font-heading text-[13.5px] font-bold tracking-[0.02em] sm:px-2 sm:tracking-[0.03em]",
-                    "motion-safe:transition-[height,box-shadow,background-color,border-color,color] motion-safe:duration-200 motion-safe:ease-out",
-                    "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-portfolio-yellow/30 focus-visible:ring-offset-2 focus-visible:ring-offset-black",
-                    active
-                      ? [
-                          "featured-writing-tab-active",
-                          "relative z-[1] overflow-visible h-10 min-h-[2.5rem] sm:h-11 sm:min-h-[2.75rem]",
-                        ].join(" ")
-                      : [
-                          TAB_PANEL_SURFACE,
-                          "featured-writing-tab-idle-edge h-8 min-h-[2rem] sm:h-9 sm:min-h-[2.25rem]",
-                          "text-mono-2/25 hover:bg-white/[0.04] hover:text-mono-2/88",
-                        ].join(" "),
-                  ].join(" ")}
-                >
-                  <span className="block w-full min-w-0 truncate px-0.5 text-center leading-snug">
-                    {TAB_LABEL[id]}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div
-          ref={bodyRuleTopRef}
-          className={[
-            "featured-writing-inner-rule-body-top relative flex flex-col overflow-x-hidden overflow-y-visible",
-            TAB_PANEL_SURFACE,
-          ].join(" ")}
-          role="region"
-          aria-label="Featured writing content"
-        >
-          <div ref={bodyPadRef} className="px-3 py-3 sm:px-4 sm:py-3.5">
-            {/*
-             * Inset matches the active tab’s left edge; width fills the folder body so
-             * thumbnail + copy are not squeezed to the tab button width (avoids clipping
-             * under overflow-hidden).
-             */}
+        <div className="featured-writing-folder relative isolate flex min-w-0 w-full flex-col">
+          <div className="relative flex h-[3.5rem] min-h-[3.5rem] shrink-0 flex-col gap-0 overflow-visible pt-3 sm:h-16 sm:min-h-16 sm:pt-4">
             <div
-              className="relative min-w-0"
-              style={{
-                marginLeft: tabInsetLeft,
-                width: `calc(100% - ${tabInsetLeft}px)`,
-              }}
+              ref={tabListRef}
+              role="tablist"
+              aria-label="Showcase views"
+              onScroll={syncFit}
+              className="flex h-full min-w-0 w-full items-end gap-0.5 overflow-visible"
             >
-              {resolvedPanel != null ? resolvedPanel : null}
+              {TAB_ORDER.map((id) => {
+                const active = activeId === id;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    role="tab"
+                    id={`showcase-tab-${id}`}
+                    aria-selected={active}
+                    tabIndex={0}
+                    onClick={() => onTabChange(id)}
+                    style={
+                      active
+                        ? {
+                            color: featuredTabSoftYellow,
+                          }
+                        : undefined
+                    }
+                    className={[
+                      "group relative flex min-w-0 flex-1 basis-0 items-center justify-center",
+                      FOLDER_TAB_TOP,
+                      "px-1.5 font-heading text-[13.5px] font-bold tracking-[0.02em] sm:px-2 sm:tracking-[0.03em]",
+                      "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-portfolio-yellow/30 focus-visible:ring-offset-2 focus-visible:ring-offset-black",
+                      active
+                        ? [
+                            "featured-writing-tab-active",
+                            "relative z-[3] -mb-px",
+                          ].join(" ")
+                        : [
+                            TAB_PANEL_SURFACE,
+                            "featured-writing-tab-idle-edge",
+                            "text-mono-2/50 hover:bg-white/[0.05] hover:text-mono-2/88",
+                          ].join(" "),
+                    ].join(" ")}
+                  >
+                    <span className="relative z-[4] block w-full min-w-0 truncate px-0.5 text-center leading-snug">
+                      {TAB_LABEL[id]}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div
+            className={[
+              "featured-writing-body-card featured-writing-inner-rule-body-top relative z-[1] flex flex-col overflow-visible",
+            ].join(" ")}
+            role="region"
+            aria-label="Featured writing content"
+          >
+            <div
+              ref={bodyPadRef}
+              className={[
+                TAB_PANEL_SURFACE,
+                "overflow-x-hidden overflow-y-visible px-3 py-3 sm:px-4 sm:py-3.5",
+              ].join(" ")}
+            >
+              <div
+                className="relative min-w-0"
+                style={{
+                  marginLeft: tabInsetLeft,
+                  width: `calc(100% - ${tabInsetLeft}px)`,
+                }}
+              >
+                {resolvedPanel != null ? resolvedPanel : null}
+              </div>
             </div>
           </div>
         </div>

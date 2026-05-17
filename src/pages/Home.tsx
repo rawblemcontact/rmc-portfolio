@@ -1663,6 +1663,11 @@ const BUTTON_FADE_DURATION_MS = 486; // -10%
 const SUMMARY_DELAY_S = 0.0455; // -10%
 const SUMMARY_DURATION_S = 0.306; // 0.34 * 0.9
 const BUTTONS_DELAY_AFTER_SUMMARY_MS = 85;
+/** Profile-parity entrance (Experience mirrors PhantomProfile cadence). */
+const PROFILE_SECTION_ENTER_S = 0.342;
+const PROFILE_TITLE_DELAY_S = 0.152;
+const PROFILE_HERO_ENTER_S = 0.52;
+const PROFILE_LINE_DURATION_S = RED_LINE_DURATION_MS / 1000;
 
 const PhantomProfile = () => {
   const profileLeftRef = useRef<HTMLDivElement>(null);
@@ -3504,10 +3509,10 @@ const PalaceProjects = ({
                 activeId={showcaseTabId}
                 onTabChange={setShowcaseTabId}
                 className="w-full min-w-0"
-                panel={({ tabWidthPx }) => (
+                panel={({ previewColumnWidthPx }) => (
                   <ShowcaseWritingFeaturedPanel
                     item={SHOWCASE_WRITING_TAB_FEATURED[showcaseTabId]}
-                    previewWidthPx={tabWidthPx}
+                    previewWidthPx={previewColumnWidthPx}
                     onOpenPdfInSupporting={onOpenFeaturedPdfInSupporting}
                   />
                 )}
@@ -3813,31 +3818,79 @@ const ExperienceSkillTag = ({ label, Icon }: CareerOverviewSkillTagRow) => (
   </span>
 );
 
-const ConfidantExperience = () => {
+const ConfidantExperience = ({
+  panelSettled = false,
+  reduceMotion = false,
+}: {
+  /** False until section panel wipe + settle finishes (see `navigateTo` + `CONTENT_SETTLE_DELAY`). */
+  panelSettled?: boolean;
+  reduceMotion?: boolean | null;
+}) => {
   const tabsRootRef = useRef<HTMLDivElement>(null);
-  const reduceMotion = useReducedMotion();
+  const rm = !!reduceMotion;
 
-  const experienceEntranceEase = [0.16, 1, 0.3, 1] as const;
+  const experienceEntranceEase = EASE.out;
+  /** Right-hand card — same motion as PROFILE summary / metadata cards. */
+  const experienceCardMotionEase = EASE.out;
+  const experienceCardEntranceDuration = SUMMARY_DURATION_S;
+  const experienceCardEntranceY = 14;
+  const careerTabFadeMs = Math.round(SUMMARY_DURATION_S * 1000);
+  const careerTabHeightMs = BUTTON_FADE_DURATION_MS;
+  const experienceRailLabelsDelay = rm ? 0 : PROFILE_TITLE_DELAY_S * 1.25 * 1.1 * 1.15 * 1.15 * 0.95;
+  const experienceRailBaseDelay = experienceRailLabelsDelay;
+  const experienceRailLabelDuration = PROFILE_SECTION_ENTER_S * 1.25;
+  const experienceRailLabelSlideX = 24;
+  const experienceRailDividerDuration = PROFILE_LINE_DURATION_S;
+  const experienceTabsTailDelay = (PROFILE_LINE_DURATION_S + SUMMARY_DELAY_S) * 0.28;
+  const experienceTabsBaseDelay = rm
+    ? 0
+    : (experienceRailLabelsDelay + experienceRailLabelDuration + experienceTabsTailDelay) * 0.9;
+  const experienceTabStagger = (BUTTONS_DELAY_AFTER_SUMMARY_MS / 1000) * 0.5;
+  const experienceTabItemDuration = SUMMARY_DURATION_S / 1.25;
+
+  const experienceEntranceRoot: Variants = {
+    hidden: {},
+    visible: {},
+  };
   const experienceCardEntrance: Variants = {
-    hidden: { opacity: reduceMotion ? 1 : 0, y: reduceMotion ? 0 : 24 },
+    hidden: { opacity: rm ? 1 : 0, y: rm ? 0 : experienceCardEntranceY },
     visible: {
       opacity: 1,
       y: 0,
       transition: {
-        delay: reduceMotion ? 0 : 0.04,
-        duration: reduceMotion ? 0 : 0.56,
-        ease: experienceEntranceEase,
+        delay: 0,
+        type: "tween",
+        duration: rm ? 0 : experienceCardEntranceDuration,
+        ease: experienceCardMotionEase,
       },
     },
   };
   const experienceRailHeaderEntrance: Variants = {
-    hidden: { opacity: reduceMotion ? 1 : 0, x: reduceMotion ? 0 : 16 },
+    hidden: {},
+    visible: {
+      transition: {
+        delayChildren: experienceRailBaseDelay,
+      },
+    },
+  };
+  const experienceRailLabelsEntrance: Variants = {
+    hidden: { opacity: rm ? 1 : 0, x: rm ? 0 : experienceRailLabelSlideX },
     visible: {
       opacity: 1,
       x: 0,
       transition: {
-        delay: reduceMotion ? 0 : 0.14,
-        duration: reduceMotion ? 0 : 0.42,
+        duration: rm ? 0 : experienceRailLabelDuration,
+        ease: experienceEntranceEase,
+      },
+    },
+  };
+  const experienceRailDividerEntrance: Variants = {
+    hidden: { scaleX: rm ? 1 : 0 },
+    visible: {
+      scaleX: 1,
+      transition: {
+        delay: rm ? 0 : experienceRailLabelDuration,
+        duration: rm ? 0 : experienceRailDividerDuration,
         ease: experienceEntranceEase,
       },
     },
@@ -3846,18 +3899,17 @@ const ConfidantExperience = () => {
     hidden: {},
     visible: {
       transition: {
-        delayChildren: reduceMotion ? 0 : 0.22,
-        staggerChildren: reduceMotion ? 0 : 0.055,
+        delayChildren: experienceTabsBaseDelay,
+        staggerChildren: rm ? 0 : experienceTabStagger,
       },
     },
   };
   const experienceTabItemEntrance: Variants = {
-    hidden: { opacity: reduceMotion ? 1 : 0, x: reduceMotion ? 0 : 18 },
+    hidden: { opacity: rm ? 1 : 0 },
     visible: {
       opacity: 1,
-      x: 0,
       transition: {
-        duration: reduceMotion ? 0 : 0.38,
+        duration: rm ? 0 : experienceTabItemDuration,
         ease: experienceEntranceEase,
       },
     },
@@ -3872,8 +3924,8 @@ const ConfidantExperience = () => {
     const tabPanels = root.querySelectorAll<HTMLElement>(".tab-panel");
     const tabsShellEl = root.querySelector<HTMLElement>(".tabs-content");
 
-    const CAREER_TAB_FADE_MS = 320;
-    const CAREER_TAB_HEIGHT_MS = 380;
+    const CAREER_TAB_FADE_MS = careerTabFadeMs;
+    const CAREER_TAB_HEIGHT_MS = careerTabHeightMs;
     let tabFadeLocked = false;
     const tabFadeTimeoutIds: ReturnType<typeof setTimeout>[] = [];
     /** Single driver so outer + inner heights share one eased curve (no stagger). */
@@ -4027,7 +4079,7 @@ const ConfidantExperience = () => {
 
             const anim = animate(t, 1, {
               duration: CAREER_TAB_HEIGHT_MS / 1000,
-              ease: [0.22, 1, 0.36, 1],
+              ease: experienceCardMotionEase,
               onComplete: finishHeights,
             });
 
@@ -4046,6 +4098,11 @@ const ConfidantExperience = () => {
       );
     }
 
+    const tabsNavEl = root.querySelector<HTMLElement>(".tabs-nav");
+    const tabHoverShiftPx = tabsNavEl
+      ? parseFloat(getComputedStyle(tabsNavEl).getPropertyValue("--career-tab-hover-shift")) || 6
+      : 6;
+
     const buttonCleanups: Array<() => void> = [];
     tabButtons.forEach((button) => {
       const onClick = function (this: HTMLElement) {
@@ -4061,7 +4118,7 @@ const ConfidantExperience = () => {
         }
       };
       const onMouseEnter = function (this: HTMLElement) {
-        this.style.transform = "translateX(4px)";
+        this.style.transform = `translateX(${tabHoverShiftPx}px)`;
       };
       const onMouseLeave = function (this: HTMLElement) {
         this.style.transform = "translateX(0)";
@@ -4117,17 +4174,26 @@ const ConfidantExperience = () => {
         }, 100);
       });
     }
-    // Animate stats on panel switch
+    // Animate stats on panel switch (education B.A. / UVic / Dist.: fade only)
+    const careerStatEase = "cubic-bezier(0.16, 1, 0.3, 1)";
     function animateStats(panel: HTMLElement) {
-      const statValues = panel.querySelectorAll<HTMLElement>(".stat-value");
-      statValues.forEach((stat, index) => {
+      const isEducation = panel.id === "education";
+      const statTargets = isEducation
+        ? panel.querySelectorAll<HTMLElement>(".stats-grid .stat-item")
+        : panel.querySelectorAll<HTMLElement>(".stat-value");
+      statTargets.forEach((stat, index) => {
         stat.style.opacity = "0";
-        stat.style.transform = "translateY(20px)";
-        setTimeout(() => {
-          stat.style.transition = "all 0.5s ease";
-          stat.style.opacity = "1";
-          stat.style.transform = "translateY(0)";
-        }, index * 100);
+        stat.style.transform = isEducation ? "none" : "translateY(20px)";
+        setTimeout(
+          () => {
+            stat.style.transition = isEducation
+              ? `opacity 0.32s ${careerStatEase}`
+              : `opacity 0.5s ${careerStatEase}, transform 0.5s ${careerStatEase}`;
+            stat.style.opacity = "1";
+            stat.style.transform = isEducation ? "none" : "translateY(0)";
+          },
+          isEducation ? 0 : index * 100,
+        );
       });
     }
     // Observer for panel changes
@@ -4179,26 +4245,42 @@ const ConfidantExperience = () => {
           <div className="px-2 sm:px-4 lg:px-2 xl:px-3">
           <motion.div
             className="main-container"
+            variants={experienceEntranceRoot}
             initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.34, margin: "0px 0px -8% 0px" }}
+            animate={panelSettled ? "visible" : "hidden"}
           >
           <motion.div className="career-overview-rail">
           <motion.div className="nav-header" variants={experienceRailHeaderEntrance}>
-            <div className="tab-text">
+            <motion.div className="career-nav-section-labels" variants={experienceRailLabelsEntrance}>
               <p className="career-nav-section-subtitle">Experience</p>
               <p className="career-nav-section-title">Career Overview</p>
-            </div>
+            </motion.div>
+            <motion.div
+              className="career-nav-section-divider"
+              variants={experienceRailDividerEntrance}
+              style={{ transformOrigin: "center" }}
+              aria-hidden
+            />
           </motion.div>
           {/* Vertical Tabs Navigation */}
           <motion.nav className="tabs-nav" variants={experienceTabsEntrance}>
-            <motion.button className="tab-btn active" data-tab="rawblem" type="button" variants={experienceTabItemEntrance}>
+            <motion.button
+              className="tab-btn active"
+              data-tab="rawblem"
+              type="button"
+              variants={experienceTabItemEntrance}
+            >
               <div className="tab-text">
                 <div className="tab-title">Digital Content</div>
                 <div className="tab-subtitle">RAWBLEM</div>
               </div>
             </motion.button>
-            <motion.button className="tab-btn" data-tab="uvic-esports" type="button" variants={experienceTabItemEntrance}>
+            <motion.button
+              className="tab-btn"
+              data-tab="uvic-esports"
+              type="button"
+              variants={experienceTabItemEntrance}
+            >
               <div className="tab-text">
                 <div className="tab-title">Social Media</div>
                 <div className="tab-subtitle">UVIC E-Sports</div>
@@ -4210,7 +4292,12 @@ const ConfidantExperience = () => {
                 <div className="tab-subtitle">Starbucks</div>
               </div>
             </motion.button>
-            <motion.button className="tab-btn" data-tab="education" type="button" variants={experienceTabItemEntrance}>
+            <motion.button
+              className="tab-btn"
+              data-tab="education"
+              type="button"
+              variants={experienceTabItemEntrance}
+            >
               <div className="tab-text">
                 <div className="tab-title">Education</div>
                 <div className="tab-subtitle">B.A. Writing</div>
@@ -4219,7 +4306,12 @@ const ConfidantExperience = () => {
           </motion.nav>
           </motion.div>
           {/* Tab Content Panels */}
-          <motion.div className="tabs-content" variants={experienceCardEntrance}>
+          <motion.div
+            className="tabs-content"
+            variants={experienceCardEntrance}
+            initial="hidden"
+            animate={panelSettled ? "visible" : "hidden"}
+          >
             {/* Dashboard Panel */}
             <div className="tab-panel active no-scrollbar" id="rawblem">
               <div className="panel-header">
@@ -4363,15 +4455,15 @@ const ConfidantExperience = () => {
                     </ul>
                   </div>
                   <div className="stats-grid">
-                    <div className="stat-item">
+                    <div className="stat-item stat-item--fade-only">
                       <div className="stat-value">B.A.</div>
                       <div className="stat-label">Writing</div>
                     </div>
-                    <div className="stat-item">
+                    <div className="stat-item stat-item--fade-only">
                       <div className="stat-value">UVic</div>
                       <div className="stat-label">Victoria BC</div>
                     </div>
-                    <div className="stat-item">
+                    <div className="stat-item stat-item--fade-only">
                       <div className="stat-value">Dist.</div>
                       <div className="stat-label">Distinction</div>
                     </div>
@@ -7111,7 +7203,9 @@ export default function Home() {
                     )}
                   </AnimatePresence>
                 )}
-                {currentSection === "experience" && <ConfidantExperience />}
+                {currentSection === "experience" && (
+                  <ConfidantExperience panelSettled={panelSettled} reduceMotion={reduceMotion} />
+                )}
                 {currentSection === "social" && <SocialLink />}
                 {currentSection === "skills" && (
                   <SkillArsenal panelSettled={panelSettled} reduceMotion={reduceMotion} />

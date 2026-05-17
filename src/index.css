@@ -312,19 +312,47 @@
   /**
    * FEATURED WRITING — same stack as profile/project (panel = card surface). shell < panel < raised.
    */
+  /** Stack wrapper — no outer card fill; border lives on body + tab rail. */
   .featured-writing-shell {
     position: relative;
     z-index: 0;
-    background: color-mix(in srgb, var(--portfolio-section-card) 8%, transparent);
+    background: transparent;
     background-image: none;
     filter: none;
-    -webkit-backdrop-filter: blur(2px);
-    backdrop-filter: blur(2px);
-    /* Inner rules + tab edges */
-    --fw-rule-header: rgba(0, 0, 0, 0.5);
-    --fw-rule-body-top: rgba(0, 0, 0, 0.45);
-    --fw-tab-idle: rgba(0, 0, 0, 0.4);
-    --fw-tab-idle-hover: rgba(0, 0, 0, 0.55);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    --fw-card-stroke: rgba(255, 255, 255, 0.18);
+    --fw-card-stroke-soft: rgba(255, 255, 255, 0.12);
+    --fw-rule-body-top: var(--fw-card-stroke);
+    --fw-tab-idle: rgba(255, 255, 255, 0.15);
+    --fw-tab-idle-hover: rgba(255, 255, 255, 0.25);
+    --fw-tab-active-bg: color-mix(in srgb, var(--portfolio-section-card) 18%, transparent);
+    --fw-tab-idle-bg: color-mix(in srgb, var(--portfolio-section-card) 10%, transparent);
+    --fw-tab-radius: 9px;
+  }
+
+  @media (min-width: 640px) {
+    .featured-writing-shell {
+      --fw-tab-radius: 10px;
+    }
+  }
+
+  /** Content panel — one real border; active tab overlaps the top edge by 1px. */
+  .featured-writing-body-card {
+    border: 1px solid var(--fw-card-stroke);
+    border-radius: 0 0 11px 11px;
+    box-shadow:
+      0 18px 48px -28px rgba(0, 0, 0, 0.9),
+      inset 1px 0 0 rgba(255, 255, 255, 0.025),
+      inset -1px 0 0 rgba(255, 255, 255, 0.025);
+    background-color: transparent;
+    background-image: none;
+  }
+
+  @media (min-width: 640px) {
+    .featured-writing-body-card {
+      border-radius: 0 0 12px 12px;
+    }
   }
 
   .featured-writing-panel {
@@ -347,49 +375,135 @@
     border-bottom: 1px solid var(--fw-rule-header);
   }
 
-  /**
-   * Folder seam: 1px rule with a gap under the active tab (skip span from JS:
-   * `--fw-rule-skip-start` / `--fw-rule-skip-end`, px from this box’s left edge).
-   */
+  /** Folder body top edge is the real panel border; no segmented seam overlays. */
   .featured-writing-inner-rule-body-top {
-    border-top: none;
-    background-repeat: no-repeat;
-    background-size: 100% 1px;
-    background-position: top left;
-    background-image: linear-gradient(
-      to right,
-      var(--fw-rule-body-top) 0,
-      var(--fw-rule-body-top) var(--fw-rule-skip-start, 0px),
-      transparent var(--fw-rule-skip-start, 0px),
-      transparent var(--fw-rule-skip-end, 0px),
-      var(--fw-rule-body-top) var(--fw-rule-skip-end, 0px),
-      var(--fw-rule-body-top) 100%
-    );
+    background-color: transparent;
+    background-image: none;
   }
 
-  /** Active folder tab — same single panel fill as the body below (no stacked rail wash). */
+  .featured-writing-inner-rule-body-top::before {
+    display: none;
+  }
+
+  .featured-writing-inner-rule-body-top > .featured-writing-panel {
+    position: relative;
+    z-index: 1;
+  }
+
+  .featured-writing-inner-rule-body-top > .featured-writing-panel {
+    border-radius: 0 0 10px 10px;
+  }
+
+  @media (min-width: 640px) {
+    .featured-writing-inner-rule-body-top > .featured-writing-panel {
+      border-radius: 0 0 11px 11px;
+    }
+  }
+
+  /** Active folder tab — panel fill inside tab; connects into body seam gap. */
+  .featured-writing-tab-active,
+  .featured-writing-tab-idle-edge {
+    --fw-tab-stroke-current: var(--fw-card-stroke);
+    height: 2.25rem;
+    min-height: 2.25rem;
+    margin-bottom: 0;
+    border: 1px solid var(--fw-tab-stroke-current);
+    border-bottom: 0;
+    border-radius: var(--fw-tab-radius) var(--fw-tab-radius) 0 0;
+    background-clip: padding-box;
+    isolation: isolate;
+    overflow: visible;
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    /* Match #experience .tab-btn (--career-tab-hover-duration 0.18s / Material ease). */
+    transition:
+      height 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+      min-height 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+      box-shadow 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+      background 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+      border-color 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+      color 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  @media (min-width: 640px) {
+    .featured-writing-tab-active,
+    .featured-writing-tab-idle-edge {
+      height: 2.5rem;
+      min-height: 2.5rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .featured-writing-tab-active,
+    .featured-writing-tab-idle-edge {
+      transition: none;
+    }
+  }
+
+  .featured-writing-tab-active::before,
+  .featured-writing-tab-idle-edge::before {
+    display: none;
+  }
+
+  .featured-writing-tab-active::after,
+  .featured-writing-tab-idle-edge::after {
+    display: none;
+  }
+
   .featured-writing-tab-active {
     --fw-tab-active-accent: color-mix(in srgb, var(--palette-yellow-projects) 48%, rgb(186, 186, 186));
-    background: color-mix(in srgb, var(--portfolio-section-card) 8%, transparent);
+    --fw-tab-bg-current: var(--fw-tab-active-bg);
+    height: calc(2.75rem * 1.05);
+    min-height: calc(2.75rem * 1.05);
+    margin-bottom: 0;
+    color: var(--fw-tab-active-accent);
+    background: var(--fw-tab-active-bg);
     background-image: none;
     filter: none;
     -webkit-backdrop-filter: blur(2px);
     backdrop-filter: blur(2px);
-    margin-bottom: -1px;
-    border-top-color: var(--fw-tab-active-accent);
-    border-left-color: var(--fw-tab-active-accent);
-    border-right-color: var(--fw-tab-active-accent);
-    border-top-width: 1px;
-    box-shadow: inset 0 1px 0 0 var(--fw-tab-active-accent);
+    border-bottom: 0;
+    background-clip: border-box;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.07),
+      inset 1px 0 0 rgba(255, 255, 255, 0.025),
+      inset -1px 0 0 rgba(255, 255, 255, 0.025),
+      0 8px 20px -18px rgba(0, 0, 0, 0.9);
   }
 
-  /** Inactive folder tabs — border-color only (width from Tailwind `border border-b-0`). */
+  @media (min-width: 640px) {
+    .featured-writing-tab-active {
+      height: calc(3rem * 1.05);
+      min-height: calc(3rem * 1.05);
+    }
+  }
+
+  /** Inactive folder tabs — panel fill + stroke; no bottom edge (seam runs below). */
   .featured-writing-tab-idle-edge {
-    border-color: var(--fw-tab-idle);
+    --fw-tab-bg-current: var(--fw-tab-idle-bg);
+    background: var(--fw-tab-idle-bg);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.04),
+      inset 1px 0 0 rgba(255, 255, 255, 0.018),
+      inset -1px 0 0 rgba(255, 255, 255, 0.018);
   }
 
+  /* Same height grow as active on click; do not set margin-bottom here (-mb-px is active-only). */
   .featured-writing-tab-idle-edge:hover {
-    border-color: var(--fw-tab-idle-hover);
+    --fw-tab-bg-current: color-mix(in srgb, var(--portfolio-section-card) 12%, transparent);
+    --fw-tab-stroke-current: var(--fw-tab-idle-hover);
+    height: calc(2.75rem * 1.05);
+    min-height: calc(2.75rem * 1.05);
+    z-index: 3;
+    background: color-mix(in srgb, var(--portfolio-section-card) 12%, transparent);
+  }
+
+  @media (min-width: 640px) {
+    .featured-writing-tab-idle-edge:hover {
+      height: calc(3rem * 1.05);
+      min-height: calc(3rem * 1.05);
+    }
   }
 
   /** PDF thumb loading shimmer — matches featured-writing stack */
@@ -685,13 +799,13 @@
     padding-bottom: max(20px, env(safe-area-inset-bottom, 0px));
     padding-left: 0;
     padding-right: 0;
-    /* Career section type scale — rail display → panel headline → body → chrome */
-    --career-font-display: 1.90625rem;
-    --career-font-eyebrow: 1.15625rem;
-    --career-font-panel-headline: clamp(1.34375rem, calc(1.72vw + 0.03125rem), 1.71875rem);
+    /* Career section type scale — rail display + subhead dominant → panel → tabs → body */
+    --career-font-display: clamp(2rem, calc(1.1vw + 1.5625rem), 2.25rem);
+    --career-font-eyebrow: clamp(1.25rem, calc(0.55vw + 1rem), 1.4375rem);
+    --career-font-panel-headline: clamp(1.1875rem, calc(1.28vw + 0.5rem), 1.46875rem);
     --career-font-panel-meta: clamp(0.96875rem, calc(1.04vw + 0.03125rem), 1.03125rem);
-    --career-font-tab-lead: 0.84375rem;
-    --career-font-tab-sub: 0.78125rem;
+    --career-font-tab-lead: 0.78125rem;
+    --career-font-tab-sub: 0.71875rem;
     --career-font-card-head: 1.09375rem;
     --career-font-card-body: clamp(0.96875rem, calc(1.02vw + 0.03125rem), 1.09375rem);
     --career-font-body: clamp(0.96875rem, calc(1.06vw + 0.03125rem), 1.09375rem);
@@ -704,6 +818,14 @@
     --career-lh-body-sm: 1.36;
     --career-lh-caption: 1.3;
     --career-layout-nudge: 0px;
+    /* PROFILE parity: summary card + overlay fades (SUMMARY_DURATION_S / EASE.out) */
+    --career-card-ease: cubic-bezier(0.16, 1, 0.3, 1);
+    --career-card-fade-ms: 306ms;
+    --career-card-height-ms: 486ms;
+    /* Left edge of right-hand content (inner seam → outer card border at lg) */
+    --career-overview-content-edge: var(--portfolio-stroke-inner);
+    /* Rail section divider — slightly brighter than card edge for visibility on dark rail */
+    --career-nav-divider-stroke: rgba(255, 255, 255, 0.11);
   }
 
   @media (min-width: 768px) {
@@ -743,8 +865,19 @@
     display: flex;
     flex-direction: column;
     gap: 11px;
-    border-right: 1px solid var(--portfolio-stroke-inner);
+    border-right: 1px solid var(--career-overview-content-edge);
     position: relative;
+    /* Career tab hierarchy: soft idle blocks, active brightest + blue rail */
+    --career-tab-surface-idle: color-mix(in srgb, white 6%, transparent);
+    --career-tab-surface-idle-hover: color-mix(in srgb, white 7.5%, transparent);
+    --career-tab-surface-active: color-mix(in srgb, white 13%, transparent);
+    --career-tab-title-idle: color-mix(in srgb, var(--color-mono-2) 64%, transparent);
+    --career-tab-title-idle-hover: color-mix(in srgb, var(--color-mono-2) 76%, transparent);
+    --career-tab-sub-idle: color-mix(in srgb, var(--color-mono-2) 44%, transparent);
+    --career-tab-sub-idle-hover: color-mix(in srgb, var(--color-mono-2) 54%, transparent);
+    --career-tab-sub-active: rgba(255, 255, 255, 0.72);
+    --career-tab-hover-shift: 13.5px;
+    --career-tab-hover-duration: 0.18s;
   }
 
   #experience .nav-header {
@@ -752,38 +885,45 @@
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 0;
+    gap: 0.5rem;
     /* Same horizontal shell as .tabs-nav (12px); bottom pad = space above divider */
-    padding: 0 12px 12px;
+    padding: 0 12px 14px;
     border-bottom: 0;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
   }
 
-  /* Column gap pairs title + eyebrow; horizontal inset matches .tabs-nav shell (see 901px+) */
-  #experience .nav-header > .tab-text {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.375rem;
+  #experience .nav-header .career-nav-section-subtitle,
+  #experience .nav-header .career-nav-section-title {
+    margin: 0;
     width: 100%;
     min-width: 0;
     padding: 0;
     box-sizing: border-box;
   }
 
-  #experience .nav-header::after {
-    content: "";
+  #experience .career-nav-section-divider {
     position: absolute;
     left: 12px;
     right: 12px;
     bottom: 0;
-    height: 1px;
-    background: var(--portfolio-stroke-outer);
+    height: 0;
+    border: 0;
+    border-bottom: 1px solid var(--career-nav-divider-stroke);
+    background: transparent;
+    transform-origin: center center;
   }
 
-  /* Section title — matches SectionHeader compact title (SHOWCASE / PROFILE base scale) */
+  #experience .career-nav-section-labels {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4375rem;
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Section title — dominant rail headline (above tabs + panel role title) */
   #experience .nav-header .career-nav-section-subtitle {
-    margin: 0;
+    margin: 0 0 0 -0.08em;
     padding: 0;
     width: 100%;
     color: #fff;
@@ -797,17 +937,17 @@
     max-width: 100%;
   }
 
-  /* Eyebrow — tab-subtitle spacing/caps; ~60% of Experience for a clear but paired scale */
+  /* Paired subhead — second in hierarchy, still clearly above nav tabs */
   #experience .nav-header .career-nav-section-title {
-    margin: 0;
+    margin: 0 0 0 -0.05em;
     padding: 0;
     width: 100%;
-    color: color-mix(in srgb, var(--color-mono-2) 90%, transparent);
-    font-family: var(--font-heading);
+    color: rgba(255, 255, 255, 0.5);
+    font-family: var(--font-display);
     font-size: var(--career-font-eyebrow);
-    font-weight: 500;
-    line-height: var(--career-lh-caption);
-    letter-spacing: normal;
+    font-weight: 600;
+    line-height: 1.12;
+    letter-spacing: -0.015em;
     text-transform: none;
     text-wrap: balance;
     max-width: 100%;
@@ -823,7 +963,7 @@
     border: none;
     border-radius: 0;
     cursor: pointer;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all var(--career-tab-hover-duration) cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
     text-align: left;
   }
@@ -832,15 +972,13 @@
     content: "";
     position: absolute;
     inset: 0;
-    background: rgba(255, 255, 255, 0.045);
-    opacity: 0;
-    transition: opacity 0.4s ease;
+    opacity: 1;
     border-radius: 0;
+    transition: background-color var(--career-tab-hover-duration) cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  /* Faint idle fill — same layer as active, much lower opacity */
   #experience .tab-btn:not(.active)::before {
-    opacity: 0.3;
+    background: var(--career-tab-surface-idle);
   }
 
   #experience .tab-btn::after {
@@ -853,15 +991,15 @@
     height: 60%;
     background: var(--palette-blue);
     border-radius: 0 4px 4px 0;
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform var(--career-tab-hover-duration) cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   #experience .tab-btn:not(.active):hover::before {
-    opacity: 0.5;
+    background: var(--career-tab-surface-idle-hover);
   }
 
   #experience .tab-btn.active::before {
-    opacity: 1;
+    background: var(--career-tab-surface-active);
   }
 
   #experience .tab-btn.active::after {
@@ -880,33 +1018,48 @@
   }
 
   #experience .tab-btn .tab-text {
-    opacity: 0.5;
-    transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  #experience .tab-btn:not(.active):hover .tab-text {
-    opacity: 0.68;
-  }
-
-  #experience .tab-btn.active .tab-text {
     opacity: 1;
   }
 
   #experience .tab-title {
-    color: #fff;
     font-size: var(--career-font-tab-lead);
-    font-weight: 700;
+    font-weight: 600;
     line-height: var(--career-lh-caption);
-    letter-spacing: 0.08em;
+    letter-spacing: 0.07em;
     text-transform: uppercase;
     white-space: nowrap;
+    transition: color var(--career-tab-hover-duration) cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  #experience .tab-btn:not(.active) .tab-title {
+    color: var(--career-tab-title-idle);
+  }
+
+  #experience .tab-btn:not(.active):hover .tab-title {
+    color: var(--career-tab-title-idle-hover);
+  }
+
+  #experience .tab-btn.active .tab-title {
+    color: #fff;
   }
 
   #experience .tab-subtitle {
-    color: rgba(255, 255, 255, 0.62);
     font-size: var(--career-font-tab-sub);
     line-height: var(--career-lh-caption);
     margin-top: 2px;
+    transition: color var(--career-tab-hover-duration) cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  #experience .tab-btn:not(.active) .tab-subtitle {
+    color: var(--career-tab-sub-idle);
+  }
+
+  #experience .tab-btn:not(.active):hover .tab-subtitle {
+    color: var(--career-tab-sub-idle-hover);
+  }
+
+  #experience .tab-btn.active .tab-subtitle {
+    color: var(--career-tab-sub-active);
   }
 
   /* Content Area — outer shell + inner layer; inner opacity fades on tab change (see .career-tabs-content-inner) */
@@ -918,6 +1071,9 @@
     position: relative;
     overflow: hidden;
     isolation: isolate;
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
   }
 
   #experience .career-tabs-content-inner {
@@ -929,7 +1085,7 @@
     transform: translate3d(0, 0, 0);
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
-    transition: opacity 320ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition: opacity var(--career-card-fade-ms) var(--career-card-ease);
   }
 
   #experience .career-tabs-content-inner.career-tabs-dim {
@@ -955,7 +1111,10 @@
     opacity: 0;
     visibility: hidden;
     transform: translateX(30px);
-    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    transition:
+      opacity var(--career-card-fade-ms) var(--career-card-ease),
+      transform var(--career-card-fade-ms) var(--career-card-ease),
+      visibility 0s linear var(--career-card-fade-ms);
     overflow-y: hidden;
     overflow-x: hidden;
     overscroll-behavior: contain;
@@ -967,6 +1126,10 @@
     opacity: 1;
     visibility: visible;
     transform: translateX(0);
+    transition:
+      opacity var(--career-card-fade-ms) var(--career-card-ease),
+      transform var(--career-card-fade-ms) var(--career-card-ease),
+      visibility 0s;
   }
 
   #experience .panel-header {
@@ -987,7 +1150,7 @@
     transform: translate3d(0, 0, 0);
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
-    transition: opacity 320ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition: opacity var(--career-card-fade-ms) var(--career-card-ease);
   }
 
   #experience .panel-header.career-tabs-dim {
@@ -1039,7 +1202,7 @@
   }
 
   #experience .panel-title {
-    color: rgba(255, 255, 255, 0.86);
+    color: rgba(255, 255, 255, 0.8);
     max-width: min(100%, 30ch);
     font-size: var(--career-font-panel-headline);
     font-weight: 700;
@@ -1050,17 +1213,17 @@
     text-wrap: balance;
   }
 
-  /* Match .panel-title (role headline) — year / range only, no label styling */
+  /* Dates — tertiary to role title; keeps rail headers visually dominant */
   #experience .panel-period {
     flex-shrink: 0;
     margin: 0;
     padding-top: 0;
     margin-left: -0.04em;
-    color: rgba(255, 255, 255, 0.68);
-    font-size: var(--career-font-panel-headline);
-    font-weight: 600;
-    line-height: var(--career-lh-headline);
-    letter-spacing: -0.025em;
+    color: rgba(255, 255, 255, 0.58);
+    font-size: var(--career-font-panel-meta);
+    font-weight: 500;
+    line-height: var(--career-lh-body);
+    letter-spacing: -0.01em;
     text-align: right;
     white-space: nowrap;
     font-variant-numeric: tabular-nums;
@@ -1177,6 +1340,29 @@
   #experience #education .content-card {
     min-height: 0;
     flex: 0 0 auto;
+  }
+
+  #experience #education .content-card:hover {
+    transform: none;
+  }
+
+  #experience #education .stat-value,
+  #experience #education .stat-label,
+  #experience .stat-item--fade-only {
+    transform: none !important;
+  }
+
+  #experience #education .stat-item,
+  #experience .stat-item--fade-only {
+    transition:
+      opacity 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+      border-color 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+      background-color 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  #experience #education .stat-item:hover,
+  #experience .stat-item--fade-only:hover {
+    transform: none;
   }
 
   #experience .card-header {
@@ -1467,6 +1653,8 @@
     .career-overview-shell {
       --career-layout-nudge: 14px;
       --career-rail-card-offset: 5%;
+      --career-overview-content-edge: var(--portfolio-stroke-outer);
+      --career-nav-divider-stroke: rgba(255, 255, 255, 0.14);
     }
 
     /* Slightly less outer left gutter — rail + card move together */
@@ -1510,16 +1698,11 @@
     }
 
     #experience .nav-header {
-      padding: 20px 12px 12px 8px;
-      margin: 0 0 12px;
+      padding: 22px 12px 14px 8px;
+      margin: 0 0 16px;
     }
 
-    /* Text + divider share tabs-nav 8px shell; tab labels indent inside .tab-btn */
-    #experience .nav-header > .tab-text {
-      padding: 0;
-    }
-
-    #experience .nav-header::after {
+    #experience .career-nav-section-divider {
       left: 8px;
       right: 12px;
     }
@@ -1548,14 +1731,31 @@
       align-self: start;
       margin-left: var(--career-rail-card-offset, 5%);
       overflow: visible;
-      /* Outer shell: light frost so padding/border ring matches other portfolio glass cards */
-      background: color-mix(in srgb, var(--portfolio-section-card) 6%, transparent);
+      /* Frost on ::before so entrance transform does not recomposite blur (end stutter) */
+      background: transparent;
       background-image: none;
       filter: none;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+      border: 1px solid var(--career-overview-content-edge);
+      border-radius: 16px;
+    }
+
+    #experience .tabs-content::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      background: color-mix(in srgb, var(--portfolio-section-card) 6%, transparent);
       -webkit-backdrop-filter: blur(2px);
       backdrop-filter: blur(2px);
-      border: 1px solid var(--portfolio-stroke-outer);
-      border-radius: 16px;
+    }
+
+    #experience .tabs-content > * {
+      position: relative;
+      z-index: 1;
     }
 
     #experience .career-tabs-content-inner {
