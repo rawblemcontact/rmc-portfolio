@@ -516,18 +516,21 @@
     );
   }
 
-  /** VIEW CTA — same fill as `.featured-writing-shell`; hover = yellow border only */
+  /** VIEW CTA — same fill as `.featured-writing-shell`; rest = faint frame; hover = yellow border */
   .featured-writing-view-cta {
-    background: color-mix(in srgb, var(--portfolio-section-card) 8%, transparent);
+    background: color-mix(in srgb, var(--portfolio-section-card) 14%, transparent);
     background-image: none;
     filter: none;
     -webkit-backdrop-filter: blur(2px);
     backdrop-filter: blur(2px);
-    border: 1px solid transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow:
+      0 14px 36px -22px rgba(0, 0, 0, 0.85),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
   }
 
   .featured-writing-view-cta:hover {
-    background: color-mix(in srgb, var(--portfolio-section-card) 8%, transparent);
+    background: color-mix(in srgb, var(--portfolio-section-card) 14%, transparent);
     border-color: color-mix(in srgb, var(--palette-yellow-projects) 48%, rgb(186, 186, 186));
   }
 
@@ -880,7 +883,8 @@
     --career-tab-hover-duration: 0.18s;
   }
 
-  #experience .nav-header {
+  #experience .nav-header,
+  #skills .skills-subpanel-header.nav-header {
     position: relative;
     display: flex;
     flex-direction: column;
@@ -892,8 +896,17 @@
     margin-bottom: 14px;
   }
 
+  #skills .skills-subpanel-header.nav-header {
+    padding: 0;
+    gap: 0;
+    margin-bottom: 0;
+    overflow: visible;
+  }
+
   #experience .nav-header .career-nav-section-subtitle,
-  #experience .nav-header .career-nav-section-title {
+  #experience .nav-header .career-nav-section-title,
+  #skills .skills-subpanel-header.nav-header .career-nav-section-subtitle,
+  #skills .skills-subpanel-header.nav-header .career-nav-section-title {
     margin: 0;
     width: 100%;
     min-width: 0;
@@ -901,7 +914,8 @@
     box-sizing: border-box;
   }
 
-  #experience .career-nav-section-divider {
+  #experience .career-nav-section-divider,
+  #skills .skills-subpanel-header .career-nav-section-divider {
     position: absolute;
     left: 12px;
     right: 12px;
@@ -913,7 +927,13 @@
     transform-origin: center center;
   }
 
-  #experience .career-nav-section-labels {
+  #skills .skills-subpanel-header .career-nav-section-divider {
+    left: 0;
+    right: 0;
+  }
+
+  #experience .career-nav-section-labels,
+  #skills .skills-subpanel-header .career-nav-section-labels {
     display: flex;
     flex-direction: column;
     gap: 0.4375rem;
@@ -922,7 +942,8 @@
   }
 
   /* Section title — dominant rail headline (above tabs + panel role title) */
-  #experience .nav-header .career-nav-section-subtitle {
+  #experience .nav-header .career-nav-section-subtitle,
+  #skills .skills-subpanel-header.nav-header .career-nav-section-subtitle {
     margin: 0 0 0 -0.08em;
     padding: 0;
     width: 100%;
@@ -937,8 +958,19 @@
     max-width: 100%;
   }
 
+  #skills .skills-subpanel-header--compact.nav-header .career-nav-section-subtitle {
+    font-size: clamp(1.125rem, calc(0.85vw + 0.9rem), 1.5rem);
+    line-height: 1.05;
+  }
+
+  #skills .skills-subpanel-header--compact.nav-header .career-nav-section-title {
+    font-size: clamp(0.875rem, calc(0.35vw + 0.78rem), 1.0625rem);
+    line-height: 1.1;
+  }
+
   /* Paired subhead — second in hierarchy, still clearly above nav tabs */
-  #experience .nav-header .career-nav-section-title {
+  #experience .nav-header .career-nav-section-title,
+  #skills .skills-subpanel-header.nav-header .career-nav-section-title {
     margin: 0 0 0 -0.05em;
     padding: 0;
     width: 100%;
@@ -1952,6 +1984,13 @@
   #skills .skills-subcategory-column-title {
     color: rgb(244 244 245);
   }
+  #skills .skills-row-strip-bg {
+    background: color-mix(in srgb, var(--portfolio-section-card) 8%, transparent);
+    background-image: none;
+    filter: none;
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+  }
   #skills .skills-card-diagonal {
     border: 1px solid var(--portfolio-stroke-outer);
     background: color-mix(in srgb, var(--portfolio-section-card) 8%, transparent);
@@ -1960,14 +1999,6 @@
     -webkit-backdrop-filter: blur(2px);
     backdrop-filter: blur(2px);
     box-shadow: none;
-  }
-
-  #skills .skills-row-strip-bg {
-    background: color-mix(in srgb, var(--portfolio-section-card) 8%, transparent);
-    background-image: none;
-    filter: none;
-    -webkit-backdrop-filter: blur(2px);
-    backdrop-filter: blur(2px);
   }
 
   /* Skills: ambient marquee layer (behind cards, not inside CardBlackFace; each row animates on its own root) */
