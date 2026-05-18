@@ -3174,7 +3174,7 @@ const showcaseDetailCard =
 
 /** Same frame as project detail insets; darker wash + soft stacked shadow (single box-shadow, two layers). Corners: sharp TL/BR, rounded TR/BL (StealthWorm reference). */
 const SKILLS_SUBCATEGORY_CARD_FACE =
-  "skills-card-surface rounded-[0.95rem] border-0 shadow-[0_8px_32px_rgba(0,0,0,0.35)] sm:rounded-[1.05rem] transition-[background-color,box-shadow] duration-300 ease-out hover:shadow-[0_10px_36px_rgba(0,0,0,0.4)]";
+  "skills-card-surface transition-[background-color] duration-300 ease-out";
 
 /** Row zone behind the 3 subskill cards — solid fill, no border/shadow; radii match `SKILLS_SUBCATEGORY_CARD_FACE`. */
 const SKILLS_ROW_STRIP_BG =
@@ -3182,7 +3182,7 @@ const SKILLS_ROW_STRIP_BG =
 
 /** Inset for cards inside the row zone (strip fills padded box via `absolute inset-0`). */
 const SKILLS_ROW_ZONE_PADDING = "p-2.5 sm:p-3.5 md:p-4 lg:p-5";
-const SKILLS_ROW_ZONE_PADDING_DUAL = "p-2 sm:p-2.5 md:p-3";
+const SKILLS_ROW_ZONE_PADDING_DUAL = "px-2.5 py-2.5 sm:px-3 sm:py-3 md:px-3.5 md:py-3";
 
 const ShowcaseDetailOverviewRole = ({ card }: { card: ShowcaseProjectCard }) => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-3">
@@ -5009,7 +5009,7 @@ const SKILLS_DATA = {
   core: {
     title: "CORE COMPETENCIES",
     /** Paired subhead under rail title (matches #experience .career-nav-section-title). */
-    subtitle: "Capability overview",
+    subtitle: "Skills Embodied",
     categories: [
       {
         title: "Writing & Narrative",
@@ -5045,7 +5045,7 @@ const SKILLS_DATA = {
   },
   tools: {
     title: "TOOLKIT",
-    subtitle: "Tools & platforms",
+    subtitle: "Skills Applied",
     categories: [
       {
         title: "Design & Productivity",
@@ -5537,9 +5537,12 @@ const UiverseCard = styled.div`
 
   /* Two stacked inline panels: share viewport height (overrides single-card cap above). */
   &.skills-subcard.skills-subcard-dual {
-    max-height: min(calc(50dvh - 3.75rem), 22rem);
+    width: 100%;
+    max-height: none;
+    overflow: visible;
     @media (max-width: 639px) {
-      max-height: min(calc(50dvh - 3.25rem), 19rem);
+      width: 100%;
+      max-height: none;
     }
   }
 `;
@@ -5718,79 +5721,6 @@ const ViewportRuleOfThirdsOverlay = styled(RuleOfThirdsOverlay)`
   border-radius: 0;
 `;
 
-const SKILLS_CONTENT_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
-
-/** Skills orchestrated reveal (after panel wipe): ms timings + pauses, PROJECT-DETAILS-style; GPU: transform/opacity only. */
-const SKILLS_REVEAL_PAUSE_MS = 51;
-/** Dual-inline row zone backdrops fade in first; orchestrated SKILLS content waits this long (ms). */
-const SKILLS_REVEAL_ROW_ZONES_LEAD_MS = 280;
-const SKILLS_REVEAL_TITLE_FADE_MS = 191;
-const SKILLS_REVEAL_HEADER_SLIDE_MS = 225;
-const SKILLS_REVEAL_CARD_SLIDE_MS = 200;
-const SKILLS_REVEAL_CARD_STAGGER_MS = 24;
-const SKILLS_REVEAL_HEADER_DELAY_MS = SKILLS_REVEAL_TITLE_FADE_MS + SKILLS_REVEAL_PAUSE_MS;
-const SKILLS_REVEAL_CORE_GRID_DELAY_MS =
-  SKILLS_REVEAL_HEADER_DELAY_MS + SKILLS_REVEAL_HEADER_SLIDE_MS + SKILLS_REVEAL_PAUSE_MS;
-/** Time after core column cards begin before toolkit column cards begin (overlap is intentional; was full core slide+stagger+pause). */
-const SKILLS_REVEAL_TOOLKIT_AFTER_CORE_START_MS = 68;
-const SKILLS_REVEAL_TOOLKIT_GRID_DELAY_MS =
-  SKILLS_REVEAL_CORE_GRID_DELAY_MS + SKILLS_REVEAL_TOOLKIT_AFTER_CORE_START_MS;
-const SKILLS_ORCHESTRATED_END_S =
-  (SKILLS_REVEAL_ROW_ZONES_LEAD_MS +
-    SKILLS_REVEAL_TOOLKIT_GRID_DELAY_MS +
-    SKILLS_REVEAL_CARD_SLIDE_MS +
-    2 * SKILLS_REVEAL_CARD_STAGGER_MS) /
-  1000;
-
-/** Stagger inside subskills card: header ? scroll body ? bottom rule */
-const skillsPanelStaggerParent: Variants = {
-  hidden: {},
-  show: {
-    transition: { staggerChildren: 0.09, delayChildren: 0.04 },
-  },
-};
-const skillsPanelStaggerChild: Variants = {
-  hidden: { opacity: 0, y: 16 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.4, ease: SKILLS_CONTENT_EASE },
-  },
-};
-
-/** Stagger around card + flank nav (inline) or intro pair cards */
-const skillsChromeStaggerParent: Variants = {
-  hidden: {},
-  show: {
-    transition: { staggerChildren: 0.1, delayChildren: 0.06 },
-  },
-};
-const skillsChromeStaggerChild: Variants = {
-  hidden: { opacity: 0, y: 14 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.38, ease: SKILLS_CONTENT_EASE },
-  },
-};
-
-/** Icon flourish starts this many seconds before the modeled end of the SKILLS slide/fade stack (keep in sync with variants below). */
-const SKILLS_FLOURISH_LEAD_S = 0.5;
-
-/** Footer = 3rd panel stagger child: delayChildren + 2?staggerChildren + duration */
-const SKILLS_PANEL_STAGGER_END_S = 0.04 + 2 * 0.09 + 0.4;
-/** Inline dual panels: orchestrated reveal end (icon flourish sync). */
-const SKILLS_CHROME_INLINE_STAGGER_END_S = SKILLS_ORCHESTRATED_END_S;
-const SKILLS_INLINE_MOTION_END_S = Math.max(SKILLS_PANEL_STAGGER_END_S, SKILLS_CHROME_INLINE_STAGGER_END_S);
-
-/** Intro: 2nd chrome card; also second card title motion (delay 0.25 + 0.4s) in SkillArsenal */
-const SKILLS_INTRO_CHROME_STAGGER_END_S = 0.06 + 1 * 0.1 + 0.38;
-const SKILLS_INTRO_SECOND_TITLE_END_S = 0.25 + 0.4;
-const SKILLS_INTRO_MOTION_END_S = Math.max(SKILLS_INTRO_CHROME_STAGGER_END_S, SKILLS_INTRO_SECOND_TITLE_END_S);
-
-/** Overlay shell expand vs panel stagger (parallel, same t0) */
-const SKILLS_OVERLAY_MOTION_END_S = Math.max(MORPH_EXPAND_DUR, SKILLS_PANEL_STAGGER_END_S);
-
 /** Background marquee (not inside cards): same outline style; runs on its own layer behind panels. */
 type SkillsAmbientBand = "core" | "tools";
 
@@ -5843,114 +5773,70 @@ const SkillsSubskillsPanel = ({
   variant,
   onClose,
   dualInline = false,
-  orchestratedReveal = false,
-  revealActive = false,
-  revealReduceMotion = false,
-  headerRevealDelayMs = 0,
-  gridRevealDelayMs = 0,
 }: {
   slide: "core" | "tools";
   variant: "overlay" | "inline";
   onClose?: () => void;
-  /** Both skills panels visible: tighter max-height + in-card scroll. */
+  /** Both skills panels visible: tighter type/spacing so each card reads without inner scrolling. */
   dualInline?: boolean;
-  orchestratedReveal?: boolean;
-  revealActive?: boolean;
-  revealReduceMotion?: boolean;
-  headerRevealDelayMs?: number;
-  gridRevealDelayMs?: number;
 }) => {
-  const isOrchestrated = orchestratedReveal && variant === "inline" && dualInline;
-
   const panelHeader = SKILLS_DATA[slide];
   const headerCompact = dualInline && variant === "inline";
-  const headerLabelsDelayS = revealReduceMotion
-    ? 0
-    : (headerRevealDelayMs + SKILLS_REVEAL_ROW_ZONES_LEAD_MS) / 1000;
-  const headerDividerDelayS = revealReduceMotion
-    ? 0
-    : headerLabelsDelayS + SKILLS_REVEAL_HEADER_SLIDE_MS / 1000;
 
-  const rowZoneBackdrop =
-    isOrchestrated ? (
-      <motion.div
-        aria-hidden
-        className={SKILLS_ROW_STRIP_BG}
-        initial={{ opacity: 0 }}
-        animate={revealActive ? { opacity: 1 } : { opacity: 0 }}
-        transition={{
-          duration: revealReduceMotion ? 0.01 : SKILLS_REVEAL_ROW_ZONES_LEAD_MS / 1000,
-          ease: SKILLS_CONTENT_EASE,
-        }}
-        style={{ willChange: "opacity" }}
-      />
-    ) : (
-      <div aria-hidden className={SKILLS_ROW_STRIP_BG} />
-    );
+  const rowZoneBackdrop = dualInline ? null : <div aria-hidden className={SKILLS_ROW_STRIP_BG} />;
 
-  const rowZonePad = dualInline ? SKILLS_ROW_ZONE_PADDING_DUAL : SKILLS_ROW_ZONE_PADDING;
+  const rowZonePad = dualInline ? "relative w-full min-w-0" : SKILLS_ROW_ZONE_PADDING;
+
   const gridGapClass = dualInline
-    ? "gap-y-2.5 sm:gap-y-3 gap-x-3 md:gap-x-4"
+    ? "gap-y-2 gap-x-2 sm:gap-y-3 sm:gap-x-3 md:gap-x-3"
     : "gap-y-5 sm:gap-y-7 gap-x-4 md:gap-x-5 lg:gap-x-6";
   const columnPadClass = dualInline
-    ? "px-3 py-3 sm:px-3.5 sm:py-3.5 md:py-4"
+    ? "px-2 py-2.5 sm:px-3 sm:py-3 md:px-3.5 md:py-3.5"
     : "px-3 py-3 sm:px-4 sm:py-3.5";
+  const treeConnector = dualInline ? (
+    <motion.div
+      className="relative z-[1] mx-auto mb-2.5 h-7 w-[68%] sm:mb-3 sm:h-8"
+      aria-hidden
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.32, ease: SKILLS_EASE, delay: 0.12 }}
+    >
+      <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-white/[0.14]" />
+      <div className="absolute left-0 right-0 bottom-0 h-px bg-white/[0.12]" />
+      <div className="absolute left-0 bottom-0 h-2.5 w-px bg-white/[0.12]" />
+      <div className="absolute left-1/2 bottom-0 h-2.5 w-px -translate-x-1/2 bg-white/[0.12]" />
+      <div className="absolute right-0 bottom-0 h-2.5 w-px bg-white/[0.12]" />
+    </motion.div>
+  ) : null;
 
   /** Same rail header as #experience .nav-header (title + gray subhead + divider). */
-  const sectionHeader = (
+  const sectionHeader = dualInline ? (
     <motion.div
+      className="skills-subpanel-header skills-subpanel-header--compact nav-header relative z-[1] mx-auto w-fit max-w-full flex-shrink-0 min-w-0 text-center"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: SKILLS_EASE, delay: slide === "core" ? 0.1 : 0.16 }}
+    >
+      <div className="career-nav-section-labels min-w-0 items-center pr-0 text-center">
+        <p className="career-nav-section-subtitle">{panelHeader.title}</p>
+        <p className="career-nav-section-title">{panelHeader.subtitle}</p>
+      </div>
+      <div className="career-nav-section-divider" aria-hidden />
+    </motion.div>
+  ) : (
+    <div
       className={[
         "skills-subpanel-header nav-header relative z-[1] flex-shrink-0 min-w-0",
         headerCompact ? "skills-subpanel-header--compact" : "",
       ]
         .filter(Boolean)
         .join(" ")}
-      {...(!isOrchestrated ? { variants: skillsPanelStaggerChild } : {})}
     >
-      <motion.div
-        className="career-nav-section-labels min-w-0 pr-0 sm:pr-12"
-        initial={isOrchestrated ? { opacity: 0, x: -40 } : false}
-        animate={
-          isOrchestrated
-            ? revealActive
-              ? { opacity: 1, x: 0 }
-              : { opacity: 0, x: -40 }
-            : undefined
-        }
-        transition={{
-          duration: revealReduceMotion ? 0.01 : SKILLS_REVEAL_HEADER_SLIDE_MS / 1000,
-          delay: headerLabelsDelayS,
-          ease: SKILLS_CONTENT_EASE,
-        }}
-        style={isOrchestrated ? { willChange: "transform, opacity" } : undefined}
-      >
+      <div className="career-nav-section-labels min-w-0 pr-0">
         <p className="career-nav-section-subtitle">{panelHeader.title}</p>
         <p className="career-nav-section-title">{panelHeader.subtitle}</p>
-      </motion.div>
-      {isOrchestrated ? (
-        <motion.div
-          className="career-nav-section-divider"
-          aria-hidden
-          initial={{ scaleX: revealReduceMotion ? 1 : 0 }}
-          animate={{ scaleX: revealActive ? 1 : 0 }}
-          transition={{
-            duration: revealReduceMotion ? 0.01 : 0.28,
-            delay: headerDividerDelayS,
-            ease: SKILLS_CONTENT_EASE,
-          }}
-          style={{ transformOrigin: "center center", willChange: "transform" }}
-        />
-      ) : (
-        <motion.div
-          className="career-nav-section-divider"
-          aria-hidden
-          initial={{ scaleX: 0 }}
-          whileInView={{ scaleX: 1 }}
-          viewport={{ once: false, amount: 0.2 }}
-          transition={{ duration: 0.28, ease: SKILLS_CONTENT_EASE }}
-          style={{ transformOrigin: "center center" }}
-        />
-      )}
+      </div>
+      <div className="career-nav-section-divider" aria-hidden />
       {SKILLS_SHOW_IDEA_GEAR_DECOR ? (
         <div
           className={
@@ -6023,7 +5909,7 @@ const SkillsSubskillsPanel = ({
             )}
           </div>
         ) : null}
-    </motion.div>
+    </div>
   );
 
   return (
@@ -6052,29 +5938,21 @@ const SkillsSubskillsPanel = ({
           variant === "overlay"
             ? "relative z-10 flex min-h-0 max-h-[min(680px,90vh)] sm:max-h-[min(440px,58vh)] flex-col overflow-hidden px-4 sm:px-10 md:px-16 lg:px-20 py-4 pt-12 sm:pt-14 pb-5 sm:pb-6 text-left shadow-[0_0_22px_rgba(0,0,0,0.5),0_0_18px_rgba(34,211,238,0.12)]"
             : dualInline
-              ? "relative z-10 flex min-h-0 max-h-[min(calc(50dvh-3.75rem),22rem)] max-sm:max-h-[min(calc(50dvh-3.25rem),19rem)] flex-col overflow-hidden px-3 sm:px-6 md:px-10 lg:px-12 pt-0 pb-1.5 sm:pt-1 sm:pb-3 md:pt-1.5 md:pb-4 text-left shadow-[0_0_18px_rgba(0,0,0,0.45),0_0_14px_rgba(34,211,238,0.1)]"
+              ? "relative z-10 flex min-h-0 flex-col overflow-visible px-0 pt-0 pb-0 text-left"
               : "relative z-10 flex min-h-0 max-h-[min(680px,90vh)] sm:max-h-[min(440px,58vh)] flex-col overflow-hidden px-4 sm:px-8 md:px-14 lg:px-16 xl:px-20 py-2.5 sm:py-6 md:py-7 text-left shadow-[0_0_22px_rgba(0,0,0,0.5),0_0_18px_rgba(34,211,238,0.12)]"
         }
-        {...(isOrchestrated
-          ? {}
-          : {
-              variants: skillsPanelStaggerParent,
-              initial: "hidden" as const,
-              whileInView: "show" as const,
-              viewport: { once: false, amount: 0.08 },
-            })}
+
       >
         <motion.div
           className={
             "relative z-[1] flex-1 min-h-0"
           }
-          {...(!isOrchestrated ? { variants: skillsPanelStaggerChild } : {})}
         >
         <div
           className={
             variant === "inline"
               ? dualInline
-                ? "h-full min-h-0 overflow-y-auto overflow-x-hidden pr-2 pb-2 no-scrollbar"
+                ? "h-full min-h-0 overflow-visible pr-0 pb-0"
                 : "h-full min-h-0 overflow-y-hidden overflow-x-hidden pr-2 pb-3 sm:pb-2"
               : "h-full min-h-0 overflow-y-hidden overflow-x-hidden pr-2 pb-8 sm:pb-2"
           }
@@ -6084,7 +5962,8 @@ const SkillsSubskillsPanel = ({
               <div className={`relative w-full min-w-0 ${rowZonePad}`}>
                 {rowZoneBackdrop}
                 {sectionHeader}
-                <div className={`relative z-[1] grid w-full min-w-0 grid-cols-1 md:grid-cols-3 md:items-start ${gridGapClass}`}>
+                {treeConnector}
+                <div className={`relative z-[1] grid w-full min-w-0 ${dualInline ? "grid-cols-3" : "grid-cols-1 md:grid-cols-3"} md:items-start ${gridGapClass}`}>
                 {CORE_SUBSKILLS_CATEGORIES.map(({ categoryTitle, items }, index) => {
                   const columnClass = [
                     "flex min-w-0 min-h-0 flex-col",
@@ -6094,22 +5973,22 @@ const SkillsSubskillsPanel = ({
                   const cardInner = (
                     <>
                       <p
-                        className="skills-subcategory-column-title mb-3.5 w-full min-w-0 pb-2.5 border-b border-white/[0.06] text-center text-[12px] sm:text-[13px] font-heading font-semibold uppercase leading-snug tracking-eyebrow-tight !text-zinc-100 max-md:text-balance max-md:whitespace-normal md:whitespace-nowrap"
+                        className={`${dualInline ? "mb-2 pb-1.5 text-[9.5px] leading-tight tracking-[0.06em] sm:mb-2.5 sm:pb-2 sm:text-[11px] md:text-xs" : "mb-3.5 pb-2.5 text-[12px] sm:text-[13px] tracking-eyebrow-tight"} skills-subcategory-column-title w-full min-w-0 border-b border-white/[0.06] text-center font-heading font-semibold uppercase !text-zinc-100 text-balance whitespace-normal`}
                         title={categoryTitle}
                       >
                         {categoryTitle}
                       </p>
-                      <ul className="space-y-2 sm:space-y-3">
+                      <ul className={dualInline ? "space-y-1 sm:space-y-1.5" : "space-y-2 sm:space-y-3"}>
                         {items.map(({ label, Icon }) => (
                           <li
                             key={label}
-                            className="group flex min-w-0 items-center gap-3 transition-transform duration-200 ease-out hover:translate-x-[2px]"
+                            className={`${dualInline ? "gap-1.5 text-[10px] leading-tight sm:gap-2 sm:text-[11px] md:text-xs" : "gap-3"} group flex min-w-0 items-center transition-transform duration-200 ease-out hover:translate-x-[2px]`}
                           >
-                            <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center">
-                              <Icon size={18} className="text-portfolio-green" />
+                            <span className={`${dualInline ? "h-4 w-4 sm:h-[18px] sm:w-[18px]" : "h-5 w-5"} inline-flex shrink-0 items-center justify-center`}>
+                              <Icon size={dualInline ? 16 : 18} className="text-portfolio-green" />
                             </span>
                             <span
-                              className="min-w-0 truncate text-zinc-200 transition-colors duration-200 ease-out"
+                              className="min-w-0 text-zinc-200 transition-colors duration-200 ease-out"
                               title={label}
                             >
                               {label}
@@ -6119,38 +5998,16 @@ const SkillsSubskillsPanel = ({
                       </ul>
                     </>
                   );
-                  if (isOrchestrated) {
-                    return (
-                      <motion.div
-                        key={categoryTitle}
-                        className={columnClass}
-                        initial={{ opacity: 0, y: 36 }}
-                        animate={
-                          !revealActive
-                            ? { opacity: 0, y: 36 }
-                            : { opacity: 1, y: 0 }
-                        }
-                        transition={{
-                          duration: revealReduceMotion ? 0.01 : SKILLS_REVEAL_CARD_SLIDE_MS / 1000,
-                          delay:
-                            revealReduceMotion
-                              ? 0
-                              : (SKILLS_REVEAL_ROW_ZONES_LEAD_MS +
-                                  gridRevealDelayMs +
-                                  index * SKILLS_REVEAL_CARD_STAGGER_MS) /
-                                1000,
-                          ease: SKILLS_CONTENT_EASE,
-                        }}
-                        style={{ willChange: "transform, opacity" }}
-                      >
-                        {cardInner}
-                      </motion.div>
-                    );
-                  }
                   return (
-                    <div key={categoryTitle} className={columnClass}>
+                    <motion.div
+                      key={categoryTitle}
+                      className={columnClass}
+                      initial={dualInline ? { opacity: 0, y: 8 } : undefined}
+                      animate={dualInline ? { opacity: 1, y: 0 } : undefined}
+                      transition={dualInline ? { duration: 0.28, ease: SKILLS_EASE, delay: 0.18 + index * 0.045 } : undefined}
+                    >
                       {cardInner}
-                    </div>
+                    </motion.div>
                   );
                 })}
                 </div>
@@ -6161,7 +6018,8 @@ const SkillsSubskillsPanel = ({
               <div className={`relative w-full min-w-0 ${rowZonePad}`}>
                 {rowZoneBackdrop}
                 {sectionHeader}
-                <div className={`relative z-[1] grid w-full min-w-0 grid-cols-1 md:grid-cols-3 md:items-start ${gridGapClass} [&>*]:min-w-0`}>
+                {treeConnector}
+                <div className={`relative z-[1] grid w-full min-w-0 ${dualInline ? "grid-cols-3" : "grid-cols-1 md:grid-cols-3"} md:items-start ${gridGapClass} [&>*]:min-w-0`}>
                 {[
                   {
                     title: "Design & Productivity",
@@ -6197,22 +6055,22 @@ const SkillsSubskillsPanel = ({
                   const cardInner = (
                     <>
                       <p
-                        className="skills-subcategory-column-title mb-3.5 w-full min-w-0 pb-2.5 border-b border-white/[0.06] text-center text-[12px] sm:text-[13px] font-heading font-semibold uppercase leading-snug tracking-eyebrow-tight !text-zinc-100 max-md:text-balance max-md:whitespace-normal md:whitespace-nowrap"
+                        className={`${dualInline ? "mb-2 pb-1.5 text-[9.5px] leading-tight tracking-[0.06em] sm:mb-2.5 sm:pb-2 sm:text-[11px] md:text-xs" : "mb-3.5 pb-2.5 text-[12px] sm:text-[13px] tracking-eyebrow-tight"} skills-subcategory-column-title w-full min-w-0 border-b border-white/[0.06] text-center font-heading font-semibold uppercase !text-zinc-100 text-balance whitespace-normal`}
                         title={title}
                       >
                         {label}
                       </p>
-                      <ul className="space-y-2 sm:space-y-3">
+                      <ul className={dualInline ? "space-y-1 sm:space-y-1.5" : "space-y-2 sm:space-y-3"}>
                         {items.map((tool) => (
                           <li
                             key={tool}
-                            className="group flex min-w-0 items-center gap-3 transition-transform duration-200 ease-out hover:translate-x-[2px]"
+                            className={`${dualInline ? "gap-1.5 text-[10px] leading-tight sm:gap-2 sm:text-[11px] md:text-xs" : "gap-3"} group flex min-w-0 items-center transition-transform duration-200 ease-out hover:translate-x-[2px]`}
                           >
-                            <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center">
-                              <ToolIcon name={tool} size={18} />
+                            <span className={`${dualInline ? "h-4 w-4 sm:h-[18px] sm:w-[18px]" : "h-5 w-5"} inline-flex shrink-0 items-center justify-center`}>
+                              <ToolIcon name={tool} size={dualInline ? 16 : 18} />
                             </span>
                             <span
-                              className="min-w-0 truncate text-zinc-200 transition-colors duration-200 ease-out"
+                              className="min-w-0 text-zinc-200 transition-colors duration-200 ease-out"
                               title={tool}
                             >
                               {tool}
@@ -6222,38 +6080,16 @@ const SkillsSubskillsPanel = ({
                       </ul>
                     </>
                   );
-                  if (isOrchestrated) {
-                    return (
-                      <motion.div
-                        key={title}
-                        className={columnClass}
-                        initial={{ opacity: 0, y: 36 }}
-                        animate={
-                          !revealActive
-                            ? { opacity: 0, y: 36 }
-                            : { opacity: 1, y: 0 }
-                        }
-                        transition={{
-                          duration: revealReduceMotion ? 0.01 : SKILLS_REVEAL_CARD_SLIDE_MS / 1000,
-                          delay:
-                            revealReduceMotion
-                              ? 0
-                              : (SKILLS_REVEAL_ROW_ZONES_LEAD_MS +
-                                  gridRevealDelayMs +
-                                  index * SKILLS_REVEAL_CARD_STAGGER_MS) /
-                                1000,
-                          ease: SKILLS_CONTENT_EASE,
-                        }}
-                        style={{ willChange: "transform, opacity" }}
-                      >
-                        {cardInner}
-                      </motion.div>
-                    );
-                  }
                   return (
-                    <div key={title} className={columnClass}>
+                    <motion.div
+                      key={title}
+                      className={columnClass}
+                      initial={dualInline ? { opacity: 0, y: 8 } : undefined}
+                      animate={dualInline ? { opacity: 1, y: 0 } : undefined}
+                      transition={dualInline ? { duration: 0.28, ease: SKILLS_EASE, delay: 0.24 + index * 0.045 } : undefined}
+                    >
                       {cardInner}
-                    </div>
+                    </motion.div>
                   );
                 })}
                 </div>
@@ -6270,63 +6106,88 @@ const SkillsSubskillsPanel = ({
   );
 };
 
-const SkillArsenal = ({
-  panelSettled = true,
-  reduceMotion = false,
+const SKILLS_TOOLS_CATEGORIES = [
+  {
+    title: "Design & Productivity",
+    items: ["Microsoft Office 365", "Adobe Creative Suite", "Canva", "Procreate"],
+  },
+  {
+    title: "Video & Writing",
+    items: ["DaVinci Resolve", "CapCut", "Final Draft", "Arc Studio"],
+  },
+  {
+    title: "Social Platforms",
+    items: ["Hootsuite", "TikTok Creator Tools", "Instagram Reels", "YouTube Shorts"],
+  },
+];
+
+/** Same rail header pattern as #experience .nav-header (labels + scaleX divider). */
+const SkillsBranchRailHeader = ({
+  sectionSubtitle,
+  sectionTitle,
+  baseDelay = 0,
 }: {
-  /** False until section panel wipe + settle finishes (see `navigateTo` + `CONTENT_SETTLE_DELAY`). */
-  panelSettled?: boolean;
-  reduceMotion?: boolean | null;
+  sectionSubtitle: string;
+  sectionTitle: string;
+  baseDelay?: number;
 }) => {
-  const [activeSubskills, setActiveSubskills] = useState<"core" | "tools" | null>(null);
-  const [skillsIconFlourish, setSkillsIconFlourish] = useState(false);
-  const skillsFlourishCommittedRef = useRef(false);
-  const skillsFlourishTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const revealActive = panelSettled;
-  const revealRm = !!reduceMotion;
+  const rm = useReducedMotion();
+  const ease: [number, number, number, number] = [0.22, 1, 0.36, 1];
+  const labelDuration = 0.45;
+  const dividerDuration = 0.42;
+  const labelSlideX = 24;
 
-  const scheduleSkillsIconFlourish = useCallback((sequenceEndS: number) => {
-    if (skillsFlourishCommittedRef.current) return;
-    if (skillsFlourishTimerRef.current != null) {
-      clearTimeout(skillsFlourishTimerRef.current);
-      skillsFlourishTimerRef.current = null;
-    }
-    const delayMs = Math.max(0, (sequenceEndS - SKILLS_FLOURISH_LEAD_S) * 1000);
-    skillsFlourishTimerRef.current = setTimeout(() => {
-      skillsFlourishTimerRef.current = null;
-      if (skillsFlourishCommittedRef.current) return;
-      skillsFlourishCommittedRef.current = true;
-      setSkillsIconFlourish(true);
-    }, delayMs);
-  }, []);
-
-  useEffect(() => {
-    if (skillsFlourishTimerRef.current != null) {
-      clearTimeout(skillsFlourishTimerRef.current);
-      skillsFlourishTimerRef.current = null;
-    }
-    skillsFlourishCommittedRef.current = false;
-    setSkillsIconFlourish(false);
-  }, [activeSubskills]);
-
-  useEffect(
-    () => () => {
-      if (skillsFlourishTimerRef.current != null) {
-        clearTimeout(skillsFlourishTimerRef.current);
-      }
+  const headerEntrance: Variants = {
+    hidden: {},
+    visible: { transition: { delayChildren: baseDelay } },
+  };
+  const labelsEntrance: Variants = {
+    hidden: { opacity: rm ? 1 : 0, x: rm ? 0 : labelSlideX },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: { duration: rm ? 0 : labelDuration, ease },
     },
-    [],
-  );
+  };
+  const dividerEntrance: Variants = {
+    hidden: { scaleX: rm ? 1 : 0 },
+    visible: {
+      scaleX: 1,
+      transition: {
+        delay: rm ? 0 : labelDuration,
+        duration: rm ? 0 : dividerDuration,
+        ease,
+      },
+    },
+  };
 
-  useEffect(() => {
-    if (!revealActive || revealRm || SKILLS_SHOW_INTRO_PAIR_CARDS) return;
-    scheduleSkillsIconFlourish(SKILLS_INLINE_MOTION_END_S);
-  }, [revealActive, revealRm, scheduleSkillsIconFlourish]);
+  return (
+    <motion.div
+      className="skills-branch-header skills-branch-header--center nav-header mx-auto w-full min-w-0"
+      variants={headerEntrance}
+      initial="hidden"
+      animate="visible"
+    >
+      <motion.div className="career-nav-section-labels items-center text-center" variants={labelsEntrance}>
+        <p className="career-nav-section-subtitle whitespace-nowrap">{sectionSubtitle}</p>
+        <p className="career-nav-section-title whitespace-nowrap">{sectionTitle}</p>
+      </motion.div>
+      <motion.div
+        className="career-nav-section-divider"
+        variants={dividerEntrance}
+        style={{ transformOrigin: "center" }}
+        aria-hidden
+      />
+    </motion.div>
+  );
+};
+
+const SkillArsenal = () => {
+  const treeEase: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
   return (
     <section
       id="skills"
-      data-skills-icon-flourish={skillsIconFlourish ? "true" : undefined}
       className="no-scrollbar relative flex h-full min-h-0 w-full flex-col overflow-x-hidden overflow-y-visible bg-black text-white scroll-mt-6"
     >
       <SectionGridOverlay />
@@ -6338,307 +6199,105 @@ const SkillArsenal = ({
             : undefined
         }
       >
-        {!SKILLS_SHOW_INTRO_PAIR_CARDS && SKILLS_SHOW_AMBIENT_MARQUEE_BG ? (
-          <>
-            <div
-              className="skills-ambient-bleed skills-ambient-bleed--above pointer-events-none absolute inset-x-0 top-0 bottom-1/2 z-0 flex justify-center px-1 sm:px-2 md:px-3"
-              aria-hidden
-            >
-              <div
-                className="skills-ambient-bleed-slot relative h-full w-full min-h-0 max-w-[min(100%,1180px)] overflow-hidden [border-radius:0_2rem_0_2rem] max-sm:[border-radius:0_1.35rem_0_1.35rem]"
-                data-skills-ambient-row="core"
-              >
-                <SkillsAmbientWall band="core" />
-              </div>
-            </div>
-            <div
-              className="skills-ambient-bleed skills-ambient-bleed--below pointer-events-none absolute inset-x-0 top-1/2 bottom-0 z-0 flex justify-center px-1 sm:px-2 md:px-3"
-              aria-hidden
-            >
-              <div
-                className="skills-ambient-bleed-slot relative h-full w-full min-h-0 max-w-[min(100%,1180px)] overflow-hidden [border-radius:0_2rem_0_2rem] max-sm:[border-radius:0_1.35rem_0_1.35rem]"
-                data-skills-ambient-row="tools"
-              >
-                <SkillsAmbientWall band="tools" />
-              </div>
-            </div>
-          </>
-        ) : null}
-        <div className="relative z-[2] flex w-full min-h-0 flex-1 flex-col items-center justify-start pt-0 sm:pt-1 md:pt-2">
-          <div className="flex w-full min-w-0 max-w-[min(100%,88.75rem)] min-h-0 max-h-full flex-col items-center">
-            <div className="skills-inline-chrome relative flex w-full flex-col items-center">
-            <div className="relative z-[4] flex w-full shrink-0 justify-center px-1 sm:px-2 md:px-3">
-              <motion.div
-                className="w-full max-w-[min(100%,1180px)]"
-                initial={{ opacity: 0, y: -28 }}
-                animate={
-                  revealActive
-                    ? { opacity: 1, y: 0 }
-                    : { opacity: 0, y: -28 }
-                }
-                transition={{
-                  duration: revealRm ? 0.01 : SKILLS_REVEAL_TITLE_FADE_MS / 1000,
-                  delay: revealRm ? 0 : SKILLS_REVEAL_ROW_ZONES_LEAD_MS / 1000,
-                  ease: SKILLS_CONTENT_EASE,
-                }}
-                style={{ willChange: "transform, opacity" }}
-              >
-                <SectionHeader
-                  title="SKILLS"
-                  align="center"
-                  showBar={false}
-                  compact
-                  titleFade
-                  titleClassName="font-semibold"
-                  className="!mb-4 sm:!mb-5 md:!mb-6"
-                />
-              </motion.div>
-            </div>
-            {/* Cards area: intro pair (gated) + sub-skills overlay or inline dual panels */}
-            <div className="skills-content-shell relative z-[2] w-full min-h-0 flex flex-col items-center justify-center overflow-visible">
-          {SKILLS_SHOW_INTRO_PAIR_CARDS ? (
-            <div className="flex w-full flex-wrap items-center justify-center gap-8">
-              <motion.div
-                className="flex w-full flex-wrap items-center justify-center gap-8"
-                initial={{ opacity: 1 }}
-                animate={{
-                  opacity: activeSubskills ? 0 : 1,
-                }}
-                transition={{ duration: MORPH_DUR, ease: MORPH_EASE }}
-                style={{ pointerEvents: activeSubskills ? "none" : "auto" }}
-              >
-                <motion.div
-                  className="flex w-full flex-wrap items-center justify-center gap-8"
-                  variants={skillsChromeStaggerParent}
-                  initial="hidden"
-                  whileInView="show"
-                  viewport={{ once: false, amount: 0.2 }}
-                  onAnimationStart={(def) => {
-                    if (def !== "show") return;
-                    scheduleSkillsIconFlourish(SKILLS_INTRO_MOTION_END_S);
-                  }}
-                >
-                  <motion.div variants={skillsChromeStaggerChild}>
-                  <UiverseCard
-                    className="skills-main-card"
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => setActiveSubskills("core")}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        setActiveSubskills("core");
-                      }
-                    }}
-                  >
-                    <CardBlackFace>
-                      {showRuleOfThirds && <RuleOfThirdsOverlay />}
-                      {SKILLS_SHOW_IDEA_GEAR_DECOR ? (
-                        <span
-                          style={{
-                            transform: `translate(${SKILLS_CARD_LAYOUT.core.icon.offsetX}px, ${SKILLS_CARD_LAYOUT.core.icon.offsetY}px)`,
-                            display: "inline-block",
-                            position: "relative",
-                            zIndex: 1,
-                          }}
-                        >
-                          <AiIdeaSvg
-                            viewBox="0 0 24 24"
-                            className="paperplane"
-                            style={{
-                              width: SKILLS_CARD_LAYOUT.core.icon.size,
-                              height: SKILLS_CARD_LAYOUT.core.icon.size,
-                            }}
-                          >
-                            <path strokeLinecap="round" d={AI_IDEA_PATH_1} />
-                            <path data-ai-star d={AI_IDEA_STAR} />
-                            <path d={AI_IDEA_LINE} />
-                          </AiIdeaSvg>
-                        </span>
-                      ) : null}
-                      <CardTitleSlot
-                        style={{
-                          bottom: SKILLS_CARD_LAYOUT.core.title.offsetY,
-                          position: "absolute",
-                          zIndex: 1,
-                        }}
-                      >
-                        <span data-card-title-wrap>
-                          <motion.span
-                            className="block font-display font-semibold uppercase tracking-nav-caps leading-snug text-white h-[52px]"
-                            style={{
-                              fontSize: `${SKILLS_CARD_LAYOUT.core.title.fontSize}px`,
-                              textShadow: "0 0 10px rgba(0,0,0,0.9)",
-                            }}
-                            initial={{ y: 12, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
-                          >
-                            CORE COMPETENCIES
-                          </motion.span>
-                        </span>
-                      </CardTitleSlot>
-                    </CardBlackFace>
-                  </UiverseCard>
-                  </motion.div>
-                  <motion.div variants={skillsChromeStaggerChild}>
-                  <UiverseCard
-                    className="skills-main-card"
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => setActiveSubskills("tools")}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        setActiveSubskills("tools");
-                      }
-                    }}
-                  >
-                    <CardBlackFace>
-                      {showRuleOfThirds && <RuleOfThirdsOverlay />}
-                      {SKILLS_SHOW_IDEA_GEAR_DECOR ? (
-                        <span
-                          style={{
-                            transform: `translate(${SKILLS_CARD_LAYOUT.tools.icon.offsetX}px, ${SKILLS_CARD_LAYOUT.tools.icon.offsetY}px)`,
-                            display: "inline-block",
-                            position: "relative",
-                            zIndex: 1,
-                          }}
-                        >
-                          <GearSvg
-                            viewBox="0 0 256 256"
-                            className="paperplane"
-                            style={{
-                              width: SKILLS_CARD_LAYOUT.tools.icon.size,
-                              height: SKILLS_CARD_LAYOUT.tools.icon.size,
-                            }}
-                          >
-                            <rect width="256" height="256" fill="none" stroke="none" />
-                            {/* Gear outline + inner ring, stroke-only (no fill animation) */}
-                            <path
-                              d="M130.05,206.11c-1.34,0-2.69,0-4,0L94,224a104.61,104.61,0,0,1-34.11-19.2l-.12-36c-.71-1.12-1.38-2.25-2-3.41L25.9,147.24a99.15,99.15,0,0,1,0-38.46l31.84-18.1c.65-1.15,1.32-2.29,2-3.41l.16-36A104.58,104.58,0,0,1,94,32l32,17.89c1.34,0,2.69,0,4,0L162,32a104.61,104.61,0,0,1,34.11,19.2l.12,36c.71,1.12,1.38,2.25,2,3.41l31.85,18.14a99.15,99.15,0,0,1,0,38.46l-31.84,18.1c-.65,1.15-1.32,2.29-2,3.41l-.16,36A104.58,104.58,0,0,1,162,224Z"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="11"
-                            />
-                            <circle
-                              cx="128"
-                              cy="128"
-                              r="40"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="11"
-                            />
-                          </GearSvg>
-                        </span>
-                      ) : null}
-                      <CardTitleSlot
-                        style={{
-                          bottom: SKILLS_CARD_LAYOUT.tools.title.offsetY,
-                          position: "absolute",
-                          zIndex: 1,
-                        }}
-                      >
-                        <span data-card-title-wrap>
-                          <motion.span
-                            className="block font-display font-semibold uppercase tracking-nav-caps leading-snug text-white h-[52px]"
-                            style={{
-                              fontSize: `${SKILLS_CARD_LAYOUT.tools.title.fontSize}px`,
-                              textShadow: "0 0 10px rgba(0,0,0,0.9)",
-                            }}
-                            initial={{ y: 12, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1], delay: 0.25 }}
-                          >
-                            TOOLKIT
-                          </motion.span>
-                        </span>
-                      </CardTitleSlot>
-                    </CardBlackFace>
-                  </UiverseCard>
-                  </motion.div>
-                </motion.div>
-              </motion.div>
-            </div>
-          ) : null}
+        {/* ── Two half-viewport bands: CORE (top) / TOOLKIT (bottom) ── */}
+        <div className="relative z-[2] flex w-full min-h-0 flex-1 flex-col">
 
-          {!SKILLS_SHOW_INTRO_PAIR_CARDS ? (
-            <div className="skills-carousel-wrap flex w-full min-w-0 max-w-full flex-col items-stretch justify-center overflow-visible py-1 sm:py-2">
-              <div className="flex w-full min-w-0 max-w-full justify-center px-1 sm:px-2 md:px-3">
-                <div
-                  className="skills-source-stack relative isolate mx-auto flex w-full min-w-0 max-w-[min(100%,1180px)] flex-col gap-4 sm:gap-5 md:gap-6"
-                  role="group"
-                  aria-label="Skills detail"
-                >
-                  <div className="relative z-[3] flex min-h-0 w-full -translate-y-1 flex-col gap-4 sm:-translate-y-1.5 sm:gap-5 md:-translate-y-2 md:gap-6">
-                    <div className="min-w-0">
-                      <SkillsSubskillsPanel
-                        slide="core"
-                        variant="inline"
-                        dualInline
-                        orchestratedReveal
-                        revealActive={revealActive}
-                        revealReduceMotion={revealRm}
-                        headerRevealDelayMs={SKILLS_REVEAL_HEADER_DELAY_MS}
-                        gridRevealDelayMs={SKILLS_REVEAL_CORE_GRID_DELAY_MS}
-                      />
-                    </div>
-                    <div className="min-w-0">
-                      <SkillsSubskillsPanel
-                        slide="tools"
-                        variant="inline"
-                        dualInline
-                        orchestratedReveal
-                        revealActive={revealActive}
-                        revealReduceMotion={revealRm}
-                        headerRevealDelayMs={SKILLS_REVEAL_HEADER_DELAY_MS}
-                        gridRevealDelayMs={SKILLS_REVEAL_TOOLKIT_GRID_DELAY_MS}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <AnimatePresence>
-              {SKILLS_SHOW_INTRO_PAIR_CARDS && activeSubskills ? (
-                <motion.div
-                  key="skills-subcard"
-                  initial={{ opacity: 0, scale: 0.95, y: 32 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 1, y: 16 }}
-                  transition={{ duration: MORPH_EXPAND_DUR, ease: MORPH_EXPAND_EASE }}
-                  onAnimationStart={() => {
-                    scheduleSkillsIconFlourish(SKILLS_OVERLAY_MOTION_END_S);
-                  }}
-                  className="absolute inset-0 flex items-center justify-center pointer-events-auto px-4 sm:px-6"
-                  onClick={() => setActiveSubskills(null)}
-                >
+          {/* ── TOP HALF: CORE COMPETENCIES ── */}
+          <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-4 sm:px-6 py-4 sm:py-5">
+            <div className="flex w-full min-w-0 max-w-[min(100%,1140px)] flex-col items-center gap-0">
+
+              <SkillsBranchRailHeader
+                sectionSubtitle={SKILLS_DATA.core.title}
+                sectionTitle={SKILLS_DATA.core.subtitle}
+                baseDelay={0.06}
+              />
+
+              {/* 3 child cards */}
+              <motion.div className="skills-row-cards grid w-full max-w-[min(100%,880px)] grid-cols-3">
+                {CORE_SUBSKILLS_CATEGORIES.map(({ categoryTitle, items }, i) => (
                   <div
-                    role="group"
-                    aria-label="Skills detail"
-                    className="skills-source-stack flex w-full max-w-[min(100%,1180px)] flex-col"
-                    onClick={(e) => e.stopPropagation()}
+                    key={categoryTitle}
+                    className="skills-row-card-slot"
                   >
-                    <SkillsSubskillsPanel
-                      slide={activeSubskills}
-                      variant="overlay"
-                      onClose={() => setActiveSubskills(null)}
-                    />
+                  <motion.div
+                    className="skills-card-surface h-full rounded-[0.9rem] border border-white/[0.09] px-2.5 py-4 sm:px-3 sm:py-5"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.26, ease: treeEase, delay: 0.2 + i * 0.055 }}
+                  >
+                    <p
+                      className="skills-subcategory-column-title mb-2.5 w-full border-b border-white/[0.06] pb-2.5 text-center text-[12px] sm:text-[14px] font-heading font-semibold uppercase tracking-[0.06em] !text-zinc-100 leading-tight"
+                      title={categoryTitle}
+                    >
+                      {categoryTitle}
+                    </p>
+                    <ul className="space-y-2 sm:space-y-2.5">
+                      {items.map(({ label, Icon }) => (
+                        <li key={label} className="flex min-w-0 items-start gap-2 text-[12px] sm:text-[14px] leading-tight text-zinc-200">
+                          <span className="mt-[1px] inline-flex h-4 w-4 shrink-0 items-center justify-center">
+                            <Icon size={14} className="text-portfolio-green" />
+                          </span>
+                          <span className="min-w-0">{label}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </motion.div>
                   </div>
-                </motion.div>
-              ) : null}
-            </AnimatePresence>
-          )}
+                ))}
+              </motion.div>
+
             </div>
           </div>
+
+          {/* ── BOTTOM HALF: TOOLKIT ── */}
+          <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-4 sm:px-6 py-4 sm:py-5">
+            <div className="flex w-full min-w-0 max-w-[min(100%,1140px)] flex-col items-center gap-0">
+
+              <SkillsBranchRailHeader
+                sectionSubtitle={SKILLS_DATA.tools.title}
+                sectionTitle={SKILLS_DATA.tools.subtitle}
+                baseDelay={0.1}
+              />
+
+              {/* 3 child cards */}
+              <div className="skills-row-cards grid w-full max-w-[min(100%,880px)] grid-cols-3">
+                {SKILLS_TOOLS_CATEGORIES.map(({ title, items }, i) => (
+                  <div
+                    key={title}
+                    className="skills-row-card-slot"
+                  >
+                  <motion.div
+                    className="skills-card-surface h-full rounded-[0.9rem] border border-white/[0.09] px-2.5 py-4 sm:px-3 sm:py-5"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.26, ease: treeEase, delay: 0.24 + i * 0.055 }}
+                  >
+                    <p
+                      className="skills-subcategory-column-title mb-2.5 w-full border-b border-white/[0.06] pb-2.5 text-center text-[12px] sm:text-[14px] font-heading font-semibold uppercase tracking-[0.06em] !text-zinc-100 leading-tight"
+                      title={title}
+                    >
+                      {title}
+                    </p>
+                    <ul className="space-y-2 sm:space-y-2.5">
+                      {items.map((tool) => (
+                        <li key={tool} className="flex min-w-0 items-start gap-2 text-[12px] sm:text-[14px] leading-tight text-zinc-200">
+                          <span className="mt-[1px] inline-flex h-4 w-4 shrink-0 items-center justify-center">
+                            <ToolIcon name={tool} size={14} />
+                          </span>
+                          <span className="min-w-0">{tool}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </motion.div>
+                  </div>
+                ))}
+              </div>
+
+            </div>
+          </div>
+
         </div>
       </div>
-    </div>
     </section>
   );
 };
@@ -7323,7 +6982,7 @@ export default function Home() {
                 )}
                 {currentSection === "social" && <SocialLink />}
                 {currentSection === "skills" && (
-                  <SkillArsenal panelSettled={panelSettled} reduceMotion={reduceMotion} />
+                  <SkillArsenal />
                 )}
               </div>
             </motion.div>
