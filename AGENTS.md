@@ -94,6 +94,10 @@ Prefer **small, focused components** in `src/components/` when extracting from `
 
 - **`PdfJsDocumentView`** and related flows use **`no-scrollbar`** on internal scroll areas where appropriate.
 
+### PROFILE viewport gutters (side margins)
+
+Desktop left/right gaps on `#profile` come from the **centered two-column row** (text + gap + mascot), not container padding alone. Other sections that must match PROFILE (e.g. SKILLS) use shared `PROFILE_*` constants and `PROFILE_VIEWPORT_CONTENT_MAX` in `Home.tsx`. See `.cursor/skills/portfoliov2-profile-viewport-gutters/SKILL.md`.
+
 ### General editing discipline
 
 - Match existing **imports, naming, and Tailwind** style in `Home.tsx`.
@@ -106,4 +110,5 @@ Prefer **small, focused components** in `src/components/` when extracting from `
 
 | Date | Note |
 |------|------|
+| 2026-05 | Added PROFILE viewport gutters note + `portfoliov2-profile-viewport-gutters` skill; SKILLS uses `PROFILE_VIEWPORT_CONTENT_MAX`. |
 | 2026-04 | Added “Rules and guidelines — implementation”; corrected paths from legacy `client/src` to `src`. |

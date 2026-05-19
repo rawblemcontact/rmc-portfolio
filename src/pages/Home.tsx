@@ -541,6 +541,7 @@ const scrollToId = (id: string, behavior: ScrollBehavior = "smooth") => {
 };
 
 const PROFILE_ACCENT_SOFT = "color-mix(in srgb, var(--palette-red) 56%, rgb(170 170 170))";
+const SKILLS_ACCENT_SOFT = "color-mix(in srgb, var(--palette-green) 56%, rgb(170 170 170))";
 const PROJECTS_ACCENT_SOFT = "color-mix(in srgb, var(--palette-yellow-projects) 48%, rgb(186 186 186))";
 
 const NAV_ITEMS: { id: string; label: string; icon: LucideIcon; color: string; sub: string; microLabel: string }[] = [
@@ -1701,8 +1702,8 @@ const PhantomProfile = () => {
   return (
     <section id="profile" className={`relative min-h-screen w-full overflow-x-hidden bg-black text-white scroll-mt-6 ${SLIDE}`}>
       <SectionGridOverlay />
-      <div className="container mx-auto px-4 sm:px-6 relative z-20 pt-[24vh] lg:pt-0 pb-16 lg:pb-12 lg:min-h-screen lg:flex lg:items-center">
-        <div className="flex w-full flex-col lg:flex-row lg:justify-center gap-20 lg:gap-20 xl:gap-36 2xl:gap-[min(14rem,12vw)] items-center">
+      <motion.div className={`${PROFILE_SECTION_CONTAINER} pt-[24vh] lg:pt-0 pb-16 lg:pb-12 lg:min-h-screen lg:flex lg:items-center`}>
+        <motion.div className={PROFILE_LAYOUT_ROW}>
 
           <motion.div
             ref={rawblemRef}
@@ -1711,9 +1712,9 @@ const PhantomProfile = () => {
             viewport={{ once: false, amount: 0.2 }}
             transition={{ duration: 0.52, ease: [0.16, 1, 0.3, 1] }}
             onAnimationComplete={() => rawblemInView && setRawblemFloatReady(true)}
-            className="lg:order-2 w-full lg:w-auto lg:min-w-0 lg:shrink-0 flex justify-center translate-x-2 max-lg:-mt-14 sm:max-lg:-mt-16 max-lg:-translate-y-2 lg:translate-y-0 lg:mt-0"
+            className={PROFILE_MASCOT_COLUMN}
           >
-            <div className="w-full max-w-[160px] sm:max-w-[220px] md:max-w-[300px] xl:max-w-[312px] 2xl:max-w-[348px] aspect-square flex items-center justify-center">
+            <div className={PROFILE_MASCOT_FRAME}>
               <motion.img
                 src="/rawblem3.svg"
                 alt="RAWBLEM"
@@ -1734,7 +1735,7 @@ const PhantomProfile = () => {
             whileInView={{ opacity: 1, y: 0, x: 0 }}
             viewport={{ once: false, amount: 0.2 }}
             transition={{ duration: 0.342, ease: [0.16, 1, 0.3, 1] }}
-            className="min-w-0 lg:order-1 w-full lg:w-auto lg:max-w-[38rem] xl:max-w-[40rem] 2xl:max-w-[44rem] lg:shrink-0 lg:mt-0"
+            className={PROFILE_LEFT_COLUMN}
           >
              <SectionHeader
                key={profileLeftInView ? "profile-in" : "profile-out"}
@@ -1799,8 +1800,8 @@ const PhantomProfile = () => {
               </ul>
             </motion.div>
           </motion.div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </section>
   );
 };
@@ -2097,6 +2098,29 @@ const DETAIL_CARD_H =
   "h-[min(280px,45svh)] sm:h-[min(308px,48svh)] md:h-[min(328px,50svh)] lg:h-[min(352px,52svh)] xl:h-[min(368px,54svh)] 2xl:h-[min(384px,56svh)]";
 /** SHOWCASE carousel + FEATURED WRITING column cap — widened to align left gutter with PROFILE. */
 const SHOWCASE_COLUMN_MAX = "max-w-[min(100%,58rem)]";
+/** Main section title top inset — `#projects` SHOWCASE shell (`pt-16 sm:pt-20 md:pt-22`). */
+const SECTION_MAIN_HEADER_INSET = "pt-16 sm:pt-20 md:pt-22";
+/** Centered main `SectionHeader` chrome (SHOWCASE). */
+const SECTION_MAIN_HEADER_TITLE_CLASS =
+  "mt-1 sm:mt-1.5 !mb-6 sm:!mb-7 md:!mb-8 w-full shrink-0";
+/** SKILLS main title — extra clearance below (no subtitle line like SHOWCASE). */
+const SECTION_SKILLS_MAIN_HEADER_TITLE_CLASS =
+  "mt-1 sm:mt-1.5 !mb-8 sm:!mb-10 md:!mb-11 w-full shrink-0";
+/** `#profile` shell — container + centered row (left column + gap + mascot). */
+const PROFILE_SECTION_CONTAINER = "container mx-auto px-4 sm:px-6 relative z-20";
+const PROFILE_LAYOUT_ROW =
+  "flex w-full flex-col lg:flex-row lg:justify-center gap-20 lg:gap-20 xl:gap-36 2xl:gap-[min(14rem,12vw)] items-center";
+const PROFILE_LEFT_COLUMN =
+  "min-w-0 lg:order-1 w-full lg:w-auto lg:max-w-[38rem] xl:max-w-[40rem] 2xl:max-w-[44rem] lg:shrink-0 lg:mt-0";
+const PROFILE_MASCOT_COLUMN =
+  "lg:order-2 w-full lg:w-auto lg:min-w-0 lg:shrink-0 flex justify-center translate-x-2 max-lg:-mt-14 sm:max-lg:-mt-16 max-lg:-translate-y-2 lg:translate-y-0 lg:mt-0";
+const PROFILE_MASCOT_FRAME =
+  "w-full max-w-[160px] sm:max-w-[220px] md:max-w-[300px] xl:max-w-[312px] 2xl:max-w-[348px] aspect-square flex items-center justify-center";
+/** Total row width (left + gap + mascot) — centers SKILLS with the same L/R viewport gutters as PROFILE. */
+const PROFILE_VIEWPORT_CONTENT_MAX =
+  "w-full min-w-0 mx-auto lg:max-w-[min(100%,calc(38rem+5rem+300px))] xl:max-w-[min(100%,calc(40rem+9rem+312px))] 2xl:max-w-[min(100%,calc(44rem+min(14rem,12vw)+348px))]";
+const SECTION_CONTAINER_GUTTER =
+  "container relative z-10 mx-auto w-full min-w-0 max-w-full px-4 sm:px-6";
 const SHOWCASE_SEQUENCE_DUR_S = 0.0830875;
 const SHOWCASE_SEQUENCE_GAP_S = 0.03176875;
 const SHOWCASE_SEQUENCE_HEADER_DELAY_S = 0.01955;
@@ -3506,7 +3530,7 @@ const PalaceProjects = ({
   return (
     <section
       id="projects"
-      className="relative flex min-h-full w-full min-w-0 max-w-full flex-col justify-start overflow-x-hidden bg-black pt-16 pb-[max(1.25rem,calc(var(--slide-gap)*1.5),env(safe-area-inset-bottom,0px))] text-white sm:pt-20 md:pt-22 scroll-mt-6 [--slide-gap:0.875rem] sm:[--slide-gap:1.25rem] lg:[--slide-gap:1rem] xl:[--slide-gap:1.125rem]"
+      className={`relative flex min-h-full w-full min-w-0 max-w-full flex-col justify-start overflow-x-hidden bg-black ${SECTION_MAIN_HEADER_INSET} pb-[max(1.25rem,calc(var(--slide-gap)*1.5),env(safe-area-inset-bottom,0px))] text-white scroll-mt-6 [--slide-gap:0.875rem] sm:[--slide-gap:1.25rem] lg:[--slide-gap:1rem] xl:[--slide-gap:1.125rem]`}
     >
       <SectionGridOverlay projectDetailActive={!!activeCard} />
       <div className="container relative z-10 mx-auto flex min-h-0 min-w-0 w-full max-w-full flex-1 flex-col px-4 sm:px-6">
@@ -3537,7 +3561,7 @@ const PalaceProjects = ({
                 showBar={false}
                 compact
                 titleClassName="xl:text-5xl 2xl:text-6xl"
-                className="mt-1 sm:mt-1.5 !mb-6 sm:!mb-7 md:!mb-8 w-full shrink-0"
+                className={SECTION_MAIN_HEADER_TITLE_CLASS}
                 titleDelay={0.152}
                 titleDuration={0.342}
                 titleStagger={0.0216}
@@ -6125,17 +6149,20 @@ const SKILLS_TOOLS_CATEGORIES = [
 const SkillsBranchRailHeader = ({
   sectionSubtitle,
   sectionTitle,
+  align = "left",
   baseDelay = 0,
 }: {
   sectionSubtitle: string;
   sectionTitle: string;
+  align?: "left" | "right";
   baseDelay?: number;
 }) => {
   const rm = useReducedMotion();
   const ease: [number, number, number, number] = [0.22, 1, 0.36, 1];
   const labelDuration = 0.45;
-  const dividerDuration = 0.42;
-  const labelSlideX = 24;
+  const labelSlideX = align === "right" ? -24 : 24;
+  const accentLineRef = useRef<HTMLDivElement>(null);
+  const accentLineInView = useInView(accentLineRef, { once: false, amount: 0.5 });
 
   const headerEntrance: Variants = {
     hidden: {},
@@ -6149,35 +6176,48 @@ const SkillsBranchRailHeader = ({
       transition: { duration: rm ? 0 : labelDuration, ease },
     },
   };
-  const dividerEntrance: Variants = {
-    hidden: { scaleX: rm ? 1 : 0 },
-    visible: {
-      scaleX: 1,
-      transition: {
-        delay: rm ? 0 : labelDuration,
-        duration: rm ? 0 : dividerDuration,
-        ease,
-      },
-    },
-  };
+
+  const alignClass =
+    align === "right" ? "skills-branch-header--right" : "skills-branch-header--left";
 
   return (
     <motion.div
-      className="skills-branch-header skills-branch-header--center nav-header mx-auto w-full min-w-0"
+      className={`skills-branch-header skills-branch-header--page ${alignClass} nav-header w-full min-w-0`}
       variants={headerEntrance}
       initial="hidden"
       animate="visible"
     >
-      <motion.div className="career-nav-section-labels items-center text-center" variants={labelsEntrance}>
+      <motion.div
+        className={`career-nav-section-labels ${
+          align === "right" ? "items-end text-right" : "items-start text-left"
+        }`}
+        variants={labelsEntrance}
+      >
         <p className="career-nav-section-subtitle whitespace-nowrap">{sectionSubtitle}</p>
         <p className="career-nav-section-title whitespace-nowrap">{sectionTitle}</p>
       </motion.div>
-      <motion.div
-        className="career-nav-section-divider"
-        variants={dividerEntrance}
-        style={{ transformOrigin: "center" }}
+      <div
+        ref={accentLineRef}
+        className={`skills-branch-accent-line relative min-h-[2px] w-[min(100%,12.5rem)] sm:w-[min(100%,16rem)] md:w-[min(100%,20rem)] ${
+          align === "right" ? "ml-auto" : ""
+        }`}
         aria-hidden
-      />
+      >
+        <motion.span
+          className="absolute bottom-0 left-0 right-0 h-[2px]"
+          style={{
+            backgroundColor: SKILLS_ACCENT_SOFT,
+            transformOrigin: align === "right" ? "right center" : "left center",
+          }}
+          initial={false}
+          animate={{ scaleX: rm || accentLineInView ? 1 : 0 }}
+          transition={{
+            duration: RED_LINE_DURATION_MS / 1000,
+            delay: rm ? 0 : baseDelay + labelDuration + RED_LINE_DELAY_MS / 1000,
+            ease: [0.16, 1, 0.3, 1],
+          }}
+        />
+      </div>
     </motion.div>
   );
 };
@@ -6188,116 +6228,115 @@ const SkillArsenal = () => {
   return (
     <section
       id="skills"
-      className="no-scrollbar relative flex h-full min-h-0 w-full flex-col overflow-x-hidden overflow-y-visible bg-black text-white scroll-mt-6"
+      className={`no-scrollbar relative flex min-h-full w-full min-w-0 flex-col justify-start overflow-x-hidden overflow-y-visible bg-black text-white scroll-mt-6 ${SECTION_MAIN_HEADER_INSET} pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:pb-8 md:pb-10`}
     >
       <SectionGridOverlay />
-      <div
-        className="container relative z-10 mx-auto flex h-full min-h-0 w-full max-w-full min-w-0 flex-1 flex-col overflow-visible px-4 sm:px-6 pt-[calc(5.25rem+2px)] md:pt-[calc(6.25rem+2px)] pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:pb-8 md:pb-9"
+      <motion.div
+        className="container relative z-10 mx-auto flex min-h-0 min-w-0 w-full max-w-full flex-1 flex-col justify-start px-4 sm:px-6"
         style={
           SKILLS_LAYOUT.sectionOffsetRem !== 0
             ? { transform: `translateY(${SKILLS_LAYOUT.sectionOffsetRem}rem)` }
             : undefined
         }
       >
-        {/* ── Two half-viewport bands: CORE (top) / TOOLKIT (bottom) ── */}
-        <div className="relative z-[2] flex w-full min-h-0 flex-1 flex-col">
+        <motion.div
+          className={`${PROFILE_VIEWPORT_CONTENT_MAX} skills-profile-shell relative z-[2] mx-auto flex min-h-0 w-full flex-1 flex-col justify-start`}
+        >
+          <div className="skills-header w-full shrink-0">
+            <SectionHeader
+              title="SKILLS"
+              align="center"
+              showBar={false}
+              compact
+              titleClassName="xl:text-5xl 2xl:text-6xl"
+              className={SECTION_SKILLS_MAIN_HEADER_TITLE_CLASS}
+              titleStatic
+            />
+          </div>
 
-          {/* ── TOP HALF: CORE COMPETENCIES ── */}
-          <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-4 sm:px-6 py-4 sm:py-5">
-            <div className="flex w-full min-w-0 max-w-[min(100%,1140px)] flex-col items-center gap-0">
-
+            <motion.div className="skills-page-layout flex min-h-0 w-full min-w-0 flex-1 flex-col justify-start">
+              <motion.div className="skills-page-grid flex min-h-0 w-full flex-1 flex-col justify-start">
+            <div className="skills-page-band skills-page-band--core w-full min-w-0">
               <SkillsBranchRailHeader
+                align="left"
                 sectionSubtitle={SKILLS_DATA.core.title}
                 sectionTitle={SKILLS_DATA.core.subtitle}
                 baseDelay={0.06}
               />
 
-              {/* 3 child cards */}
-              <motion.div className="skills-row-cards grid w-full max-w-[min(100%,880px)] grid-cols-3">
+              <motion.div className="skills-row-cards skills-row-cards--page grid w-full grid-cols-1 md:grid-cols-3">
                 {CORE_SUBSKILLS_CATEGORIES.map(({ categoryTitle, items }, i) => (
-                  <div
-                    key={categoryTitle}
-                    className="skills-row-card-slot"
-                  >
+                  <motion.div key={categoryTitle} className="skills-row-card-slot">
                   <motion.div
-                    className="skills-card-surface h-full rounded-[0.9rem] border border-white/[0.09] px-2.5 py-4 sm:px-3 sm:py-5"
+                    className="skills-card-surface skills-card-surface--page h-full border border-white/[0.09]"
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.26, ease: treeEase, delay: 0.2 + i * 0.055 }}
                   >
                     <p
-                      className="skills-subcategory-column-title mb-2.5 w-full border-b border-white/[0.06] pb-2.5 text-center text-[12px] sm:text-[14px] font-heading font-semibold uppercase tracking-[0.06em] !text-zinc-100 leading-tight"
+                      className="skills-subcategory-column-title w-full border-b border-white/[0.06] text-center font-heading font-semibold uppercase !text-zinc-100"
                       title={categoryTitle}
                     >
                       {categoryTitle}
                     </p>
-                    <ul className="space-y-2 sm:space-y-2.5">
+                    <ul className="skills-page-card-list">
                       {items.map(({ label, Icon }) => (
-                        <li key={label} className="flex min-w-0 items-start gap-2 text-[12px] sm:text-[14px] leading-tight text-zinc-200">
-                          <span className="mt-[1px] inline-flex h-4 w-4 shrink-0 items-center justify-center">
-                            <Icon size={14} className="text-portfolio-green" />
+                        <li key={label} className="skills-page-card-row flex min-w-0 items-start text-zinc-200">
+                          <span className="skills-page-card-icon inline-flex shrink-0 items-center justify-center">
+                            <Icon size={15} className="text-portfolio-green" />
                           </span>
                           <span className="min-w-0">{label}</span>
                         </li>
                       ))}
                     </ul>
                   </motion.div>
-                  </div>
+                  </motion.div>
                 ))}
               </motion.div>
-
             </div>
-          </div>
 
-          {/* ── BOTTOM HALF: TOOLKIT ── */}
-          <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-4 sm:px-6 py-4 sm:py-5">
-            <div className="flex w-full min-w-0 max-w-[min(100%,1140px)] flex-col items-center gap-0">
-
+            <div className="skills-page-band skills-page-band--tools w-full min-w-0">
               <SkillsBranchRailHeader
+                align="right"
                 sectionSubtitle={SKILLS_DATA.tools.title}
                 sectionTitle={SKILLS_DATA.tools.subtitle}
                 baseDelay={0.1}
               />
 
-              {/* 3 child cards */}
-              <div className="skills-row-cards grid w-full max-w-[min(100%,880px)] grid-cols-3">
+              <motion.div className="skills-row-cards skills-row-cards--page grid w-full grid-cols-1 md:grid-cols-3">
                 {SKILLS_TOOLS_CATEGORIES.map(({ title, items }, i) => (
-                  <div
-                    key={title}
-                    className="skills-row-card-slot"
-                  >
+                  <motion.div key={title} className="skills-row-card-slot">
                   <motion.div
-                    className="skills-card-surface h-full rounded-[0.9rem] border border-white/[0.09] px-2.5 py-4 sm:px-3 sm:py-5"
+                    className="skills-card-surface skills-card-surface--page h-full border border-white/[0.09]"
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.26, ease: treeEase, delay: 0.24 + i * 0.055 }}
                   >
                     <p
-                      className="skills-subcategory-column-title mb-2.5 w-full border-b border-white/[0.06] pb-2.5 text-center text-[12px] sm:text-[14px] font-heading font-semibold uppercase tracking-[0.06em] !text-zinc-100 leading-tight"
+                      className="skills-subcategory-column-title w-full border-b border-white/[0.06] text-center font-heading font-semibold uppercase !text-zinc-100"
                       title={title}
                     >
                       {title}
                     </p>
-                    <ul className="space-y-2 sm:space-y-2.5">
+                    <ul className="skills-page-card-list">
                       {items.map((tool) => (
-                        <li key={tool} className="flex min-w-0 items-start gap-2 text-[12px] sm:text-[14px] leading-tight text-zinc-200">
-                          <span className="mt-[1px] inline-flex h-4 w-4 shrink-0 items-center justify-center">
-                            <ToolIcon name={tool} size={14} />
+                        <li key={tool} className="skills-page-card-row flex min-w-0 items-start text-zinc-200">
+                          <span className="skills-page-card-icon inline-flex shrink-0 items-center justify-center">
+                            <ToolIcon name={tool} size={15} />
                           </span>
                           <span className="min-w-0">{tool}</span>
                         </li>
                       ))}
                     </ul>
                   </motion.div>
-                  </div>
+                  </motion.div>
                 ))}
-              </div>
-
+              </motion.div>
             </div>
-          </div>
-
-        </div>
-      </div>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+      </motion.div>
     </section>
   );
 };

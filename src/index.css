@@ -293,6 +293,7 @@
     filter: none;
   }
 
+  /* PROFILE parity: 8% section-card wash + 2px backdrop frost (`.profile-card-surface`) */
   #skills .skills-card-surface {
     position: relative;
     z-index: 0;
@@ -302,6 +303,8 @@
     background: color-mix(in srgb, var(--portfolio-section-card) 8%, transparent);
     background-image: none;
     filter: none;
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
   }
 
   @media (min-width: 640px) {
@@ -937,12 +940,18 @@
     align-items: center;
     padding-left: 0;
     padding-right: 0;
-    margin-bottom: 0.75rem;
+    margin-bottom: 1rem;
   }
 
   @media (min-width: 640px) {
     #skills .skills-branch-header--center.nav-header {
-      margin-bottom: 0.875rem;
+      margin-bottom: 1.125rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    #skills .skills-branch-header--center.nav-header {
+      margin-bottom: 1.25rem;
     }
   }
 
@@ -2112,10 +2121,256 @@
   @media (prefers-reduced-motion: reduce) {
     .skills-grid-parallax { animation: none; }
   }
-  #skills .skills-header h2 {
-    letter-spacing: 0.08em;
-    margin-bottom: 0.15em;
+  #skills .skills-profile-shell {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
   }
+
+  #skills .skills-page-layout {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding-top: clamp(0.375rem, 1.25vh, 0.875rem);
+  }
+
+  @media (min-width: 768px) {
+    #skills .skills-page-layout {
+      padding-top: clamp(0.5rem, 1.75vh, 1.125rem);
+    }
+  }
+
+  #skills .skills-page-grid {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    gap: clamp(1.25rem, 3vh, 2.25rem);
+  }
+
+  @media (min-width: 768px) {
+    #skills .skills-page-grid {
+      gap: clamp(1.375rem, 3.5vh, 2.5rem);
+    }
+  }
+
+  @media (max-height: 820px) {
+    #skills .skills-page-layout {
+      padding-top: clamp(0.25rem, 0.75vh, 0.5rem);
+    }
+
+    #skills .skills-page-grid {
+      gap: clamp(1rem, 2.5vh, 1.5rem);
+    }
+
+    #skills .skills-branch-header--page.nav-header {
+      margin-bottom: 0.5rem;
+    }
+
+    #skills .skills-card-surface--page {
+      min-height: calc(9.5rem * var(--skills-page-scale, 1.0625));
+    }
+
+    #skills .skills-row-cards--page {
+      gap: calc(0.5rem * 1.328125);
+    }
+  }
+
+  #skills .skills-page-band {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+  }
+
+  #skills .skills-page-band--core {
+    align-items: flex-start;
+  }
+
+  #skills .skills-page-band--tools {
+    align-items: flex-end;
+  }
+
+  /* Page rail headers: left / right (proportions only — same type tokens as branch rail) */
+  #skills .skills-branch-header--page.nav-header {
+    align-items: stretch;
+    width: 100%;
+    max-width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+    margin-bottom: 0.625rem;
+  }
+
+  @media (min-width: 640px) {
+    #skills .skills-branch-header--page.nav-header {
+      margin-bottom: 0.75rem;
+    }
+  }
+
+  #skills .skills-branch-header--left .career-nav-section-labels,
+  #skills .skills-branch-header--right .career-nav-section-labels {
+    width: auto;
+    max-width: 100%;
+    gap: 0.0625rem;
+  }
+
+  /* Two-band page layout: section name → subhead → accent line (below subhead) */
+  #skills .skills-branch-header--page.nav-header .career-nav-section-subtitle {
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: clamp(1.625rem, 2.35vw, 2.125rem);
+    font-weight: 700;
+    line-height: 1.04;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+  }
+
+  #skills .skills-branch-header--page.nav-header .career-nav-section-title {
+    color: rgb(161 161 170);
+    font-family: var(--font-display);
+    font-size: clamp(0.8125rem, 0.95vw, 0.9375rem);
+    font-weight: 600;
+    line-height: 1.08;
+    letter-spacing: 0.01em;
+    text-transform: none;
+    margin-bottom: 0;
+  }
+
+  #skills .skills-branch-header--page .skills-branch-accent-line {
+    margin-top: 0.1875rem;
+  }
+
+  @media (min-width: 768px) {
+    #skills .skills-branch-header--page.nav-header .career-nav-section-subtitle {
+      font-size: clamp(1.75rem, 2.1vw, 2.25rem);
+    }
+
+    #skills .skills-branch-header--page.nav-header .career-nav-section-title {
+      font-size: clamp(0.875rem, 0.85vw, 1rem);
+    }
+  }
+
+  #skills .skills-branch-header--left .career-nav-section-labels {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  #skills .skills-branch-header--right .career-nav-section-labels {
+    align-items: flex-end;
+    text-align: right;
+    margin-left: auto;
+  }
+
+  #skills .skills-branch-header--left .career-nav-section-subtitle,
+  #skills .skills-branch-header--left .career-nav-section-title,
+  #skills .skills-branch-header--right .career-nav-section-subtitle,
+  #skills .skills-branch-header--right .career-nav-section-title {
+    margin-left: 0;
+    margin-right: 0;
+    width: auto;
+    max-width: none;
+    text-align: inherit;
+    white-space: nowrap;
+    text-wrap: nowrap;
+  }
+
+  #skills .skills-branch-header--page .career-nav-section-divider {
+    display: none;
+  }
+
+  #skills .skills-branch-accent-line {
+    flex-shrink: 0;
+    transform: translateZ(0);
+  }
+
+  #skills .skills-row-cards--page {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin-left: 0;
+    margin-right: 0;
+    box-sizing: border-box;
+    gap: calc(0.625rem * 1.328125);
+  }
+
+  @media (min-width: 640px) {
+    #skills .skills-row-cards--page {
+      gap: calc(0.75rem * 1.328125);
+    }
+  }
+
+  @media (min-width: 768px) {
+    #skills .skills-row-cards--page {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  /* Page band cards — base shell/type × 1.0625 (was +25%, then −15%) */
+  #skills .skills-card-surface--page {
+    --skills-page-scale: 1.0625;
+    min-height: clamp(
+      calc(10.25rem * var(--skills-page-scale)),
+      calc(17.5svh * var(--skills-page-scale)),
+      calc(12rem * var(--skills-page-scale))
+    );
+    border-radius: calc(0.9rem * var(--skills-page-scale));
+    padding: calc(1.125rem * var(--skills-page-scale)) calc(0.625rem * var(--skills-page-scale));
+  }
+
+  @media (min-width: 640px) {
+    #skills .skills-card-surface--page {
+      padding: calc(1.375rem * var(--skills-page-scale)) calc(0.75rem * var(--skills-page-scale));
+    }
+  }
+
+  #skills .skills-card-surface--page .skills-subcategory-column-title {
+    margin-bottom: calc(0.5rem * var(--skills-page-scale, 1.0625));
+    padding-bottom: calc(0.5rem * var(--skills-page-scale, 1.0625));
+    font-size: clamp(
+      calc(0.75rem * var(--skills-page-scale, 1.0625)),
+      calc(1.2vw * var(--skills-page-scale, 1.0625)),
+      calc(0.875rem * var(--skills-page-scale, 1.0625))
+    );
+    line-height: 1.2;
+    letter-spacing: 0.055em;
+    text-wrap: balance;
+  }
+
+  #skills .skills-card-surface--page .skills-page-card-list {
+    display: flex;
+    flex-direction: column;
+    gap: calc(0.375rem * var(--skills-page-scale, 1.0625));
+  }
+
+  @media (min-width: 640px) {
+    #skills .skills-card-surface--page .skills-page-card-list {
+      gap: calc(0.4375rem * var(--skills-page-scale, 1.0625));
+    }
+  }
+
+  #skills .skills-card-surface--page .skills-page-card-row {
+    gap: calc(0.4375rem * var(--skills-page-scale, 1.0625));
+    font-size: clamp(
+      calc(0.75rem * var(--skills-page-scale, 1.0625)),
+      calc(1.2vw * var(--skills-page-scale, 1.0625)),
+      calc(0.875rem * var(--skills-page-scale, 1.0625))
+    );
+    line-height: 1.3;
+  }
+
+  #skills .skills-card-surface--page .skills-page-card-icon {
+    margin-top: calc(0.0625rem * var(--skills-page-scale, 1.0625));
+    width: calc(1rem * var(--skills-page-scale, 1.0625));
+    height: calc(1rem * var(--skills-page-scale, 1.0625));
+  }
+
+  #skills .skills-card-surface--page .skills-page-card-icon svg {
+    width: calc(0.875rem * var(--skills-page-scale, 1.0625));
+    height: calc(0.875rem * var(--skills-page-scale, 1.0625));
+  }
+
   /* All six subcolumn headings (core + toolkit); pins zinc-100 vs parent `text-white` wrappers */
   #skills .skills-subcategory-column-title {
     color: rgb(244 244 245);
