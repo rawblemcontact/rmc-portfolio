@@ -2103,9 +2103,9 @@ const SECTION_MAIN_HEADER_INSET = "pt-16 sm:pt-20 md:pt-22";
 /** Centered main `SectionHeader` chrome (SHOWCASE). */
 const SECTION_MAIN_HEADER_TITLE_CLASS =
   "mt-1 sm:mt-1.5 !mb-6 sm:!mb-7 md:!mb-8 w-full shrink-0";
-/** SKILLS main title — extra clearance below (no subtitle line like SHOWCASE). */
+/** SKILLS main title — tight clearance above green accent line. */
 const SECTION_SKILLS_MAIN_HEADER_TITLE_CLASS =
-  "mt-1 sm:mt-1.5 !mb-8 sm:!mb-10 md:!mb-11 w-full shrink-0";
+  "mt-1 sm:mt-1.5 !mb-2 sm:!mb-2.5 md:!mb-3 w-full shrink-0";
 /** `#profile` shell — container + centered row (left column + gap + mascot). */
 const PROFILE_SECTION_CONTAINER = "container mx-auto px-4 sm:px-6 relative z-20";
 const PROFILE_LAYOUT_ROW =
@@ -5111,6 +5111,28 @@ const DIAGONAL_START = { x: 38, y: 20 };
 const DIAGONAL_END   = { x: 62, y: 80 };
 const DIAGONAL_MID   = { x: 50, y: 50 };
 const SKILLS_CARD_EASE = [0.22, 1, 0.36, 1] as const;
+/** Profile metadata pill slide — `PhantomProfile` `x: -24`. */
+const PROFILE_PILL_SLIDE_X = 24;
+/** #experience `.tab-btn` entrance — same as `experienceTabItemDuration` / `experienceTabStagger`. */
+const EXPERIENCE_TAB_ENTRANCE_DUR_S = SUMMARY_DURATION_S / 1.25;
+const EXPERIENCE_TAB_STAGGER_S = (BUTTONS_DELAY_AFTER_SUMMARY_MS / 1000) * 0.5;
+/** #experience `.nav-header` labels + divider (ConfidantExperience rail). */
+const EXPERIENCE_RAIL_LABEL_DUR_S = PROFILE_SECTION_ENTER_S * 1.25;
+const EXPERIENCE_RAIL_LABEL_SLIDE_X = 24;
+const EXPERIENCE_RAIL_LINE_DUR_S = PROFILE_LINE_DURATION_S;
+const EXPERIENCE_TABS_TAIL_DELAY_S = (PROFILE_LINE_DURATION_S + SUMMARY_DELAY_S) * 0.28;
+/** Accent line starts this far through the rail label slide (overlap = sooner line). */
+const SKILLS_RAIL_LINE_LABEL_OVERLAP = 0.5;
+/** Bullets start this far through in-card header (title + line) — before header fully lands. */
+const SKILLS_CARD_BULLETS_HEADER_OVERLAP = 0.84;
+/** Row 2 shells start this far through row 1 — slightly before row 1 finishes. */
+const SKILLS_ROW2_START_OVERLAP = 0.84;
+/** Global multiplier for SKILLS section entrance delays + durations. */
+const SKILLS_ENTRANCE_SPEED = 0.95;
+const skillsEntranceS = (seconds: number) => seconds * SKILLS_ENTRANCE_SPEED;
+/** Green accent scaleX — full line duration, ease-out tail for a softer landing. */
+const SKILLS_GREEN_LINE_DUR_S = skillsEntranceS(PROFILE_LINE_DURATION_S);
+const SKILLS_GREEN_LINE_EASE = [0.22, 1, 0.36, 1] as const;
 const SKILLS_CARD_DUR = 0.22;
 
 const SKILLS_CARD_LAYOUT = {
@@ -6151,18 +6173,23 @@ const SkillsBranchRailHeader = ({
   sectionTitle,
   align = "left",
   baseDelay = 0,
+  greenLineDelay,
+  panelSettled = false,
+  reduceMotion = false,
 }: {
   sectionSubtitle: string;
   sectionTitle: string;
   align?: "left" | "right";
   baseDelay?: number;
+  greenLineDelay: number;
+  panelSettled?: boolean;
+  reduceMotion?: boolean;
 }) => {
-  const rm = useReducedMotion();
-  const ease: [number, number, number, number] = [0.22, 1, 0.36, 1];
-  const labelDuration = 0.45;
-  const labelSlideX = align === "right" ? -24 : 24;
-  const accentLineRef = useRef<HTMLDivElement>(null);
-  const accentLineInView = useInView(accentLineRef, { once: false, amount: 0.5 });
+  const rm = reduceMotion;
+  const labelDuration = skillsEntranceS(SUMMARY_DURATION_S / 1.25);
+  // CORE (left) slides right: starts left of target (negative x)
+  // TOOLKIT (right) slides left: starts right of target (positive x)
+  const labelSlideX = align === "right" ? 28 : -28;
 
   const headerEntrance: Variants = {
     hidden: {},
@@ -6173,7 +6200,7 @@ const SkillsBranchRailHeader = ({
     visible: {
       opacity: 1,
       x: 0,
-      transition: { duration: rm ? 0 : labelDuration, ease },
+      transition: { duration: rm ? 0 : labelDuration, ease: EASE.out, type: "tween" },
     },
   };
 
@@ -6185,7 +6212,7 @@ const SkillsBranchRailHeader = ({
       className={`skills-branch-header skills-branch-header--page ${alignClass} nav-header w-full min-w-0`}
       variants={headerEntrance}
       initial="hidden"
-      animate="visible"
+      animate={panelSettled ? "visible" : "hidden"}
     >
       <motion.div
         className={`career-nav-section-labels ${
@@ -6197,7 +6224,6 @@ const SkillsBranchRailHeader = ({
         <p className="career-nav-section-title whitespace-nowrap">{sectionTitle}</p>
       </motion.div>
       <div
-        ref={accentLineRef}
         className={`skills-branch-accent-line relative min-h-[2px] w-[min(100%,12.5rem)] sm:w-[min(100%,16rem)] md:w-[min(100%,20rem)] ${
           align === "right" ? "ml-auto" : ""
         }`}
@@ -6209,12 +6235,12 @@ const SkillsBranchRailHeader = ({
             backgroundColor: SKILLS_ACCENT_SOFT,
             transformOrigin: align === "right" ? "right center" : "left center",
           }}
-          initial={false}
-          animate={{ scaleX: rm || accentLineInView ? 1 : 0 }}
+          initial={{ scaleX: rm ? 1 : 0 }}
+          animate={{ scaleX: rm || panelSettled ? 1 : 0 }}
           transition={{
-            duration: RED_LINE_DURATION_MS / 1000,
-            delay: rm ? 0 : baseDelay + labelDuration + RED_LINE_DELAY_MS / 1000,
-            ease: [0.16, 1, 0.3, 1],
+            duration: rm ? 0 : SKILLS_GREEN_LINE_DUR_S,
+            delay: rm ? 0 : greenLineDelay,
+            ease: SKILLS_GREEN_LINE_EASE,
           }}
         />
       </div>
@@ -6222,8 +6248,251 @@ const SkillsBranchRailHeader = ({
   );
 };
 
-const SkillArsenal = () => {
-  const treeEase: [number, number, number, number] = [0.22, 1, 0.36, 1];
+/** Centered SKILLS title + green line — same cadence as CORE / TOOLKIT rail headers. */
+const SkillsMainSectionHeader = ({
+  baseDelay = 0,
+  greenLineDelay,
+  panelSettled = false,
+  reduceMotion = false,
+}: {
+  baseDelay?: number;
+  greenLineDelay: number;
+  panelSettled?: boolean;
+  reduceMotion?: boolean;
+}) => {
+  const rm = reduceMotion;
+  const labelDuration = skillsEntranceS(SUMMARY_DURATION_S / 1.25);
+  const titleUpY = 10;
+
+  const headerEntrance: Variants = {
+    hidden: {},
+    visible: { transition: { delayChildren: baseDelay } },
+  };
+  const titleEntrance: Variants = {
+    hidden: { opacity: rm ? 1 : 0, y: rm ? 0 : titleUpY },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: rm ? 0 : labelDuration, ease: EASE.out, type: "tween" },
+    },
+  };
+
+  return (
+    <motion.div
+      className="skills-header flex w-full shrink-0 flex-col items-center"
+      variants={headerEntrance}
+      initial="hidden"
+      animate={panelSettled ? "visible" : "hidden"}
+    >
+      <motion.div className="flex w-full flex-col items-center" variants={titleEntrance}>
+        <SectionHeader
+          title="SKILLS"
+          align="center"
+          showBar={false}
+          compact
+          titleClassName="xl:text-5xl 2xl:text-6xl"
+          className={SECTION_SKILLS_MAIN_HEADER_TITLE_CLASS}
+          titleStatic
+        />
+      </motion.div>
+      <div
+        className="skills-main-accent-line relative mx-auto mb-6 min-h-[2px] w-[min(100%,11rem)] sm:mb-8 sm:w-[min(100%,14rem)] md:mb-10 md:w-[min(100%,17rem)]"
+        aria-hidden
+      >
+        <motion.span
+          className="absolute bottom-0 left-0 right-0 h-[2px] bg-portfolio-green"
+          style={{ transformOrigin: "center center" }}
+          initial={{ scaleX: rm ? 1 : 0 }}
+          animate={{ scaleX: rm || panelSettled ? 1 : 0 }}
+          transition={{
+            duration: rm ? 0 : SKILLS_GREEN_LINE_DUR_S,
+            delay: rm ? 0 : greenLineDelay,
+            ease: SKILLS_GREEN_LINE_EASE,
+          }}
+        />
+      </div>
+    </motion.div>
+  );
+};
+
+/** Card column title + underline + list — after empty shell slide; mirrors experience rail + tab cadence. */
+const SkillsCardInnerContent = ({
+  categoryTitle,
+  align,
+  panelSettled,
+  reduceMotion,
+  contentBaseDelay,
+  bullets,
+}: {
+  categoryTitle: string;
+  align: "left" | "right";
+  panelSettled: boolean;
+  reduceMotion: boolean;
+  contentBaseDelay: number;
+  bullets: { key: string; label: string; icon: React.ReactNode }[];
+}) => {
+  const rm = reduceMotion;
+  const cardHeaderUpY = 10;
+  const cardHeaderDur = skillsEntranceS(EXPERIENCE_RAIL_LABEL_DUR_S);
+  const cardLineDur = skillsEntranceS(EXPERIENCE_RAIL_LINE_DUR_S);
+  const cardBulletDur = skillsEntranceS(EXPERIENCE_TAB_ENTRANCE_DUR_S);
+  const cardBulletStagger = skillsEntranceS(EXPERIENCE_TAB_STAGGER_S);
+
+  const innerRoot: Variants = {
+    hidden: { opacity: rm ? 1 : 0 },
+    visible: {
+      opacity: 1,
+      transition: { delayChildren: rm ? 0 : contentBaseDelay },
+    },
+  };
+  const cardHeaderEntrance: Variants = {
+    hidden: {},
+    visible: { transition: { staggerChildren: 0 } },
+  };
+  const cardTitleEntrance: Variants = {
+    hidden: { opacity: rm ? 1 : 0, y: rm ? 0 : cardHeaderUpY },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: rm ? 0 : cardHeaderDur, ease: EASE.out, type: "tween" },
+    },
+  };
+  const cardHeaderLineEntrance: Variants = {
+    hidden: { scaleX: rm ? 1 : 0, opacity: rm ? 1 : 0 },
+    visible: {
+      scaleX: 1,
+      opacity: 1,
+      transition: {
+        duration: rm ? 0 : cardLineDur,
+        ease: EASE.out,
+      },
+    },
+  };
+  const cardHeaderEnd = Math.max(cardHeaderDur, cardLineDur);
+  const cardBulletsEntrance: Variants = {
+    hidden: {},
+    visible: {
+      transition: {
+        delayChildren: rm ? 0 : cardHeaderEnd * SKILLS_CARD_BULLETS_HEADER_OVERLAP,
+        staggerChildren: rm ? 0 : cardBulletStagger,
+      },
+    },
+  };
+  const cardBulletItemEntrance: Variants = {
+    hidden: { opacity: rm ? 1 : 0 },
+    visible: {
+      opacity: 1,
+      transition: { duration: rm ? 0 : cardBulletDur, ease: EASE.out, type: "tween" },
+    },
+  };
+
+  return (
+    <motion.div
+      className="flex min-h-0 w-full flex-1 flex-col"
+      variants={innerRoot}
+      initial="hidden"
+      animate={panelSettled ? "visible" : "hidden"}
+    >
+      <motion.div className="skills-card-column-header w-full shrink-0" variants={cardHeaderEntrance}>
+        <motion.p
+          variants={cardTitleEntrance}
+          className="skills-subcategory-column-title w-full text-center font-heading font-semibold uppercase !text-zinc-100"
+          title={categoryTitle}
+        >
+          {categoryTitle}
+        </motion.p>
+        <motion.span
+          variants={cardHeaderLineEntrance}
+          className="skills-card-column-header__line block h-px w-full bg-white/[0.06]"
+          style={{ transformOrigin: "center center" }}
+          aria-hidden
+        />
+      </motion.div>
+      <motion.ul className="skills-page-card-list" variants={cardBulletsEntrance}>
+        {bullets.map(({ key, label, icon }) => (
+          <motion.li
+            key={key}
+            variants={cardBulletItemEntrance}
+            className="skills-page-card-row flex min-w-0 items-start text-zinc-200"
+          >
+            <span className="skills-page-card-icon inline-flex shrink-0 items-center justify-center">
+              {icon}
+            </span>
+            <span className="min-w-0">{label}</span>
+          </motion.li>
+        ))}
+      </motion.ul>
+    </motion.div>
+  );
+};
+
+const SkillArsenal = ({
+  panelSettled = false,
+  reduceMotion = false,
+}: {
+  panelSettled?: boolean;
+  reduceMotion?: boolean | null;
+}) => {
+  const rm = !!reduceMotion;
+  const skillsCardSlideDur = skillsEntranceS(EXPERIENCE_TAB_ENTRANCE_DUR_S);
+  const skillsCardStagger = skillsEntranceS(EXPERIENCE_TAB_STAGGER_S);
+  const skillsCardSlideX = PROFILE_PILL_SLIDE_X;
+  const skillsRowCardsEnd = (rowStart: number, count: number) =>
+    rowStart + skillsCardSlideDur + (count - 1) * skillsCardStagger;
+
+  // Shells → main SKILLS title + rail + in-card headers together → bullets after column headers
+  const CARD_ROW_BASE = skillsEntranceS(0.034);
+  const skillsCardCount = CORE_SUBSKILLS_CATEGORIES.length;
+  const toolsCardCount = SKILLS_TOOLS_CATEGORIES.length;
+  const coreCardsRowEnd = skillsRowCardsEnd(CARD_ROW_BASE, skillsCardCount);
+  const coreRowSpan = coreCardsRowEnd - CARD_ROW_BASE;
+  const TOOLS_CARD_ROW_BASE = CARD_ROW_BASE + coreRowSpan * SKILLS_ROW2_START_OVERLAP;
+  const cardsRowEnd = skillsRowCardsEnd(TOOLS_CARD_ROW_BASE, toolsCardCount);
+  const RAIL_HEADERS_DELAY = cardsRowEnd;
+  /** In-card column headers run with CORE / TOOLKIT rail headers; bullets keep their inner tail. */
+  const CARD_INNER_BASE_DELAY = cardsRowEnd;
+  const cardHeaderDur = skillsEntranceS(EXPERIENCE_RAIL_LABEL_DUR_S);
+  const cardLineDur = skillsEntranceS(EXPERIENCE_RAIL_LINE_DUR_S);
+  const cardHeaderEnd = Math.max(cardHeaderDur, cardLineDur);
+  /** Green accent lines (main + CORE / TOOLKIT rails) — same t0 as in-card bullets. */
+  const skillsGreenLineDelay =
+    cardsRowEnd + cardHeaderEnd * SKILLS_CARD_BULLETS_HEADER_OVERLAP;
+
+  const skillsCardRowEntrance = (rowDelay: number, reverse = false): Variants => ({
+    hidden: {},
+    visible: {
+      transition: {
+        delayChildren: rm ? 0 : rowDelay,
+        staggerChildren: rm ? 0 : skillsCardStagger,
+        ...(reverse && !rm ? { staggerDirection: -1 } : {}),
+      },
+    },
+  });
+
+  const skillsCoreCardItemEntrance: Variants = {
+    hidden: { opacity: rm ? 1 : 0, x: rm ? 0 : -skillsCardSlideX },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: {
+        type: "tween",
+        duration: rm ? 0 : skillsCardSlideDur,
+        ease: EASE.out,
+      },
+    },
+  };
+  const skillsToolsCardItemEntrance: Variants = {
+    hidden: { opacity: rm ? 1 : 0, x: rm ? 0 : skillsCardSlideX },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: {
+        type: "tween",
+        duration: rm ? 0 : skillsCardSlideDur,
+        ease: EASE.out,
+      },
+    },
+  };
 
   return (
     <section
@@ -6242,100 +6511,105 @@ const SkillArsenal = () => {
         <motion.div
           className={`${PROFILE_VIEWPORT_CONTENT_MAX} skills-profile-shell relative z-[2] mx-auto flex min-h-0 w-full flex-1 flex-col justify-start`}
         >
-          <div className="skills-header w-full shrink-0">
-            <SectionHeader
-              title="SKILLS"
-              align="center"
-              showBar={false}
-              compact
-              titleClassName="xl:text-5xl 2xl:text-6xl"
-              className={SECTION_SKILLS_MAIN_HEADER_TITLE_CLASS}
-              titleStatic
-            />
-          </div>
+          <SkillsMainSectionHeader
+            baseDelay={RAIL_HEADERS_DELAY}
+            greenLineDelay={skillsGreenLineDelay}
+            panelSettled={panelSettled}
+            reduceMotion={rm}
+          />
 
-            <motion.div className="skills-page-layout flex min-h-0 w-full min-w-0 flex-1 flex-col justify-start">
-              <motion.div className="skills-page-grid flex min-h-0 w-full flex-1 flex-col justify-start">
-            <div className="skills-page-band skills-page-band--core w-full min-w-0">
-              <SkillsBranchRailHeader
-                align="left"
-                sectionSubtitle={SKILLS_DATA.core.title}
-                sectionTitle={SKILLS_DATA.core.subtitle}
-                baseDelay={0.06}
-              />
+          <motion.div className="skills-page-layout flex min-h-0 w-full min-w-0 flex-1 flex-col justify-start">
+            <motion.div className="skills-page-grid flex min-h-0 w-full flex-1 flex-col justify-start">
 
-              <motion.div className="skills-row-cards skills-row-cards--page grid w-full grid-cols-1 md:grid-cols-3">
-                {CORE_SUBSKILLS_CATEGORIES.map(({ categoryTitle, items }, i) => (
-                  <motion.div key={categoryTitle} className="skills-row-card-slot">
-                  <motion.div
-                    className="skills-card-surface skills-card-surface--page h-full border border-white/[0.09]"
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.26, ease: treeEase, delay: 0.2 + i * 0.055 }}
-                  >
-                    <p
-                      className="skills-subcategory-column-title w-full border-b border-white/[0.06] text-center font-heading font-semibold uppercase !text-zinc-100"
-                      title={categoryTitle}
+              {/* Cards first, then CORE rail header */}
+              <div className="skills-page-band skills-page-band--core w-full min-w-0">
+                <SkillsBranchRailHeader
+                  align="left"
+                  sectionSubtitle={SKILLS_DATA.core.title}
+                  sectionTitle={SKILLS_DATA.core.subtitle}
+                  baseDelay={RAIL_HEADERS_DELAY}
+                  greenLineDelay={skillsGreenLineDelay}
+                  panelSettled={panelSettled}
+                  reduceMotion={rm}
+                />
+
+                <motion.div
+                  className="skills-row-cards skills-row-cards--page grid w-full grid-cols-1 md:grid-cols-3"
+                  variants={skillsCardRowEntrance(CARD_ROW_BASE)}
+                  initial="hidden"
+                  animate={panelSettled || rm ? "visible" : "hidden"}
+                >
+                  {CORE_SUBSKILLS_CATEGORIES.map(({ categoryTitle, items }) => (
+                    <motion.div
+                      key={categoryTitle}
+                      className="skills-row-card-slot transform-gpu"
+                      variants={skillsCoreCardItemEntrance}
                     >
-                      {categoryTitle}
-                    </p>
-                    <ul className="skills-page-card-list">
-                      {items.map(({ label, Icon }) => (
-                        <li key={label} className="skills-page-card-row flex min-w-0 items-start text-zinc-200">
-                          <span className="skills-page-card-icon inline-flex shrink-0 items-center justify-center">
-                            <Icon size={15} className="text-portfolio-green" />
-                          </span>
-                          <span className="min-w-0">{label}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </motion.div>
-                  </motion.div>
-                ))}
-              </motion.div>
-            </div>
+                      <div className="skills-card-surface skills-card-surface--page h-full border border-white/[0.09]">
+                        <SkillsCardInnerContent
+                          categoryTitle={categoryTitle}
+                          align="left"
+                          panelSettled={panelSettled}
+                          reduceMotion={rm}
+                          contentBaseDelay={CARD_INNER_BASE_DELAY}
+                          bullets={items.map(({ label, Icon }) => ({
+                            key: label,
+                            label,
+                            icon: <Icon size={15} className="text-portfolio-green" />,
+                          }))}
+                        />
+                      </div>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              </div>
 
-            <div className="skills-page-band skills-page-band--tools w-full min-w-0">
-              <SkillsBranchRailHeader
-                align="right"
-                sectionSubtitle={SKILLS_DATA.tools.title}
-                sectionTitle={SKILLS_DATA.tools.subtitle}
-                baseDelay={0.1}
-              />
+              {/* TOOLKIT band — row 2 cards after row 1; rail header with CORE */}
+              <div className="skills-page-band skills-page-band--tools w-full min-w-0">
+                <SkillsBranchRailHeader
+                  align="right"
+                  sectionSubtitle={SKILLS_DATA.tools.title}
+                  sectionTitle={SKILLS_DATA.tools.subtitle}
+                  baseDelay={RAIL_HEADERS_DELAY}
+                  greenLineDelay={skillsGreenLineDelay}
+                  panelSettled={panelSettled}
+                  reduceMotion={rm}
+                />
 
-              <motion.div className="skills-row-cards skills-row-cards--page grid w-full grid-cols-1 md:grid-cols-3">
-                {SKILLS_TOOLS_CATEGORIES.map(({ title, items }, i) => (
-                  <motion.div key={title} className="skills-row-card-slot">
-                  <motion.div
-                    className="skills-card-surface skills-card-surface--page h-full border border-white/[0.09]"
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.26, ease: treeEase, delay: 0.24 + i * 0.055 }}
-                  >
-                    <p
-                      className="skills-subcategory-column-title w-full border-b border-white/[0.06] text-center font-heading font-semibold uppercase !text-zinc-100"
-                      title={title}
+                <motion.div
+                  className="skills-row-cards skills-row-cards--page grid w-full grid-cols-1 md:grid-cols-3"
+                  variants={skillsCardRowEntrance(TOOLS_CARD_ROW_BASE, true)}
+                  initial="hidden"
+                  animate={panelSettled || rm ? "visible" : "hidden"}
+                >
+                  {SKILLS_TOOLS_CATEGORIES.map(({ title, items }) => (
+                    <motion.div
+                      key={title}
+                      className="skills-row-card-slot transform-gpu"
+                      variants={skillsToolsCardItemEntrance}
                     >
-                      {title}
-                    </p>
-                    <ul className="skills-page-card-list">
-                      {items.map((tool) => (
-                        <li key={tool} className="skills-page-card-row flex min-w-0 items-start text-zinc-200">
-                          <span className="skills-page-card-icon inline-flex shrink-0 items-center justify-center">
-                            <ToolIcon name={tool} size={15} />
-                          </span>
-                          <span className="min-w-0">{tool}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </motion.div>
-                  </motion.div>
-                ))}
-              </motion.div>
-            </div>
-              </motion.div>
+                      <div className="skills-card-surface skills-card-surface--page h-full border border-white/[0.09]">
+                        <SkillsCardInnerContent
+                          categoryTitle={title}
+                          align="right"
+                          panelSettled={panelSettled}
+                          reduceMotion={rm}
+                          contentBaseDelay={CARD_INNER_BASE_DELAY}
+                          bullets={items.map((tool) => ({
+                            key: tool,
+                            label: tool,
+                            icon: <ToolIcon name={tool} size={15} />,
+                          }))}
+                        />
+                      </div>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              </div>
+
             </motion.div>
           </motion.div>
+        </motion.div>
       </motion.div>
     </section>
   );
@@ -6484,6 +6758,11 @@ export default function Home() {
   const [transitionTarget, setTransitionTarget] = useState<string | "menu" | null>(null);
   const [menuPanelAtRight, setMenuPanelAtRight] = useState(false);
   const [panelSettled, setPanelSettled] = useState(false);
+  /** Side-nav SKILLS re-click: snap hidden, then fade in only (no animated fade-out). */
+  const [skillsContentFade, setSkillsContentFade] = useState<
+    "visible" | "hide-instant" | "fade-in"
+  >("visible");
+  const skillsFadeReplayRafRef = useRef<number | null>(null);
   const reduceMotion = useReducedMotion();
   const heroInViewRef = useRef<HTMLDivElement | null>(null);
   const isHeroInView = useInView(heroInViewRef, { margin: "-100px 0px 0px 0px" });
@@ -6554,6 +6833,18 @@ export default function Home() {
     }
   }, [currentSection]);
 
+  useEffect(() => {
+    if (currentSection !== "skills") setSkillsContentFade("visible");
+  }, [currentSection]);
+
+  useEffect(() => {
+    return () => {
+      if (skillsFadeReplayRafRef.current != null) {
+        cancelAnimationFrame(skillsFadeReplayRafRef.current);
+      }
+    };
+  }, []);
+
   const handleStart = () => {
     const root = slidesRef.current;
     const menuEl = document.getElementById("menu");
@@ -6583,6 +6874,23 @@ export default function Home() {
     if (id === "projects" && currentSection === "projects") {
       if (activeShowcaseProjectId) {
         setActiveShowcaseProjectId(null);
+      }
+      return;
+    }
+
+    // Already on SKILLS: fade in only — snap hidden, then opacity up (SkillArsenal stays mounted).
+    if (id === "skills" && currentSection === "skills") {
+      transitionTimeoutsRef.current.forEach((t) => window.clearTimeout(t));
+      transitionTimeoutsRef.current = [];
+      if (!reduceMotion) {
+        if (skillsFadeReplayRafRef.current != null) {
+          cancelAnimationFrame(skillsFadeReplayRafRef.current);
+        }
+        setSkillsContentFade("hide-instant");
+        skillsFadeReplayRafRef.current = requestAnimationFrame(() => {
+          skillsFadeReplayRafRef.current = null;
+          setSkillsContentFade("fade-in");
+        });
       }
       return;
     }
@@ -7020,9 +7328,31 @@ export default function Home() {
                   <ConfidantExperience panelSettled={panelSettled} reduceMotion={reduceMotion} />
                 )}
                 {currentSection === "social" && <SocialLink />}
-                {currentSection === "skills" && (
-                  <SkillArsenal />
-                )}
+                {currentSection === "skills" &&
+                  (reduceMotion ? (
+                    <SkillArsenal panelSettled={panelSettled} reduceMotion={reduceMotion} />
+                  ) : (
+                    <motion.div
+                      className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col"
+                      animate={{
+                        opacity: skillsContentFade === "hide-instant" ? 0 : 1,
+                      }}
+                      transition={{
+                        duration:
+                          skillsContentFade === "fade-in"
+                            ? SHOWCASE_SUBROUTE_FADE_S
+                            : 0,
+                        ease: EASE.out,
+                      }}
+                      onAnimationComplete={() => {
+                        if (skillsContentFade === "fade-in") {
+                          setSkillsContentFade("visible");
+                        }
+                      }}
+                    >
+                      <SkillArsenal panelSettled={panelSettled} reduceMotion={reduceMotion} />
+                    </motion.div>
+                  ))}
               </div>
             </motion.div>
           )}
