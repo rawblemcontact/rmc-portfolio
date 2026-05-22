@@ -292,6 +292,119 @@ function FinalDraftIcon({
   );
 }
 
+/** OBS Studio (Streamline Logos) — `currentColor` for `text-portfolio-green` in `ToolIcon`. */
+function ObsStudioIcon({
+  size = 18,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      className={className}
+      aria-hidden
+    >
+      <path
+        fill="currentColor"
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M23 12c0 6.075 -4.925 11 -11 11S1 18.075 1 12 5.925 1 12 1s11 4.925 11 11Zm-3.479 4.326a3.652 3.652 0 0 0 -5.23 -4.828 3.652 3.652 0 0 0 -0.912 5.122 0.466 0.466 0 0 1 0 0.584A5.56 5.56 0 0 1 12 18.391a5.478 5.478 0 0 1 -7.213 -1.597 3.653 3.653 0 0 0 6.528 -2.52 3.652 3.652 0 0 0 -3.971 -3.36 0.447 0.447 0 0 1 -0.494 -0.293 5.323 5.323 0 0 1 -0.328 -1.817 5.478 5.478 0 0 1 5.104 -5.478 3.652 3.652 0 1 0 1.954 6.921 3.58 3.58 0 0 0 1.734 -1.762 0.474 0.474 0 0 1 0.503 -0.283 5.18 5.18 0 0 1 1.661 0.648 5.479 5.479 0 0 1 2.043 7.476Z"
+      />
+    </svg>
+  );
+}
+
+/** Cursor IDE — `currentColor` for `text-portfolio-green` in `ToolIcon`. */
+function CursorIcon({
+  size = 18,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="currentColor"
+      fillRule="evenodd"
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      className={className}
+      aria-hidden
+    >
+      <path d="M22.106 5.68L12.5.135a.998.998 0 00-.998 0L1.893 5.68a.84.84 0 00-.419.726v11.186c0 .3.16.577.42.727l9.607 5.547a.999.999 0 00.998 0l9.608-5.547a.84.84 0 00.42-.727V6.407a.84.84 0 00-.42-.726zm-.603 1.176L12.228 22.92c-.063.108-.228.064-.228-.061V12.34a.59.59 0 00-.295-.51l-9.11-5.26c-.107-.062-.063-.228.062-.228h18.55c.264 0 .428.286.296.514z" />
+    </svg>
+  );
+}
+
+/** Twitch — `currentColor` for `text-portfolio-green` in `ToolIcon`. */
+function TwitchIcon({
+  size = 18,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 64 64"
+      width={size}
+      height={size}
+      className={className}
+      aria-hidden
+    >
+      <path
+        fill="currentColor"
+        fillRule="evenodd"
+        d="M5.7 0L1.4 10.985V55.88h15.284V64h8.597l8.12-8.12h12.418l16.716-16.716V0H5.7zm51.104 36.3L47.25 45.85H31.967l-8.12 8.12v-8.12H10.952V5.73h45.85V36.3zM47.25 16.716v16.716h-5.73V16.716h5.73zm-15.284 0v16.716h-5.73V16.716h5.73z"
+      />
+    </svg>
+  );
+}
+
+/** Neutral toolkit bullet mark when no brand asset is wired — matches `ToolIcon` size/color. */
+function SkillsToolPlaceholderIcon({
+  size = 18,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+    >
+      <rect
+        x="3.25"
+        y="3.25"
+        width="17.5"
+        height="17.5"
+        rx="4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+      />
+      <path
+        fill="currentColor"
+        d="M8.25 8.25h3.5v3.5h-3.5zm4 0h3.5v3.5h-3.5zm-4 4h3.5v3.5h-3.5zm4 0h3.5v3.5h-3.5z"
+      />
+    </svg>
+  );
+}
+
 /** Microsoft four-square mark (svgrepo); `currentColor` so it matches `text-portfolio-green` in `ToolIcon`. */
 function MicrosoftOffice365Icon({
   size = 18,
@@ -332,6 +445,9 @@ const TOOL_ICONS: Record<
   "TikTok Creator Tools": SiTiktok,
   "Instagram Reels": SiInstagram,
   "YouTube Shorts": SiYoutubeshorts,
+  Cursor: CursorIcon,
+  "OBS Studio": ObsStudioIcon,
+  Twitch: TwitchIcon,
 };
 
 const FAVICON_SIZE = 64; // Google returns better quality at 64+
@@ -453,10 +569,24 @@ function accentGlowShadow(color: string, active: boolean): string {
 }
 
 // --- TEXT SHUTTER (Persona-style directional reveal, inspired by The Line Studio / Framer) ---
+/** Stagger rank for center-out character reveal (0 = first letter to appear). */
+const centerOutCharStaggerRank = (index: number, length: number): number => {
+  const order: number[] = [];
+  let left = Math.floor((length - 1) / 2);
+  let right = Math.ceil((length - 1) / 2);
+  while (order.length < length) {
+    if (left >= 0 && !order.includes(left)) order.push(left);
+    if (right < length && right !== left && !order.includes(right)) order.push(right);
+    left--;
+    right++;
+  }
+  return order.indexOf(index);
+};
+
 type TextShutterProps = {
   text: string;
   className?: string;
-  direction?: "ltr" | "rtl";
+  direction?: "ltr" | "rtl" | "center" | "center-type";
   duration?: number;
   stagger?: number;
   as?: "span" | "h1" | "h2" | "p";
@@ -467,6 +597,8 @@ type TextShutterProps = {
   trigger?: "mount" | "viewport";
   /** When trigger is viewport: if false, animation resets when leaving view so it plays again on re-entry */
   viewportOnce?: boolean;
+  /** When trigger is mount: false keeps shutter closed until true (panel-gated entrances). */
+  play?: boolean;
 };
 
 const TextShutter = ({
@@ -481,19 +613,34 @@ const TextShutter = ({
   trigger = "mount",
   viewportOnce = true,
   fade = false,
+  play = true,
 }: TextShutterProps & { fade?: boolean }) => {
-  const isLtr = direction === "ltr";
-  const closedClip = isLtr ? "inset(0 100% 0 0)" : "inset(0 0 0 100%)";
+  const isCenterType = direction === "center-type";
+  const closedClip =
+    direction === "center"
+      ? "inset(0 50% 0 50%)"
+      : direction === "ltr"
+        ? "inset(0 100% 0 0)"
+        : "inset(0 0 0 100%)";
   const openClip = "inset(0 0 0 0)";
 
-  const parts = split === "words" ? text.split(/\s+/) : split === "chars" ? Array.from(text) : [text];
-  const isSpace = split === "words" && parts.length > 1;
+  const effectiveSplit = isCenterType ? "chars" : split;
+  const parts =
+    effectiveSplit === "words"
+      ? text.split(/\s+/)
+      : effectiveSplit === "chars"
+        ? Array.from(text)
+        : [text];
+  const isSpace = effectiveSplit === "words" && parts.length > 1;
+  const useOpacity = fade || isCenterType;
 
   const MotionTag = motion[Tag] as typeof motion.span;
 
   const transition = (i: number) => ({
     duration,
-    delay: delay + i * stagger,
+    delay:
+      delay +
+      (isCenterType ? centerOutCharStaggerRank(i, parts.length) : i) * stagger,
     ease: EASE.out,
   });
 
@@ -502,20 +649,22 @@ const TextShutter = ({
       {parts.map((part, i) => (
         <motion.span
           key={i}
-          initial={fade ? { opacity: 0 } : { clipPath: closedClip }}
+          initial={useOpacity ? { opacity: 0 } : { clipPath: closedClip }}
           {...(trigger === "viewport"
             ? {
-                whileInView: fade ? { opacity: 1 } : { clipPath: openClip },
+                whileInView: useOpacity ? { opacity: 1 } : { clipPath: openClip },
                 viewport: { once: viewportOnce, margin: "-40px 0px -40px 0px" },
                 transition: transition(i),
               }
             : {
-                animate: fade ? { opacity: 1 } : { clipPath: openClip },
+                animate: useOpacity
+                  ? { opacity: play ? 1 : 0 }
+                  : { clipPath: play ? openClip : closedClip },
                 transition: transition(i),
               })}
           style={{
             display: "inline-block",
-            overflow: fade ? "visible" : "hidden",
+            overflow: useOpacity ? "visible" : "hidden",
             verticalAlign: "top",
           }}
         >
@@ -669,6 +818,7 @@ const SectionHeader = ({
   slideFadeDelay = 0,
   titleTrigger = "viewport",
   titleClassName,
+  subtitleClassName,
   titleFade = false,
   titleStatic = false,
 }: {
@@ -698,12 +848,14 @@ const SectionHeader = ({
   titleTrigger?: "mount" | "viewport";
   /** Extra classes for the title heading (e.g. xl/2xl scale). */
   titleClassName?: string;
+  /** Optional subtitle classes (replaces default eyebrow styles when set). */
+  subtitleClassName?: string;
   /** When true, title animates with a simple fade instead of the clip-path wipe. */
   titleFade?: boolean;
   /** When true, render title text without TextShutter animation. */
   titleStatic?: boolean;
 }) => {
-  const sizeClasses = compact ? "text-3xl md:text-5xl" : "text-4xl md:text-6xl";
+  const sizeClasses = "section-main-header-title";
 
   const baseClass = `flex flex-col ${align === "center" ? "items-center text-center" : "items-start text-left"} ${
     compact ? "mb-10" : "mb-16"
@@ -720,7 +872,7 @@ const SectionHeader = ({
         />
       )}
       <h2
-        className={`${sizeClasses} ${titleClassName ?? ""} font-display ${color} leading-[0.95] tracking-[-0.02em] uppercase -translate-y-0.5`}
+        className={`${sizeClasses} ${titleClassName ?? ""} font-display ${color} leading-[0.95] -translate-y-0.5`}
       >
         {titleStatic ? (
           <span>{title}</span>
@@ -743,7 +895,12 @@ const SectionHeader = ({
         <div className="mt-4">{betweenTitleAndSubtitle}</div>
       )}
       {subtitle && (
-        <p className="font-heading text-sm leading-snug uppercase text-mono-2/90 mt-1.5 tracking-normal">
+        <p
+          className={
+            subtitleClassName ??
+            "section-subhead-title font-display font-semibold mt-1.5"
+          }
+        >
           {subtitle}
         </p>
       )}
@@ -1668,6 +1825,11 @@ const PROFILE_SECTION_ENTER_S = 0.342;
 const PROFILE_TITLE_DELAY_S = 0.152;
 const PROFILE_HERO_ENTER_S = 0.52;
 const PROFILE_LINE_DURATION_S = RED_LINE_DURATION_MS / 1000;
+/** Vertical air around metadata pill (red rule → pill → summary card). */
+const PROFILE_METADATA_PILL_GAP = "mt-6 sm:mt-7";
+/** Metadata pill + in-card section labels (SUMMARY, etc.) — paired with `#profile` CSS. */
+const PROFILE_CARD_INLINE_LABEL_CLASS =
+  "profile-card-inline-label font-heading w-full min-w-0 max-w-full text-balance leading-snug uppercase";
 
 const PhantomProfile = () => {
   const profileLeftRef = useRef<HTMLDivElement>(null);
@@ -1743,7 +1905,6 @@ const PhantomProfile = () => {
                color="text-white"
                showBar={false}
                compact
-               titleClassName="xl:text-5xl 2xl:text-6xl"
                className="!mb-5 max-lg:mt-0 lg:mt-0 -ml-[3px]"
                titleDelay={0.152}
                titleDuration={0.342}
@@ -1767,35 +1928,37 @@ const PhantomProfile = () => {
                />
             </div>
             <motion.div
-              className="profile-card-surface relative mt-4 sm:mt-5 w-full min-w-0 max-w-xl xl:max-w-2xl 2xl:max-w-2xl -ml-[3px] pe-[max(0.75rem,env(safe-area-inset-right,0px))] sm:pe-4 rounded-[0_0.85rem] px-3 py-2 sm:px-4 sm:py-2.5"
+              className={`profile-card-surface relative ${PROFILE_METADATA_PILL_GAP} block w-[calc(100%+0.5rem)] min-w-0 max-w-xl xl:max-w-2xl 2xl:max-w-2xl -ml-[calc(3px+0.25rem)] pe-[max(0.75rem,env(safe-area-inset-right,0px))] sm:pe-4 rounded-[0_0.85rem] px-3 py-2 sm:px-4 sm:py-2.5`}
               initial={{ x: -24, opacity: 0 }}
               animate={{ x: overlayRevealed ? 0 : -24, opacity: overlayRevealed ? 1 : 0 }}
               transition={{ duration: BUTTON_FADE_DURATION_MS / 1000, delay: overlayRevealed ? BUTTONS_DELAY_AFTER_SUMMARY_MS / 1000 : 0, ease: [0.16, 1, 0.3, 1] }}
             >
-              <p className="font-heading w-full min-w-0 max-w-full text-balance text-sm tracking-eyebrow-tight leading-snug uppercase text-mono-2/90 max-sm:whitespace-normal sm:whitespace-nowrap sm:overflow-x-auto sm:overflow-y-visible sm:no-scrollbar">
+              <p
+                className={`${PROFILE_CARD_INLINE_LABEL_CLASS} max-sm:whitespace-normal sm:whitespace-nowrap sm:overflow-x-auto sm:overflow-y-visible sm:no-scrollbar`}
+              >
                 Victoria, BC <span className="text-mono-2/35 mx-0.5 sm:mx-1" aria-hidden>•</span> BA WRITING{" "}
                 <span className="text-mono-2/35 mx-0.5 sm:mx-1" aria-hidden>•</span> DIGITAL MEDIA
               </p>
             </motion.div>
             <motion.div
-              className="profile-card-surface relative mt-8 max-w-xl sm:mt-9 xl:max-w-2xl 2xl:max-w-2xl -ml-[3px] rounded-[0_1rem] px-4 py-4 sm:px-5 sm:py-5"
+              className={`profile-card-surface relative ${PROFILE_METADATA_PILL_GAP} max-w-xl xl:max-w-2xl 2xl:max-w-2xl -ml-[3px] rounded-[0_1rem] px-4 py-4 sm:px-5 sm:py-5`}
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: overlayRevealed ? 1 : 0, y: overlayRevealed ? 0 : 14 }}
               transition={{ duration: SUMMARY_DURATION_S, delay: overlayRevealed ? SUMMARY_DELAY_S : 0, ease: [0.16, 1, 0.3, 1] }}
             >
-              <p className="font-heading text-sm tracking-eyebrow-tight leading-snug uppercase mb-1.5" style={{ color: PROFILE_ACCENT_SOFT }}>SUMMARY</p>
-              <p className="font-body text-sm sm:text-base md:text-lg xl:text-lg 2xl:text-xl text-mono-2 leading-relaxed mb-4">
+              <p className={`${PROFILE_CARD_INLINE_LABEL_CLASS} mb-1.5`} style={{ color: PROFILE_ACCENT_SOFT }}>SUMMARY</p>
+              <p className="font-body text-mono-2 leading-relaxed mb-4">
                 Communications-focused writer and digital media coordinator with experience producing narrative-driven web content and managing social media workflows across multiple platforms. Combines narrative storytelling with platform-native content production and distribution. Bachelor of Arts in Writing (Distinction), University of Victoria.
               </p>
-              <p className="font-heading text-sm tracking-eyebrow-tight leading-snug uppercase mb-1.5" style={{ color: PROFILE_ACCENT_SOFT }}>CURRENT WORK</p>
-              <ul className="font-body text-sm sm:text-base md:text-lg xl:text-lg 2xl:text-xl text-mono-2/90 leading-relaxed mb-4 ml-3 list-disc list-outside space-y-2 pl-6 sm:pl-7 marker:text-mono-2/50">
+              <p className={`${PROFILE_CARD_INLINE_LABEL_CLASS} mb-1.5`} style={{ color: PROFILE_ACCENT_SOFT }}>CURRENT WORK</p>
+              <ul className="font-body text-mono-2/90 leading-relaxed mb-4 ml-3 list-disc list-outside space-y-2 pl-6 sm:pl-7 marker:text-mono-2/50">
                 <li>Currently developing SLAYWIRE, a narrative-first RPG.</li>
                 <li>
                   RAWBLEM - Creative brand producing narrative-driven short-form content across TikTok, Instagram Reels, and YouTube Shorts.
                 </li>
               </ul>
-              <p className="font-heading text-sm tracking-eyebrow-tight leading-snug uppercase mb-1.5" style={{ color: PROFILE_ACCENT_SOFT }}>AVAILABILITY</p>
-              <ul className="font-body text-sm sm:text-base md:text-lg xl:text-lg 2xl:text-xl text-mono-2 leading-relaxed ml-3 list-disc list-outside space-y-2 pl-6 sm:pl-7 marker:text-mono-2/50">
+              <p className={`${PROFILE_CARD_INLINE_LABEL_CLASS} mb-1.5`} style={{ color: PROFILE_ACCENT_SOFT }}>AVAILABILITY</p>
+              <ul className="font-body text-mono-2 leading-relaxed ml-3 list-disc list-outside space-y-2 pl-6 sm:pl-7 marker:text-mono-2/50">
                 <li>Full-Time Content, Communications, or Digital Media roles.</li>
               </ul>
             </motion.div>
@@ -2096,16 +2259,16 @@ const DETAIL_HERO_FADE_START_RAF_PAD_MS = 40;
 /** Match showcase carousel card height (same as `motion.button` project cards). Capped with svh so SHOWCASE + FEATURED fit one screen with bottom gutter ? no scroll. */
 const DETAIL_CARD_H =
   "h-[min(280px,45svh)] sm:h-[min(308px,48svh)] md:h-[min(328px,50svh)] lg:h-[min(352px,52svh)] xl:h-[min(368px,54svh)] 2xl:h-[min(384px,56svh)]";
-/** SHOWCASE carousel + FEATURED WRITING column cap — widened to align left gutter with PROFILE. */
+/** SHOWCASE carousel inner column cap (detail overlay / career rail — not PROFILE viewport gutters). */
 const SHOWCASE_COLUMN_MAX = "max-w-[min(100%,58rem)]";
 /** Main section title top inset — `#projects` SHOWCASE shell (`pt-16 sm:pt-20 md:pt-22`). */
 const SECTION_MAIN_HEADER_INSET = "pt-16 sm:pt-20 md:pt-22";
-/** Centered main `SectionHeader` chrome (SHOWCASE). */
+/** Centered SHOWCASE rail header chrome — tight bottom margin; yellow line below. */
 const SECTION_MAIN_HEADER_TITLE_CLASS =
-  "mt-1 sm:mt-1.5 !mb-6 sm:!mb-7 md:!mb-8 w-full shrink-0";
-/** SKILLS main title — tight clearance above green accent line. */
-const SECTION_SKILLS_MAIN_HEADER_TITLE_CLASS =
   "mt-1 sm:mt-1.5 !mb-2 sm:!mb-2.5 md:!mb-3 w-full shrink-0";
+/** SKILLS main title — line gap via `.skills-main-header-chrome` in `index.css`. */
+const SECTION_SKILLS_MAIN_HEADER_TITLE_CLASS =
+  "skills-main-header-chrome mt-1 sm:mt-1.5 w-full shrink-0";
 /** `#profile` shell — container + centered row (left column + gap + mascot). */
 const PROFILE_SECTION_CONTAINER = "container mx-auto px-4 sm:px-6 relative z-20";
 const PROFILE_LAYOUT_ROW =
@@ -2119,11 +2282,17 @@ const PROFILE_MASCOT_FRAME =
 /** Total row width (left + gap + mascot) — centers SKILLS with the same L/R viewport gutters as PROFILE. */
 const PROFILE_VIEWPORT_CONTENT_MAX =
   "w-full min-w-0 mx-auto lg:max-w-[min(100%,calc(38rem+5rem+300px))] xl:max-w-[min(100%,calc(40rem+9rem+312px))] 2xl:max-w-[min(100%,calc(44rem+min(14rem,12vw)+348px))]";
+/** `#projects` — same L/R viewport gutters as #profile (portfoliov2-profile-viewport-gutters). */
+const PROJECTS_VIEWPORT_SHELL = `${PROFILE_VIEWPORT_CONTENT_MAX} relative z-[1] flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-x-hidden self-center`;
 const SECTION_CONTAINER_GUTTER =
   "container relative z-10 mx-auto w-full min-w-0 max-w-full px-4 sm:px-6";
 const SHOWCASE_SEQUENCE_DUR_S = 0.0830875;
 const SHOWCASE_SEQUENCE_GAP_S = 0.03176875;
 const SHOWCASE_SEQUENCE_HEADER_DELAY_S = 0.01955;
+const SHOWCASE_YELLOW_LINE_DUR_S = PROFILE_LINE_DURATION_S;
+const SHOWCASE_YELLOW_LINE_DELAY_S =
+  SHOWCASE_SEQUENCE_HEADER_DELAY_S + SHOWCASE_SEQUENCE_DUR_S;
+const SHOWCASE_YELLOW_LINE_EASE = [0.22, 1, 0.36, 1] as const;
 const SHOWCASE_SEQUENCE_SLIDER_DELAY_S =
   SHOWCASE_SEQUENCE_HEADER_DELAY_S + SHOWCASE_SEQUENCE_DUR_S + SHOWCASE_SEQUENCE_GAP_S;
 const SHOWCASE_SEQUENCE_TABS_DELAY_S =
@@ -2390,11 +2559,8 @@ const ProjectsStack = ({
   }, [autoplayIndices]);
 
   return (
-    <div className={`mx-auto -mt-1 sm:-mt-1.5 flex w-full min-w-0 ${SHOWCASE_COLUMN_MAX} flex-col justify-center items-center pt-2 px-1 pb-0 sm:pt-3 sm:px-2 overflow-x-visible overflow-y-visible`}>
-      {/*
-       * Single horizontal inset for dots + viewport so the pager lines up with card side borders (same as FEATURED WRITING below).
-       */}
-      <div className="w-full min-w-0 px-2 sm:px-4 lg:px-2 xl:px-3">
+    <div className="-mt-1 sm:-mt-1.5 flex w-full min-w-0 flex-col justify-center overflow-x-visible overflow-y-visible pt-2 pb-0 sm:pt-3">
+      <div className="w-full min-w-0">
         <div className="mb-0 flex w-full -translate-y-1.5 items-center justify-end">
           <div className="flex -translate-x-1 items-center gap-2.5 sm:-translate-x-1.5 lg:-translate-x-1 xl:-translate-x-1.5">
             {(emblaApi?.scrollSnapList() ?? []).map((_, snapIdx) => (
@@ -3533,7 +3699,8 @@ const PalaceProjects = ({
       className={`relative flex min-h-full w-full min-w-0 max-w-full flex-col justify-start overflow-x-hidden bg-black ${SECTION_MAIN_HEADER_INSET} pb-[max(1.25rem,calc(var(--slide-gap)*1.5),env(safe-area-inset-bottom,0px))] text-white scroll-mt-6 [--slide-gap:0.875rem] sm:[--slide-gap:1.25rem] lg:[--slide-gap:1rem] xl:[--slide-gap:1.125rem]`}
     >
       <SectionGridOverlay projectDetailActive={!!activeCard} />
-      <div className="container relative z-10 mx-auto flex min-h-0 min-w-0 w-full max-w-full flex-1 flex-col px-4 sm:px-6">
+      <div className={`${PROFILE_SECTION_CONTAINER} relative z-10 flex min-h-0 min-w-0 w-full flex-1 flex-col`}>
+        <div className={`${PROJECTS_VIEWPORT_SHELL} justify-center overflow-y-visible`}>
         {/*
          * Column inherits --slide-gap from #projects. Spacer + section pb = bottom air; overlay scrolls if needed (no clipping).
          */}
@@ -3549,25 +3716,35 @@ const PalaceProjects = ({
             style={{ pointerEvents: activeCard ? "none" : "auto" }}
           >
             <motion.div
+              className={`showcase-header flex w-full min-w-0 shrink-0 flex-col items-start mb-6 sm:mb-8 md:mb-10 ${SECTION_MAIN_HEADER_TITLE_CLASS}`}
               variants={SHOWCASE_HEADER_VARIANTS}
               initial={reduceMotion ? false : "hidden"}
               animate={reduceMotion ? undefined : entranceVisibleState ? "ready" : "hidden"}
             >
-              <SectionHeader
-                title="SHOWCASE"
-                subtitle="MEDIA PROJECTS & WRITING SAMPLES"
-                align="center"
-                color="text-white"
-                showBar={false}
-                compact
-                titleClassName="xl:text-5xl 2xl:text-6xl"
-                className={SECTION_MAIN_HEADER_TITLE_CLASS}
-                titleDelay={0.152}
-                titleDuration={0.342}
-                titleStagger={0.0216}
-                viewportOnce={false}
-                titleStatic
-              />
+              <div className="showcase-header-title-stack relative z-10 w-full min-w-0">
+                <p className="career-nav-section-subtitle section-main-header-title font-display text-left">PROJECTS</p>
+                <div className="showcase-header-subhead-rule w-fit max-w-full">
+                  <p className="career-nav-section-title text-left">
+                    Digital Media &amp; Writing Showcase
+                  </p>
+                  <div className="showcase-main-accent-line relative min-h-[2px] w-full" aria-hidden>
+                    <motion.span
+                      className="absolute bottom-0 left-0 right-0 h-[2px]"
+                      style={{
+                        transformOrigin: "left center",
+                        backgroundColor: PROJECTS_ACCENT_SOFT,
+                      }}
+                      initial={{ scaleX: reduceMotion ? 1 : 0 }}
+                      animate={{ scaleX: reduceMotion || entranceVisibleState ? 1 : 0 }}
+                      transition={{
+                        duration: reduceMotion ? 0 : SHOWCASE_YELLOW_LINE_DUR_S,
+                        delay: reduceMotion ? 0 : SHOWCASE_YELLOW_LINE_DELAY_S,
+                        ease: SHOWCASE_YELLOW_LINE_EASE,
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
             </motion.div>
           </motion.div>
         {/*
@@ -3609,7 +3786,7 @@ const PalaceProjects = ({
            * ProjectsStack uses pb-0 so gallery bottom padding does not stack with this margin.
            */}
           <motion.div
-            className={`mx-auto mt-[var(--slide-gap,0.875rem)] flex w-full min-w-0 ${SHOWCASE_COLUMN_MAX} flex-col px-1 sm:px-2 ${activeCard ? "opacity-0" : "opacity-100"}`}
+            className={`mt-[var(--slide-gap,0.875rem)] flex w-full min-w-0 flex-col ${activeCard ? "opacity-0" : "opacity-100"}`}
             variants={SHOWCASE_TABS_VARIANTS}
             initial={reduceMotion ? false : "hidden"}
             animate={
@@ -3622,12 +3799,8 @@ const PalaceProjects = ({
                     : "hidden"
             }
           >
-            {/*
-             * Same horizontal inset as ProjectsStack outer + embla viewport so folder
-             * card width matches the showcase cards above.
-             */}
             <motion.div
-              className="flex w-full min-w-0 flex-col px-2 sm:px-4 lg:px-2 xl:px-3"
+              className="flex w-full min-w-0 flex-col"
               initial={false}
               animate={{ opacity: sliderContentReady ? 1 : 0 }}
               transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
@@ -3657,7 +3830,7 @@ const PalaceProjects = ({
          */}
         <div
           ref={detailAnchorRef}
-          className={`absolute top-0 left-0 right-0 mx-auto w-full ${SHOWCASE_COLUMN_MAX} ${DETAIL_CARD_H} pointer-events-none`}
+          className={`absolute top-0 left-0 right-0 mx-auto w-full ${PROFILE_VIEWPORT_CONTENT_MAX} ${DETAIL_CARD_H} pointer-events-none`}
           aria-hidden
           style={{ visibility: "hidden" }}
         />
@@ -3668,11 +3841,11 @@ const PalaceProjects = ({
          */}
         {activeCard && (
           <div className="absolute inset-0 z-20 flex flex-col items-center">
-            <div className={`w-full ${SHOWCASE_COLUMN_MAX} shrink-0 ${DETAIL_CARD_H}`} aria-hidden />
+            <div className={`w-full ${PROFILE_VIEWPORT_CONTENT_MAX} shrink-0 ${DETAIL_CARD_H}`} aria-hidden />
 
             {morphDone && (
               <div
-                className={`project-card-surface absolute top-0 left-0 right-0 mx-auto w-full ${SHOWCASE_COLUMN_MAX} ${DETAIL_CARD_H} rounded-[11px] sm:rounded-xl border-0 overflow-hidden`}
+                className={`project-card-surface absolute top-0 left-0 right-0 mx-auto w-full ${PROFILE_VIEWPORT_CONTENT_MAX} ${DETAIL_CARD_H} rounded-[11px] sm:rounded-xl border-0 overflow-hidden`}
                 style={{
                   boxShadow: `${SHOWCASE_SLIDER_MEDIA_BOX_SHADOW}, 0 18px 48px -28px rgba(0,0,0,0.9)`,
                   borderRadius: `${detailCardRadiusPx}px`,
@@ -3702,7 +3875,7 @@ const PalaceProjects = ({
             )}
 
             {activeCard && morphRect && (
-              <div className={`w-full ${SHOWCASE_COLUMN_MAX} mt-5 pb-8`}>
+              <div className={`w-full ${PROFILE_VIEWPORT_CONTENT_MAX} mt-5 pb-8`}>
                 <div
                   className="-ml-[3px] flex w-full max-w-full flex-col items-stretch gap-y-1.5 text-left"
                   style={
@@ -3780,6 +3953,7 @@ const PalaceProjects = ({
             )}
           </div>
         )}
+        </div>
       </div>
 
       {/*
@@ -4383,7 +4557,7 @@ const ConfidantExperience = ({
           <motion.div className="career-overview-rail">
           <motion.div className="nav-header" variants={experienceRailHeaderEntrance}>
             <motion.div className="career-nav-section-labels" variants={experienceRailLabelsEntrance}>
-              <p className="career-nav-section-subtitle">Experience</p>
+              <p className="career-nav-section-subtitle section-main-header-title">Experience</p>
               <p className="career-nav-section-title">Career Overview</p>
             </motion.div>
             <motion.div
@@ -4626,7 +4800,7 @@ const SocialLink = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2, margin: "0px 0px -8% 0px" }}
           transition={{ duration: 0.416, ease: [0.027, 0, 0.06, 1], delay: 0.4 }}
-          className="text-4xl md:text-6xl font-display text-white relative z-10 mb-12"
+          className="section-main-header-title font-display text-white relative z-10 mb-12 leading-[0.95]"
         >
           LET'S CONNECT!
         </motion.h2>
@@ -4750,9 +4924,9 @@ const SKILLS_MAJOR_CATEGORIES: {
     id: "tools",
     label: "TOOLKIT",
     panels: [
-      { title: "DESIGN & PRODUCTIVITY", titleCase: "Design & Productivity", subtitle: "Toolkit", items: ["Microsoft Office 365", "Adobe Creative Suite", "Canva", "Procreate"] },
-      { title: "VIDEO & WRITING", titleCase: "Video & Writing", subtitle: "Production Tools", items: ["DaVinci Resolve", "CapCut", "Final Draft", "Arc Studio"] },
-      { title: "SOCIAL PLATFORMS", titleCase: "Social Platforms", subtitle: "Distribution Platforms", items: ["Hootsuite", "TikTok Creator Tools", "Instagram Reels", "YouTube Shorts"] },
+      { title: "DESIGN & PRODUCTIVITY", titleCase: "Design & Productivity", subtitle: "Toolkit", items: ["Microsoft Office 365", "Adobe Creative Suite", "Canva", "Procreate", "Cursor"] },
+      { title: "VIDEO & WRITING", titleCase: "Video & Writing", subtitle: "Production Tools", items: ["DaVinci Resolve", "CapCut", "Final Draft", "Arc Studio", "OBS Studio"] },
+      { title: "SOCIAL PLATFORMS", titleCase: "Social Platforms", subtitle: "Distribution Platforms", items: ["Hootsuite", "TikTok Creator Tools", "Instagram Reels", "YouTube Shorts", "Twitch"] },
     ],
   },
 ];
@@ -5078,11 +5252,12 @@ const SKILLS_DATA = {
           "Adobe Creative Suite",
           "Canva",
           "Procreate",
+          "Cursor",
         ],
       },
       {
         title: "Video & Writing",
-        items: ["DaVinci Resolve", "CapCut", "Final Draft", "Arc Studio"],
+        items: ["DaVinci Resolve", "CapCut", "Final Draft", "Arc Studio", "OBS Studio"],
       },
       {
         title: "Social Platforms",
@@ -5091,6 +5266,7 @@ const SKILLS_DATA = {
           "TikTok Creator Tools",
           "Instagram Reels",
           "YouTube Shorts",
+          "Twitch",
         ],
       },
     ],
@@ -5127,8 +5303,8 @@ const SKILLS_RAIL_LINE_LABEL_OVERLAP = 0.5;
 const SKILLS_CARD_BULLETS_HEADER_OVERLAP = 0.84;
 /** Row 2 shells start this far through row 1 — slightly before row 1 finishes. */
 const SKILLS_ROW2_START_OVERLAP = 0.84;
-/** Global multiplier for SKILLS section entrance delays + durations. */
-const SKILLS_ENTRANCE_SPEED = 0.95;
+/** Global multiplier for SKILLS section entrance delays + durations (lower = faster). */
+const SKILLS_ENTRANCE_SPEED = (0.95 / 1.2705) * 0.95;
 const skillsEntranceS = (seconds: number) => seconds * SKILLS_ENTRANCE_SPEED;
 /** Green accent scaleX — full line duration, ease-out tail for a softer landing. */
 const SKILLS_GREEN_LINE_DUR_S = skillsEntranceS(PROFILE_LINE_DURATION_S);
@@ -6075,12 +6251,13 @@ const SkillsSubskillsPanel = ({
                       "Adobe Creative Suite",
                       "Canva",
                       "Procreate",
+                      "Cursor",
                     ],
                   },
                   {
                     title: "Video & Writing",
                     label: "Video & Writing",
-                    items: ["DaVinci Resolve", "CapCut", "Final Draft", "Arc Studio"],
+                    items: ["DaVinci Resolve", "CapCut", "Final Draft", "Arc Studio", "OBS Studio"],
                   },
                   {
                     title: "Social Platforms",
@@ -6090,6 +6267,7 @@ const SkillsSubskillsPanel = ({
                       "TikTok Creator Tools",
                       "Instagram Reels",
                       "YouTube Shorts",
+                      "Twitch",
                     ],
                   },
                 ].map(({ title, label, items }, index) => {
@@ -6155,15 +6333,15 @@ const SkillsSubskillsPanel = ({
 const SKILLS_TOOLS_CATEGORIES = [
   {
     title: "Design & Productivity",
-    items: ["Microsoft Office 365", "Adobe Creative Suite", "Canva", "Procreate"],
+    items: ["Microsoft Office 365", "Adobe Creative Suite", "Canva", "Procreate", "Cursor"],
   },
   {
     title: "Video & Writing",
-    items: ["DaVinci Resolve", "CapCut", "Final Draft", "Arc Studio"],
+    items: ["DaVinci Resolve", "CapCut", "Final Draft", "Arc Studio", "OBS Studio"],
   },
   {
     title: "Social Platforms",
-    items: ["Hootsuite", "TikTok Creator Tools", "Instagram Reels", "YouTube Shorts"],
+    items: ["Hootsuite", "TikTok Creator Tools", "Instagram Reels", "YouTube Shorts", "Twitch"],
   },
 ];
 
@@ -6176,6 +6354,8 @@ const SkillsBranchRailHeader = ({
   greenLineDelay,
   panelSettled = false,
   reduceMotion = false,
+  titleStackRef,
+  sharedAccentLineWidthPx,
 }: {
   sectionSubtitle: string;
   sectionTitle: string;
@@ -6184,6 +6364,9 @@ const SkillsBranchRailHeader = ({
   greenLineDelay: number;
   panelSettled?: boolean;
   reduceMotion?: boolean;
+  /** Measure target for CORE rail — sets shared accent line width for both rails. */
+  titleStackRef?: React.RefObject<HTMLDivElement | null>;
+  sharedAccentLineWidthPx?: number | null;
 }) => {
   const rm = reduceMotion;
   const labelDuration = skillsEntranceS(SUMMARY_DURATION_S / 1.25);
@@ -6206,6 +6389,10 @@ const SkillsBranchRailHeader = ({
 
   const alignClass =
     align === "right" ? "skills-branch-header--right" : "skills-branch-header--left";
+  const titleStackStyle =
+    sharedAccentLineWidthPx != null && sharedAccentLineWidthPx > 0
+      ? { width: sharedAccentLineWidthPx }
+      : undefined;
 
   return (
     <motion.div
@@ -6214,35 +6401,38 @@ const SkillsBranchRailHeader = ({
       initial="hidden"
       animate={panelSettled ? "visible" : "hidden"}
     >
-      <motion.div
-        className={`career-nav-section-labels ${
-          align === "right" ? "items-end text-right" : "items-start text-left"
-        }`}
-        variants={labelsEntrance}
-      >
-        <p className="career-nav-section-subtitle whitespace-nowrap">{sectionSubtitle}</p>
-        <p className="career-nav-section-title whitespace-nowrap">{sectionTitle}</p>
-      </motion.div>
       <div
-        className={`skills-branch-accent-line relative min-h-[2px] w-[min(100%,12.5rem)] sm:w-[min(100%,16rem)] md:w-[min(100%,20rem)] ${
+        ref={titleStackRef}
+        className={`skills-branch-header-title-stack w-fit max-w-full ${
           align === "right" ? "ml-auto" : ""
         }`}
-        aria-hidden
+        style={titleStackStyle}
       >
-        <motion.span
-          className="absolute bottom-0 left-0 right-0 h-[2px]"
-          style={{
-            backgroundColor: SKILLS_ACCENT_SOFT,
-            transformOrigin: align === "right" ? "right center" : "left center",
-          }}
-          initial={{ scaleX: rm ? 1 : 0 }}
-          animate={{ scaleX: rm || panelSettled ? 1 : 0 }}
-          transition={{
-            duration: rm ? 0 : SKILLS_GREEN_LINE_DUR_S,
-            delay: rm ? 0 : greenLineDelay,
-            ease: SKILLS_GREEN_LINE_EASE,
-          }}
-        />
+        <motion.div
+          className={`career-nav-section-labels ${
+            align === "right" ? "items-end text-right" : "items-start text-left"
+          }`}
+          variants={labelsEntrance}
+        >
+          <p className="career-nav-section-subtitle whitespace-nowrap">{sectionSubtitle}</p>
+          <p className="career-nav-section-title whitespace-nowrap">{sectionTitle}</p>
+        </motion.div>
+        <div className="skills-branch-accent-line relative min-h-[2px] w-full" aria-hidden>
+          <motion.span
+            className="absolute bottom-0 left-0 right-0 h-[2px]"
+            style={{
+              backgroundColor: SKILLS_ACCENT_SOFT,
+              transformOrigin: align === "right" ? "right center" : "left center",
+            }}
+            initial={{ scaleX: rm ? 1 : 0 }}
+            animate={{ scaleX: rm || panelSettled ? 1 : 0 }}
+            transition={{
+              duration: rm ? 0 : SKILLS_GREEN_LINE_DUR_S,
+              delay: rm ? 0 : greenLineDelay,
+              ease: SKILLS_GREEN_LINE_EASE,
+            }}
+          />
+        </div>
       </div>
     </motion.div>
   );
@@ -6261,19 +6451,20 @@ const SkillsMainSectionHeader = ({
   reduceMotion?: boolean;
 }) => {
   const rm = reduceMotion;
-  const labelDuration = skillsEntranceS(SUMMARY_DURATION_S / 1.25);
+  /** Same t0 + duration as CORE / TOOLKIT `.career-nav-section-labels` slide. */
+  const railLabelDuration = skillsEntranceS(SUMMARY_DURATION_S / 1.25);
   const titleUpY = 10;
 
   const headerEntrance: Variants = {
     hidden: {},
-    visible: { transition: { delayChildren: baseDelay } },
+    visible: { transition: { delayChildren: rm ? 0 : baseDelay } },
   };
   const titleEntrance: Variants = {
     hidden: { opacity: rm ? 1 : 0, y: rm ? 0 : titleUpY },
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: rm ? 0 : labelDuration, ease: EASE.out, type: "tween" },
+      transition: { duration: rm ? 0 : railLabelDuration, ease: EASE.out, type: "tween" },
     },
   };
 
@@ -6285,18 +6476,16 @@ const SkillsMainSectionHeader = ({
       animate={panelSettled ? "visible" : "hidden"}
     >
       <motion.div className="flex w-full flex-col items-center" variants={titleEntrance}>
-        <SectionHeader
-          title="SKILLS"
-          align="center"
-          showBar={false}
-          compact
-          titleClassName="xl:text-5xl 2xl:text-6xl"
-          className={SECTION_SKILLS_MAIN_HEADER_TITLE_CLASS}
-          titleStatic
-        />
+        <div
+          className={`flex flex-col items-center text-center relative z-10 ${SECTION_SKILLS_MAIN_HEADER_TITLE_CLASS}`}
+        >
+          <h2 className="section-main-header-title font-display text-white leading-[0.95] -translate-y-0.5">
+            <span>SKILLS</span>
+          </h2>
+        </div>
       </motion.div>
       <div
-        className="skills-main-accent-line relative mx-auto mb-6 min-h-[2px] w-[min(100%,11rem)] sm:mb-8 sm:w-[min(100%,14rem)] md:mb-10 md:w-[min(100%,17rem)]"
+        className="skills-main-accent-line relative mx-auto mb-6 min-h-[2px] w-[min(100%,10.45rem)] sm:mb-8 sm:w-[min(100%,13.3rem)] md:mb-10 md:w-[min(100%,16.15rem)]"
         aria-hidden
       >
         <motion.span
@@ -6458,6 +6647,40 @@ const SkillArsenal = ({
   const skillsGreenLineDelay =
     cardsRowEnd + cardHeaderEnd * SKILLS_CARD_BULLETS_HEADER_OVERLAP;
 
+  const coreRailTitleStackRef = useRef<HTMLDivElement>(null);
+  const [sharedRailAccentWidthPx, setSharedRailAccentWidthPx] = useState<number | null>(null);
+
+  const syncSharedRailAccentWidth = useCallback(() => {
+    const stack = coreRailTitleStackRef.current;
+    if (!stack) return;
+    const w = stack.getBoundingClientRect().width;
+    if (w > 0) setSharedRailAccentWidthPx(Math.ceil(w));
+  }, []);
+
+  useLayoutEffect(() => {
+    if (rm) {
+      setSharedRailAccentWidthPx(null);
+      return;
+    }
+    syncSharedRailAccentWidth();
+    const el = coreRailTitleStackRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => syncSharedRailAccentWidth());
+    ro.observe(el);
+    window.addEventListener("resize", syncSharedRailAccentWidth);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", syncSharedRailAccentWidth);
+    };
+  }, [rm, syncSharedRailAccentWidth]);
+
+  useLayoutEffect(() => {
+    if (!panelSettled || rm) return;
+    syncSharedRailAccentWidth();
+    const raf = requestAnimationFrame(syncSharedRailAccentWidth);
+    return () => cancelAnimationFrame(raf);
+  }, [panelSettled, rm, syncSharedRailAccentWidth]);
+
   const skillsCardRowEntrance = (rowDelay: number, reverse = false): Variants => ({
     hidden: {},
     visible: {
@@ -6527,6 +6750,8 @@ const SkillArsenal = ({
                   align="left"
                   sectionSubtitle={SKILLS_DATA.core.title}
                   sectionTitle={SKILLS_DATA.core.subtitle}
+                  titleStackRef={coreRailTitleStackRef}
+                  sharedAccentLineWidthPx={sharedRailAccentWidthPx}
                   baseDelay={RAIL_HEADERS_DELAY}
                   greenLineDelay={skillsGreenLineDelay}
                   panelSettled={panelSettled}
@@ -6570,6 +6795,7 @@ const SkillArsenal = ({
                   align="right"
                   sectionSubtitle={SKILLS_DATA.tools.title}
                   sectionTitle={SKILLS_DATA.tools.subtitle}
+                  sharedAccentLineWidthPx={sharedRailAccentWidthPx}
                   baseDelay={RAIL_HEADERS_DELAY}
                   greenLineDelay={skillsGreenLineDelay}
                   panelSettled={panelSettled}

@@ -7,7 +7,7 @@ const TAB_ORDER: ShowcaseTabId[] = ["tab-1", "tab-2", "tab-3", "tab-4", "tab-5",
 const TAB_LABEL: Record<ShowcaseTabId, string> = {
   "tab-1": "Content Writing",
   "tab-2": "Screenplay",
-  "tab-3": "Graphic Novel",
+  "tab-3": "Web Comic",
   "tab-4": "Literary Analysis",
   "tab-5": "Media Analysis",
   "tab-6": "Narrative Essay",

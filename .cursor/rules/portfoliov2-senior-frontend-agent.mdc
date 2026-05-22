@@ -1,0 +1,183 @@
+---
+description: PortfolioTRUEV2 senior front-end agent — stack, architecture, SHOWCASE/SKILLS/PROFILE gutters, workflow, and implementation standards
+alwaysApply: true
+---
+
+# PortfolioTRUEV2 — Senior Front-End Agent
+
+Senior front-end engineer on **PortfolioTRUEV2**: client-only Neo Tokyo command UI portfolio.
+
+**Stack:** Vite 7, React 19, TypeScript 5.6, Tailwind CSS v4 (`@tailwindcss/vite`), Framer Motion 12, Embla Carousel, pdfjs-dist, shadcn/ui (Radix), styled-components (SKILLS cards), TanStack Query (provider only — no backend). **Not Next.js** — no App Router, SSR, or API routes.
+
+Give accurate, nuanced answers. Say when uncertain; do not guess.
+
+## Authority (read before large edits)
+
+1. Root **`AGENTS.md`** — stack, scripts, SHOWCASE/overlay rules, editing discipline, changelog.
+2. **`.cursor/rules/neo-tokyo-game-ui.mdc`** — mandatory visual/motion language (`alwaysApply`).
+3. **`.cursor/skills/portfoliov2-*`** — browser QA, gutters, terminal, GitHub, project memory when relevant.
+
+## Workflow
+
+1. Follow the user’s request and workspace rules precisely.
+2. Map the codebase first for non-trivial work: most UI lives in **`src/pages/Home.tsx`** (~7k+ lines). Extract to **`src/components/`** only when it reduces complexity without changing behavior.
+3. Plan briefly (bullets or short pseudocode), then **implement**. Ask only when requirements or trade-offs are unclear.
+4. **Minimize scope** — no drive-by refactors across unrelated `Home.tsx` sections.
+5. Finish the task — no TODOs or placeholders unless the user wants a draft.
+6. **Verify in browser** after layout/CSS on overlays, SHOWCASE, SKILLS, or FEATURED WRITING (`npm run dev` → `http://localhost:5173`).
+7. **Git:** commit or open PRs **only when the user asks**.
+
+## Product architecture
+
+| Piece | Location |
+|-------|----------|
+| Entry | `src/main.tsx` → `App.tsx` |
+| Single page | `src/pages/Home.tsx` — hero, command menu, snap slides, section overlays |
+| Global styles | `src/index.css` (Tailwind `@theme`, SKILLS/SHOWCASE CSS) |
+| Accent palette | `src/styles/portfolio-palette.css` |
+| Motion presets | `src/lib/motion.ts` — `EASE`, `DUR`, `SPRING`, `TAP`, `HOVER` |
+| Path aliases | `@/` → `src/`, `@assets/` → `attached_assets/` |
+
+**Routing:** In-app via **`navigateTo(id)`** and **`currentSection`** in `Home.tsx`. `App` renders `<Home />` only.
+
+### Command menu (`NAV_ITEMS`)
+
+| `id` | Label | Micro | Accent |
+|------|--------|-------|--------|
+| `profile` | PROFILE | OPEN | red soft mix |
+| `projects` | PROJECTS | VIEW | yellow-projects |
+| `experience` | EXPERIENCE | ENTER | blue |
+| `skills` | SKILLS | OPEN | green |
+| `social` | CONTACT | VIEW | orange |
+
+Panel edges: **`SECTION_ACCENT_COLOR`** — sync with **`portfolio-palette.css`**.
+
+**Projects:** `projects`, `projects-supporting`, `project-*` ids. Components in `Home.tsx`: `PalaceProjects`, `SupportingProjectsSection`, `ConfidantExperience`, `SkillArsenal`, `SocialLink`, `ShowcaseWritingFeaturedPanel`.
+
+### Snap vs overlay
+
+- **Snap slides:** `SLIDE` / `SLIDE_NO_Y_SCROLL` — full-viewport horizontal areas, `no-scrollbar`.
+- **Section overlay:** fixed `motion.div` (`inset-0`) — `overflow-y-auto` + hidden scrollbars; panel scroller for tall content.
+- **Grid:** `.portfolio-grid-overlay`; recess with `portfolio-grid-overlay--detail` when project detail is open.
+
+## SHOWCASE & PROJECTS
+
+### Tokens (`Home.tsx`)
+
+- **`DETAIL_CARD_H`** — `min(…px, …svh)` caps for carousel + FEATURED WRITING
+- **`SHOWCASE_COLUMN_MAX`** — `max-w-[min(100%,58rem)]`; left gutter aligns with PROFILE
+- **`SHOWCASE_TIME_DIV`** (currently `1.2`) — morph, detail text, rule-line, hero media timings
+- **Surfaces:** `project-card-surface`, `border-white/[0.09]`, `rounded-[11px] sm:rounded-xl`
+
+### Carousel & FLIP
+
+- Embla carousel; dots **`justify-end`** in **one** padding wrapper with viewport: `px-2 sm:px-4 lg:px-2 xl:px-3`
+- Nudge dots with `-translate-x-*` to align with **card borders**
+- FLIP open timings; respect **`useReducedMotion`**
+
+### FEATURED WRITING
+
+| Piece | Location |
+|-------|----------|
+| Tab strip | `src/components/ShowcaseAttachedTabStrip.tsx` |
+| PDF thumbs | `src/components/FeaturedWritingPdfThumbnail.tsx` (pdfjs, URL cache) |
+| Panel data | Near `ShowcaseWritingFeaturedPanel` in `Home.tsx` |
+| Layout anchor | `LAYOUT_ANCHOR_TAB_ID` = `tab-1`; `FEATURED_WRITING_PREVIEW_GUTTER_PX` = 8 |
+
+Do not clip folder footer with `overflow-hidden`. `PdfJsDocumentView` uses `no-scrollbar` on internal scroll.
+
+### Overflow (`AGENTS.md`)
+
+- `currentSection === "projects"`: inner wrapper **`overflow-y-visible`** so FEATURED WRITING reaches panel scroller
+- Avoid **`h-full`** chains that clip below carousel; prefer **`min-h-full`**
+- Bottom: `max(..., env(safe-area-inset-bottom))`
+
+## SKILLS (May 2026)
+
+### PROFILE gutter parity
+
+Desktop side gaps on `#profile` come from the **centered two-column row** (text + gap + mascot). **SKILLS** uses the same shell — reuse (do not duplicate widths):
+
+- `PROFILE_SECTION_CONTAINER`, `PROFILE_LAYOUT_ROW`, `PROFILE_LEFT_COLUMN`, `PROFILE_MASCOT_*`
+- **`PROFILE_VIEWPORT_CONTENT_MAX`**
+
+Reference: **`SkillArsenal`** in `Home.tsx`. Skill: `.cursor/skills/portfoliov2-profile-viewport-gutters/SKILL.md`.
+
+### SKILLS patterns
+
+- `SkillArsenal` — Core / Tools, subcategory cards, expanded subskills overlay
+- styled-components `UiverseCard` — StealthWorm corners (sharp TL/BR, rounded TR/BL)
+- CSS: `#skills` in `index.css` — `.skills-card-surface`, marquee walls, `.nav-header` parity with EXPERIENCE
+- Feature flags (toggle deliberately):
+  - `SKILLS_SHOW_INTRO_PAIR_CARDS` — currently **`false`**
+  - `SKILLS_SHOW_IDEA_GEAR_DECOR` — currently **`false`**
+- Do not run `scripts/strip-skills-animations.*` unless the user asks
+
+## Theming
+
+- Edit **`src/styles/portfolio-palette.css`** for site-wide accents
+- Tailwind `bg-portfolio-*` wired in `index.css` `@theme`
+- Soft accents: `PROFILE_ACCENT_SOFT`, `SKILLS_ACCENT_SOFT`, `PROJECTS_ACCENT_SOFT` via `color-mix`
+
+## Code guidelines
+
+**React & TypeScript**
+
+- Handlers: `handle*` prefix; prefer `const` arrows for callbacks
+- Match surrounding file (`function` vs `const` components)
+- Reuse `EASE` / `DUR` / `SPRING` from `src/lib/motion.ts` for new motion
+- `useReducedMotion()` where sections already do
+- Early returns for readability
+
+**Styling**
+
+- Primary: Tailwind `className`; `cn()` / `clsx` + `tailwind-merge` where used
+- Section CSS in `index.css` when utilities are insufficient
+- Keep styled-components in SKILLS/Uiverse patterns unless migration is in scope
+- No Svelte syntax (`class:`, `on:click`)
+
+**Accessibility**
+
+- Semantic HTML; Radix/shadcn for dialogs/menus
+- Icon-only controls: `aria-label`; keyboard + visible focus
+- EXPERIENCE/SKILLS: `.nav-header` / `.career-nav-section-*` patterns
+
+**Quality**
+
+- Readable over micro-optimized; DRY without tiny abstractions
+- Match file formatting (**semicolons** throughout)
+- `npx tsc --noEmit` may report Framer `ease` issues — does not block Vite build
+- No ESLint / no tests — manual browser verification per `AGENTS.md`
+
+**Environment**
+
+- `npm run dev` | `npm run build` | `npm run preview` | `npm run share` (localtunnel)
+- Node 22 often works; `@icons-pack/react-simple-icons` prefers ≥24
+- Replit plugins only when `REPL_ID` is set
+
+## Cursor skills
+
+| Skill | When |
+|-------|------|
+| `portfoliov2-repository-agent` | General repo, SHOWCASE |
+| `portfoliov2-profile-viewport-gutters` | PROFILE/SKILLS margin parity |
+| `portfoliov2-responsive-qa` | Breakpoints, overflow |
+| `portfoliov2-browser` | Post-change UI checks |
+| `portfoliov2-terminal` | dev/build failures |
+| `portfoliov2-github` | branches, PRs |
+| `portfoliov2-project-memory` | `AGENTS.md` changelog |
+
+## Conventional commits (only when user asks)
+
+`<type>[optional scope]: <description>` — imperative, no trailing period; body = what/why.
+
+Example: `feat(skills): align SkillArsenal shell with PROFILE_VIEWPORT_CONTENT_MAX`
+
+## Post-change verification
+
+- Section overlay scrolls; scrollbars hidden unless requested
+- FEATURED WRITING footer not clipped; PDF thumbs stable
+- SHOWCASE dots align with card borders
+- SKILLS desktop gutters match PROFILE row centering
+- `prefers-reduced-motion` paths usable
+- No new horizontal bleed on mobile
