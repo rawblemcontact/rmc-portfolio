@@ -450,7 +450,7 @@ const TOOL_ICONS: Record<
   "DaVinci Resolve": SiDavinciresolve,
   "CapCut": CapCutIcon,
   Audacity: AudacityIcon,
-  "Arc Studio - Screenwriting": ArcStudioIcon,
+  "Arc Studio": ArcStudioIcon,
   "Hootsuite": SiHootsuite,
   "TikTok Creator Tools": SiTiktok,
   "Instagram Reels": SiInstagram,
@@ -700,7 +700,6 @@ const scrollToId = (id: string, behavior: ScrollBehavior = "smooth") => {
 };
 
 const PROFILE_ACCENT_SOFT = "color-mix(in srgb, var(--palette-red) 56%, rgb(170 170 170))";
-const SKILLS_ACCENT_SOFT = "color-mix(in srgb, var(--palette-green) 56%, rgb(170 170 170))";
 const PROJECTS_ACCENT_SOFT = "color-mix(in srgb, var(--palette-yellow-projects) 48%, rgb(186 186 186))";
 
 const NAV_ITEMS: { id: string; label: string; icon: LucideIcon; color: string; sub: string; microLabel: string }[] = [
@@ -5025,7 +5024,7 @@ const SKILLS_MAJOR_CATEGORIES: {
     label: "TOOLKIT",
     panels: [
       { title: "DESIGN & PRODUCTIVITY", titleCase: "Design & Productivity", subtitle: "Toolkit", items: ["Microsoft Office 365", "Adobe Creative Suite", "Canva", "Procreate", "Cursor"] },
-      { title: "VIDEO & WRITING", titleCase: "Video & Writing", subtitle: "Production Tools", items: ["DaVinci Resolve", "CapCut", "Audacity", "Arc Studio - Screenwriting", "OBS Studio"] },
+      { title: "VIDEO & WRITING", titleCase: "Video & Writing", subtitle: "Production Tools", items: ["DaVinci Resolve", "CapCut", "Audacity", "Arc Studio", "OBS Studio"] },
       { title: "SOCIAL PLATFORMS", titleCase: "Social Platforms", subtitle: "Distribution Platforms", items: ["Hootsuite", "TikTok Creator Tools", "Instagram Reels", "YouTube Shorts", "Twitch"] },
     ],
   },
@@ -5310,7 +5309,7 @@ const SKILLS_DATA = {
   core: {
     title: "CORE COMPETENCIES",
     /** Paired subhead under rail title (matches #experience .career-nav-section-title). */
-    subtitle: "Skills Embodied",
+    subtitle: "SKILLS EMBODIED",
     categories: [
       {
         title: "Writing & Narrative",
@@ -5346,7 +5345,7 @@ const SKILLS_DATA = {
   },
   tools: {
     title: "TOOLKIT",
-    subtitle: "Skills Applied",
+    subtitle: "SKILLS APPLIED",
     categories: [
       {
         title: "Design & Productivity",
@@ -5360,7 +5359,7 @@ const SKILLS_DATA = {
       },
       {
         title: "Video & Writing",
-        items: ["DaVinci Resolve", "CapCut", "Audacity", "Arc Studio - Screenwriting", "OBS Studio"],
+        items: ["DaVinci Resolve", "CapCut", "Audacity", "Arc Studio", "OBS Studio"],
       },
       {
         title: "Social Platforms",
@@ -5417,8 +5416,6 @@ const SKILLS_HEADER_ENTER_DUR_S = skillsEntranceS(0.5);
 /** Main + CORE/TOOLKIT rail title slide — slightly longer, softer decel; delays unchanged. */
 const SKILLS_SECTION_HEADER_SLIDE_DUR_S = skillsEntranceS(0.5 * 1.12);
 const SKILLS_SECTION_HEADER_SLIDE_EASE = [0.12, 0.88, 0.26, 1] as const;
-/** Start SKILLS entrance this many seconds before the section panel wipe finishes. */
-const SKILLS_PANEL_ENTRANCE_LEAD_S = 0.08;
 /** Start PROJECTS entrance this many seconds before the section panel wipe finishes. */
 const PROJECTS_PANEL_ENTRANCE_LEAD_S = 0.06;
 /** PROJECTS header entrance duration (seconds). */
@@ -6373,7 +6370,7 @@ const SkillsSubskillsPanel = ({
                   {
                     title: "Video & Writing",
                     label: "Video & Writing",
-                    items: ["DaVinci Resolve", "CapCut", "Audacity", "Arc Studio - Screenwriting", "OBS Studio"],
+                    items: ["DaVinci Resolve", "CapCut", "Audacity", "Arc Studio", "OBS Studio"],
                   },
                   {
                     title: "Social Platforms",
@@ -6453,7 +6450,7 @@ const SKILLS_TOOLS_CATEGORIES = [
   },
   {
     title: "Video & Writing",
-    items: ["DaVinci Resolve", "CapCut", "Audacity", "Arc Studio - Screenwriting", "OBS Studio"],
+    items: ["DaVinci Resolve", "CapCut", "Audacity", "Arc Studio", "OBS Studio"],
   },
   {
     title: "Social Platforms",
@@ -6539,9 +6536,8 @@ const SkillsBranchRailHeader = ({
         </motion.div>
         <div className="skills-branch-accent-line relative min-h-[2px] w-full" aria-hidden>
           <motion.span
-            className="absolute bottom-0 left-0 right-0 h-[2px]"
+            className="absolute bottom-0 left-0 right-0 h-[2px] bg-portfolio-green"
             style={{
-              backgroundColor: SKILLS_ACCENT_SOFT,
               transformOrigin: align === "right" ? "right center" : "left center",
             }}
             initial={{ scaleX: rm ? 1 : 0 }}
@@ -7347,14 +7343,6 @@ export default function Home() {
           window.setTimeout(
             () => setProjectsEntranceArmed(true),
             Math.max(0, (PANEL_TRANSITION.duration - PROJECTS_PANEL_ENTRANCE_LEAD_S) * 1000),
-          ),
-        );
-      }
-      if (id === "skills") {
-        transitionTimeoutsRef.current.push(
-          window.setTimeout(
-            () => startTransition(() => setPanelSettled(true)),
-            Math.max(0, (PANEL_TRANSITION.duration - SKILLS_PANEL_ENTRANCE_LEAD_S) * 1000),
           ),
         );
       }
