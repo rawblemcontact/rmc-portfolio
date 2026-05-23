@@ -12,12 +12,21 @@ import {
 } from "framer-motion";
 import useEmblaCarousel from "embla-carousel-react";
 import type { EmblaCarouselType } from "embla-carousel";
-import React, { useEffect, useLayoutEffect, useState, useRef, useCallback, useMemo, startTransition } from "react";
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useState,
+  useRef,
+  useCallback,
+  useMemo,
+  startTransition,
+  type MutableRefObject,
+} from "react";
 import { createPortal } from "react-dom";
 import { Button } from "../components/ui/button";
 import { FillIcon } from "../components/FillIcon";
 import { UserFilledIcon } from "../components/icons/UserFilledIcon";
-import { DUR, EASE, HOVER, SPRING, TAP } from "../lib/motion";
+import { DUR, EASE, HOVER, SHOWCASE_PDF_PROJECTS_FADE_OUT_S, SIDE_NAV_OVERLAY_FADE_S, SPRING, TAP } from "../lib/motion";
 import { 
   Instagram, 
   Linkedin, 
@@ -40,11 +49,10 @@ import {
 } from "lucide-react";
 import styled from "styled-components";
 import { TiltCard } from "../components/TiltCard";
-import { WordsPullUp } from "../components/WordsPullUp";
 import { FloatingPhone } from "../components/FloatingPhone";
 import { ShowcaseAttachedTabStrip, type ShowcaseTabId } from "../components/ShowcaseAttachedTabStrip";
 import { FeaturedWritingPdfThumbnail } from "../components/FeaturedWritingPdfThumbnail";
-import { PdfJsDocumentView } from "../components/PdfJsDocumentView";
+import { SupportingPdfPreviewDialog } from "../components/SupportingPdfPreviewDialog";
 import {
   SiArc,
   SiBytedance,
@@ -269,7 +277,8 @@ function ArcStudioIcon({
   );
 }
 
-function FinalDraftIcon({
+/** Audacity — `currentColor` for `text-portfolio-green` in `ToolIcon`. */
+function AudacityIcon({
   size = 18,
   className,
 }: {
@@ -278,15 +287,16 @@ function FinalDraftIcon({
 }) {
   return (
     <svg
-      viewBox="0 0 264.99594 420.2551"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
       width={size}
       height={size}
       className={className}
-      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
     >
       <path
-        d="m 217.24593,12.567105 c 11.93,11.313 18.233,25.452 20.75,41.688 0.016,2.333 0.017,4.666 0,7 -16.189,3.22 -32.449,5.953 -48.744,8.574 -3.534,0.568 -7.067,1.144 -10.6,1.721 -2.756,0.45 -5.512,0.895 -8.269,1.338 -1.932,0.312 -3.862,0.628 -5.793,0.944 -1.173,0.188 -2.346,0.375 -3.555,0.568 -1.024,0.166 -2.049,0.331 -3.105,0.502 -3.007,0.361 -5.908,0.414 -8.934,0.353 0.165,-0.99 0.33,-1.981 0.5,-3 1.145,-9.431 2.25,-20.483 -2.5,-29 -4.087,-4.087 -7.815,-4.915 -13.312,-5.75 -1.111,-0.188 -1.111,-0.188 -2.245,-0.379 -1.812,-0.304 -2.98825,-0.09319 -4.59133,0.477474 -1.46762,1.145028 -1.87164,1.51036 -2.36064,2.76436 -0.266,0.684 -0.46203,0.943166 -0.73703,1.648166 -1.636,4.857 -1.942,9.436 -2.004,14.551 -0.026,1.254 -0.052,2.509 -0.078,3.801 0.502,13.043 4.48,25.625 8.64,37.887 0.26,0.772 0.519,1.545 0.787,2.341005 5.128,15.211 11.307,29.825 17.971,44.415 3.258,7.143 6.422,14.329 9.603,21.506 1.056,2.377 2.114,4.752 3.174,7.126 0.329,0.739 0.658,1.477 0.998,2.238 0.615,1.379 1.23,2.757 1.846,4.135 1.51,3.387 2.942,6.792 4.309,10.239 8.904,0.997 17.781,1.21 26.73,1.316 1.487,0.021 2.973,0.042 4.46,0.063 3.874,0.055 7.749,0.104 11.624,0.153 3.969,0.05 7.938,0.106 11.907,0.161 7.759,0.107 15.519,0.208 23.279,0.307 0.31934,7.05515 0.20456,4.48169 1,20 -0.832,0.015 -0.832,0.015 -1.681,0.031 -5.891,0.11 -11.782,0.224 -17.673,0.341 -2.185,0.043 -4.369,0.084 -6.554,0.125 -14.38,0.268 -28.73,0.731 -43.092,1.503 0.558,1.378 0.558,1.378 1.126,2.784 44.616,110.4 44.616,110.4 31.624,143.34 -4.543,10.156 -10.51,18.463 -17.75,26.876 -0.7,0.835 -1.4,1.67 -2.121,2.531 -13.151,15.25 -30.703,28.368 -51.356,30.469 -4.68,-10e-4 -8.858,-1.555 -13.25,-3.051 -1.014,-0.33 -2.029,-0.66 -3.074,-1 -3.28,-1.071 -6.552,-2.166 -9.824,-3.262 -2.251,-0.741 -4.502,-1.48 -6.754,-2.217 -4.467,-1.465 -8.932,-2.939 -13.395,-4.419 -5.446,-1.802 -10.906,-3.554 -16.378,-5.274 -1.461,-0.461 -2.922,-0.922 -4.383,-1.384 -1.997,-0.63 -3.995,-1.258 -5.995,-1.881 -1.785,-0.557 -3.567,-1.124 -5.349,-1.692 -0.975,-0.307 -1.95,-0.613 -2.955,-0.929 -2.166,-0.891 -2.166,-0.891 -3.166,-2.891 1.16,-0.292 2.32,-0.583 3.516,-0.883 27.341,-7.076 49.124,-24.459 63.73,-48.735 5.484,-9.876 5.962,-17.46 3.102,-28.359 -0.745,-2.557 -1.504,-5.104 -2.286,-7.649 l -1.239,-4.134 c -8.969,-29.671 -21.189,-57.982 -33.823,-86.24 -7.452,-0.267 -14.905,-0.528 -22.358,-0.783 -3.464,-0.118 -6.928,-0.238 -10.392,-0.363 -19.094,-0.685 -37.07493,-1.14844 -56.18293032,-1.00644 -0.33,-1.651 0.74388,-21.92378 0.74388,-21.92378 1.40439002,-1.1219 2.28202002,-1.05378 5.57602002,-1.03778 h 2.306 c 2.5220003,0 5.0430003,0.008 7.5650003,0.016 1.746,0.002 3.492,0.003 5.238,0.004 4.599,0.004 9.199,0.014 13.799,0.025 4.692,0.01 9.384,0.015 14.076,0.02 9.21,0.01 18.419,0.027 27.629,0.049 -0.447,-0.944 -0.894,-1.887 -1.355,-2.859 -1.698,-3.585 -3.392,-7.171 -5.086,-10.758 -0.726,-1.536 -1.453,-3.072 -2.181,-4.608 -21.456,-45.268 -21.456,-45.268 -25.378,-63.775 -0.156,-0.725 -0.313,-1.45 -0.474,-2.197 -2.169,-10.570005 -2.836,-21.089005 -2.964,-31.866005 -0.022,-1.117 -0.044,-2.235 -0.067,-3.386 0.032,-11.573 3.292,-21.234 11.505,-29.551 26.614,-23.368 64.307,-30.283 97.812,-37.9379997 1.287,-0.295 2.574,-0.589 3.899,-0.893 22.03203,-4.915 46.39003,-6.548 64.53903,9.1429997 z"
         fill="currentColor"
+        d="M12 2.145c-2.487 0-4.755.776-6.428 2.08-1.673 1.303-2.76 3.169-2.76 5.244v.75C1.153 11.06 0 13.268 0 15.856c0 3.312 1.884 6 4.312 6V9.468c0-1.554.805-2.984 2.186-4.06C7.879 4.331 9.829 3.643 12 3.643c2.17 0 4.12.688 5.502 1.764 1.38 1.077 2.186 2.507 2.186 4.06v12.387c2.428 0 4.312-2.687 4.312-6 0-2.587-1.152-4.795-2.813-5.636v-.75c0-2.075-1.086-3.94-2.76-5.244-1.672-1.304-3.94-2.08-6.427-2.08zm0 6.153l-1.125 8.683L9.75 9.105l-.562 6.75-.376-.75-.375-4.5-.187 4.5-.563 1.313-.374-4.5-.376 3.562-.562-.937v2.625l-.563-2.11v-4.64a1.432 1.432 0 0 0-.937-.375v11.812c.375 0 .75-.187.937-.562v-3.375l.188.187.563 1.875.187-2.25.563 2.813v-3.562l.374.937.563 2.625v-3.562l.375.374.563 3.188.562-4.313 1.24 4.86.072-2.985.375-1.124.376 4.687 1.124-4.687.375 3.937.938-4.125.938 4.5.187-3.375.562-1.125.188 4.313.938-4.125.562 1.875.188-1.688.374.75v3.375c.188.375.563.562.938.562V10.043c-.375 0-.75.188-.938.375v4.813l-.374 1-.188-3.188-.375 2.437-.375-.75-.188-2.625-.937 3.563-.188-.75L15 9.293l-.562 4.875-.376 1.5-.75-5.062-.75 4.312-.375 1.125Z"
       />
     </svg>
   );
@@ -439,8 +449,8 @@ const TOOL_ICONS: Record<
   "Procreate": ProcreateIcon,
   "DaVinci Resolve": SiDavinciresolve,
   "CapCut": CapCutIcon,
-  "Final Draft": FinalDraftIcon,
-  "Arc Studio": ArcStudioIcon,
+  Audacity: AudacityIcon,
+  "Arc Studio - Screenwriting": ArcStudioIcon,
   "Hootsuite": SiHootsuite,
   "TikTok Creator Tools": SiTiktok,
   "Instagram Reels": SiInstagram,
@@ -711,6 +721,7 @@ const SECTION_ACCENT_COLOR: Record<string, string> = {
   "project-portfolio": PROJECTS_ACCENT_SOFT,
   "project-undertale-proposal": PROJECTS_ACCENT_SOFT,
   "project-8bit-bumpers": PROJECTS_ACCENT_SOFT,
+  "project-illustrations": PROJECTS_ACCENT_SOFT,
   "projects-supporting": PROJECTS_ACCENT_SOFT,
   experience: "var(--palette-blue)",
   social: "var(--palette-orange)",
@@ -816,6 +827,7 @@ const SectionHeader = ({
   slideFade = false,
   slideFadeDuration,
   slideFadeDelay = 0,
+  slideFadeActive,
   titleTrigger = "viewport",
   titleClassName,
   subtitleClassName,
@@ -844,6 +856,8 @@ const SectionHeader = ({
   slideFadeDuration?: number;
   /** Delay before slideFade starts (seconds). */
   slideFadeDelay?: number;
+  /** When set, slideFade is driven by this flag instead of whileInView (single trigger, no viewport flicker). */
+  slideFadeActive?: boolean;
   /** "mount" = animate once on mount only (no viewport); "viewport" = animate when in view. Use mount to prevent layout shift. */
   titleTrigger?: "mount" | "viewport";
   /** Extra classes for the title heading (e.g. xl/2xl scale). */
@@ -908,13 +922,35 @@ const SectionHeader = ({
   );
 
   if (slideFade) {
+    const slideTransition = {
+      duration: slideFadeDuration ?? 0.4,
+      ease: EASE.out,
+    };
+    if (slideFadeActive !== undefined) {
+      return (
+        <motion.div
+          className={baseClass}
+          initial={false}
+          animate={{
+            y: slideFadeActive ? 0 : 14,
+            opacity: slideFadeActive ? 1 : 0,
+          }}
+          transition={{
+            ...slideTransition,
+            delay: slideFadeActive ? slideFadeDelay : 0,
+          }}
+        >
+          {content}
+        </motion.div>
+      );
+    }
     return (
       <motion.div
         className={baseClass}
         initial={{ y: 14, opacity: 0 }}
         whileInView={{ y: 0, opacity: 1 }}
         viewport={{ once: viewportOnce, amount: 0.2 }}
-        transition={{ duration: slideFadeDuration ?? 0.4, delay: slideFadeDelay, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ ...slideTransition, delay: slideFadeDelay }}
       >
         {content}
       </motion.div>
@@ -1506,25 +1542,64 @@ const Hero = ({
 
 const RainbowMenuSlide = ({
   active,
+  introReady,
+  sectionPanelClosed,
   onNavigate,
   lockedFillId,
 }: {
   active: boolean;
+  introReady: boolean;
+  sectionPanelClosed: boolean;
   onNavigate: (id: string) => void;
   lockedFillId: string | null;
 }) => {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const [playLabels, setPlayLabels] = useState(false);
+  const [pressedNavId, setPressedNavId] = useState<string | null>(null);
+  const pressedNavClearTimerRef = useRef<number | null>(null);
   const menuGridDriftDelay = useGridDriftAnimationDelay();
+  const mainMenuDividerDelayS = PROFILE_TITLE_DELAY_S;
+  const mainMenuDividerDurS = SKILLS_SECTION_HEADER_SLIDE_DUR_S * 1.15;
+  const mainMenuDividerHoldS = SKILLS_STAGGER * 2;
+  const mainMenuIconFadeDurS = 0.8;
+  const mainMenuIconFadeDelayS = Math.max(0, mainMenuDividerDelayS - mainMenuIconFadeDurS - 0.02);
+  const mainMenuItemsStartDelayS = mainMenuDividerDelayS + mainMenuDividerDurS + mainMenuDividerHoldS;
+  const mainMenuNavDelayS = mainMenuItemsStartDelayS;
+  const mainMenuTitleDelayS = mainMenuItemsStartDelayS + SKILLS_STAGGER;
+  const mainMenuIndexDelayBaseS = mainMenuItemsStartDelayS + SKILLS_STAGGER * 2;
+  const mainMenuLabelDelayBaseS = mainMenuIndexDelayBaseS + NAV_ITEMS.length * SKILLS_STAGGER;
+  const menuTimelineActive = active && introReady;
 
   useEffect(() => {
     if (!active) {
-      setPlayLabels(false);
+      setPressedNavId(null);
       return;
     }
-    const t = window.setTimeout(() => setPlayLabels(true), 140);
-    return () => window.clearTimeout(t);
-  }, [active]);
+    if (sectionPanelClosed) {
+      return;
+    }
+    if (pressedNavClearTimerRef.current !== null) {
+      window.clearTimeout(pressedNavClearTimerRef.current);
+    }
+    pressedNavClearTimerRef.current = window.setTimeout(() => {
+      setPressedNavId(null);
+      pressedNavClearTimerRef.current = null;
+    }, Math.round(PANEL_TRANSITION.duration * 1000) + 48);
+    return () => {
+      if (pressedNavClearTimerRef.current !== null) {
+        window.clearTimeout(pressedNavClearTimerRef.current);
+        pressedNavClearTimerRef.current = null;
+      }
+    };
+  }, [active, sectionPanelClosed]);
+
+  useEffect(
+    () => () => {
+      if (pressedNavClearTimerRef.current !== null) {
+        window.clearTimeout(pressedNavClearTimerRef.current);
+      }
+    },
+    [],
+  );
 
   return (
     <section
@@ -1539,8 +1614,30 @@ const RainbowMenuSlide = ({
       <div className="relative z-10 w-full max-w-4xl">
         <div className="flex items-end justify-between gap-6 mb-10">
           <div>
-            <p className="font-heading text-sm tracking-eyebrow-tight leading-snug uppercase text-mono-2/90 mb-1.5">NAVIGATION</p>
-            <h2 className="font-display text-5xl md:text-7xl leading-[0.95] tracking-[-0.02em] uppercase">MENU</h2>
+            <motion.p
+              className="font-heading text-sm tracking-eyebrow-tight leading-snug uppercase text-mono-2/90 mb-1.5 -ml-[0.12em]"
+              initial={false}
+              animate={{ opacity: menuTimelineActive ? 1 : 0, x: menuTimelineActive ? 0 : -28 }}
+              transition={{
+                duration: SKILLS_SECTION_HEADER_SLIDE_DUR_S,
+                delay: mainMenuNavDelayS,
+                ease: SKILLS_SECTION_HEADER_SLIDE_EASE,
+              }}
+            >
+              NAVIGATION
+            </motion.p>
+            <motion.h2
+              className="font-display text-5xl md:text-7xl leading-[0.95] tracking-[-0.02em] uppercase -ml-[0.07em] md:-ml-[0.08em]"
+              initial={false}
+              animate={{ opacity: menuTimelineActive ? 1 : 0, x: menuTimelineActive ? 0 : -28 }}
+              transition={{
+                duration: SKILLS_SECTION_HEADER_SLIDE_DUR_S,
+                delay: mainMenuTitleDelayS,
+                ease: SKILLS_SECTION_HEADER_SLIDE_EASE,
+              }}
+            >
+              MENU
+            </motion.h2>
           </div>
         </div>
 
@@ -1549,42 +1646,89 @@ const RainbowMenuSlide = ({
             <motion.button
               key={item.id}
               type="button"
-              onClick={() => onNavigate(item.id)}
+              onClick={() => {
+                setPressedNavId(item.id);
+                onNavigate(item.id);
+              }}
               onHoverStart={() => setHoveredId(item.id)}
               onHoverEnd={() => setHoveredId(null)}
               onFocus={() => setHoveredId(item.id)}
               onBlur={() => setHoveredId(null)}
-              className="group relative w-full text-left py-4 md:py-4 border-b border-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black focus-visible:ring-inset"
-              whileTap={TAP}
+              className="group relative w-full text-left py-4 md:py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black focus-visible:ring-inset"
+              whileTap={{ opacity: 0.92 }}
               transition={SPRING.ui}
             >
               <div className="flex items-center justify-between w-full">
                 <div className="flex items-center min-w-0 flex-1">
-                  <span className="font-mono text-xs text-mono-2/70 tabular-nums w-8 md:w-10 shrink-0">
-                    {String(idx + 1).padStart(2, "0")}
-                  </span>
-                  <FillIcon
-                    icon={item.icon}
-                    filledIcon={item.id === "profile" ? UserFilledIcon : undefined}
-                    forceFilled={lockedFillId === item.id || hoveredId === item.id}
-                    className="w-5 h-5 md:w-6 md:h-6 text-white shrink-0 ml-3 md:ml-4"
-                    strokeWidth={1.5}
-                  />
                   <motion.span
-                    className="font-display text-lg md:text-xl tracking-eyebrow-tight leading-snug uppercase text-white pl-3 md:pl-4 block"
-                    animate={{ x: hoveredId === item.id ? 6 : 0 }}
-                    transition={CMD_HOVER}
+                    className="font-mono text-xs text-mono-2/70 tabular-nums w-8 md:w-10 shrink-0"
+                    initial={false}
+                    animate={{
+                      opacity: menuTimelineActive ? 1 : 0,
+                      x: menuTimelineActive ? 0 : -28,
+                    }}
+                    transition={{
+                      duration: SKILLS_SECTION_HEADER_SLIDE_DUR_S,
+                      delay: mainMenuIndexDelayBaseS + idx * SKILLS_STAGGER,
+                      ease: SKILLS_SECTION_HEADER_SLIDE_EASE,
+                    }}
                   >
-                    <WordsPullUp
-                      text={item.label}
-                      stagger={0.03}
-                      delay={0.05}
-                      y={12}
-                      play={playLabels}
+                    {String(idx + 1).padStart(2, "0")}
+                  </motion.span>
+                  <motion.span
+                    className="ml-3 shrink-0 md:ml-4 inline-flex items-center"
+                    initial={false}
+                    animate={{
+                      opacity: menuTimelineActive ? 1 : 0,
+                    }}
+                    transition={{
+                      duration: mainMenuIconFadeDurS,
+                      delay: mainMenuIconFadeDelayS,
+                      ease: EASE.out,
+                    }}
+                  >
+                    <FillIcon
+                      icon={item.icon}
+                      filledIcon={item.id === "profile" ? UserFilledIcon : undefined}
+                      forceFilled={lockedFillId === item.id || hoveredId === item.id}
+                      className="w-5 h-5 md:w-6 md:h-6 text-white"
+                      strokeWidth={1.5}
                     />
+                  </motion.span>
+                  <motion.span
+                    className="font-display text-lg md:text-xl tracking-[0em] leading-snug uppercase text-white pl-3 md:pl-4 block"
+                    initial={false}
+                    animate={{
+                      opacity: menuTimelineActive ? 1 : 0,
+                      x: menuTimelineActive ? 0 : -28,
+                    }}
+                    transition={{
+                      duration: SKILLS_SECTION_HEADER_SLIDE_DUR_S,
+                      delay: mainMenuLabelDelayBaseS + idx * SKILLS_STAGGER,
+                      ease: SKILLS_SECTION_HEADER_SLIDE_EASE,
+                    }}
+                  >
+                    <motion.span
+                      className="block"
+                      animate={{ x: hoveredId === item.id || pressedNavId === item.id ? 6 : 0 }}
+                      transition={CMD_HOVER}
+                    >
+                      {item.label}
+                    </motion.span>
                   </motion.span>
                 </div>
               </div>
+              <motion.span
+                aria-hidden
+                className="absolute bottom-0 left-0 right-0 h-px origin-left bg-white/10"
+                initial={false}
+                animate={{ scaleX: menuTimelineActive ? 1 : 0 }}
+                transition={{
+                  duration: mainMenuDividerDurS,
+                  delay: mainMenuDividerDelayS,
+                  ease: SKILLS_SECTION_HEADER_SLIDE_EASE,
+                }}
+              />
               <motion.span
                 aria-hidden
                 className={`absolute bottom-0 left-0 right-0 h-[2px] origin-left ${item.color}`}
@@ -1631,7 +1775,7 @@ const SideNavOverlay = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
+          transition={{ duration: SIDE_NAV_OVERLAY_FADE_S }}
           onClick={onClose}
         >
           <SideNavGridBackdrop />
@@ -1651,10 +1795,12 @@ const SideNavOverlay = ({
           >
             <div className="flex items-center justify-between mb-6">
               <div className="flex flex-col gap-y-1.5">
-                <p className="font-heading text-[9px] sm:text-[10px] tracking-eyebrow-tight leading-snug uppercase text-mono-2/90">
+                <p className="font-heading text-[9px] sm:text-[10px] tracking-eyebrow-tight leading-snug uppercase text-mono-2/90 -ml-[0.12em]">
                   NAVIGATION
                 </p>
-                <p className="font-display text-3xl sm:text-4xl leading-[0.95] tracking-[-0.02em] uppercase">MENU</p>
+                <p className="font-display text-3xl sm:text-4xl leading-[0.95] tracking-[-0.02em] uppercase -ml-[0.06em]">
+                  MENU
+                </p>
               </div>
               <motion.div whileTap={TAP} transition={SPRING.ui}>
                 <Button
@@ -1698,17 +1844,11 @@ const SideNavOverlay = ({
                         strokeWidth={1.5}
                       />
                       <motion.span
-                        className="font-display text-sm sm:text-base tracking-eyebrow-tight leading-snug uppercase text-white pl-2 sm:pl-3 block"
+                        className="font-display text-sm sm:text-base tracking-[0em] leading-snug uppercase text-white pl-2 sm:pl-3 block"
                         animate={{ x: hoveredId === item.id ? 6 : 0 }}
                         transition={CMD_HOVER}
                       >
-                        <WordsPullUp
-                          text={item.label}
-                          stagger={0.03}
-                          delay={0.05}
-                          y={12}
-                          play={open}
-                        />
+                        {item.label}
                       </motion.span>
                     </div>
                   </div>
@@ -1827,6 +1967,9 @@ const PROFILE_HERO_ENTER_S = 0.52;
 const PROFILE_LINE_DURATION_S = RED_LINE_DURATION_MS / 1000;
 /** Vertical air around metadata pill (red rule → pill → summary card). */
 const PROFILE_METADATA_PILL_GAP = "mt-6 sm:mt-7";
+/** Shared width + left nudge for PROFILE red rule and card stack (pill + summary). */
+const PROFILE_CARD_COLUMN =
+  "min-w-0 w-full max-w-xl xl:max-w-2xl 2xl:max-w-2xl -ml-[3px]";
 /** Metadata pill + in-card section labels (SUMMARY, etc.) — paired with `#profile` CSS. */
 const PROFILE_CARD_INLINE_LABEL_CLASS =
   "profile-card-inline-label font-heading w-full min-w-0 max-w-full text-balance leading-snug uppercase";
@@ -1840,7 +1983,16 @@ const PhantomProfile = () => {
   const rawblemInView = useInView(rawblemRef, { once: false, amount: 0.2 });
   const [overlayRevealed, setOverlayRevealed] = useState(false);
   const [rawblemFloatReady, setRawblemFloatReady] = useState(false);
+  const [profileHeaderSlide, setProfileHeaderSlide] = useState(false);
   const prevProfileInView = useRef(false);
+
+  useLayoutEffect(() => {
+    const armId = requestAnimationFrame(() => setProfileHeaderSlide(true));
+    return () => {
+      cancelAnimationFrame(armId);
+      setProfileHeaderSlide(false);
+    };
+  }, []);
 
   useEffect(() => {
     if (!rawblemInView) setRawblemFloatReady(false);
@@ -1891,36 +2043,27 @@ const PhantomProfile = () => {
             </div>
           </motion.div>
 
-          <motion.div
-            ref={profileLeftRef}
-            initial={{ opacity: 0, y: 30, x: 0 }}
-            whileInView={{ opacity: 1, y: 0, x: 0 }}
-            viewport={{ once: false, amount: 0.2 }}
-            transition={{ duration: 0.342, ease: [0.16, 1, 0.3, 1] }}
-            className={PROFILE_LEFT_COLUMN}
-          >
+          <div ref={profileLeftRef} className={PROFILE_LEFT_COLUMN}>
              <SectionHeader
-               key={profileLeftInView ? "profile-in" : "profile-out"}
                title="PROFILE"
                color="text-white"
                showBar={false}
                compact
                className="!mb-5 max-lg:mt-0 lg:mt-0 -ml-[3px]"
-               titleDelay={0.152}
-               titleDuration={0.342}
-               titleStagger={0.0216}
-               viewportOnce={false}
                slideFade
                slideFadeDuration={0.5}
                slideFadeDelay={0.3}
+               slideFadeActive={profileHeaderSlide}
+               titleStatic
              />
+            <div className={PROFILE_CARD_COLUMN}>
              <div
                ref={dividerRef}
-               className="relative w-full max-w-xl xl:max-w-2xl 2xl:max-w-2xl mt-1 min-h-[2px] -ml-[3px]"
+               className="relative mt-1 min-h-[2px] w-full overflow-hidden"
              >
                <motion.span
                  aria-hidden
-                className="absolute bottom-0 left-0 right-0 h-[2px] origin-left"
+                className="absolute bottom-0 left-0.5 right-0 h-[2px] origin-left"
                 style={{ backgroundColor: PROFILE_ACCENT_SOFT }}
                  initial={false}
                  animate={{ scaleX: dividerInView ? 1 : 0 }}
@@ -1928,7 +2071,7 @@ const PhantomProfile = () => {
                />
             </div>
             <motion.div
-              className={`profile-card-surface relative ${PROFILE_METADATA_PILL_GAP} block w-[calc(100%+0.5rem)] min-w-0 max-w-xl xl:max-w-2xl 2xl:max-w-2xl -ml-[calc(3px+0.25rem)] pe-[max(0.75rem,env(safe-area-inset-right,0px))] sm:pe-4 rounded-[0_0.85rem] px-3 py-2 sm:px-4 sm:py-2.5`}
+              className={`profile-card-surface relative ${PROFILE_METADATA_PILL_GAP} block w-full pe-[max(0.75rem,env(safe-area-inset-right,0px))] sm:pe-4 rounded-[0_0.85rem] px-3 py-2 sm:px-4 sm:py-2.5`}
               initial={{ x: -24, opacity: 0 }}
               animate={{ x: overlayRevealed ? 0 : -24, opacity: overlayRevealed ? 1 : 0 }}
               transition={{ duration: BUTTON_FADE_DURATION_MS / 1000, delay: overlayRevealed ? BUTTONS_DELAY_AFTER_SUMMARY_MS / 1000 : 0, ease: [0.16, 1, 0.3, 1] }}
@@ -1941,7 +2084,7 @@ const PhantomProfile = () => {
               </p>
             </motion.div>
             <motion.div
-              className={`profile-card-surface relative ${PROFILE_METADATA_PILL_GAP} max-w-xl xl:max-w-2xl 2xl:max-w-2xl -ml-[3px] rounded-[0_1rem] px-4 py-4 sm:px-5 sm:py-5`}
+              className={`profile-card-surface relative ${PROFILE_METADATA_PILL_GAP} w-full rounded-[0_1rem] px-4 py-4 sm:px-5 sm:py-5`}
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: overlayRevealed ? 1 : 0, y: overlayRevealed ? 0 : 14 }}
               transition={{ duration: SUMMARY_DURATION_S, delay: overlayRevealed ? SUMMARY_DELAY_S : 0, ease: [0.16, 1, 0.3, 1] }}
@@ -1962,7 +2105,8 @@ const PhantomProfile = () => {
                 <li>Full-Time Content, Communications, or Digital Media roles.</li>
               </ul>
             </motion.div>
-          </motion.div>
+            </div>
+          </div>
         </motion.div>
       </motion.div>
     </section>
@@ -2088,6 +2232,11 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     detailTools: ["CapCut", "DaVinci Resolve"],
     detailImpact: "Sharper retention in the first seconds; clearer punchlines and readable on-screen text.",
   },
+  {
+    id: "project-illustrations",
+    title: "ILLUSTRATIONS",
+    tagline: "Procreate, Clip Studio Paint, Photoshop.",
+  },
 ];
 
 const cardEase = [0.25, 0.46, 0.45, 0.94] as const;
@@ -2096,12 +2245,15 @@ type SupportingArchivePdfItem = {
   id: string;
   title: string;
   subtitle: string;
-  href: string;
+  /** Omit or leave blank to open the in-app PDF reader with no document. */
+  href?: string;
   /** Short blurb for FEATURED WRITING showcase (optional). */
   description?: string;
   /** Optional display ordering label (e.g. screenplay numbering). */
   index?: string;
 };
+
+const supportingPdfHref = (item: SupportingArchivePdfItem) => item.href?.trim() ?? "";
 
 /** Creative nonfiction PDFs ? `client/public/cnf/`. */
 const SUPPORTING_ARCHIVE_PDF_ITEMS: SupportingArchivePdfItem[] = [
@@ -2198,36 +2350,51 @@ const SUPPORTING_ARCHIVE_PDF_SECTIONS: { heading: string; items: SupportingArchi
   { heading: "Short graphic novels ? PDF", items: SHORT_GRAPHIC_NOVEL_PDF_ITEMS },
 ];
 
-/** Featured PDF per FEATURED WRITING tab (order matches tab strip). */
-const SHOWCASE_WRITING_TAB_FEATURED: Record<ShowcaseTabId, SupportingArchivePdfItem> = {
-  "tab-1": SUPPORTING_ARCHIVE_PDF_ITEMS.find((x) => x.id === "cnf-article")!,
-  "tab-2": SCREENPLAY_PDF_ITEMS.find((x) => x.id === "screenplay-audience-of-one")!,
-  "tab-3": SHORT_GRAPHIC_NOVEL_PDF_ITEMS.find((x) => x.id === "sgn-blossom-ink-bw")!,
-  "tab-4": SUPPORTING_ARCHIVE_PDF_ITEMS.find((x) => x.id === "cnf-critical-essay")!,
-  "tab-5": SUPPORTING_ARCHIVE_PDF_ITEMS.find((x) => x.id === "cnf-media-literary")!,
-  "tab-6": {
+/**
+ * FEATURED WRITING ? VIEW loader PDFs (tab order: Content Writing ? Narrative Essay).
+ * Files live in `public/cnf/`, `public/screenplays/`, `public/short-graphic-novels/`.
+ */
+const SHOWCASE_WRITING_TAB_FEATURED_ORDER = [
+  SUPPORTING_ARCHIVE_PDF_ITEMS.find((x) => x.id === "cnf-article")!,
+  SCREENPLAY_PDF_ITEMS.find((x) => x.id === "screenplay-audience-of-one")!,
+  SHORT_GRAPHIC_NOVEL_PDF_ITEMS.find((x) => x.id === "sgn-blossom-ink-bw")!,
+  SUPPORTING_ARCHIVE_PDF_ITEMS.find((x) => x.id === "cnf-critical-essay")!,
+  SUPPORTING_ARCHIVE_PDF_ITEMS.find((x) => x.id === "cnf-media-literary")!,
+  {
     ...SUPPORTING_ARCHIVE_PDF_ITEMS.find((x) => x.id === "cnf-memoir")!,
     title: "CREATIVE NONFICTION",
   },
+] as const satisfies readonly SupportingArchivePdfItem[];
+
+const SHOWCASE_WRITING_TAB_FEATURED: Record<ShowcaseTabId, SupportingArchivePdfItem> = {
+  "tab-1": SHOWCASE_WRITING_TAB_FEATURED_ORDER[0],
+  "tab-2": SHOWCASE_WRITING_TAB_FEATURED_ORDER[1],
+  "tab-3": SHOWCASE_WRITING_TAB_FEATURED_ORDER[2],
+  "tab-4": SHOWCASE_WRITING_TAB_FEATURED_ORDER[3],
+  "tab-5": SHOWCASE_WRITING_TAB_FEATURED_ORDER[4],
+  "tab-6": SHOWCASE_WRITING_TAB_FEATURED_ORDER[5],
 };
 
 const archiveRowIndexLabel = (rowIndex: number) => String(rowIndex + 1).padStart(2, "0");
 
+const PROJECT_MEDIA_WARMUP_DELAY_MS = 20;
+
 /** Showcase carousel parallax tween (same idea as Embla ?Predefined ? Parallax?). */
 const PROJECT_CAROUSEL_TWEEN_FACTOR_BASE = 0.52;
-const PROJECT_MEDIA_WARMUP_DELAY_MS = 20;
 
 /** Divide showcase + card?detail durations by this for a uniform speed-up (1.2 ? 20% faster). */
 const SHOWCASE_TIME_DIV = 1.2;
 const PROJECT_CARD_AUTOPLAY_DELAY_MS = Math.round(360 / SHOWCASE_TIME_DIV);
+/** Showcase carousel: advance one snap after entrance; interval between advances. */
+const PROJECT_CAROUSEL_AUTO_ADVANCE_MS = 2500;
+const PROJECTS_CAROUSEL_ENTRANCE_FADE_S = 0.34;
 const ENABLE_PROJECT_CARD_VIDEO_AUTOPLAY = false;
-const SHOWCASE_GATE_S = 0.02 / SHOWCASE_TIME_DIV;
-const SHOWCASE_STAGGER_S = 0.09 / SHOWCASE_TIME_DIV;
-const SHOWCASE_CHILD_DUR_S = 0.34 / SHOWCASE_TIME_DIV;
 const SHOWCASE_EASE = [0.16, 1, 0.3, 1] as const;
-const SHOWCASE_FADE_TOTAL_MS = Math.round((SHOWCASE_GATE_S + SHOWCASE_STAGGER_S + SHOWCASE_CHILD_DUR_S) * 1000);
 /** Fade when swapping SHOWCASE carousel ? Supporting & archive in place */
 const SHOWCASE_SUBROUTE_FADE_S = DUR.fast;
+/** FEATURED WRITING PDF dismiss on PROJECTS — matches side-nav overlay. */
+const SHOWCASE_PDF_OVERLAY_CLOSE_S = SIDE_NAV_OVERLAY_FADE_S;
+const SHOWCASE_PDF_OVERLAY_OPEN_S = 0.175;
 /** FLIP morph: carousel card ? detail hero (ease matches SHOWCASE_EASE for one continuous feel). */
 const SHOWCASE_CARD_MORPH_DUR_S = 0.36 / SHOWCASE_TIME_DIV;
 /** Carousel chrome fades while the flying card moves ? slightly shorter than morph so the handoff reads clean. */
@@ -2268,7 +2435,7 @@ const SECTION_MAIN_HEADER_TITLE_CLASS =
   "mt-1 sm:mt-1.5 !mb-2 sm:!mb-2.5 md:!mb-3 w-full shrink-0";
 /** SKILLS main title — line gap via `.skills-main-header-chrome` in `index.css`. */
 const SECTION_SKILLS_MAIN_HEADER_TITLE_CLASS =
-  "skills-main-header-chrome mt-1 sm:mt-1.5 w-full shrink-0";
+  "skills-main-header-chrome mt-1 sm:mt-1.5 shrink-0";
 /** `#profile` shell — container + centered row (left column + gap + mascot). */
 const PROFILE_SECTION_CONTAINER = "container mx-auto px-4 sm:px-6 relative z-20";
 const PROFILE_LAYOUT_ROW =
@@ -2283,80 +2450,23 @@ const PROFILE_MASCOT_FRAME =
 const PROFILE_VIEWPORT_CONTENT_MAX =
   "w-full min-w-0 mx-auto lg:max-w-[min(100%,calc(38rem+5rem+300px))] xl:max-w-[min(100%,calc(40rem+9rem+312px))] 2xl:max-w-[min(100%,calc(44rem+min(14rem,12vw)+348px))]";
 /** `#projects` — same L/R viewport gutters as #profile (portfoliov2-profile-viewport-gutters). */
-const PROJECTS_VIEWPORT_SHELL = `${PROFILE_VIEWPORT_CONTENT_MAX} relative z-[1] flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-x-hidden self-center`;
+const PROJECTS_VIEWPORT_SHELL = `${PROFILE_VIEWPORT_CONTENT_MAX} relative z-[1] flex min-h-0 w-full min-w-0 flex-1 flex-col self-center`;
 const SECTION_CONTAINER_GUTTER =
   "container relative z-10 mx-auto w-full min-w-0 max-w-full px-4 sm:px-6";
-const SHOWCASE_SEQUENCE_DUR_S = 0.0830875;
-const SHOWCASE_SEQUENCE_GAP_S = 0.03176875;
-const SHOWCASE_SEQUENCE_HEADER_DELAY_S = 0.01955;
-const SHOWCASE_YELLOW_LINE_DUR_S = PROFILE_LINE_DURATION_S;
-const SHOWCASE_YELLOW_LINE_DELAY_S =
-  SHOWCASE_SEQUENCE_HEADER_DELAY_S + SHOWCASE_SEQUENCE_DUR_S;
-const SHOWCASE_YELLOW_LINE_EASE = [0.22, 1, 0.36, 1] as const;
-const SHOWCASE_SEQUENCE_SLIDER_DELAY_S =
-  SHOWCASE_SEQUENCE_HEADER_DELAY_S + SHOWCASE_SEQUENCE_DUR_S + SHOWCASE_SEQUENCE_GAP_S;
-const SHOWCASE_SEQUENCE_TABS_DELAY_S =
-  SHOWCASE_SEQUENCE_SLIDER_DELAY_S + SHOWCASE_SEQUENCE_DUR_S + SHOWCASE_SEQUENCE_GAP_S;
-const SHOWCASE_SEQUENCE_TOTAL_S =
-  SHOWCASE_SEQUENCE_TABS_DELAY_S + SHOWCASE_SEQUENCE_DUR_S;
-const SHOWCASE_MEDIA_READY_FAILSAFE_MS = 1200;
-const SHOWCASE_HEADER_VARIANTS = {
-  hidden: { opacity: 0, y: -34, scale: 0.94, transition: { duration: 0 } },
-  ready: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: {
-      duration: SHOWCASE_SEQUENCE_DUR_S,
-      delay: SHOWCASE_SEQUENCE_HEADER_DELAY_S,
-      ease: [0.16, 1, 0.3, 1] as const,
-    },
-  }
-} as const;
-const SHOWCASE_SLIDER_VARIANTS = {
-  hidden: { opacity: 0, y: -28, scale: 0.95, transition: { duration: 0 } },
-  ready: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: {
-      duration: SHOWCASE_SEQUENCE_DUR_S,
-      delay: SHOWCASE_SEQUENCE_SLIDER_DELAY_S,
-      ease: [0.16, 1, 0.3, 1] as const,
-    },
-  },
-  activeCardHidden: {
-    opacity: 0,
-    y: 0,
-    scale: 1,
-    transition: { duration: 0.14, ease: [0.16, 1, 0.3, 1] as const },
-  },
-} as const;
-const SHOWCASE_TABS_VARIANTS = {
-  hidden: { opacity: 0, y: -22, scale: 0.96, transition: { duration: 0 } },
-  ready: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: {
-      duration: SHOWCASE_SEQUENCE_DUR_S,
-      delay: SHOWCASE_SEQUENCE_TABS_DELAY_S,
-      ease: [0.16, 1, 0.3, 1] as const,
-    },
-  },
-  activeCardHidden: { opacity: 0, y: 0, scale: 1, transition: { duration: 0.14, ease: [0.16, 1, 0.3, 1] as const } },
-} as const;
 
 const ProjectsStack = ({
   onSelect,
   focusProjectId = null,
   contentReady = true,
   onContentReadyChange,
+  carouselAutoAdvanceEnabled = false,
 }: {
   onSelect: (id: string, el: HTMLElement) => void;
   focusProjectId?: string | null;
   contentReady?: boolean;
   onContentReadyChange?: (ready: boolean) => void;
+  /** When true, advance one slide every PROJECT_CAROUSEL_AUTO_ADVANCE_MS (after entrance). */
+  carouselAutoAdvanceEnabled?: boolean;
 }) => {
   const reduceMotion = useReducedMotion();
   const tweenFactor = useRef(0);
@@ -2364,8 +2474,9 @@ const ProjectsStack = ({
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const readyMediaRef = useRef<Set<number>>(new Set());
   const autoplayDelayRef = useRef<number | null>(null);
-  const hasPlayedOnce = useRef(false);
-
+  const carouselAutoAdvanceIntervalRef = useRef<number | null>(null);
+  const carouselAutoAdvanceDraggingRef = useRef(false);
+  const restartCarouselAutoAdvanceRef = useRef<() => void>(() => {});
   const [emblaRef, emblaApi] = useEmblaCarousel({
     /** `start` keeps a flush left snap so 2-up shows exactly two full cards; `center` offsets scroll and peeks neighbors. */
     align: "start",
@@ -2402,30 +2513,49 @@ const ProjectsStack = ({
   const tweenParallax = useCallback(
     (api: EmblaCarouselType) => {
       const slideNodes = api.slideNodes();
+      const resetParallax = (node: HTMLElement) => {
+        const inner = node.querySelector("[data-parallax-layer]") as HTMLElement | null;
+        if (inner) inner.style.transform = "translateX(0)";
+      };
+
       if (reduceMotion) {
-        slideNodes.forEach((node) => {
-          const inner = node.querySelector("[data-parallax-layer]") as HTMLElement | null;
-          if (inner) inner.style.transform = "translateX(0)";
-        });
+        slideNodes.forEach(resetParallax);
         return;
       }
+
       const engine = api.internalEngine();
       const scrollProgress = api.scrollProgress();
       const scrollSnaps = api.scrollSnapList();
+      const direction = engine.options.direction === "rtl" ? -1 : 1;
 
-      slideNodes.forEach((slideNode, i) => {
-        const inner = slideNode.querySelector("[data-parallax-layer]") as HTMLElement | null;
-        if (!inner) return;
-        // Video previews are more prone to shimmer/bleed with subpixel parallax transforms.
-        // Keep video cards fixed and only parallax static-image cards.
-        if (slideNode.querySelector("video")) {
-          inner.style.transform = "translateX(0)";
-          return;
+      slideNodes.forEach(resetParallax);
+
+      // Loop clones break slideNodes[i] ↔ scrollSnaps[i]; map snaps via slideRegistry.
+      scrollSnaps.forEach((scrollSnap, snapIndex) => {
+        const slidesInSnap = engine.slideRegistry[snapIndex];
+        if (!slidesInSnap?.length) return;
+
+        let diffToTarget = scrollSnap - scrollProgress;
+
+        if (engine.options.loop) {
+          engine.slideLooper.loopPoints.forEach((loopItem) => {
+            const target = loopItem.target();
+            if (snapIndex === loopItem.index && target !== 0) {
+              const sign = Math.sign(target);
+              if (sign === -1) diffToTarget = scrollSnap - (1 + scrollProgress);
+              if (sign === 1) diffToTarget = scrollSnap + (1 - scrollProgress);
+            }
+          });
         }
-        const diffToTarget = scrollSnaps[i] - scrollProgress;
-        const direction = engine.options.direction === "rtl" ? -1 : 1;
+
         const tweenValue = diffToTarget * (-1 * direction * tweenFactor.current);
-        inner.style.transform = `translateX(${tweenValue}%)`;
+
+        slidesInSnap.forEach((slideIndex) => {
+          const slideNode = slideNodes[slideIndex];
+          if (!slideNode || slideNode.querySelector("video")) return;
+          const inner = slideNode.querySelector("[data-parallax-layer]") as HTMLElement | null;
+          if (inner) inner.style.transform = `translateX(${tweenValue}%)`;
+        });
       });
     },
     [reduceMotion],
@@ -2460,6 +2590,7 @@ const ProjectsStack = ({
     deferInitialSync();
 
     emblaApi.on("scroll", scheduleTween);
+    emblaApi.on("settle", scheduleTween);
     emblaApi.on("reInit", setTweenFactor);
     emblaApi.on("reInit", tweenParallax);
     emblaApi.on("reInit", syncCarouselUi);
@@ -2469,6 +2600,7 @@ const ProjectsStack = ({
       cancelled = true;
       cancelAnimationFrame(tweenRaf.current);
       emblaApi.off("scroll", scheduleTween);
+      emblaApi.off("settle", scheduleTween);
       emblaApi.off("reInit", setTweenFactor);
       emblaApi.off("reInit", tweenParallax);
       emblaApi.off("reInit", syncCarouselUi);
@@ -2490,15 +2622,9 @@ const ProjectsStack = ({
       video.currentTime = 0;
     });
 
-    const isFirstPlay = !hasPlayedOnce.current;
-    const delay = reduceMotion
-      ? 0
-      : isFirstPlay
-        ? SHOWCASE_FADE_TOTAL_MS + PROJECT_CARD_AUTOPLAY_DELAY_MS
-        : PROJECT_CARD_AUTOPLAY_DELAY_MS;
+    const delay = reduceMotion ? 0 : PROJECT_CARD_AUTOPLAY_DELAY_MS;
 
     autoplayDelayRef.current = window.setTimeout(() => {
-      hasPlayedOnce.current = true;
       setAutoplayGateOpen(true);
     }, delay);
 
@@ -2558,6 +2684,56 @@ const ProjectsStack = ({
     });
   }, [autoplayIndices]);
 
+  useEffect(() => {
+    if (!emblaApi || !carouselAutoAdvanceEnabled) {
+      if (carouselAutoAdvanceIntervalRef.current !== null) {
+        window.clearInterval(carouselAutoAdvanceIntervalRef.current);
+        carouselAutoAdvanceIntervalRef.current = null;
+      }
+      return;
+    }
+
+    const start = () => {
+      if (carouselAutoAdvanceIntervalRef.current !== null) {
+        window.clearInterval(carouselAutoAdvanceIntervalRef.current);
+      }
+      carouselAutoAdvanceIntervalRef.current = window.setInterval(() => {
+        emblaApi.scrollNext();
+      }, PROJECT_CAROUSEL_AUTO_ADVANCE_MS);
+    };
+
+    const stop = () => {
+      if (carouselAutoAdvanceIntervalRef.current !== null) {
+        window.clearInterval(carouselAutoAdvanceIntervalRef.current);
+        carouselAutoAdvanceIntervalRef.current = null;
+      }
+    };
+
+    restartCarouselAutoAdvanceRef.current = start;
+    carouselAutoAdvanceDraggingRef.current = false;
+    start();
+
+    const onPointerDown = () => {
+      carouselAutoAdvanceDraggingRef.current = true;
+      stop();
+    };
+    const onSettle = () => {
+      if (!carouselAutoAdvanceDraggingRef.current) return;
+      carouselAutoAdvanceDraggingRef.current = false;
+      start();
+    };
+
+    emblaApi.on("pointerDown", onPointerDown);
+    emblaApi.on("settle", onSettle);
+
+    return () => {
+      stop();
+      emblaApi.off("pointerDown", onPointerDown);
+      emblaApi.off("settle", onSettle);
+      restartCarouselAutoAdvanceRef.current = () => {};
+    };
+  }, [emblaApi, carouselAutoAdvanceEnabled]);
+
   return (
     <div className="-mt-1 sm:-mt-1.5 flex w-full min-w-0 flex-col justify-center overflow-x-visible overflow-y-visible pt-2 pb-0 sm:pt-3">
       <div className="w-full min-w-0">
@@ -2567,7 +2743,10 @@ const ProjectsStack = ({
               <button
                 key={`showcase-dot-${snapIdx}`}
                 type="button"
-                onClick={() => emblaApi?.scrollTo(snapIdx)}
+                onClick={() => {
+                  emblaApi?.scrollTo(snapIdx);
+                  restartCarouselAutoAdvanceRef.current();
+                }}
                 aria-label={`Go to slide ${snapIdx + 1}`}
                 aria-current={selectedIndex === snapIdx ? "true" : undefined}
                 className={`h-2.5 w-2.5 rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
@@ -2606,10 +2785,9 @@ const ProjectsStack = ({
                   style={contentReady ? undefined : { background: "transparent", backgroundImage: "none" }}
                 >
                   <div
-                    data-parallax-layer
                     className={`h-full will-change-transform transition-opacity duration-300 ease-out ${
                       contentReady ? "opacity-100" : "opacity-0"
-                    } ${card.thumbnail || card.thumbnailVideo ? "relative z-0" : "flex min-h-0 flex-col items-center p-4 sm:p-5"}`}
+                    } relative z-0`}
                   >
                     {card.thumbnail || card.thumbnailVideo ? (
                       <>
@@ -2640,17 +2818,22 @@ const ProjectsStack = ({
                               onError={() => markCardMediaReady(index)}
                             />
                           ) : (
-                            <img
-                              src={card.thumbnail}
-                              alt={`${card.title} thumbnail`}
-                              loading="eager"
-                              decoding="async"
-                              fetchPriority="high"
-                              className="h-full w-full object-cover"
-                              style={{ objectPosition: card.focalPoint ?? "50% 50%" }}
-                              onLoad={() => markCardMediaReady(index)}
-                              onError={() => markCardMediaReady(index)}
-                            />
+                            <div
+                              data-parallax-layer
+                              className="h-full w-full will-change-transform"
+                            >
+                              <img
+                                src={card.thumbnail}
+                                alt={`${card.title} thumbnail`}
+                                loading="eager"
+                                decoding="async"
+                                fetchPriority="high"
+                                className="h-full w-full object-cover"
+                                style={{ objectPosition: card.focalPoint ?? "50% 50%" }}
+                                onLoad={() => markCardMediaReady(index)}
+                                onError={() => markCardMediaReady(index)}
+                              />
+                            </div>
                           )}
                         </div>
                         <div
@@ -2677,18 +2860,17 @@ const ProjectsStack = ({
                       </>
                     ) : null}
                     {!card.thumbnail && !card.thumbnailVideo ? (
-                      <div className="flex min-h-0 w-full max-w-full flex-1 flex-col justify-between overflow-hidden">
+                      <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
                         <span
-                          className={`font-display w-full max-w-full text-[1rem] sm:text-[1.05rem] md:text-lg lg:text-xl xl:text-[1.35rem] leading-snug text-white tracking-tight line-clamp-4 [text-wrap:balance] motion-safe:transition-[opacity,color] motion-safe:duration-300 motion-safe:ease-out ${
+                          className={`font-display block w-full max-w-full text-left text-[1rem] sm:text-[1.05rem] md:text-lg lg:text-xl xl:text-[1.35rem] leading-snug text-white tracking-tight line-clamp-3 [text-wrap:balance] motion-safe:transition-[opacity,color] motion-safe:duration-300 motion-safe:ease-out ${
                             index === selectedIndex
                               ? "opacity-100 group-hover:text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]"
-                              : "opacity-0 pointer-events-none"
+                              : "opacity-70 group-hover:text-mono-1"
                           }`}
-                          aria-hidden={index !== selectedIndex}
                         >
                           {card.title}
                         </span>
-                        <span className="font-body w-full max-w-full text-xs sm:text-[0.8125rem] md:text-sm lg:text-[0.9375rem] text-mono-2/70 leading-relaxed line-clamp-4 border-t border-white/10 pt-3 sm:pt-3.5 transition-colors group-hover:text-mono-2/90">
+                        <span className="font-body mt-3 block w-full max-w-full text-left text-xs sm:text-[0.8125rem] md:text-sm lg:text-[0.9375rem] text-mono-2 leading-relaxed line-clamp-2 border-t border-white/15 pt-3 sm:pt-3.5 transition-colors group-hover:text-white/90">
                           {card.tagline}
                         </span>
                       </div>
@@ -2721,28 +2903,25 @@ function portfolioOpticalPointerInSideGutter(clientX: number, areaRect: DOMRect)
   return x < band || x > w - band;
 }
 
+export type SupportingPdfPreviewControl = {
+  close: () => void;
+  isOpen: boolean;
+};
+
 const SupportingProjectsSection = ({
   onNavTransitionChange,
-  pendingPdfFromShowcase = null,
-  onPendingPdfFromShowcaseConsumed,
-  onReturnToShowcaseAfterFeaturedPreview,
+  previewControlRef,
 }: {
   onNavTransitionChange?: (active: boolean) => void;
-  /** When set (e.g. from FEATURED WRITING VIEW / preview), opens the PDF loader for this item once. */
-  pendingPdfFromShowcase?: SupportingArchivePdfItem | null;
-  onPendingPdfFromShowcaseConsumed?: () => void;
-  /** After closing a PDF that was opened from FEATURED WRITING ? go back to SHOWCASE without lingering on this page. */
-  onReturnToShowcaseAfterFeaturedPreview?: () => void;
+  /** Parent back button: close an open PDF instead of swapping sub-routes mid-transition. */
+  previewControlRef?: MutableRefObject<SupportingPdfPreviewControl | null>;
 } = {}) => {
   const [previewPdf, setPreviewPdf] = useState<SupportingArchivePdfItem | null>(null);
   /** Modal frame + PDF visibility state for preview card. */
   const [showPdfFrame, setShowPdfFrame] = useState(false);
   const [previewPdfReady, setPreviewPdfReady] = useState(false);
-  const [queuedPreviewPdf, setQueuedPreviewPdf] = useState<SupportingArchivePdfItem | null>(null);
-  const [isPrePreviewFading, setIsPrePreviewFading] = useState(false);
   const [isPreviewClosing, setIsPreviewClosing] = useState(false);
   const reduceMotion = useReducedMotion();
-  const preFadeTimerRef = useRef<number | null>(null);
   const closePreviewTimerRef = useRef<number | null>(null);
   const returnGateTimerRef = useRef<number | null>(null);
   const archiveScrollHostRef = useRef<HTMLDivElement | null>(null);
@@ -2753,26 +2932,34 @@ const SupportingProjectsSection = ({
   const archiveOpticalThumbRef = useRef<HTMLDivElement | null>(null);
   const archiveFirstYellowRuleRef = useRef<HTMLHeadingElement | null>(null);
   const archiveScrollHideTimerRef = useRef<number | null>(null);
-  const openedFeaturedPreviewRef = useRef(false);
+  const closeFinishHandledRef = useRef(false);
 
-  /** Archive section + dim scrim fade (dialog can mount mid-fade ? see mount delay). */
-  const PREVIEW_PRE_FADE_S = 0.16;
-  /** Show PDF modal this soon after click so loader appears before archive fade finishes. */
-  const PREVIEW_PDF_MOUNT_MS = 96;
-  const PREVIEW_HANDOFF_MS = 8;
   const PREVIEW_CLOSE_FADE_S = 0.34;
   const PREVIEW_RETURN_GATE_MS = 70;
   /** Shell fade for preview card container. */
   const PREVIEW_PDF_DIALOG_FADE_S = 0.175;
 
+  const finishClosePreview = useCallback(() => {
+    if (closeFinishHandledRef.current) return;
+    closeFinishHandledRef.current = true;
+    if (closePreviewTimerRef.current !== null) {
+      window.clearTimeout(closePreviewTimerRef.current);
+      closePreviewTimerRef.current = null;
+    }
+    setPreviewPdf(null);
+    setShowPdfFrame(false);
+    setPreviewPdfReady(false);
+    returnGateTimerRef.current = window.setTimeout(() => {
+      setIsPreviewClosing(false);
+      returnGateTimerRef.current = null;
+    }, PREVIEW_RETURN_GATE_MS);
+  }, []);
+
   const closePreview = useCallback(() => {
     // Prevent exiting while loader is still active; allow only after preview is ready.
     if (previewPdf && !showPdfFrame && !isPreviewClosing) return;
+    if (isPreviewClosing) return;
 
-    if (preFadeTimerRef.current !== null) {
-      window.clearTimeout(preFadeTimerRef.current);
-      preFadeTimerRef.current = null;
-    }
     if (closePreviewTimerRef.current !== null) {
       window.clearTimeout(closePreviewTimerRef.current);
       closePreviewTimerRef.current = null;
@@ -2781,93 +2968,49 @@ const SupportingProjectsSection = ({
       window.clearTimeout(returnGateTimerRef.current);
       returnGateTimerRef.current = null;
     }
+
+    closeFinishHandledRef.current = false;
+
     if (previewPdf && !reduceMotion) {
       setIsPreviewClosing(true);
       closePreviewTimerRef.current = window.setTimeout(() => {
-        const returnToShowcase = openedFeaturedPreviewRef.current;
-        if (returnToShowcase) {
-          openedFeaturedPreviewRef.current = false;
-          /** Swap route before clearing PDF so archive never paints; skip return gate (it would reveal WRITING SAMPLES). */
-          onReturnToShowcaseAfterFeaturedPreview?.();
-        }
-        setPreviewPdf(null);
-        setShowPdfFrame(false);
-        setPreviewPdfReady(false);
-        if (!returnToShowcase) {
-          returnGateTimerRef.current = window.setTimeout(() => {
-            setIsPreviewClosing(false);
-            returnGateTimerRef.current = null;
-          }, PREVIEW_RETURN_GATE_MS);
-        }
+        finishClosePreview();
         closePreviewTimerRef.current = null;
-      }, Math.round(PREVIEW_CLOSE_FADE_S * 1000));
-    } else {
-      const returnToShowcase = openedFeaturedPreviewRef.current;
-      if (returnToShowcase) {
-        openedFeaturedPreviewRef.current = false;
-        onReturnToShowcaseAfterFeaturedPreview?.();
-      }
-      setPreviewPdf(null);
-      setIsPreviewClosing(false);
-      setShowPdfFrame(false);
-      setPreviewPdfReady(false);
+      }, Math.round(PREVIEW_CLOSE_FADE_S * 1000) + 80);
+      return;
     }
-    setQueuedPreviewPdf(null);
-    setIsPrePreviewFading(false);
+
+    finishClosePreview();
   }, [
+    finishClosePreview,
     isPreviewClosing,
     showPdfFrame,
     previewPdf,
     reduceMotion,
-    onReturnToShowcaseAfterFeaturedPreview,
   ]);
 
+  const handlePreviewShellAnimationComplete = useCallback(() => {
+    if (!isPreviewClosing) return;
+    finishClosePreview();
+  }, [finishClosePreview, isPreviewClosing]);
+
   const openPreview = useCallback(
-    (item: SupportingArchivePdfItem, opts?: { fromFeatured?: boolean }) => {
-      if (previewPdf || isPrePreviewFading) return;
-      openedFeaturedPreviewRef.current = Boolean(opts?.fromFeatured);
-      if (reduceMotion) {
-        setPreviewPdf(item);
-        return;
-      }
-      setQueuedPreviewPdf(item);
-      setIsPrePreviewFading(true);
+    (item: SupportingArchivePdfItem) => {
+      if (previewPdf || isPreviewClosing) return;
+      closeFinishHandledRef.current = false;
+      setPreviewPdfReady(!supportingPdfHref(item));
+      setShowPdfFrame(false);
+      setPreviewPdf(item);
     },
-    [isPrePreviewFading, previewPdf, reduceMotion],
+    [isPreviewClosing, previewPdf],
   );
 
   useEffect(() => {
-    if (!pendingPdfFromShowcase || !onPendingPdfFromShowcaseConsumed) return;
-    openPreview(pendingPdfFromShowcase, { fromFeatured: true });
-    onPendingPdfFromShowcaseConsumed();
-  }, [pendingPdfFromShowcase, openPreview, onPendingPdfFromShowcaseConsumed]);
-
-  useEffect(() => {
-    if (previewPdf) {
-      // Preview card opens directly with no loader animation.
-      setShowPdfFrame(true);
+    if (!previewPdf) {
+      setShowPdfFrame(false);
       setPreviewPdfReady(false);
     }
   }, [previewPdf]);
-
-  useEffect(() => {
-    if (!isPrePreviewFading || !queuedPreviewPdf) return;
-    preFadeTimerRef.current = window.setTimeout(() => {
-      setPreviewPdfReady(false);
-      setPreviewPdf(queuedPreviewPdf);
-      setQueuedPreviewPdf(null);
-      preFadeTimerRef.current = window.setTimeout(() => {
-        setIsPrePreviewFading(false);
-        preFadeTimerRef.current = null;
-      }, PREVIEW_HANDOFF_MS);
-    }, PREVIEW_PDF_MOUNT_MS);
-    return () => {
-      if (preFadeTimerRef.current !== null) {
-        window.clearTimeout(preFadeTimerRef.current);
-        preFadeTimerRef.current = null;
-      }
-    };
-  }, [isPrePreviewFading, queuedPreviewPdf]);
 
   useEffect(() => {
     if (!previewPdf) return;
@@ -2906,9 +3049,18 @@ const SupportingProjectsSection = ({
   }, [previewPdf]);
 
   useEffect(() => {
-    onNavTransitionChange?.(isPrePreviewFading || !!previewPdf || isPreviewClosing);
+    onNavTransitionChange?.(!!previewPdf || isPreviewClosing);
     return () => onNavTransitionChange?.(false);
-  }, [isPrePreviewFading, isPreviewClosing, onNavTransitionChange, previewPdf]);
+  }, [isPreviewClosing, onNavTransitionChange, previewPdf]);
+
+  useEffect(() => {
+    if (!previewControlRef) return;
+    const isOpen = Boolean(previewPdf || isPreviewClosing);
+    previewControlRef.current = { close: closePreview, isOpen };
+    return () => {
+      previewControlRef.current = null;
+    };
+  }, [closePreview, isPreviewClosing, previewControlRef, previewPdf]);
 
   const rowBtnClass =
     "group flex w-full items-start gap-3 sm:gap-4 py-4 sm:py-4 pr-1 -mx-1 px-1 text-left transition-[transform,color,background-color] duration-200 ease-out motion-safe:group-hover:translate-x-1.5 bg-black/40 hover:bg-black/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-portfolio-blue-bright/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-sm border-0 cursor-pointer text-inherit";
@@ -3122,15 +3274,11 @@ const SupportingProjectsSection = ({
         className="container relative z-10 mx-auto flex min-h-0 w-full max-w-full min-w-0 flex-1 flex-col px-4 sm:px-6 pt-[6.5rem] md:pt-[8rem]"
         initial={false}
         animate={{
-          opacity:
-            pendingPdfFromShowcase || previewPdf || isPrePreviewFading || isPreviewClosing ? 0 : 1,
+          opacity: previewPdf || isPreviewClosing ? 0 : 1,
         }}
-        transition={{ duration: reduceMotion ? 0 : PREVIEW_PRE_FADE_S, ease: EASE.out }}
+        transition={{ duration: reduceMotion ? 0 : 0.2, ease: EASE.out }}
         style={{
-          pointerEvents:
-            pendingPdfFromShowcase || previewPdf || isPrePreviewFading || isPreviewClosing
-              ? "none"
-              : "auto",
+          pointerEvents: previewPdf || isPreviewClosing ? "none" : "auto",
         }}
       >
         <div className="shrink-0">
@@ -3223,102 +3371,23 @@ const SupportingProjectsSection = ({
         </div>
       </motion.div>
 
-      {isPrePreviewFading && (
-        <motion.div
-          className="pointer-events-none fixed inset-0 z-[75] bg-black/45"
-          initial={reduceMotion ? false : { opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: reduceMotion ? 0 : PREVIEW_PRE_FADE_S, ease: EASE.out }}
+      {previewPdf && (
+        <SupportingPdfPreviewDialog
+          item={previewPdf}
+          pdfSrc={supportingPdfHref(previewPdf)}
+          onClose={closePreview}
+          isClosing={isPreviewClosing}
+          reduceMotion={reduceMotion}
+          showFrame={showPdfFrame && previewPdfReady}
+          onFrameReady={() => {
+            setPreviewPdfReady(true);
+            setShowPdfFrame(true);
+          }}
+          closeFadeS={PREVIEW_CLOSE_FADE_S}
+          openFadeS={PREVIEW_PDF_DIALOG_FADE_S}
+          onCloseAnimationComplete={handlePreviewShellAnimationComplete}
         />
       )}
-
-      {previewPdf &&
-        typeof document !== "undefined" &&
-        createPortal(
-          <motion.div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="supporting-pdf-preview-title"
-            className="fixed inset-0 z-[80] flex items-center justify-center bg-black p-4 sm:p-6 md:p-8"
-            onClick={closePreview}
-            initial={reduceMotion ? false : { opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: reduceMotion ? 0 : PREVIEW_PDF_DIALOG_FADE_S, ease: EASE.out }}
-          >
-            <SectionGridOverlay />
-            {/*
-              PdfJsDocumentView stays mounted in the frame below and handles readiness directly.
-            */}
-            <motion.div
-              className="relative z-10 flex max-h-[min(90dvh,920px)] w-full max-w-[min(96vw,72rem)] flex-col overflow-hidden rounded-xl border border-white/[0.12] bg-black shadow-[0_24px_80px_rgba(0,0,0,0.72)] ring-1 ring-white/[0.06]"
-              onClick={(e) => e.stopPropagation()}
-              initial={reduceMotion ? false : { opacity: 0, scaleY: 0.74, y: 0 }}
-              animate={
-                reduceMotion
-                  ? { opacity: 1, scaleY: 1, y: 0 }
-                  : isPreviewClosing
-                    ? { opacity: 0, scaleY: 1, y: 0 }
-                  : showPdfFrame
-                    ? { opacity: 1, scaleY: 1, y: 0 }
-                    : { opacity: 0, scaleY: 0.74, y: 0 }
-              }
-              transition={{ duration: reduceMotion ? 0 : isPreviewClosing ? PREVIEW_CLOSE_FADE_S : 0.32, ease: EASE.out }}
-              style={{ transformOrigin: "center center" }}
-            >
-              <header className="relative flex shrink-0 items-center justify-between gap-3 border-b border-white/[0.1] bg-black px-4 py-3.5 sm:px-5">
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="outline"
-                  aria-label="Close PDF preview"
-                  onClick={closePreview}
-                  className="h-10 w-10 shrink-0 rounded-full border border-white/18 bg-black text-mono-1 hover:border-portfolio-blue-bright/45 hover:bg-zinc-900 hover:text-white"
-                >
-                  <X className="h-4 w-4" aria-hidden />
-                </Button>
-                <div className="pointer-events-none absolute left-1/2 top-1/2 w-[min(62%,26rem)] -translate-x-1/2 -translate-y-1/2 px-2 text-center">
-                  <h2
-                    id="supporting-pdf-preview-title"
-                    className="font-display text-[0.95rem] sm:text-base text-white tracking-tight text-balance leading-snug"
-                  >
-                    {previewPdf.title}
-                  </h2>
-                  <p className="font-body text-[0.7rem] sm:text-xs text-mono-2/90 mt-1 leading-snug line-clamp-2">
-                    {previewPdf.subtitle}
-                  </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  <a
-                    href={previewPdf.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="Open PDF in new tab"
-                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/18 bg-black text-mono-1 hover:border-portfolio-blue-bright/45 hover:bg-zinc-900 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-portfolio-blue-bright/45"
-                  >
-                    <ExternalLink className="h-4 w-4" aria-hidden />
-                  </a>
-                  <a
-                    href={previewPdf.href}
-                    download
-                    aria-label="Download PDF"
-                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/18 bg-black text-mono-1 hover:border-portfolio-blue-bright/45 hover:bg-zinc-900 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-portfolio-blue-bright/45"
-                  >
-                    <Download className="h-4 w-4" aria-hidden />
-                  </a>
-                </div>
-              </header>
-              <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-3 pb-3 pt-2 sm:px-4 sm:pb-4">
-                <PdfJsDocumentView
-                  src={previewPdf.href}
-                  className="rounded-lg border border-white/[0.08] bg-black/20"
-                  onReady={() => setPreviewPdfReady(true)}
-                  onError={() => setPreviewPdfReady(true)}
-                />
-              </div>
-            </motion.div>
-          </motion.div>,
-          document.body,
-        )}
     </section>
   );
 };
@@ -3357,7 +3426,7 @@ const SHOWCASE_SLIDER_MEDIA_BOX_SHADOW =
 
 /**
  * Project detail grid cells (OVERVIEW / ROLE / IMPACT / TOOLS) — same surface class + radius pattern as PROFILE
- * (`profile-card-surface` + explicit `rounded-*` overrides). No extra drop shadow (profile cards are flat glass).
+ * (`profile-card-surface` + explicit `rounded-*` overrides). Same `--portfolio-glass-*` frost as PROFILE / FEATURED WRITING.
  */
 const showcaseDetailCard =
   "profile-card-surface relative rounded-[11px] sm:rounded-xl px-3 py-3 sm:px-4 sm:py-3.5";
@@ -3428,7 +3497,7 @@ function ShowcaseWritingFeaturedPanel({
   return (
     <div className="flex w-full min-w-0 max-w-full flex-col gap-3 text-left sm:flex-row sm:items-start sm:gap-4">
       <FeaturedWritingPdfThumbnail
-        pdfSrc={item.href}
+        pdfSrc={supportingPdfHref(item)}
         widthPx={previewWidthPx}
         className="shrink-0 self-start"
         onActivate={() => onOpenPdfInSupporting(item)}
@@ -3441,17 +3510,14 @@ function ShowcaseWritingFeaturedPanel({
             </p>
             <p className="font-body text-xs leading-snug text-mono-2/75 sm:text-sm">{item.subtitle}</p>
           </div>
-          <a
-            href={item.href}
+          <button
+            type="button"
             className="featured-writing-view-cta inline-flex w-fit shrink-0 items-center gap-2 self-start rounded-[11px] sm:rounded-xl px-2.5 py-1.5 font-heading text-[10px] sm:text-xs font-semibold tracking-eyebrow-tight uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_56%,rgb(186_186_186))] transition-[background-color,color,border-color,box-shadow] duration-300 ease-out hover:text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_62%,rgb(186_186_186))] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:mr-[6px] sm:px-3 sm:py-2"
-            onClick={(e) => {
-              e.preventDefault();
-              onOpenPdfInSupporting(item);
-            }}
+            onClick={() => onOpenPdfInSupporting(item)}
           >
             VIEW
             <ExternalLink className="h-3.5 w-3.5 shrink-0 opacity-80" aria-hidden />
-          </a>
+          </button>
         </div>
         {item.description ? (
           <p
@@ -3471,16 +3537,78 @@ const PalaceProjects = ({
   onOpenSupporting,
   onOpenFeaturedPdfInSupporting,
   activeProjectId,
-  entranceReady,
+  entranceArmed = false,
+  featuredPdfViewerActive = false,
 }: {
   onSelectProject: (id: string) => void;
   onOpenSupporting: () => void;
   onOpenFeaturedPdfInSupporting: (item: SupportingArchivePdfItem) => void;
   activeProjectId: string | null;
-  entranceReady: boolean;
+  entranceArmed?: boolean;
+  /** FEATURED WRITING VIEW ? fade carousel/tabs/header while grid PDF loader is up. */
+  featuredPdfViewerActive?: boolean;
 }) => {
   const reduceMotion = useReducedMotion();
+  const projectsDividerRef = useRef<HTMLDivElement | null>(null);
+  const [projectsEntered, setProjectsEntered] = useState(reduceMotion || entranceArmed);
+  /** Keep header y at 0 after first enter — disarming entrance on panel exit must not replay y slide. */
+  const [projectsHeaderYLocked, setProjectsHeaderYLocked] = useState(reduceMotion || entranceArmed);
+  const [projectsOverlayRevealed, setProjectsOverlayRevealed] = useState(false);
+  const [carouselAutoAdvanceReady, setCarouselAutoAdvanceReady] = useState(reduceMotion);
   const activeCard = activeProjectId ? PROJECT_CARDS.find((c) => c.id === activeProjectId) ?? null : null;
+  const showcaseObscured = Boolean(activeCard || featuredPdfViewerActive);
+  const showcaseFadeDuration = reduceMotion
+    ? 0
+    : showcaseObscured
+      ? featuredPdfViewerActive && !activeCard
+        ? SHOWCASE_PDF_PROJECTS_FADE_OUT_S
+        : 0.14
+      : SIDE_NAV_OVERLAY_FADE_S;
+
+  useEffect(() => {
+    if (reduceMotion) {
+      setProjectsEntered(true);
+      setProjectsHeaderYLocked(true);
+      return;
+    }
+    setProjectsEntered(entranceArmed);
+    if (entranceArmed) setProjectsHeaderYLocked(true);
+  }, [entranceArmed, reduceMotion]);
+
+  useEffect(() => {
+    if (reduceMotion) {
+      setProjectsOverlayRevealed(true);
+      return;
+    }
+    if (!projectsEntered) {
+      setProjectsOverlayRevealed(false);
+      return;
+    }
+    setProjectsOverlayRevealed(false);
+    const headerEndMs =
+      (PROFILE_TITLE_DELAY_S + PROJECTS_HEADER_ENTER_DUR_S) * 1000;
+    const revealId = window.setTimeout(
+      () => setProjectsOverlayRevealed(true),
+      Math.max(0, headerEndMs - PROJECTS_BELOW_HEADER_LEAD_MS),
+    );
+    return () => window.clearTimeout(revealId);
+  }, [projectsEntered, reduceMotion]);
+
+  useEffect(() => {
+    if (reduceMotion) {
+      setCarouselAutoAdvanceReady(true);
+      return;
+    }
+    if (!projectsOverlayRevealed) {
+      setCarouselAutoAdvanceReady(false);
+      return;
+    }
+    const readyId = window.setTimeout(
+      () => setCarouselAutoAdvanceReady(true),
+      PROJECTS_CAROUSEL_ENTRANCE_FADE_S * 1000,
+    );
+    return () => window.clearTimeout(readyId);
+  }, [projectsOverlayRevealed, reduceMotion]);
 
   const [morphRect, setMorphRect] = useState<CardRect | null>(null);
   const [targetRect, setTargetRect] = useState<CardRect | null>(null);
@@ -3490,9 +3618,6 @@ const PalaceProjects = ({
   const [detailRow1Reveal, setDetailRow1Reveal] = useState(false);
   const [detailRow2Reveal, setDetailRow2Reveal] = useState(false);
   const [detailHeroMediaFadeIn, setDetailHeroMediaFadeIn] = useState(false);
-  const [sliderContentReady, setSliderContentReady] = useState(reduceMotion);
-  const [sliderAssetsReady, setSliderAssetsReady] = useState(false);
-  const [entrancePlayed, setEntrancePlayed] = useState(false);
   const [detailCardRadiusPx, setDetailCardRadiusPx] = useState<number>(() => {
     if (typeof window === "undefined") return 11;
     return window.matchMedia("(min-width: 640px)").matches ? 12 : 11;
@@ -3500,12 +3625,6 @@ const PalaceProjects = ({
   const detailRevealTimersRef = useRef<number[]>([]);
   const detailAnchorRef = useRef<HTMLDivElement>(null);
   const [showcaseTabId, setShowcaseTabId] = useState<ShowcaseTabId>("tab-1");
-  const entranceCanStart = entranceReady && (reduceMotion || sliderAssetsReady);
-  const entranceVisibleState = entranceCanStart || entrancePlayed;
-
-  useEffect(() => {
-    if (entranceCanStart) setEntrancePlayed(true);
-  }, [entranceCanStart]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -3586,27 +3705,6 @@ const PalaceProjects = ({
       cancelAnimationFrame(raf2);
     };
   }, [morphDone, activeCard?.id, reduceMotion]);
-
-  useEffect(() => {
-    if (reduceMotion) {
-      setSliderContentReady(true);
-      return;
-    }
-    if (!entranceCanStart) {
-      setSliderContentReady(false);
-      return;
-    }
-    const totalEntranceMs = Math.round(SHOWCASE_SEQUENCE_TOTAL_S * 1000);
-    const timer = window.setTimeout(() => setSliderContentReady(true), totalEntranceMs);
-    return () => window.clearTimeout(timer);
-  }, [entranceCanStart, reduceMotion]);
-
-  useEffect(() => {
-    if (reduceMotion || !entranceReady || sliderAssetsReady) return;
-    // iPad/Safari can delay some media ready events; fail-safe prevents hidden PROJECTS content.
-    const timer = window.setTimeout(() => setSliderAssetsReady(true), SHOWCASE_MEDIA_READY_FAILSAFE_MS);
-    return () => window.clearTimeout(timer);
-  }, [entranceReady, reduceMotion, sliderAssetsReady]);
 
   // FLIP morph + detail copy schedule (timers must survive morphDone ? do not key this effect on morphDone).
   useEffect(() => {
@@ -3707,19 +3805,22 @@ const PalaceProjects = ({
         <div className="flex min-h-0 flex-1 flex-col justify-center overflow-x-hidden overflow-y-visible">
           <motion.div
             className="w-full shrink-0"
-            initial={false}
-            animate={{ opacity: activeCard ? 0 : 1 }}
-            transition={{
-              duration: reduceMotion ? 0 : 0.28,
-              ease: [0.16, 1, 0.3, 1],
+            initial={reduceMotion ? false : { opacity: 0, y: 30 }}
+            animate={{
+              opacity: showcaseObscured ? 0 : projectsEntered || projectsHeaderYLocked ? 1 : 0,
+              y: reduceMotion ? 0 : projectsHeaderYLocked ? 0 : 30,
             }}
-            style={{ pointerEvents: activeCard ? "none" : "auto" }}
+            transition={{
+              duration: showcaseObscured ? showcaseFadeDuration : reduceMotion ? 0 : PROJECTS_HEADER_ENTER_DUR_S,
+              delay: showcaseObscured || reduceMotion ? 0 : PROFILE_TITLE_DELAY_S,
+              ease: showcaseObscured ? SHOWCASE_EASE : [0.16, 1, 0.3, 1],
+            }}
+            style={{
+              pointerEvents: showcaseObscured ? "none" : "auto",
+            }}
           >
-            <motion.div
+            <div
               className={`showcase-header flex w-full min-w-0 shrink-0 flex-col items-start mb-6 sm:mb-8 md:mb-10 ${SECTION_MAIN_HEADER_TITLE_CLASS}`}
-              variants={SHOWCASE_HEADER_VARIANTS}
-              initial={reduceMotion ? false : "hidden"}
-              animate={reduceMotion ? undefined : entranceVisibleState ? "ready" : "hidden"}
             >
               <div className="showcase-header-title-stack relative z-10 w-full min-w-0">
                 <p className="career-nav-section-subtitle section-main-header-title font-display text-left">PROJECTS</p>
@@ -3727,25 +3828,26 @@ const PalaceProjects = ({
                   <p className="career-nav-section-title text-left">
                     Digital Media &amp; Writing Showcase
                   </p>
-                  <div className="showcase-main-accent-line relative min-h-[2px] w-full" aria-hidden>
+                  <div
+                    ref={projectsDividerRef}
+                    className="showcase-main-accent-line relative min-h-[2px] w-full"
+                    aria-hidden
+                  >
                     <motion.span
                       className="absolute bottom-0 left-0 right-0 h-[2px]"
-                      style={{
-                        transformOrigin: "left center",
-                        backgroundColor: PROJECTS_ACCENT_SOFT,
-                      }}
-                      initial={{ scaleX: reduceMotion ? 1 : 0 }}
-                      animate={{ scaleX: reduceMotion || entranceVisibleState ? 1 : 0 }}
+                      style={{ backgroundColor: PROJECTS_ACCENT_SOFT }}
+                      initial={false}
+                      animate={{ scaleX: projectsEntered ? 1 : 0 }}
                       transition={{
-                        duration: reduceMotion ? 0 : SHOWCASE_YELLOW_LINE_DUR_S,
-                        delay: reduceMotion ? 0 : SHOWCASE_YELLOW_LINE_DELAY_S,
-                        ease: SHOWCASE_YELLOW_LINE_EASE,
+                        duration: PROFILE_LINE_DURATION_S,
+                        delay: RED_LINE_DELAY_MS / 1000,
+                        ease: [0.16, 1, 0.3, 1],
                       }}
                     />
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </div>
           </motion.div>
         {/*
          * CAROUSEL ? always in normal flow so the section keeps its height.
@@ -3753,71 +3855,62 @@ const PalaceProjects = ({
          * container height stays stable for the absolute detail overlay.
          */}
         <div
-          aria-hidden={!!activeCard || undefined}
-          className={`flex min-h-0 w-full flex-1 flex-col ${activeCard ? "pointer-events-none select-none" : ""}`}
+          aria-hidden={showcaseObscured || undefined}
+          className={`flex min-h-0 w-full flex-1 flex-col ${showcaseObscured ? "pointer-events-none select-none" : ""}`}
         >
-          <div
-            className={`shrink-0 ${activeCard ? "opacity-0" : "opacity-100"}`}
+          <motion.div
+            className="flex min-h-0 w-full flex-1 flex-col"
+            initial={reduceMotion ? false : { opacity: 0 }}
+            animate={{
+              opacity: reduceMotion ? 1 : projectsOverlayRevealed ? 1 : 0,
+            }}
+            transition={{
+              duration: PROJECTS_CAROUSEL_ENTRANCE_FADE_S,
+              delay: 0,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+            style={{ willChange: "opacity" }}
           >
             <motion.div
-              variants={SHOWCASE_SLIDER_VARIANTS}
-              initial={reduceMotion ? false : "hidden"}
-              animate={
-                reduceMotion
-                  ? undefined
-                  : activeCard
-                    ? "activeCardHidden"
-                    : entranceVisibleState
-                      ? "ready"
-                      : "hidden"
-              }
+              className="shrink-0"
+              initial={false}
+              animate={{ opacity: reduceMotion ? 1 : showcaseObscured ? 0 : 1 }}
+              transition={{ duration: showcaseFadeDuration, ease: SHOWCASE_EASE }}
             >
               <ProjectsStack
                 onSelect={(id, el) => handleCardClick(id, el)}
                 focusProjectId={activeCard?.id ?? null}
-                contentReady={sliderContentReady}
-                onContentReadyChange={setSliderAssetsReady}
+                carouselAutoAdvanceEnabled={carouselAutoAdvanceReady && !showcaseObscured}
               />
             </motion.div>
-          </div>
 
-          {/*
-           * Vertical gap above tabs = --slide-gap only (same token as space between slider cards).
-           * ProjectsStack uses pb-0 so gallery bottom padding does not stack with this margin.
-           */}
-          <motion.div
-            className={`mt-[var(--slide-gap,0.875rem)] flex w-full min-w-0 flex-col ${activeCard ? "opacity-0" : "opacity-100"}`}
-            variants={SHOWCASE_TABS_VARIANTS}
-            initial={reduceMotion ? false : "hidden"}
-            animate={
-              reduceMotion
-                ? undefined
-                : activeCard
-                  ? "activeCardHidden"
-                  : entranceVisibleState
-                    ? "ready"
-                    : "hidden"
-            }
-          >
+            {/*
+             * Vertical gap above tabs = --slide-gap only (same token as space between slider cards).
+             * ProjectsStack uses pb-0 so gallery bottom padding does not stack with this margin.
+             */}
             <motion.div
-              className="flex w-full min-w-0 flex-col"
+              className="mt-[var(--slide-gap,0.875rem)] flex w-full min-w-0 flex-col"
               initial={false}
-              animate={{ opacity: sliderContentReady ? 1 : 0 }}
-              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              style={{ transform: "translateZ(0)", backfaceVisibility: "hidden" }}
+              animate={{ opacity: reduceMotion ? 1 : showcaseObscured ? 0 : 1 }}
+              transition={{ duration: showcaseFadeDuration, ease: SHOWCASE_EASE }}
             >
-              <ShowcaseAttachedTabStrip
-                activeId={showcaseTabId}
-                onTabChange={setShowcaseTabId}
-                className="w-full min-w-0"
-                panel={({ previewColumnWidthPx }) => (
-                  <ShowcaseWritingFeaturedPanel
-                    item={SHOWCASE_WRITING_TAB_FEATURED[showcaseTabId]}
-                    previewWidthPx={previewColumnWidthPx}
-                    onOpenPdfInSupporting={onOpenFeaturedPdfInSupporting}
-                  />
-                )}
-              />
+              <div
+                className="flex w-full min-w-0 flex-col"
+                style={{ transform: "translateZ(0)", backfaceVisibility: "hidden" }}
+              >
+                <ShowcaseAttachedTabStrip
+                  activeId={showcaseTabId}
+                  onTabChange={setShowcaseTabId}
+                  className="w-full min-w-0"
+                  panel={({ previewColumnWidthPx }) => (
+                    <ShowcaseWritingFeaturedPanel
+                      item={SHOWCASE_WRITING_TAB_FEATURED[showcaseTabId]}
+                      previewWidthPx={previewColumnWidthPx}
+                      onOpenPdfInSupporting={onOpenFeaturedPdfInSupporting}
+                    />
+                  )}
+                />
+              </div>
             </motion.div>
           </motion.div>
         </div>
@@ -3877,7 +3970,7 @@ const PalaceProjects = ({
             {activeCard && morphRect && (
               <div className={`w-full ${PROFILE_VIEWPORT_CONTENT_MAX} mt-5 pb-8`}>
                 <div
-                  className="-ml-[3px] flex w-full max-w-full flex-col items-stretch gap-y-1.5 text-left"
+                  className="flex w-full max-w-full flex-col items-stretch gap-y-1.5 text-left"
                   style={
                     reduceMotion
                       ? { opacity: detailHdrReveal ? 1 : 0 }
@@ -4232,7 +4325,7 @@ const ConfidantExperience = ({
     const CAREER_TAB_FADE_MS = careerTabFadeMs;
     const CAREER_TAB_HEIGHT_MS = careerTabHeightMs;
     let tabFadeLocked = false;
-    const tabFadeTimeoutIds: ReturnType<typeof setTimeout>[] = [];
+    const tabFadeTimeoutIds: number[] = [];
     /** Single driver so outer + inner heights share one eased curve (no stagger). */
     let careerTabHeightSync: { stop: () => void } | null = null;
 
@@ -4249,23 +4342,26 @@ const ConfidantExperience = ({
       stopCareerTabHeightSync();
     }
 
-    function resetCareerTabFadeLayers() {
-      root.querySelectorAll<HTMLElement>(".career-tabs-content-inner").forEach((el) => {
+    function resetCareerTabFadeLayers(rootElement: HTMLElement) {
+      rootElement.querySelectorAll<HTMLElement>(".career-tabs-content-inner").forEach((el) => {
         el.classList.remove("career-tabs-dim");
         el.style.removeProperty("height");
       });
-      root.querySelectorAll<HTMLElement>(".tab-panel .panel-header").forEach((el) => {
+      rootElement.querySelectorAll<HTMLElement>(".tab-panel .panel-header").forEach((el) => {
         el.classList.remove("career-tabs-dim");
       });
     }
 
     function switchTab(tabId: string | null) {
-      if (!tabId) return;
-      const activeButton = root.querySelector<HTMLElement>(`[data-tab="${tabId}"]`);
+      const rootNode = tabsRootRef.current;
+      if (!rootNode || !tabId) return;
+      const activeButton = rootNode.querySelector<HTMLElement>(`[data-tab="${tabId}"]`);
       const activePanel = document.getElementById(tabId);
       if (!activeButton || !activePanel) return;
+      const activeButtonEl = activeButton;
+      const activePanelEl = activePanel;
 
-      const currentActivePanel = root.querySelector<HTMLElement>(".tab-panel.active");
+      const currentActivePanel = rootNode.querySelector<HTMLElement>(".tab-panel.active");
       if (currentActivePanel?.id === tabId) return;
 
       if (tabFadeLocked) return;
@@ -4273,18 +4369,18 @@ const ConfidantExperience = ({
       function applyTabSwitch() {
         tabButtons.forEach((btn) => btn.classList.remove("active"));
         tabPanels.forEach((panel) => panel.classList.remove("active"));
-        activeButton.classList.add("active");
-        activePanel.classList.add("active");
+        activeButtonEl.classList.add("active");
+        activePanelEl.classList.add("active");
       }
 
       const outgoingInner = currentActivePanel?.querySelector<HTMLElement>(
         ".career-tabs-content-inner",
       );
-      const incomingInner = activePanel.querySelector<HTMLElement>(
+      const incomingInner = activePanelEl.querySelector<HTMLElement>(
         ".career-tabs-content-inner",
       );
       const outgoingHeader = currentActivePanel?.querySelector<HTMLElement>(".panel-header");
-      const incomingHeader = activePanel.querySelector<HTMLElement>(".panel-header");
+      const incomingHeader = activePanelEl.querySelector<HTMLElement>(".panel-header");
 
       const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       if (
@@ -4294,8 +4390,8 @@ const ConfidantExperience = ({
         !incomingInner
       ) {
         stopCareerTabHeightSync();
-        tabsShellEl.style.removeProperty("height");
-        resetCareerTabFadeLayers();
+        tabsShellEl?.style.removeProperty("height");
+        resetCareerTabFadeLayers(rootNode);
         applyTabSwitch();
         return;
       }
@@ -4393,7 +4489,7 @@ const ConfidantExperience = ({
                 anim.stop();
                 unsub();
                 tabsShellEl.style.removeProperty("height");
-                resetCareerTabFadeLayers();
+                resetCareerTabFadeLayers(rootNode);
                 careerTabHeightSync = null;
                 tabFadeLocked = false;
               },
@@ -4528,7 +4624,7 @@ const ConfidantExperience = ({
 
     return () => {
       clearTabFadeTimers();
-      resetCareerTabFadeLayers();
+      resetCareerTabFadeLayers(root);
       root.querySelector<HTMLElement>(".tabs-content")?.style.removeProperty("height");
       tabFadeLocked = false;
       observer.disconnect();
@@ -4786,9 +4882,8 @@ const ConfidantExperience = ({
     </section>
   );
 };
-// --- CONTACT (Uiverse.io button style by Itskrish01) ---
-const UIVERSE_BUTTON_BASE =
-  "transform-gpu isolate [backface-visibility:hidden] p-5 rounded-full border bg-gradient-to-tr from-black/60 to-black/40 shadow-lg backdrop-blur-lg [@media(pointer:coarse)]:from-black/[0.88] [@media(pointer:coarse)]:to-black/[0.72] [@media(pointer:coarse)]:shadow-black/50 [@media(pointer:coarse)]:backdrop-blur-none hover:scale-110 [@media(pointer:coarse)]:hover:scale-100 active:scale-95 [@media(pointer:coarse)]:active:scale-100 active:rotate-0 transition-[transform,opacity,box-shadow,border-color] duration-300 ease-out cursor-pointer group relative overflow-hidden";
+const CONTACT_BUTTON_BASE =
+  "bg-black rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black";
 
 const SocialLink = () => {
   return (
@@ -4824,11 +4919,12 @@ const SocialLink = () => {
               visible: { opacity: 1, x: 0 },
             }}
             transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-            className={`${UIVERSE_BUTTON_BASE} border-white/10 hover:rotate-2 hover:border-white/30`}
+            whileHover={{ y: -3 }}
+            className={`${CONTACT_BUTTON_BASE} p-5 border border-red-500/20 text-red-500 hover:border-red-500/50 hover:text-red-400`}
             aria-label="YouTube"
           >
-            <div className="relative z-10">
-              <svg className="w-7 h-7 fill-current text-red-500 group-hover:text-red-400 transition-colors duration-300" viewBox="0 0 576 512" xmlns="http://www.w3.org/2000/svg">
+            <div>
+              <svg className="w-7 h-7 fill-current transition-colors duration-300" viewBox="0 0 576 512" xmlns="http://www.w3.org/2000/svg">
                 <path d="M549.655 124.083c-6.281-23.65-24.787-42.276-48.284-48.597C458.781 64 288 64 288 64S117.22 64 74.629 75.486c-23.497 6.322-42.003 24.947-48.284 48.597-11.412 42.867-11.412 132.305-11.412 132.305s0 89.438 11.412 132.305c6.281 23.65 24.787 41.5 48.284 47.821C117.22 448 288 448 288 448s170.78 0 213.371-11.486c23.497-6.321 42.003-24.171 48.284-47.821 11.412-42.867 11.412-132.305 11.412-132.305s0-89.438-11.412-132.305zm-317.51 213.508V175.185l142.739 81.205-142.739 81.201z" />
               </svg>
             </div>
@@ -4841,11 +4937,12 @@ const SocialLink = () => {
               visible: { opacity: 1, x: 0 },
             }}
             transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-            className={`${UIVERSE_BUTTON_BASE} border-white/10 hover:rotate-2 hover:border-white/30`}
+            whileHover={{ y: -3 }}
+            className={`${CONTACT_BUTTON_BASE} p-5 border border-blue-500/20 text-blue-500 hover:border-blue-500/50 hover:text-blue-400`}
             aria-label="LinkedIn"
           >
-            <div className="relative z-10">
-              <svg className="w-7 h-7 fill-current text-blue-500 group-hover:text-blue-400 transition-colors duration-300" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <div>
+              <svg className="w-7 h-7 fill-current transition-colors duration-300" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
               </svg>
             </div>
@@ -4858,11 +4955,12 @@ const SocialLink = () => {
               visible: { opacity: 1, x: 0 },
             }}
             transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-            className={`${UIVERSE_BUTTON_BASE} border-white/10 hover:-rotate-2 hover:border-white/30`}
+            whileHover={{ y: -3 }}
+            className={`${CONTACT_BUTTON_BASE} p-5 border border-cyan-500/20 text-cyan-500 hover:border-cyan-500/50 hover:text-cyan-400`}
             aria-label="TikTok"
           >
-            <div className="relative z-10">
-              <svg className="w-7 h-7 fill-current text-cyan-500 group-hover:text-cyan-400 transition-colors duration-300" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <div>
+              <svg className="w-7 h-7 fill-current transition-colors duration-300" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
               </svg>
             </div>
@@ -4875,11 +4973,12 @@ const SocialLink = () => {
               visible: { opacity: 1, x: 0 },
             }}
             transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-            className={`${UIVERSE_BUTTON_BASE} border-white/10 hover:rotate-2 hover:border-white/30`}
+            whileHover={{ y: -3 }}
+            className={`${CONTACT_BUTTON_BASE} p-5 border border-pink-500/20 text-pink-500 hover:border-pink-500/50 hover:text-pink-400`}
             aria-label="Instagram"
           >
-            <div className="relative z-10 flex items-center justify-center">
-              <Instagram size={28} className="text-pink-500 group-hover:text-pink-400 transition-colors duration-300" strokeWidth={1.5} aria-hidden />
+            <div className="flex items-center justify-center">
+              <Instagram size={28} className="transition-colors duration-300" strokeWidth={1.5} aria-hidden />
             </div>
           </motion.a>
 
@@ -4890,11 +4989,12 @@ const SocialLink = () => {
               visible: { opacity: 1, x: 0 },
             }}
             transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-            className={`${UIVERSE_BUTTON_BASE} border-white/10 hover:rotate-3 hover:border-white/30`}
+            whileHover={{ y: -3 }}
+            className={`${CONTACT_BUTTON_BASE} p-5 border border-white/10 text-mono-2 hover:border-white/30 hover:text-white`}
             aria-label="Email"
           >
-            <div className="relative z-10 flex items-center justify-center">
-              <Mail size={28} className="text-white group-hover:text-white/90 transition-colors duration-300" strokeWidth={1.5} aria-hidden />
+            <div className="flex items-center justify-center">
+              <Mail size={28} className="transition-colors duration-300" strokeWidth={1.5} aria-hidden />
             </div>
           </motion.a>
         </motion.div>
@@ -4925,14 +5025,17 @@ const SKILLS_MAJOR_CATEGORIES: {
     label: "TOOLKIT",
     panels: [
       { title: "DESIGN & PRODUCTIVITY", titleCase: "Design & Productivity", subtitle: "Toolkit", items: ["Microsoft Office 365", "Adobe Creative Suite", "Canva", "Procreate", "Cursor"] },
-      { title: "VIDEO & WRITING", titleCase: "Video & Writing", subtitle: "Production Tools", items: ["DaVinci Resolve", "CapCut", "Final Draft", "Arc Studio", "OBS Studio"] },
+      { title: "VIDEO & WRITING", titleCase: "Video & Writing", subtitle: "Production Tools", items: ["DaVinci Resolve", "CapCut", "Audacity", "Arc Studio - Screenwriting", "OBS Studio"] },
       { title: "SOCIAL PLATFORMS", titleCase: "Social Platforms", subtitle: "Distribution Platforms", items: ["Hootsuite", "TikTok Creator Tools", "Instagram Reels", "YouTube Shorts", "Twitch"] },
     ],
   },
 ];
 
 // ??? SKILLS SYSTEM CONSTANTS ????????????????????????????????????????????????
-const BRANCH_DRAW_MS = 0.32;
+/** ~56% faster than baseline SKILLS tweens — divide durations/delays by this (1.25 × 1.25). */
+const SKILLS_ANIM_SPEED = 1.5625;
+const skillsAnimS = (seconds: number) => seconds / SKILLS_ANIM_SPEED;
+const BRANCH_DRAW_MS = skillsAnimS(0.32);
 const BRANCH_EASE: [number, number, number, number] = [0.4, 0, 0.6, 1];
 const SKILLS_DEFAULT_OPACITY = 0.28;
 const BACK_MS = 300;
@@ -5082,7 +5185,7 @@ const BranchDiagram = ({
   useEffect(() => {
     if (!reverse && (trunkSegments.length > 0 || branchSegments.length > 0)) {
       const controls = animate(dashOffset, 800, {
-        duration: 2,
+        duration: skillsAnimS(2),
         repeat: Infinity,
         ease: "linear",
       });
@@ -5157,7 +5260,7 @@ const BranchDiagram = ({
           style={{ strokeDashoffset: dashOffset }}
           initial={{ opacity: 0 }}
           animate={{ opacity: reverse ? 0 : 0.75 }}
-          transition={{ duration: 0.2, ease: BRANCH_EASE, delay: BRANCH_DRAW_MS }}
+          transition={{ duration: skillsAnimS(0.2), ease: BRANCH_EASE, delay: BRANCH_DRAW_MS }}
         />
       )}
 
@@ -5181,9 +5284,9 @@ const BranchDiagram = ({
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: reverse ? 0 : 1, opacity: reverse ? 0 : 1 }}
             transition={{
-              duration: 0.18,
+              duration: skillsAnimS(0.18),
               ease: BRANCH_EASE,
-              delay: BRANCH_DRAW_MS * 0.7 + idx * 0.04,
+              delay: BRANCH_DRAW_MS * 0.7 + idx * skillsAnimS(0.04),
             }}
           />
         );
@@ -5194,10 +5297,10 @@ const BranchDiagram = ({
 
 // ??? SKILLS MOTION CONSTANTS (P3R / neo-Tokyo: UI 160?260ms, stagger 30?60ms) ??
 const SKILLS_EASE: [number, number, number, number] = [0.2, 0.8, 0.2, 1]; // ease-out
-const SKILLS_HOVER_DUR = 0.2;   // ~200ms selection feel (smoother)
-const SKILLS_EXPAND_DUR = 0.3;  // panel settle (slightly longer for polish)
-const SKILLS_STAGGER = 0.05;    // 50ms per item (more pronounced stagger)
-const SKILLS_UNDERLINE_DUR = 0.24;
+const SKILLS_HOVER_DUR = skillsAnimS(0.2);   // ~200ms selection feel (smoother)
+const SKILLS_EXPAND_DUR = skillsAnimS(0.3);  // panel settle (slightly longer for polish)
+const SKILLS_STAGGER = skillsAnimS(0.05);    // 50ms per item (more pronounced stagger)
+const SKILLS_UNDERLINE_DUR = skillsAnimS(0.24);
 const SKILLS_HOVER_SHIFT_PX = 8; // Ball travel: increased for more dynamic feel
 const SKILLS_CARD_HOVER_SCALE = 1.04; // More pronounced hover scale
 const SKILLS_CARD_HOVER_Y = -12; // More lift on hover // Ball travel: slower so it?s readable (was 0.5)
@@ -5257,7 +5360,7 @@ const SKILLS_DATA = {
       },
       {
         title: "Video & Writing",
-        items: ["DaVinci Resolve", "CapCut", "Final Draft", "Arc Studio", "OBS Studio"],
+        items: ["DaVinci Resolve", "CapCut", "Audacity", "Arc Studio - Screenwriting", "OBS Studio"],
       },
       {
         title: "Social Platforms",
@@ -5305,11 +5408,24 @@ const SKILLS_CARD_BULLETS_HEADER_OVERLAP = 0.84;
 const SKILLS_ROW2_START_OVERLAP = 0.84;
 /** Global multiplier for SKILLS section entrance delays + durations (lower = faster). */
 const SKILLS_ENTRANCE_SPEED = (0.95 / 1.2705) * 0.95;
-const skillsEntranceS = (seconds: number) => seconds * SKILLS_ENTRANCE_SPEED;
+const skillsEntranceS = (seconds: number) => (seconds * SKILLS_ENTRANCE_SPEED) / SKILLS_ANIM_SPEED;
 /** Green accent scaleX — full line duration, ease-out tail for a softer landing. */
 const SKILLS_GREEN_LINE_DUR_S = skillsEntranceS(PROFILE_LINE_DURATION_S);
 const SKILLS_GREEN_LINE_EASE = [0.22, 1, 0.36, 1] as const;
-const SKILLS_CARD_DUR = 0.22;
+/** Header label/title slide — PROFILE `SectionHeader` slideFade duration parity. */
+const SKILLS_HEADER_ENTER_DUR_S = skillsEntranceS(0.5);
+/** Main + CORE/TOOLKIT rail title slide — slightly longer, softer decel; delays unchanged. */
+const SKILLS_SECTION_HEADER_SLIDE_DUR_S = skillsEntranceS(0.5 * 1.12);
+const SKILLS_SECTION_HEADER_SLIDE_EASE = [0.12, 0.88, 0.26, 1] as const;
+/** Start SKILLS entrance this many seconds before the section panel wipe finishes. */
+const SKILLS_PANEL_ENTRANCE_LEAD_S = 0.08;
+/** Start PROJECTS entrance this many seconds before the section panel wipe finishes. */
+const PROJECTS_PANEL_ENTRANCE_LEAD_S = 0.06;
+/** PROJECTS header entrance duration (seconds). */
+const PROJECTS_HEADER_ENTER_DUR_S = 0.3;
+/** Start below-header content exactly when header ends. */
+const PROJECTS_BELOW_HEADER_LEAD_MS = 0;
+const SKILLS_CARD_DUR = skillsAnimS(0.22);
 
 const SKILLS_CARD_LAYOUT = {
   core: {
@@ -5531,7 +5647,7 @@ const SkillsWebHooks = ({
           transition={{
             backgroundColor: { duration: cardDur, ease: SKILLS_CARD_EASE },
             scale: isActive 
-              ? { duration: 0.5, ease: [0.22, 1, 0.36, 1] }
+              ? { duration: skillsAnimS(0.5), ease: [0.22, 1, 0.36, 1] }
               : { duration: cardDur, ease: SKILLS_CARD_EASE },
             boxShadow: { duration: cardDur, ease: SKILLS_CARD_EASE },
           }}
@@ -5542,7 +5658,7 @@ const SkillsWebHooks = ({
 };
 
 // ??? SKILLS EXPANDED VIEW (morphed title + panel; no cards, no line/ball) ??????
-const SKILLS_VIEW_TRANSITION = { duration: 0.35, ease: [0.2, 0.8, 0.2, 1] as const };
+const SKILLS_VIEW_TRANSITION = { duration: skillsAnimS(0.35), ease: [0.2, 0.8, 0.2, 1] as const };
 
 const SkillsExpandedView = ({
   data,
@@ -5575,7 +5691,7 @@ const SkillsExpandedView = ({
         transition={{ 
           duration: expandDur * 1.2, 
           ease: [0.16, 1, 0.3, 1],
-          delay: reducedMotion ? 0 : 0.05,
+          delay: reducedMotion ? 0 : skillsAnimS(0.05),
         }}
         className="w-full flex items-center justify-between gap-4 mb-6"
       >
@@ -5595,7 +5711,7 @@ const SkillsExpandedView = ({
           aria-label="Back to skills"
           whileHover={{ scale: 1.05, x: -2 }}
           whileTap={{ scale: 0.98 }}
-          transition={{ duration: 0.2 }}
+          transition={{ duration: skillsAnimS(0.2) }}
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           Back
@@ -5645,7 +5761,7 @@ const SkillsExpandedPanel = ({
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 8, transition: { duration: 0.2, ease: SKILLS_EASE } }}
+      exit={{ opacity: 0, y: 8, transition: { duration: skillsAnimS(0.2), ease: SKILLS_EASE } }}
       transition={{ duration: expandDur, ease: SKILLS_EASE }}
       className="mt-10 w-full max-w-4xl mx-auto"
     >
@@ -5676,11 +5792,11 @@ const SkillsExpandedPanel = ({
 
 // ??? SKILL ARSENAL (dual-layer: undercard expands, P3R-style reveal) ?????????????
 // P3R motion: UI 160?260ms, ease-out, panel slide + row stagger (30?60ms), y+opacity
-const MORPH_DUR = 0.22;
+const MORPH_DUR = skillsAnimS(0.22);
 const MORPH_EASE = [0.2, 0.8, 0.2, 1] as const; // P3R ease-out
-const MORPH_EXPAND_DUR = 0.28;
+const MORPH_EXPAND_DUR = skillsAnimS(0.28);
 const MORPH_EXPAND_EASE = [0.22, 1, 0.36, 1] as const;
-const P3R_STAGGER_MS = 45; // 30?60ms per row
+const P3R_STAGGER_MS = 45 / SKILLS_ANIM_SPEED; // 30?60ms per row
 
 /**
  * When `true`: Core + Tools intro pair shows first; opening a card reveals sub-skills in the overlay (with Close).
@@ -5888,7 +6004,7 @@ const AI_IDEA_LINE =
 
 
 const SKILLS_EXPAND_EASE = [0.22, 1, 0.36, 1] as const;
-const SKILLS_EXPAND_EXIT_DUR = 0.28;
+const SKILLS_EXPAND_EXIT_DUR = skillsAnimS(0.28);
 const SKILLS_EXPAND_ENTER_DUR = SKILLS_EXPAND_EXIT_DUR * 1.5; // 50% longer fade-in
 
 /** Rule-of-thirds overlay for positioning. Set showRuleOfThirds = true to show on viewport. Preserved for future use. */
@@ -6021,7 +6137,7 @@ const SkillsSubskillsPanel = ({
       aria-hidden
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.32, ease: SKILLS_EASE, delay: 0.12 }}
+      transition={{ duration: skillsAnimS(0.32), ease: SKILLS_EASE, delay: skillsAnimS(0.12) }}
     >
       <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-white/[0.14]" />
       <div className="absolute left-0 right-0 bottom-0 h-px bg-white/[0.12]" />
@@ -6037,7 +6153,7 @@ const SkillsSubskillsPanel = ({
       className="skills-subpanel-header skills-subpanel-header--compact nav-header relative z-[1] mx-auto w-fit max-w-full flex-shrink-0 min-w-0 text-center"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, ease: SKILLS_EASE, delay: slide === "core" ? 0.1 : 0.16 }}
+      transition={{ duration: skillsAnimS(0.3), ease: SKILLS_EASE, delay: slide === "core" ? skillsAnimS(0.1) : skillsAnimS(0.16) }}
     >
       <div className="career-nav-section-labels min-w-0 items-center pr-0 text-center">
         <p className="career-nav-section-subtitle">{panelHeader.title}</p>
@@ -6226,7 +6342,7 @@ const SkillsSubskillsPanel = ({
                       className={columnClass}
                       initial={dualInline ? { opacity: 0, y: 8 } : undefined}
                       animate={dualInline ? { opacity: 1, y: 0 } : undefined}
-                      transition={dualInline ? { duration: 0.28, ease: SKILLS_EASE, delay: 0.18 + index * 0.045 } : undefined}
+                      transition={dualInline ? { duration: skillsAnimS(0.28), ease: SKILLS_EASE, delay: skillsAnimS(0.18 + index * 0.045) } : undefined}
                     >
                       {cardInner}
                     </motion.div>
@@ -6257,7 +6373,7 @@ const SkillsSubskillsPanel = ({
                   {
                     title: "Video & Writing",
                     label: "Video & Writing",
-                    items: ["DaVinci Resolve", "CapCut", "Final Draft", "Arc Studio", "OBS Studio"],
+                    items: ["DaVinci Resolve", "CapCut", "Audacity", "Arc Studio - Screenwriting", "OBS Studio"],
                   },
                   {
                     title: "Social Platforms",
@@ -6310,7 +6426,7 @@ const SkillsSubskillsPanel = ({
                       className={columnClass}
                       initial={dualInline ? { opacity: 0, y: 8 } : undefined}
                       animate={dualInline ? { opacity: 1, y: 0 } : undefined}
-                      transition={dualInline ? { duration: 0.28, ease: SKILLS_EASE, delay: 0.24 + index * 0.045 } : undefined}
+                      transition={dualInline ? { duration: skillsAnimS(0.28), ease: SKILLS_EASE, delay: skillsAnimS(0.24 + index * 0.045) } : undefined}
                     >
                       {cardInner}
                     </motion.div>
@@ -6337,7 +6453,7 @@ const SKILLS_TOOLS_CATEGORIES = [
   },
   {
     title: "Video & Writing",
-    items: ["DaVinci Resolve", "CapCut", "Final Draft", "Arc Studio", "OBS Studio"],
+    items: ["DaVinci Resolve", "CapCut", "Audacity", "Arc Studio - Screenwriting", "OBS Studio"],
   },
   {
     title: "Social Platforms",
@@ -6350,8 +6466,7 @@ const SkillsBranchRailHeader = ({
   sectionSubtitle,
   sectionTitle,
   align = "left",
-  baseDelay = 0,
-  greenLineDelay,
+  revealDelay,
   panelSettled = false,
   reduceMotion = false,
   titleStackRef,
@@ -6360,8 +6475,7 @@ const SkillsBranchRailHeader = ({
   sectionSubtitle: string;
   sectionTitle: string;
   align?: "left" | "right";
-  baseDelay?: number;
-  greenLineDelay: number;
+  revealDelay: number;
   panelSettled?: boolean;
   reduceMotion?: boolean;
   /** Measure target for CORE rail — sets shared accent line width for both rails. */
@@ -6369,22 +6483,28 @@ const SkillsBranchRailHeader = ({
   sharedAccentLineWidthPx?: number | null;
 }) => {
   const rm = reduceMotion;
-  const labelDuration = skillsEntranceS(SUMMARY_DURATION_S / 1.25);
+  const labelDuration = SKILLS_SECTION_HEADER_SLIDE_DUR_S;
   // CORE (left) slides right: starts left of target (negative x)
   // TOOLKIT (right) slides left: starts right of target (positive x)
   const labelSlideX = align === "right" ? 28 : -28;
 
-  const headerEntrance: Variants = {
-    hidden: {},
-    visible: { transition: { delayChildren: baseDelay } },
-  };
   const labelsEntrance: Variants = {
     hidden: { opacity: rm ? 1 : 0, x: rm ? 0 : labelSlideX },
     visible: {
       opacity: 1,
       x: 0,
-      transition: { duration: rm ? 0 : labelDuration, ease: EASE.out, type: "tween" },
+      transition: {
+        delay: rm ? 0 : revealDelay,
+        duration: rm ? 0 : labelDuration,
+        ease: SKILLS_SECTION_HEADER_SLIDE_EASE,
+        type: "tween",
+      },
     },
+  };
+
+  const headerEntrance: Variants = {
+    hidden: {},
+    visible: {},
   };
 
   const alignClass =
@@ -6428,7 +6548,7 @@ const SkillsBranchRailHeader = ({
             animate={{ scaleX: rm || panelSettled ? 1 : 0 }}
             transition={{
               duration: rm ? 0 : SKILLS_GREEN_LINE_DUR_S,
-              delay: rm ? 0 : greenLineDelay,
+              delay: rm ? 0 : revealDelay,
               ease: SKILLS_GREEN_LINE_EASE,
             }}
           />
@@ -6440,32 +6560,35 @@ const SkillsBranchRailHeader = ({
 
 /** Centered SKILLS title + green line — same cadence as CORE / TOOLKIT rail headers. */
 const SkillsMainSectionHeader = ({
-  baseDelay = 0,
-  greenLineDelay,
+  revealDelay,
   panelSettled = false,
   reduceMotion = false,
 }: {
-  baseDelay?: number;
-  greenLineDelay: number;
+  revealDelay: number;
   panelSettled?: boolean;
   reduceMotion?: boolean;
 }) => {
   const rm = reduceMotion;
-  /** Same t0 + duration as CORE / TOOLKIT `.career-nav-section-labels` slide. */
-  const railLabelDuration = skillsEntranceS(SUMMARY_DURATION_S / 1.25);
+  const railLabelDuration = SKILLS_SECTION_HEADER_SLIDE_DUR_S;
   const titleUpY = 10;
 
-  const headerEntrance: Variants = {
-    hidden: {},
-    visible: { transition: { delayChildren: rm ? 0 : baseDelay } },
-  };
   const titleEntrance: Variants = {
     hidden: { opacity: rm ? 1 : 0, y: rm ? 0 : titleUpY },
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: rm ? 0 : railLabelDuration, ease: EASE.out, type: "tween" },
+      transition: {
+        delay: rm ? 0 : revealDelay,
+        duration: rm ? 0 : railLabelDuration,
+        ease: SKILLS_SECTION_HEADER_SLIDE_EASE,
+        type: "tween",
+      },
     },
+  };
+
+  const headerEntrance: Variants = {
+    hidden: {},
+    visible: {},
   };
 
   return (
@@ -6475,7 +6598,10 @@ const SkillsMainSectionHeader = ({
       initial="hidden"
       animate={panelSettled ? "visible" : "hidden"}
     >
-      <motion.div className="flex w-full flex-col items-center" variants={titleEntrance}>
+      <motion.div
+        className="mx-auto inline-flex w-fit max-w-full flex-col items-stretch"
+        variants={titleEntrance}
+      >
         <div
           className={`flex flex-col items-center text-center relative z-10 ${SECTION_SKILLS_MAIN_HEADER_TITLE_CLASS}`}
         >
@@ -6483,23 +6609,23 @@ const SkillsMainSectionHeader = ({
             <span>SKILLS</span>
           </h2>
         </div>
+        <div
+          className="skills-main-accent-line relative mb-6 min-h-[2px] w-full sm:mb-8 md:mb-10"
+          aria-hidden
+        >
+          <motion.span
+            className="absolute bottom-0 left-0 right-0 h-[2px] bg-portfolio-green"
+            style={{ transformOrigin: "center center" }}
+            initial={{ scaleX: rm ? 1 : 0 }}
+            animate={{ scaleX: rm || panelSettled ? 1 : 0 }}
+            transition={{
+              duration: rm ? 0 : SKILLS_GREEN_LINE_DUR_S,
+              delay: rm ? 0 : revealDelay,
+              ease: SKILLS_GREEN_LINE_EASE,
+            }}
+          />
+        </div>
       </motion.div>
-      <div
-        className="skills-main-accent-line relative mx-auto mb-6 min-h-[2px] w-[min(100%,10.45rem)] sm:mb-8 sm:w-[min(100%,13.3rem)] md:mb-10 md:w-[min(100%,16.15rem)]"
-        aria-hidden
-      >
-        <motion.span
-          className="absolute bottom-0 left-0 right-0 h-[2px] bg-portfolio-green"
-          style={{ transformOrigin: "center center" }}
-          initial={{ scaleX: rm ? 1 : 0 }}
-          animate={{ scaleX: rm || panelSettled ? 1 : 0 }}
-          transition={{
-            duration: rm ? 0 : SKILLS_GREEN_LINE_DUR_S,
-            delay: rm ? 0 : greenLineDelay,
-            ease: SKILLS_GREEN_LINE_EASE,
-          }}
-        />
-      </div>
     </motion.div>
   );
 };
@@ -6511,6 +6637,7 @@ const SkillsCardInnerContent = ({
   panelSettled,
   reduceMotion,
   contentBaseDelay,
+  bulletsRevealDelay,
   bullets,
 }: {
   categoryTitle: string;
@@ -6518,14 +6645,14 @@ const SkillsCardInnerContent = ({
   panelSettled: boolean;
   reduceMotion: boolean;
   contentBaseDelay: number;
+  bulletsRevealDelay: number;
   bullets: { key: string; label: string; icon: React.ReactNode }[];
 }) => {
   const rm = reduceMotion;
   const cardHeaderUpY = 10;
-  const cardHeaderDur = skillsEntranceS(EXPERIENCE_RAIL_LABEL_DUR_S);
-  const cardLineDur = skillsEntranceS(EXPERIENCE_RAIL_LINE_DUR_S);
-  const cardBulletDur = skillsEntranceS(EXPERIENCE_TAB_ENTRANCE_DUR_S);
+  const cardHeaderDur = SKILLS_SECTION_HEADER_SLIDE_DUR_S;
   const cardBulletStagger = skillsEntranceS(EXPERIENCE_TAB_STAGGER_S);
+  const cardBulletsDelayChildren = Math.max(0, bulletsRevealDelay - contentBaseDelay);
 
   const innerRoot: Variants = {
     hidden: { opacity: rm ? 1 : 0 },
@@ -6543,35 +6670,34 @@ const SkillsCardInnerContent = ({
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: rm ? 0 : cardHeaderDur, ease: EASE.out, type: "tween" },
+      transition: { duration: rm ? 0 : cardHeaderDur, ease: SKILLS_SECTION_HEADER_SLIDE_EASE, type: "tween" },
     },
   };
-  const cardHeaderLineEntrance: Variants = {
-    hidden: { scaleX: rm ? 1 : 0, opacity: rm ? 1 : 0 },
-    visible: {
-      scaleX: 1,
-      opacity: 1,
-      transition: {
-        duration: rm ? 0 : cardLineDur,
-        ease: EASE.out,
-      },
-    },
-  };
-  const cardHeaderEnd = Math.max(cardHeaderDur, cardLineDur);
   const cardBulletsEntrance: Variants = {
     hidden: {},
     visible: {
       transition: {
-        delayChildren: rm ? 0 : cardHeaderEnd * SKILLS_CARD_BULLETS_HEADER_OVERLAP,
+        delayChildren: rm ? 0 : cardBulletsDelayChildren,
         staggerChildren: rm ? 0 : cardBulletStagger,
       },
     },
   };
   const cardBulletItemEntrance: Variants = {
-    hidden: { opacity: rm ? 1 : 0 },
+    hidden: { opacity: rm ? 1 : 0, y: rm ? 0 : cardHeaderUpY },
     visible: {
       opacity: 1,
-      transition: { duration: rm ? 0 : cardBulletDur, ease: EASE.out, type: "tween" },
+      y: 0,
+      transition: {
+        opacity: {
+          duration: rm ? 0 : SKILLS_SECTION_HEADER_SLIDE_DUR_S * 0.52,
+          ease: EASE.out,
+        },
+        y: {
+          duration: rm ? 0 : SKILLS_SECTION_HEADER_SLIDE_DUR_S,
+          ease: SKILLS_SECTION_HEADER_SLIDE_EASE,
+        },
+        type: "tween",
+      },
     },
   };
 
@@ -6591,9 +6717,17 @@ const SkillsCardInnerContent = ({
           {categoryTitle}
         </motion.p>
         <motion.span
-          variants={cardHeaderLineEntrance}
           className="skills-card-column-header__line block h-px w-full bg-white/[0.06]"
-          style={{ transformOrigin: "center center" }}
+          style={{
+            transformOrigin: align === "right" ? "right center" : "left center",
+          }}
+          initial={{ scaleX: rm ? 1 : 0 }}
+          animate={{ scaleX: rm || panelSettled ? 1 : 0 }}
+          transition={{
+            duration: rm ? 0 : SKILLS_GREEN_LINE_DUR_S,
+            delay: rm ? 0 : bulletsRevealDelay,
+            ease: SKILLS_GREEN_LINE_EASE,
+          }}
           aria-hidden
         />
       </motion.div>
@@ -6637,14 +6771,13 @@ const SkillArsenal = ({
   const coreRowSpan = coreCardsRowEnd - CARD_ROW_BASE;
   const TOOLS_CARD_ROW_BASE = CARD_ROW_BASE + coreRowSpan * SKILLS_ROW2_START_OVERLAP;
   const cardsRowEnd = skillsRowCardsEnd(TOOLS_CARD_ROW_BASE, toolsCardCount);
-  const RAIL_HEADERS_DELAY = cardsRowEnd;
   /** In-card column headers run with CORE / TOOLKIT rail headers; bullets keep their inner tail. */
   const CARD_INNER_BASE_DELAY = cardsRowEnd;
   const cardHeaderDur = skillsEntranceS(EXPERIENCE_RAIL_LABEL_DUR_S);
   const cardLineDur = skillsEntranceS(EXPERIENCE_RAIL_LINE_DUR_S);
   const cardHeaderEnd = Math.max(cardHeaderDur, cardLineDur);
-  /** Green accent lines (main + CORE / TOOLKIT rails) — same t0 as in-card bullets. */
-  const skillsGreenLineDelay =
+  /** Main + CORE / TOOLKIT rail labels/lines — same t0 as in-card bullet reveal. */
+  const skillsBulletsRevealDelay =
     cardsRowEnd + cardHeaderEnd * SKILLS_CARD_BULLETS_HEADER_OVERLAP;
 
   const coreRailTitleStackRef = useRef<HTMLDivElement>(null);
@@ -6735,8 +6868,7 @@ const SkillArsenal = ({
           className={`${PROFILE_VIEWPORT_CONTENT_MAX} skills-profile-shell relative z-[2] mx-auto flex min-h-0 w-full flex-1 flex-col justify-start`}
         >
           <SkillsMainSectionHeader
-            baseDelay={RAIL_HEADERS_DELAY}
-            greenLineDelay={skillsGreenLineDelay}
+            revealDelay={skillsBulletsRevealDelay}
             panelSettled={panelSettled}
             reduceMotion={rm}
           />
@@ -6752,8 +6884,7 @@ const SkillArsenal = ({
                   sectionTitle={SKILLS_DATA.core.subtitle}
                   titleStackRef={coreRailTitleStackRef}
                   sharedAccentLineWidthPx={sharedRailAccentWidthPx}
-                  baseDelay={RAIL_HEADERS_DELAY}
-                  greenLineDelay={skillsGreenLineDelay}
+                  revealDelay={skillsBulletsRevealDelay}
                   panelSettled={panelSettled}
                   reduceMotion={rm}
                 />
@@ -6777,6 +6908,7 @@ const SkillArsenal = ({
                           panelSettled={panelSettled}
                           reduceMotion={rm}
                           contentBaseDelay={CARD_INNER_BASE_DELAY}
+                          bulletsRevealDelay={skillsBulletsRevealDelay}
                           bullets={items.map(({ label, Icon }) => ({
                             key: label,
                             label,
@@ -6796,8 +6928,7 @@ const SkillArsenal = ({
                   sectionSubtitle={SKILLS_DATA.tools.title}
                   sectionTitle={SKILLS_DATA.tools.subtitle}
                   sharedAccentLineWidthPx={sharedRailAccentWidthPx}
-                  baseDelay={RAIL_HEADERS_DELAY}
-                  greenLineDelay={skillsGreenLineDelay}
+                  revealDelay={skillsBulletsRevealDelay}
                   panelSettled={panelSettled}
                   reduceMotion={rm}
                 />
@@ -6821,6 +6952,7 @@ const SkillArsenal = ({
                           panelSettled={panelSettled}
                           reduceMotion={rm}
                           contentBaseDelay={CARD_INNER_BASE_DELAY}
+                          bulletsRevealDelay={skillsBulletsRevealDelay}
                           bullets={items.map((tool) => ({
                             key: tool,
                             label: tool,
@@ -6977,7 +7109,7 @@ export default function Home() {
   useEffect(() => { setAppReady(true); }, []);
 
   const [isResumeMode, setIsResumeMode] = useState(false);
-  const [navButtonsFaded, setNavButtonsFaded] = useState(false);
+  const [archivePdfNavActive, setArchivePdfNavActive] = useState(false);
   const [isSideNavOpen, setIsSideNavOpen] = useState(false);
   const [currentSection, setCurrentSection] = useState<string | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -6989,17 +7121,35 @@ export default function Home() {
     "visible" | "hide-instant" | "fade-in"
   >("visible");
   const skillsFadeReplayRafRef = useRef<number | null>(null);
+  /** Side-nav EXPERIENCE re-click: same fade-only replay (no entrance re-run). */
+  const [experienceContentFade, setExperienceContentFade] = useState<
+    "visible" | "hide-instant" | "fade-in"
+  >("visible");
+  const experienceFadeReplayRafRef = useRef<number | null>(null);
   const reduceMotion = useReducedMotion();
   const heroInViewRef = useRef<HTMLDivElement | null>(null);
   const isHeroInView = useInView(heroInViewRef, { margin: "-100px 0px 0px 0px" });
   const slidesRef = useRef<HTMLDivElement | null>(null);
   const slideOrder = ["hero", "menu"];
   const [currentSlideId, setCurrentSlideId] = useState<string>("hero");
+  const [menuIntroReady, setMenuIntroReady] = useState(false);
   const [menuLockedFillId, setMenuLockedFillId] = useState<string | null>(null);
   const [activeShowcaseProjectId, setActiveShowcaseProjectId] = useState<string | null>(null);
-  /** FEATURED WRITING ? open this PDF in SupportingProjectsSection loader after navigation. */
-  const [supportingPdfIntent, setSupportingPdfIntent] = useState<SupportingArchivePdfItem | null>(null);
-  const clearSupportingPdfIntent = useCallback(() => setSupportingPdfIntent(null), []);
+  const [projectsEntranceArmed, setProjectsEntranceArmed] = useState(false);
+  /** FEATURED WRITING ? PDF overlay on PROJECTS (same dismiss feel as closing side nav). */
+  const [showcasePdfOverlay, setShowcasePdfOverlay] = useState<SupportingArchivePdfItem | null>(null);
+  const [showcasePdfObscuring, setShowcasePdfObscuring] = useState(false);
+  const [showcasePdfClosing, setShowcasePdfClosing] = useState(false);
+  const [showcasePdfFrame, setShowcasePdfFrame] = useState(false);
+  const showcasePdfCloseFinishRef = useRef(false);
+  const showcasePdfCloseTimerRef = useRef<number | null>(null);
+  const showcasePdfObscureTimerRef = useRef<number | null>(null);
+  const supportingPdfPreviewControlRef = useRef<SupportingPdfPreviewControl | null>(null);
+  const showcasePdfPreviewControlRef = useRef<SupportingPdfPreviewControl | null>(null);
+  const navButtonsFaded =
+    archivePdfNavActive || Boolean(showcasePdfOverlay) || showcasePdfClosing || showcasePdfObscuring;
+  const showcasePdfViewerActive =
+    showcasePdfObscuring || Boolean(showcasePdfOverlay) || showcasePdfClosing;
   const prevSlideIdRef = useRef<string>("hero");
   const transitionTimeoutsRef = useRef<number[]>([]);
   const hasWarmedProjectMediaRef = useRef(false);
@@ -7064,9 +7214,16 @@ export default function Home() {
   }, [currentSection]);
 
   useEffect(() => {
+    if (currentSection !== "experience") setExperienceContentFade("visible");
+  }, [currentSection]);
+
+  useEffect(() => {
     return () => {
       if (skillsFadeReplayRafRef.current != null) {
         cancelAnimationFrame(skillsFadeReplayRafRef.current);
+      }
+      if (experienceFadeReplayRafRef.current != null) {
+        cancelAnimationFrame(experienceFadeReplayRafRef.current);
       }
     };
   }, []);
@@ -7083,6 +7240,21 @@ export default function Home() {
 
   const navigateTo = (id: string) => {
     setIsSideNavOpen(false);
+    if (id !== "projects" && (showcasePdfOverlay || showcasePdfClosing || showcasePdfObscuring)) {
+      if (showcasePdfObscureTimerRef.current !== null) {
+        window.clearTimeout(showcasePdfObscureTimerRef.current);
+        showcasePdfObscureTimerRef.current = null;
+      }
+      showcasePdfCloseFinishRef.current = false;
+      if (showcasePdfCloseTimerRef.current !== null) {
+        window.clearTimeout(showcasePdfCloseTimerRef.current);
+        showcasePdfCloseTimerRef.current = null;
+      }
+      setShowcasePdfObscuring(false);
+      setShowcasePdfOverlay(null);
+      setShowcasePdfClosing(false);
+      setShowcasePdfFrame(false);
+    }
     if (isTransitioning) return;
 
     // SHOWCASE sub-route: swap carousel ? Supporting & archive in place (no panel slide / settle reset).
@@ -7092,6 +7264,7 @@ export default function Home() {
     ) {
       transitionTimeoutsRef.current.forEach((t) => window.clearTimeout(t));
       transitionTimeoutsRef.current = [];
+      if (id === "projects") setProjectsEntranceArmed(true);
       setCurrentSection(id);
       return;
     }
@@ -7121,7 +7294,25 @@ export default function Home() {
       return;
     }
 
+    // Already on EXPERIENCE: fade in only — keep panel settled (no entrance re-run).
+    if (id === "experience" && currentSection === "experience") {
+      transitionTimeoutsRef.current.forEach((t) => window.clearTimeout(t));
+      transitionTimeoutsRef.current = [];
+      if (!reduceMotion) {
+        if (experienceFadeReplayRafRef.current != null) {
+          cancelAnimationFrame(experienceFadeReplayRafRef.current);
+        }
+        setExperienceContentFade("hide-instant");
+        experienceFadeReplayRafRef.current = requestAnimationFrame(() => {
+          experienceFadeReplayRafRef.current = null;
+          setExperienceContentFade("fade-in");
+        });
+      }
+      return;
+    }
+
     if (reduceMotion) {
+      setProjectsEntranceArmed(id === "projects");
       setCurrentSection(id === "menu" ? null : id);
       startTransition(() => setPanelSettled(true));
       return;
@@ -7129,6 +7320,7 @@ export default function Home() {
 
     transitionTimeoutsRef.current.forEach((t) => window.clearTimeout(t));
     transitionTimeoutsRef.current = [];
+    setProjectsEntranceArmed(false);
 
     if (id === "menu") {
       setMenuPanelAtRight(true);
@@ -7150,6 +7342,22 @@ export default function Home() {
       setCurrentSection(id);
       setTransitionTarget(id);
       setIsTransitioning(true);
+      if (id === "projects") {
+        transitionTimeoutsRef.current.push(
+          window.setTimeout(
+            () => setProjectsEntranceArmed(true),
+            Math.max(0, (PANEL_TRANSITION.duration - PROJECTS_PANEL_ENTRANCE_LEAD_S) * 1000),
+          ),
+        );
+      }
+      if (id === "skills") {
+        transitionTimeoutsRef.current.push(
+          window.setTimeout(
+            () => startTransition(() => setPanelSettled(true)),
+            Math.max(0, (PANEL_TRANSITION.duration - SKILLS_PANEL_ENTRANCE_LEAD_S) * 1000),
+          ),
+        );
+      }
       transitionTimeoutsRef.current.push(
         window.setTimeout(() => {
           setIsTransitioning(false);
@@ -7162,14 +7370,122 @@ export default function Home() {
     }
   };
 
-  const openFeaturedPdfInSupporting = (item: SupportingArchivePdfItem) => {
-    setSupportingPdfIntent(item);
-    navigateTo("projects-supporting");
-  };
-  const projectShowcaseEntranceReady =
-    currentSection === "projects" &&
-    (reduceMotion || (!isTransitioning && transitionTarget === null));
+  const finishShowcasePdfClose = useCallback(() => {
+    if (showcasePdfCloseFinishRef.current) return;
+    showcasePdfCloseFinishRef.current = true;
+    if (showcasePdfCloseTimerRef.current !== null) {
+      window.clearTimeout(showcasePdfCloseTimerRef.current);
+      showcasePdfCloseTimerRef.current = null;
+    }
+    if (showcasePdfObscureTimerRef.current !== null) {
+      window.clearTimeout(showcasePdfObscureTimerRef.current);
+      showcasePdfObscureTimerRef.current = null;
+    }
+    setShowcasePdfObscuring(false);
+    setShowcasePdfOverlay(null);
+    setShowcasePdfClosing(false);
+    setShowcasePdfFrame(false);
+  }, []);
 
+  const cancelShowcasePdfReveal = useCallback(() => {
+    if (showcasePdfObscureTimerRef.current !== null) {
+      window.clearTimeout(showcasePdfObscureTimerRef.current);
+      showcasePdfObscureTimerRef.current = null;
+    }
+    setShowcasePdfObscuring(false);
+  }, []);
+
+  const closeShowcasePdfOverlay = useCallback(() => {
+    if (!showcasePdfOverlay || showcasePdfClosing) return;
+    showcasePdfCloseFinishRef.current = false;
+    if (reduceMotion) {
+      finishShowcasePdfClose();
+      return;
+    }
+    setShowcasePdfClosing(true);
+    showcasePdfCloseTimerRef.current = window.setTimeout(() => {
+      finishShowcasePdfClose();
+      showcasePdfCloseTimerRef.current = null;
+    }, Math.round(SHOWCASE_PDF_OVERLAY_CLOSE_S * 1000) + 48);
+  }, [finishShowcasePdfClose, reduceMotion, showcasePdfClosing, showcasePdfOverlay]);
+
+  const openFeaturedPdfInSupporting = (item: SupportingArchivePdfItem) => {
+    if (currentSection !== "projects") {
+      navigateTo("projects");
+    }
+    showcasePdfCloseFinishRef.current = false;
+    setShowcasePdfClosing(false);
+    setShowcasePdfFrame(false);
+    setShowcasePdfOverlay(null);
+    if (showcasePdfObscureTimerRef.current !== null) {
+      window.clearTimeout(showcasePdfObscureTimerRef.current);
+      showcasePdfObscureTimerRef.current = null;
+    }
+    setShowcasePdfObscuring(true);
+    const revealDelayMs = reduceMotion ? 0 : Math.round(SHOWCASE_PDF_PROJECTS_FADE_OUT_S * 1000);
+    showcasePdfObscureTimerRef.current = window.setTimeout(() => {
+      setShowcasePdfOverlay(item);
+      setShowcasePdfObscuring(false);
+      showcasePdfObscureTimerRef.current = null;
+    }, revealDelayMs);
+  };
+
+  useEffect(() => {
+    if (!showcasePdfOverlay) {
+      setShowcasePdfFrame(false);
+    }
+  }, [showcasePdfOverlay]);
+
+  useEffect(() => {
+    if (!showcasePdfOverlay) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeShowcasePdfOverlay();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [closeShowcasePdfOverlay, showcasePdfOverlay]);
+
+  useEffect(() => {
+    if (!showcasePdfOverlay) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [showcasePdfOverlay]);
+
+  useEffect(() => {
+    showcasePdfPreviewControlRef.current =
+      showcasePdfOverlay || showcasePdfClosing || showcasePdfObscuring
+        ? {
+            close: showcasePdfObscuring ? cancelShowcasePdfReveal : closeShowcasePdfOverlay,
+            isOpen: true,
+          }
+        : null;
+    return () => {
+      showcasePdfPreviewControlRef.current = null;
+    };
+  }, [
+    cancelShowcasePdfReveal,
+    closeShowcasePdfOverlay,
+    showcasePdfClosing,
+    showcasePdfObscuring,
+    showcasePdfOverlay,
+  ]);
+
+  useEffect(
+    () => () => {
+      if (showcasePdfCloseTimerRef.current !== null) {
+        window.clearTimeout(showcasePdfCloseTimerRef.current);
+        showcasePdfCloseTimerRef.current = null;
+      }
+      if (showcasePdfObscureTimerRef.current !== null) {
+        window.clearTimeout(showcasePdfObscureTimerRef.current);
+        showcasePdfObscureTimerRef.current = null;
+      }
+    },
+    [],
+  );
   useEffect(() => {
     return () => transitionTimeoutsRef.current.forEach((t) => window.clearTimeout(t));
   }, []);
@@ -7181,6 +7497,22 @@ export default function Home() {
     }
     prevSlideIdRef.current = currentSlideId;
   }, [currentSlideId]);
+
+  useEffect(() => {
+    if (currentSlideId !== "menu") {
+      setMenuIntroReady(false);
+      return;
+    }
+    if (reduceMotion) {
+      setMenuIntroReady(true);
+      return;
+    }
+    const id = window.setTimeout(
+      () => setMenuIntroReady(true),
+      Math.max(0, Math.round(PANEL_TRANSITION.duration * 1000) - 350),
+    );
+    return () => window.clearTimeout(id);
+  }, [currentSlideId, reduceMotion]);
 
   const navigateFromMenu = (id: string) => {
     setMenuLockedFillId(id);
@@ -7293,11 +7625,23 @@ export default function Home() {
                 : "Back to menu"
           }
           onBack={() => {
-            if (currentSection === "projects" && activeShowcaseProjectId) {
-              setActiveShowcaseProjectId(null);
-              return;
+            if (currentSection === "projects") {
+              const showcasePdf = showcasePdfPreviewControlRef.current;
+              if (showcasePdf?.isOpen) {
+                showcasePdf.close();
+                return;
+              }
+              if (activeShowcaseProjectId) {
+                setActiveShowcaseProjectId(null);
+                return;
+              }
             }
             if (currentSection === "projects-supporting") {
+              const pdfControl = supportingPdfPreviewControlRef.current;
+              if (pdfControl?.isOpen) {
+                pdfControl.close();
+                return;
+              }
               navigateTo("projects");
               return;
             }
@@ -7410,6 +7754,8 @@ export default function Home() {
             />
             <RainbowMenuSlide
               active={currentSlideId === "menu"}
+              introReady={menuIntroReady}
+              sectionPanelClosed={currentSection === null}
               onNavigate={navigateFromMenu}
               lockedFillId={menuLockedFillId}
             />
@@ -7502,24 +7848,27 @@ export default function Home() {
                           onOpenSupporting={() => navigateTo("projects-supporting")}
                           onOpenFeaturedPdfInSupporting={openFeaturedPdfInSupporting}
                           activeProjectId={activeShowcaseProjectId}
-                          entranceReady={projectShowcaseEntranceReady}
+                          entranceArmed={projectsEntranceArmed}
+                          featuredPdfViewerActive={showcasePdfViewerActive}
                         />
                       </div>
                     )}
                     {currentSection === "projects-supporting" && (
                       <SupportingProjectsSection
-                        onNavTransitionChange={setNavButtonsFaded}
-                        pendingPdfFromShowcase={supportingPdfIntent}
-                        onPendingPdfFromShowcaseConsumed={clearSupportingPdfIntent}
-                        onReturnToShowcaseAfterFeaturedPreview={() => navigateTo("projects")}
+                        onNavTransitionChange={setArchivePdfNavActive}
+                        previewControlRef={supportingPdfPreviewControlRef}
                       />
                     )}
                   </>
                 ) : (
                   <AnimatePresence mode="wait" initial={false}>
                     {currentSection === "projects" && (
-                      <div
+                      <motion.div
                         key="projects"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: SHOWCASE_SUBROUTE_FADE_S, ease: EASE.out }}
                         className="flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-x-hidden"
                       >
                         <PalaceProjects
@@ -7527,9 +7876,10 @@ export default function Home() {
                           onOpenSupporting={() => navigateTo("projects-supporting")}
                           onOpenFeaturedPdfInSupporting={openFeaturedPdfInSupporting}
                           activeProjectId={activeShowcaseProjectId}
-                          entranceReady={projectShowcaseEntranceReady}
+                          entranceArmed={projectsEntranceArmed}
+                          featuredPdfViewerActive={showcasePdfViewerActive}
                         />
-                      </div>
+                      </motion.div>
                     )}
                     {currentSection === "projects-supporting" && (
                       <motion.div
@@ -7541,18 +7891,38 @@ export default function Home() {
                         className="w-full"
                       >
                         <SupportingProjectsSection
-                          onNavTransitionChange={setNavButtonsFaded}
-                          pendingPdfFromShowcase={supportingPdfIntent}
-                          onPendingPdfFromShowcaseConsumed={clearSupportingPdfIntent}
-                          onReturnToShowcaseAfterFeaturedPreview={() => navigateTo("projects")}
+                          onNavTransitionChange={setArchivePdfNavActive}
+                          previewControlRef={supportingPdfPreviewControlRef}
                         />
                       </motion.div>
                     )}
                   </AnimatePresence>
                 )}
-                {currentSection === "experience" && (
-                  <ConfidantExperience panelSettled={panelSettled} reduceMotion={reduceMotion} />
-                )}
+                {currentSection === "experience" &&
+                  (reduceMotion ? (
+                    <ConfidantExperience panelSettled={panelSettled} reduceMotion={reduceMotion} />
+                  ) : (
+                    <motion.div
+                      className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col"
+                      animate={{
+                        opacity: experienceContentFade === "hide-instant" ? 0 : 1,
+                      }}
+                      transition={{
+                        duration:
+                          experienceContentFade === "fade-in"
+                            ? SHOWCASE_SUBROUTE_FADE_S
+                            : 0,
+                        ease: EASE.out,
+                      }}
+                      onAnimationComplete={() => {
+                        if (experienceContentFade === "fade-in") {
+                          setExperienceContentFade("visible");
+                        }
+                      }}
+                    >
+                      <ConfidantExperience panelSettled={panelSettled} reduceMotion={reduceMotion} />
+                    </motion.div>
+                  ))}
                 {currentSection === "social" && <SocialLink />}
                 {currentSection === "skills" &&
                   (reduceMotion ? (
@@ -7566,7 +7936,7 @@ export default function Home() {
                       transition={{
                         duration:
                           skillsContentFade === "fade-in"
-                            ? SHOWCASE_SUBROUTE_FADE_S
+                            ? skillsAnimS(SHOWCASE_SUBROUTE_FADE_S)
                             : 0,
                         ease: EASE.out,
                       }}
@@ -7581,6 +7951,21 @@ export default function Home() {
                   ))}
               </div>
             </motion.div>
+          )}
+
+          {showcasePdfOverlay && (
+            <SupportingPdfPreviewDialog
+              item={showcasePdfOverlay}
+              pdfSrc={supportingPdfHref(showcasePdfOverlay)}
+              onClose={closeShowcasePdfOverlay}
+              isClosing={showcasePdfClosing}
+              reduceMotion={reduceMotion}
+              showFrame={showcasePdfFrame}
+              onFrameReady={() => setShowcasePdfFrame(true)}
+              closeFadeS={SHOWCASE_PDF_OVERLAY_CLOSE_S}
+              openFadeS={SHOWCASE_PDF_OVERLAY_OPEN_S}
+              onCloseAnimationComplete={finishShowcasePdfClose}
+            />
           )}
         </>
       )}

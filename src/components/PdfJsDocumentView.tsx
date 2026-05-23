@@ -4,7 +4,7 @@ import type { PDFDocumentProxy } from "pdfjs-dist";
 
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
-import { PdfFoldLoader } from "./PdfFoldLoader";
+import { PdfLoadingIndicator } from "./PdfLoadingIndicator";
 
 type Props = {
   src: string;
@@ -13,6 +13,8 @@ type Props = {
   maxDpr?: number;
   onReady?: () => void;
   onError?: () => void;
+  /** Parent shows loader on grid backdrop (PDF preview dialog). */
+  suppressLoadingOverlay?: boolean;
 };
 
 /** Max CSS width for a page inside the viewer (readability on large screens). */
@@ -22,14 +24,24 @@ const MAX_PAGE_CSS_PX = 920;
  * Renders a PDF with PDF.js in a Google Drive–like layout: gray workspace,
  * centered white sheets with shadow, vertical scroll inside the preview only.
  */
-export function PdfJsDocumentView({ src, className = "", maxDpr = 2, onReady, onError }: Props) {
+export function PdfJsDocumentView({
+  src,
+  className = "",
+  maxDpr = 2,
+  onReady,
+  onError,
+  suppressLoadingOverlay = false,
+}: Props) {
+  const pdfSrc = src.trim();
+  const isEmpty = pdfSrc.length === 0;
+
   const [bindMeasureRef, bounds] = useMeasure({ debounce: { scroll: 0, resize: 120 } });
   const pagesHostRef = useRef<HTMLDivElement | null>(null);
 
   const [pdfDoc, setPdfDoc] = useState<PDFDocumentProxy | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [pagesError, setPagesError] = useState<string | null>(null);
-  const [pagesReady, setPagesReady] = useState(false);
+  const [pagesReady, setPagesReady] = useState(isEmpty);
 
   const viewportWidth = Math.max(0, Math.floor(bounds.width));
   /** Horizontal breathing room inside the gray viewer. */
@@ -39,8 +51,21 @@ export function PdfJsDocumentView({ src, className = "", maxDpr = 2, onReady, on
     Math.min(MAX_PAGE_CSS_PX, viewportWidth > 0 ? viewportWidth - horizontalGutter : 0),
   );
 
+  useEffect(() => {
+    if (!isEmpty) return;
+    onReady?.();
+  }, [isEmpty, onReady]);
+
   // Load document when URL changes
   useEffect(() => {
+    if (isEmpty) {
+      setPdfDoc(null);
+      setLoadError(null);
+      setPagesError(null);
+      setPagesReady(true);
+      return;
+    }
+
     let alive = true;
     let docToDestroy: PDFDocumentProxy | null = null;
 
@@ -53,7 +78,7 @@ export function PdfJsDocumentView({ src, className = "", maxDpr = 2, onReady, on
       try {
         const pdfjs = await import("pdfjs-dist");
         pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
-        const loadingTask = pdfjs.getDocument({ url: src });
+        const loadingTask = pdfjs.getDocument({ url: pdfSrc });
         const doc = await loadingTask.promise;
         docToDestroy = doc;
         if (!alive) {
@@ -74,10 +99,12 @@ export function PdfJsDocumentView({ src, className = "", maxDpr = 2, onReady, on
       docToDestroy = null;
       setPdfDoc(null);
     };
-  }, [src]);
+  }, [isEmpty, pdfSrc]);
 
   // Paint pages when document or slot width changes
   useEffect(() => {
+    if (isEmpty) return;
+
     if (!pdfDoc || pageSlotWidth < 24) {
       setPagesReady(false);
       return;
@@ -147,10 +174,10 @@ export function PdfJsDocumentView({ src, className = "", maxDpr = 2, onReady, on
       cancelled = true;
       host.replaceChildren();
     };
-  }, [pdfDoc, pageSlotWidth, maxDpr]);
+  }, [isEmpty, pdfDoc, pageSlotWidth, maxDpr]);
 
-  const showLoading = !loadError && (!pdfDoc || !pagesReady);
-  const showError = loadError ?? pagesError;
+  const showLoading = !isEmpty && !loadError && (!pdfDoc || !pagesReady);
+  const showError = !isEmpty && (loadError ?? pagesError);
 
   useEffect(() => {
     if (pagesReady) onReady?.();
@@ -162,14 +189,13 @@ export function PdfJsDocumentView({ src, className = "", maxDpr = 2, onReady, on
 
   return (
     <div className={`relative flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden ${className}`}>
-      {showLoading && (
+      {showLoading && !suppressLoadingOverlay && (
         <div
-          className="pointer-events-none absolute inset-0 z-[1] flex items-center justify-center bg-zinc-950/75 backdrop-blur-[2px]"
+          className="pointer-events-none absolute inset-0 z-[1] flex items-center justify-center"
           aria-busy
           aria-live="polite"
         >
-          <span className="sr-only">Loading PDF…</span>
-          <PdfFoldLoader className="scale-[1.35] sm:scale-150" />
+          <PdfLoadingIndicator />
         </div>
       )}
 
@@ -185,11 +211,16 @@ export function PdfJsDocumentView({ src, className = "", maxDpr = 2, onReady, on
           ref={bindMeasureRef}
           className="no-scrollbar min-h-0 flex-1 overflow-y-auto overflow-x-hidden scroll-smooth rounded-xl bg-[#3c4043]/5"
           style={{ WebkitOverflowScrolling: "touch", scrollBehavior: "smooth" }}
+          aria-label={isEmpty ? "PDF viewer (no document)" : undefined}
         >
-          <div
-            ref={pagesHostRef}
-            className="flex w-full min-w-0 flex-col items-center gap-6 py-6 pb-12 sm:gap-8 sm:py-8 sm:pb-14"
-          />
+          {!isEmpty ? (
+            <div
+              ref={pagesHostRef}
+              className="flex w-full min-w-0 flex-col items-center gap-6 py-6 pb-12 sm:gap-8 sm:py-8 sm:pb-14"
+            />
+          ) : (
+            <div className="min-h-[min(52vh,28rem)] w-full" aria-hidden />
+          )}
         </div>
       )}
     </div>

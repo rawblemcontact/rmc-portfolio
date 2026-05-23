@@ -12,6 +12,11 @@ export const DUR = {
   slow: 0.55,
 };
 
+/** SideNavOverlay backdrop fade (open + close). */
+export const SIDE_NAV_OVERLAY_FADE_S = 0.2;
+/** PROJECTS chrome fade-out when FEATURED WRITING VIEW opens the PDF loader. */
+export const SHOWCASE_PDF_PROJECTS_FADE_OUT_S = 0.3;
+
 export const SPRING = {
   // Tight, employer-ready UI spring (low bounce)
   ui: { type: "spring", stiffness: 520, damping: 38 } as const,

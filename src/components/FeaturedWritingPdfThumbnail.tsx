@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { FileText } from "lucide-react";
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
@@ -41,10 +41,14 @@ export function FeaturedWritingPdfThumbnail({
     () => dataUrlByKey.get(key) ?? null,
   );
   const [error, setError] = useState(false);
-  const [thumbVisible, setThumbVisible] = useState(false);
-  const imgRef = useRef<HTMLImageElement | null>(null);
 
   useEffect(() => {
+    if (!pdfSrc.trim()) {
+      setDataUrl(null);
+      setError(false);
+      return;
+    }
+
     const cached = dataUrlByKey.get(key);
     if (cached) {
       setDataUrl(cached);
@@ -98,33 +102,9 @@ export function FeaturedWritingPdfThumbnail({
     };
   }, [pdfSrc, key, rasterW, rasterH]);
 
-  const showImg = Boolean(dataUrl && !error);
-  const showLoadingShell = !error && (!showImg || !thumbVisible);
-
-  // Fade in on every tab / key change: never flip visible in the same frame as reset (cached imgs skip transition otherwise).
-  useLayoutEffect(() => {
-    if (!dataUrl || error) {
-      setThumbVisible(false);
-      return;
-    }
-    setThumbVisible(false);
-    let cancelled = false;
-    let raf2 = 0;
-    const raf1 = requestAnimationFrame(() => {
-      raf2 = requestAnimationFrame(() => {
-        if (cancelled) return;
-        const el = imgRef.current;
-        if (el?.complete && el.naturalWidth > 0) {
-          setThumbVisible(true);
-        }
-      });
-    });
-    return () => {
-      cancelled = true;
-      cancelAnimationFrame(raf1);
-      cancelAnimationFrame(raf2);
-    };
-  }, [key, dataUrl, error]);
+  const isBlank = !pdfSrc.trim();
+  const showImg = Boolean(!isBlank && dataUrl && !error);
+  const showLoadingShell = !isBlank && !error && !showImg;
 
   const interactive = typeof onActivate === "function";
 
@@ -154,9 +134,13 @@ export function FeaturedWritingPdfThumbnail({
           : undefined
       }
     >
+      {isBlank ? (
+        <div className="absolute inset-0 z-0 bg-black/35" aria-hidden />
+      ) : null}
+
       {showLoadingShell ? (
         <div
-          className="featured-writing-thumb-loading absolute inset-0 z-0 animate-pulse motion-reduce:animate-none motion-reduce:opacity-90"
+          className="featured-writing-thumb-loading absolute inset-0 z-0"
           aria-hidden
         />
       ) : null}
@@ -164,19 +148,14 @@ export function FeaturedWritingPdfThumbnail({
       {showImg && dataUrl ? (
         <img
           key={key}
-          ref={imgRef}
           src={dataUrl}
           alt=""
-          className={[
-            "relative z-[1] h-full w-full object-cover object-top motion-safe:transition-opacity motion-safe:duration-500 motion-safe:ease-out",
-            thumbVisible ? "opacity-100" : "opacity-0",
-          ].join(" ")}
+          className="relative z-[1] h-full w-full object-cover object-top"
           draggable={false}
-          onLoad={() => setThumbVisible(true)}
         />
       ) : null}
 
-      {showImg && thumbVisible ? (
+      {showImg ? (
         <div
           className="pointer-events-none absolute inset-0 z-[2] bg-[linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[length:8px_8px] opacity-[0.35]"
           aria-hidden
