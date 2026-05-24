@@ -2164,6 +2164,8 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     id: "project-visual-design",
     title: "VISUAL DESIGN",
     tagline: "Graphic design, illustration & branding",
+    thumbnail: "/illustrations/illustrations-charger.png",
+    focalPoint: "50% 42%",
     detailGallery: [
       {
         id: "illustrations-01",
@@ -3225,172 +3227,6 @@ const SKILLS_ROW_ZONE_PADDING_DUAL = "px-2.5 py-2.5 sm:px-3 sm:py-3 md:px-3.5 md
 
 type ShowcaseDetailGallerySlide = NonNullable<ShowcaseProjectCard["detailGallery"]>[number];
 
-type IllustrationThumbnailFraming = {
-  focalX: number;
-  focalY: number;
-  zoom: number;
-};
-
-const ILLUSTRATION_FRAMING_ZOOM_MIN = 0.4;
-const ILLUSTRATION_FRAMING_ZOOM_MAX = 1.35;
-const ILLUSTRATION_FRAMING_ZOOM_DEFAULT = 1;
-
-function parseGalleryFocalPoint(focalPoint?: string): Pick<IllustrationThumbnailFraming, "focalX" | "focalY"> {
-  if (!focalPoint?.trim()) return { focalX: 50, focalY: 50 };
-  const [xRaw, yRaw] = focalPoint.trim().split(/\s+/);
-  const parsePct = (raw: string | undefined, fallback: number) => {
-    if (!raw) return fallback;
-    const n = Number.parseFloat(raw.replace("%", ""));
-    return Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : fallback;
-  };
-  return { focalX: parsePct(xRaw, 50), focalY: parsePct(yRaw, 50) };
-}
-
-function buildInitialIllustrationFramings(
-  slides: readonly ShowcaseDetailGallerySlide[],
-): Record<string, IllustrationThumbnailFraming> {
-  return Object.fromEntries(
-    slides.map((slide) => {
-      const { focalX, focalY } = parseGalleryFocalPoint(slide.focalPoint);
-      return [slide.id, { focalX, focalY, zoom: ILLUSTRATION_FRAMING_ZOOM_DEFAULT }];
-    }),
-  );
-}
-
-function formatGalleryFocalPoint(framing: IllustrationThumbnailFraming): string {
-  return `${Math.round(framing.focalX)}% ${Math.round(framing.focalY)}%`;
-}
-
-/** Oversized cover layer: lower zoom = larger layer = more of the artwork visible in the tile. */
-function illustrationThumbnailFrameStyle(framing: IllustrationThumbnailFraming): React.CSSProperties {
-  const layerSizePct = 100 / framing.zoom;
-  return {
-    width: `${layerSizePct}%`,
-    height: `${layerSizePct}%`,
-    left: "50%",
-    top: "50%",
-    transform: "translate(-50%, -50%)",
-    objectPosition: `${framing.focalX}% ${framing.focalY}%`,
-  };
-}
-
-const ShowcaseIllustrationsFramingControls = ({
-  slides,
-  selectedIndex,
-  framing,
-  onSelectedIndexChange,
-  onFramingChange,
-  onResetSelected,
-}: {
-  slides: readonly ShowcaseDetailGallerySlide[];
-  selectedIndex: number;
-  framing: IllustrationThumbnailFraming;
-  onSelectedIndexChange: (index: number) => void;
-  onFramingChange: (patch: Partial<IllustrationThumbnailFraming>) => void;
-  onResetSelected: () => void;
-}) => {
-  const selectedSlide = slides[selectedIndex];
-  const label = selectedSlide?.alt?.trim() || `Illustration ${selectedIndex + 1}`;
-
-  const handleCopy = () => {
-    if (!selectedSlide) return;
-    const payload = {
-      id: selectedSlide.id,
-      focalPoint: formatGalleryFocalPoint(framing),
-      zoom: Number(framing.zoom.toFixed(2)),
-    };
-    void navigator.clipboard?.writeText(JSON.stringify(payload, null, 2));
-  };
-
-  return (
-    <div className="w-full shrink-0 sm:max-w-[17.5rem] lg:max-w-[19rem] rounded-[11px] border border-white/[0.09] bg-[var(--portfolio-section-card)] p-2.5 sm:p-3">
-      <p className="m-0 font-heading text-[10px] uppercase tracking-eyebrow-tight text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]">
-        Thumbnail frame
-      </p>
-      <label className="mt-2 block">
-        <span className="sr-only">Select illustration</span>
-        <select
-          value={selectedIndex}
-          onChange={(e) => onSelectedIndexChange(Number(e.target.value))}
-          className="mt-1 w-full rounded-md border border-white/[0.12] bg-black/40 px-2 py-1.5 font-body text-xs text-white outline-none focus-visible:ring-1 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]"
-        >
-          {slides.map((slide, index) => (
-            <option key={slide.id} value={index}>
-              {String(index + 1).padStart(2, "0")} — {slide.alt?.trim() || `Illustration ${index + 1}`}
-            </option>
-          ))}
-        </select>
-      </label>
-      <p className="mt-1.5 line-clamp-1 font-body text-[10px] leading-snug text-mono-2/70" title={label}>
-        {label}
-      </p>
-      <div className="mt-2.5 space-y-2">
-        <label className="block">
-          <span className="flex items-center justify-between font-heading text-[10px] uppercase tracking-eyebrow-tight text-mono-2/80">
-            <span>Zoom</span>
-            <span className="font-mono tabular-nums text-white/85">{Math.round(framing.zoom * 100)}%</span>
-          </span>
-          <input
-            type="range"
-            min={ILLUSTRATION_FRAMING_ZOOM_MIN * 100}
-            max={ILLUSTRATION_FRAMING_ZOOM_MAX * 100}
-            step={1}
-            value={Math.round(framing.zoom * 100)}
-            onChange={(e) => onFramingChange({ zoom: Number(e.target.value) / 100 })}
-            className="mt-1 h-1 w-full cursor-pointer accent-[color:color-mix(in_srgb,var(--palette-yellow-projects)_56%,rgb(186_186_186))]"
-          />
-        </label>
-        <label className="block">
-          <span className="flex items-center justify-between font-heading text-[10px] uppercase tracking-eyebrow-tight text-mono-2/80">
-            <span>Position X</span>
-            <span className="font-mono tabular-nums text-white/85">{Math.round(framing.focalX)}%</span>
-          </span>
-          <input
-            type="range"
-            min={0}
-            max={100}
-            step={1}
-            value={Math.round(framing.focalX)}
-            onChange={(e) => onFramingChange({ focalX: Number(e.target.value) })}
-            className="mt-1 h-1 w-full cursor-pointer accent-[color:color-mix(in_srgb,var(--palette-yellow-projects)_56%,rgb(186_186_186))]"
-          />
-        </label>
-        <label className="block">
-          <span className="flex items-center justify-between font-heading text-[10px] uppercase tracking-eyebrow-tight text-mono-2/80">
-            <span>Position Y</span>
-            <span className="font-mono tabular-nums text-white/85">{Math.round(framing.focalY)}%</span>
-          </span>
-          <input
-            type="range"
-            min={0}
-            max={100}
-            step={1}
-            value={Math.round(framing.focalY)}
-            onChange={(e) => onFramingChange({ focalY: Number(e.target.value) })}
-            className="mt-1 h-1 w-full cursor-pointer accent-[color:color-mix(in_srgb,var(--palette-yellow-projects)_56%,rgb(186_186_186))]"
-          />
-        </label>
-      </div>
-      <div className="mt-2.5 flex flex-wrap gap-1.5">
-        <button
-          type="button"
-          onClick={onResetSelected}
-          className="rounded-md border border-white/[0.12] px-2 py-1 font-heading text-[10px] uppercase tracking-eyebrow-tight text-mono-2/85 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]"
-        >
-          Reset
-        </button>
-        <button
-          type="button"
-          onClick={handleCopy}
-          className="rounded-md border border-white/[0.12] px-2 py-1 font-heading text-[10px] uppercase tracking-eyebrow-tight text-mono-2/85 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]"
-        >
-          Copy
-        </button>
-      </div>
-    </div>
-  );
-};
-
 const ShowcaseVisualDesignDetail = ({
   card,
   reduceMotion,
@@ -3405,47 +3241,12 @@ const ShowcaseVisualDesignDetail = ({
   detailGalleryReveal: boolean;
 }) => {
   const slides = card.detailGallery ?? [];
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const [framings, setFramings] = useState<Record<string, IllustrationThumbnailFraming>>(() =>
-    buildInitialIllustrationFramings(slides),
-  );
-
-  useEffect(() => {
-    setFramings(buildInitialIllustrationFramings(slides));
-    setSelectedIndex(0);
-  }, [card.id]);
-
-  const selectedSlide = slides[selectedIndex];
-  const selectedFraming =
-    (selectedSlide ? framings[selectedSlide.id] : undefined) ??
-    ({ focalX: 50, focalY: 50, zoom: ILLUSTRATION_FRAMING_ZOOM_DEFAULT } satisfies IllustrationThumbnailFraming);
-
-  const handleFramingChange = useCallback(
-    (patch: Partial<IllustrationThumbnailFraming>) => {
-      if (!selectedSlide) return;
-      setFramings((prev) => ({
-        ...prev,
-        [selectedSlide.id]: { ...prev[selectedSlide.id], ...patch },
-      }));
-    },
-    [selectedSlide],
-  );
-
-  const handleResetSelected = useCallback(() => {
-    if (!selectedSlide) return;
-    const { focalX, focalY } = parseGalleryFocalPoint(selectedSlide.focalPoint);
-    setFramings((prev) => ({
-      ...prev,
-      [selectedSlide.id]: { focalX, focalY, zoom: ILLUSTRATION_FRAMING_ZOOM_DEFAULT },
-    }));
-  }, [selectedSlide]);
-
   if (!slides.length) return null;
 
   return (
     <>
-      <div
-        className="order-1 mt-0 flex w-full flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4"
+      <motion.div
+        className="order-1 mt-0 flex w-full flex-col items-stretch gap-y-1.5 text-left"
         style={
           reduceMotion
             ? { opacity: detailHdrReveal ? 1 : 0 }
@@ -3458,28 +3259,18 @@ const ShowcaseVisualDesignDetail = ({
               }
         }
       >
-        <div className="flex min-w-0 flex-1 flex-col items-stretch gap-y-1.5 text-left">
-          <p className="m-0 w-full font-heading text-sm sm:text-base leading-snug tracking-eyebrow-tight uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]">
-            Project details
-          </p>
-          <h3 className="m-0 w-full font-display text-2xl md:text-3xl leading-[1.1] tracking-[-0.015em] text-white">
-            {card.title}
-          </h3>
-          <p className="m-0 w-full pl-[2px] font-body text-sm sm:text-base leading-snug text-mono-2">
-            {card.tagline}
-          </p>
-        </div>
-        <ShowcaseIllustrationsFramingControls
-          slides={slides}
-          selectedIndex={selectedIndex}
-          framing={selectedFraming}
-          onSelectedIndexChange={setSelectedIndex}
-          onFramingChange={handleFramingChange}
-          onResetSelected={handleResetSelected}
-        />
-      </div>
-      <div className="order-2 mt-5 w-full" aria-hidden>
-        <div
+        <p className="m-0 w-full font-heading text-sm sm:text-base leading-snug tracking-eyebrow-tight uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]">
+          Project details
+        </p>
+        <h3 className="m-0 w-full font-display text-2xl md:text-3xl leading-[1.1] tracking-[-0.015em] text-white">
+          {card.title}
+        </h3>
+        <p className="m-0 w-full pl-[2px] font-body text-sm sm:text-base leading-snug text-mono-2">
+          {card.tagline}
+        </p>
+      </motion.div>
+      <motion.div className="order-2 mt-5 w-full" aria-hidden>
+        <motion.div
           className="mx-auto block h-px w-full max-w-full shrink-0 bg-white/[0.09]"
           style={{
             clipPath: detailRuleReveal ? "inset(0 0 0 0)" : "inset(0 50% 0 50%)",
@@ -3494,8 +3285,8 @@ const ShowcaseVisualDesignDetail = ({
                 : {}),
           }}
         />
-      </div>
-      <div
+      </motion.div>
+      <motion.div
         className="order-3 mt-4 w-full sm:mt-5"
         style={
           reduceMotion
@@ -3509,13 +3300,8 @@ const ShowcaseVisualDesignDetail = ({
               }
         }
       >
-        <ShowcaseDetailIllustrationsGrid
-          slides={slides}
-          framings={framings}
-          selectedIndex={selectedIndex}
-          onSelectIndex={setSelectedIndex}
-        />
-      </div>
+        <ShowcaseDetailIllustrationsGrid slides={slides} />
+      </motion.div>
     </>
   );
 };
@@ -3721,20 +3507,100 @@ const ShowcaseIllustrationLightbox = ({
   );
 };
 
-/** ILLUSTRATIONS project-details gallery — 2×2 squares on mobile; 3×3 portrait tiles on desktop (lg+). */
+/** First N gallery tiles keep full-image contain; later tiles fill the same cell with cover. */
+const ILLUSTRATION_GRID_CONTAIN_TILE_COUNT = 3;
+
+function illustrationGridColumnCount(): number {
+  if (typeof window === "undefined") return 3;
+  return window.matchMedia("(min-width: 1024px)").matches ? 3 : 2;
+}
+
+/** Cover tile aligns to the contain tile above it in the same column. */
+function illustrationGridCoverInsetReferenceIndex(index: number, columnCount: number): number {
+  const column = index % columnCount;
+  for (let refIndex = index - columnCount; refIndex >= 0; refIndex -= columnCount) {
+    if (refIndex < ILLUSTRATION_GRID_CONTAIN_TILE_COUNT) return refIndex;
+  }
+  return column;
+}
+
+/** object-contain painted width vs tile width → symmetric L/R inset for cover clip. */
+function illustrationGridContainHorizontalInsetPct(
+  naturalWidth: number,
+  naturalHeight: number,
+  tileWidth: number,
+  tileHeight: number,
+): number {
+  if (naturalWidth <= 0 || naturalHeight <= 0 || tileWidth <= 0 || tileHeight <= 0) return 0;
+  const imageAspect = naturalWidth / naturalHeight;
+  const tileAspect = tileWidth / tileHeight;
+  const displayWidthFraction = imageAspect <= tileAspect ? imageAspect / tileAspect : 1;
+  return Number((((1 - displayWidthFraction) / 2) * 100).toFixed(3));
+}
+
+/** Extend cover clip left by N px (right-column cover tiles ↔ Wisely column). */
+const ILLUSTRATION_GRID_COVER_CLIP_LEFT_NUDGE_PX: Partial<Record<string, number>> = {
+  "illustrations-06": 1,
+  "illustrations-09": 1,
+};
+
+/** ILLUSTRATIONS project-details gallery — Instagram-style fit (full image in tile). */
 const ShowcaseDetailIllustrationsGrid = ({
   slides,
-  framings,
-  selectedIndex,
-  onSelectIndex,
 }: {
   slides: readonly ShowcaseDetailGallerySlide[];
-  framings?: Record<string, IllustrationThumbnailFraming>;
-  selectedIndex?: number;
-  onSelectIndex?: (index: number) => void;
 }) => {
   const reduceMotion = useReducedMotion();
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [gridColumnCount, setGridColumnCount] = useState(illustrationGridColumnCount);
+  const [coverInsetPctByRef, setCoverInsetPctByRef] = useState<Record<number, number>>({});
+  const containTileRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const containImgRefs = useRef<(HTMLImageElement | null)[]>([]);
+
+  const measureCoverInsets = useCallback(() => {
+    const next: Record<number, number> = {};
+    for (let refIndex = 0; refIndex < ILLUSTRATION_GRID_CONTAIN_TILE_COUNT; refIndex += 1) {
+      const tile = containTileRefs.current[refIndex];
+      const img = containImgRefs.current[refIndex];
+      if (!tile || !img || !img.complete || !img.naturalWidth || !img.naturalHeight) continue;
+      const tileWidth = tile.clientWidth;
+      const tileHeight = tile.clientHeight;
+      if (tileWidth <= 0 || tileHeight <= 0) continue;
+      next[refIndex] = illustrationGridContainHorizontalInsetPct(
+        img.naturalWidth,
+        img.naturalHeight,
+        tileWidth,
+        tileHeight,
+      );
+    }
+    setCoverInsetPctByRef((prev) => {
+      const unchanged =
+        Object.keys(next).length === Object.keys(prev).length &&
+        Object.entries(next).every(([key, value]) => prev[Number(key)] === value);
+      return unchanged ? prev : next;
+    });
+  }, []);
+
+  useLayoutEffect(() => {
+    const media = window.matchMedia("(min-width: 1024px)");
+    const syncColumnCount = () => setGridColumnCount(media.matches ? 3 : 2);
+    syncColumnCount();
+    media.addEventListener("change", syncColumnCount);
+    return () => media.removeEventListener("change", syncColumnCount);
+  }, []);
+
+  useLayoutEffect(() => {
+    measureCoverInsets();
+    const ro = new ResizeObserver(() => measureCoverInsets());
+    containTileRefs.current.forEach((tile) => {
+      if (tile) ro.observe(tile);
+    });
+    window.addEventListener("resize", measureCoverInsets);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measureCoverInsets);
+    };
+  }, [measureCoverInsets, slides, gridColumnCount]);
 
   const openableIndices = useMemo(
     () =>
@@ -3753,14 +3619,6 @@ const ShowcaseDetailIllustrationsGrid = ({
     setActiveIndex(index);
   }, []);
 
-  const handleTileClick = useCallback(
-    (index: number) => {
-      onSelectIndex?.(index);
-      setActiveIndex(index);
-    },
-    [onSelectIndex],
-  );
-
   if (!slides.length) return null;
 
   return (
@@ -3775,15 +3633,8 @@ const ShowcaseDetailIllustrationsGrid = ({
             slide.src?.trim()
               ? slide.alt?.trim() || `Illustration ${index + 1}`
               : `Illustration slot ${index + 1}`;
-          const framing =
-            framings?.[slide.id] ??
-            ({
-              ...parseGalleryFocalPoint(slide.focalPoint),
-              zoom: ILLUSTRATION_FRAMING_ZOOM_DEFAULT,
-            } satisfies IllustrationThumbnailFraming);
-          const isSelected = selectedIndex === index;
           const tileClassName =
-            "relative aspect-square min-w-0 bg-[var(--portfolio-section-card-raised)] lg:aspect-[4/5]";
+            "relative aspect-square min-w-0 overflow-hidden bg-black lg:aspect-[4/5]";
 
           if (!slide.src?.trim()) {
             return (
@@ -3796,28 +3647,75 @@ const ShowcaseDetailIllustrationsGrid = ({
             );
           }
 
+          const useContainFit = index < ILLUSTRATION_GRID_CONTAIN_TILE_COUNT;
+          const coverInsetReferenceIndex = illustrationGridCoverInsetReferenceIndex(
+            index,
+            gridColumnCount,
+          );
+          const refTile = containTileRefs.current[coverInsetReferenceIndex];
+          const refImg = containImgRefs.current[coverInsetReferenceIndex];
+          const coverInsetPct =
+            coverInsetPctByRef[coverInsetReferenceIndex] ??
+            (refTile &&
+            refImg?.complete &&
+            refImg.naturalWidth &&
+            refImg.naturalHeight &&
+            refTile.clientWidth > 0 &&
+            refTile.clientHeight > 0
+              ? illustrationGridContainHorizontalInsetPct(
+                  refImg.naturalWidth,
+                  refImg.naturalHeight,
+                  refTile.clientWidth,
+                  refTile.clientHeight,
+                )
+              : undefined);
+
           return (
             <button
               key={slide.id}
               type="button"
               role="listitem"
-              className={`${tileClassName} group cursor-pointer overflow-hidden border-0 p-0 text-left transition-opacity duration-200 ease-out hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black${
-                isSelected
-                  ? " ring-2 ring-[color:color-mix(in_srgb,var(--palette-yellow-projects)_56%,rgb(186_186_186))] ring-offset-2 ring-offset-black"
-                  : ""
-              }`}
+              ref={(node) => {
+                if (useContainFit) containTileRefs.current[index] = node;
+              }}
+              className={`${tileClassName} group cursor-pointer border-0 p-0 text-left transition-opacity duration-200 ease-out hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black`}
               aria-label={`View ${label}`}
-              aria-pressed={isSelected}
-              onClick={() => handleTileClick(index)}
+              onClick={() => setActiveIndex(index)}
             >
-              <img
-                src={slide.src}
-                alt={slide.alt?.trim() || `Illustration ${index + 1}`}
-                className="absolute max-h-none max-w-none object-cover"
-                style={illustrationThumbnailFrameStyle(framing)}
-                loading="lazy"
-                decoding="async"
-              />
+              {useContainFit ? (
+                <img
+                  ref={(node) => {
+                    containImgRefs.current[index] = node;
+                  }}
+                  src={slide.src}
+                  alt={slide.alt?.trim() || `Illustration ${index + 1}`}
+                  className="absolute inset-0 h-full w-full object-contain object-center"
+                  loading="lazy"
+                  decoding="async"
+                  onLoad={measureCoverInsets}
+                />
+              ) : (
+                <div
+                  className="absolute inset-y-0 overflow-hidden"
+                  style={
+                    coverInsetPct == null
+                      ? undefined
+                      : {
+                          left: `max(0px, calc(${coverInsetPct}% - ${ILLUSTRATION_GRID_COVER_CLIP_LEFT_NUDGE_PX[slide.id] ?? 0}px))`,
+                          right: `${coverInsetPct}%`,
+                        }
+                  }
+                >
+                  <img
+                    src={slide.src}
+                    alt={slide.alt?.trim() || `Illustration ${index + 1}`}
+                    className="absolute inset-0 h-full w-full object-cover object-center"
+                    style={{ objectPosition: slide.focalPoint ?? "50% 50%" }}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+              )}
             </button>
           );
         })}
