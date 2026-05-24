@@ -714,13 +714,11 @@ const NAV_ITEMS: { id: string; label: string; icon: LucideIcon; color: string; s
 const SECTION_ACCENT_COLOR: Record<string, string> = {
   profile: PROFILE_ACCENT_SOFT,
   projects: PROJECTS_ACCENT_SOFT,
-  "project-rawblem": PROJECTS_ACCENT_SOFT,
+  "project-visual-design": PROJECTS_ACCENT_SOFT,
+  "project-video-editing": PROJECTS_ACCENT_SOFT,
+  "project-motion-design": PROJECTS_ACCENT_SOFT,
+  "project-interactive-media": PROJECTS_ACCENT_SOFT,
   "project-slaywire": PROJECTS_ACCENT_SOFT,
-  "project-undertale-fhe": PROJECTS_ACCENT_SOFT,
-  "project-portfolio": PROJECTS_ACCENT_SOFT,
-  "project-undertale-proposal": PROJECTS_ACCENT_SOFT,
-  "project-8bit-bumpers": PROJECTS_ACCENT_SOFT,
-  "project-illustrations": PROJECTS_ACCENT_SOFT,
   "projects-supporting": PROJECTS_ACCENT_SOFT,
   experience: "var(--palette-blue)",
   social: "var(--palette-orange)",
@@ -993,7 +991,7 @@ const Hero = ({
   const heroSlides = PROJECT_CARDS.slice(0, 5);
   const initialHeroSlideIndex = Math.max(
     0,
-    heroSlides.findIndex((slide) => slide.id === "project-undertale-fhe"),
+    heroSlides.findIndex((slide) => slide.id === "project-slaywire"),
   );
   const [fontsReady, setFontsReady] = useState(false);
   const [heroMediaReady, setHeroMediaReady] = useState(false);
@@ -2152,59 +2150,121 @@ type ShowcaseProjectCard = {
   readonly detailRole?: string;
   readonly detailTools?: readonly string[];
   readonly detailImpact?: string;
+  /** In-flow gallery in project details (ILLUSTRATIONS). Add `src` per slide when assets are ready. */
+  readonly detailGallery?: readonly {
+    readonly id: string;
+    readonly src?: string;
+    readonly alt?: string;
+    readonly focalPoint?: string;
+  }[];
 };
 
 const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
   {
-    id: "project-rawblem",
-    title: "RAWBLEM",
-    tagline: "Creative brand & short-form content system",
+    id: "project-visual-design",
+    title: "VISUAL DESIGN",
+    tagline: "Graphic design, illustration & branding",
+    detailGallery: [
+      {
+        id: "illustrations-01",
+        src: "/illustrations/illustrations-charger.png",
+        alt: "Charger — Slaywire character concept art",
+        focalPoint: "50% 42%",
+      },
+      {
+        id: "illustrations-02",
+        src: "/illustrations/illustrations-fragment.png",
+        alt: "Fragment — Slaywire character concept art",
+        focalPoint: "50% 45%",
+      },
+      {
+        id: "illustrations-03",
+        src: "/illustrations/illustrations-wisely.png",
+        alt: "Wisely of the Emotus Automata — Slaywire character concept art",
+        focalPoint: "50% 42%",
+      },
+      {
+        id: "illustrations-04",
+        src: "/illustrations/illustrations-star-fox.png",
+        alt: "Star Fox illustration",
+        focalPoint: "50% 50%",
+      },
+      {
+        id: "illustrations-05",
+        src: "/illustrations/illustrations-strong-as-duck.png",
+        alt: "Strong as Duck illustration",
+        focalPoint: "50% 38%",
+      },
+      {
+        id: "illustrations-06",
+        src: "/illustrations/illustrations-slaywire.png",
+        alt: "Slaywire promotional illustration",
+        focalPoint: "50% 45%",
+      },
+      {
+        id: "illustrations-07",
+        src: "/illustrations/illustrations-dish-cat.png",
+        alt: "Dish cat line art illustration",
+        focalPoint: "50% 50%",
+      },
+      {
+        id: "illustrations-08",
+        src: "/illustrations/illustrations-melee-poster.png",
+        alt: "Vancouver Island Melee Power Rankings Winter 2020 poster design",
+        focalPoint: "50% 42%",
+      },
+      {
+        id: "illustrations-09",
+        src: "/illustrations/illustrations-melee-banner.png",
+        alt: "Vancouver Island Melee interim rankings banner design",
+        focalPoint: "50% 38%",
+      },
+      {
+        id: "illustrations-10",
+        src: "/illustrations/illustrations-rawblem-logo.png",
+        alt: "RAWBLEM brand logo design",
+        focalPoint: "50% 45%",
+      },
+    ],
+  },
+  {
+    id: "project-video-editing",
+    title: "VIDEO EDITING",
+    tagline: "Short-form edits & platform-native cuts",
+    thumbnailVideo: "/edits-meme1-online.mp4",
+    poster: "/edits-meme1-online-poster.jpg",
+    focalPoint: "50% 36%",
+    detailOverview:
+      "Short-form edits built around timing, meme literacy, and platform-native pacing?hooks, captions, and sound-led moments.",
+    detailRole: "Editor and creative director for individual cuts.",
+    detailTools: ["CapCut", "DaVinci Resolve"],
+    detailImpact: "Sharper retention in the first seconds; clearer punchlines and readable on-screen text.",
+  },
+  {
+    id: "project-motion-design",
+    title: "MOTION DESIGN",
+    tagline: "Motion graphics and animated content",
     thumbnailVideo: "/rawblem-thumbnail.mp4",
     poster: "/rawblem-thumbnail-poster.jpg",
     focalPoint: "50% 34%",
     detailOverview:
-      "A focused creative brand built around short-form video and repeatable content beats?treatment, capture, and platform-native packaging.",
-    detailRole: "Sole creator: concept, production, edit, and distribution.",
-    detailTools: ["CapCut", "DaVinci Resolve", "Hootsuite", "TikTok / Reels / Shorts"],
-    detailImpact: "Story-first formats tuned for retention; multi-platform publishing with consistent voice and visual DNA.",
+      "Motion-led pieces from pixel bumpers to short-form brand content?loops, typography, and timing tuned for playback and social.",
+    detailRole: "Animation, art direction, edit, and asset delivery.",
+    detailTools: ["CapCut", "DaVinci Resolve", "Pixel workflow / raster"],
+    detailImpact: "Readable on-screen branding and motion that holds attention without overpowering the message.",
   },
   {
-    id: "project-8bit-bumpers",
-    title: "8-bit Film Festival bumpers",
-    tagline: "Pixel animation project",
-    thumbnail: "/8bit-festival-thumbnail.jpg",
-    focalPoint: "50% 42%",
-    detailOverview:
-      "Pixel-style bumpers and interstitials for a film festival program?simple loops, readable typography, and arcade-era restraint.",
-    detailRole: "Animation, art direction, and asset delivery for playback.",
-    detailTools: ["Pixel workflow / raster", "Timeline-based editing"],
-    detailImpact: "Clear on-screen branding between screenings without overpowering the main features.",
-  },
-  {
-    id: "project-undertale-fhe",
-    title: "UNDERTALE ? Forever Home Edition",
-    tagline: "Game project ? GameMaker Studio 2",
-    thumbnail: "/undertale-fhe-thumbnail.png",
-    focalPoint: "50% 40%",
-    detailOverview:
-      "A GameMaker Studio 2 project exploring Undertale-inspired tone and structure?rooms, encounters, and narrative pacing as design problems.",
-    detailRole: "Design, implementation, and iteration in GMS2.",
-    detailTools: ["GameMaker Studio 2"],
-    detailImpact: "Hands-on practice shipping playable slices and tightening feel through playtesting.",
-  },
-  {
-    id: "project-portfolio",
-    title: "Portfolio Website",
-    tagline: "React, Vite, Framer Motion",
+    id: "project-interactive-media",
+    title: "INTERACTIVE MEDIA",
+    tagline: "Games projects and web experiences",
     thumbnailVideo: "/portfolio-website-thumbnail-v2.mp4",
     poster: "/portfolio-website-thumbnail-v2-poster.jpg",
     focalPoint: "50% 38%",
     detailOverview:
-      "A client-side portfolio with motion-forward UI, editorial grids, and careful performance budgets for media-heavy sections.",
-    detailRole: "Design and front-end implementation.",
-    detailTools: ["React", "Vite", "TypeScript", "Tailwind CSS", "Framer Motion"],
-    detailImpact:
-      "Single deployable artifact, fast iteration, and a cohesive Neo?Tokyo / command UI visual language.",
+      "Playable and interactive work?from GameMaker prototypes to motion-forward web UI?where feel, pacing, and user flow are the design problem.",
+    detailRole: "Design, implementation, and iteration across game and front-end builds.",
+    detailTools: ["GameMaker Studio 2", "React", "Vite", "TypeScript", "Framer Motion"],
+    detailImpact: "Shippable slices with tight feedback loops and interfaces that reward exploration.",
   },
   {
     id: "project-slaywire",
@@ -2217,24 +2277,6 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     detailRole: "Writer, illustrator, and world/visual development.",
     detailTools: ["Digital illustration", "Layout & print-minded pacing"],
     detailImpact: "A durable IP bible and finished spreads that support pitching and incremental publishing.",
-  },
-  {
-    id: "project-undertale-proposal",
-    title: "EDITS",
-    tagline: "Video project",
-    thumbnailVideo: "/edits-meme1-online.mp4",
-    poster: "/edits-meme1-online-poster.jpg",
-    focalPoint: "50% 36%",
-    detailOverview:
-      "Short-form edits built around timing, meme literacy, and platform-native pacing?hooks, captions, and sound-led moments.",
-    detailRole: "Editor and creative director for individual cuts.",
-    detailTools: ["CapCut", "DaVinci Resolve"],
-    detailImpact: "Sharper retention in the first seconds; clearer punchlines and readable on-screen text.",
-  },
-  {
-    id: "project-illustrations",
-    title: "ILLUSTRATIONS",
-    tagline: "Procreate, Clip Studio Paint, Photoshop.",
   },
 ];
 
@@ -2388,6 +2430,9 @@ const PROJECT_CARD_AUTOPLAY_DELAY_MS = Math.round(360 / SHOWCASE_TIME_DIV);
 const PROJECT_CAROUSEL_AUTO_ADVANCE_MS = 2500;
 const PROJECTS_CAROUSEL_ENTRANCE_FADE_S = 0.34;
 const ENABLE_PROJECT_CARD_VIDEO_AUTOPLAY = false;
+/** Five-up project row — single-line card titles (no wrap). */
+const PROJECT_CARD_TITLE_CLASS =
+  "project-card-title font-display tracking-tight text-white opacity-100 motion-safe:transition-[opacity,color] motion-safe:duration-300 motion-safe:ease-out group-hover:text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]";
 const SHOWCASE_EASE = [0.16, 1, 0.3, 1] as const;
 /** Fade when swapping SHOWCASE carousel ? Supporting & archive in place */
 const SHOWCASE_SUBROUTE_FADE_S = DUR.fast;
@@ -2458,7 +2503,7 @@ const ProjectsStack = ({
   focusProjectId = null,
   contentReady = true,
   onContentReadyChange,
-  carouselAutoAdvanceEnabled = false,
+  carouselAutoAdvanceEnabled: _carouselAutoAdvanceEnabled = false,
 }: {
   onSelect: (id: string, el: HTMLElement) => void;
   focusProjectId?: string | null;
@@ -2467,27 +2512,8 @@ const ProjectsStack = ({
   /** When true, advance one slide every PROJECT_CAROUSEL_AUTO_ADVANCE_MS (after entrance). */
   carouselAutoAdvanceEnabled?: boolean;
 }) => {
-  const reduceMotion = useReducedMotion();
-  const tweenFactor = useRef(0);
-  const tweenRaf = useRef<number>(0);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const readyMediaRef = useRef<Set<number>>(new Set());
-  const autoplayDelayRef = useRef<number | null>(null);
-  const carouselAutoAdvanceIntervalRef = useRef<number | null>(null);
-  const carouselAutoAdvanceDraggingRef = useRef(false);
-  const restartCarouselAutoAdvanceRef = useRef<() => void>(() => {});
-  const [emblaRef, emblaApi] = useEmblaCarousel({
-    /** `start` keeps a flush left snap so 2-up shows exactly two full cards; `center` offsets scroll and peeks neighbors. */
-    align: "start",
-    loop: true,
-    skipSnaps: false,
-    dragFree: false,
-    containScroll: false,
-  });
-
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const [autoplayIndices, setAutoplayIndices] = useState<number[]>([]);
-  const [autoplayGateOpen, setAutoplayGateOpen] = useState(false);
   const [loadedMediaCount, setLoadedMediaCount] = useState(0);
 
   const requiredMediaCount = useMemo(
@@ -2505,157 +2531,6 @@ const ProjectsStack = ({
     onContentReadyChange?.(loadedMediaCount >= requiredMediaCount);
   }, [loadedMediaCount, onContentReadyChange, requiredMediaCount]);
 
-  const setTweenFactor = useCallback((api: EmblaCarouselType) => {
-    tweenFactor.current = PROJECT_CAROUSEL_TWEEN_FACTOR_BASE * api.scrollSnapList().length;
-  }, []);
-
-  const tweenParallax = useCallback(
-    (api: EmblaCarouselType) => {
-      const slideNodes = api.slideNodes();
-      const resetParallax = (node: HTMLElement) => {
-        const inner = node.querySelector("[data-parallax-layer]") as HTMLElement | null;
-        if (inner) inner.style.transform = "translateX(0)";
-      };
-
-      if (reduceMotion) {
-        slideNodes.forEach(resetParallax);
-        return;
-      }
-
-      const engine = api.internalEngine();
-      const scrollProgress = api.scrollProgress();
-      const scrollSnaps = api.scrollSnapList();
-      const direction = engine.options.direction === "rtl" ? -1 : 1;
-
-      slideNodes.forEach(resetParallax);
-
-      // Loop clones break slideNodes[i] ↔ scrollSnaps[i]; map snaps via slideRegistry.
-      scrollSnaps.forEach((scrollSnap, snapIndex) => {
-        const slidesInSnap = engine.slideRegistry[snapIndex];
-        if (!slidesInSnap?.length) return;
-
-        let diffToTarget = scrollSnap - scrollProgress;
-
-        if (engine.options.loop) {
-          engine.slideLooper.loopPoints.forEach((loopItem) => {
-            const target = loopItem.target();
-            if (snapIndex === loopItem.index && target !== 0) {
-              const sign = Math.sign(target);
-              if (sign === -1) diffToTarget = scrollSnap - (1 + scrollProgress);
-              if (sign === 1) diffToTarget = scrollSnap + (1 - scrollProgress);
-            }
-          });
-        }
-
-        const tweenValue = diffToTarget * (-1 * direction * tweenFactor.current);
-
-        slidesInSnap.forEach((slideIndex) => {
-          const slideNode = slideNodes[slideIndex];
-          if (!slideNode || slideNode.querySelector("video")) return;
-          const inner = slideNode.querySelector("[data-parallax-layer]") as HTMLElement | null;
-          if (inner) inner.style.transform = `translateX(${tweenValue}%)`;
-        });
-      });
-    },
-    [reduceMotion],
-  );
-
-  const scheduleTween = useCallback(() => {
-    if (!emblaApi) return;
-    cancelAnimationFrame(tweenRaf.current);
-    tweenRaf.current = requestAnimationFrame(() => tweenParallax(emblaApi));
-  }, [emblaApi, tweenParallax]);
-
-  const syncCarouselUi = useCallback(() => {
-    if (!emblaApi) return;
-    setSelectedIndex(emblaApi.selectedScrollSnap());
-  }, [emblaApi]);
-
-  useEffect(() => {
-    if (!emblaApi) return;
-    setTweenFactor(emblaApi);
-
-    let cancelled = false;
-    const deferInitialSync = () => {
-      requestAnimationFrame(() => {
-        if (cancelled) return;
-        requestAnimationFrame(() => {
-          if (cancelled) return;
-          tweenParallax(emblaApi);
-          syncCarouselUi();
-        });
-      });
-    };
-    deferInitialSync();
-
-    emblaApi.on("scroll", scheduleTween);
-    emblaApi.on("settle", scheduleTween);
-    emblaApi.on("reInit", setTweenFactor);
-    emblaApi.on("reInit", tweenParallax);
-    emblaApi.on("reInit", syncCarouselUi);
-    emblaApi.on("select", syncCarouselUi);
-
-    return () => {
-      cancelled = true;
-      cancelAnimationFrame(tweenRaf.current);
-      emblaApi.off("scroll", scheduleTween);
-      emblaApi.off("settle", scheduleTween);
-      emblaApi.off("reInit", setTweenFactor);
-      emblaApi.off("reInit", tweenParallax);
-      emblaApi.off("reInit", syncCarouselUi);
-      emblaApi.off("select", syncCarouselUi);
-    };
-  }, [emblaApi, scheduleTween, setTweenFactor, tweenParallax, syncCarouselUi]);
-
-  useEffect(() => {
-    if (autoplayDelayRef.current !== null) {
-      window.clearTimeout(autoplayDelayRef.current);
-    }
-
-    setAutoplayGateOpen(false);
-    setAutoplayIndices([]);
-
-    videoRefs.current.forEach((video) => {
-      if (!video) return;
-      video.pause();
-      video.currentTime = 0;
-    });
-
-    const delay = reduceMotion ? 0 : PROJECT_CARD_AUTOPLAY_DELAY_MS;
-
-    autoplayDelayRef.current = window.setTimeout(() => {
-      setAutoplayGateOpen(true);
-    }, delay);
-
-    return () => {
-      if (autoplayDelayRef.current !== null) {
-        window.clearTimeout(autoplayDelayRef.current);
-        autoplayDelayRef.current = null;
-      }
-    };
-  }, [reduceMotion, selectedIndex]);
-
-  useEffect(() => {
-    if (!autoplayGateOpen) return;
-    const syncVisibleAutoplay = () => {
-      if (!emblaApi) {
-        setAutoplayIndices(PROJECT_CARDS[selectedIndex]?.thumbnailVideo ? [selectedIndex] : []);
-        return;
-      }
-      const visible = emblaApi.slidesInView();
-      const playable = visible.filter((idx) => !!PROJECT_CARDS[idx]?.thumbnailVideo);
-      setAutoplayIndices(playable);
-    };
-
-    syncVisibleAutoplay();
-    emblaApi?.on("select", syncVisibleAutoplay);
-    emblaApi?.on("reInit", syncVisibleAutoplay);
-    return () => {
-      emblaApi?.off("select", syncVisibleAutoplay);
-      emblaApi?.off("reInit", syncVisibleAutoplay);
-    };
-  }, [autoplayGateOpen, selectedIndex, emblaApi]);
-
   useEffect(() => {
     if (!ENABLE_PROJECT_CARD_VIDEO_AUTOPLAY) {
       videoRefs.current.forEach((video) => {
@@ -2668,7 +2543,7 @@ const ProjectsStack = ({
     videoRefs.current.forEach((video, index) => {
       if (!video) return;
 
-      if (autoplayIndices.includes(index)) {
+      if (PROJECT_CARDS[index]?.thumbnailVideo) {
         const playPromise = video.play();
         if (playPromise) {
           playPromise.catch(() => {
@@ -2681,100 +2556,22 @@ const ProjectsStack = ({
       video.pause();
       video.currentTime = 0;
     });
-  }, [autoplayIndices]);
-
-  useEffect(() => {
-    if (!emblaApi || !carouselAutoAdvanceEnabled) {
-      if (carouselAutoAdvanceIntervalRef.current !== null) {
-        window.clearInterval(carouselAutoAdvanceIntervalRef.current);
-        carouselAutoAdvanceIntervalRef.current = null;
-      }
-      return;
-    }
-
-    const start = () => {
-      if (carouselAutoAdvanceIntervalRef.current !== null) {
-        window.clearInterval(carouselAutoAdvanceIntervalRef.current);
-      }
-      carouselAutoAdvanceIntervalRef.current = window.setInterval(() => {
-        emblaApi.scrollNext();
-      }, PROJECT_CAROUSEL_AUTO_ADVANCE_MS);
-    };
-
-    const stop = () => {
-      if (carouselAutoAdvanceIntervalRef.current !== null) {
-        window.clearInterval(carouselAutoAdvanceIntervalRef.current);
-        carouselAutoAdvanceIntervalRef.current = null;
-      }
-    };
-
-    restartCarouselAutoAdvanceRef.current = start;
-    carouselAutoAdvanceDraggingRef.current = false;
-    start();
-
-    const onPointerDown = () => {
-      carouselAutoAdvanceDraggingRef.current = true;
-      stop();
-    };
-    const onSettle = () => {
-      if (!carouselAutoAdvanceDraggingRef.current) return;
-      carouselAutoAdvanceDraggingRef.current = false;
-      start();
-    };
-
-    emblaApi.on("pointerDown", onPointerDown);
-    emblaApi.on("settle", onSettle);
-
-    return () => {
-      stop();
-      emblaApi.off("pointerDown", onPointerDown);
-      emblaApi.off("settle", onSettle);
-      restartCarouselAutoAdvanceRef.current = () => {};
-    };
-  }, [emblaApi, carouselAutoAdvanceEnabled]);
+  }, [loadedMediaCount]);
 
   return (
     <div className="-mt-1 sm:-mt-1.5 flex w-full min-w-0 flex-col justify-center overflow-x-visible overflow-y-visible pt-2 pb-0 sm:pt-3">
       <div className="w-full min-w-0">
-        <div className="mb-0 flex w-full -translate-y-1.5 items-center justify-end">
-          <div className="flex -translate-x-1 items-center gap-2.5 sm:-translate-x-1.5 lg:-translate-x-1 xl:-translate-x-1.5">
-            {(emblaApi?.scrollSnapList() ?? []).map((_, snapIdx) => (
-              <button
-                key={`showcase-dot-${snapIdx}`}
-                type="button"
-                onClick={() => {
-                  emblaApi?.scrollTo(snapIdx);
-                  restartCarouselAutoAdvanceRef.current();
-                }}
-                aria-label={`Go to slide ${snapIdx + 1}`}
-                aria-current={selectedIndex === snapIdx ? "true" : undefined}
-                className={`h-2.5 w-2.5 rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
-                  selectedIndex === snapIdx
-                    ? "bg-white scale-110"
-                    : "bg-white/35 hover:bg-white/55"
-                }`}
-              />
-            ))}
-          </div>
-        </div>
         <div className="min-w-0 max-w-full w-full overflow-hidden [--slide-gap:0.875rem] sm:[--slide-gap:1.25rem] lg:[--slide-gap:1rem] xl:[--slide-gap:1.125rem]">
-        {/*
-         * Slides: 1? full width < lg; lg+ 2 columns. Embla `align: start` + clip + slightly under-filled halves = no neighbor slivers.
-         */}
-        <div ref={emblaRef} className="overflow-x-clip overflow-y-hidden">
-          <div className="flex items-stretch touch-pan-y [-webkit-touch-callout:none] -ml-[var(--slide-gap)]">
+          <div className="grid w-full min-w-0 grid-cols-5 gap-[var(--slide-gap)]">
             {PROJECT_CARDS.map((card, index) => (
-              <div
-                key={card.id}
-                className="flex min-w-0 shrink-0 grow-0 justify-center pl-[var(--slide-gap)] flex-[0_0_100%] lg:flex-[0_0_calc((100%-4px)/2)]"
-              >
+              <div key={card.id} className="min-w-0">
                 <motion.button
                   type="button"
                   data-carousel-card
                   onClick={(e) => onSelect(card.id, e.currentTarget)}
                   whileTap={{ scale: 0.985 }}
                   transition={{ duration: 0.28 / SHOWCASE_TIME_DIV, ease: cardEase }}
-                  className={`group project-card-surface relative w-full ${DETAIL_CARD_H} rounded-[11px] sm:rounded-xl border border-white/[0.09] shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)] text-center overflow-hidden transition-[opacity,background-color,border-color] duration-300 ease-out ${
+                  className={`group project-card-surface relative w-full [container-type:inline-size] ${DETAIL_CARD_H} rounded-[11px] sm:rounded-xl border border-white/[0.09] shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)] text-center overflow-hidden transition-[opacity,background-color,border-color] duration-300 ease-out ${
                     contentReady
                       ? "hover:border-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] hover:bg-[var(--portfolio-section-card-hover)] [background:var(--portfolio-section-card)]"
                       : "[background:transparent!important] hover:[background:transparent!important]"
@@ -2817,10 +2614,7 @@ const ProjectsStack = ({
                               onError={() => markCardMediaReady(index)}
                             />
                           ) : (
-                            <div
-                              data-parallax-layer
-                              className="h-full w-full will-change-transform"
-                            >
+                            <div className="h-full w-full will-change-transform">
                               <img
                                 src={card.thumbnail}
                                 alt={`${card.title} thumbnail`}
@@ -2838,18 +2632,12 @@ const ProjectsStack = ({
                         <div
                           className={
                             card.thumbnailVideo
-                              ? "absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black via-black/85 to-transparent"
-                              : "absolute inset-x-[-1rem] bottom-0 h-32 bg-gradient-to-t from-black via-black/85 to-transparent sm:inset-x-[-1.25rem]"
+                              ? "absolute inset-x-0 bottom-0 h-40 sm:h-44 bg-gradient-to-t from-black via-black/88 via-35% to-transparent"
+                              : "absolute inset-x-[-1rem] bottom-0 h-40 sm:h-44 bg-gradient-to-t from-black via-black/88 via-35% to-transparent sm:inset-x-[-1.25rem]"
                           }
                         />
-                        <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
-                          <span
-                            className={`font-display block w-full max-w-full text-left text-[1rem] sm:text-[1.05rem] md:text-lg lg:text-xl xl:text-[1.35rem] leading-snug text-white tracking-tight line-clamp-3 [text-wrap:balance] motion-safe:transition-[opacity,color] motion-safe:duration-300 motion-safe:ease-out ${
-                              index === selectedIndex
-                                ? "opacity-100 group-hover:text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]"
-                                : "opacity-70 group-hover:text-mono-1"
-                            }`}
-                          >
+                        <div className="absolute inset-x-0 bottom-0 px-2.5 py-3.5 sm:px-3 sm:py-4">
+                          <span className={PROJECT_CARD_TITLE_CLASS}>
                             {card.title}
                           </span>
                           <span className="font-body mt-3 block w-full max-w-full text-left text-xs sm:text-[0.8125rem] md:text-sm lg:text-[0.9375rem] text-mono-2 leading-relaxed line-clamp-2 border-t border-white/15 pt-3 sm:pt-3.5 transition-colors group-hover:text-white/90">
@@ -2859,14 +2647,8 @@ const ProjectsStack = ({
                       </>
                     ) : null}
                     {!card.thumbnail && !card.thumbnailVideo ? (
-                      <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
-                        <span
-                          className={`font-display block w-full max-w-full text-left text-[1rem] sm:text-[1.05rem] md:text-lg lg:text-xl xl:text-[1.35rem] leading-snug text-white tracking-tight line-clamp-3 [text-wrap:balance] motion-safe:transition-[opacity,color] motion-safe:duration-300 motion-safe:ease-out ${
-                            index === selectedIndex
-                              ? "opacity-100 group-hover:text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]"
-                              : "opacity-70 group-hover:text-mono-1"
-                          }`}
-                        >
+                      <div className="absolute inset-x-0 bottom-0 px-2.5 py-3.5 sm:px-3 sm:py-4">
+                        <span className={PROJECT_CARD_TITLE_CLASS}>
                           {card.title}
                         </span>
                         <span className="font-body mt-3 block w-full max-w-full text-left text-xs sm:text-[0.8125rem] md:text-sm lg:text-[0.9375rem] text-mono-2 leading-relaxed line-clamp-2 border-t border-white/15 pt-3 sm:pt-3.5 transition-colors group-hover:text-white/90">
@@ -2879,7 +2661,6 @@ const ProjectsStack = ({
               </div>
             ))}
           </div>
-        </div>
         </div>
       </div>
     </div>
@@ -3393,6 +3174,10 @@ const SupportingProjectsSection = ({
 
 type CardRect = { top: number; left: number; width: number; height: number };
 
+/** Same box-shadow + vignette stack as the hero SHOWCASE media slider (final ?open? state). */
+const SHOWCASE_SLIDER_MEDIA_BOX_SHADOW =
+  "0 36px 88px rgba(0,0,0,0.6), inset 0 -40px 70px rgba(0,0,0,0.52), 0 0 0 1px rgba(255,255,255,0.07), 0 0 28px 4px rgba(255,255,255,0.04)";
+
 /** Settled project detail hero ? full-bleed media with per-project focal crop. */
 const DetailCardMedia = ({ card }: { card: ShowcaseProjectCard }) => (
   <>
@@ -3408,20 +3193,16 @@ const DetailCardMedia = ({ card }: { card: ShowcaseProjectCard }) => (
         className="block h-full w-full object-cover"
         style={{ objectPosition: card.focalPoint ?? "50% 50%" }}
       />
-    ) : (
+    ) : card.thumbnail ? (
       <img
         src={card.thumbnail}
         alt={card.title}
         className="h-full w-full object-cover"
         style={{ objectPosition: card.focalPoint ?? "50% 50%" }}
       />
-    )}
+    ) : null}
   </>
 );
-
-/** Same box-shadow + vignette stack as the hero SHOWCASE media slider (final ?open? state). */
-const SHOWCASE_SLIDER_MEDIA_BOX_SHADOW =
-  "0 36px 88px rgba(0,0,0,0.6), inset 0 -40px 70px rgba(0,0,0,0.52), 0 0 0 1px rgba(255,255,255,0.07), 0 0 28px 4px rgba(255,255,255,0.04)";
 
 /**
  * Project detail grid cells (OVERVIEW / ROLE / IMPACT / TOOLS) — same surface class + radius pattern as PROFILE
@@ -3441,6 +3222,627 @@ const SKILLS_ROW_STRIP_BG =
 /** Inset for cards inside the row zone (strip fills padded box via `absolute inset-0`). */
 const SKILLS_ROW_ZONE_PADDING = "p-2.5 sm:p-3.5 md:p-4 lg:p-5";
 const SKILLS_ROW_ZONE_PADDING_DUAL = "px-2.5 py-2.5 sm:px-3 sm:py-3 md:px-3.5 md:py-3";
+
+type ShowcaseDetailGallerySlide = NonNullable<ShowcaseProjectCard["detailGallery"]>[number];
+
+type IllustrationThumbnailFraming = {
+  focalX: number;
+  focalY: number;
+  zoom: number;
+};
+
+const ILLUSTRATION_FRAMING_ZOOM_MIN = 0.4;
+const ILLUSTRATION_FRAMING_ZOOM_MAX = 1.35;
+const ILLUSTRATION_FRAMING_ZOOM_DEFAULT = 1;
+
+function parseGalleryFocalPoint(focalPoint?: string): Pick<IllustrationThumbnailFraming, "focalX" | "focalY"> {
+  if (!focalPoint?.trim()) return { focalX: 50, focalY: 50 };
+  const [xRaw, yRaw] = focalPoint.trim().split(/\s+/);
+  const parsePct = (raw: string | undefined, fallback: number) => {
+    if (!raw) return fallback;
+    const n = Number.parseFloat(raw.replace("%", ""));
+    return Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : fallback;
+  };
+  return { focalX: parsePct(xRaw, 50), focalY: parsePct(yRaw, 50) };
+}
+
+function buildInitialIllustrationFramings(
+  slides: readonly ShowcaseDetailGallerySlide[],
+): Record<string, IllustrationThumbnailFraming> {
+  return Object.fromEntries(
+    slides.map((slide) => {
+      const { focalX, focalY } = parseGalleryFocalPoint(slide.focalPoint);
+      return [slide.id, { focalX, focalY, zoom: ILLUSTRATION_FRAMING_ZOOM_DEFAULT }];
+    }),
+  );
+}
+
+function formatGalleryFocalPoint(framing: IllustrationThumbnailFraming): string {
+  return `${Math.round(framing.focalX)}% ${Math.round(framing.focalY)}%`;
+}
+
+/** Oversized cover layer: lower zoom = larger layer = more of the artwork visible in the tile. */
+function illustrationThumbnailFrameStyle(framing: IllustrationThumbnailFraming): React.CSSProperties {
+  const layerSizePct = 100 / framing.zoom;
+  return {
+    width: `${layerSizePct}%`,
+    height: `${layerSizePct}%`,
+    left: "50%",
+    top: "50%",
+    transform: "translate(-50%, -50%)",
+    objectPosition: `${framing.focalX}% ${framing.focalY}%`,
+  };
+}
+
+const ShowcaseIllustrationsFramingControls = ({
+  slides,
+  selectedIndex,
+  framing,
+  onSelectedIndexChange,
+  onFramingChange,
+  onResetSelected,
+}: {
+  slides: readonly ShowcaseDetailGallerySlide[];
+  selectedIndex: number;
+  framing: IllustrationThumbnailFraming;
+  onSelectedIndexChange: (index: number) => void;
+  onFramingChange: (patch: Partial<IllustrationThumbnailFraming>) => void;
+  onResetSelected: () => void;
+}) => {
+  const selectedSlide = slides[selectedIndex];
+  const label = selectedSlide?.alt?.trim() || `Illustration ${selectedIndex + 1}`;
+
+  const handleCopy = () => {
+    if (!selectedSlide) return;
+    const payload = {
+      id: selectedSlide.id,
+      focalPoint: formatGalleryFocalPoint(framing),
+      zoom: Number(framing.zoom.toFixed(2)),
+    };
+    void navigator.clipboard?.writeText(JSON.stringify(payload, null, 2));
+  };
+
+  return (
+    <div className="w-full shrink-0 sm:max-w-[17.5rem] lg:max-w-[19rem] rounded-[11px] border border-white/[0.09] bg-[var(--portfolio-section-card)] p-2.5 sm:p-3">
+      <p className="m-0 font-heading text-[10px] uppercase tracking-eyebrow-tight text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]">
+        Thumbnail frame
+      </p>
+      <label className="mt-2 block">
+        <span className="sr-only">Select illustration</span>
+        <select
+          value={selectedIndex}
+          onChange={(e) => onSelectedIndexChange(Number(e.target.value))}
+          className="mt-1 w-full rounded-md border border-white/[0.12] bg-black/40 px-2 py-1.5 font-body text-xs text-white outline-none focus-visible:ring-1 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]"
+        >
+          {slides.map((slide, index) => (
+            <option key={slide.id} value={index}>
+              {String(index + 1).padStart(2, "0")} — {slide.alt?.trim() || `Illustration ${index + 1}`}
+            </option>
+          ))}
+        </select>
+      </label>
+      <p className="mt-1.5 line-clamp-1 font-body text-[10px] leading-snug text-mono-2/70" title={label}>
+        {label}
+      </p>
+      <div className="mt-2.5 space-y-2">
+        <label className="block">
+          <span className="flex items-center justify-between font-heading text-[10px] uppercase tracking-eyebrow-tight text-mono-2/80">
+            <span>Zoom</span>
+            <span className="font-mono tabular-nums text-white/85">{Math.round(framing.zoom * 100)}%</span>
+          </span>
+          <input
+            type="range"
+            min={ILLUSTRATION_FRAMING_ZOOM_MIN * 100}
+            max={ILLUSTRATION_FRAMING_ZOOM_MAX * 100}
+            step={1}
+            value={Math.round(framing.zoom * 100)}
+            onChange={(e) => onFramingChange({ zoom: Number(e.target.value) / 100 })}
+            className="mt-1 h-1 w-full cursor-pointer accent-[color:color-mix(in_srgb,var(--palette-yellow-projects)_56%,rgb(186_186_186))]"
+          />
+        </label>
+        <label className="block">
+          <span className="flex items-center justify-between font-heading text-[10px] uppercase tracking-eyebrow-tight text-mono-2/80">
+            <span>Position X</span>
+            <span className="font-mono tabular-nums text-white/85">{Math.round(framing.focalX)}%</span>
+          </span>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            step={1}
+            value={Math.round(framing.focalX)}
+            onChange={(e) => onFramingChange({ focalX: Number(e.target.value) })}
+            className="mt-1 h-1 w-full cursor-pointer accent-[color:color-mix(in_srgb,var(--palette-yellow-projects)_56%,rgb(186_186_186))]"
+          />
+        </label>
+        <label className="block">
+          <span className="flex items-center justify-between font-heading text-[10px] uppercase tracking-eyebrow-tight text-mono-2/80">
+            <span>Position Y</span>
+            <span className="font-mono tabular-nums text-white/85">{Math.round(framing.focalY)}%</span>
+          </span>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            step={1}
+            value={Math.round(framing.focalY)}
+            onChange={(e) => onFramingChange({ focalY: Number(e.target.value) })}
+            className="mt-1 h-1 w-full cursor-pointer accent-[color:color-mix(in_srgb,var(--palette-yellow-projects)_56%,rgb(186_186_186))]"
+          />
+        </label>
+      </div>
+      <div className="mt-2.5 flex flex-wrap gap-1.5">
+        <button
+          type="button"
+          onClick={onResetSelected}
+          className="rounded-md border border-white/[0.12] px-2 py-1 font-heading text-[10px] uppercase tracking-eyebrow-tight text-mono-2/85 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]"
+        >
+          Reset
+        </button>
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="rounded-md border border-white/[0.12] px-2 py-1 font-heading text-[10px] uppercase tracking-eyebrow-tight text-mono-2/85 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]"
+        >
+          Copy
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const ShowcaseVisualDesignDetail = ({
+  card,
+  reduceMotion,
+  detailHdrReveal,
+  detailRuleReveal,
+  detailGalleryReveal,
+}: {
+  card: ShowcaseProjectCard;
+  reduceMotion: boolean | null;
+  detailHdrReveal: boolean;
+  detailRuleReveal: boolean;
+  detailGalleryReveal: boolean;
+}) => {
+  const slides = card.detailGallery ?? [];
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [framings, setFramings] = useState<Record<string, IllustrationThumbnailFraming>>(() =>
+    buildInitialIllustrationFramings(slides),
+  );
+
+  useEffect(() => {
+    setFramings(buildInitialIllustrationFramings(slides));
+    setSelectedIndex(0);
+  }, [card.id]);
+
+  const selectedSlide = slides[selectedIndex];
+  const selectedFraming =
+    (selectedSlide ? framings[selectedSlide.id] : undefined) ??
+    ({ focalX: 50, focalY: 50, zoom: ILLUSTRATION_FRAMING_ZOOM_DEFAULT } satisfies IllustrationThumbnailFraming);
+
+  const handleFramingChange = useCallback(
+    (patch: Partial<IllustrationThumbnailFraming>) => {
+      if (!selectedSlide) return;
+      setFramings((prev) => ({
+        ...prev,
+        [selectedSlide.id]: { ...prev[selectedSlide.id], ...patch },
+      }));
+    },
+    [selectedSlide],
+  );
+
+  const handleResetSelected = useCallback(() => {
+    if (!selectedSlide) return;
+    const { focalX, focalY } = parseGalleryFocalPoint(selectedSlide.focalPoint);
+    setFramings((prev) => ({
+      ...prev,
+      [selectedSlide.id]: { focalX, focalY, zoom: ILLUSTRATION_FRAMING_ZOOM_DEFAULT },
+    }));
+  }, [selectedSlide]);
+
+  if (!slides.length) return null;
+
+  return (
+    <>
+      <div
+        className="order-1 mt-0 flex w-full flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4"
+        style={
+          reduceMotion
+            ? { opacity: detailHdrReveal ? 1 : 0 }
+            : {
+                opacity: detailHdrReveal ? 1 : 0,
+                transform: detailHdrReveal
+                  ? "translate3d(0,0,0)"
+                  : `translate3d(0,${DETAIL_HDR_SLIDE_PX}px,0)`,
+                transition: `opacity ${DETAIL_HDR_OPACITY_MS}ms ${DETAIL_FADE_CUBIC}, transform ${DETAIL_HDR_SLIDE_MS}ms ${DETAIL_SLIDE_CUBIC}`,
+              }
+        }
+      >
+        <div className="flex min-w-0 flex-1 flex-col items-stretch gap-y-1.5 text-left">
+          <p className="m-0 w-full font-heading text-sm sm:text-base leading-snug tracking-eyebrow-tight uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]">
+            Project details
+          </p>
+          <h3 className="m-0 w-full font-display text-2xl md:text-3xl leading-[1.1] tracking-[-0.015em] text-white">
+            {card.title}
+          </h3>
+          <p className="m-0 w-full pl-[2px] font-body text-sm sm:text-base leading-snug text-mono-2">
+            {card.tagline}
+          </p>
+        </div>
+        <ShowcaseIllustrationsFramingControls
+          slides={slides}
+          selectedIndex={selectedIndex}
+          framing={selectedFraming}
+          onSelectedIndexChange={setSelectedIndex}
+          onFramingChange={handleFramingChange}
+          onResetSelected={handleResetSelected}
+        />
+      </div>
+      <div className="order-2 mt-5 w-full" aria-hidden>
+        <div
+          className="mx-auto block h-px w-full max-w-full shrink-0 bg-white/[0.09]"
+          style={{
+            clipPath: detailRuleReveal ? "inset(0 0 0 0)" : "inset(0 50% 0 50%)",
+            ...(reduceMotion
+              ? {}
+              : detailRuleReveal
+                ? {
+                    transitionProperty: "clip-path",
+                    transitionDuration: `${DETAIL_RULE_EXPAND_MS}ms`,
+                    transitionTimingFunction: DETAIL_SLIDE_CUBIC,
+                  }
+                : {}),
+          }}
+        />
+      </div>
+      <div
+        className="order-3 mt-4 w-full sm:mt-5"
+        style={
+          reduceMotion
+            ? { opacity: detailGalleryReveal ? 1 : 0 }
+            : {
+                opacity: detailGalleryReveal ? 1 : 0,
+                transform: detailGalleryReveal
+                  ? "translate3d(0,0,0)"
+                  : `translate3d(0,${DETAIL_GRID_SLIDE_PX}px,0)`,
+                transition: `opacity ${DETAIL_GRID_OPACITY_MS}ms ${DETAIL_FADE_CUBIC}, transform ${DETAIL_GRID_SLIDE_MS}ms ${DETAIL_SLIDE_CUBIC}`,
+              }
+        }
+      >
+        <ShowcaseDetailIllustrationsGrid
+          slides={slides}
+          framings={framings}
+          selectedIndex={selectedIndex}
+          onSelectIndex={setSelectedIndex}
+        />
+      </div>
+    </>
+  );
+};
+
+/** ILLUSTRATIONS grid lightbox fade (matches PDF preview open feel). */
+const ILLUSTRATION_LIGHTBOX_FADE_S = 0.18;
+
+/** Full-screen illustration viewer — Embla swipe/drag + arrow buttons + keyboard. */
+const ShowcaseIllustrationLightbox = ({
+  slides,
+  openableIndices,
+  activeIndex,
+  reduceMotion,
+  onClose,
+  onActiveIndexChange,
+}: {
+  slides: readonly ShowcaseDetailGallerySlide[];
+  openableIndices: readonly number[];
+  activeIndex: number;
+  reduceMotion: boolean | null;
+  onClose: () => void;
+  onActiveIndexChange: (index: number) => void;
+}) => {
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    align: "center",
+    loop: false,
+    skipSnaps: false,
+    dragFree: false,
+  });
+
+  const activeOpenablePos = openableIndices.indexOf(activeIndex);
+  const activeSlide = slides[activeIndex];
+  const hasPrev = activeOpenablePos > 0;
+  const hasNext =
+    activeOpenablePos >= 0 && activeOpenablePos < openableIndices.length - 1;
+
+  const lightboxLabel =
+    activeSlide?.alt?.trim() ||
+    (activeIndex != null ? `Illustration ${activeIndex + 1}` : "Illustration preview");
+
+  const handleShowPrev = useCallback(() => {
+    emblaApi?.scrollPrev();
+  }, [emblaApi]);
+
+  const handleShowNext = useCallback(() => {
+    emblaApi?.scrollNext();
+  }, [emblaApi]);
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!emblaApi || activeOpenablePos < 0) return;
+    if (emblaApi.selectedScrollSnap() !== activeOpenablePos) {
+      emblaApi.scrollTo(activeOpenablePos, true);
+    }
+  }, [activeOpenablePos, emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    const syncActiveIndex = () => {
+      const snap = emblaApi.selectedScrollSnap();
+      const nextIndex = openableIndices[snap];
+      if (nextIndex != null && nextIndex !== activeIndex) {
+        onActiveIndexChange(nextIndex);
+      }
+    };
+    syncActiveIndex();
+    emblaApi.on("select", syncActiveIndex);
+    emblaApi.on("reInit", syncActiveIndex);
+    return () => {
+      emblaApi.off("select", syncActiveIndex);
+      emblaApi.off("reInit", syncActiveIndex);
+    };
+  }, [activeIndex, emblaApi, onActiveIndexChange, openableIndices]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+      } else if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        handleShowPrev();
+      } else if (event.key === "ArrowRight") {
+        event.preventDefault();
+        handleShowNext();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleShowNext, handleShowPrev, onClose]);
+
+  if (!activeSlide?.src?.trim()) return null;
+
+  return (
+    <motion.div
+      key="illustrations-lightbox"
+      role="dialog"
+      aria-modal="true"
+      aria-label={lightboxLabel}
+      className="fixed inset-0 z-[100] flex flex-col bg-black"
+      initial={reduceMotion ? false : { opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{
+        duration: reduceMotion ? 0 : ILLUSTRATION_LIGHTBOX_FADE_S,
+        ease: EASE.out,
+      }}
+    >
+      <button
+        type="button"
+        className="absolute inset-0 z-[1] cursor-default border-0 bg-transparent p-0"
+        aria-label="Close illustration preview"
+        onClick={onClose}
+      />
+
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col">
+        <header className="relative flex shrink-0 items-center justify-between gap-3 border-b border-white/[0.1] bg-black px-4 py-3.5 sm:px-5">
+          <button
+            type="button"
+            aria-label="Close illustration preview"
+            onClick={onClose}
+            className="pdf-viewer-chrome-btn"
+          >
+            <X aria-hidden />
+          </button>
+          <div className="pointer-events-none absolute left-1/2 top-1/2 w-[min(72%,34rem)] -translate-x-1/2 -translate-y-1/2 px-2 text-center">
+            <p className="font-display text-[0.95rem] leading-snug tracking-tight text-white sm:text-base">
+              {lightboxLabel}
+            </p>
+            {openableIndices.length > 1 ? (
+              <p className="font-heading mt-1 text-[0.65rem] uppercase tracking-eyebrow-tight text-mono-2/80 sm:text-[0.7rem]">
+                {activeOpenablePos + 1} / {openableIndices.length}
+              </p>
+            ) : null}
+          </div>
+          <span className="inline-block h-10 w-10 shrink-0" aria-hidden />
+        </header>
+
+        <div
+          className="relative flex min-h-0 flex-1 flex-col"
+          onClick={(event) => event.stopPropagation()}
+        >
+          {hasPrev ? (
+            <button
+              type="button"
+              aria-label="Previous illustration"
+              onClick={handleShowPrev}
+              className="pdf-viewer-chrome-btn absolute left-3 top-1/2 z-20 -translate-y-1/2 sm:left-5"
+            >
+              <ArrowLeft aria-hidden />
+            </button>
+          ) : null}
+
+          <div
+            ref={emblaRef}
+            className="min-h-0 flex-1 overflow-hidden touch-pan-y [-webkit-touch-callout:none]"
+            aria-roledescription="carousel"
+          >
+            <div className="flex h-full min-h-[min(78dvh,920px)] touch-pan-y [-webkit-touch-callout:none]">
+              {openableIndices.map((slideIndex) => {
+                const slide = slides[slideIndex]!;
+                const label = slide.alt?.trim() || `Illustration ${slideIndex + 1}`;
+
+                return (
+                  <div
+                    key={slide.id}
+                    className="flex h-full min-w-0 flex-[0_0_100%] items-center justify-center px-4 py-4 sm:px-6 sm:py-6"
+                    aria-label={label}
+                  >
+                    <img
+                      src={slide.src}
+                      alt={label}
+                      className="max-h-[min(78dvh,920px)] w-auto max-w-[min(96vw,72rem)] object-contain object-center select-none"
+                      draggable={false}
+                      decoding="async"
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {hasNext ? (
+            <button
+              type="button"
+              aria-label="Next illustration"
+              onClick={handleShowNext}
+              className="pdf-viewer-chrome-btn absolute right-3 top-1/2 z-20 -translate-y-1/2 sm:right-5"
+            >
+              <ArrowRight aria-hidden />
+            </button>
+          ) : null}
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+/** ILLUSTRATIONS project-details gallery — 2×2 squares on mobile; 3×3 portrait tiles on desktop (lg+). */
+const ShowcaseDetailIllustrationsGrid = ({
+  slides,
+  framings,
+  selectedIndex,
+  onSelectIndex,
+}: {
+  slides: readonly ShowcaseDetailGallerySlide[];
+  framings?: Record<string, IllustrationThumbnailFraming>;
+  selectedIndex?: number;
+  onSelectIndex?: (index: number) => void;
+}) => {
+  const reduceMotion = useReducedMotion();
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+
+  const openableIndices = useMemo(
+    () =>
+      slides.reduce<number[]>((indices, slide, index) => {
+        if (slide.src?.trim()) indices.push(index);
+        return indices;
+      }, []),
+    [slides],
+  );
+
+  const handleCloseLightbox = useCallback(() => {
+    setActiveIndex(null);
+  }, []);
+
+  const handleActiveIndexChange = useCallback((index: number) => {
+    setActiveIndex(index);
+  }, []);
+
+  const handleTileClick = useCallback(
+    (index: number) => {
+      onSelectIndex?.(index);
+      setActiveIndex(index);
+    },
+    [onSelectIndex],
+  );
+
+  if (!slides.length) return null;
+
+  return (
+    <>
+      <div
+        role="list"
+        aria-label="Illustrations"
+        className="grid w-full min-w-0 grid-cols-2 gap-px lg:grid-cols-3"
+      >
+        {slides.map((slide, index) => {
+          const label =
+            slide.src?.trim()
+              ? slide.alt?.trim() || `Illustration ${index + 1}`
+              : `Illustration slot ${index + 1}`;
+          const framing =
+            framings?.[slide.id] ??
+            ({
+              ...parseGalleryFocalPoint(slide.focalPoint),
+              zoom: ILLUSTRATION_FRAMING_ZOOM_DEFAULT,
+            } satisfies IllustrationThumbnailFraming);
+          const isSelected = selectedIndex === index;
+          const tileClassName =
+            "relative aspect-square min-w-0 bg-[var(--portfolio-section-card-raised)] lg:aspect-[4/5]";
+
+          if (!slide.src?.trim()) {
+            return (
+              <div
+                key={slide.id}
+                role="listitem"
+                className={tileClassName}
+                aria-label={label}
+              />
+            );
+          }
+
+          return (
+            <button
+              key={slide.id}
+              type="button"
+              role="listitem"
+              className={`${tileClassName} group cursor-pointer overflow-hidden border-0 p-0 text-left transition-opacity duration-200 ease-out hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black${
+                isSelected
+                  ? " ring-2 ring-[color:color-mix(in_srgb,var(--palette-yellow-projects)_56%,rgb(186_186_186))] ring-offset-2 ring-offset-black"
+                  : ""
+              }`}
+              aria-label={`View ${label}`}
+              aria-pressed={isSelected}
+              onClick={() => handleTileClick(index)}
+            >
+              <img
+                src={slide.src}
+                alt={slide.alt?.trim() || `Illustration ${index + 1}`}
+                className="absolute max-h-none max-w-none object-cover"
+                style={illustrationThumbnailFrameStyle(framing)}
+                loading="lazy"
+                decoding="async"
+              />
+            </button>
+          );
+        })}
+      </div>
+
+      {typeof document !== "undefined" && activeIndex != null
+        ? createPortal(
+            <AnimatePresence>
+              {openableIndices.includes(activeIndex) ? (
+                <ShowcaseIllustrationLightbox
+                  slides={slides}
+                  openableIndices={openableIndices}
+                  activeIndex={activeIndex}
+                  reduceMotion={reduceMotion}
+                  onClose={handleCloseLightbox}
+                  onActiveIndexChange={handleActiveIndexChange}
+                />
+              ) : null}
+            </AnimatePresence>,
+            document.body,
+          )
+        : null}
+    </>
+  );
+};
 
 const ShowcaseDetailOverviewRole = ({ card }: { card: ShowcaseProjectCard }) => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-3">
@@ -3555,6 +3957,7 @@ const PalaceProjects = ({
   const [projectsOverlayRevealed, setProjectsOverlayRevealed] = useState(false);
   const [carouselAutoAdvanceReady, setCarouselAutoAdvanceReady] = useState(reduceMotion);
   const activeCard = activeProjectId ? PROJECT_CARDS.find((c) => c.id === activeProjectId) ?? null : null;
+  const illustrationsDetailNoHero = Boolean(activeCard?.detailGallery?.length);
   const showcaseObscured = Boolean(activeCard || featuredPdfViewerActive);
   const showcaseFadeDuration = reduceMotion
     ? 0
@@ -3614,6 +4017,7 @@ const PalaceProjects = ({
   const [morphDone, setMorphDone] = useState(false);
   const [detailHdrReveal, setDetailHdrReveal] = useState(false);
   const [detailRuleReveal, setDetailRuleReveal] = useState(false);
+  const [detailGalleryReveal, setDetailGalleryReveal] = useState(false);
   const [detailRow1Reveal, setDetailRow1Reveal] = useState(false);
   const [detailRow2Reveal, setDetailRow2Reveal] = useState(false);
   const [detailHeroMediaFadeIn, setDetailHeroMediaFadeIn] = useState(false);
@@ -3653,18 +4057,26 @@ const PalaceProjects = ({
   const mScaleY = useMotionValue(1);
 
   const handleCardClick = useCallback((id: string, el: HTMLElement) => {
-    if (!detailAnchorRef.current) return;
     const src = el.getBoundingClientRect();
+    setMorphRect({ top: src.top, left: src.left, width: src.width, height: src.height });
+
+    if (PROJECT_CARDS.find((card) => card.id === id)?.detailGallery?.length) {
+      setTargetRect(null);
+      setMorphDone(true);
+      onSelectProject(id);
+      return;
+    }
+
+    if (!detailAnchorRef.current) return;
     const dst = detailAnchorRef.current.getBoundingClientRect();
 
     // Set all transforms synchronously ? before React schedules its render ?
     // so Framer Motion's useLayoutEffect applies them before the first paint.
     mX.set(src.left);
     mY.set(src.top);
-    mScaleX.set(src.width  / dst.width);
+    mScaleX.set(src.width / dst.width);
     mScaleY.set(src.height / dst.height);
 
-    setMorphRect({ top: src.top,  left: src.left,  width: src.width,  height: src.height });
     setTargetRect({ top: dst.top, left: dst.left, width: dst.width, height: dst.height });
     setMorphDone(false);
     onSelectProject(id);
@@ -3776,15 +4188,17 @@ const PalaceProjects = ({
     if (!morphDone) {
       setDetailHdrReveal(false);
       setDetailRuleReveal(false);
+      setDetailGalleryReveal(false);
       setDetailRow1Reveal(false);
       setDetailRow2Reveal(false);
       detailRevealTimersRef.current.forEach((id) => window.clearTimeout(id));
       detailRevealTimersRef.current = [];
       return;
     }
-    if (reduceMotion) {
+    if (reduceMotion || activeCard?.detailGallery?.length) {
       setDetailHdrReveal(true);
       setDetailRuleReveal(true);
+      setDetailGalleryReveal(true);
       setDetailRow1Reveal(true);
       setDetailRow2Reveal(true);
     }
@@ -3932,12 +4346,20 @@ const PalaceProjects = ({
          * Uses flex-col so the card + text stack naturally from the container top.
          */}
         {activeCard && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center">
-            <div className={`w-full ${PROFILE_VIEWPORT_CONTENT_MAX} shrink-0 ${DETAIL_CARD_H}`} aria-hidden />
+          <div
+            className={`absolute inset-0 z-20 flex flex-col items-center${
+              illustrationsDetailNoHero
+                ? " overflow-y-auto overscroll-y-contain no-scrollbar"
+                : ""
+            }`}
+          >
+            {!illustrationsDetailNoHero ? (
+              <div className={`w-full ${PROFILE_VIEWPORT_CONTENT_MAX} shrink-0 ${DETAIL_CARD_H}`} aria-hidden />
+            ) : null}
 
-            {morphDone && (
+            {morphDone && !illustrationsDetailNoHero ? (
               <div
-                className={`project-card-surface absolute top-0 left-0 right-0 mx-auto w-full ${PROFILE_VIEWPORT_CONTENT_MAX} ${DETAIL_CARD_H} rounded-[11px] sm:rounded-xl border-0 overflow-hidden`}
+                className={`project-card-surface absolute top-0 left-0 right-0 mx-auto w-full ${PROFILE_VIEWPORT_CONTENT_MAX} ${DETAIL_CARD_H} overflow-hidden rounded-[11px] sm:rounded-xl border-0`}
                 style={{
                   boxShadow: `${SHOWCASE_SLIDER_MEDIA_BOX_SHADOW}, 0 18px 48px -28px rgba(0,0,0,0.9)`,
                   borderRadius: `${detailCardRadiusPx}px`,
@@ -3964,12 +4386,29 @@ const PalaceProjects = ({
                   <DetailCardMedia card={activeCard} />
                 </div>
               </div>
-            )}
+            ) : null}
 
             {activeCard && morphRect && (
-              <div className={`w-full ${PROFILE_VIEWPORT_CONTENT_MAX} mt-5 pb-8`}>
+              <div
+                className={`w-full ${PROFILE_VIEWPORT_CONTENT_MAX} pb-8 ${
+                  illustrationsDetailNoHero ? "mt-0 flex flex-col" : "mt-5"
+                }`}
+              >
+                {illustrationsDetailNoHero && activeCard.detailGallery?.length ? (
+                  <ShowcaseVisualDesignDetail
+                    card={activeCard}
+                    reduceMotion={reduceMotion}
+                    detailHdrReveal={detailHdrReveal}
+                    detailRuleReveal={detailRuleReveal}
+                    detailGalleryReveal={detailGalleryReveal}
+                  />
+                ) : null}
+                {!illustrationsDetailNoHero ? (
+                <>
                 <div
-                  className="flex w-full max-w-full flex-col items-stretch gap-y-1.5 text-left"
+                  className={`flex w-full max-w-full flex-col items-stretch gap-y-1.5 text-left ${
+                    illustrationsDetailNoHero ? "order-1 mt-0" : ""
+                  }`}
                   style={
                     reduceMotion
                       ? { opacity: detailHdrReveal ? 1 : 0 }
@@ -4009,6 +4448,9 @@ const PalaceProjects = ({
                     }}
                   />
                 </div>
+                </>
+                ) : null}
+                {!illustrationsDetailNoHero ? (
                 <div className="pt-3.5 flex flex-col gap-2 sm:gap-3">
                   <div
                     style={
@@ -4041,6 +4483,7 @@ const PalaceProjects = ({
                     <ShowcaseDetailImpactTools card={activeCard} />
                   </div>
                 </div>
+                ) : null}
               </div>
             )}
           </div>

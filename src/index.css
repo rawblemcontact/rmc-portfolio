@@ -164,12 +164,11 @@
   [id="experience"],
   [id="social"],
   [id="projects"],
-  [id="project-rawblem"],
+  [id="project-visual-design"],
+  [id="project-video-editing"],
+  [id="project-motion-design"],
+  [id="project-interactive-media"],
   [id="project-slaywire"],
-  [id="project-undertale-fhe"],
-  [id="project-portfolio"],
-  [id="project-undertale-proposal"],
-  [id="project-8bit-bumpers"],
   [id="projects-supporting"],
   [id="hero"],
   [id="menu"],
@@ -1202,6 +1201,51 @@
   #projects {
     --showcase-header-label-gap: 0.4375rem;
     --showcase-header-line-gap: 0.5rem;
+  }
+
+  /* Five-up row: scale title to card width (max = xl showcase size) so lines fit without ellipsis. */
+  #projects [data-carousel-card] {
+    container-type: inline-size;
+  }
+
+  #projects .project-card-title {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    text-align: left;
+    white-space: nowrap;
+    line-height: 1.375;
+    letter-spacing: -0.015em;
+    font-size: clamp(0.6875rem, 8.5cqi, 1rem);
+    text-shadow:
+      0 0 1px rgba(0, 0, 0, 0.85),
+      0 1px 3px rgba(0, 0, 0, 0.72),
+      0 4px 14px rgba(0, 0, 0, 0.55);
+  }
+
+  @media (min-width: 640px) {
+    #projects .project-card-title {
+      font-size: clamp(0.6875rem, 8.5cqi, 1.05rem);
+    }
+  }
+
+  @media (min-width: 768px) {
+    #projects .project-card-title {
+      font-size: clamp(0.6875rem, 8.5cqi, 1.125rem);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    #projects .project-card-title {
+      font-size: clamp(0.6875rem, 8.5cqi, 1.25rem);
+    }
+  }
+
+  @media (min-width: 1280px) {
+    #projects .project-card-title {
+      font-size: clamp(0.6875rem, 8.5cqi, 1.35rem);
+    }
   }
 
   #projects .showcase-header {
