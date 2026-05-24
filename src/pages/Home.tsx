@@ -2227,6 +2227,18 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         alt: "RAWBLEM brand logo design",
         focalPoint: "50% 45%",
       },
+      {
+        id: "illustrations-11",
+        src: "/illustrations/illustrations-mr-meowrange.png",
+        alt: "Mr. Meowrange — mascot character illustration",
+        focalPoint: "50% 50%",
+      },
+      {
+        id: "illustrations-12",
+        src: "/illustrations/illustrations-manamelon.png",
+        alt: "Manamelon — watermelon manatee character illustration",
+        focalPoint: "50% 50%",
+      },
     ],
   },
   {
