@@ -51,6 +51,7 @@ import styled from "styled-components";
 import { TiltCard } from "../components/TiltCard";
 import { FloatingPhone } from "../components/FloatingPhone";
 import { ShowcaseAttachedTabStrip, type ShowcaseTabId } from "../components/ShowcaseAttachedTabStrip";
+import { ShowcaseVideoEditingDetail, type ShowcaseDetailVideo } from "../components/ShowcaseVideoEditingDetail";
 import { FeaturedWritingPdfThumbnail } from "../components/FeaturedWritingPdfThumbnail";
 import { SupportingPdfPreviewDialog } from "../components/SupportingPdfPreviewDialog";
 import {
@@ -2150,6 +2151,7 @@ type ShowcaseProjectCard = {
   readonly detailRole?: string;
   readonly detailTools?: readonly string[];
   readonly detailImpact?: string;
+  readonly detailVideos?: readonly ShowcaseDetailVideo[];
   /** In-flow gallery in project details (ILLUSTRATIONS). Add `src` per slide when assets are ready. */
   readonly detailGallery?: readonly {
     readonly id: string;
@@ -2253,6 +2255,92 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     detailRole: "Editor and creative director for individual cuts.",
     detailTools: ["CapCut", "DaVinci Resolve"],
     detailImpact: "Sharper retention in the first seconds; clearer punchlines and readable on-screen text.",
+    detailVideos: [
+      {
+        id: "video-edit-1",
+        url: "/edits-meme1-online.mp4",
+        label: "1",
+        thumbnailSrc: "/edits-meme1-online-poster.jpg",
+        selectorTitle: "RAWBLEM",
+        selectorSubtitle: "Social Media Ad",
+        selectorDuration: "0:20",
+        detailOverview:
+          "Comedic open with an immediate visual hook and subtitle-first framing to land context in under one second.",
+        detailRole: "Cut direction, beat timing, and caption hierarchy.",
+        detailTools: ["CapCut", "DaVinci Resolve"],
+        detailImpact: "Higher watch-through in the first 3 seconds with cleaner joke setup.",
+      },
+      {
+        id: "video-edit-2",
+        url: "/edits-meme1-online.mp4",
+        label: "2",
+        thumbnailSrc: "/rawblem-thumbnail-poster.jpg",
+        selectorTitle: "RAWBLEM",
+        selectorSubtitle: "Meme-Style Brand Ad",
+        selectorDuration: "0:30",
+        detailOverview:
+          "Reaction-led pacing pass focused on hit-point trims, dead-air removal, and stronger frame-to-frame rhythm.",
+        detailRole: "Pacing pass, pacing QA, and social-safe export prep.",
+        detailTools: ["DaVinci Resolve", "CapCut"],
+        detailImpact: "Tighter mid-section flow and fewer drop-offs across transition moments.",
+      },
+      {
+        id: "video-edit-3",
+        url: "/edits-meme1-online.mp4",
+        label: "3",
+        thumbnailSrc: "/portfolio-website-thumbnail-v2-poster.jpg",
+        selectorTitle: "GUILT TRIP",
+        selectorSubtitle: "Comedy/Horror Short Film",
+        selectorDuration: "0:45",
+        detailOverview:
+          "Text-forward variation tuned for mute autoplay with larger type, safer contrast, and clearer callouts.",
+        detailRole: "Caption design system and legibility balancing.",
+        detailTools: ["CapCut", "Typography overlays"],
+        detailImpact: "Improved message clarity for silent viewers and thumbnail-to-content continuity.",
+      },
+      {
+        id: "video-edit-4",
+        url: "/edits-meme1-online.mp4",
+        label: "4",
+        thumbnailSrc: "/8bit-festival-thumbnail.jpg",
+        selectorTitle: "M.P.M.R",
+        selectorSubtitle: "Comedy/Psychological Short Film",
+        selectorDuration: "0:38",
+        detailOverview:
+          "Ending re-cut with payoff-first sequencing and cleaner audio punch for stronger loop potential.",
+        detailRole: "Final polish, sound sync, and export optimization.",
+        detailTools: ["DaVinci Resolve", "CapCut"],
+        detailImpact: "Stronger final beat and better replay intent at the outro.",
+      },
+      {
+        id: "video-edit-5",
+        url: "/edits-meme1-online.mp4",
+        label: "5",
+        thumbnailSrc: "/undertale-fhe-thumbnail.png",
+        selectorTitle: "EDIT 05",
+        selectorSubtitle: "Pacing Variant",
+        selectorDuration: "0:32",
+        detailOverview:
+          "Alternate pacing pass emphasizing setup-to-punchline contrast and stronger cadence in transition points.",
+        detailRole: "Timing pass, arrangement tweaks, and social delivery prep.",
+        detailTools: ["DaVinci Resolve", "CapCut"],
+        detailImpact: "Cleaner narrative rhythm across the middle beats with improved continuity.",
+      },
+      {
+        id: "video-edit-6",
+        url: "/edits-meme1-online.mp4",
+        label: "6",
+        thumbnailSrc: "/slaywire-thumbnail.png",
+        selectorTitle: "EDIT 06",
+        selectorSubtitle: "Branding Variant",
+        selectorDuration: "0:27",
+        detailOverview:
+          "Title-card-forward variation tuned for branding clarity while preserving fast short-form momentum.",
+        detailRole: "Brand integration, typography pass, and final polish.",
+        detailTools: ["CapCut", "DaVinci Resolve"],
+        detailImpact: "Stronger brand recall while maintaining retention-friendly pacing.",
+      },
+    ],
   },
   {
     id: "project-motion-design",
@@ -3868,6 +3956,7 @@ const PalaceProjects = ({
   const [carouselAutoAdvanceReady, setCarouselAutoAdvanceReady] = useState(reduceMotion);
   const activeCard = activeProjectId ? PROJECT_CARDS.find((c) => c.id === activeProjectId) ?? null : null;
   const illustrationsDetailNoHero = Boolean(activeCard?.detailGallery?.length);
+  const videoEditingDetailNoMainCard = activeCard?.id === "project-video-editing";
   const showcaseObscured = Boolean(activeCard || featuredPdfViewerActive);
   const showcaseFadeDuration = reduceMotion
     ? 0
@@ -3967,6 +4056,15 @@ const PalaceProjects = ({
   const mScaleY = useMotionValue(1);
 
   const handleCardClick = useCallback((id: string, el: HTMLElement) => {
+    if (id === "project-video-editing") {
+      // VIDEO EDITING opens without FLIP hero morph; prevents transient ghost card frames.
+      setMorphRect(null);
+      setTargetRect(null);
+      setMorphDone(true);
+      onSelectProject(id);
+      return;
+    }
+
     const src = el.getBoundingClientRect();
     setMorphRect({ top: src.top, left: src.left, width: src.width, height: src.height });
 
@@ -4263,11 +4361,11 @@ const PalaceProjects = ({
                 : ""
             }`}
           >
-            {!illustrationsDetailNoHero ? (
+            {!illustrationsDetailNoHero && !videoEditingDetailNoMainCard ? (
               <div className={`w-full ${PROFILE_VIEWPORT_CONTENT_MAX} shrink-0 ${DETAIL_CARD_H}`} aria-hidden />
             ) : null}
 
-            {morphDone && !illustrationsDetailNoHero ? (
+            {morphDone && !illustrationsDetailNoHero && !videoEditingDetailNoMainCard ? (
               <div
                 className={`project-card-surface absolute top-0 left-0 right-0 mx-auto w-full ${PROFILE_VIEWPORT_CONTENT_MAX} ${DETAIL_CARD_H} overflow-hidden rounded-[11px] sm:rounded-xl border-0`}
                 style={{
@@ -4298,10 +4396,10 @@ const PalaceProjects = ({
               </div>
             ) : null}
 
-            {activeCard && morphRect && (
+            {activeCard && (morphRect || videoEditingDetailNoMainCard) && (
               <div
                 className={`w-full ${PROFILE_VIEWPORT_CONTENT_MAX} pb-8 ${
-                  illustrationsDetailNoHero ? "mt-0 flex flex-col" : "mt-5"
+                  illustrationsDetailNoHero || videoEditingDetailNoMainCard ? "mt-0 flex flex-col" : "mt-5"
                 }`}
               >
                 {illustrationsDetailNoHero && activeCard.detailGallery?.length ? (
@@ -4313,7 +4411,23 @@ const PalaceProjects = ({
                     detailGalleryReveal={detailGalleryReveal}
                   />
                 ) : null}
-                {!illustrationsDetailNoHero ? (
+                {videoEditingDetailNoMainCard ? (
+                  <ShowcaseVideoEditingDetail
+                    card={activeCard}
+                    reduceMotion={reduceMotion}
+                    detailHdrReveal={detailHdrReveal}
+                    detailRuleReveal={detailRuleReveal}
+                    detailPlayerReveal={detailRow1Reveal}
+                    detailHdrOpacityMs={DETAIL_HDR_OPACITY_MS}
+                    detailHdrSlideMs={DETAIL_HDR_SLIDE_MS}
+                    detailHdrSlidePx={DETAIL_HDR_SLIDE_PX}
+                    detailRuleExpandMs={DETAIL_RULE_EXPAND_MS}
+                    detailPlayerOpacityMs={DETAIL_GRID_OPACITY_MS}
+                    detailFadeCubic={DETAIL_FADE_CUBIC}
+                    detailSlideCubic={DETAIL_SLIDE_CUBIC}
+                  />
+                ) : null}
+                {!illustrationsDetailNoHero && !videoEditingDetailNoMainCard ? (
                 <>
                 <div
                   className={`flex w-full max-w-full flex-col items-stretch gap-y-1.5 text-left ${
@@ -4360,7 +4474,7 @@ const PalaceProjects = ({
                 </div>
                 </>
                 ) : null}
-                {!illustrationsDetailNoHero ? (
+                {!illustrationsDetailNoHero && !videoEditingDetailNoMainCard ? (
                 <div className="pt-3.5 flex flex-col gap-2 sm:gap-3">
                   <div
                     style={
@@ -4410,7 +4524,7 @@ const PalaceProjects = ({
        * FLIP technique: destination size set as plain values (React commit, pre-paint);
        * scaleX/scaleY set synchronously before render via MotionValues.
        */}
-      {createPortal(
+      {!videoEditingDetailNoMainCard && createPortal(
         <motion.div
           style={{
             position: "fixed",
