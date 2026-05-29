@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import Plyr from "plyr";
 import type { Options as PlyrOptions } from "plyr";
@@ -186,6 +187,14 @@ export function ShowcaseVideoEditingDetail({
     });
   };
 
+  const handleSelectAdjacentWork = (direction: -1 | 1) => {
+    const nextIndex = (safeIndex + direction + videos.length) % videos.length;
+    handleSelectVideo(nextIndex);
+  };
+
+  const worksArrowBtnClass =
+    "video-editing-works-arrow absolute top-[2.45rem] z-10 flex h-6 w-6 -translate-y-1/2 items-center justify-center border-0 bg-transparent p-0 text-white/85 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:h-7 sm:w-7";
+
   return (
     <>
       <motion.div
@@ -209,7 +218,7 @@ export function ShowcaseVideoEditingDetail({
         />
       </motion.div>
       <motion.div
-        className="video-editing-detail order-3 mt-3 w-full min-w-0 max-w-full sm:mt-4 md:mt-5 lg:mt-6"
+        className="video-editing-detail order-3 mt-3 w-full min-w-0 max-w-full overflow-x-visible sm:mt-4 md:mt-5 lg:mt-6"
         style={{ opacity: 1 }}
       >
         <div className="video-editing-carousel video-editing-carousel--solo" role="group" aria-label="Featured edits">
@@ -222,11 +231,34 @@ export function ShowcaseVideoEditingDetail({
               </p>
             </div>
           </div>
-          <div className="mt-3 w-full min-w-0">
+          <div className="mt-3 w-full min-w-0 overflow-x-visible">
             <p className="mb-2 pl-[2px] font-heading text-[11px] leading-none tracking-[0.17em] uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]">
               Selected works
             </p>
-            <div className="no-scrollbar flex w-full min-w-0 snap-x snap-mandatory gap-2 overflow-x-auto pb-0.5 sm:gap-2.5">
+            <div
+              className={
+                videos.length > 1
+                  ? "relative -mx-4 w-[calc(100%+2rem)] overflow-visible sm:-mx-6 sm:w-[calc(100%+3rem)]"
+                  : "relative w-full min-w-0"
+              }
+            >
+              {videos.length > 1 ? (
+                <button
+                  type="button"
+                  className={`${worksArrowBtnClass} -left-1.5 sm:-left-2`}
+                  aria-label="Previous selected work"
+                  onClick={() => handleSelectAdjacentWork(-1)}
+                >
+                  <ChevronLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" strokeWidth={2.25} aria-hidden />
+                </button>
+              ) : null}
+            <div
+              className={`no-scrollbar flex min-w-0 snap-x snap-mandatory gap-2 overflow-x-auto pb-0.5 sm:gap-2.5 ${
+                videos.length > 1
+                  ? "mx-4 w-[calc(100%-2rem)] sm:mx-6 sm:w-[calc(100%-3rem)]"
+                  : "w-full"
+              }`}
+            >
               {videos.map((video, index) => {
                 const active = index === safeIndex;
                 const selectorTitle = video.selectorTitle?.trim() || `Edit ${index + 1}`;
@@ -291,6 +323,17 @@ export function ShowcaseVideoEditingDetail({
                   </button>
                 );
               })}
+            </div>
+              {videos.length > 1 ? (
+                <button
+                  type="button"
+                  className={`${worksArrowBtnClass} -right-1.5 sm:-right-2`}
+                  aria-label="Next selected work"
+                  onClick={() => handleSelectAdjacentWork(1)}
+                >
+                  <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" strokeWidth={2.25} aria-hidden />
+                </button>
+              ) : null}
             </div>
             <div className="w-full pt-2.5 sm:pt-3" aria-hidden>
               <div className="mx-auto block h-px w-full max-w-full shrink-0 bg-white/[0.09]" />

@@ -579,6 +579,18 @@ function accentGlowShadow(color: string, active: boolean): string {
   return `0 0 ${ACCENT_GLOW.blur}px color-mix(in srgb, ${color} ${pct}%, transparent)`;
 }
 
+/** Leading panel edge during wipe — PROJECTS uses full yellow so the line reads during the slide. */
+function sectionPanelEdgeAccent(sectionId: string): string {
+  if (
+    sectionId === "projects" ||
+    sectionId === "projects-supporting" ||
+    sectionId.startsWith("project-")
+  ) {
+    return "var(--palette-yellow-projects)";
+  }
+  return SECTION_ACCENT_COLOR[sectionId] ?? "var(--palette-blue)";
+}
+
 // --- TEXT SHUTTER (Persona-style directional reveal, inspired by The Line Studio / Framer) ---
 /** Stagger rank for center-out character reveal (0 = first letter to appear). */
 const centerOutCharStaggerRank = (index: number, length: number): number => {
@@ -1922,30 +1934,14 @@ const SideNavOverlay = ({
 };
 
 // --- PROFILE (About) ---
-const SectionGridOverlay = ({
-  projectDetailActive = false,
-}: {
-  /** SHOWCASE: slightly recess grid when project detail overlay is open. */
-  projectDetailActive?: boolean;
-} = {}) => {
+const SectionGridOverlay = () => {
   const sectionGridDriftDelay = useGridDriftAnimationDelay();
   return (
-    <>
-      <div
-        className={[
-          "pointer-events-none absolute inset-0 z-0 grid-drift-bg portfolio-grid-overlay",
-          projectDetailActive ? "portfolio-grid-overlay--detail" : "",
-        ].join(" ")}
-        style={{ ...gridOverlayStyle, animationDelay: sectionGridDriftDelay }}
-        aria-hidden
-      />
-      {projectDetailActive ? (
-        <div
-          className="pointer-events-none absolute inset-0 z-0 motion-safe:transition-opacity motion-safe:duration-300 motion-safe:ease-out bg-black/[0.14]"
-          aria-hidden
-        />
-      ) : null}
-    </>
+    <div
+      className="pointer-events-none absolute inset-0 z-0 grid-drift-bg portfolio-grid-overlay"
+      style={{ ...gridOverlayStyle, animationDelay: sectionGridDriftDelay }}
+      aria-hidden
+    />
   );
 };
 
@@ -4014,6 +4010,11 @@ const PalaceProjects = ({
   const [morphRect, setMorphRect] = useState<CardRect | null>(null);
   const [targetRect, setTargetRect] = useState<CardRect | null>(null);
   const [morphDone, setMorphDone] = useState(false);
+  /** In-flow detail expands #projects so section grid covers desc cards; absolute overlay is FLIP-only. */
+  const projectDetailInFlow = Boolean(
+    activeCard &&
+      (videoEditingDetailNoMainCard || illustrationsDetailNoHero || morphDone),
+  );
   const [detailHdrReveal, setDetailHdrReveal] = useState(false);
   const [detailRuleReveal, setDetailRuleReveal] = useState(false);
   const [detailGalleryReveal, setDetailGalleryReveal] = useState(false);
@@ -4215,29 +4216,49 @@ const PalaceProjects = ({
   return (
     <section
       id="projects"
-      className={`relative flex min-h-full w-full min-w-0 max-w-full flex-col justify-start overflow-x-hidden bg-black ${SECTION_MAIN_HEADER_INSET} pb-[max(1.25rem,calc(var(--slide-gap)*1.5),env(safe-area-inset-bottom,0px))] text-white scroll-mt-6 [--slide-gap:0.875rem] sm:[--slide-gap:1.25rem] lg:[--slide-gap:1rem] xl:[--slide-gap:1.125rem]`}
+      className={`relative flex w-full min-w-0 max-w-full flex-col justify-start pb-[max(1.25rem,calc(var(--slide-gap)*1.5),env(safe-area-inset-bottom,0px))] text-white scroll-mt-6 [--slide-gap:0.875rem] sm:[--slide-gap:1.25rem] lg:[--slide-gap:1rem] xl:[--slide-gap:1.125rem] ${
+        projectDetailInFlow
+          ? `min-h-screen shrink-0 ${SECTION_MAIN_HEADER_INSET} ${
+              videoEditingDetailNoMainCard ? "overflow-x-visible" : "overflow-x-hidden"
+            }`
+          : `min-h-full overflow-x-hidden ${SECTION_MAIN_HEADER_INSET}`
+      }`}
     >
-      <SectionGridOverlay projectDetailActive={!!activeCard} />
-      <div className={`${PROFILE_SECTION_CONTAINER} relative z-10 flex min-h-0 min-w-0 w-full flex-1 flex-col`}>
-        <div className={`${PROJECTS_VIEWPORT_SHELL} justify-center overflow-y-visible`}>
+      <SectionGridOverlay />
+      <div
+        className={`${PROFILE_SECTION_CONTAINER} relative z-10 flex min-w-0 w-full flex-col ${
+          projectDetailInFlow ? "min-h-min shrink-0" : "min-h-0 flex-1"
+        }`}
+      >
+        <div
+          className={`${PROJECTS_VIEWPORT_SHELL} overflow-y-visible ${
+            projectDetailInFlow ? "min-h-min shrink-0 justify-start" : "min-h-0 flex-1 justify-center"
+          }`}
+        >
         {/*
          * Column inherits --slide-gap from #projects. Spacer + section pb = bottom air; overlay scrolls if needed (no clipping).
          */}
-        <div className="flex min-h-0 flex-1 flex-col justify-center overflow-x-hidden overflow-y-visible">
+        <div
+          className={`flex flex-col overflow-y-visible ${
+            projectDetailInFlow
+              ? `min-h-min shrink-0 justify-start ${
+                  videoEditingDetailNoMainCard ? "overflow-x-visible" : "overflow-x-hidden"
+                }`
+              : "min-h-0 flex-1 justify-center overflow-x-hidden"
+          }`}
+        >
+          {!activeCard ? (
           <motion.div
             className="w-full shrink-0"
             initial={reduceMotion ? false : { opacity: 0, y: 30 }}
             animate={{
-              opacity: showcaseObscured ? 0 : projectsEntered || projectsHeaderYLocked ? 1 : 0,
+              opacity: projectsEntered || projectsHeaderYLocked ? 1 : 0,
               y: reduceMotion ? 0 : projectsHeaderYLocked ? 0 : 30,
             }}
             transition={{
-              duration: showcaseObscured ? showcaseFadeDuration : reduceMotion ? 0 : PROJECTS_HEADER_ENTER_DUR_S,
-              delay: showcaseObscured || reduceMotion ? 0 : PROFILE_TITLE_DELAY_S,
-              ease: showcaseObscured ? SHOWCASE_EASE : [0.16, 1, 0.3, 1],
-            }}
-            style={{
-              pointerEvents: showcaseObscured ? "none" : "auto",
+              duration: reduceMotion ? 0 : PROJECTS_HEADER_ENTER_DUR_S,
+              delay: reduceMotion ? 0 : PROFILE_TITLE_DELAY_S,
+              ease: [0.16, 1, 0.3, 1],
             }}
           >
             <div
@@ -4270,11 +4291,12 @@ const PalaceProjects = ({
               </div>
             </div>
           </motion.div>
+          ) : null}
         {/*
-         * CAROUSEL ? always in normal flow so the section keeps its height.
-         * When a card is active we fade it out but DO NOT unmount it so the
-         * container height stays stable for the absolute detail overlay.
+         * CAROUSEL + FEATURED WRITING ? in flow until project detail opens; then detail
+         * replaces this block so tall copy (e.g. VIDEO EDITING desc cards) stays inside #projects grid.
          */}
+        {!projectDetailInFlow ? (
         <div
           aria-hidden={showcaseObscured || undefined}
           className={`flex min-h-0 w-full flex-1 flex-col ${showcaseObscured ? "pointer-events-none select-none" : ""}`}
@@ -4335,70 +4357,48 @@ const PalaceProjects = ({
             </motion.div>
           </motion.div>
         </div>
-        </div>
+        ) : null}
 
-        {/*
-         * Permanent measurement anchor ? always in the DOM so we can read its
-         * getBoundingClientRect() synchronously at click time (zero RAF delay).
-         * Absolutely positioned so it never affects carousel layout.
-         */}
-        <div
-          ref={detailAnchorRef}
-          className={`absolute top-0 left-0 right-0 mx-auto w-full ${PROFILE_VIEWPORT_CONTENT_MAX} ${DETAIL_CARD_H} pointer-events-none`}
-          aria-hidden
-          style={{ visibility: "hidden" }}
-        />
-
-        {/*
-         * DETAIL OVERLAY ? absolute, sits on top of the (now invisible) carousel.
-         * Uses flex-col so the card + text stack naturally from the container top.
-         */}
-        {activeCard && (
+        {projectDetailInFlow && activeCard ? (
           <div
-            className={`absolute inset-0 z-20 flex flex-col items-center${
+            className={`relative flex w-full min-w-0 max-w-full flex-col items-stretch${
               illustrationsDetailNoHero
                 ? " overflow-y-auto overscroll-y-contain no-scrollbar"
                 : ""
             }`}
           >
-            {!illustrationsDetailNoHero && !videoEditingDetailNoMainCard ? (
-              <div className={`w-full ${PROFILE_VIEWPORT_CONTENT_MAX} shrink-0 ${DETAIL_CARD_H}`} aria-hidden />
-            ) : null}
-
-            {morphDone && !illustrationsDetailNoHero && !videoEditingDetailNoMainCard ? (
-              <div
-                className={`project-card-surface absolute top-0 left-0 right-0 mx-auto w-full ${PROFILE_VIEWPORT_CONTENT_MAX} ${DETAIL_CARD_H} overflow-hidden rounded-[11px] sm:rounded-xl border-0`}
-                style={{
-                  boxShadow: `${SHOWCASE_SLIDER_MEDIA_BOX_SHADOW}, 0 18px 48px -28px rgba(0,0,0,0.9)`,
-                  borderRadius: `${detailCardRadiusPx}px`,
-                  background: detailHeroMediaFadeIn ? undefined : "transparent",
-                  backgroundImage: "none",
-                }}
-              >
+              {!illustrationsDetailNoHero && !videoEditingDetailNoMainCard ? (
                 <div
-                  key={activeCard.id}
-                  className="h-full w-full"
+                  className={`project-card-surface relative z-[1] mx-auto w-full max-w-full ${PROFILE_VIEWPORT_CONTENT_MAX} ${DETAIL_CARD_H} overflow-hidden rounded-[11px] sm:rounded-xl border-0`}
                   style={{
-                    opacity: reduceMotion ? 1 : detailHeroMediaFadeIn ? 1 : 0,
-                    ...(reduceMotion
-                      ? {}
-                      : detailHeroMediaFadeIn
-                        ? {
-                            transitionProperty: "opacity",
-                            transitionDuration: `${DETAIL_HERO_MEDIA_FADE_MS}ms`,
-                            transitionTimingFunction: DETAIL_HERO_MEDIA_FADE_EASE,
-                          }
-                        : {}),
+                    boxShadow: `${SHOWCASE_SLIDER_MEDIA_BOX_SHADOW}, 0 18px 48px -28px rgba(0,0,0,0.9)`,
+                    borderRadius: `${detailCardRadiusPx}px`,
+                    background: detailHeroMediaFadeIn ? undefined : "transparent",
+                    backgroundImage: "none",
                   }}
                 >
-                  <DetailCardMedia card={activeCard} />
+                  <div
+                    key={activeCard.id}
+                    className="h-full w-full"
+                    style={{
+                      opacity: reduceMotion ? 1 : detailHeroMediaFadeIn ? 1 : 0,
+                      ...(reduceMotion
+                        ? {}
+                        : detailHeroMediaFadeIn
+                          ? {
+                              transitionProperty: "opacity",
+                              transitionDuration: `${DETAIL_HERO_MEDIA_FADE_MS}ms`,
+                              transitionTimingFunction: DETAIL_HERO_MEDIA_FADE_EASE,
+                            }
+                          : {}),
+                    }}
+                  >
+                    <DetailCardMedia card={activeCard} />
+                  </div>
                 </div>
-              </div>
-            ) : null}
-
-            {activeCard && (morphRect || videoEditingDetailNoMainCard) && (
+              ) : null}
               <div
-                className={`w-full ${PROFILE_VIEWPORT_CONTENT_MAX} pb-8 ${
+                className={`relative z-[1] mx-auto w-full max-w-full min-w-0 ${PROFILE_VIEWPORT_CONTENT_MAX} pb-8 ${
                   illustrationsDetailNoHero || videoEditingDetailNoMainCard ? "mt-0 flex flex-col" : "mt-5"
                 }`}
               >
@@ -4509,9 +4509,30 @@ const PalaceProjects = ({
                 </div>
                 ) : null}
               </div>
-            )}
           </div>
-        )}
+        ) : null}
+        </div>
+
+        {/*
+         * Permanent measurement anchor ? always in the DOM so we can read its
+         * getBoundingClientRect() synchronously at click time (zero RAF delay).
+         * Absolutely positioned so it never affects carousel layout.
+         */}
+        <div
+          ref={detailAnchorRef}
+          className={`absolute top-0 left-0 right-0 mx-auto w-full ${PROFILE_VIEWPORT_CONTENT_MAX} ${DETAIL_CARD_H} pointer-events-none`}
+          aria-hidden
+          style={{ visibility: "hidden" }}
+        />
+
+        {/*
+         * FLIP morph only ? absolute spacer while carousel stays mounted; detail body is in-flow above.
+         */}
+        {activeCard && !projectDetailInFlow ? (
+          <div className="pointer-events-none absolute inset-0 z-20 flex flex-col items-center" aria-hidden>
+            <div className={`w-full ${PROFILE_VIEWPORT_CONTENT_MAX} shrink-0 ${DETAIL_CARD_H}`} />
+          </div>
+        ) : null}
         </div>
       </div>
 
@@ -8220,10 +8241,12 @@ export default function Home() {
           {/* Section panel: layered black, accent edge when incoming, content settle */}
           {currentSection && (
             <motion.div
-              className={`fixed inset-0 flex min-h-0 flex-col overflow-x-hidden no-scrollbar ${
-                currentSection === "projects-supporting" || currentSection === "experience"
-                  ? "overflow-y-hidden"
-                  : "overflow-y-auto overscroll-y-contain [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0"
+              className={`fixed inset-0 flex min-h-0 flex-col no-scrollbar ${
+                currentSection === "projects"
+                  ? "overflow-x-hidden overflow-y-auto overscroll-y-contain [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0"
+                  : currentSection === "projects-supporting" || currentSection === "experience"
+                    ? "overflow-x-hidden overflow-y-hidden"
+                    : "overflow-x-hidden overflow-y-auto overscroll-y-contain [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0"
               }`}
               style={{
                 backgroundColor: "#000",
@@ -8255,21 +8278,21 @@ export default function Home() {
             >
               {!reduceMotion && transitionTarget !== "menu" && transitionTarget === currentSection && (
                 <div
-                  className="absolute left-0 top-0 bottom-0 w-[2px] z-10 pointer-events-none"
+                  className="absolute left-0 top-0 bottom-0 z-20 w-[2px] pointer-events-none"
                   style={{
-                    backgroundColor: SECTION_ACCENT_COLOR[currentSection] ?? "var(--palette-blue)",
-                    boxShadow: isProjectsPage ? "none" : accentGlowShadow(SECTION_ACCENT_COLOR[currentSection] ?? "var(--palette-blue)", true),
+                    backgroundColor: sectionPanelEdgeAccent(currentSection),
+                    boxShadow: accentGlowShadow(sectionPanelEdgeAccent(currentSection), true),
                   }}
                   aria-hidden
                 />
               )}
               {!reduceMotion && transitionTarget === "menu" && (
                 <motion.div
-                  className="absolute top-0 bottom-0 w-[2px] z-10 pointer-events-none"
+                  className="absolute top-0 bottom-0 z-20 w-[2px] pointer-events-none"
                   style={{
-                    backgroundColor: SECTION_ACCENT_COLOR[currentSection] ?? "var(--palette-blue)",
+                    backgroundColor: sectionPanelEdgeAccent(currentSection),
                     transform: "translateX(-2px)",
-                    boxShadow: isProjectsPage ? "none" : accentGlowShadow(SECTION_ACCENT_COLOR[currentSection] ?? "var(--palette-blue)", true),
+                    boxShadow: accentGlowShadow(sectionPanelEdgeAccent(currentSection), true),
                   }}
                   aria-hidden
                   initial={{ left: "0%" }}
@@ -8287,7 +8310,9 @@ export default function Home() {
               <div
                 className={
                   currentSection === "projects"
-                    ? "flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-visible"
+                    ? `relative z-10 flex w-full min-w-0 flex-col overflow-x-hidden overflow-y-visible ${
+                        activeShowcaseProjectId ? "min-h-min shrink-0" : "min-h-0 flex-1"
+                      }`
                     : currentSection === "skills"
                       ? "flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-visible"
                       : "flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden"
@@ -8297,7 +8322,11 @@ export default function Home() {
                 {reduceMotion ? (
                   <>
                     {currentSection === "projects" && (
-                      <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-x-hidden">
+                      <div
+                        className={`flex w-full min-w-0 shrink-0 flex-col overflow-x-hidden overflow-y-visible ${
+                          activeShowcaseProjectId ? "min-h-min" : "min-h-0 flex-1"
+                        }`}
+                      >
                         <PalaceProjects
                           onSelectProject={setActiveShowcaseProjectId}
                           onOpenSupporting={() => navigateTo("projects-supporting")}
@@ -8324,7 +8353,9 @@ export default function Home() {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: SHOWCASE_SUBROUTE_FADE_S, ease: EASE.out }}
-                        className="flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-x-hidden"
+                        className={`flex w-full min-w-0 shrink-0 flex-col overflow-x-hidden overflow-y-visible ${
+                          activeShowcaseProjectId ? "min-h-min" : "min-h-0 flex-1"
+                        }`}
                       >
                         <PalaceProjects
                           onSelectProject={setActiveShowcaseProjectId}

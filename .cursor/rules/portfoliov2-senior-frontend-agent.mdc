@@ -58,7 +58,7 @@ Panel edges: **`SECTION_ACCENT_COLOR`** — sync with **`portfolio-palette.css`*
 
 - **Snap slides:** `SLIDE` / `SLIDE_NO_Y_SCROLL` — full-viewport horizontal areas, `no-scrollbar`.
 - **Section overlay:** fixed `motion.div` (`inset-0`) — `overflow-y-auto` + hidden scrollbars; panel scroller for tall content.
-- **Grid:** `.portfolio-grid-overlay`; recess with `portfolio-grid-overlay--detail` when project detail is open.
+- **Grid:** `.portfolio-grid-overlay` on section backgrounds (same brightness in project detail as elsewhere).
 
 ## SHOWCASE & PROJECTS
 

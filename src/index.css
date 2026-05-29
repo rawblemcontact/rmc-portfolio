@@ -258,16 +258,8 @@
     backface-visibility: hidden;
   }
 
-  .portfolio-grid-overlay--detail {
-    opacity: 0.048;
-  }
-
   @media (pointer: coarse) {
     .portfolio-grid-overlay {
-      opacity: 0.048;
-    }
-
-    .portfolio-grid-overlay--detail {
       opacity: 0.048;
     }
   }
@@ -279,10 +271,6 @@
   @media (min-width: 744px) and (max-width: 1366px) and (any-pointer: coarse) {
     .portfolio-grid-overlay {
       opacity: 0.17;
-    }
-
-    .portfolio-grid-overlay--detail {
-      opacity: 0.125;
     }
   }
 
@@ -2887,6 +2875,26 @@
   }
   @media (prefers-reduced-motion: reduce) {
     .skills-node-pulse-once { animation: none; }
+  }
+
+  /* VIDEO EDITING — Selected works strip: side arrows (opacity pulse only; no layout shift) */
+  @keyframes video-editing-works-arrow-pulse {
+    0%,
+    100% {
+      opacity: 0.45;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+  .video-editing-works-arrow {
+    animation: video-editing-works-arrow-pulse 1.85s ease-in-out infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .video-editing-works-arrow {
+      animation: none;
+      opacity: 0.85;
+    }
   }
 
   /* Back to menu — animated button (dark theme: white text/border, cyan circle) */
