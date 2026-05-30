@@ -114,7 +114,7 @@ function VideoEditingPlyrPlayer({ video }: { video: ShowcaseDetailVideo }) {
   }, [source, video.id]);
 
   if (!source) return null;
-  return <div ref={hostRef} />;
+  return <div ref={hostRef} className="w-full min-w-0" />;
 }
 
 type ShowcaseVideoEditingDetailProps = {
@@ -193,13 +193,23 @@ export function ShowcaseVideoEditingDetail({
   };
 
   const worksArrowBtnClass =
-    "video-editing-works-arrow absolute top-[2.45rem] z-10 flex h-6 w-6 -translate-y-1/2 items-center justify-center border-0 bg-transparent p-0 text-white/85 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:h-7 sm:w-7";
+    "video-editing-works-arrow absolute top-[2.45rem] z-10 flex h-[1.65rem] w-[1.65rem] items-center justify-center border-0 bg-transparent p-0 text-white/85 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:h-[1.925rem] sm:w-[1.925rem]";
 
   return (
     <>
       <motion.div
-        className="order-1 mt-0 flex w-full min-w-0 flex-col items-stretch gap-y-1.5 text-left"
-        style={{ opacity: 1, transform: "translate3d(0,0,0)" }}
+        className="order-1 mt-0 flex w-full flex-col items-stretch gap-y-1.5 text-left"
+        style={
+          reduceMotion
+            ? { opacity: detailHdrReveal ? 1 : 0 }
+            : {
+                opacity: detailHdrReveal ? 1 : 0,
+                transform: detailHdrReveal
+                  ? "translate3d(0,0,0)"
+                  : `translate3d(0,${detailHdrSlidePx}px,0)`,
+                transition: `opacity ${detailHdrOpacityMs}ms ${detailFadeCubic}, transform ${detailHdrSlideMs}ms ${detailSlideCubic}`,
+              }
+        }
       >
         <p className="m-0 w-full font-heading text-sm sm:text-base leading-snug tracking-eyebrow-tight uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]">
           Project details
@@ -211,18 +221,22 @@ export function ShowcaseVideoEditingDetail({
           {card.tagline}
         </p>
       </motion.div>
-      <motion.div className="order-2 mt-3 w-full min-w-0 sm:mt-4 md:mt-5" aria-hidden>
-        <motion.div
-          className="mx-auto block h-px w-full max-w-full shrink-0 bg-white/[0.09]"
-          style={{ clipPath: "inset(0 0 0 0)" }}
-        />
-      </motion.div>
       <motion.div
-        className="video-editing-detail order-3 mt-3 w-full min-w-0 max-w-full overflow-x-visible sm:mt-4 md:mt-5 lg:mt-6"
-        style={{ opacity: 1 }}
+        className="video-editing-detail order-3 mt-[calc(0.75rem+1px)] w-full min-w-0 max-w-full overflow-x-visible sm:mt-[calc(1rem+1px)] md:mt-[calc(1.25rem+1px)]"
+        style={
+          reduceMotion
+            ? { opacity: detailPlayerReveal ? 1 : 0 }
+            : {
+                opacity: detailPlayerReveal ? 1 : 0,
+                transform: detailPlayerReveal
+                  ? "translate3d(0,0,0)"
+                  : `translate3d(0,${detailHdrSlidePx}px,0)`,
+                transition: `opacity ${detailPlayerOpacityMs}ms ${detailFadeCubic}, transform ${detailHdrSlideMs}ms ${detailSlideCubic}`,
+              }
+        }
       >
         <div className="video-editing-carousel video-editing-carousel--solo" role="group" aria-label="Featured edits">
-          <div className="video-editing-player video-editing-player--plyr group relative">
+          <div className="video-editing-player video-editing-player--plyr group relative overflow-hidden rounded-[11px] ring-1 ring-white/[0.09] sm:rounded-xl">
             <VideoEditingPlyrPlayer video={activeVideo} />
             <div className="pointer-events-none absolute inset-x-0 top-0 z-10 bg-gradient-to-b from-black/70 via-black/30 to-transparent px-3 pt-2 pb-8 opacity-0 transition-opacity duration-200 ease-out group-hover:opacity-100 group-focus-within:opacity-100 sm:px-3.5 sm:pt-2.5">
               <p className="truncate font-body text-[12px] leading-none text-white sm:text-[13px]">
@@ -232,9 +246,6 @@ export function ShowcaseVideoEditingDetail({
             </div>
           </div>
           <div className="mt-3 w-full min-w-0 overflow-x-visible">
-            <p className="mb-2 pl-[2px] font-heading text-[11px] leading-none tracking-[0.17em] uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]">
-              Selected works
-            </p>
             <div
               className={
                 videos.length > 1
@@ -245,11 +256,11 @@ export function ShowcaseVideoEditingDetail({
               {videos.length > 1 ? (
                 <button
                   type="button"
-                  className={`${worksArrowBtnClass} -left-1.5 sm:-left-2`}
+                  className={`${worksArrowBtnClass} video-editing-works-arrow--prev -left-1.5 sm:-left-2`}
                   aria-label="Previous selected work"
                   onClick={() => handleSelectAdjacentWork(-1)}
                 >
-                  <ChevronLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" strokeWidth={2.25} aria-hidden />
+                  <ChevronLeft className="video-editing-works-arrow-glyph h-[0.9625rem] w-[0.9625rem] sm:h-[1.1rem] sm:w-[1.1rem]" strokeWidth={2.25} aria-hidden />
                 </button>
               ) : null}
             <div
@@ -283,7 +294,7 @@ export function ShowcaseVideoEditingDetail({
                     <span
                       className={`relative block h-[4.9rem] w-full overflow-hidden rounded-[10px] border transition-colors ${
                         active
-                          ? "border-[color:color-mix(in_srgb,var(--palette-blue)_70%,white)]"
+                          ? "border-[color:color-mix(in_srgb,var(--palette-yellow-projects)_70%,white)]"
                           : "border-white/[0.14]"
                       }`}
                     >
@@ -314,7 +325,7 @@ export function ShowcaseVideoEditingDetail({
                         </span>
                       ) : null}
                     </span>
-                    <span className={`mt-1.5 block font-heading text-sm leading-tight uppercase ${active ? "text-[color:var(--palette-blue)]" : "text-white"}`}>
+                    <span className="mt-1.5 block font-heading text-sm leading-tight uppercase text-white">
                       {selectorTitle}
                     </span>
                     <span className="mt-0.5 block font-body text-[12px] leading-tight text-mono-2">
@@ -327,16 +338,63 @@ export function ShowcaseVideoEditingDetail({
               {videos.length > 1 ? (
                 <button
                   type="button"
-                  className={`${worksArrowBtnClass} -right-1.5 sm:-right-2`}
+                  className={`${worksArrowBtnClass} video-editing-works-arrow--next -right-1.5 sm:-right-2`}
                   aria-label="Next selected work"
                   onClick={() => handleSelectAdjacentWork(1)}
                 >
-                  <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" strokeWidth={2.25} aria-hidden />
+                  <ChevronRight className="video-editing-works-arrow-glyph h-[0.9625rem] w-[0.9625rem] sm:h-[1.1rem] sm:w-[1.1rem]" strokeWidth={2.25} aria-hidden />
                 </button>
               ) : null}
             </div>
-            <div className="w-full pt-2.5 sm:pt-3" aria-hidden>
-              <div className="mx-auto block h-px w-full max-w-full shrink-0 bg-white/[0.09]" />
+            <motion.div className="w-full pt-2.5 sm:pt-3" aria-hidden>
+              <motion.div
+                className="mx-auto block h-px w-full max-w-full shrink-0 bg-white/[0.09]"
+                style={{
+                  clipPath: detailRuleReveal ? "inset(0 0 0 0)" : "inset(0 50% 0 50%)",
+                  ...(reduceMotion
+                    ? {}
+                    : detailRuleReveal
+                      ? {
+                          transitionProperty: "clip-path",
+                          transitionDuration: `${detailRuleExpandMs}ms`,
+                          transitionTimingFunction: detailSlideCubic,
+                        }
+                      : {}),
+                }}
+              />
+            </motion.div>
+          </div>
+          <div className="mt-3.5 w-full min-w-0 sm:mt-4">
+            <div className="flex w-full min-w-0 flex-col items-stretch gap-y-1.5 text-left">
+              <p className="m-0 w-full font-heading text-sm sm:text-base leading-snug tracking-eyebrow-tight uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]">
+                Now playing
+              </p>
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={activeVideo.id}
+                  initial={reduceMotion ? false : { opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={reduceMotion ? undefined : { opacity: 0 }}
+                  transition={
+                    reduceMotion
+                      ? undefined
+                      : {
+                          duration: 0.22,
+                          ease: [0.22, 1, 0.36, 1],
+                        }
+                  }
+                  className="flex w-full min-w-0 flex-col items-stretch gap-y-1.5 text-left"
+                >
+                  <h3 className="m-0 w-full font-display text-2xl md:text-3xl leading-[1.1] tracking-[-0.015em] text-white">
+                    {activeSelectorTitle}
+                  </h3>
+                  {activeSelectorSubtitle ? (
+                    <p className="m-0 w-full pl-[2px] font-body text-sm sm:text-base leading-snug text-mono-2">
+                      {activeSelectorSubtitle}
+                    </p>
+                  ) : null}
+                </motion.div>
+              </AnimatePresence>
             </div>
           </div>
         </div>

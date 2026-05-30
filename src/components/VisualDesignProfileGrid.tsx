@@ -16,7 +16,7 @@ export type VisualDesignGallerySlide = {
 const LIGHTBOX_FADE_S = 0.18;
 
 const TILE_SHELL =
-  "relative aspect-square min-w-0 overflow-hidden bg-[var(--portfolio-section-card-raised)] lg:aspect-[4/5]";
+  "relative min-w-0 overflow-hidden bg-[var(--portfolio-section-card-raised)]";
 
 type VisualDesignProfileGalleryProps = {
   readonly slides: readonly VisualDesignGallerySlide[];
@@ -220,7 +220,7 @@ const VisualDesignProfileLightbox = ({
 };
 
 /**
- * VISUAL DESIGN gallery — 2×2 squares on mobile, 3×3 portrait tiles on desktop (lg+).
+ * VISUAL DESIGN gallery — responsive masonry with click-through lightbox.
  * Click opens full-screen viewer (Embla + keyboard).
  */
 export const VisualDesignProfileGallery = ({ slides }: VisualDesignProfileGalleryProps) => {
@@ -251,7 +251,7 @@ export const VisualDesignProfileGallery = ({ slides }: VisualDesignProfileGaller
       <div
         role="list"
         aria-label="Illustrations"
-        className="grid w-full min-w-0 grid-cols-2 gap-px lg:grid-cols-3"
+        className="w-full min-w-0 columns-2 gap-px lg:columns-3"
       >
         {slides.map((slide, index) => {
           const label =
@@ -264,30 +264,32 @@ export const VisualDesignProfileGallery = ({ slides }: VisualDesignProfileGaller
               <div
                 key={slide.id}
                 role="listitem"
-                className={TILE_SHELL}
+                className={`${TILE_SHELL} mb-px break-inside-avoid lg:mb-px`}
                 aria-label={label}
               />
             );
           }
 
           return (
-            <button
+            <motion.button
               key={slide.id}
               type="button"
               role="listitem"
-              className={`${TILE_SHELL} group w-full cursor-pointer border-0 p-0 text-left transition-opacity duration-200 ease-out hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black`}
+              whileHover={reduceMotion ? undefined : { scale: 1.015 }}
+              whileTap={reduceMotion ? undefined : { scale: 1.02 }}
+              transition={reduceMotion ? undefined : { duration: 0.2, ease: EASE.out }}
+              className={`${TILE_SHELL} group mb-px inline-block w-full break-inside-avoid cursor-pointer border-0 p-0 text-left align-top transition-opacity duration-200 ease-out hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black`}
               aria-label={`View ${label}`}
               onClick={() => setActiveIndex(index)}
             >
               <img
                 src={slide.src}
                 alt={slide.alt?.trim() || `Illustration ${index + 1}`}
-                className="absolute inset-0 h-full w-full object-cover object-center"
-                style={{ objectPosition: slide.focalPoint ?? "50% 50%" }}
+                className="block h-auto w-full origin-center transition-transform duration-200 ease-out group-hover:scale-[1.02] group-active:scale-[1.02]"
                 loading="lazy"
                 decoding="async"
               />
-            </button>
+            </motion.button>
           );
         })}
       </div>

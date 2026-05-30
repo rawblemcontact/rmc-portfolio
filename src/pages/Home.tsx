@@ -2154,6 +2154,8 @@ type ShowcaseProjectCard = {
     readonly src?: string;
     readonly alt?: string;
     readonly focalPoint?: string;
+    readonly caption?: string;
+    readonly artistStatement?: string;
   }[];
 };
 
@@ -3289,7 +3291,11 @@ const DetailCardMedia = ({ card }: { card: ShowcaseProjectCard }) => (
         playsInline
         preload="auto"
         className="block h-full w-full object-cover"
-        style={{ objectPosition: card.focalPoint ?? "50% 50%" }}
+        style={{
+          objectPosition: card.focalPoint ?? "50% 50%",
+          transform: card.id === "project-interactive-media" ? "scale(1.06)" : undefined,
+          transformOrigin: card.id === "project-interactive-media" ? "50% 50%" : undefined,
+        }}
       />
     ) : card.thumbnail ? (
       <img
@@ -3437,6 +3443,10 @@ const ShowcaseIllustrationLightbox = ({
   const lightboxLabel =
     activeSlide?.alt?.trim() ||
     (activeIndex != null ? `Illustration ${activeIndex + 1}` : "Illustration preview");
+  const caption = activeSlide?.caption?.trim() || activeSlide?.alt?.trim() || null;
+  const artistStatement =
+    activeSlide?.artistStatement?.trim() ||
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.";
 
   const handleShowPrev = useCallback(() => {
     emblaApi?.scrollPrev();
@@ -3521,27 +3531,14 @@ const ShowcaseIllustrationLightbox = ({
       />
 
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
-        <header className="relative flex shrink-0 items-center justify-between gap-3 border-b border-white/[0.1] bg-black px-4 py-3.5 sm:px-5">
-          <button
-            type="button"
-            aria-label="Close illustration preview"
-            onClick={onClose}
-            className="pdf-viewer-chrome-btn"
-          >
-            <X aria-hidden />
-          </button>
-          <div className="pointer-events-none absolute left-1/2 top-1/2 w-[min(72%,34rem)] -translate-x-1/2 -translate-y-1/2 px-2 text-center">
-            <p className="font-display text-[0.95rem] leading-snug tracking-tight text-white sm:text-base">
-              {lightboxLabel}
-            </p>
-            {openableIndices.length > 1 ? (
-              <p className="font-heading mt-1 text-[0.65rem] uppercase tracking-eyebrow-tight text-mono-2/80 sm:text-[0.7rem]">
-                {activeOpenablePos + 1} / {openableIndices.length}
-              </p>
-            ) : null}
-          </div>
-          <span className="inline-block h-10 w-10 shrink-0" aria-hidden />
-        </header>
+        <button
+          type="button"
+          aria-label="Close illustration preview"
+          onClick={onClose}
+          className="pdf-viewer-chrome-btn absolute right-3 top-3 z-30 sm:right-5 sm:top-5"
+        >
+          <X aria-hidden />
+        </button>
 
         <div
           className="relative flex min-h-0 flex-1 flex-col"
@@ -3598,49 +3595,30 @@ const ShowcaseIllustrationLightbox = ({
             </button>
           ) : null}
         </div>
+
+        <section className="relative shrink-0 border-t border-white/[0.1] bg-black/90 px-4 py-3 pr-20 sm:px-6 sm:py-4 sm:pr-24">
+          {caption ? (
+            <p className="font-display text-sm leading-snug tracking-tight text-white sm:text-base">
+              {caption}
+            </p>
+          ) : null}
+          {artistStatement ? (
+            <p className="mt-1 line-clamp-2 font-body text-xs leading-relaxed text-mono-2 sm:mt-1.5 sm:text-sm">
+              {artistStatement}
+            </p>
+          ) : null}
+          {openableIndices.length > 1 ? (
+            <p className="pointer-events-none absolute bottom-3 right-4 font-heading text-[0.65rem] uppercase tracking-eyebrow-tight text-mono-2/80 sm:bottom-4 sm:right-6 sm:text-[0.7rem]">
+              {activeOpenablePos + 1} / {openableIndices.length}
+            </p>
+          ) : null}
+        </section>
       </div>
     </motion.div>
   );
 };
 
-/** First N gallery tiles keep full-image contain; later tiles fill the same cell with cover. */
-const ILLUSTRATION_GRID_CONTAIN_TILE_COUNT = 3;
-
-function illustrationGridColumnCount(): number {
-  if (typeof window === "undefined") return 3;
-  return window.matchMedia("(min-width: 1024px)").matches ? 3 : 2;
-}
-
-/** Cover tile aligns to the contain tile above it in the same column. */
-function illustrationGridCoverInsetReferenceIndex(index: number, columnCount: number): number {
-  const column = index % columnCount;
-  for (let refIndex = index - columnCount; refIndex >= 0; refIndex -= columnCount) {
-    if (refIndex < ILLUSTRATION_GRID_CONTAIN_TILE_COUNT) return refIndex;
-  }
-  return column;
-}
-
-/** object-contain painted width vs tile width → symmetric L/R inset for cover clip. */
-function illustrationGridContainHorizontalInsetPct(
-  naturalWidth: number,
-  naturalHeight: number,
-  tileWidth: number,
-  tileHeight: number,
-): number {
-  if (naturalWidth <= 0 || naturalHeight <= 0 || tileWidth <= 0 || tileHeight <= 0) return 0;
-  const imageAspect = naturalWidth / naturalHeight;
-  const tileAspect = tileWidth / tileHeight;
-  const displayWidthFraction = imageAspect <= tileAspect ? imageAspect / tileAspect : 1;
-  return Number((((1 - displayWidthFraction) / 2) * 100).toFixed(3));
-}
-
-/** Extend cover clip left by N px (right-column cover tiles ↔ Wisely column). */
-const ILLUSTRATION_GRID_COVER_CLIP_LEFT_NUDGE_PX: Partial<Record<string, number>> = {
-  "illustrations-06": 1,
-  "illustrations-09": 1,
-};
-
-/** ILLUSTRATIONS project-details gallery — Instagram-style fit (full image in tile). */
+/** ILLUSTRATIONS gallery — responsive masonry with click-through lightbox. */
 const ShowcaseDetailIllustrationsGrid = ({
   slides,
 }: {
@@ -3648,55 +3626,6 @@ const ShowcaseDetailIllustrationsGrid = ({
 }) => {
   const reduceMotion = useReducedMotion();
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
-  const [gridColumnCount, setGridColumnCount] = useState(illustrationGridColumnCount);
-  const [coverInsetPctByRef, setCoverInsetPctByRef] = useState<Record<number, number>>({});
-  const containTileRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const containImgRefs = useRef<(HTMLImageElement | null)[]>([]);
-
-  const measureCoverInsets = useCallback(() => {
-    const next: Record<number, number> = {};
-    for (let refIndex = 0; refIndex < ILLUSTRATION_GRID_CONTAIN_TILE_COUNT; refIndex += 1) {
-      const tile = containTileRefs.current[refIndex];
-      const img = containImgRefs.current[refIndex];
-      if (!tile || !img || !img.complete || !img.naturalWidth || !img.naturalHeight) continue;
-      const tileWidth = tile.clientWidth;
-      const tileHeight = tile.clientHeight;
-      if (tileWidth <= 0 || tileHeight <= 0) continue;
-      next[refIndex] = illustrationGridContainHorizontalInsetPct(
-        img.naturalWidth,
-        img.naturalHeight,
-        tileWidth,
-        tileHeight,
-      );
-    }
-    setCoverInsetPctByRef((prev) => {
-      const unchanged =
-        Object.keys(next).length === Object.keys(prev).length &&
-        Object.entries(next).every(([key, value]) => prev[Number(key)] === value);
-      return unchanged ? prev : next;
-    });
-  }, []);
-
-  useLayoutEffect(() => {
-    const media = window.matchMedia("(min-width: 1024px)");
-    const syncColumnCount = () => setGridColumnCount(media.matches ? 3 : 2);
-    syncColumnCount();
-    media.addEventListener("change", syncColumnCount);
-    return () => media.removeEventListener("change", syncColumnCount);
-  }, []);
-
-  useLayoutEffect(() => {
-    measureCoverInsets();
-    const ro = new ResizeObserver(() => measureCoverInsets());
-    containTileRefs.current.forEach((tile) => {
-      if (tile) ro.observe(tile);
-    });
-    window.addEventListener("resize", measureCoverInsets);
-    return () => {
-      ro.disconnect();
-      window.removeEventListener("resize", measureCoverInsets);
-    };
-  }, [measureCoverInsets, slides, gridColumnCount]);
 
   const openableIndices = useMemo(
     () =>
@@ -3717,102 +3646,52 @@ const ShowcaseDetailIllustrationsGrid = ({
 
   if (!slides.length) return null;
 
+  const tileClassName = "relative min-w-0 overflow-hidden bg-transparent";
+
   return (
     <>
       <div
         role="list"
         aria-label="Illustrations"
-        className="grid w-full min-w-0 grid-cols-2 gap-px lg:grid-cols-3"
+        className="showcase-illustrations-grid w-full min-w-0 columns-2 gap-[var(--slide-gap,0.875rem)] lg:columns-3"
       >
         {slides.map((slide, index) => {
           const label =
             slide.src?.trim()
               ? slide.alt?.trim() || `Illustration ${index + 1}`
               : `Illustration slot ${index + 1}`;
-          const tileClassName =
-            "relative aspect-square min-w-0 overflow-hidden bg-black lg:aspect-[4/5]";
 
           if (!slide.src?.trim()) {
             return (
               <div
                 key={slide.id}
                 role="listitem"
-                className={tileClassName}
+                className={`${tileClassName} mb-[var(--slide-gap,0.875rem)] break-inside-avoid`}
                 aria-label={label}
               />
             );
           }
 
-          const useContainFit = index < ILLUSTRATION_GRID_CONTAIN_TILE_COUNT;
-          const coverInsetReferenceIndex = illustrationGridCoverInsetReferenceIndex(
-            index,
-            gridColumnCount,
-          );
-          const refTile = containTileRefs.current[coverInsetReferenceIndex];
-          const refImg = containImgRefs.current[coverInsetReferenceIndex];
-          const coverInsetPct =
-            coverInsetPctByRef[coverInsetReferenceIndex] ??
-            (refTile &&
-            refImg?.complete &&
-            refImg.naturalWidth &&
-            refImg.naturalHeight &&
-            refTile.clientWidth > 0 &&
-            refTile.clientHeight > 0
-              ? illustrationGridContainHorizontalInsetPct(
-                  refImg.naturalWidth,
-                  refImg.naturalHeight,
-                  refTile.clientWidth,
-                  refTile.clientHeight,
-                )
-              : undefined);
-
           return (
-            <button
+            <motion.button
               key={slide.id}
               type="button"
               role="listitem"
-              ref={(node) => {
-                if (useContainFit) containTileRefs.current[index] = node;
-              }}
-              className={`${tileClassName} group cursor-pointer border-0 p-0 text-left transition-opacity duration-200 ease-out hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black`}
+              whileHover={reduceMotion ? undefined : { scale: 1.015 }}
+              whileTap={reduceMotion ? undefined : { scale: 1.02 }}
+              transition={reduceMotion ? undefined : { duration: 0.2, ease: EASE.out }}
+              className={`${tileClassName} group mb-[var(--slide-gap,0.875rem)] inline-block w-full break-inside-avoid cursor-pointer border-0 p-0 text-left align-top transition-opacity duration-200 ease-out hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black`}
               aria-label={`View ${label}`}
               onClick={() => setActiveIndex(index)}
             >
-              {useContainFit ? (
-                <img
-                  ref={(node) => {
-                    containImgRefs.current[index] = node;
-                  }}
-                  src={slide.src}
-                  alt={slide.alt?.trim() || `Illustration ${index + 1}`}
-                  className="absolute inset-0 h-full w-full object-contain object-center"
-                  loading="lazy"
-                  decoding="async"
-                  onLoad={measureCoverInsets}
-                />
-              ) : (
-                <div
-                  className="absolute inset-y-0 overflow-hidden"
-                  style={
-                    coverInsetPct == null
-                      ? undefined
-                      : {
-                          left: `max(0px, calc(${coverInsetPct}% - ${ILLUSTRATION_GRID_COVER_CLIP_LEFT_NUDGE_PX[slide.id] ?? 0}px))`,
-                          right: `${coverInsetPct}%`,
-                        }
-                  }
-                >
-                  <img
-                    src={slide.src}
-                    alt={slide.alt?.trim() || `Illustration ${index + 1}`}
-                    className="absolute inset-0 h-full w-full object-cover object-center"
-                    style={{ objectPosition: slide.focalPoint ?? "50% 50%" }}
-                    loading="lazy"
-                    decoding="async"
-                  />
-                </div>
-              )}
-            </button>
+              <img
+                src={slide.src}
+                alt={slide.alt?.trim() || `Illustration ${index + 1}`}
+                className="block h-auto w-full origin-center transition-transform duration-200 ease-out group-hover:scale-[1.02] group-active:scale-[1.02]"
+                loading="lazy"
+                decoding="async"
+              />
+            </motion.button>
           );
         })}
       </div>
@@ -3953,6 +3832,12 @@ const PalaceProjects = ({
   const activeCard = activeProjectId ? PROJECT_CARDS.find((c) => c.id === activeProjectId) ?? null : null;
   const illustrationsDetailNoHero = Boolean(activeCard?.detailGallery?.length);
   const videoEditingDetailNoMainCard = activeCard?.id === "project-video-editing";
+  const noMorphProjectIds = new Set([
+    "project-motion-design",
+    "project-interactive-media",
+    "project-slaywire",
+  ]);
+  const activeCardNoMorph = Boolean(activeCard && noMorphProjectIds.has(activeCard.id));
   const showcaseObscured = Boolean(activeCard || featuredPdfViewerActive);
   const showcaseFadeDuration = reduceMotion
     ? 0
@@ -4013,7 +3898,7 @@ const PalaceProjects = ({
   /** In-flow detail expands #projects so section grid covers desc cards; absolute overlay is FLIP-only. */
   const projectDetailInFlow = Boolean(
     activeCard &&
-      (videoEditingDetailNoMainCard || illustrationsDetailNoHero || morphDone),
+      (videoEditingDetailNoMainCard || illustrationsDetailNoHero || activeCardNoMorph || morphDone),
   );
   const [detailHdrReveal, setDetailHdrReveal] = useState(false);
   const [detailRuleReveal, setDetailRuleReveal] = useState(false);
@@ -4057,8 +3942,8 @@ const PalaceProjects = ({
   const mScaleY = useMotionValue(1);
 
   const handleCardClick = useCallback((id: string, el: HTMLElement) => {
-    if (id === "project-video-editing") {
-      // VIDEO EDITING opens without FLIP hero morph; prevents transient ghost card frames.
+    if (id === "project-video-editing" || noMorphProjectIds.has(id)) {
+      // These projects open without FLIP hero morph; detail card fades in.
       setMorphRect(null);
       setTargetRect(null);
       setMorphDone(true);
@@ -4204,14 +4089,14 @@ const PalaceProjects = ({
       detailRevealTimersRef.current = [];
       return;
     }
-    if (reduceMotion || activeCard?.detailGallery?.length) {
+    if (reduceMotion || activeCard?.detailGallery?.length || videoEditingDetailNoMainCard || activeCardNoMorph) {
       setDetailHdrReveal(true);
       setDetailRuleReveal(true);
       setDetailGalleryReveal(true);
       setDetailRow1Reveal(true);
       setDetailRow2Reveal(true);
     }
-  }, [morphDone, activeCard?.id, reduceMotion]);
+  }, [morphDone, activeCard?.id, reduceMotion, activeCardNoMorph, videoEditingDetailNoMainCard]);
 
   return (
     <section
@@ -4302,7 +4187,7 @@ const PalaceProjects = ({
           className={`flex min-h-0 w-full flex-1 flex-col ${showcaseObscured ? "pointer-events-none select-none" : ""}`}
         >
           <motion.div
-            className="flex min-h-0 w-full flex-1 flex-col"
+            className="flex w-full shrink-0 flex-col"
             initial={reduceMotion ? false : { opacity: 0 }}
             animate={{
               opacity: reduceMotion ? 1 : projectsOverlayRevealed ? 1 : 0,
@@ -4326,35 +4211,32 @@ const PalaceProjects = ({
                 carouselAutoAdvanceEnabled={carouselAutoAdvanceReady && !showcaseObscured}
               />
             </motion.div>
+          </motion.div>
 
-            {/*
-             * Vertical gap above tabs = --slide-gap only (same token as space between slider cards).
-             * ProjectsStack uses pb-0 so gallery bottom padding does not stack with this margin.
-             */}
-            <motion.div
-              className="mt-[var(--slide-gap,0.875rem)] flex w-full min-w-0 flex-col"
-              initial={false}
-              animate={{ opacity: reduceMotion ? 1 : showcaseObscured ? 0 : 1 }}
-              transition={{ duration: showcaseFadeDuration, ease: SHOWCASE_EASE }}
-            >
-              <div
-                className="flex w-full min-w-0 flex-col"
-                style={{ transform: "translateZ(0)", backfaceVisibility: "hidden" }}
-              >
-                <ShowcaseAttachedTabStrip
-                  activeId={showcaseTabId}
-                  onTabChange={setShowcaseTabId}
-                  className="w-full min-w-0"
-                  panel={({ previewColumnWidthPx }) => (
-                    <ShowcaseWritingFeaturedPanel
-                      item={SHOWCASE_WRITING_TAB_FEATURED[showcaseTabId]}
-                      previewWidthPx={previewColumnWidthPx}
-                      onOpenPdfInSupporting={onOpenFeaturedPdfInSupporting}
-                    />
-                  )}
+          {/*
+           * FEATURED WRITING outside carousel entrance opacity layer (Framer opacity isolates backdrop-filter).
+           * Gap above tabs = --slide-gap only — same as space between slider cards.
+           */}
+          <motion.div
+            className={`mt-[var(--slide-gap,0.875rem)] flex w-full shrink-0 min-w-0 flex-col${
+              !projectsOverlayRevealed && !reduceMotion ? " invisible" : ""
+            }`}
+            initial={false}
+            animate={{ opacity: reduceMotion ? 1 : showcaseObscured ? 0 : 1 }}
+            transition={{ duration: showcaseFadeDuration, ease: SHOWCASE_EASE }}
+          >
+            <ShowcaseAttachedTabStrip
+              activeId={showcaseTabId}
+              onTabChange={setShowcaseTabId}
+              className="w-full min-w-0"
+              panel={({ previewColumnWidthPx }) => (
+                <ShowcaseWritingFeaturedPanel
+                  item={SHOWCASE_WRITING_TAB_FEATURED[showcaseTabId]}
+                  previewWidthPx={previewColumnWidthPx}
+                  onOpenPdfInSupporting={onOpenFeaturedPdfInSupporting}
                 />
-              </div>
-            </motion.div>
+              )}
+            />
           </motion.div>
         </div>
         ) : null}
@@ -4369,7 +4251,7 @@ const PalaceProjects = ({
           >
               {!illustrationsDetailNoHero && !videoEditingDetailNoMainCard ? (
                 <div
-                  className={`project-card-surface relative z-[1] mx-auto w-full max-w-full ${PROFILE_VIEWPORT_CONTENT_MAX} ${DETAIL_CARD_H} overflow-hidden rounded-[11px] sm:rounded-xl border-0`}
+                  className={`project-card-surface relative z-[1] mx-auto w-full max-w-full ${PROFILE_VIEWPORT_CONTENT_MAX} ${DETAIL_CARD_H} overflow-hidden rounded-[11px] sm:rounded-xl border border-white/[0.09]`}
                   style={{
                     boxShadow: `${SHOWCASE_SLIDER_MEDIA_BOX_SHADOW}, 0 18px 48px -28px rgba(0,0,0,0.9)`,
                     borderRadius: `${detailCardRadiusPx}px`,
@@ -4545,7 +4427,7 @@ const PalaceProjects = ({
        * FLIP technique: destination size set as plain values (React commit, pre-paint);
        * scaleX/scaleY set synchronously before render via MotionValues.
        */}
-      {!videoEditingDetailNoMainCard && createPortal(
+      {!videoEditingDetailNoMainCard && !activeCardNoMorph && createPortal(
         <motion.div
           style={{
             position: "fixed",
@@ -7310,10 +7192,10 @@ const SkillArsenal = ({
   });
 
   const skillsCoreCardItemEntrance: Variants = {
-    hidden: { opacity: rm ? 1 : 0, x: rm ? 0 : -skillsCardSlideX },
+    hidden: { opacity: rm ? 1 : 0, y: rm ? 0 : 18 },
     visible: {
       opacity: 1,
-      x: 0,
+      y: 0,
       transition: {
         type: "tween",
         duration: rm ? 0 : skillsCardSlideDur,
@@ -7322,10 +7204,10 @@ const SkillArsenal = ({
     },
   };
   const skillsToolsCardItemEntrance: Variants = {
-    hidden: { opacity: rm ? 1 : 0, x: rm ? 0 : skillsCardSlideX },
+    hidden: { opacity: rm ? 1 : 0, y: rm ? 0 : 18 },
     visible: {
       opacity: 1,
-      x: 0,
+      y: 0,
       transition: {
         type: "tween",
         duration: rm ? 0 : skillsCardSlideDur,

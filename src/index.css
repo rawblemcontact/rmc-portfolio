@@ -400,15 +400,15 @@
   /**
    * FEATURED WRITING — same stack as profile/project (panel = card surface). shell < panel < raised.
    */
-  /** Stack wrapper — shared `--portfolio-glass-*` frost behind folder tabs + body. */
+  /** Stack wrapper — tab/body chrome only; body frost on inner `.profile-card-surface`. */
   .featured-writing-shell {
     position: relative;
     z-index: 0;
-    background: var(--portfolio-glass-fill);
+    background: transparent;
     background-image: none;
     filter: none;
-    -webkit-backdrop-filter: var(--portfolio-glass-blur);
-    backdrop-filter: var(--portfolio-glass-blur);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
     --fw-card-stroke: var(--portfolio-glass-stroke);
     --fw-card-stroke-soft: rgba(255, 255, 255, 0.12);
     --fw-rule-body-top: var(--fw-card-stroke);
@@ -425,11 +425,22 @@
     }
   }
 
-  /** Content panel — one real border; active tab overlaps the top edge by 1px. */
+  /** Content panel shell — frost on inner `.profile-card-surface` (same layer stack as project detail cards). */
   .featured-writing-body-card {
-    border: 1px solid var(--fw-card-stroke);
-    border-radius: 0 0 11px 11px;
+    background: transparent;
+    background-image: none;
+    border: 0;
+    box-shadow: none;
+  }
+
+  /** FEATURED WRITING body — same glass stack as project detail cards (live grid blur). */
+  .featured-writing-inner-rule-body-top > .profile-card-surface {
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    border: 1px solid var(--portfolio-glass-stroke);
     box-shadow: var(--portfolio-glass-shadow);
+    border-radius: 0 0 11px 11px;
     background: var(--portfolio-glass-fill);
     background-image: none;
     filter: none;
@@ -438,7 +449,7 @@
   }
 
   @media (min-width: 640px) {
-    .featured-writing-body-card {
+    .featured-writing-inner-rule-body-top > .profile-card-surface {
       border-radius: 0 0 12px 12px;
     }
   }
@@ -471,21 +482,6 @@
 
   .featured-writing-inner-rule-body-top::before {
     display: none;
-  }
-
-  .featured-writing-inner-rule-body-top > .featured-writing-panel {
-    position: relative;
-    z-index: 1;
-  }
-
-  .featured-writing-inner-rule-body-top > .featured-writing-panel {
-    border-radius: 0 0 10px 10px;
-  }
-
-  @media (min-width: 640px) {
-    .featured-writing-inner-rule-body-top > .featured-writing-panel {
-      border-radius: 0 0 11px 11px;
-    }
   }
 
   /** Active folder tab — panel fill inside tab; connects into body seam gap. */
@@ -2877,6 +2873,17 @@
     .skills-node-pulse-once { animation: none; }
   }
 
+  /* VIDEO EDITING — Plyr player frame (ring border — no layout shift) */
+  .video-editing-player--plyr .plyr,
+  .video-editing-player--plyr .plyr__video-wrapper,
+  .video-editing-player--plyr .plyr__poster {
+    border-radius: inherit;
+  }
+
+  .video-editing-player--plyr .plyr {
+    overflow: hidden;
+  }
+
   /* VIDEO EDITING — Selected works strip: side arrows (opacity pulse only; no layout shift) */
   @keyframes video-editing-works-arrow-pulse {
     0%,
@@ -2888,12 +2895,42 @@
     }
   }
   .video-editing-works-arrow {
+    transform: translateY(-50%);
     animation: video-editing-works-arrow-pulse 1.85s ease-in-out infinite;
+    transition:
+      transform 0.22s cubic-bezier(0.16, 1, 0.32, 1),
+      color 0.22s ease,
+      filter 0.22s ease,
+      opacity 0.22s ease;
+  }
+  .video-editing-works-arrow:hover,
+  .video-editing-works-arrow:active {
+    animation: none;
+    opacity: 1;
+    color: var(--palette-yellow-projects);
+    filter: drop-shadow(0 0 7px color-mix(in srgb, var(--palette-yellow-projects) 62%, transparent));
+  }
+  .video-editing-works-arrow-glyph {
+    transition: transform 0.22s cubic-bezier(0.16, 1, 0.32, 1);
+  }
+  .video-editing-works-arrow--prev:hover .video-editing-works-arrow-glyph,
+  .video-editing-works-arrow--prev:active .video-editing-works-arrow-glyph {
+    transform: translateX(-4px);
+  }
+  .video-editing-works-arrow--next:hover .video-editing-works-arrow-glyph,
+  .video-editing-works-arrow--next:active .video-editing-works-arrow-glyph {
+    transform: translateX(4px);
   }
   @media (prefers-reduced-motion: reduce) {
     .video-editing-works-arrow {
       animation: none;
       opacity: 0.85;
+    }
+    .video-editing-works-arrow--prev:hover .video-editing-works-arrow-glyph,
+    .video-editing-works-arrow--prev:active .video-editing-works-arrow-glyph,
+    .video-editing-works-arrow--next:hover .video-editing-works-arrow-glyph,
+    .video-editing-works-arrow--next:active .video-editing-works-arrow-glyph {
+      transform: none;
     }
   }
 

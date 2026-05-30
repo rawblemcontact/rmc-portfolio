@@ -141,7 +141,7 @@ export function ShowcaseAttachedTabStrip({
           "featured-writing-shell flex min-w-0 w-full max-w-full flex-col",
         ].join(" ")}
       >
-        <div className="featured-writing-folder relative isolate flex min-w-0 w-full flex-col">
+        <div className="featured-writing-folder relative flex min-w-0 w-full flex-col">
           <div className="relative flex h-[3.5rem] min-h-[3.5rem] shrink-0 flex-col gap-0 overflow-visible pt-3 sm:h-16 sm:min-h-16 sm:pt-4">
             <div
               ref={tabListRef}
@@ -203,10 +203,7 @@ export function ShowcaseAttachedTabStrip({
           >
             <div
               ref={bodyPadRef}
-              className={[
-                TAB_PANEL_SURFACE,
-                "overflow-x-hidden overflow-y-visible px-3 py-3 sm:px-4 sm:py-3.5",
-              ].join(" ")}
+              className="profile-card-surface rounded-t-none rounded-b-[11px] px-3 py-3 sm:rounded-b-xl sm:px-4 sm:py-3.5"
             >
               <div
                 className="relative min-w-0"
