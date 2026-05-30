@@ -586,7 +586,7 @@ function sectionPanelEdgeAccent(sectionId: string): string {
     sectionId === "projects-supporting" ||
     sectionId.startsWith("project-")
   ) {
-    return "var(--palette-yellow-projects)";
+    return "color-mix(in srgb, var(--palette-yellow-projects) 48%, rgb(186 186 186))";
   }
   return SECTION_ACCENT_COLOR[sectionId] ?? "var(--palette-blue)";
 }
@@ -713,6 +713,7 @@ const scrollToId = (id: string, behavior: ScrollBehavior = "smooth") => {
 };
 
 const PROFILE_ACCENT_SOFT = "color-mix(in srgb, var(--palette-red) 56%, rgb(170 170 170))";
+const NAV_SUBHEAD_GRAY = "color-mix(in srgb, var(--color-mono-2) 70%, transparent)";
 const PROJECTS_ACCENT_SOFT = "color-mix(in srgb, var(--palette-yellow-projects) 48%, rgb(186 186 186))";
 
 const NAV_ITEMS: { id: string; label: string; icon: LucideIcon; color: string; sub: string; microLabel: string }[] = [
@@ -1625,7 +1626,8 @@ const RainbowMenuSlide = ({
         <div className="flex items-end justify-between gap-6 mb-10">
           <div>
             <motion.p
-              className="font-heading text-sm tracking-eyebrow-tight leading-snug uppercase text-mono-2/90 mb-1.5 -ml-[0.12em]"
+              className="font-heading text-sm tracking-eyebrow-tight leading-snug uppercase mb-1.5 -ml-[0.12em]"
+              style={{ color: NAV_SUBHEAD_GRAY }}
               initial={false}
               animate={{ opacity: menuTimelineActive ? 1 : 0, x: menuTimelineActive ? 0 : -28 }}
               transition={{
@@ -1805,7 +1807,7 @@ const SideNavOverlay = ({
           >
             <div className="flex items-center justify-between mb-6">
               <div className="flex flex-col gap-y-1.5">
-                <p className="font-heading text-[9px] sm:text-[10px] tracking-eyebrow-tight leading-snug uppercase text-mono-2/90 -ml-[0.12em]">
+                <p className="font-heading text-[9px] sm:text-[10px] tracking-eyebrow-tight leading-snug uppercase -ml-[0.12em]" style={{ color: NAV_SUBHEAD_GRAY }}>
                   NAVIGATION
                 </p>
                 <p className="font-display text-3xl sm:text-4xl leading-[0.95] tracking-[-0.02em] uppercase -ml-[0.06em]">
@@ -1960,13 +1962,15 @@ const PROFILE_TITLE_DELAY_S = 0.152;
 const PROFILE_HERO_ENTER_S = 0.52;
 const PROFILE_LINE_DURATION_S = RED_LINE_DURATION_MS / 1000;
 /** Vertical air around metadata pill (red rule → pill → summary card). */
-const PROFILE_METADATA_PILL_GAP = "mt-6 sm:mt-7";
+const PROFILE_METADATA_PILL_GAP = "mt-3";
 /** Shared width + left nudge for PROFILE red rule and card stack (pill + summary). */
 const PROFILE_CARD_COLUMN =
   "min-w-0 w-full max-w-xl xl:max-w-2xl 2xl:max-w-2xl -ml-[3px]";
 /** Metadata pill + in-card section labels (SUMMARY, etc.) — paired with `#profile` CSS. */
 const PROFILE_CARD_INLINE_LABEL_CLASS =
   "profile-card-inline-label font-heading w-full min-w-0 max-w-full text-balance leading-snug uppercase";
+/** Slightly stronger hierarchy for red in-card labels (SUMMARY/CURRENT WORK/AVAILABILITY). */
+const PROFILE_CARD_SECTION_LABEL_CLASS = `${PROFILE_CARD_INLINE_LABEL_CLASS} profile-card-section-label`;
 
 const PhantomProfile = () => {
   const profileLeftRef = useRef<HTMLDivElement>(null);
@@ -2043,7 +2047,7 @@ const PhantomProfile = () => {
                color="text-white"
                showBar={false}
                compact
-               className="!mb-5 max-lg:mt-0 lg:mt-0 -ml-[3px]"
+               className="!mb-3 max-lg:mt-0 lg:mt-0 -ml-[3px]"
                slideFade
                slideFadeDuration={0.5}
                slideFadeDelay={0.3}
@@ -2065,16 +2069,17 @@ const PhantomProfile = () => {
                />
             </div>
             <motion.div
-              className={`profile-card-surface relative ${PROFILE_METADATA_PILL_GAP} block w-full pe-[max(0.75rem,env(safe-area-inset-right,0px))] sm:pe-4 rounded-[0_0.85rem] px-3 py-2 sm:px-4 sm:py-2.5`}
+              className={`${PROFILE_METADATA_PILL_GAP} w-full`}
               initial={{ x: -24, opacity: 0 }}
               animate={{ x: overlayRevealed ? 0 : -24, opacity: overlayRevealed ? 1 : 0 }}
               transition={{ duration: BUTTON_FADE_DURATION_MS / 1000, delay: overlayRevealed ? BUTTONS_DELAY_AFTER_SUMMARY_MS / 1000 : 0, ease: [0.16, 1, 0.3, 1] }}
             >
               <p
-                className={`${PROFILE_CARD_INLINE_LABEL_CLASS} max-sm:whitespace-normal sm:whitespace-nowrap sm:overflow-x-auto sm:overflow-y-visible sm:no-scrollbar`}
+                className={`${PROFILE_CARD_INLINE_LABEL_CLASS} ml-[2px] max-sm:whitespace-normal sm:whitespace-nowrap sm:overflow-x-auto sm:overflow-y-visible sm:no-scrollbar`}
+                style={{ color: NAV_SUBHEAD_GRAY }}
               >
-                Victoria, BC <span className="text-mono-2/35 mx-0.5 sm:mx-1" aria-hidden>•</span> BA WRITING{" "}
-                <span className="text-mono-2/35 mx-0.5 sm:mx-1" aria-hidden>•</span> DIGITAL MEDIA
+                Victoria, BC <span className="mx-0.5 sm:mx-1" aria-hidden>•</span> BA WRITING{" "}
+                <span className="mx-0.5 sm:mx-1" aria-hidden>•</span> DIGITAL MEDIA
               </p>
             </motion.div>
             <motion.div
@@ -2083,18 +2088,18 @@ const PhantomProfile = () => {
               animate={{ opacity: overlayRevealed ? 1 : 0, y: overlayRevealed ? 0 : 14 }}
               transition={{ duration: SUMMARY_DURATION_S, delay: overlayRevealed ? SUMMARY_DELAY_S : 0, ease: [0.16, 1, 0.3, 1] }}
             >
-              <p className={`${PROFILE_CARD_INLINE_LABEL_CLASS} mb-1.5`} style={{ color: PROFILE_ACCENT_SOFT }}>SUMMARY</p>
+              <p className={`${PROFILE_CARD_SECTION_LABEL_CLASS} mb-1.5`} style={{ color: PROFILE_ACCENT_SOFT }}>SUMMARY</p>
               <p className="font-body text-mono-2 leading-relaxed mb-4">
                 Communications-focused writer and digital media coordinator with experience producing narrative-driven web content and managing social media workflows across multiple platforms. Combines narrative storytelling with platform-native content production and distribution. Bachelor of Arts in Writing (Distinction), University of Victoria.
               </p>
-              <p className={`${PROFILE_CARD_INLINE_LABEL_CLASS} mb-1.5`} style={{ color: PROFILE_ACCENT_SOFT }}>CURRENT WORK</p>
+              <p className={`${PROFILE_CARD_SECTION_LABEL_CLASS} mb-1.5`} style={{ color: PROFILE_ACCENT_SOFT }}>CURRENT WORK</p>
               <ul className="font-body text-mono-2/90 leading-relaxed mb-4 ml-3 list-disc list-outside space-y-2 pl-6 sm:pl-7 marker:text-mono-2/50">
                 <li>Currently developing SLAYWIRE, a narrative-first RPG.</li>
                 <li>
                   RAWBLEM - Creative brand producing narrative-driven short-form content across TikTok, Instagram Reels, and YouTube Shorts.
                 </li>
               </ul>
-              <p className={`${PROFILE_CARD_INLINE_LABEL_CLASS} mb-1.5`} style={{ color: PROFILE_ACCENT_SOFT }}>AVAILABILITY</p>
+              <p className={`${PROFILE_CARD_SECTION_LABEL_CLASS} mb-1.5`} style={{ color: PROFILE_ACCENT_SOFT }}>AVAILABILITY</p>
               <ul className="font-body text-mono-2 leading-relaxed ml-3 list-disc list-outside space-y-2 pl-6 sm:pl-7 marker:text-mono-2/50">
                 <li>Full-Time Content, Communications, or Digital Media roles.</li>
               </ul>
@@ -3531,25 +3536,25 @@ const ShowcaseIllustrationLightbox = ({
       />
 
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
-        <button
-          type="button"
-          aria-label="Close illustration preview"
-          onClick={onClose}
-          className="pdf-viewer-chrome-btn absolute right-3 top-3 z-30 sm:right-5 sm:top-5"
-        >
-          <X aria-hidden />
-        </button>
-
         <div
-          className="relative flex min-h-0 flex-1 flex-col"
+          className="relative flex min-h-0 flex-1 flex-col py-6 sm:py-8"
           onClick={(event) => event.stopPropagation()}
         >
+          <button
+            type="button"
+            aria-label="Close illustration preview"
+            onClick={onClose}
+            className="pdf-viewer-chrome-btn illustration-lightbox-chrome-btn illustration-lightbox-close-btn absolute right-3 top-3 z-30 sm:right-5 sm:top-5"
+          >
+            <X aria-hidden />
+          </button>
+
           {hasPrev ? (
             <button
               type="button"
               aria-label="Previous illustration"
               onClick={handleShowPrev}
-              className="pdf-viewer-chrome-btn absolute left-3 top-1/2 z-20 -translate-y-1/2 sm:left-5"
+              className="pdf-viewer-chrome-btn illustration-lightbox-chrome-btn absolute left-3 top-1/2 z-20 -translate-y-1/2 sm:left-5"
             >
               <ArrowLeft aria-hidden />
             </button>
@@ -3589,7 +3594,7 @@ const ShowcaseIllustrationLightbox = ({
               type="button"
               aria-label="Next illustration"
               onClick={handleShowNext}
-              className="pdf-viewer-chrome-btn absolute right-3 top-1/2 z-20 -translate-y-1/2 sm:right-5"
+              className="pdf-viewer-chrome-btn illustration-lightbox-chrome-btn absolute right-3 top-1/2 z-20 -translate-y-1/2 sm:right-5"
             >
               <ArrowRight aria-hidden />
             </button>
@@ -4152,7 +4157,7 @@ const PalaceProjects = ({
               <div className="showcase-header-title-stack relative z-10 w-full min-w-0">
                 <p className="career-nav-section-subtitle section-main-header-title font-display text-left">PROJECTS</p>
                 <div className="showcase-header-subhead-rule w-fit max-w-full">
-                  <p className="career-nav-section-title text-left">
+                  <p className="career-nav-section-title text-left" style={{ color: NAV_SUBHEAD_GRAY }}>
                     Digital Media &amp; Writing Showcase
                   </p>
                   <div
@@ -5023,7 +5028,7 @@ const ConfidantExperience = ({
           <motion.div className="nav-header" variants={experienceRailHeaderEntrance}>
             <motion.div className="career-nav-section-labels" variants={experienceRailLabelsEntrance}>
               <p className="career-nav-section-subtitle section-main-header-title">Experience</p>
-              <p className="career-nav-section-title">Career Overview</p>
+              <p className="career-nav-section-title" style={{ color: NAV_SUBHEAD_GRAY }}>Career Overview</p>
             </motion.div>
             <motion.div
               className="career-nav-section-divider"
@@ -6524,7 +6529,7 @@ const SkillsSubskillsPanel = ({
     >
       <div className="career-nav-section-labels min-w-0 items-center pr-0 text-center">
         <p className="career-nav-section-subtitle">{panelHeader.title}</p>
-        <p className="career-nav-section-title">{panelHeader.subtitle}</p>
+        <p className="career-nav-section-title" style={{ color: NAV_SUBHEAD_GRAY }}>{panelHeader.subtitle}</p>
       </div>
       <div className="career-nav-section-divider" aria-hidden />
     </motion.div>
@@ -6539,7 +6544,7 @@ const SkillsSubskillsPanel = ({
     >
       <div className="career-nav-section-labels min-w-0 pr-0">
         <p className="career-nav-section-subtitle">{panelHeader.title}</p>
-        <p className="career-nav-section-title">{panelHeader.subtitle}</p>
+        <p className="career-nav-section-title" style={{ color: NAV_SUBHEAD_GRAY }}>{panelHeader.subtitle}</p>
       </div>
       <div className="career-nav-section-divider" aria-hidden />
       {SKILLS_SHOW_IDEA_GEAR_DECOR ? (
@@ -6902,7 +6907,7 @@ const SkillsBranchRailHeader = ({
           variants={labelsEntrance}
         >
           <p className="career-nav-section-subtitle whitespace-nowrap">{sectionSubtitle}</p>
-          <p className="career-nav-section-title whitespace-nowrap">{sectionTitle}</p>
+          <p className="career-nav-section-title whitespace-nowrap" style={{ color: NAV_SUBHEAD_GRAY }}>{sectionTitle}</p>
         </motion.div>
         <div className="skills-branch-accent-line relative min-h-[2px] w-full" aria-hidden>
           <motion.span
@@ -7017,7 +7022,8 @@ const SkillsCardInnerContent = ({
   const rm = reduceMotion;
   const cardHeaderUpY = 10;
   const cardHeaderDur = SKILLS_SECTION_HEADER_SLIDE_DUR_S;
-  const cardBulletStagger = skillsEntranceS(EXPERIENCE_TAB_STAGGER_S);
+  const cardBulletStagger = skillsEntranceS(0.034);
+  const cardBulletUpY = 8;
   const cardBulletsDelayChildren = Math.max(0, bulletsRevealDelay - contentBaseDelay);
 
   const innerRoot: Variants = {
@@ -7049,19 +7055,13 @@ const SkillsCardInnerContent = ({
     },
   };
   const cardBulletItemEntrance: Variants = {
-    hidden: { opacity: rm ? 1 : 0, y: rm ? 0 : cardHeaderUpY },
+    hidden: { opacity: rm ? 1 : 0, y: rm ? 0 : cardBulletUpY },
     visible: {
       opacity: 1,
       y: 0,
       transition: {
-        opacity: {
-          duration: rm ? 0 : SKILLS_SECTION_HEADER_SLIDE_DUR_S * 0.52,
-          ease: EASE.out,
-        },
-        y: {
-          duration: rm ? 0 : SKILLS_SECTION_HEADER_SLIDE_DUR_S,
-          ease: SKILLS_SECTION_HEADER_SLIDE_EASE,
-        },
+        duration: rm ? 0 : skillsAnimS(0.22),
+        ease: [0.22, 1, 0.36, 1],
         type: "tween",
       },
     },
@@ -7102,7 +7102,7 @@ const SkillsCardInnerContent = ({
           <motion.li
             key={key}
             variants={cardBulletItemEntrance}
-            className="skills-page-card-row flex min-w-0 items-start text-zinc-200"
+            className="skills-page-card-row flex min-w-0 transform-gpu items-start text-zinc-200"
           >
             <span className="skills-page-card-icon inline-flex shrink-0 items-center justify-center">
               {icon}

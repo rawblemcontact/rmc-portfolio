@@ -311,6 +311,13 @@
     color: var(--section-eyebrow-muted);
   }
 
+  #profile .profile-card-surface > p.profile-card-inline-label.profile-card-section-label {
+    font-size: clamp(0.82rem, calc(0.2vw + 0.77rem), 0.9rem);
+    line-height: 1.24;
+    letter-spacing: 0.07em;
+    font-weight: 700;
+  }
+
   #profile .profile-card-surface > p.font-body {
     font-size: clamp(0.875rem, calc(0.35vw + 0.78rem), 1rem);
     line-height: 1.45;
@@ -1344,55 +1351,45 @@
     align-items: center;
     gap: 12px;
     padding: 14px 14px;
-    background: transparent;
+    background: color-mix(in srgb, var(--portfolio-section-card) 8%, transparent);
+    background-image: none;
+    filter: none;
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+    box-shadow: inset 0 0 0 1px var(--portfolio-stroke-outer);
     border: none;
-    border-radius: 0;
+    border-radius: 11px;
     cursor: pointer;
-    transition: all var(--career-tab-hover-duration) cubic-bezier(0.4, 0, 0.2, 1);
+    transition:
+      background-color var(--career-tab-hover-duration) cubic-bezier(0.4, 0, 0.2, 1),
+      box-shadow var(--career-tab-hover-duration) cubic-bezier(0.4, 0, 0.2, 1),
+      transform var(--career-tab-hover-duration) cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
     text-align: left;
   }
 
   #experience .tab-btn::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    opacity: 1;
-    border-radius: 0;
-    transition: background-color var(--career-tab-hover-duration) cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  #experience .tab-btn:not(.active)::before {
-    background: var(--career-tab-surface-idle);
+    display: none;
   }
 
   #experience .tab-btn::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%) scaleY(0);
-    width: 3px;
-    height: 60%;
-    background: var(--palette-blue);
-    border-radius: 0 4px 4px 0;
-    transition: transform var(--career-tab-hover-duration) cubic-bezier(0.4, 0, 0.2, 1);
+    display: none;
   }
 
-  #experience .tab-btn:not(.active):hover::before {
-    background: var(--career-tab-surface-idle-hover);
+  #experience .tab-btn:not(.active):hover {
+    background: color-mix(in srgb, var(--portfolio-section-card-hover) 8%, transparent);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
   }
 
-  #experience .tab-btn.active::before {
-    background: var(--career-tab-surface-active);
-  }
-
-  #experience .tab-btn.active::after {
-    transform: translateY(-50%) scaleY(1);
+  #experience .tab-btn:not(.active) {
+    opacity: 0.9;
   }
 
   #experience .tab-btn.active {
-    box-shadow: none;
+    background: color-mix(in srgb, var(--palette-blue) 18%, var(--portfolio-section-card-hover));
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, var(--palette-blue) 52%, rgba(255, 255, 255, 0.12)),
+      0 0 0 1px color-mix(in srgb, var(--palette-blue) 24%, transparent);
   }
 
   #experience .tab-text {
@@ -3280,6 +3277,29 @@
   width: 1rem;
   height: 1rem;
   flex-shrink: 0;
+}
+
+/* Visual design lightbox controls: slightly smaller so chrome clears artwork. */
+.illustration-lightbox-chrome-btn {
+  width: 2.125rem;
+  height: 2.125rem;
+}
+
+.illustration-lightbox-chrome-btn svg {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+.illustration-lightbox-close-btn {
+  border-color: transparent;
+  background-color: transparent;
+}
+
+.illustration-lightbox-close-btn:hover,
+.illustration-lightbox-close-btn:active,
+.illustration-lightbox-close-btn:focus-visible {
+  border-color: color-mix(in srgb, var(--palette-yellow-projects) 48%, rgb(186, 186, 186));
+  background-color: #fff;
 }
 
 /* PDF viewer — loader stack (Satoshi label under fold animation) */
