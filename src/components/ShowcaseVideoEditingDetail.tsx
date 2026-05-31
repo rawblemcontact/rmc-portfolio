@@ -53,7 +53,13 @@ function toPlyrSource(video: ShowcaseDetailVideo): ResolvedPlyrSource | null {
   return { kind: "file", url: video.url, mime: "video/mp4" };
 }
 
-function VideoEditingPlyrPlayer({ video }: { video: ShowcaseDetailVideo }) {
+function VideoEditingPlyrPlayer({
+  video,
+  className = "",
+}: {
+  video: ShowcaseDetailVideo;
+  className?: string;
+}) {
   const source = useMemo(() => toPlyrSource(video), [video]);
   const hostRef = useRef<HTMLDivElement | null>(null);
   const playerRef = useRef<Plyr | null>(null);
@@ -114,11 +120,12 @@ function VideoEditingPlyrPlayer({ video }: { video: ShowcaseDetailVideo }) {
   }, [source, video.id]);
 
   if (!source) return null;
-  return <div ref={hostRef} className="w-full min-w-0" />;
+  return <div ref={hostRef} className={`w-full min-w-0 ${className}`.trim()} />;
 }
 
 type ShowcaseVideoEditingDetailProps = {
   card: {
+    readonly id?: string;
     readonly title: string;
     readonly tagline: string;
     readonly detailOverview?: string;
@@ -194,6 +201,7 @@ export function ShowcaseVideoEditingDetail({
 
   const worksArrowBtnClass =
     "video-editing-works-arrow absolute top-[2.45rem] z-10 flex h-[1.65rem] w-[1.65rem] items-center justify-center border-0 bg-transparent p-0 text-white/85 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:h-[1.925rem] sm:w-[1.925rem]";
+  const isInteractiveMedia = card.id === "project-interactive-media";
 
   return (
     <>
@@ -237,7 +245,10 @@ export function ShowcaseVideoEditingDetail({
       >
         <div className="video-editing-carousel video-editing-carousel--solo" role="group" aria-label="Featured edits">
           <div className="video-editing-player video-editing-player--plyr group relative overflow-hidden rounded-[11px] ring-1 ring-white/[0.09] sm:rounded-xl">
-            <VideoEditingPlyrPlayer video={activeVideo} />
+            <VideoEditingPlyrPlayer
+              video={activeVideo}
+              className={isInteractiveMedia ? "video-editing-player--interactive-media" : ""}
+            />
             <div className="pointer-events-none absolute inset-x-0 top-0 z-10 bg-gradient-to-b from-black/70 via-black/30 to-transparent px-3 pt-2 pb-8 opacity-0 transition-opacity duration-200 ease-out group-hover:opacity-100 group-focus-within:opacity-100 sm:px-3.5 sm:pt-2.5">
               <p className="truncate font-body text-[12px] leading-none text-white sm:text-[13px]">
                 <span className="font-display tracking-[-0.01em]">{activeSelectorTitle}</span>

@@ -166,7 +166,6 @@
   [id="projects"],
   [id="project-visual-design"],
   [id="project-video-editing"],
-  [id="project-motion-design"],
   [id="project-interactive-media"],
   [id="project-slaywire"],
   [id="projects-supporting"],
@@ -1194,7 +1193,7 @@
     --showcase-header-line-gap: 0.5rem;
   }
 
-  /* Five-up row: scale title to card width (max = xl showcase size) so lines fit without ellipsis. */
+  /* Four-up row: scale title to card width (max = xl showcase size) so lines fit without ellipsis. */
   #projects [data-carousel-card] {
     container-type: inline-size;
   }
@@ -1213,6 +1212,23 @@
       0 0 1px rgba(0, 0, 0, 0.85),
       0 1px 3px rgba(0, 0, 0, 0.72),
       0 4px 14px rgba(0, 0, 0, 0.55);
+  }
+
+  #projects .project-card-title .showcase-stacked-title-main {
+    white-space: nowrap;
+  }
+
+  .showcase-stacked-title-prefix {
+    position: absolute;
+    left: 0;
+    bottom: 100%;
+    display: block;
+    white-space: nowrap;
+    line-height: inherit;
+  }
+
+  .showcase-stacked-title-main {
+    display: block;
   }
 
   @media (min-width: 640px) {
@@ -2879,6 +2895,24 @@
 
   .video-editing-player--plyr .plyr {
     overflow: hidden;
+  }
+
+  /* INTERACTIVE MEDIA in shared video-detail layout:
+     fill the player frame to avoid pillarbox gutters that make the border feel heavier. */
+  .video-editing-player--interactive-media .plyr video,
+  .video-editing-player--interactive-media .plyr iframe,
+  .video-editing-player--interactive-media .plyr__video-wrapper video,
+  .video-editing-player--interactive-media .plyr__video-wrapper iframe {
+    width: 100%;
+    height: 100%;
+    object-fit: cover !important;
+    object-position: center;
+    transform: scale(1.45);
+    transform-origin: center;
+  }
+  .video-editing-player--interactive-media .plyr__poster {
+    background-size: cover !important;
+    background-position: center !important;
   }
 
   /* VIDEO EDITING — Selected works strip: side arrows (opacity pulse only; no layout shift) */

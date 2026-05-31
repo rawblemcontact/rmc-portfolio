@@ -730,7 +730,6 @@ const SECTION_ACCENT_COLOR: Record<string, string> = {
   projects: PROJECTS_ACCENT_SOFT,
   "project-visual-design": PROJECTS_ACCENT_SOFT,
   "project-video-editing": PROJECTS_ACCENT_SOFT,
-  "project-motion-design": PROJECTS_ACCENT_SOFT,
   "project-interactive-media": PROJECTS_ACCENT_SOFT,
   "project-slaywire": PROJECTS_ACCENT_SOFT,
   "projects-supporting": PROJECTS_ACCENT_SOFT,
@@ -2139,6 +2138,8 @@ const StatRow = ({ label, value }: { label: string; value: string }) => (
 type ShowcaseProjectCard = {
   readonly id: string;
   readonly title: string;
+  /** Optional line above `title`; absolutely stacked so tagline/divider layout stays fixed. */
+  readonly titlePrefix?: string;
   readonly tagline: string;
   readonly thumbnail?: string;
   readonly thumbnailVideo?: string;
@@ -2346,19 +2347,6 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     ],
   },
   {
-    id: "project-motion-design",
-    title: "MOTION DESIGN",
-    tagline: "Motion graphics and animated content",
-    thumbnailVideo: "/rawblem-thumbnail.mp4",
-    poster: "/rawblem-thumbnail-poster.jpg",
-    focalPoint: "50% 34%",
-    detailOverview:
-      "Motion-led pieces from pixel bumpers to short-form brand content?loops, typography, and timing tuned for playback and social.",
-    detailRole: "Animation, art direction, edit, and asset delivery.",
-    detailTools: ["CapCut", "DaVinci Resolve", "Pixel workflow / raster"],
-    detailImpact: "Readable on-screen branding and motion that holds attention without overpowering the message.",
-  },
-  {
     id: "project-interactive-media",
     title: "INTERACTIVE MEDIA",
     tagline: "Games projects and web experiences",
@@ -2370,6 +2358,60 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     detailRole: "Design, implementation, and iteration across game and front-end builds.",
     detailTools: ["GameMaker Studio 2", "React", "Vite", "TypeScript", "Framer Motion"],
     detailImpact: "Shippable slices with tight feedback loops and interfaces that reward exploration.",
+    detailVideos: [
+      {
+        id: "interactive-media-1",
+        url: "/portfolio-website-thumbnail-v2.mp4",
+        label: "INTERACTIVE MEDIA",
+        thumbnailSrc: "/portfolio-website-thumbnail-v2-poster.jpg",
+        selectorTitle: "INTERACTIVE MEDIA",
+        selectorSubtitle: "Games projects and web experiences",
+        detailOverview:
+          "Playable and interactive work?from GameMaker prototypes to motion-forward web UI?where feel, pacing, and user flow are the design problem.",
+        detailRole: "Design, implementation, and iteration across game and front-end builds.",
+        detailTools: ["GameMaker Studio 2", "React", "Vite", "TypeScript", "Framer Motion"],
+        detailImpact: "Shippable slices with tight feedback loops and interfaces that reward exploration.",
+      },
+      {
+        id: "interactive-media-2",
+        url: "/portfolio-website-thumbnail-v2.mp4",
+        label: "INTERACTIVE MEDIA",
+        thumbnailSrc: "/portfolio-website-thumbnail-v2-poster.jpg",
+        selectorTitle: "INTERACTIVE MEDIA",
+        selectorSubtitle: "Games projects and web experiences",
+        detailOverview:
+          "Playable and interactive work?from GameMaker prototypes to motion-forward web UI?where feel, pacing, and user flow are the design problem.",
+        detailRole: "Design, implementation, and iteration across game and front-end builds.",
+        detailTools: ["GameMaker Studio 2", "React", "Vite", "TypeScript", "Framer Motion"],
+        detailImpact: "Shippable slices with tight feedback loops and interfaces that reward exploration.",
+      },
+      {
+        id: "interactive-media-3",
+        url: "/portfolio-website-thumbnail-v2.mp4",
+        label: "INTERACTIVE MEDIA",
+        thumbnailSrc: "/portfolio-website-thumbnail-v2-poster.jpg",
+        selectorTitle: "INTERACTIVE MEDIA",
+        selectorSubtitle: "Games projects and web experiences",
+        detailOverview:
+          "Playable and interactive work?from GameMaker prototypes to motion-forward web UI?where feel, pacing, and user flow are the design problem.",
+        detailRole: "Design, implementation, and iteration across game and front-end builds.",
+        detailTools: ["GameMaker Studio 2", "React", "Vite", "TypeScript", "Framer Motion"],
+        detailImpact: "Shippable slices with tight feedback loops and interfaces that reward exploration.",
+      },
+      {
+        id: "interactive-media-4",
+        url: "/portfolio-website-thumbnail-v2.mp4",
+        label: "INTERACTIVE MEDIA",
+        thumbnailSrc: "/portfolio-website-thumbnail-v2-poster.jpg",
+        selectorTitle: "INTERACTIVE MEDIA",
+        selectorSubtitle: "Games projects and web experiences",
+        detailOverview:
+          "Playable and interactive work?from GameMaker prototypes to motion-forward web UI?where feel, pacing, and user flow are the design problem.",
+        detailRole: "Design, implementation, and iteration across game and front-end builds.",
+        detailTools: ["GameMaker Studio 2", "React", "Vite", "TypeScript", "Framer Motion"],
+        detailImpact: "Shippable slices with tight feedback loops and interfaces that reward exploration.",
+      },
+    ],
   },
   {
     id: "project-slaywire",
@@ -2535,9 +2577,32 @@ const PROJECT_CARD_AUTOPLAY_DELAY_MS = Math.round(360 / SHOWCASE_TIME_DIV);
 const PROJECT_CAROUSEL_AUTO_ADVANCE_MS = 2500;
 const PROJECTS_CAROUSEL_ENTRANCE_FADE_S = 0.34;
 const ENABLE_PROJECT_CARD_VIDEO_AUTOPLAY = false;
-/** Five-up project row — single-line card titles (no wrap). */
+/** Project row — single-line card titles (no wrap); optional `titlePrefix` stacks above without shifting tagline. */
 const PROJECT_CARD_TITLE_CLASS =
   "project-card-title font-display tracking-tight text-white opacity-100 motion-safe:transition-[opacity,color] motion-safe:duration-300 motion-safe:ease-out group-hover:text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]";
+
+const showcaseProjectDisplayTitle = (card: Pick<ShowcaseProjectCard, "title" | "titlePrefix">) =>
+  card.titlePrefix ? `${card.titlePrefix} ${card.title}` : card.title;
+
+function ShowcaseStackedTitle({
+  title,
+  titlePrefix,
+  className = "",
+}: {
+  title: string;
+  titlePrefix?: string;
+  className?: string;
+}) {
+  if (!titlePrefix) {
+    return <span className={className}>{title}</span>;
+  }
+  return (
+    <span className={`relative ${className}`.trim()}>
+      <span className="showcase-stacked-title-prefix">{titlePrefix}</span>
+      <span className="showcase-stacked-title-main">{title}</span>
+    </span>
+  );
+}
 const SHOWCASE_EASE = [0.16, 1, 0.3, 1] as const;
 /** Fade when swapping SHOWCASE carousel ? Supporting & archive in place */
 const SHOWCASE_SUBROUTE_FADE_S = DUR.fast;
@@ -2667,7 +2732,7 @@ const ProjectsStack = ({
     <div className="-mt-1 sm:-mt-1.5 flex w-full min-w-0 flex-col justify-center overflow-x-visible overflow-y-visible pt-2 pb-0 sm:pt-3">
       <div className="w-full min-w-0">
         <div className="min-w-0 max-w-full w-full overflow-hidden [--slide-gap:0.875rem] sm:[--slide-gap:1.25rem] lg:[--slide-gap:1rem] xl:[--slide-gap:1.125rem]">
-          <div className="grid w-full min-w-0 grid-cols-5 gap-[var(--slide-gap)]">
+          <div className="grid w-full min-w-0 grid-cols-4 gap-[var(--slide-gap)]">
             {PROJECT_CARDS.map((card, index) => (
               <div key={card.id} className="min-w-0">
                 <motion.button
@@ -2710,7 +2775,7 @@ const ProjectsStack = ({
                               loop
                               playsInline
                               preload="metadata"
-                              aria-label={`${card.title} preview`}
+                              aria-label={`${showcaseProjectDisplayTitle(card)} preview`}
                               className="block h-full w-full object-cover"
                               style={{ objectPosition: card.focalPoint ?? "50% 50%" }}
                               onLoadedMetadata={() => markCardMediaReady(index)}
@@ -2722,7 +2787,7 @@ const ProjectsStack = ({
                             <div className="h-full w-full will-change-transform">
                               <img
                                 src={card.thumbnail}
-                                alt={`${card.title} thumbnail`}
+                                alt={`${showcaseProjectDisplayTitle(card)} thumbnail`}
                                 loading="eager"
                                 decoding="async"
                                 fetchPriority="high"
@@ -2742,9 +2807,11 @@ const ProjectsStack = ({
                           }
                         />
                         <div className="absolute inset-x-0 bottom-0 px-2.5 py-3.5 sm:px-3 sm:py-4">
-                          <span className={PROJECT_CARD_TITLE_CLASS}>
-                            {card.title}
-                          </span>
+                          <ShowcaseStackedTitle
+                            title={card.title}
+                            titlePrefix={card.titlePrefix}
+                            className={PROJECT_CARD_TITLE_CLASS}
+                          />
                           <span className="font-body mt-3 block w-full max-w-full text-left text-xs sm:text-[0.8125rem] md:text-sm lg:text-[0.9375rem] text-mono-2 leading-relaxed line-clamp-2 border-t border-white/15 pt-3 sm:pt-3.5 transition-colors group-hover:text-white/90">
                             {card.tagline}
                           </span>
@@ -2753,9 +2820,11 @@ const ProjectsStack = ({
                     ) : null}
                     {!card.thumbnail && !card.thumbnailVideo ? (
                       <div className="absolute inset-x-0 bottom-0 px-2.5 py-3.5 sm:px-3 sm:py-4">
-                        <span className={PROJECT_CARD_TITLE_CLASS}>
-                          {card.title}
-                        </span>
+                        <ShowcaseStackedTitle
+                          title={card.title}
+                          titlePrefix={card.titlePrefix}
+                          className={PROJECT_CARD_TITLE_CLASS}
+                        />
                         <span className="font-body mt-3 block w-full max-w-full text-left text-xs sm:text-[0.8125rem] md:text-sm lg:text-[0.9375rem] text-mono-2 leading-relaxed line-clamp-2 border-t border-white/15 pt-3 sm:pt-3.5 transition-colors group-hover:text-white/90">
                           {card.tagline}
                         </span>
@@ -3305,7 +3374,7 @@ const DetailCardMedia = ({ card }: { card: ShowcaseProjectCard }) => (
     ) : card.thumbnail ? (
       <img
         src={card.thumbnail}
-        alt={card.title}
+        alt={showcaseProjectDisplayTitle(card)}
         className="h-full w-full object-cover"
         style={{ objectPosition: card.focalPoint ?? "50% 50%" }}
       />
@@ -3370,7 +3439,7 @@ const ShowcaseVisualDesignDetail = ({
           Project details
         </p>
         <h3 className="m-0 w-full font-display text-2xl md:text-3xl leading-[1.1] tracking-[-0.015em] text-white">
-          {card.title}
+          <ShowcaseStackedTitle title={card.title} titlePrefix={card.titlePrefix} />
         </h3>
         <p className="m-0 w-full pl-[2px] font-body text-sm sm:text-base leading-snug text-mono-2">
           {card.tagline}
@@ -3836,9 +3905,9 @@ const PalaceProjects = ({
   const [carouselAutoAdvanceReady, setCarouselAutoAdvanceReady] = useState(reduceMotion);
   const activeCard = activeProjectId ? PROJECT_CARDS.find((c) => c.id === activeProjectId) ?? null : null;
   const illustrationsDetailNoHero = Boolean(activeCard?.detailGallery?.length);
-  const videoEditingDetailNoMainCard = activeCard?.id === "project-video-editing";
+  const videoEditingDetailNoMainCard =
+    activeCard?.id === "project-video-editing" || activeCard?.id === "project-interactive-media";
   const noMorphProjectIds = new Set([
-    "project-motion-design",
     "project-interactive-media",
     "project-slaywire",
   ]);
@@ -4336,7 +4405,7 @@ const PalaceProjects = ({
                     Project details
                   </p>
                   <h3 className="m-0 w-full font-display text-2xl md:text-3xl leading-[1.1] tracking-[-0.015em] text-white">
-                    {activeCard.title}
+                    <ShowcaseStackedTitle title={activeCard.title} titlePrefix={activeCard.titlePrefix} />
                   </h3>
                   <p className="m-0 w-full pl-[2px] font-body text-sm sm:text-base leading-snug text-mono-2">
                     {activeCard.tagline}
