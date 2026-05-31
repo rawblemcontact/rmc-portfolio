@@ -811,7 +811,7 @@ const BackToMenuButton = ({
             onClick={onBack}
             size="icon"
             aria-label={ariaLabel}
-            className="h-14 w-14 min-h-0 min-w-0 rounded-full border-[3px] border-black bg-black p-0 text-white shadow-xl transition-colors duration-200 hover:bg-white hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black [&_svg]:!size-[22px]"
+            className="h-12 w-12 sm:h-14 sm:w-14 min-h-0 min-w-0 rounded-full border-[3px] border-black bg-black p-0 text-white shadow-xl transition-colors duration-200 hover:bg-white hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black [&_svg]:!size-[19px] sm:[&_svg]:!size-[22px]"
           >
             <ArrowLeft size={22} strokeWidth={2} aria-hidden />
           </Button>
@@ -1765,6 +1765,24 @@ const SideNavOverlay = ({
   onNavigate: (id: string) => void;
 }) => {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mediaQuery = window.matchMedia("(max-width: 639.98px)");
+    const syncViewport = () => setIsMobileViewport(mediaQuery.matches);
+    syncViewport();
+
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", syncViewport);
+      return () => mediaQuery.removeEventListener("change", syncViewport);
+    }
+
+    mediaQuery.addListener(syncViewport);
+    return () => mediaQuery.removeListener(syncViewport);
+  }, []);
+
+  const sideNavClosedX = isMobileViewport ? "calc(100% + 2px)" : "100%";
 
   useEffect(() => {
     if (!open) return;
@@ -1798,10 +1816,10 @@ const SideNavOverlay = ({
             aria-label="Navigation"
             role="dialog"
             aria-modal="true"
-            className="side-nav-panel profile-card-surface fixed inset-y-0 right-0 z-[60] w-full max-w-[380px] sm:max-w-[400px] p-5 sm:p-6 shadow-2xl flex flex-col"
-            initial={{ x: "100%" }}
+            className="side-nav-panel profile-card-surface fixed inset-y-0 right-0 z-[60] w-full max-w-none sm:max-w-[400px] p-5 sm:p-6 shadow-2xl flex flex-col"
+            initial={{ x: sideNavClosedX }}
             animate={{ x: 0 }}
-            exit={{ x: "100%" }}
+            exit={{ x: sideNavClosedX }}
             transition={SPRING.panel}
           >
             <div className="flex items-center justify-between mb-6">
@@ -2011,9 +2029,9 @@ const PhantomProfile = () => {
   }, [profileLeftInView]);
 
   return (
-    <section id="profile" className={`relative min-h-screen w-full overflow-x-hidden bg-black text-white scroll-mt-6 ${SLIDE}`}>
+    <section id="profile" className={`relative min-h-screen w-full overflow-x-hidden max-sm:overflow-y-auto bg-black text-white scroll-mt-6 ${SLIDE}`}>
       <SectionGridOverlay />
-      <motion.div className={`${PROFILE_SECTION_CONTAINER} pt-[24vh] lg:pt-0 pb-16 lg:pb-12 lg:min-h-screen lg:flex lg:items-center`}>
+      <motion.div className={`${PROFILE_SECTION_CONTAINER} pt-[24vh] max-sm:pt-[max(5.5rem,env(safe-area-inset-top,0px))] lg:pt-0 pb-16 max-sm:pb-10 lg:pb-12 lg:min-h-screen lg:flex lg:items-center`}>
         <motion.div className={PROFILE_LAYOUT_ROW}>
 
           <motion.div
@@ -2023,7 +2041,7 @@ const PhantomProfile = () => {
             viewport={{ once: false, amount: 0.2 }}
             transition={{ duration: 0.52, ease: [0.16, 1, 0.3, 1] }}
             onAnimationComplete={() => rawblemInView && setRawblemFloatReady(true)}
-            className={PROFILE_MASCOT_COLUMN}
+            className={`${PROFILE_MASCOT_COLUMN} max-sm:hidden`}
           >
             <div className={PROFILE_MASCOT_FRAME}>
               <motion.img
@@ -2068,18 +2086,28 @@ const PhantomProfile = () => {
                />
             </div>
             <motion.div
-              className={`${PROFILE_METADATA_PILL_GAP} w-full`}
+              className={`profile-card-surface relative ${PROFILE_METADATA_PILL_GAP} w-full rounded-[0_1rem] px-4 py-4 sm:px-5 sm:py-5`}
               initial={{ x: -24, opacity: 0 }}
               animate={{ x: overlayRevealed ? 0 : -24, opacity: overlayRevealed ? 1 : 0 }}
               transition={{ duration: BUTTON_FADE_DURATION_MS / 1000, delay: overlayRevealed ? BUTTONS_DELAY_AFTER_SUMMARY_MS / 1000 : 0, ease: [0.16, 1, 0.3, 1] }}
             >
-              <p
-                className={`${PROFILE_CARD_INLINE_LABEL_CLASS} ml-[2px] max-sm:whitespace-normal sm:whitespace-nowrap sm:overflow-x-auto sm:overflow-y-visible sm:no-scrollbar`}
-                style={{ color: NAV_SUBHEAD_GRAY }}
-              >
-                Victoria, BC <span className="mx-0.5 sm:mx-1" aria-hidden>•</span> BA WRITING{" "}
-                <span className="mx-0.5 sm:mx-1" aria-hidden>•</span> DIGITAL MEDIA
-              </p>
+              <div className="flex w-full min-w-0 items-center gap-3 sm:gap-4">
+                <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full border border-white/[0.16] bg-black/70 sm:h-16 sm:w-16">
+                  <img src="/rawblem3.svg" alt="Profile picture" className="h-full w-full object-cover object-center" />
+                </div>
+                <div className="h-12 w-px shrink-0 bg-white/[0.1] sm:h-14" aria-hidden />
+                <div className="min-w-0 flex-1 space-y-1 text-left">
+                  <p className={`${PROFILE_CARD_INLINE_LABEL_CLASS} truncate text-[0.68rem] sm:text-xs tracking-[0.06em]`} style={{ color: NAV_SUBHEAD_GRAY }}>
+                    ROBBIE MCLAUGHLIN
+                  </p>
+                  <p className="font-display truncate text-base leading-tight tracking-[-0.01em] text-white sm:text-lg">
+                    WRITING, DIGITAL CONTENT, &amp; SOCIAL MEDIA
+                  </p>
+                  <p className={`${PROFILE_CARD_INLINE_LABEL_CLASS} truncate text-[0.68rem] sm:text-xs tracking-[0.06em]`} style={{ color: NAV_SUBHEAD_GRAY }}>
+                    B.A. WRITING
+                  </p>
+                </div>
+              </div>
             </motion.div>
             <motion.div
               className={`profile-card-surface relative ${PROFILE_METADATA_PILL_GAP} w-full rounded-[0_1rem] px-4 py-4 sm:px-5 sm:py-5`}
@@ -2651,13 +2679,13 @@ const SECTION_MAIN_HEADER_TITLE_CLASS =
 const SECTION_SKILLS_MAIN_HEADER_TITLE_CLASS =
   "skills-main-header-chrome mt-1 sm:mt-1.5 shrink-0";
 /** `#profile` shell — container + centered row (left column + gap + mascot). */
-const PROFILE_SECTION_CONTAINER = "container mx-auto px-4 sm:px-6 relative z-20";
+const PROFILE_SECTION_CONTAINER = "container mx-auto px-4 max-sm:px-3 sm:px-6 relative z-20";
 const PROFILE_LAYOUT_ROW =
-  "flex w-full flex-col lg:flex-row lg:justify-center gap-20 lg:gap-20 xl:gap-36 2xl:gap-[min(14rem,12vw)] items-center";
+  "flex w-full flex-col max-sm:gap-8 lg:flex-row lg:justify-center gap-20 lg:gap-20 xl:gap-36 2xl:gap-[min(14rem,12vw)] items-center";
 const PROFILE_LEFT_COLUMN =
-  "min-w-0 lg:order-1 w-full lg:w-auto lg:max-w-[38rem] xl:max-w-[40rem] 2xl:max-w-[44rem] lg:shrink-0 lg:mt-0";
+  "min-w-0 max-sm:order-1 max-sm:w-full lg:order-1 w-full lg:w-auto lg:max-w-[38rem] xl:max-w-[40rem] 2xl:max-w-[44rem] lg:shrink-0 lg:mt-0";
 const PROFILE_MASCOT_COLUMN =
-  "lg:order-2 w-full lg:w-auto lg:min-w-0 lg:shrink-0 flex justify-center translate-x-2 max-lg:-mt-14 sm:max-lg:-mt-16 max-lg:-translate-y-2 lg:translate-y-0 lg:mt-0";
+  "lg:order-2 w-full lg:w-auto lg:min-w-0 lg:shrink-0 flex justify-center translate-x-2 max-sm:order-2 max-sm:mt-2 max-sm:translate-x-0 sm:max-lg:-mt-16 sm:max-lg:-translate-y-2 lg:translate-y-0 lg:mt-0";
 const PROFILE_MASCOT_FRAME =
   "w-full max-w-[160px] sm:max-w-[220px] md:max-w-[300px] xl:max-w-[312px] 2xl:max-w-[348px] aspect-square flex items-center justify-center";
 /** Total row width (left + gap + mascot) — centers SKILLS with the same L/R viewport gutters as PROFILE. */
@@ -2731,8 +2759,8 @@ const ProjectsStack = ({
   return (
     <div className="-mt-1 sm:-mt-1.5 flex w-full min-w-0 flex-col justify-center overflow-x-visible overflow-y-visible pt-2 pb-0 sm:pt-3">
       <div className="w-full min-w-0">
-        <div className="min-w-0 max-w-full w-full overflow-hidden [--slide-gap:0.875rem] sm:[--slide-gap:1.25rem] lg:[--slide-gap:1rem] xl:[--slide-gap:1.125rem]">
-          <div className="grid w-full min-w-0 grid-cols-4 gap-[var(--slide-gap)]">
+        <div className="min-w-0 max-w-full w-full overflow-hidden [--slide-gap:0.875rem] sm:[--slide-gap:1.25rem] lg:[--slide-gap:1rem] xl:[--slide-gap:1.125rem] max-sm:[--slide-gap:0.625rem]">
+          <div className="grid w-full min-w-0 grid-cols-2 sm:grid-cols-4 gap-[var(--slide-gap)]">
             {PROJECT_CARDS.map((card, index) => (
               <div key={card.id} className="min-w-0">
                 <motion.button
@@ -3869,7 +3897,7 @@ function ShowcaseWritingFeaturedPanel({
         </div>
         {item.description ? (
           <p
-            className="line-clamp-3 min-w-0 font-body text-sm leading-relaxed text-mono-2/70 sm:text-[0.9375rem] sm:leading-relaxed md:text-base"
+            className="line-clamp-4 min-w-0 font-body text-sm leading-relaxed text-mono-2/70 sm:line-clamp-3 sm:text-[0.9375rem] sm:leading-relaxed md:text-base"
             title={item.description}
           >
             {item.description}
@@ -4826,8 +4854,14 @@ const ConfidantExperience = ({
       const incomingHeader = activePanelEl.querySelector<HTMLElement>(".panel-header");
 
       const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const isTabletOrMobileViewport = window.matchMedia("(max-width: 1024px)").matches;
+      const isSafariBrowser =
+        typeof navigator !== "undefined" &&
+        /^((?!chrome|chromium|android|crios|fxios).)*safari/i.test(navigator.userAgent);
       if (
         reduceMotion ||
+        isTabletOrMobileViewport ||
+        isSafariBrowser ||
         !tabsShellEl ||
         !outgoingInner ||
         !incomingInner
@@ -7288,11 +7322,11 @@ const SkillArsenal = ({
   return (
     <section
       id="skills"
-      className={`no-scrollbar relative flex min-h-full w-full min-w-0 flex-col justify-start overflow-x-hidden overflow-y-visible bg-black text-white scroll-mt-6 ${SECTION_MAIN_HEADER_INSET} pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:pb-8 md:pb-10`}
+      className={`no-scrollbar relative flex min-h-full w-full min-w-0 flex-col justify-start overflow-x-hidden overflow-y-visible bg-black text-white scroll-mt-6 max-md:min-h-max ${SECTION_MAIN_HEADER_INSET} pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:pb-8 md:pb-10`}
     >
       <SectionGridOverlay />
       <motion.div
-        className="container relative z-10 mx-auto flex min-h-0 min-w-0 w-full max-w-full flex-1 flex-col justify-start px-4 sm:px-6"
+        className="container relative z-10 mx-auto flex min-h-0 min-w-0 w-full max-w-full flex-1 max-md:flex-none flex-col justify-start px-4 sm:px-6"
         style={
           SKILLS_LAYOUT.sectionOffsetRem !== 0
             ? { transform: `translateY(${SKILLS_LAYOUT.sectionOffsetRem}rem)` }
@@ -7300,7 +7334,7 @@ const SkillArsenal = ({
         }
       >
         <motion.div
-          className={`${PROFILE_VIEWPORT_CONTENT_MAX} skills-profile-shell relative z-[2] mx-auto flex min-h-0 w-full flex-1 flex-col justify-start`}
+          className={`${PROFILE_VIEWPORT_CONTENT_MAX} skills-profile-shell relative z-[2] mx-auto flex min-h-0 w-full flex-1 max-md:flex-none flex-col justify-start`}
         >
           <SkillsMainSectionHeader
             revealDelay={skillsBulletsRevealDelay}
@@ -7308,8 +7342,8 @@ const SkillArsenal = ({
             reduceMotion={rm}
           />
 
-          <motion.div className="skills-page-layout flex min-h-0 w-full min-w-0 flex-1 flex-col justify-start">
-            <motion.div className="skills-page-grid flex min-h-0 w-full flex-1 flex-col justify-start">
+          <motion.div className="skills-page-layout flex min-h-0 w-full min-w-0 flex-1 max-md:flex-none flex-col justify-start">
+            <motion.div className="skills-page-grid flex min-h-0 w-full flex-1 max-md:flex-none flex-col justify-start">
 
               {/* Cards first, then CORE rail header */}
               <div className="skills-page-band skills-page-band--core w-full min-w-0">
@@ -8005,7 +8039,7 @@ export default function Home() {
               onClick={() => setIsResumeMode(!isResumeMode)}
               size="icon"
               aria-label={isResumeMode ? "Exit resume mode" : "Enter resume mode"}
-              className={`shadow-xl border-[3px] transition-colors duration-200 font-display rounded-full h-14 w-14 min-h-0 min-w-0 p-0 flex items-center justify-center [&_svg]:!size-5 ${
+              className={`shadow-xl border-[3px] transition-colors duration-200 font-display rounded-full h-12 w-12 sm:h-14 sm:w-14 min-h-0 min-w-0 p-0 flex items-center justify-center [&_svg]:!size-[18px] sm:[&_svg]:!size-5 ${
                 isResumeMode
                   ? "bg-black text-white border-black hover:bg-zinc-800"
                   : "bg-black text-white border-black hover:bg-white hover:text-black"
@@ -8023,7 +8057,7 @@ export default function Home() {
               onClick={() => setIsSideNavOpen(true)}
               size="icon"
               aria-label="Open navigation menu"
-              className="shadow-xl border-[3px] transition-colors duration-200 font-display rounded-full h-14 w-14 min-h-0 min-w-0 p-0 flex items-center justify-center bg-black text-white border-black hover:bg-white hover:text-black [&_svg]:!size-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+              className="shadow-xl border-[3px] transition-colors duration-200 font-display rounded-full h-12 w-12 sm:h-14 sm:w-14 min-h-0 min-w-0 p-0 flex items-center justify-center bg-black text-white border-black hover:bg-white hover:text-black [&_svg]:!size-[18px] sm:[&_svg]:!size-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
             >
               <Menu size={20} aria-hidden />
             </Button>
@@ -8042,7 +8076,7 @@ export default function Home() {
       {/* Back to menu ? above panels so it stays clickable when viewing a section */}
       {!isResumeMode && (
         <BackToMenuButton
-          show={currentSection !== null}
+          show={currentSection !== null && !isSideNavOpen}
           fadeOut={navButtonsFaded}
           ariaLabel={
             currentSection === "projects" && activeShowcaseProjectId
@@ -8264,8 +8298,10 @@ export default function Home() {
                     ? `relative z-10 flex w-full min-w-0 flex-col overflow-x-hidden overflow-y-visible ${
                         activeShowcaseProjectId ? "min-h-min shrink-0" : "min-h-0 flex-1"
                       }`
-                    : currentSection === "skills"
+                    : currentSection === "profile"
                       ? "flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-visible"
+                    : currentSection === "skills"
+                      ? "flex min-h-full w-full min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-visible"
                       : "flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden"
                 }
               >
@@ -8340,7 +8376,7 @@ export default function Home() {
                     <ConfidantExperience panelSettled={panelSettled} reduceMotion={reduceMotion} />
                   ) : (
                     <motion.div
-                      className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col"
+                      className="flex min-h-full w-full min-w-0 flex-1 flex-col"
                       animate={{
                         opacity: experienceContentFade === "hide-instant" ? 0 : 1,
                       }}
@@ -8366,7 +8402,7 @@ export default function Home() {
                     <SkillArsenal panelSettled={panelSettled} reduceMotion={reduceMotion} />
                   ) : (
                     <motion.div
-                      className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col"
+                      className="flex min-h-full w-full min-w-0 flex-1 flex-col"
                       animate={{
                         opacity: skillsContentFade === "hide-instant" ? 0 : 1,
                       }}

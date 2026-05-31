@@ -259,7 +259,7 @@
 
   @media (pointer: coarse) {
     .portfolio-grid-overlay {
-      opacity: 0.048;
+      opacity: 0.07;
     }
   }
 
@@ -269,7 +269,7 @@
    */
   @media (min-width: 744px) and (max-width: 1366px) and (any-pointer: coarse) {
     .portfolio-grid-overlay {
-      opacity: 0.17;
+      opacity: 0.153;
     }
   }
 
@@ -318,6 +318,11 @@
   }
 
   #profile .profile-card-surface > p.font-body {
+    font-size: clamp(0.875rem, calc(0.35vw + 0.78rem), 1rem);
+    line-height: 1.45;
+  }
+
+  #profile .profile-card-surface > ul.font-body {
     font-size: clamp(0.875rem, calc(0.35vw + 0.78rem), 1rem);
     line-height: 1.45;
   }
@@ -1212,6 +1217,14 @@
       0 0 1px rgba(0, 0, 0, 0.85),
       0 1px 3px rgba(0, 0, 0, 0.72),
       0 4px 14px rgba(0, 0, 0, 0.55);
+  }
+
+  @media (max-width: 639.98px) {
+    #projects .project-card-title {
+      white-space: normal;
+      line-height: 1.2;
+      font-size: clamp(0.75rem, 6.2cqi, 0.95rem);
+    }
   }
 
   #projects .project-card-title .showcase-stacked-title-main {
@@ -2179,73 +2192,211 @@
     }
   }
 
-  /* Responsive */
-  @media (max-width: 900px) {
+  /* Responsive (mobile only) */
+  @media (max-width: 768px) {
     #experience .main-container {
+      display: flex;
       flex-direction: column;
       min-height: auto;
       height: auto;
       max-height: none;
+      overflow: visible;
+      background: transparent;
+      background-image: none;
+      filter: none;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
     }
 
-    #experience .tabs-nav {
+    #experience .career-overview-rail {
       width: 100%;
-      min-width: auto;
-      flex-direction: row;
-      overflow-x: auto;
-      padding: 14px;
-      border: 0;
-      border-bottom: 1px solid var(--portfolio-stroke-inner);
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
     }
 
     #experience .nav-header {
+      display: flex;
+      order: 1;
+      padding: 0 0 12px;
+      margin: 0 0 10px;
+    }
+
+    #experience .career-nav-section-divider {
+      left: 0;
+      right: 0;
+    }
+
+    #experience .tabs-nav {
+      order: 2;
+      width: 100%;
+      min-width: 0;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      gap: 8px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 0 0 2px;
+      border: 0;
+      border-bottom: 0;
+      background: transparent;
+      background-image: none;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+
+    #experience .tabs-nav::-webkit-scrollbar {
       display: none;
     }
 
+    #experience .tabs-nav .tab-btn,
     #experience .tab-btn {
-      flex-direction: column;
-      min-width: 100px;
-      padding: 12px;
-      text-align: center;
+      flex: 0 0 auto;
+      min-width: max-content;
+      width: auto;
+      padding: 10px 12px;
+      text-align: left;
+      scroll-snap-align: start;
+      transform: none !important;
     }
 
-    #experience .tab-btn::after {
-      top: auto;
-      bottom: 0;
-      left: 50%;
-      transform: translateX(-50%) scaleX(0);
-      width: 60%;
-      height: 3px;
-      border-radius: 4px 4px 0 0;
-    }
-
-    #experience .tab-btn.active::after {
-      transform: translateX(-50%) scaleX(1);
-    }
-
-    #experience .tab-text {
-      text-align: center;
-    }
-
+    #experience .tab-title,
     #experience .tab-subtitle {
-      display: none;
+      white-space: nowrap;
     }
 
     #experience .tabs-content {
-      padding: 22px;
+      order: 3;
+      margin-left: 0;
+      width: 100%;
+      min-width: 0;
+      padding: 20px 0 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      overflow: visible;
+      height: auto !important;
+    }
+
+    #experience .tabs-content::before {
+      display: none;
+    }
+
+    #experience .career-tabs-content-inner {
+      background: transparent;
+      background-image: none;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+      border-radius: 0;
+    }
+
+    /* Mobile: keep active card content visible; disable desktop tab fade choreography. */
+    #experience .career-tabs-content-inner.career-tabs-dim,
+    #experience .panel-header.career-tabs-dim {
+      opacity: 1 !important;
+      pointer-events: auto !important;
     }
 
     #experience .tab-panel {
       position: relative;
       inset: auto;
       display: none;
+      opacity: 1;
+      visibility: visible;
+      transform: none;
+      transition: none;
       overflow: visible;
       padding-top: 0;
       padding-right: 0;
     }
 
     #experience .tab-panel.active {
-      display: block;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #experience .panel-header {
+      width: 100%;
+      max-width: 100%;
+      row-gap: 6px;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+    }
+
+    #experience .panel-title-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: 8px 12px;
+      min-height: 0;
+    }
+
+    #experience .panel-title {
+      max-width: 100%;
+      font-size: clamp(1.36rem, 5.4vw, 1.62rem);
+      line-height: 1.1;
+      text-wrap: pretty;
+      margin-bottom: 0;
+    }
+
+    #experience .panel-period {
+      margin-left: 0;
+      text-align: left;
+      white-space: nowrap;
+      font-size: clamp(1.12rem, 4.4vw, 1.28rem);
+      line-height: 1.12;
+    }
+
+    #experience .panel-description {
+      min-height: 0;
+      font-size: clamp(0.9rem, 3.45vw, 0.98rem);
+      line-height: 1.34;
+      text-wrap: pretty;
+    }
+
+    #experience .experience-skill-tags {
+      gap: 6px;
+    }
+
+    #experience .experience-skill-tag {
+      min-height: 20px;
+      padding: 3px 8px;
+      font-size: 0.62rem;
+      letter-spacing: 0.085em;
+    }
+
+    #experience .panel-content {
+      width: 100%;
+      max-width: 100%;
+      gap: 0;
+    }
+
+    #experience .content-card {
+      width: 100%;
+      padding: 14px;
+      border-radius: 11px;
+    }
+
+    #experience .feature-list {
+      gap: 10px;
+    }
+
+    #experience .feature-list li {
+      gap: 10px;
+      font-size: clamp(0.9rem, 3.35vw, 0.98rem);
+      line-height: 1.38;
+    }
+
+    #experience .feature-list li::before {
+      width: 6px;
+      height: 6px;
+      margin-top: 0.52em;
     }
 
     #experience .stats-grid,
@@ -2962,6 +3113,36 @@
     .video-editing-works-arrow--next:hover .video-editing-works-arrow-glyph,
     .video-editing-works-arrow--next:active .video-editing-works-arrow-glyph {
       transform: none;
+    }
+  }
+
+  /* FEATURED WRITING tabs (mobile): subtle arrows indicating horizontal scroll. */
+  @keyframes featured-tabs-scroll-hint-pulse {
+    0%,
+    100% {
+      opacity: 0.42;
+    }
+    50% {
+      opacity: 0.95;
+    }
+  }
+  .featured-tabs-scroll-hint {
+    animation: featured-tabs-scroll-hint-pulse 1.85s ease-in-out infinite;
+  }
+  .featured-tabs-mobile-nav-btn {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    pointer-events: auto;
+  }
+  .featured-tabs-mobile-nav-btn:disabled .featured-tabs-scroll-hint {
+    animation: none;
+    opacity: 0.42;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .featured-tabs-scroll-hint {
+      animation: none;
+      opacity: 0.78;
     }
   }
 

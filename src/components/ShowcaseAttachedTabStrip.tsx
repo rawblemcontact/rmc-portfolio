@@ -1,4 +1,6 @@
-import React, { useCallback, useLayoutEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 
 export type ShowcaseTabId = "tab-1" | "tab-2" | "tab-3" | "tab-4" | "tab-5" | "tab-6";
 
@@ -84,10 +86,23 @@ export function ShowcaseAttachedTabStrip({
   const tabListRef = useRef<HTMLDivElement>(null);
   const bodyPadRef = useRef<HTMLDivElement>(null);
   const [tabGeom, setTabGeom] = useState({ ml: 0, w: 0 });
+  const [bodyContentWidth, setBodyContentWidth] = useState(0);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const [mobileSwitchDir, setMobileSwitchDir] = useState<1 | -1>(1);
+  const mobileSwipeStartRef = useRef<{ x: number; y: number } | null>(null);
+  const activeTabIndex = TAB_ORDER.indexOf(activeId);
+  const canSelectPrev = activeTabIndex > 0;
+  const canSelectNext = activeTabIndex >= 0 && activeTabIndex < TAB_ORDER.length - 1;
 
   const syncFit = useCallback(() => {
     const el = bodyPadRef.current;
     if (!el) return;
+    const br = el.getBoundingClientRect();
+    const cs = getComputedStyle(el);
+    const pl = parseFloat(cs.paddingLeft) || 0;
+    const pr = parseFloat(cs.paddingRight) || 0;
+    const contentWidth = Math.max(0, br.width - pl - pr);
+    setBodyContentWidth((prev) => (Math.abs(prev - contentWidth) < 0.5 ? prev : contentWidth));
     const next = measureTabGeometryForLayout(
       el,
       tabListRef.current,
@@ -116,10 +131,77 @@ export function ShowcaseAttachedTabStrip({
     };
   }, [syncFit]);
 
-  const tabInsetLeft = tabGeom.ml;
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 639.98px)");
+    const apply = () => setIsMobileViewport(mq.matches);
+    apply();
+    if (typeof mq.addEventListener === "function") {
+      mq.addEventListener("change", apply);
+      return () => mq.removeEventListener("change", apply);
+    }
+    mq.addListener(apply);
+    return () => mq.removeListener(apply);
+  }, []);
+
+  const handleSelectPrevTab = useCallback(() => {
+    if (!canSelectPrev) return;
+    setMobileSwitchDir(-1);
+    const previous = TAB_ORDER[activeTabIndex - 1];
+    if (previous) onTabChange(previous);
+  }, [activeTabIndex, canSelectPrev, onTabChange]);
+
+  const handleSelectNextTab = useCallback(() => {
+    if (!canSelectNext) return;
+    setMobileSwitchDir(1);
+    const next = TAB_ORDER[activeTabIndex + 1];
+    if (next) onTabChange(next);
+  }, [activeTabIndex, canSelectNext, onTabChange]);
+
+  const handleMobileSelectorTouchStart = useCallback(
+    (event: React.TouchEvent<HTMLDivElement>) => {
+      const touch = event.touches[0];
+      if (!touch) return;
+      mobileSwipeStartRef.current = { x: touch.clientX, y: touch.clientY };
+    },
+    [],
+  );
+
+  const handleMobileSelectorTouchCancel = useCallback(() => {
+    mobileSwipeStartRef.current = null;
+  }, []);
+
+  const handleMobileSelectorTouchEnd = useCallback(
+    (event: React.TouchEvent<HTMLDivElement>) => {
+      const start = mobileSwipeStartRef.current;
+      mobileSwipeStartRef.current = null;
+      if (!start) return;
+      const touch = event.changedTouches[0];
+      if (!touch) return;
+
+      const dx = touch.clientX - start.x;
+      const dy = touch.clientY - start.y;
+      const absDx = Math.abs(dx);
+      const absDy = Math.abs(dy);
+
+      // Horizontal-intent swipe only; ignore short drags and vertical pans.
+      if (absDx < 38 || absDx < absDy * 1.15) return;
+      if (dx < 0) {
+        handleSelectNextTab();
+      } else {
+        handleSelectPrevTab();
+      }
+    },
+    [handleSelectNextTab, handleSelectPrevTab],
+  );
+
+  const tabInsetLeft = isMobileViewport ? 0 : tabGeom.ml;
   const previewGutterPx = FEATURED_WRITING_PREVIEW_GUTTER_PX;
   const previewColumnWidthPx =
-    tabGeom.w > 0 ? Math.floor(tabGeom.w) : 128;
+    isMobileViewport
+      ? Math.max(128, Math.floor(bodyContentWidth || tabGeom.w || 128))
+      : tabGeom.w > 0
+        ? Math.floor(tabGeom.w)
+        : 128;
   const previewWidthPx = Math.max(
     48,
     previewColumnWidthPx - previewGutterPx * 2,
@@ -142,13 +224,91 @@ export function ShowcaseAttachedTabStrip({
         ].join(" ")}
       >
         <div className="featured-writing-folder relative flex min-w-0 w-full flex-col">
-          <div className="relative flex h-[3.5rem] min-h-[3.5rem] shrink-0 flex-col gap-0 overflow-visible pt-3 sm:h-16 sm:min-h-16 sm:pt-4">
+          <div className="relative flex h-[3.5rem] min-h-[3.5rem] shrink-0 flex-col gap-0 overflow-visible pt-3 max-sm:h-[3.9rem] max-sm:min-h-[3.9rem] sm:h-16 sm:min-h-16 sm:pt-4">
+            <div
+              className="featured-writing-panel relative z-[3] -mb-px hidden max-sm:flex h-[3.15rem] min-h-[3.15rem] w-full items-center justify-between rounded-t-[9px] border border-white/[0.14] border-b-0 px-2.5"
+              onTouchStart={handleMobileSelectorTouchStart}
+              onTouchEnd={handleMobileSelectorTouchEnd}
+              onTouchCancel={handleMobileSelectorTouchCancel}
+            >
+              <button
+                type="button"
+                aria-label="Previous writing category"
+                onClick={handleSelectPrevTab}
+                disabled={!canSelectPrev}
+                className={`featured-tabs-mobile-nav-btn flex h-7 w-7 items-center justify-center rounded-full ${
+                  canSelectPrev ? "text-mono-2/80 hover:text-mono-2/95" : "cursor-default text-mono-2/35"
+                }`}
+              >
+                <ChevronLeft className="featured-tabs-scroll-hint h-3.5 w-3.5" aria-hidden />
+              </button>
+              <div className="relative min-w-0 flex-1 overflow-hidden px-1">
+                <AnimatePresence initial={false} mode="wait" custom={mobileSwitchDir}>
+                  <motion.div
+                    key={activeId}
+                    custom={mobileSwitchDir}
+                    initial={{ opacity: 0, x: mobileSwitchDir > 0 ? 14 : -14 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: mobileSwitchDir > 0 ? -14 : 14 }}
+                    transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                    className="flex min-w-0 flex-col items-center text-center"
+                  >
+                    <span
+                      className="max-w-full truncate px-1 font-heading text-[13.5px] font-bold leading-snug tracking-[0.02em]"
+                      style={{ color: featuredTabSoftYellow }}
+                    >
+                      {TAB_LABEL[activeId]}
+                    </span>
+                    <span className="font-heading text-[0.58rem] leading-tight tracking-[0.08em] text-mono-2/50">
+                      {activeTabIndex + 1} / {TAB_ORDER.length}
+                    </span>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+              <button
+                type="button"
+                aria-label="Next writing category"
+                onClick={handleSelectNextTab}
+                disabled={!canSelectNext}
+                className={`featured-tabs-mobile-nav-btn flex h-7 w-7 items-center justify-center rounded-full ${
+                  canSelectNext ? "text-mono-2/80 hover:text-mono-2/95" : "cursor-default text-mono-2/35"
+                }`}
+              >
+                <ChevronRight className="featured-tabs-scroll-hint h-3.5 w-3.5" aria-hidden />
+              </button>
+            </div>
+            <button
+              type="button"
+              aria-label="Previous writing tab"
+              onClick={handleSelectPrevTab}
+              disabled={!canSelectPrev}
+              className={`featured-tabs-mobile-nav-btn featured-tabs-mobile-nav-btn--prev absolute inset-y-0 left-1 z-[5] hidden items-end pb-2 ${
+                canSelectPrev
+                  ? "text-mono-2/70 hover:text-mono-2/95"
+                  : "cursor-default text-mono-2/35"
+              }`}
+            >
+              <ChevronLeft className="featured-tabs-scroll-hint h-3.5 w-3.5" aria-hidden />
+            </button>
+            <button
+              type="button"
+              aria-label="Next writing tab"
+              onClick={handleSelectNextTab}
+              disabled={!canSelectNext}
+              className={`featured-tabs-mobile-nav-btn featured-tabs-mobile-nav-btn--next absolute inset-y-0 right-1 z-[5] hidden items-end pb-2 ${
+                canSelectNext
+                  ? "text-mono-2/70 hover:text-mono-2/95"
+                  : "cursor-default text-mono-2/35"
+              }`}
+            >
+              <ChevronRight className="featured-tabs-scroll-hint h-3.5 w-3.5" aria-hidden />
+            </button>
             <div
               ref={tabListRef}
               role="tablist"
               aria-label="Showcase views"
               onScroll={syncFit}
-              className="flex h-full min-w-0 w-full items-end gap-0.5 overflow-visible"
+              className="flex h-full min-w-0 w-full items-end gap-0.5 overflow-visible max-sm:hidden"
             >
               {TAB_ORDER.map((id) => {
                 const active = activeId === id;
