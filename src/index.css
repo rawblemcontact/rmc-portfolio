@@ -279,6 +279,21 @@
     }
   }
 
+  /* SKILLS / PROJECTS mobile/tablet: sync overlay height to section scrollHeight (set in section components). */
+  @media (max-width: 1024px) {
+    #skills > .portfolio-grid-overlay {
+      bottom: auto;
+      height: var(--skills-grid-overlay-height, 100%);
+      min-height: 100%;
+    }
+
+    #projects > .portfolio-grid-overlay {
+      bottom: auto;
+      height: var(--projects-grid-overlay-height, 100%);
+      min-height: 100%;
+    }
+  }
+
   /** Canonical glass frost — PROFILE cards, FEATURED WRITING shell/body/panel, SKILLS tiles */
   .portfolio-glass-frost,
   .profile-card-surface {
@@ -336,15 +351,23 @@
   }
 
   /**
-   * Right-docked NAVIGATE drawer — same glass stack; square on viewport edge.
-   * `.profile-card-surface` sets `position: relative` and `z-index: 0`; without these overrides
-   * they beat Tailwind `fixed` / `z-[60]` and the panel leaves the viewport or sits under the scrim.
+   * Right-docked NAVIGATE drawer — same glass stack; flush on viewport right edge.
+   * `.profile-card-surface` sets `position: relative` and full box border; without these overrides
+   * they beat Tailwind `fixed` / `z-[60]` and the right stroke reads as a gap (“pulled out”).
    */
   .side-nav-panel.profile-card-surface {
     position: fixed;
     z-index: 60;
-    border-radius: 0;
-    /* Drawer uses Tailwind `shadow-2xl`; skip stacked glass shadow */
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: auto;
+    margin: 0;
+    border: none;
+    border-left: 1px solid var(--portfolio-glass-stroke);
+    border-top: 1px solid var(--portfolio-glass-stroke);
+    border-bottom: 1px solid var(--portfolio-glass-stroke);
+    border-radius: 1.05rem 0 0 1.05rem;
     box-shadow: none;
   }
 
@@ -961,10 +984,32 @@
     }
   }
 
+  /* Mobile/tablet: shell top inset from Tailwind (SECTION_OVERLAY_TOP_INSET_MAX_LG in Home.tsx). */
+  @media (max-width: 1023.98px) {
+    .career-overview-shell {
+      padding-top: 0;
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: none !important;
+      overflow-y: visible !important;
+    }
+
+    .career-viewport {
+      position: relative !important;
+      inset: auto !important;
+      align-items: flex-start;
+      width: 100% !important;
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: none !important;
+      overflow: visible !important;
+    }
+  }
+
   #experience .main-container {
     width: 100%;
     max-width: none;
-    margin: clamp(40px, 5svh, 64px) auto 0;
+    margin: 0 auto;
     background: color-mix(in srgb, var(--portfolio-section-card) 8%, transparent);
     background-image: none;
     filter: none;
@@ -977,6 +1022,12 @@
     overflow: hidden;
     min-height: min(680px, calc(100svh - 7rem));
     max-height: calc(100svh - 7rem);
+  }
+
+  @media (min-width: 1024px) {
+    #experience .main-container {
+      margin-top: clamp(40px, 5svh, 64px);
+    }
   }
 
   /* Tabs Navigation */
@@ -1159,6 +1210,7 @@
     font-weight: 700;
     text-wrap: balance;
     max-width: 100%;
+    transform: translateY(-0.125rem);
   }
 
   /* In-section SKILLS rails (CORE / TOOLKIT, subpanels) — not section mains */
@@ -1294,6 +1346,7 @@
     max-width: 100%;
     text-align: left;
     text-wrap: balance;
+    transform: translateY(-0.125rem);
   }
 
   #projects .showcase-header-subhead-rule {
@@ -1326,6 +1379,14 @@
     margin-top: 0;
     width: 100%;
     min-width: 0;
+  }
+
+  @media (max-width: 1023.98px) {
+    /* Match #profile red rule — full content-column width on mobile/tablet. */
+    #projects .showcase-header-subhead-rule {
+      width: 100%;
+      max-width: 100%;
+    }
   }
 
   /* Subhead under section main title — uppercase */
@@ -1541,6 +1602,10 @@
       opacity var(--career-card-fade-ms) var(--career-card-ease),
       transform var(--career-card-fade-ms) var(--career-card-ease),
       visibility 0s;
+  }
+
+  #experience .tab-panel[hidden] {
+    display: none !important;
   }
 
   #experience .panel-header {
@@ -2060,7 +2125,8 @@
     transform: translateX(24px);
   }
 
-  @media (min-width: 901px) {
+  /* Tablet+ (md): desktop two-column grid; mobile stack is max-width 767.98px below. */
+  @media (min-width: 768px) {
     .career-overview-shell {
       --career-layout-nudge: 14px;
       --career-rail-card-offset: 5%;
@@ -2190,10 +2256,194 @@
       display: flex;
       flex-direction: column;
     }
+
+    #experience .tab-panel[hidden] {
+      display: none !important;
+    }
+  }
+
+  /* Mobile only: single-column stack (tablet+ uses desktop grid above). */
+  @media (max-width: 767.98px) {
+    #experience .nav-header {
+      padding-top: 0;
+    }
+
+    #experience .main-container {
+      display: flex !important;
+      flex-direction: column !important;
+      grid-template-columns: unset !important;
+      grid-template-rows: unset !important;
+      align-items: stretch !important;
+      min-height: auto !important;
+      height: auto !important;
+      max-height: none !important;
+      overflow: visible !important;
+      -webkit-backdrop-filter: none !important;
+      backdrop-filter: none !important;
+      margin-left: 0 !important;
+      width: 100% !important;
+      background: transparent !important;
+      background-image: none !important;
+      filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      backdrop-filter: none !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+    }
+
+    #experience .career-overview-rail {
+      display: flex !important;
+      flex-direction: column !important;
+      width: 100% !important;
+      min-width: 0 !important;
+      grid-column: auto !important;
+      grid-row: auto !important;
+    }
+
+    #experience .nav-header {
+      display: flex;
+      order: 1;
+      padding: 0 0 12px;
+      margin: 0 0 10px;
+    }
+
+    #experience .career-nav-section-divider {
+      left: 0;
+      right: 0;
+    }
+
+    #experience .tabs-nav {
+      order: 2;
+      width: 100% !important;
+      min-width: 0 !important;
+      flex-direction: row !important;
+      flex-wrap: nowrap;
+      gap: 8px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 0 0 2px;
+      border: 0 !important;
+      border-right: 0 !important;
+      background: transparent !important;
+      background-image: none !important;
+      -webkit-backdrop-filter: none !important;
+      backdrop-filter: none !important;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+
+    #experience .tabs-nav::-webkit-scrollbar {
+      display: none;
+    }
+
+    #experience .tabs-nav .tab-btn,
+    #experience .tab-btn {
+      flex: 0 0 auto;
+      min-width: max-content;
+      width: auto;
+      padding: 10px 12px;
+      text-align: left;
+      scroll-snap-align: start;
+      transform: none !important;
+    }
+
+    #experience .tab-title,
+    #experience .tab-subtitle {
+      white-space: nowrap;
+    }
+
+    #experience .tabs-content {
+      order: 3;
+      flex: 0 0 auto;
+      margin-left: 0 !important;
+      width: 100% !important;
+      min-width: 0 !important;
+      min-height: min-content !important;
+      padding: 20px 0 0;
+      border: 0 !important;
+      border-radius: 0;
+      background: transparent !important;
+      background-image: none !important;
+      overflow: visible !important;
+      height: auto !important;
+      transform: none;
+      -webkit-transform: none;
+      -webkit-backface-visibility: visible;
+      backface-visibility: visible;
+      isolation: auto;
+    }
+
+    #experience .tabs-content::before {
+      display: none;
+    }
+
+    #experience .career-tabs-content-inner {
+      background: transparent !important;
+      background-image: none !important;
+      -webkit-backdrop-filter: none !important;
+      backdrop-filter: none !important;
+      border-radius: 0;
+    }
+
+    #experience .career-tabs-content-inner.career-tabs-dim,
+    #experience .panel-header.career-tabs-dim {
+      opacity: 1 !important;
+      pointer-events: auto !important;
+    }
+
+    #experience .tab-panel {
+      position: relative !important;
+      inset: auto !important;
+      display: flex !important;
+      flex-direction: column !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      transform: none !important;
+      transition: none !important;
+      overflow: visible !important;
+      padding-top: 0 !important;
+      padding-right: 0 !important;
+      width: 100% !important;
+      min-width: 0 !important;
+    }
+
+    #experience .tab-panel:not(.active) {
+      display: none !important;
+    }
+
+    #experience .tab-panel.active {
+      display: flex !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      transform: none !important;
+    }
+
+    #experience .tab-panel.active .career-tabs-content-inner,
+    #experience .tab-panel.active .panel-header,
+    #experience .tab-panel.active .panel-content,
+    #experience .tab-panel.active .content-card {
+      opacity: 1 !important;
+      visibility: visible !important;
+      transform: none !important;
+      -webkit-backface-visibility: visible;
+      backface-visibility: visible;
+    }
+
+    #experience .tabs-content > .tab-panel {
+      position: relative !important;
+      inset: auto !important;
+      width: 100% !important;
+      min-width: 0 !important;
+      min-height: min-content !important;
+      height: auto !important;
+      overflow: visible !important;
+    }
   }
 
   /* Responsive (mobile only) */
-  @media (max-width: 768px) {
+  @media (max-width: 767.98px) {
     #experience .main-container {
       display: flex;
       flex-direction: column;
@@ -2303,24 +2553,6 @@
       pointer-events: auto !important;
     }
 
-    #experience .tab-panel {
-      position: relative;
-      inset: auto;
-      display: none;
-      opacity: 1;
-      visibility: visible;
-      transform: none;
-      transition: none;
-      overflow: visible;
-      padding-top: 0;
-      padding-right: 0;
-    }
-
-    #experience .tab-panel.active {
-      display: flex;
-      flex-direction: column;
-    }
-
     #experience .panel-header {
       width: 100%;
       max-width: 100%;
@@ -2404,6 +2636,31 @@
     #experience .career-project-grid {
       grid-template-columns: 1fr;
     }
+  }
+
+  /* iOS Safari desktop behavior parity: force active panel paint in desktop/tablet layout. */
+  @supports (-webkit-touch-callout: none) {
+    @media (min-width: 768px) {
+      #experience .tabs-content {
+        overflow: visible;
+      }
+
+      #experience .tabs-content::before {
+        display: none;
+      }
+
+      #experience .tab-panel.active {
+        display: flex;
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+      }
+
+      #experience .tab-panel[hidden] {
+        display: none !important;
+      }
+    }
+
   }
 
   /* Animations */
@@ -2562,7 +2819,7 @@
     align-items: flex-end;
   }
 
-  /* Page rail headers: left / right (proportions only — same type tokens as branch rail) */
+  /* Page rail headers: layout + CORE / TOOLKIT type tokens */
   #skills .skills-branch-header--page.nav-header {
     align-items: stretch;
     width: 100%;
@@ -2570,6 +2827,8 @@
     padding-left: 0;
     padding-right: 0;
     margin-bottom: 0;
+    --skills-rail-display: var(--section-rail-font);
+    --skills-rail-eyebrow: var(--section-rail-eyebrow-font);
   }
 
   #skills .skills-branch-header--left .career-nav-section-labels,
@@ -2579,13 +2838,6 @@
     gap: var(--skills-rail-label-gap);
   }
 
-  /* CORE / TOOLKIT page rails — one step below section main title */
-  #skills .skills-branch-header--page.nav-header {
-    --skills-rail-display: var(--section-rail-font);
-    --skills-rail-eyebrow: var(--section-rail-eyebrow-font);
-  }
-
-  /* Two-band page layout: section name → subhead → accent line (below subhead) */
   #skills .skills-branch-header--page.nav-header .career-nav-section-subtitle {
     color: #fff;
     font-family: var(--font-display);
@@ -2603,7 +2855,7 @@
     font-weight: 600;
     line-height: var(--section-subhead-lh);
     letter-spacing: -0.015em;
-    text-transform: none;
+    text-transform: uppercase;
     margin: 0;
   }
 
@@ -2637,6 +2889,11 @@
     max-width: none;
   }
 
+  #skills .skills-branch-accent-line {
+    flex-shrink: 0;
+    transform: translateZ(0);
+  }
+
   #skills .skills-branch-header--left .career-nav-section-labels {
     align-items: flex-start;
     text-align: left;
@@ -2663,11 +2920,6 @@
 
   #skills .skills-branch-header--page .career-nav-section-divider {
     display: none;
-  }
-
-  #skills .skills-branch-accent-line {
-    flex-shrink: 0;
-    transform: translateZ(0);
   }
 
   #skills .skills-row-cards--page {

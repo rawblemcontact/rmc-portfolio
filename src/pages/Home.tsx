@@ -8,7 +8,6 @@ import {
   useMotionValue,
   useTransform,
   animate,
-  motionValue,
 } from "framer-motion";
 import useEmblaCarousel from "embla-carousel-react";
 import type { EmblaCarouselType } from "embla-carousel";
@@ -21,6 +20,7 @@ import React, {
   useMemo,
   startTransition,
   type MutableRefObject,
+  type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "../components/ui/button";
@@ -707,6 +707,18 @@ const SLIDE =
 const SLIDE_NO_Y_SCROLL =
   "no-scrollbar w-screen h-screen flex-shrink-0 snap-start overflow-y-hidden overflow-x-hidden";
 
+/** Extra top clearance for fixed nav + section headers (mobile/tablet only). */
+const TOP_NAV_FIXED_TOP =
+  "top-[max(calc(0.875rem+0.625rem),calc(env(safe-area-inset-top,0px)+1.125rem))] lg:top-6";
+/** Fixed top-right / section back icon buttons — no fill (all breakpoints). */
+const TOP_NAV_ICON_BUTTON_CLASS =
+  "h-11 w-11 sm:h-14 sm:w-14 min-h-0 min-w-0 rounded-full border-0 bg-transparent p-0 text-white shadow-none transition-colors duration-200 hover:bg-transparent hover:text-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black";
+/** #experience inner horizontal inset layers (mobile/tablet) — after `container px-5 sm:px-6`. */
+const EXPERIENCE_GUTTER_OUTER_MAX_LG = "max-lg:px-1 max-lg:sm:px-2";
+const EXPERIENCE_GUTTER_INNER_MAX_LG = "max-lg:px-2 max-lg:sm:px-4";
+const EXPERIENCE_GUTTER_SHELL_OUTER = `w-full min-w-0 ${EXPERIENCE_GUTTER_OUTER_MAX_LG}`;
+const EXPERIENCE_GUTTER_SHELL_INNER = `w-full min-w-0 ${EXPERIENCE_GUTTER_INNER_MAX_LG}`;
+
 const scrollToId = (id: string, behavior: ScrollBehavior = "smooth") => {
   const el = document.getElementById(id);
   el?.scrollIntoView({ behavior, block: "nearest", inline: "start" });
@@ -803,15 +815,16 @@ const BackToMenuButton = ({
         animate={{ opacity: fadeOut ? 0 : 1, x: 0 }}
         exit={{ opacity: 0, x: -10 }}
         transition={{ duration: DUR.fast, ease: EASE.out }}
-        className="fixed top-5 left-3 z-50 sm:top-6 sm:left-4"
+        className={`fixed ${TOP_NAV_FIXED_TOP} left-1 z-50 max-sm:-translate-x-0.5 sm:left-4 sm:translate-x-0`}
       >
         <motion.div whileTap={TAP} transition={SPRING.ui}>
           <Button
             type="button"
+            variant="ghost"
             onClick={onBack}
             size="icon"
             aria-label={ariaLabel}
-            className="h-12 w-12 sm:h-14 sm:w-14 min-h-0 min-w-0 rounded-full border-[3px] border-black bg-black p-0 text-white shadow-xl transition-colors duration-200 hover:bg-white hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black [&_svg]:!size-[19px] sm:[&_svg]:!size-[22px]"
+            className={`${TOP_NAV_ICON_BUTTON_CLASS} [&_svg]:!size-[18px] sm:[&_svg]:!size-[22px]`}
           >
             <ArrowLeft size={22} strokeWidth={2} aria-hidden />
           </Button>
@@ -1765,24 +1778,34 @@ const SideNavOverlay = ({
   onNavigate: (id: string) => void;
 }) => {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const openRef = useRef(open);
+  openRef.current = open;
+  const [canFineHover, setCanFineHover] = useState(true);
+
+  const setAccentId = useCallback((id: string | null) => {
+    if (id !== null && !openRef.current) return;
+    setHoveredId(id);
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const mediaQuery = window.matchMedia("(max-width: 639.98px)");
-    const syncViewport = () => setIsMobileViewport(mediaQuery.matches);
-    syncViewport();
-
+    const mediaQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const syncHover = () => setCanFineHover(mediaQuery.matches);
+    syncHover();
     if (typeof mediaQuery.addEventListener === "function") {
-      mediaQuery.addEventListener("change", syncViewport);
-      return () => mediaQuery.removeEventListener("change", syncViewport);
+      mediaQuery.addEventListener("change", syncHover);
+      return () => mediaQuery.removeEventListener("change", syncHover);
     }
-
-    mediaQuery.addListener(syncViewport);
-    return () => mediaQuery.removeListener(syncViewport);
+    mediaQuery.addListener(syncHover);
+    return () => mediaQuery.removeListener(syncHover);
   }, []);
 
-  const sideNavClosedX = isMobileViewport ? "calc(100% + 2px)" : "100%";
+  useEffect(() => {
+    setHoveredId(null);
+    if (!open && document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -1816,10 +1839,11 @@ const SideNavOverlay = ({
             aria-label="Navigation"
             role="dialog"
             aria-modal="true"
-            className="side-nav-panel profile-card-surface fixed inset-y-0 right-0 z-[60] w-full max-w-none sm:max-w-[400px] p-5 sm:p-6 shadow-2xl flex flex-col"
-            initial={{ x: sideNavClosedX }}
+            className="side-nav-panel profile-card-surface fixed inset-y-0 right-0 z-[60] w-full max-w-[380px] sm:max-w-[400px] p-5 sm:p-6 flex flex-col"
+            style={{ transformOrigin: "right center" }}
+            initial={{ x: "100%" }}
             animate={{ x: 0 }}
-            exit={{ x: sideNavClosedX }}
+            exit={{ x: "100%" }}
             transition={SPRING.panel}
           >
             <div className="flex items-center justify-between mb-6">
@@ -1834,9 +1858,10 @@ const SideNavOverlay = ({
               <motion.div whileTap={TAP} transition={SPRING.ui}>
                 <Button
                   type="button"
+                  variant="ghost"
                   onClick={onClose}
                   aria-label="Close menu"
-                  className="h-14 w-14 min-h-0 min-w-0 rounded-full bg-black text-white hover:bg-white hover:text-black border-[3px] border-black p-0 shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black [&_svg]:!size-5"
+                  className={`${TOP_NAV_ICON_BUTTON_CLASS} [&_svg]:!size-[18px] sm:[&_svg]:!size-5`}
                 >
                   <X size={22} strokeWidth={1} aria-hidden />
                 </Button>
@@ -1849,13 +1874,25 @@ const SideNavOverlay = ({
                   key={item.id}
                   type="button"
                   onClick={() => {
+                    setAccentId(null);
                     onNavigate(item.id);
                     onClose();
                   }}
-                  onHoverStart={() => setHoveredId(item.id)}
-                  onHoverEnd={() => setHoveredId(null)}
-                  onFocus={() => setHoveredId(item.id)}
-                  onBlur={() => setHoveredId(null)}
+                  onHoverStart={() => {
+                    if (canFineHover) setAccentId(item.id);
+                  }}
+                  onHoverEnd={() => {
+                    if (canFineHover) setAccentId(null);
+                  }}
+                  onFocus={() => {
+                    if (canFineHover) setAccentId(item.id);
+                  }}
+                  onBlur={() => setAccentId(null)}
+                  onPointerDown={(e) => {
+                    if (e.pointerType === "touch") setAccentId(item.id);
+                  }}
+                  onPointerUp={() => setAccentId(null)}
+                  onPointerCancel={() => setAccentId(null)}
                   className="group relative w-full text-left py-3 sm:py-3.5 border-b border-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black focus-visible:ring-inset"
                   whileTap={TAP}
                   transition={SPRING.ui}
@@ -2029,9 +2066,11 @@ const PhantomProfile = () => {
   }, [profileLeftInView]);
 
   return (
-    <section id="profile" className={`relative min-h-screen w-full overflow-x-hidden max-sm:overflow-y-auto bg-black text-white scroll-mt-6 ${SLIDE}`}>
+    <section id="profile" className="relative w-full min-w-0 overflow-x-hidden overflow-y-visible bg-black text-white scroll-mt-6 max-lg:min-h-min lg:min-h-screen">
       <SectionGridOverlay />
-      <motion.div className={`${PROFILE_SECTION_CONTAINER} pt-[24vh] max-sm:pt-[max(5.5rem,env(safe-area-inset-top,0px))] lg:pt-0 pb-16 max-sm:pb-10 lg:pb-12 lg:min-h-screen lg:flex lg:items-center`}>
+      <motion.div className={`${PROFILE_SECTION_CONTAINER} ${PROFILE_SECTION_TOP_INSET} max-lg:pb-0 lg:pb-12 lg:min-h-screen lg:flex lg:items-center`}>
+        <div className={EXPERIENCE_GUTTER_SHELL_OUTER}>
+          <div className={EXPERIENCE_GUTTER_SHELL_INNER}>
         <motion.div className={PROFILE_LAYOUT_ROW}>
 
           <motion.div
@@ -2097,13 +2136,21 @@ const PhantomProfile = () => {
                 </div>
                 <div className="h-12 w-px shrink-0 bg-white/[0.1] sm:h-14" aria-hidden />
                 <div className="min-w-0 flex-1 space-y-1 text-left">
-                  <p className={`${PROFILE_CARD_INLINE_LABEL_CLASS} truncate text-[0.68rem] sm:text-xs tracking-[0.06em]`} style={{ color: NAV_SUBHEAD_GRAY }}>
-                    ROBBIE MCLAUGHLIN
-                  </p>
-                  <p className="font-display truncate text-base leading-tight tracking-[-0.01em] text-white sm:text-lg">
+                  <div className="flex min-w-0 items-start justify-between gap-3">
+                    <p className="min-w-0 flex-1 font-display text-base leading-tight tracking-[-0.01em] text-white sm:text-lg">
+                      ROBBIE MCLAUGHLIN
+                    </p>
+                    <p
+                      className="profile-card-inline-label shrink-0 pt-0.5 text-right text-[0.68rem] leading-snug tracking-[0.06em] whitespace-nowrap uppercase sm:text-xs"
+                      style={{ color: NAV_SUBHEAD_GRAY }}
+                    >
+                      VICTORIA, BC
+                    </p>
+                  </div>
+                  <p className={`${PROFILE_CARD_INLINE_LABEL_CLASS} text-[0.68rem] sm:text-xs tracking-[0.06em]`} style={{ color: NAV_SUBHEAD_GRAY }}>
                     WRITING, DIGITAL CONTENT, &amp; SOCIAL MEDIA
                   </p>
-                  <p className={`${PROFILE_CARD_INLINE_LABEL_CLASS} truncate text-[0.68rem] sm:text-xs tracking-[0.06em]`} style={{ color: NAV_SUBHEAD_GRAY }}>
+                  <p className={`${PROFILE_CARD_INLINE_LABEL_CLASS} text-[0.68rem] sm:text-xs tracking-[0.06em]`} style={{ color: NAV_SUBHEAD_GRAY }}>
                     B.A. WRITING
                   </p>
                 </div>
@@ -2134,7 +2181,10 @@ const PhantomProfile = () => {
             </div>
           </div>
         </motion.div>
+          </div>
+        </div>
       </motion.div>
+      <div className={SECTION_OVERLAY_BOTTOM_SPACER_MAX_LG} aria-hidden />
     </section>
   );
 };
@@ -2670,16 +2720,28 @@ const DETAIL_CARD_H =
   "h-[min(280px,45svh)] sm:h-[min(308px,48svh)] md:h-[min(328px,50svh)] lg:h-[min(352px,52svh)] xl:h-[min(368px,54svh)] 2xl:h-[min(384px,56svh)]";
 /** SHOWCASE carousel inner column cap (detail overlay / career rail — not PROFILE viewport gutters). */
 const SHOWCASE_COLUMN_MAX = "max-w-[min(100%,58rem)]";
-/** Main section title top inset — `#projects` SHOWCASE shell (`pt-16 sm:pt-20 md:pt-22`). */
-const SECTION_MAIN_HEADER_INSET = "pt-16 sm:pt-20 md:pt-22";
+/** Mobile/tablet section top inset — PROFILE, Experience, Projects, Skills (`lg+` uses section-specific desktop pt). */
+const SECTION_OVERLAY_TOP_INSET_MAX_LG =
+  "max-lg:pt-[calc(24vh+0.625rem)] max-lg:max-sm:pt-[max(calc(5.5rem+0.625rem),calc(env(safe-area-inset-top,0px)+0.625rem))]";
+/** Mobile/tablet scroll end air — in-flow spacer on panel scroller (pb on h-screen / flex-1 traps does not extend scroll). */
+const SECTION_OVERLAY_BOTTOM_SPACER_MAX_LG =
+  "hidden max-lg:block shrink-0 w-full pointer-events-none min-h-[max(3rem,calc(2rem+env(safe-area-inset-bottom,0px)))] max-lg:sm:min-h-[max(3.5rem,calc(2.25rem+env(safe-area-inset-bottom,0px)))]";
+/** Same inset as PROFILE; `!` overrides `.career-overview-shell` base padding in CSS. */
+const EXPERIENCE_SHELL_TOP_INSET_MAX_LG =
+  "max-lg:!pt-[calc(24vh+0.625rem)] max-lg:max-sm:!pt-[max(calc(5.5rem+0.625rem),calc(env(safe-area-inset-top,0px)+0.625rem))]";
+/** Main section title top inset — `#projects` + `#skills` (`pt-16 sm:pt-20 md:pt-22` on desktop). */
+const SECTION_MAIN_HEADER_INSET =
+  `pt-16 sm:pt-20 md:pt-22 ${SECTION_OVERLAY_TOP_INSET_MAX_LG}`;
+const PROFILE_SECTION_TOP_INSET =
+  `pt-[24vh] max-sm:pt-[max(5.5rem,env(safe-area-inset-top,0px))] ${SECTION_OVERLAY_TOP_INSET_MAX_LG} lg:pt-0`;
 /** Centered SHOWCASE rail header chrome — tight bottom margin; yellow line below. */
 const SECTION_MAIN_HEADER_TITLE_CLASS =
-  "mt-1 sm:mt-1.5 !mb-2 sm:!mb-2.5 md:!mb-3 w-full shrink-0";
+  "mt-1 sm:mt-1.5 max-lg:mt-0 max-lg:sm:mt-0 !mb-2 sm:!mb-2.5 md:!mb-3 w-full shrink-0";
 /** SKILLS main title — line gap via `.skills-main-header-chrome` in `index.css`. */
 const SECTION_SKILLS_MAIN_HEADER_TITLE_CLASS =
-  "skills-main-header-chrome mt-1 sm:mt-1.5 shrink-0";
+  "skills-main-header-chrome mt-1 sm:mt-1.5 max-lg:mt-0 max-lg:sm:mt-0 shrink-0";
 /** `#profile` shell — container + centered row (left column + gap + mascot). */
-const PROFILE_SECTION_CONTAINER = "container mx-auto px-4 max-sm:px-3 sm:px-6 relative z-20";
+const PROFILE_SECTION_CONTAINER = "container mx-auto px-5 sm:px-6 relative z-20";
 const PROFILE_LAYOUT_ROW =
   "flex w-full flex-col max-sm:gap-8 lg:flex-row lg:justify-center gap-20 lg:gap-20 xl:gap-36 2xl:gap-[min(14rem,12vw)] items-center";
 const PROFILE_LEFT_COLUMN =
@@ -2694,7 +2756,7 @@ const PROFILE_VIEWPORT_CONTENT_MAX =
 /** `#projects` — same L/R viewport gutters as #profile (portfoliov2-profile-viewport-gutters). */
 const PROJECTS_VIEWPORT_SHELL = `${PROFILE_VIEWPORT_CONTENT_MAX} relative z-[1] flex min-h-0 w-full min-w-0 flex-1 flex-col self-center`;
 const SECTION_CONTAINER_GUTTER =
-  "container relative z-10 mx-auto w-full min-w-0 max-w-full px-4 sm:px-6";
+  "container relative z-10 mx-auto w-full min-w-0 max-w-full px-5 sm:px-6";
 
 const ProjectsStack = ({
   onSelect,
@@ -3253,7 +3315,7 @@ const SupportingProjectsSection = ({
     >
       <SectionGridOverlay />
       <motion.div
-        className="container relative z-10 mx-auto flex min-h-0 w-full max-w-full min-w-0 flex-1 flex-col px-4 sm:px-6 pt-[6.5rem] md:pt-[8rem]"
+        className="container relative z-10 mx-auto flex min-h-0 w-full max-w-full min-w-0 flex-1 flex-col px-5 sm:px-6 pt-[6.5rem] md:pt-[8rem] max-lg:pt-[calc(6.5rem+0.625rem)] max-lg:md:pt-[calc(8rem+0.625rem)]"
         initial={false}
         animate={{
           opacity: previewPdf || isPreviewClosing ? 0 : 1,
@@ -3274,10 +3336,9 @@ const SupportingProjectsSection = ({
           />
         </div>
 
-        <div
-          ref={archiveScrollHostRef}
-          className="archive-optical-scrollbar-host relative min-h-0 flex-1 min-w-0"
-        >
+        <div className={`archive-optical-scrollbar-host relative min-h-0 flex-1 min-w-0 ${EXPERIENCE_GUTTER_SHELL_OUTER}`}>
+          <div className={`${EXPERIENCE_GUTTER_SHELL_INNER} flex min-h-0 flex-1 flex-col`}>
+        <div ref={archiveScrollHostRef} className="relative min-h-0 flex-1 min-w-0">
           <div
             ref={archiveScrollAreaRef}
             onScroll={onArchiveListScroll}
@@ -3349,6 +3410,8 @@ const SupportingProjectsSection = ({
                 onPointerDown={onArchiveOpticalThumbPointerDown}
               />
             </div>
+          </div>
+        </div>
           </div>
         </div>
       </motion.div>
@@ -3925,12 +3988,13 @@ const PalaceProjects = ({
   featuredPdfViewerActive?: boolean;
 }) => {
   const reduceMotion = useReducedMotion();
+  const projectsSectionRef = useRef<HTMLElement>(null);
   const projectsDividerRef = useRef<HTMLDivElement | null>(null);
   const [projectsEntered, setProjectsEntered] = useState(reduceMotion || entranceArmed);
   /** Keep header y at 0 after first enter — disarming entrance on panel exit must not replay y slide. */
   const [projectsHeaderYLocked, setProjectsHeaderYLocked] = useState(reduceMotion || entranceArmed);
   const [projectsOverlayRevealed, setProjectsOverlayRevealed] = useState(false);
-  const [carouselAutoAdvanceReady, setCarouselAutoAdvanceReady] = useState(reduceMotion);
+  const [carouselAutoAdvanceReady, setCarouselAutoAdvanceReady] = useState(!!reduceMotion);
   const activeCard = activeProjectId ? PROJECT_CARDS.find((c) => c.id === activeProjectId) ?? null : null;
   const illustrationsDetailNoHero = Boolean(activeCard?.detailGallery?.length);
   const videoEditingDetailNoMainCard =
@@ -4002,6 +4066,36 @@ const PalaceProjects = ({
     activeCard &&
       (videoEditingDetailNoMainCard || illustrationsDetailNoHero || activeCardNoMorph || morphDone),
   );
+
+  /** WebKit mobile/tablet: absolute grid overlay can stop at viewport height while content scrolls. */
+  useLayoutEffect(() => {
+    const section = projectsSectionRef.current;
+    if (!section) return;
+
+    const mq = window.matchMedia("(max-width: 1024px)");
+    const syncProjectsGridOverlayHeight = () => {
+      if (!mq.matches) {
+        section.style.removeProperty("--projects-grid-overlay-height");
+        return;
+      }
+      const sectionHeight = Math.max(section.offsetHeight, section.scrollHeight);
+      section.style.setProperty("--projects-grid-overlay-height", `${sectionHeight}px`);
+    };
+
+    syncProjectsGridOverlayHeight();
+    const ro = new ResizeObserver(syncProjectsGridOverlayHeight);
+    ro.observe(section);
+    mq.addEventListener("change", syncProjectsGridOverlayHeight);
+    window.addEventListener("resize", syncProjectsGridOverlayHeight);
+
+    return () => {
+      ro.disconnect();
+      mq.removeEventListener("change", syncProjectsGridOverlayHeight);
+      window.removeEventListener("resize", syncProjectsGridOverlayHeight);
+      section.style.removeProperty("--projects-grid-overlay-height");
+    };
+  }, [projectDetailInFlow, activeProjectId, projectsOverlayRevealed]);
+
   const [detailHdrReveal, setDetailHdrReveal] = useState(false);
   const [detailRuleReveal, setDetailRuleReveal] = useState(false);
   const [detailGalleryReveal, setDetailGalleryReveal] = useState(false);
@@ -4203,23 +4297,28 @@ const PalaceProjects = ({
   return (
     <section
       id="projects"
-      className={`relative flex w-full min-w-0 max-w-full flex-col justify-start pb-[max(1.25rem,calc(var(--slide-gap)*1.5),env(safe-area-inset-bottom,0px))] text-white scroll-mt-6 [--slide-gap:0.875rem] sm:[--slide-gap:1.25rem] lg:[--slide-gap:1rem] xl:[--slide-gap:1.125rem] ${
+      ref={projectsSectionRef}
+      className={`relative flex w-full min-w-0 max-w-full flex-col justify-start lg:pb-[max(1.25rem,calc(var(--slide-gap)*1.5),env(safe-area-inset-bottom,0px))] text-white scroll-mt-6 [--slide-gap:0.875rem] sm:[--slide-gap:1.25rem] lg:[--slide-gap:1rem] xl:[--slide-gap:1.125rem] ${
         projectDetailInFlow
           ? `min-h-screen shrink-0 ${SECTION_MAIN_HEADER_INSET} ${
               videoEditingDetailNoMainCard ? "overflow-x-visible" : "overflow-x-hidden"
             }`
-          : `min-h-full overflow-x-hidden ${SECTION_MAIN_HEADER_INSET}`
+          : `max-lg:min-h-min lg:min-h-full overflow-x-hidden ${SECTION_MAIN_HEADER_INSET}`
       }`}
     >
       <SectionGridOverlay />
       <div
         className={`${PROFILE_SECTION_CONTAINER} relative z-10 flex min-w-0 w-full flex-col ${
-          projectDetailInFlow ? "min-h-min shrink-0" : "min-h-0 flex-1"
+          projectDetailInFlow ? "min-h-min shrink-0" : "max-lg:min-h-min max-lg:flex-none lg:min-h-0 lg:flex-1"
         }`}
       >
+        <div className={EXPERIENCE_GUTTER_SHELL_OUTER}>
+          <div className={EXPERIENCE_GUTTER_SHELL_INNER}>
         <div
           className={`${PROJECTS_VIEWPORT_SHELL} overflow-y-visible ${
-            projectDetailInFlow ? "min-h-min shrink-0 justify-start" : "min-h-0 flex-1 justify-center"
+            projectDetailInFlow
+              ? "min-h-min shrink-0 justify-start"
+              : "max-lg:min-h-min max-lg:flex-none max-lg:justify-start lg:min-h-0 lg:flex-1 lg:justify-center"
           }`}
         >
         {/*
@@ -4231,7 +4330,7 @@ const PalaceProjects = ({
               ? `min-h-min shrink-0 justify-start ${
                   videoEditingDetailNoMainCard ? "overflow-x-visible" : "overflow-x-hidden"
                 }`
-              : "min-h-0 flex-1 justify-center overflow-x-hidden"
+              : "max-lg:min-h-min max-lg:flex-none max-lg:justify-start lg:min-h-0 lg:flex-1 lg:justify-center overflow-x-hidden"
           }`}
         >
           {!activeCard ? (
@@ -4253,7 +4352,7 @@ const PalaceProjects = ({
             >
               <div className="showcase-header-title-stack relative z-10 w-full min-w-0">
                 <p className="career-nav-section-subtitle section-main-header-title font-display text-left">PROJECTS</p>
-                <div className="showcase-header-subhead-rule w-fit max-w-full">
+                <div className="showcase-header-subhead-rule w-fit max-w-full max-lg:w-full">
                   <p className="career-nav-section-title text-left" style={{ color: NAV_SUBHEAD_GRAY }}>
                     Digital Media &amp; Writing Showcase
                   </p>
@@ -4263,7 +4362,7 @@ const PalaceProjects = ({
                     aria-hidden
                   >
                     <motion.span
-                      className="absolute bottom-0 left-0 right-0 h-[2px]"
+                      className="absolute bottom-0 left-0 right-0 max-lg:left-0.5 h-[2px] origin-left"
                       style={{ backgroundColor: PROJECTS_ACCENT_SOFT }}
                       initial={false}
                       animate={{ scaleX: projectsEntered ? 1 : 0 }}
@@ -4310,7 +4409,7 @@ const PalaceProjects = ({
               <ProjectsStack
                 onSelect={(id, el) => handleCardClick(id, el)}
                 focusProjectId={activeCard?.id ?? null}
-                carouselAutoAdvanceEnabled={carouselAutoAdvanceReady && !showcaseObscured}
+                carouselAutoAdvanceEnabled={!!carouselAutoAdvanceReady && !showcaseObscured}
               />
             </motion.div>
           </motion.div>
@@ -4518,6 +4617,8 @@ const PalaceProjects = ({
           </div>
         ) : null}
         </div>
+          </div>
+        </div>
       </div>
 
       {/*
@@ -4558,6 +4659,7 @@ const PalaceProjects = ({
         </motion.div>,
         document.body,
       )}
+      <div className={SECTION_OVERLAY_BOTTOM_SPACER_MAX_LG} aria-hidden />
     </section>
   );
 };
@@ -4686,6 +4788,190 @@ const ExperienceSkillTag = ({ label, Icon }: CareerOverviewSkillTagRow) => (
   </span>
 );
 
+const EXPERIENCE_TAB_IDS = ["rawblem", "uvic-esports", "starbucks", "education"] as const;
+type ExperienceTabId = (typeof EXPERIENCE_TAB_IDS)[number];
+
+/** Mobile-only horizontal tab stack; tablet+ matches desktop grid + motion. */
+const EXPERIENCE_MOBILE_MAX_PX = 767;
+
+const experienceTabBtnClass = (activeId: ExperienceTabId, id: ExperienceTabId) =>
+  activeId === id ? "tab-btn active" : "tab-btn";
+
+const experienceTabPanelClass = (activeId: ExperienceTabId, id: ExperienceTabId) =>
+  `tab-panel no-scrollbar${activeId === id ? " active" : ""}`;
+
+const ExperienceTabPanelBody = ({ tabId }: { tabId: ExperienceTabId }) => {
+  switch (tabId) {
+    case "rawblem":
+      return (
+        <>
+          <div className="panel-header">
+            <span className="panel-badge">Experience</span>
+            <div className="panel-title-row">
+              <h1 className="panel-title">{EXPERIENCE_DATA[0].role}</h1>
+              <p className="panel-period">{EXPERIENCE_DATA[0].period}</p>
+            </div>
+            <p className="panel-description">
+              {EXPERIENCE_DATA[0].company}
+              <span className="panel-meta-sep" aria-hidden="true">
+                •
+              </span>
+              {EXPERIENCE_DATA[0].location}
+            </p>
+            <div className="experience-skill-tags" aria-label="Relevant skills">
+              {CAREER_OVERVIEW_SKILL_TAG_ROWS.rawblem.map((row) => (
+                <ExperienceSkillTag {...row} key={row.label} />
+              ))}
+            </div>
+          </div>
+          <div className="career-tabs-content-inner">
+            <div className="panel-content">
+              <div className="content-card">
+                <ul className="feature-list">
+                  {CAREER_OVERVIEW_PANEL_BULLETS.rawblem.map((bullet) => (
+                    <li key={bullet}>
+                      <span>{bullet}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </>
+      );
+    case "uvic-esports":
+      return (
+        <>
+          <div className="panel-header">
+            <span className="panel-badge">Experience</span>
+            <div className="panel-title-row">
+              <h1 className="panel-title">{EXPERIENCE_DATA[1].role}</h1>
+              <p className="panel-period">{EXPERIENCE_DATA[1].period}</p>
+            </div>
+            <p className="panel-description">
+              {EXPERIENCE_DATA[1].company}
+              <span className="panel-meta-sep" aria-hidden="true">
+                •
+              </span>
+              {EXPERIENCE_DATA[1].location}
+            </p>
+            <div className="experience-skill-tags" aria-label="Relevant skills">
+              {CAREER_OVERVIEW_SKILL_TAG_ROWS.uvic.map((row) => (
+                <ExperienceSkillTag {...row} key={row.label} />
+              ))}
+            </div>
+          </div>
+          <div className="career-tabs-content-inner">
+            <div className="panel-content">
+              <div className="content-card">
+                <ul className="feature-list">
+                  {CAREER_OVERVIEW_PANEL_BULLETS.uvic.map((bullet) => (
+                    <li key={bullet}>
+                      <span>{bullet}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </>
+      );
+    case "starbucks":
+      return (
+        <>
+          <div className="panel-header">
+            <span className="panel-badge">Experience</span>
+            <div className="panel-title-row">
+              <h1 className="panel-title">{EXPERIENCE_DATA[2].role}</h1>
+              <p className="panel-period">{EXPERIENCE_DATA[2].period}</p>
+            </div>
+            <p className="panel-description">
+              {EXPERIENCE_DATA[2].company}
+              <span className="panel-meta-sep" aria-hidden="true">
+                •
+              </span>
+              {EXPERIENCE_DATA[2].location}
+            </p>
+            <div className="experience-skill-tags" aria-label="Relevant skills">
+              {CAREER_OVERVIEW_SKILL_TAG_ROWS.starbucks.map((row) => (
+                <ExperienceSkillTag {...row} key={row.label} />
+              ))}
+            </div>
+          </div>
+          <div className="career-tabs-content-inner">
+            <div className="panel-content">
+              <div className="content-card">
+                <ul className="feature-list">
+                  {CAREER_OVERVIEW_PANEL_BULLETS.starbucks.map((bullet) => (
+                    <li key={bullet}>
+                      <span>{bullet}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </>
+      );
+    case "education":
+      return (
+        <>
+          <div className="panel-header">
+            <span className="panel-badge">Education</span>
+            <div className="panel-title-row">
+              <h1 className="panel-title">University of Victoria</h1>
+              <p className="panel-period">2024</p>
+            </div>
+            <p className="panel-description">
+              Bachelor&apos;s Degree, Writing
+              <span className="panel-meta-sep" aria-hidden="true">
+                •
+              </span>
+              University of Victoria
+              <span className="panel-meta-sep" aria-hidden="true">
+                •
+              </span>
+              Victoria, BC
+            </p>
+            <div className="experience-skill-tags" aria-label="Relevant skills">
+              {CAREER_OVERVIEW_SKILL_TAG_ROWS.education.map((row) => (
+                <ExperienceSkillTag {...row} key={row.label} />
+              ))}
+            </div>
+          </div>
+          <div className="career-tabs-content-inner">
+            <div className="panel-content">
+              <div className="content-card">
+                <p className="card-text">University of Victoria / Victoria, BC / 2024</p>
+                <ul className="feature-list">
+                  {CAREER_OVERVIEW_PANEL_BULLETS.education.map((bullet) => (
+                    <li key={bullet}>
+                      <span>{bullet}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="stats-grid">
+                <div className="stat-item stat-item--fade-only">
+                  <div className="stat-value">B.A.</div>
+                  <div className="stat-label">Writing</div>
+                </div>
+                <div className="stat-item stat-item--fade-only">
+                  <div className="stat-value">UVic</div>
+                  <div className="stat-label">Victoria BC</div>
+                </div>
+                <div className="stat-item stat-item--fade-only">
+                  <div className="stat-value">Dist.</div>
+                  <div className="stat-label">Distinction</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      );
+  }
+};
+
 const ConfidantExperience = ({
   panelSettled = false,
   reduceMotion = false,
@@ -4695,15 +4981,79 @@ const ConfidantExperience = ({
   reduceMotion?: boolean | null;
 }) => {
   const tabsRootRef = useRef<HTMLDivElement>(null);
+  const [activeExperienceTabId, setActiveExperienceTabId] = useState<ExperienceTabId>("rawblem");
+  const [isCompactExperienceLayout, setIsCompactExperienceLayout] = useState(() =>
+    typeof window !== "undefined"
+      ? window.matchMedia(`(max-width: ${EXPERIENCE_MOBILE_MAX_PX}px)`).matches
+      : false,
+  );
   const rm = !!reduceMotion;
+
+  useEffect(() => {
+    const mq = window.matchMedia(`(max-width: ${EXPERIENCE_MOBILE_MAX_PX}px)`);
+    const onChange = () => setIsCompactExperienceLayout(mq.matches);
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+  const handleExperienceTabKeyDown = useCallback(
+    (tabId: ExperienceTabId, e: React.KeyboardEvent<HTMLButtonElement>) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        setActiveExperienceTabId(tabId);
+      }
+    },
+    [],
+  );
+
+  const renderExperienceTabButton = (
+    tabId: ExperienceTabId,
+    title: string,
+    subtitle: string,
+    motionVariants?: Variants,
+  ) => {
+    const className = experienceTabBtnClass(activeExperienceTabId, tabId);
+    const onClick = () => setActiveExperienceTabId(tabId);
+    const onKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) =>
+      handleExperienceTabKeyDown(tabId, e);
+    const label = (
+      <div className="tab-text">
+        <div className="tab-title">{title}</div>
+        <div className="tab-subtitle">{subtitle}</div>
+      </div>
+    );
+    return (
+      <motion.button
+        key={tabId}
+        className={className}
+        data-tab={tabId}
+        type="button"
+        variants={motionVariants}
+        onClick={onClick}
+        onTouchStart={onClick}
+        onKeyDown={onKeyDown}
+      >
+        {label}
+      </motion.button>
+    );
+  };
+
+  const renderExperienceTabPanels = (): ReactNode =>
+    EXPERIENCE_TAB_IDS.map((tabId) => (
+      <div
+        key={tabId}
+        id={tabId}
+        className={experienceTabPanelClass(activeExperienceTabId, tabId)}
+      >
+        <ExperienceTabPanelBody tabId={tabId} />
+      </div>
+    ));
 
   const experienceEntranceEase = EASE.out;
   /** Right-hand card — same motion as PROFILE summary / metadata cards. */
   const experienceCardMotionEase = EASE.out;
   const experienceCardEntranceDuration = SUMMARY_DURATION_S * 1.5;
   const experienceCardEntranceY = 21;
-  const careerTabFadeMs = Math.round(SUMMARY_DURATION_S * 1000);
-  const careerTabHeightMs = BUTTON_FADE_DURATION_MS;
   const experienceRailLabelsDelay = rm ? 0 : PROFILE_TITLE_DELAY_S * 1.25 * 1.1 * 1.15 * 1.15 * 0.95;
   const experienceRailBaseDelay = experienceRailLabelsDelay;
   const experienceRailLabelDuration = PROFILE_SECTION_ENTER_S * 1.25;
@@ -4783,198 +5133,69 @@ const ConfidantExperience = ({
       },
     },
   };
+  useEffect(() => {
+    if (isCompactExperienceLayout) return;
+    const root = tabsRootRef.current;
+    if (!root) return;
+
+    root.querySelectorAll<HTMLElement>(".career-tabs-content-inner").forEach((el) => {
+      el.classList.remove("career-tabs-dim");
+      el.style.removeProperty("height");
+    });
+    root.querySelectorAll<HTMLElement>(".tab-panel .panel-header").forEach((el) => {
+      el.classList.remove("career-tabs-dim");
+    });
+    root.querySelector<HTMLElement>(".tabs-content")?.style.removeProperty("height");
+
+    root.querySelectorAll<HTMLElement>(".tab-panel").forEach((panel) => {
+      panel.querySelectorAll<HTMLElement>(
+        ".stat-value, .stat-item, .progress-fill, .career-tabs-content-inner, .panel-header, .panel-content, .content-card",
+      ).forEach((el) => {
+        el.style.removeProperty("opacity");
+        el.style.removeProperty("transform");
+        el.style.removeProperty("transition");
+      });
+    });
+
+    const panel = root.querySelector<HTMLElement>(`#${activeExperienceTabId}`);
+    if (!panel) return;
+
+    void panel.offsetHeight;
+
+    if (isCompactExperienceLayout) return;
+
+    panel.querySelectorAll<HTMLElement>(".progress-fill").forEach((bar) => {
+      const width = bar.style.width;
+      bar.style.width = "0%";
+      setTimeout(() => {
+        bar.style.width = width;
+      }, 100);
+    });
+
+    const careerStatEase = "cubic-bezier(0.16, 1, 0.3, 1)";
+    const isEducation = panel.id === "education";
+    const statTargets = isEducation
+      ? panel.querySelectorAll<HTMLElement>(".stats-grid .stat-item")
+      : panel.querySelectorAll<HTMLElement>(".stat-value");
+    statTargets.forEach((stat, index) => {
+      stat.style.opacity = "0";
+      stat.style.transform = isEducation ? "none" : "translateY(20px)";
+      setTimeout(
+        () => {
+          stat.style.transition = isEducation
+            ? `opacity 0.32s ${careerStatEase}`
+            : `opacity 0.5s ${careerStatEase}, transform 0.5s ${careerStatEase}`;
+          stat.style.opacity = "1";
+          stat.style.transform = isEducation ? "none" : "translateY(0)";
+        },
+        isEducation ? 0 : index * 100,
+      );
+    });
+  }, [activeExperienceTabId, isCompactExperienceLayout]);
 
   useEffect(() => {
     const root = tabsRootRef.current;
     if (!root) return;
-
-    // Tab functionality, adapted directly from the provided CodePen logic.
-    const tabButtons = root.querySelectorAll<HTMLElement>(".tab-btn");
-    const tabPanels = root.querySelectorAll<HTMLElement>(".tab-panel");
-    const tabsShellEl = root.querySelector<HTMLElement>(".tabs-content");
-
-    const CAREER_TAB_FADE_MS = careerTabFadeMs;
-    const CAREER_TAB_HEIGHT_MS = careerTabHeightMs;
-    let tabFadeLocked = false;
-    const tabFadeTimeoutIds: number[] = [];
-    /** Single driver so outer + inner heights share one eased curve (no stagger). */
-    let careerTabHeightSync: { stop: () => void } | null = null;
-
-    function stopCareerTabHeightSync() {
-      careerTabHeightSync?.stop();
-      careerTabHeightSync = null;
-    }
-
-    function clearTabFadeTimers() {
-      while (tabFadeTimeoutIds.length) {
-        const id = tabFadeTimeoutIds.pop();
-        if (id !== undefined) window.clearTimeout(id);
-      }
-      stopCareerTabHeightSync();
-    }
-
-    function resetCareerTabFadeLayers(rootElement: HTMLElement) {
-      rootElement.querySelectorAll<HTMLElement>(".career-tabs-content-inner").forEach((el) => {
-        el.classList.remove("career-tabs-dim");
-        el.style.removeProperty("height");
-      });
-      rootElement.querySelectorAll<HTMLElement>(".tab-panel .panel-header").forEach((el) => {
-        el.classList.remove("career-tabs-dim");
-      });
-    }
-
-    function switchTab(tabId: string | null) {
-      const rootNode = tabsRootRef.current;
-      if (!rootNode || !tabId) return;
-      const activeButton = rootNode.querySelector<HTMLElement>(`[data-tab="${tabId}"]`);
-      const activePanel = document.getElementById(tabId);
-      if (!activeButton || !activePanel) return;
-      const activeButtonEl = activeButton;
-      const activePanelEl = activePanel;
-
-      const currentActivePanel = rootNode.querySelector<HTMLElement>(".tab-panel.active");
-      if (currentActivePanel?.id === tabId) return;
-
-      if (tabFadeLocked) return;
-
-      function applyTabSwitch() {
-        tabButtons.forEach((btn) => btn.classList.remove("active"));
-        tabPanels.forEach((panel) => panel.classList.remove("active"));
-        activeButtonEl.classList.add("active");
-        activePanelEl.classList.add("active");
-      }
-
-      const outgoingInner = currentActivePanel?.querySelector<HTMLElement>(
-        ".career-tabs-content-inner",
-      );
-      const incomingInner = activePanelEl.querySelector<HTMLElement>(
-        ".career-tabs-content-inner",
-      );
-      const outgoingHeader = currentActivePanel?.querySelector<HTMLElement>(".panel-header");
-      const incomingHeader = activePanelEl.querySelector<HTMLElement>(".panel-header");
-
-      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      const isTabletOrMobileViewport = window.matchMedia("(max-width: 1024px)").matches;
-      const isSafariBrowser =
-        typeof navigator !== "undefined" &&
-        /^((?!chrome|chromium|android|crios|fxios).)*safari/i.test(navigator.userAgent);
-      if (
-        reduceMotion ||
-        isTabletOrMobileViewport ||
-        isSafariBrowser ||
-        !tabsShellEl ||
-        !outgoingInner ||
-        !incomingInner
-      ) {
-        stopCareerTabHeightSync();
-        tabsShellEl?.style.removeProperty("height");
-        resetCareerTabFadeLayers(rootNode);
-        applyTabSwitch();
-        return;
-      }
-
-      stopCareerTabHeightSync();
-
-      const fromShellH = Math.max(
-        1,
-        Math.round(tabsShellEl.getBoundingClientRect().height),
-      );
-      const fromInnerH = Math.max(
-        1,
-        Math.round(outgoingInner.getBoundingClientRect().height),
-      );
-      tabsShellEl.style.height = `${fromShellH}px`;
-      outgoingInner.style.height = `${fromInnerH}px`;
-
-      tabFadeLocked = true;
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          outgoingInner.classList.add("career-tabs-dim");
-          outgoingHeader?.classList.add("career-tabs-dim");
-        });
-      });
-
-      tabFadeTimeoutIds.push(
-        window.setTimeout(() => {
-          incomingInner.classList.add("career-tabs-dim");
-          incomingHeader?.classList.add("career-tabs-dim");
-          applyTabSwitch();
-          outgoingInner.classList.remove("career-tabs-dim");
-          outgoingHeader?.classList.remove("career-tabs-dim");
-          outgoingInner.style.removeProperty("height");
-
-          /* FLIP: shell + incoming inner (frosted body only) */
-          tabsShellEl.style.height = "auto";
-          incomingInner.style.height = "auto";
-          const naturalShellH = Math.round(
-            tabsShellEl.getBoundingClientRect().height,
-          );
-          const naturalInnerH = Math.round(
-            incomingInner.getBoundingClientRect().height,
-          );
-          tabsShellEl.style.height = `${fromShellH}px`;
-          incomingInner.style.height = `${fromInnerH}px`;
-          void tabsShellEl.offsetHeight;
-
-          requestAnimationFrame(() => {
-            incomingInner.classList.remove("career-tabs-dim");
-            incomingHeader?.classList.remove("career-tabs-dim");
-
-            if (
-              !naturalShellH ||
-              naturalShellH < 1 ||
-              !naturalInnerH ||
-              naturalInnerH < 1
-            ) {
-              tabsShellEl.style.removeProperty("height");
-              incomingInner.style.removeProperty("height");
-              tabFadeLocked = false;
-              return;
-            }
-
-            const dShell = naturalShellH - fromShellH;
-            const dInner = naturalInnerH - fromInnerH;
-            if (Math.abs(dShell) < 2 && Math.abs(dInner) < 2) {
-              tabsShellEl.style.removeProperty("height");
-              incomingInner.style.removeProperty("height");
-              tabFadeLocked = false;
-              return;
-            }
-
-            const t = motionValue(0);
-            const unsub = t.on("change", (p) => {
-              tabsShellEl.style.height = `${Math.round(fromShellH + dShell * p)}px`;
-              incomingInner.style.height = `${Math.round(fromInnerH + dInner * p)}px`;
-            });
-
-            const finishHeights = () => {
-              unsub();
-              tabsShellEl.style.removeProperty("height");
-              incomingInner.style.removeProperty("height");
-              careerTabHeightSync = null;
-              tabFadeLocked = false;
-            };
-
-            const anim = animate(t, 1, {
-              duration: CAREER_TAB_HEIGHT_MS / 1000,
-              ease: experienceCardMotionEase,
-              onComplete: finishHeights,
-            });
-
-            careerTabHeightSync = {
-              stop: () => {
-                anim.stop();
-                unsub();
-                tabsShellEl.style.removeProperty("height");
-                resetCareerTabFadeLayers(rootNode);
-                careerTabHeightSync = null;
-                tabFadeLocked = false;
-              },
-            };
-          });
-        }, CAREER_TAB_FADE_MS),
-      );
-    }
 
     const tabsNavEl = root.querySelector<HTMLElement>(".tabs-nav");
     const tabHoverShiftPx = tabsNavEl
@@ -4982,19 +5203,7 @@ const ConfidantExperience = ({
       : 6;
 
     const buttonCleanups: Array<() => void> = [];
-    tabButtons.forEach((button) => {
-      const onClick = function (this: HTMLElement) {
-        const tabId = this.getAttribute("data-tab");
-        switchTab(tabId);
-      };
-      // Keyboard accessibility
-      const onKeyDown = function (this: HTMLElement, e: KeyboardEvent) {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          const tabId = this.getAttribute("data-tab");
-          switchTab(tabId);
-        }
-      };
+    root.querySelectorAll<HTMLElement>(".tab-btn").forEach((button) => {
       const onMouseEnter = function (this: HTMLElement) {
         this.style.transform = `translateX(${tabHoverShiftPx}px)`;
       };
@@ -5002,26 +5211,19 @@ const ConfidantExperience = ({
         this.style.transform = "translateX(0)";
       };
 
-      button.addEventListener("click", onClick);
-      button.addEventListener("keydown", onKeyDown);
       button.addEventListener("mouseenter", onMouseEnter);
       button.addEventListener("mouseleave", onMouseLeave);
       buttonCleanups.push(() => {
-        button.removeEventListener("click", onClick);
-        button.removeEventListener("keydown", onKeyDown);
         button.removeEventListener("mouseenter", onMouseEnter);
         button.removeEventListener("mouseleave", onMouseLeave);
       });
     });
 
-    // Toggle switch functionality
-    const toggleSwitches = root.querySelectorAll<HTMLElement>(".toggle-switch");
     const toggleCleanups: Array<() => void> = [];
-    toggleSwitches.forEach((toggle) => {
+    root.querySelectorAll<HTMLElement>(".toggle-switch").forEach((toggle) => {
       const onClick = function (this: HTMLElement) {
         this.classList.toggle("active");
       };
-      // Keyboard accessibility for toggles
       toggle.setAttribute("tabindex", "0");
       toggle.setAttribute("role", "switch");
       toggle.setAttribute("aria-checked", String(toggle.classList.contains("active")));
@@ -5041,70 +5243,7 @@ const ConfidantExperience = ({
       });
     });
 
-    // Animate progress bars on panel switch
-    function animateProgressBars(panel: HTMLElement) {
-      const progressBars = panel.querySelectorAll<HTMLElement>(".progress-fill");
-      progressBars.forEach((bar) => {
-        const width = bar.style.width;
-        bar.style.width = "0%";
-        setTimeout(() => {
-          bar.style.width = width;
-        }, 100);
-      });
-    }
-    // Animate stats on panel switch (education B.A. / UVic / Dist.: fade only)
-    const careerStatEase = "cubic-bezier(0.16, 1, 0.3, 1)";
-    function animateStats(panel: HTMLElement) {
-      const isEducation = panel.id === "education";
-      const statTargets = isEducation
-        ? panel.querySelectorAll<HTMLElement>(".stats-grid .stat-item")
-        : panel.querySelectorAll<HTMLElement>(".stat-value");
-      statTargets.forEach((stat, index) => {
-        stat.style.opacity = "0";
-        stat.style.transform = isEducation ? "none" : "translateY(20px)";
-        setTimeout(
-          () => {
-            stat.style.transition = isEducation
-              ? `opacity 0.32s ${careerStatEase}`
-              : `opacity 0.5s ${careerStatEase}, transform 0.5s ${careerStatEase}`;
-            stat.style.opacity = "1";
-            stat.style.transform = isEducation ? "none" : "translateY(0)";
-          },
-          isEducation ? 0 : index * 100,
-        );
-      });
-    }
-    // Observer for panel changes
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (
-          mutation.type === "attributes" &&
-          mutation.attributeName === "class"
-        ) {
-          const panel = mutation.target as HTMLElement;
-          if (panel.classList.contains("active")) {
-            animateProgressBars(panel);
-            animateStats(panel);
-          }
-        }
-      });
-    });
-    tabPanels.forEach((panel) => {
-      observer.observe(panel, { attributes: true });
-    });
-    // Initial animation for the first active panel
-    const initialPanel = root.querySelector<HTMLElement>(".tab-panel.active");
-    if (initialPanel) {
-      animateProgressBars(initialPanel);
-      animateStats(initialPanel);
-    }
-
     return () => {
-      clearTabFadeTimers();
-      resetCareerTabFadeLayers(root);
-      root.querySelector<HTMLElement>(".tabs-content")?.style.removeProperty("height");
-      tabFadeLocked = false;
-      observer.disconnect();
       buttonCleanups.forEach((cleanup) => cleanup());
       toggleCleanups.forEach((cleanup) => cleanup());
     };
@@ -5113,14 +5252,13 @@ const ConfidantExperience = ({
   return (
     <section
       id="experience"
-      className={`career-viewport bg-black font-body text-white ${SLIDE}`}
+      className="career-viewport bg-black font-body text-white max-lg:relative max-lg:h-auto max-lg:min-h-0 max-lg:w-full max-lg:overflow-visible"
     >
       <SectionGridOverlay />
-      <div ref={tabsRootRef} className="career-overview-shell no-scrollbar">
-        <div className="container mx-auto px-4 sm:px-6">
-        <div className={`mx-auto w-full ${SHOWCASE_COLUMN_MAX}`}>
-          <div className="px-1 sm:px-2">
-          <div className="px-2 sm:px-4 lg:px-2 xl:px-3">
+      <div ref={tabsRootRef} className={`career-overview-shell no-scrollbar ${EXPERIENCE_SHELL_TOP_INSET_MAX_LG}`}>
+        <div className="container mx-auto px-5 sm:px-6">
+        <div className={`mx-auto w-full ${SHOWCASE_COLUMN_MAX} ${EXPERIENCE_GUTTER_OUTER_MAX_LG} lg:px-1 lg:sm:px-2`}>
+          <div className={`min-w-0 w-full ${EXPERIENCE_GUTTER_INNER_MAX_LG} lg:px-2 lg:sm:px-4 xl:px-3`}>
           <motion.div
             className="main-container"
             variants={experienceEntranceRoot}
@@ -5128,10 +5266,17 @@ const ConfidantExperience = ({
             animate={panelSettled ? "visible" : "hidden"}
           >
           <motion.div className="career-overview-rail">
-          <motion.div className="nav-header" variants={experienceRailHeaderEntrance}>
+          <motion.div
+            className="nav-header"
+            variants={experienceRailHeaderEntrance}
+            initial="hidden"
+            animate={panelSettled ? "visible" : "hidden"}
+          >
             <motion.div className="career-nav-section-labels" variants={experienceRailLabelsEntrance}>
               <p className="career-nav-section-subtitle section-main-header-title">Experience</p>
-              <p className="career-nav-section-title" style={{ color: NAV_SUBHEAD_GRAY }}>Career Overview</p>
+              <p className="career-nav-section-title" style={{ color: NAV_SUBHEAD_GRAY }}>
+                Career Overview
+              </p>
             </motion.div>
             <motion.div
               className="career-nav-section-divider"
@@ -5141,217 +5286,47 @@ const ConfidantExperience = ({
             />
           </motion.div>
           {/* Vertical Tabs Navigation */}
-          <motion.nav className="tabs-nav" variants={experienceTabsEntrance}>
-            <motion.button
-              className="tab-btn active"
-              data-tab="rawblem"
-              type="button"
-              variants={experienceTabItemEntrance}
-            >
-              <div className="tab-text">
-                <div className="tab-title">Digital Content</div>
-                <div className="tab-subtitle">RAWBLEM</div>
-              </div>
-            </motion.button>
-            <motion.button
-              className="tab-btn"
-              data-tab="uvic-esports"
-              type="button"
-              variants={experienceTabItemEntrance}
-            >
-              <div className="tab-text">
-                <div className="tab-title">Social Media</div>
-                <div className="tab-subtitle">UVIC E-Sports</div>
-              </div>
-            </motion.button>
-            <motion.button className="tab-btn" data-tab="starbucks" type="button" variants={experienceTabItemEntrance}>
-              <div className="tab-text">
-                <div className="tab-title">Barista</div>
-                <div className="tab-subtitle">Starbucks</div>
-              </div>
-            </motion.button>
-            <motion.button
-              className="tab-btn"
-              data-tab="education"
-              type="button"
-              variants={experienceTabItemEntrance}
-            >
-              <div className="tab-text">
-                <div className="tab-title">Education</div>
-                <div className="tab-subtitle">B.A. Writing</div>
-              </div>
-            </motion.button>
+          <motion.nav
+            className="tabs-nav"
+            variants={experienceTabsEntrance}
+            initial="hidden"
+            animate={panelSettled ? "visible" : "hidden"}
+          >
+            {renderExperienceTabButton(
+              "rawblem",
+              "Digital Content",
+              "RAWBLEM",
+              experienceTabItemEntrance,
+            )}
+            {renderExperienceTabButton(
+              "uvic-esports",
+              "Social Media",
+              "UVIC E-Sports",
+              experienceTabItemEntrance,
+            )}
+            {renderExperienceTabButton(
+              "starbucks",
+              "Barista",
+              "Starbucks",
+              experienceTabItemEntrance,
+            )}
+            {renderExperienceTabButton(
+              "education",
+              "Education",
+              "B.A. Writing",
+              experienceTabItemEntrance,
+            )}
           </motion.nav>
           </motion.div>
-          {/* Tab Content Panels */}
           <motion.div
             className="tabs-content"
             variants={experienceCardEntrance}
             initial="hidden"
             animate={panelSettled ? "visible" : "hidden"}
           >
-            {/* Dashboard Panel */}
-            <div className="tab-panel active no-scrollbar" id="rawblem">
-              <div className="panel-header">
-                <span className="panel-badge">Experience</span>
-                <div className="panel-title-row">
-                  <h1 className="panel-title">{EXPERIENCE_DATA[0].role}</h1>
-                  <p className="panel-period">{EXPERIENCE_DATA[0].period}</p>
-                </div>
-                <p className="panel-description">
-                  {EXPERIENCE_DATA[0].company}
-                  <span className="panel-meta-sep" aria-hidden="true">
-                    •
-                  </span>
-                  {EXPERIENCE_DATA[0].location}
-                </p>
-                <div className="experience-skill-tags" aria-label="Relevant skills">
-                  {CAREER_OVERVIEW_SKILL_TAG_ROWS.rawblem.map((row) => (
-                    <ExperienceSkillTag {...row} key={row.label} />
-                  ))}
-                </div>
-              </div>
-              <div className="career-tabs-content-inner">
-                <div className="panel-content">
-                  <div className="content-card">
-                    <ul className="feature-list">
-                      {CAREER_OVERVIEW_PANEL_BULLETS.rawblem.map((bullet) => (
-                        <li key={bullet}>
-                          <span>{bullet}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </div>
-            {/* Analytics Panel */}
-            <div className="tab-panel no-scrollbar" id="uvic-esports">
-              <div className="panel-header">
-                <span className="panel-badge">Experience</span>
-                <div className="panel-title-row">
-                  <h1 className="panel-title">{EXPERIENCE_DATA[1].role}</h1>
-                  <p className="panel-period">{EXPERIENCE_DATA[1].period}</p>
-                </div>
-                <p className="panel-description">
-                  {EXPERIENCE_DATA[1].company}
-                  <span className="panel-meta-sep" aria-hidden="true">
-                    •
-                  </span>
-                  {EXPERIENCE_DATA[1].location}
-                </p>
-                <div className="experience-skill-tags" aria-label="Relevant skills">
-                  {CAREER_OVERVIEW_SKILL_TAG_ROWS.uvic.map((row) => (
-                    <ExperienceSkillTag {...row} key={row.label} />
-                  ))}
-                </div>
-              </div>
-              <div className="career-tabs-content-inner">
-                <div className="panel-content">
-                  <div className="content-card">
-                    <ul className="feature-list">
-                      {CAREER_OVERVIEW_PANEL_BULLETS.uvic.map((bullet) => (
-                        <li key={bullet}>
-                          <span>{bullet}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </div>
-            {/* Projects Panel */}
-            <div className="tab-panel no-scrollbar" id="starbucks">
-              <div className="panel-header">
-                <span className="panel-badge">Experience</span>
-                <div className="panel-title-row">
-                  <h1 className="panel-title">{EXPERIENCE_DATA[2].role}</h1>
-                  <p className="panel-period">{EXPERIENCE_DATA[2].period}</p>
-                </div>
-                <p className="panel-description">
-                  {EXPERIENCE_DATA[2].company}
-                  <span className="panel-meta-sep" aria-hidden="true">
-                    •
-                  </span>
-                  {EXPERIENCE_DATA[2].location}
-                </p>
-                <div className="experience-skill-tags" aria-label="Relevant skills">
-                  {CAREER_OVERVIEW_SKILL_TAG_ROWS.starbucks.map((row) => (
-                    <ExperienceSkillTag {...row} key={row.label} />
-                  ))}
-                </div>
-              </div>
-              <div className="career-tabs-content-inner">
-                <div className="panel-content">
-                  <div className="content-card">
-                    <ul className="feature-list">
-                      {CAREER_OVERVIEW_PANEL_BULLETS.starbucks.map((bullet) => (
-                        <li key={bullet}>
-                          <span>{bullet}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </div>
-            {/* Messages Panel */}
-            <div className="tab-panel no-scrollbar" id="education">
-              <div className="panel-header">
-                <span className="panel-badge">Education</span>
-                <div className="panel-title-row">
-                  <h1 className="panel-title">University of Victoria</h1>
-                  <p className="panel-period">2024</p>
-                </div>
-                <p className="panel-description">
-                  Bachelor&apos;s Degree, Writing
-                  <span className="panel-meta-sep" aria-hidden="true">
-                    •
-                  </span>
-                  University of Victoria
-                  <span className="panel-meta-sep" aria-hidden="true">
-                    •
-                  </span>
-                  Victoria, BC
-                </p>
-                <div className="experience-skill-tags" aria-label="Relevant skills">
-                  {CAREER_OVERVIEW_SKILL_TAG_ROWS.education.map((row) => (
-                    <ExperienceSkillTag {...row} key={row.label} />
-                  ))}
-                </div>
-              </div>
-              <div className="career-tabs-content-inner">
-                <div className="panel-content">
-                  <div className="content-card">
-                    <p className="card-text">University of Victoria / Victoria, BC / 2024</p>
-                    <ul className="feature-list">
-                      {CAREER_OVERVIEW_PANEL_BULLETS.education.map((bullet) => (
-                        <li key={bullet}>
-                          <span>{bullet}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div className="stats-grid">
-                    <div className="stat-item stat-item--fade-only">
-                      <div className="stat-value">B.A.</div>
-                      <div className="stat-label">Writing</div>
-                    </div>
-                    <div className="stat-item stat-item--fade-only">
-                      <div className="stat-value">UVic</div>
-                      <div className="stat-label">Victoria BC</div>
-                    </div>
-                    <div className="stat-item stat-item--fade-only">
-                      <div className="stat-value">Dist.</div>
-                      <div className="stat-label">Distinction</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            {renderExperienceTabPanels()}
           </motion.div>
           </motion.div>
-          </div>
           </div>
         </div>
         </div>
@@ -5786,7 +5761,7 @@ const SKILLS_CARD_HOVER_Y = -12; // More lift on hover // Ball travel: slower so
 const SKILLS_DATA = {
   core: {
     title: "CORE COMPETENCIES",
-    /** Paired subhead under rail title (matches #experience .career-nav-section-title). */
+    /** Paired subhead under rail title (EXPERIENCE panel-description color). */
     subtitle: "SKILLS EMBODIED",
     categories: [
       {
@@ -5822,7 +5797,7 @@ const SKILLS_DATA = {
     ],
   },
   tools: {
-    title: "TOOLKIT",
+    title: "Toolkit",
     subtitle: "SKILLS APPLIED",
     categories: [
       {
@@ -7010,7 +6985,7 @@ const SkillsBranchRailHeader = ({
           variants={labelsEntrance}
         >
           <p className="career-nav-section-subtitle whitespace-nowrap">{sectionSubtitle}</p>
-          <p className="career-nav-section-title whitespace-nowrap" style={{ color: NAV_SUBHEAD_GRAY }}>{sectionTitle}</p>
+          <p className="career-nav-section-title whitespace-nowrap">{sectionTitle}</p>
         </motion.div>
         <div className="skills-branch-accent-line relative min-h-[2px] w-full" aria-hidden>
           <motion.span
@@ -7249,6 +7224,7 @@ const SkillArsenal = ({
   const skillsBulletsRevealDelay =
     cardsRowEnd + cardHeaderEnd * SKILLS_CARD_BULLETS_HEADER_OVERLAP;
 
+  const skillsSectionRef = useRef<HTMLElement>(null);
   const coreRailTitleStackRef = useRef<HTMLDivElement>(null);
   const [sharedRailAccentWidthPx, setSharedRailAccentWidthPx] = useState<number | null>(null);
 
@@ -7282,6 +7258,35 @@ const SkillArsenal = ({
     const raf = requestAnimationFrame(syncSharedRailAccentWidth);
     return () => cancelAnimationFrame(raf);
   }, [panelSettled, rm, syncSharedRailAccentWidth]);
+
+  /** WebKit mobile: absolute grid overlay can stop at viewport height while content scrolls. */
+  useLayoutEffect(() => {
+    const section = skillsSectionRef.current;
+    if (!section) return;
+
+    const mq = window.matchMedia("(max-width: 1024px)");
+    const syncSkillsGridOverlayHeight = () => {
+      if (!mq.matches) {
+        section.style.removeProperty("--skills-grid-overlay-height");
+        return;
+      }
+      const sectionHeight = Math.max(section.offsetHeight, section.scrollHeight);
+      section.style.setProperty("--skills-grid-overlay-height", `${sectionHeight}px`);
+    };
+
+    syncSkillsGridOverlayHeight();
+    const ro = new ResizeObserver(syncSkillsGridOverlayHeight);
+    ro.observe(section);
+    mq.addEventListener("change", syncSkillsGridOverlayHeight);
+    window.addEventListener("resize", syncSkillsGridOverlayHeight);
+
+    return () => {
+      ro.disconnect();
+      mq.removeEventListener("change", syncSkillsGridOverlayHeight);
+      window.removeEventListener("resize", syncSkillsGridOverlayHeight);
+      section.style.removeProperty("--skills-grid-overlay-height");
+    };
+  }, [panelSettled]);
 
   const skillsCardRowEntrance = (rowDelay: number, reverse = false): Variants => ({
     hidden: {},
@@ -7321,21 +7326,21 @@ const SkillArsenal = ({
 
   return (
     <section
+      ref={skillsSectionRef}
       id="skills"
       className={`no-scrollbar relative flex min-h-full w-full min-w-0 flex-col justify-start overflow-x-hidden overflow-y-visible bg-black text-white scroll-mt-6 max-md:min-h-max ${SECTION_MAIN_HEADER_INSET} pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:pb-8 md:pb-10`}
     >
       <SectionGridOverlay />
       <motion.div
-        className="container relative z-10 mx-auto flex min-h-0 min-w-0 w-full max-w-full flex-1 max-md:flex-none flex-col justify-start px-4 sm:px-6"
+        className="container relative z-10 mx-auto flex min-h-0 min-w-0 w-full max-w-full flex-1 max-md:flex-none flex-col justify-start px-5 sm:px-6"
         style={
           SKILLS_LAYOUT.sectionOffsetRem !== 0
             ? { transform: `translateY(${SKILLS_LAYOUT.sectionOffsetRem}rem)` }
             : undefined
         }
       >
-        <motion.div
-          className={`${PROFILE_VIEWPORT_CONTENT_MAX} skills-profile-shell relative z-[2] mx-auto flex min-h-0 w-full flex-1 max-md:flex-none flex-col justify-start`}
-        >
+        <div className={EXPERIENCE_GUTTER_SHELL_OUTER}>
+          <div className={`${EXPERIENCE_GUTTER_SHELL_INNER} ${PROFILE_VIEWPORT_CONTENT_MAX} skills-profile-shell relative z-[2] mx-auto flex min-h-0 w-full flex-1 max-md:flex-none flex-col justify-start`}>
           <SkillsMainSectionHeader
             revealDelay={skillsBulletsRevealDelay}
             panelSettled={panelSettled}
@@ -7436,7 +7441,8 @@ const SkillArsenal = ({
 
             </motion.div>
           </motion.div>
-        </motion.div>
+          </div>
+        </div>
       </motion.div>
     </section>
   );
@@ -7590,11 +7596,6 @@ export default function Home() {
     "visible" | "hide-instant" | "fade-in"
   >("visible");
   const skillsFadeReplayRafRef = useRef<number | null>(null);
-  /** Side-nav EXPERIENCE re-click: same fade-only replay (no entrance re-run). */
-  const [experienceContentFade, setExperienceContentFade] = useState<
-    "visible" | "hide-instant" | "fade-in"
-  >("visible");
-  const experienceFadeReplayRafRef = useRef<number | null>(null);
   const reduceMotion = useReducedMotion();
   const heroInViewRef = useRef<HTMLDivElement | null>(null);
   const isHeroInView = useInView(heroInViewRef, { margin: "-100px 0px 0px 0px" });
@@ -7683,16 +7684,9 @@ export default function Home() {
   }, [currentSection]);
 
   useEffect(() => {
-    if (currentSection !== "experience") setExperienceContentFade("visible");
-  }, [currentSection]);
-
-  useEffect(() => {
     return () => {
       if (skillsFadeReplayRafRef.current != null) {
         cancelAnimationFrame(skillsFadeReplayRafRef.current);
-      }
-      if (experienceFadeReplayRafRef.current != null) {
-        cancelAnimationFrame(experienceFadeReplayRafRef.current);
       }
     };
   }, []);
@@ -7763,20 +7757,10 @@ export default function Home() {
       return;
     }
 
-    // Already on EXPERIENCE: fade in only — keep panel settled (no entrance re-run).
+    // Already on EXPERIENCE: no-op (keep desktop behavior consistent across browsers).
     if (id === "experience" && currentSection === "experience") {
       transitionTimeoutsRef.current.forEach((t) => window.clearTimeout(t));
       transitionTimeoutsRef.current = [];
-      if (!reduceMotion) {
-        if (experienceFadeReplayRafRef.current != null) {
-          cancelAnimationFrame(experienceFadeReplayRafRef.current);
-        }
-        setExperienceContentFade("hide-instant");
-        experienceFadeReplayRafRef.current = requestAnimationFrame(() => {
-          experienceFadeReplayRafRef.current = null;
-          setExperienceContentFade("fade-in");
-        });
-      }
       return;
     }
 
@@ -8020,7 +8004,7 @@ export default function Home() {
     >
       {/* Top-right controls (Resume + Hamburger) */}
       <motion.div
-        className="fixed top-5 right-3 sm:top-6 sm:right-4 z-50 flex items-center gap-2 sm:gap-2.5"
+        className={`fixed ${TOP_NAV_FIXED_TOP} right-2.5 sm:right-4 z-50 flex items-center gap-1.5 sm:gap-2.5`}
         initial={false}
         animate={{
           opacity: navButtonsFaded ? 0 : 1,
@@ -8036,14 +8020,11 @@ export default function Home() {
             transition={SPRING.ui}
           >
             <Button
+              variant="ghost"
               onClick={() => setIsResumeMode(!isResumeMode)}
               size="icon"
               aria-label={isResumeMode ? "Exit resume mode" : "Enter resume mode"}
-              className={`shadow-xl border-[3px] transition-colors duration-200 font-display rounded-full h-12 w-12 sm:h-14 sm:w-14 min-h-0 min-w-0 p-0 flex items-center justify-center [&_svg]:!size-[18px] sm:[&_svg]:!size-5 ${
-                isResumeMode
-                  ? "bg-black text-white border-black hover:bg-zinc-800"
-                  : "bg-black text-white border-black hover:bg-white hover:text-black"
-              }`}
+              className={`${TOP_NAV_ICON_BUTTON_CLASS} font-display flex items-center justify-center [&_svg]:!size-[17px] sm:[&_svg]:!size-5`}
             >
               {isResumeMode ? <Zap size={20} /> : <FileText size={20} />}
             </Button>
@@ -8054,10 +8035,11 @@ export default function Home() {
           <motion.div whileTap={TAP} transition={SPRING.ui}>
             <Button
               type="button"
+              variant="ghost"
               onClick={() => setIsSideNavOpen(true)}
               size="icon"
               aria-label="Open navigation menu"
-              className="shadow-xl border-[3px] transition-colors duration-200 font-display rounded-full h-12 w-12 sm:h-14 sm:w-14 min-h-0 min-w-0 p-0 flex items-center justify-center bg-black text-white border-black hover:bg-white hover:text-black [&_svg]:!size-[18px] sm:[&_svg]:!size-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+              className={`${TOP_NAV_ICON_BUTTON_CLASS} font-display flex items-center justify-center [&_svg]:!size-[17px] sm:[&_svg]:!size-5`}
             >
               <Menu size={20} aria-hidden />
             </Button>
@@ -8229,8 +8211,10 @@ export default function Home() {
               className={`fixed inset-0 flex min-h-0 flex-col no-scrollbar ${
                 currentSection === "projects"
                   ? "overflow-x-hidden overflow-y-auto overscroll-y-contain [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0"
-                  : currentSection === "projects-supporting" || currentSection === "experience"
+                  : currentSection === "projects-supporting"
                     ? "overflow-x-hidden overflow-y-hidden"
+                    : currentSection === "experience"
+                      ? "overflow-x-hidden overflow-y-auto overscroll-y-contain no-scrollbar [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0"
                     : "overflow-x-hidden overflow-y-auto overscroll-y-contain [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0"
               }`}
               style={{
@@ -8239,7 +8223,7 @@ export default function Home() {
                 pointerEvents: transitionTarget === "menu" ? "none" : "auto",
                 // Dropping will-change after settle avoids Chromium keeping section text on a blurry GPU layer.
                 willChange: !panelSettled || isTransitioning ? "transform" : "auto",
-                ...(currentSection === "projects-supporting" || currentSection === "experience"
+                ...(currentSection === "projects-supporting"
                   ? {}
                   : { scrollbarWidth: "none", msOverflowStyle: "none" }),
               }}
@@ -8295,13 +8279,15 @@ export default function Home() {
               <div
                 className={
                   currentSection === "projects"
-                    ? `relative z-10 flex w-full min-w-0 flex-col overflow-x-hidden overflow-y-visible ${
-                        activeShowcaseProjectId ? "min-h-min shrink-0" : "min-h-0 flex-1"
+                    ? `relative z-10 flex w-full min-w-0 flex-col overflow-x-hidden overflow-y-visible max-lg:min-h-min max-lg:flex-none ${
+                        activeShowcaseProjectId ? "min-h-min shrink-0" : "lg:min-h-0 lg:flex-1"
                       }`
                     : currentSection === "profile"
-                      ? "flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-visible"
+                      ? "flex min-h-min w-full min-w-0 max-lg:flex-none flex-col overflow-x-hidden overflow-y-visible lg:h-full lg:min-h-0 lg:flex-1"
                     : currentSection === "skills"
                       ? "flex min-h-full w-full min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-visible"
+                    : currentSection === "experience"
+                      ? "flex min-h-min w-full min-w-0 max-lg:flex-none flex-col overflow-x-hidden overflow-y-visible lg:h-full lg:min-h-0 lg:flex-1"
                       : "flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden"
                 }
               >
@@ -8310,8 +8296,8 @@ export default function Home() {
                   <>
                     {currentSection === "projects" && (
                       <div
-                        className={`flex w-full min-w-0 shrink-0 flex-col overflow-x-hidden overflow-y-visible ${
-                          activeShowcaseProjectId ? "min-h-min" : "min-h-0 flex-1"
+                        className={`flex w-full min-w-0 shrink-0 flex-col overflow-x-hidden overflow-y-visible max-lg:min-h-min max-lg:flex-none ${
+                          activeShowcaseProjectId ? "min-h-min" : "lg:min-h-0 lg:flex-1"
                         }`}
                       >
                         <PalaceProjects
@@ -8340,8 +8326,8 @@ export default function Home() {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: SHOWCASE_SUBROUTE_FADE_S, ease: EASE.out }}
-                        className={`flex w-full min-w-0 shrink-0 flex-col overflow-x-hidden overflow-y-visible ${
-                          activeShowcaseProjectId ? "min-h-min" : "min-h-0 flex-1"
+                        className={`flex w-full min-w-0 shrink-0 flex-col overflow-x-hidden overflow-y-visible max-lg:min-h-min max-lg:flex-none ${
+                          activeShowcaseProjectId ? "min-h-min" : "lg:min-h-0 lg:flex-1"
                         }`}
                       >
                         <PalaceProjects
@@ -8375,26 +8361,9 @@ export default function Home() {
                   (reduceMotion ? (
                     <ConfidantExperience panelSettled={panelSettled} reduceMotion={reduceMotion} />
                   ) : (
-                    <motion.div
-                      className="flex min-h-full w-full min-w-0 flex-1 flex-col"
-                      animate={{
-                        opacity: experienceContentFade === "hide-instant" ? 0 : 1,
-                      }}
-                      transition={{
-                        duration:
-                          experienceContentFade === "fade-in"
-                            ? SHOWCASE_SUBROUTE_FADE_S
-                            : 0,
-                        ease: EASE.out,
-                      }}
-                      onAnimationComplete={() => {
-                        if (experienceContentFade === "fade-in") {
-                          setExperienceContentFade("visible");
-                        }
-                      }}
-                    >
+                    <div className="flex min-h-full w-full min-w-0 flex-1 flex-col">
                       <ConfidantExperience panelSettled={panelSettled} reduceMotion={reduceMotion} />
-                    </motion.div>
+                    </div>
                   ))}
                 {currentSection === "social" && <SocialLink />}
                 {currentSection === "skills" &&

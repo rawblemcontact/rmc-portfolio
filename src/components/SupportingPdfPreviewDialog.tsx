@@ -112,7 +112,7 @@ export function SupportingPdfPreviewDialog({
       {showGridLoader && (
         <motion.div
           key={`pdf-loader-${loaderEnterKey}`}
-          className="pointer-events-none absolute inset-0 z-[5] flex items-center justify-center p-4 sm:p-6 md:p-8"
+          className="pointer-events-none absolute inset-0 z-[5] flex items-center justify-center p-4 max-lg:p-8 max-lg:sm:p-12 sm:p-6 md:p-8"
           initial={false}
         >
           <PdfLoadingIndicator exiting={loaderExiting} onExitComplete={handleLoaderExitComplete} />
@@ -127,7 +127,7 @@ export function SupportingPdfPreviewDialog({
       />
 
       <motion.div
-        className={`absolute inset-0 z-10 flex items-center justify-center p-4 sm:p-6 md:p-8 ${
+        className={`absolute inset-0 z-10 flex items-center justify-center p-4 max-lg:p-8 max-lg:sm:p-12 sm:p-6 md:p-8 ${
           showGridLoader ? "pointer-events-none" : "pointer-events-none"
         }`}
         initial={false}
