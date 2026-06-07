@@ -2025,18 +2025,41 @@ const PROFILE_CARD_INLINE_LABEL_CLASS =
   "profile-card-inline-label font-heading w-full min-w-0 max-w-full text-balance leading-snug uppercase";
 /** Slightly stronger hierarchy for red in-card labels (SUMMARY/CURRENT WORK/AVAILABILITY). */
 const PROFILE_CARD_SECTION_LABEL_CLASS = `${PROFILE_CARD_INLINE_LABEL_CLASS} profile-card-section-label`;
+/** Tablet band (768–1366px) — mascot must be in-layout before panel open; no whileInView entrance. */
+const PROFILE_TABLET_MIN_PX = 768;
+const PROFILE_TABLET_MAX_PX = 1366;
+const matchesProfileTabletViewport = () =>
+  typeof window !== "undefined" &&
+  window.matchMedia(`(min-width: ${PROFILE_TABLET_MIN_PX}px) and (max-width: ${PROFILE_TABLET_MAX_PX}px)`).matches;
 
 const PhantomProfile = () => {
+  const reduceMotion = useReducedMotion();
   const profileLeftRef = useRef<HTMLDivElement>(null);
   const dividerRef = useRef<HTMLDivElement>(null);
   const rawblemRef = useRef<HTMLDivElement>(null);
   const profileLeftInView = useInView(profileLeftRef, { once: false, amount: 0.2 });
   const dividerInView = useInView(dividerRef, { once: false, amount: 0.5 });
   const rawblemInView = useInView(rawblemRef, { once: false, amount: 0.2 });
+  const [profileTabletViewport, setProfileTabletViewport] = useState(matchesProfileTabletViewport);
   const [overlayRevealed, setOverlayRevealed] = useState(false);
   const [rawblemFloatReady, setRawblemFloatReady] = useState(false);
   const [profileHeaderSlide, setProfileHeaderSlide] = useState(false);
   const prevProfileInView = useRef(false);
+  const profileMascotInstant = profileTabletViewport || !!reduceMotion;
+
+  useEffect(() => {
+    const mq = window.matchMedia(
+      `(min-width: ${PROFILE_TABLET_MIN_PX}px) and (max-width: ${PROFILE_TABLET_MAX_PX}px)`,
+    );
+    const onChange = () => setProfileTabletViewport(mq.matches);
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  useLayoutEffect(() => {
+    if (profileMascotInstant) setRawblemFloatReady(true);
+  }, [profileMascotInstant]);
 
   useLayoutEffect(() => {
     const armId = requestAnimationFrame(() => setProfileHeaderSlide(true));
@@ -2047,8 +2070,9 @@ const PhantomProfile = () => {
   }, []);
 
   useEffect(() => {
+    if (profileMascotInstant) return;
     if (!rawblemInView) setRawblemFloatReady(false);
-  }, [rawblemInView]);
+  }, [rawblemInView, profileMascotInstant]);
 
   // Overlay + buttons: reset when section leaves; start only after red line anim completes
   useEffect(() => {
@@ -2068,25 +2092,54 @@ const PhantomProfile = () => {
   return (
     <section id="profile" className="relative w-full min-w-0 overflow-x-hidden overflow-y-visible bg-black text-white scroll-mt-6 max-lg:min-h-min lg:min-h-screen">
       <SectionGridOverlay />
-      <motion.div className={`${PROFILE_SECTION_CONTAINER} ${PROFILE_SECTION_TOP_INSET} max-lg:pb-0 lg:pb-12 lg:min-h-screen lg:flex lg:items-center`}>
+      <motion.div className={`${PROFILE_SECTION_CONTAINER} ${PROFILE_SECTION_TOP_INSET} profile-section-tablet-shell max-lg:pb-0 lg:pb-12 lg:min-h-screen lg:flex lg:items-center`}>
         <div className={EXPERIENCE_GUTTER_SHELL_OUTER}>
           <div className={EXPERIENCE_GUTTER_SHELL_INNER}>
-        <motion.div className={PROFILE_LAYOUT_ROW}>
+        <motion.div className={`${PROFILE_LAYOUT_ROW} profile-tablet-layout-row`}>
 
+          {profileMascotInstant ? (
+            <div ref={rawblemRef} className={`${PROFILE_MASCOT_COLUMN} profile-tablet-mascot-column max-sm:hidden`}>
+              <div className={PROFILE_MASCOT_FRAME}>
+                <motion.img
+                  src="/rawblem3.svg"
+                  alt="RAWBLEM"
+                  width={300}
+                  height={300}
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="sync"
+                  className="h-full w-full object-contain"
+                  animate={{ y: rawblemFloatReady ? [0, -8, 0] : 0 }}
+                  transition={
+                    rawblemFloatReady
+                      ? { duration: 3.2, repeat: Infinity, ease: "easeInOut" }
+                      : { duration: 0 }
+                  }
+                />
+              </div>
+            </div>
+          ) : (
           <motion.div
             ref={rawblemRef}
             initial={{ opacity: 0, y: 32, x: 0 }}
             whileInView={{ opacity: 1, y: 0, x: 0 }}
             viewport={{ once: false, amount: 0.2 }}
             transition={{ duration: 0.52, ease: [0.16, 1, 0.3, 1] }}
-            onAnimationComplete={() => rawblemInView && setRawblemFloatReady(true)}
-            className={`${PROFILE_MASCOT_COLUMN} max-sm:hidden`}
+            onAnimationComplete={() => {
+              if (rawblemInView) setRawblemFloatReady(true);
+            }}
+            className={`${PROFILE_MASCOT_COLUMN} profile-tablet-mascot-column max-sm:hidden`}
           >
             <div className={PROFILE_MASCOT_FRAME}>
               <motion.img
                 src="/rawblem3.svg"
                 alt="RAWBLEM"
-                className="w-full h-full object-contain"
+                width={300}
+                height={300}
+                loading="eager"
+                fetchPriority="high"
+                decoding="sync"
+                className="h-full w-full object-contain"
                 animate={{ y: rawblemFloatReady ? [0, -8, 0] : 0 }}
                 transition={
                   rawblemFloatReady
@@ -2096,8 +2149,9 @@ const PhantomProfile = () => {
               />
             </div>
           </motion.div>
+          )}
 
-          <div ref={profileLeftRef} className={PROFILE_LEFT_COLUMN}>
+          <div ref={profileLeftRef} className={`${PROFILE_LEFT_COLUMN} profile-tablet-text-column`}>
              <SectionHeader
                title="PROFILE"
                color="text-white"
@@ -2723,9 +2777,16 @@ const SHOWCASE_COLUMN_MAX = "max-w-[min(100%,58rem)]";
 /** Mobile/tablet section top inset — PROFILE, Experience, Projects, Skills (`lg+` uses section-specific desktop pt). */
 const SECTION_OVERLAY_TOP_INSET_MAX_LG =
   "max-lg:pt-[calc(24vh+0.625rem)] max-lg:max-sm:pt-[max(calc(5.5rem+0.625rem),calc(env(safe-area-inset-top,0px)+0.625rem))]";
-/** Mobile/tablet scroll end air — in-flow spacer on panel scroller (pb on h-screen / flex-1 traps does not extend scroll). */
+/** Mobile scroll end air — PROFILE panel scroller (tablet uses SECTION_TABLET_BOTTOM_SPACER on PROJECTS/SKILLS). */
 const SECTION_OVERLAY_BOTTOM_SPACER_MAX_LG =
   "hidden max-lg:block shrink-0 w-full pointer-events-none min-h-[max(3rem,calc(2rem+env(safe-area-inset-bottom,0px)))] max-lg:sm:min-h-[max(3.5rem,calc(2.25rem+env(safe-area-inset-bottom,0px)))]";
+/** Tablet only (768px–1366px): PROJECTS + SKILLS scroll-end air — visibility in index.css `.section-tablet-bottom-spacer`. */
+const SECTION_TABLET_BOTTOM_SPACER = "section-tablet-bottom-spacer";
+/** Tablet showcase list only — pairs with SKILLS `md:pb-10` (index.css `.projects-showcase-tablet-pad`). */
+const PROJECTS_SHOWCASE_TABLET_PAD = "projects-showcase-tablet-pad";
+/** Tablet showcase — flex chain grows with content so scroll-end spacer is reachable (index.css). */
+const PROJECTS_SHOWCASE_TABLET_SHELL = "projects-showcase-tablet-shell";
+const PROJECTS_SHOWCASE_TABLET_CHAIN = "projects-showcase-tablet-chain";
 /** Same inset as PROFILE; `!` overrides `.career-overview-shell` base padding in CSS. */
 const EXPERIENCE_SHELL_TOP_INSET_MAX_LG =
   "max-lg:!pt-[calc(24vh+0.625rem)] max-lg:max-sm:!pt-[max(calc(5.5rem+0.625rem),calc(env(safe-area-inset-top,0px)+0.625rem))]";
@@ -2749,7 +2810,7 @@ const PROFILE_LEFT_COLUMN =
 const PROFILE_MASCOT_COLUMN =
   "lg:order-2 w-full lg:w-auto lg:min-w-0 lg:shrink-0 flex justify-center translate-x-2 max-sm:order-2 max-sm:mt-2 max-sm:translate-x-0 sm:max-lg:-mt-16 sm:max-lg:-translate-y-2 lg:translate-y-0 lg:mt-0";
 const PROFILE_MASCOT_FRAME =
-  "w-full max-w-[160px] sm:max-w-[220px] md:max-w-[300px] xl:max-w-[312px] 2xl:max-w-[348px] aspect-square flex items-center justify-center";
+  "shrink-0 flex items-center justify-center w-[220px] h-[220px] sm:w-[220px] sm:h-[220px] md:w-[300px] md:h-[300px] xl:w-[312px] xl:h-[312px] 2xl:w-[348px] 2xl:h-[348px]";
 /** Total row width (left + gap + mascot) — centers SKILLS with the same L/R viewport gutters as PROFILE. */
 const PROFILE_VIEWPORT_CONTENT_MAX =
   "w-full min-w-0 mx-auto lg:max-w-[min(100%,calc(38rem+5rem+300px))] xl:max-w-[min(100%,calc(40rem+9rem+312px))] 2xl:max-w-[min(100%,calc(44rem+min(14rem,12vw)+348px))]";
@@ -2934,6 +2995,46 @@ const ProjectsStack = ({
 /** WRITING SAMPLES + CAREER OVERVIEW ? optical scrollbar rail (desktop lg+). */
 const PORTFOLIO_SECTION_SCROLLBAR_VISIBLE_MS = 450;
 const PORTFOLIO_OPTICAL_MIN_VIEWPORT_PX = 1024;
+/** PROJECTS/SKILLS grid overlay height sync — matches index.css (all breakpoints). */
+const SECTION_PANEL_GRID_SELECTOR = '[aria-label^="Section:"]';
+
+function sectionGridOverlayHeightPx(section: HTMLElement): number {
+  const viewportH = Math.round(window.visualViewport?.height ?? window.innerHeight);
+  const panel = section.closest<HTMLElement>(SECTION_PANEL_GRID_SELECTOR);
+  const panelH = panel
+    ? Math.max(panel.clientHeight, panel.offsetHeight, panel.scrollHeight)
+    : 0;
+  return Math.max(section.offsetHeight, section.scrollHeight, viewportH, panelH);
+}
+
+function bindSectionGridOverlayHeightSync(
+  section: HTMLElement,
+  cssVar: "--projects-grid-overlay-height" | "--skills-grid-overlay-height",
+) {
+  const sync = () => {
+    section.style.setProperty(cssVar, `${sectionGridOverlayHeightPx(section)}px`);
+  };
+
+  sync();
+  const ro = new ResizeObserver(sync);
+  ro.observe(section);
+  const panel = section.closest<HTMLElement>(SECTION_PANEL_GRID_SELECTOR);
+  if (panel) ro.observe(panel);
+  const contentShell = section.querySelector<HTMLElement>(":scope > div:not(.portfolio-grid-overlay)");
+  if (contentShell) ro.observe(contentShell);
+
+  window.addEventListener("resize", sync);
+  window.visualViewport?.addEventListener("resize", sync);
+  window.visualViewport?.addEventListener("scroll", sync);
+
+  return () => {
+    ro.disconnect();
+    window.removeEventListener("resize", sync);
+    window.visualViewport?.removeEventListener("resize", sync);
+    window.visualViewport?.removeEventListener("scroll", sync);
+    section.style.removeProperty(cssVar);
+  };
+}
 const PORTFOLIO_OPTICAL_RAIL_BOTTOM_NUDGE_PX = 4;
 const PORTFOLIO_OPTICAL_RAIL_TOP_OUTSET_PX = 5;
 const PORTFOLIO_OPTICAL_RAIL_BOTTOM_OUTSET_PX = 5;
@@ -4067,34 +4168,12 @@ const PalaceProjects = ({
       (videoEditingDetailNoMainCard || illustrationsDetailNoHero || activeCardNoMorph || morphDone),
   );
 
-  /** WebKit mobile/tablet: absolute grid overlay can stop at viewport height while content scrolls. */
+  /** WebKit mobile/tablet: grid overlay must track section + panel scroller (iPad landscape >1024px included). */
   useLayoutEffect(() => {
     const section = projectsSectionRef.current;
     if (!section) return;
-
-    const mq = window.matchMedia("(max-width: 1024px)");
-    const syncProjectsGridOverlayHeight = () => {
-      if (!mq.matches) {
-        section.style.removeProperty("--projects-grid-overlay-height");
-        return;
-      }
-      const sectionHeight = Math.max(section.offsetHeight, section.scrollHeight);
-      section.style.setProperty("--projects-grid-overlay-height", `${sectionHeight}px`);
-    };
-
-    syncProjectsGridOverlayHeight();
-    const ro = new ResizeObserver(syncProjectsGridOverlayHeight);
-    ro.observe(section);
-    mq.addEventListener("change", syncProjectsGridOverlayHeight);
-    window.addEventListener("resize", syncProjectsGridOverlayHeight);
-
-    return () => {
-      ro.disconnect();
-      mq.removeEventListener("change", syncProjectsGridOverlayHeight);
-      window.removeEventListener("resize", syncProjectsGridOverlayHeight);
-      section.style.removeProperty("--projects-grid-overlay-height");
-    };
-  }, [projectDetailInFlow, activeProjectId, projectsOverlayRevealed]);
+    return bindSectionGridOverlayHeightSync(section, "--projects-grid-overlay-height");
+  }, [projectDetailInFlow, activeProjectId, projectsOverlayRevealed, entranceArmed]);
 
   const [detailHdrReveal, setDetailHdrReveal] = useState(false);
   const [detailRuleReveal, setDetailRuleReveal] = useState(false);
@@ -4303,13 +4382,15 @@ const PalaceProjects = ({
           ? `min-h-screen shrink-0 ${SECTION_MAIN_HEADER_INSET} ${
               videoEditingDetailNoMainCard ? "overflow-x-visible" : "overflow-x-hidden"
             }`
-          : `max-lg:min-h-min lg:min-h-full overflow-x-hidden ${SECTION_MAIN_HEADER_INSET}`
+          : `max-lg:min-h-full lg:min-h-full overflow-x-hidden ${PROJECTS_SHOWCASE_TABLET_PAD} ${SECTION_MAIN_HEADER_INSET}`
       }`}
     >
       <SectionGridOverlay />
       <div
         className={`${PROFILE_SECTION_CONTAINER} relative z-10 flex min-w-0 w-full flex-col ${
-          projectDetailInFlow ? "min-h-min shrink-0" : "max-lg:min-h-min max-lg:flex-none lg:min-h-0 lg:flex-1"
+          projectDetailInFlow
+            ? "min-h-min shrink-0"
+            : `max-lg:min-h-full max-lg:flex-none lg:min-h-0 lg:flex-1 ${PROJECTS_SHOWCASE_TABLET_SHELL}`
         }`}
       >
         <div className={EXPERIENCE_GUTTER_SHELL_OUTER}>
@@ -4318,7 +4399,7 @@ const PalaceProjects = ({
           className={`${PROJECTS_VIEWPORT_SHELL} overflow-y-visible ${
             projectDetailInFlow
               ? "min-h-min shrink-0 justify-start"
-              : "max-lg:min-h-min max-lg:flex-none max-lg:justify-start lg:min-h-0 lg:flex-1 lg:justify-center"
+              : `max-lg:min-h-min max-lg:flex-none max-lg:justify-start lg:min-h-0 lg:flex-1 lg:justify-center ${PROJECTS_SHOWCASE_TABLET_CHAIN}`
           }`}
         >
         {/*
@@ -4330,8 +4411,17 @@ const PalaceProjects = ({
               ? `min-h-min shrink-0 justify-start ${
                   videoEditingDetailNoMainCard ? "overflow-x-visible" : "overflow-x-hidden"
                 }`
-              : "max-lg:min-h-min max-lg:flex-none max-lg:justify-start lg:min-h-0 lg:flex-1 lg:justify-center overflow-x-hidden"
+              : `max-lg:min-h-min max-lg:flex-none max-lg:justify-start lg:min-h-0 lg:flex-1 lg:justify-center overflow-x-hidden ${PROJECTS_SHOWCASE_TABLET_CHAIN}`
           }`}
+        >
+        {/*
+         * CAROUSEL + FEATURED WRITING ? in flow until project detail opens; then detail
+         * replaces this block so tall copy (e.g. VIDEO EDITING desc cards) stays inside #projects grid.
+         */}
+        {!projectDetailInFlow ? (
+        <div
+          aria-hidden={showcaseObscured || undefined}
+          className={`projects-showcase-flow flex min-h-0 w-full flex-1 flex-col justify-start ${showcaseObscured ? "pointer-events-none select-none" : ""}`}
         >
           {!activeCard ? (
           <motion.div
@@ -4378,15 +4468,6 @@ const PalaceProjects = ({
             </div>
           </motion.div>
           ) : null}
-        {/*
-         * CAROUSEL + FEATURED WRITING ? in flow until project detail opens; then detail
-         * replaces this block so tall copy (e.g. VIDEO EDITING desc cards) stays inside #projects grid.
-         */}
-        {!projectDetailInFlow ? (
-        <div
-          aria-hidden={showcaseObscured || undefined}
-          className={`flex min-h-0 w-full flex-1 flex-col ${showcaseObscured ? "pointer-events-none select-none" : ""}`}
-        >
           <motion.div
             className="flex w-full shrink-0 flex-col"
             initial={reduceMotion ? false : { opacity: 0 }}
@@ -4439,6 +4520,7 @@ const PalaceProjects = ({
               )}
             />
           </motion.div>
+          <div className={SECTION_TABLET_BOTTOM_SPACER} aria-hidden />
         </div>
         ) : null}
 
@@ -4659,7 +4741,6 @@ const PalaceProjects = ({
         </motion.div>,
         document.body,
       )}
-      <div className={SECTION_OVERLAY_BOTTOM_SPACER_MAX_LG} aria-hidden />
     </section>
   );
 };
@@ -4793,6 +4874,12 @@ type ExperienceTabId = (typeof EXPERIENCE_TAB_IDS)[number];
 
 /** Mobile-only horizontal tab stack; tablet+ matches desktop grid + motion. */
 const EXPERIENCE_MOBILE_MAX_PX = 767;
+
+/** iPadOS WebKit — keep section overlay compositor layer while EXPERIENCE is open. */
+const IS_IOS_TOUCH =
+  typeof window !== "undefined" &&
+  typeof CSS !== "undefined" &&
+  CSS.supports("-webkit-touch-callout", "none");
 
 const experienceTabBtnClass = (activeId: ExperienceTabId, id: ExperienceTabId) =>
   activeId === id ? "tab-btn active" : "tab-btn";
@@ -7259,33 +7346,11 @@ const SkillArsenal = ({
     return () => cancelAnimationFrame(raf);
   }, [panelSettled, rm, syncSharedRailAccentWidth]);
 
-  /** WebKit mobile: absolute grid overlay can stop at viewport height while content scrolls. */
+  /** WebKit mobile/tablet: grid overlay must track section + panel scroller (iPad landscape >1024px included). */
   useLayoutEffect(() => {
     const section = skillsSectionRef.current;
     if (!section) return;
-
-    const mq = window.matchMedia("(max-width: 1024px)");
-    const syncSkillsGridOverlayHeight = () => {
-      if (!mq.matches) {
-        section.style.removeProperty("--skills-grid-overlay-height");
-        return;
-      }
-      const sectionHeight = Math.max(section.offsetHeight, section.scrollHeight);
-      section.style.setProperty("--skills-grid-overlay-height", `${sectionHeight}px`);
-    };
-
-    syncSkillsGridOverlayHeight();
-    const ro = new ResizeObserver(syncSkillsGridOverlayHeight);
-    ro.observe(section);
-    mq.addEventListener("change", syncSkillsGridOverlayHeight);
-    window.addEventListener("resize", syncSkillsGridOverlayHeight);
-
-    return () => {
-      ro.disconnect();
-      mq.removeEventListener("change", syncSkillsGridOverlayHeight);
-      window.removeEventListener("resize", syncSkillsGridOverlayHeight);
-      section.style.removeProperty("--skills-grid-overlay-height");
-    };
+    return bindSectionGridOverlayHeightSync(section, "--skills-grid-overlay-height");
   }, [panelSettled]);
 
   const skillsCardRowEntrance = (rowDelay: number, reverse = false): Variants => ({
@@ -7328,7 +7393,7 @@ const SkillArsenal = ({
     <section
       ref={skillsSectionRef}
       id="skills"
-      className={`no-scrollbar relative flex min-h-full w-full min-w-0 flex-col justify-start overflow-x-hidden overflow-y-visible bg-black text-white scroll-mt-6 max-md:min-h-max ${SECTION_MAIN_HEADER_INSET} pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:pb-8 md:pb-10`}
+      className={`no-scrollbar relative flex min-h-full max-lg:min-h-full w-full min-w-0 flex-col justify-start overflow-x-hidden overflow-y-visible bg-black text-white scroll-mt-6 max-md:min-h-max ${SECTION_MAIN_HEADER_INSET} pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:pb-8 md:pb-10`}
     >
       <SectionGridOverlay />
       <motion.div
@@ -7444,6 +7509,7 @@ const SkillArsenal = ({
           </div>
         </div>
       </motion.div>
+      <div className={SECTION_TABLET_BOTTOM_SPACER} aria-hidden />
     </section>
   );
 };
@@ -7603,6 +7669,7 @@ export default function Home() {
   const slideOrder = ["hero", "menu"];
   const [currentSlideId, setCurrentSlideId] = useState<string>("hero");
   const [menuIntroReady, setMenuIntroReady] = useState(false);
+  const [profileSectionMounted, setProfileSectionMounted] = useState(false);
   const [menuLockedFillId, setMenuLockedFillId] = useState<string | null>(null);
   const [activeShowcaseProjectId, setActiveShowcaseProjectId] = useState<string | null>(null);
   const [projectsEntranceArmed, setProjectsEntranceArmed] = useState(false);
@@ -7636,6 +7703,11 @@ export default function Home() {
 
     const timer = window.setTimeout(() => {
       const handles: (HTMLImageElement | HTMLVideoElement)[] = [];
+
+      const profileMascotImg = new Image();
+      profileMascotImg.decoding = "sync";
+      profileMascotImg.src = "/rawblem3.svg";
+      handles.push(profileMascotImg);
 
       PROJECT_CARDS.forEach((card) => {
         // Static thumbnail image
@@ -7790,7 +7862,7 @@ export default function Home() {
         }, PANEL_TRANSITION.duration * 1000)
       );
     } else {
-      // SHOWCASE (projects): settle immediately so carousel + tabs reserve height and fade with the panel ? delayed settle caused a second layout/opacity beat after the slide.
+      // SHOWCASE (projects): settle immediately so carousel + tabs reserve height and fade with the panel — delayed settle caused a second layout/opacity beat after the slide.
       setPanelSettled(id === "projects");
       setCurrentSection(id);
       setTransitionTarget(id);
@@ -7958,6 +8030,11 @@ export default function Home() {
     );
     return () => window.clearTimeout(id);
   }, [currentSlideId, reduceMotion]);
+
+  useEffect(() => {
+    if (!menuIntroReady || !matchesProfileTabletViewport()) return;
+    setProfileSectionMounted(true);
+  }, [menuIntroReady]);
 
   const navigateFromMenu = (id: string) => {
     setMenuLockedFillId(id);
@@ -8222,7 +8299,16 @@ export default function Home() {
                 zIndex: currentSection ? 40 : 30,
                 pointerEvents: transitionTarget === "menu" ? "none" : "auto",
                 // Dropping will-change after settle avoids Chromium keeping section text on a blurry GPU layer.
-                willChange: !panelSettled || isTransitioning ? "transform" : "auto",
+                // iOS: keep transform layer while panel is open — dropping at panelSettled blanks content/grid on iPad.
+                willChange:
+                  isTransitioning ||
+                  !panelSettled ||
+                  (IS_IOS_TOUCH &&
+                    (currentSection === "experience" ||
+                      currentSection === "projects" ||
+                      currentSection === "skills"))
+                    ? "transform"
+                    : "auto",
                 ...(currentSection === "projects-supporting"
                   ? {}
                   : { scrollbarWidth: "none", msOverflowStyle: "none" }),
@@ -8279,8 +8365,10 @@ export default function Home() {
               <div
                 className={
                   currentSection === "projects"
-                    ? `relative z-10 flex w-full min-w-0 flex-col overflow-x-hidden overflow-y-visible max-lg:min-h-min max-lg:flex-none ${
-                        activeShowcaseProjectId ? "min-h-min shrink-0" : "lg:min-h-0 lg:flex-1"
+                    ? `relative z-10 flex w-full min-w-0 flex-col overflow-x-hidden overflow-y-visible max-lg:min-h-full max-lg:flex-none ${
+                        activeShowcaseProjectId
+                          ? "min-h-min shrink-0"
+                          : `lg:min-h-0 lg:flex-1 ${PROJECTS_SHOWCASE_TABLET_CHAIN}`
                       }`
                     : currentSection === "profile"
                       ? "flex min-h-min w-full min-w-0 max-lg:flex-none flex-col overflow-x-hidden overflow-y-visible lg:h-full lg:min-h-0 lg:flex-1"
@@ -8291,13 +8379,20 @@ export default function Home() {
                       : "flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden"
                 }
               >
-                {currentSection === "profile" && <PhantomProfile />}
+                {profileSectionMounted && (
+                  <div className={currentSection !== "profile" ? "hidden" : undefined} aria-hidden={currentSection !== "profile"}>
+                    <PhantomProfile />
+                  </div>
+                )}
+                {!profileSectionMounted && currentSection === "profile" && <PhantomProfile />}
                 {reduceMotion ? (
                   <>
                     {currentSection === "projects" && (
                       <div
-                        className={`flex w-full min-w-0 shrink-0 flex-col overflow-x-hidden overflow-y-visible max-lg:min-h-min max-lg:flex-none ${
-                          activeShowcaseProjectId ? "min-h-min" : "lg:min-h-0 lg:flex-1"
+                        className={`flex w-full min-w-0 shrink-0 flex-col overflow-x-hidden overflow-y-visible max-lg:min-h-full max-lg:flex-none ${
+                          activeShowcaseProjectId
+                            ? "min-h-min"
+                            : `lg:min-h-0 lg:flex-1 ${PROJECTS_SHOWCASE_TABLET_CHAIN}`
                         }`}
                       >
                         <PalaceProjects
@@ -8326,8 +8421,10 @@ export default function Home() {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: SHOWCASE_SUBROUTE_FADE_S, ease: EASE.out }}
-                        className={`flex w-full min-w-0 shrink-0 flex-col overflow-x-hidden overflow-y-visible max-lg:min-h-min max-lg:flex-none ${
-                          activeShowcaseProjectId ? "min-h-min" : "lg:min-h-0 lg:flex-1"
+                        className={`flex w-full min-w-0 shrink-0 flex-col overflow-x-hidden overflow-y-visible max-lg:min-h-full max-lg:flex-none ${
+                          activeShowcaseProjectId
+                            ? "min-h-min"
+                            : `lg:min-h-0 lg:flex-1 ${PROJECTS_SHOWCASE_TABLET_CHAIN}`
                         }`}
                       >
                         <PalaceProjects

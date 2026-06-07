@@ -279,18 +279,109 @@
     }
   }
 
-  /* SKILLS / PROJECTS mobile/tablet: sync overlay height to section scrollHeight (set in section components). */
-  @media (max-width: 1024px) {
-    #skills > .portfolio-grid-overlay {
-      bottom: auto;
-      height: var(--skills-grid-overlay-height, 100%);
-      min-height: 100%;
+  /* SKILLS / PROJECTS: overlay height from JS (sectionGridOverlayHeightPx) — panel + scroll, all breakpoints. */
+  #skills > .portfolio-grid-overlay {
+    bottom: auto;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: var(--skills-grid-overlay-height, 100%);
+    min-height: 100%;
+  }
+
+  #projects > .portfolio-grid-overlay {
+    bottom: auto;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: var(--projects-grid-overlay-height, 100%);
+    min-height: 100%;
+  }
+
+  #projects {
+    min-height: var(--projects-grid-overlay-height, 100%);
+  }
+
+  #skills {
+    min-height: var(--skills-grid-overlay-height, 100%);
+  }
+
+  /* Tablet only (768px–1366px): PROJECTS + SKILLS scroll-end breathing room — not phone or large desktop. */
+  .section-tablet-bottom-spacer {
+    display: none;
+    flex-shrink: 0;
+    width: 100%;
+    pointer-events: none;
+  }
+
+  /* Tablet portrait: PROFILE header aligns with PROJECTS (768–1023). */
+  @media (min-width: 768px) and (max-width: 1023.98px) {
+    #profile .profile-section-tablet-shell {
+      align-items: flex-start !important;
+      padding-top: 5.5rem !important;
     }
 
-    #projects > .portfolio-grid-overlay {
-      bottom: auto;
-      height: var(--projects-grid-overlay-height, 100%);
-      min-height: 100%;
+    #profile .profile-tablet-layout-row {
+      align-items: flex-start;
+    }
+
+    #profile .profile-tablet-text-column {
+      order: 1;
+    }
+
+    #profile .profile-tablet-mascot-column {
+      order: 2;
+      margin-top: 0 !important;
+      transform: none !important;
+    }
+  }
+
+  /* Tablet landscape touch (iPad): PROFILE header aligns with PROJECTS. */
+  @media (min-width: 1024px) and (max-width: 1366px) and (any-pointer: coarse) {
+    #profile .profile-section-tablet-shell {
+      align-items: flex-start !important;
+      padding-top: calc(5.5rem + 0.375rem) !important;
+    }
+  }
+
+  /* Desktop — fine pointer lg+ or any viewport >1366: keep original centered shell. */
+  @media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
+    #profile .profile-section-tablet-shell {
+      align-items: center !important;
+      padding-top: 0 !important;
+    }
+  }
+
+  @media (min-width: 768px) and (max-width: 1366px) {
+    /* Showcase list only — ~⅓ of SKILLS `md:pb-10` bottom pad (not project detail). */
+    #projects.projects-showcase-tablet-pad {
+      padding-bottom: calc(2.5rem / 3);
+    }
+
+    /*
+     * Showcase list: flex-1 / min-h-0 chain caps panel scroll height on iPad landscape.
+     * Scoped to #projects + panel direct child — never bare class (would leak to desktop wrappers).
+     */
+    [aria-label="Section: projects"] > .projects-showcase-tablet-chain,
+    #projects.projects-showcase-tablet-pad .projects-showcase-tablet-shell,
+    #projects.projects-showcase-tablet-pad .projects-showcase-tablet-chain,
+    #projects.projects-showcase-tablet-pad .projects-showcase-flow {
+      flex: 0 0 auto;
+      min-height: auto;
+    }
+
+    #projects.projects-showcase-tablet-pad .projects-showcase-tablet-chain {
+      justify-content: flex-start !important;
+    }
+
+    #projects.projects-showcase-tablet-pad .projects-showcase-flow > .section-tablet-bottom-spacer {
+      display: block;
+      min-height: max(2rem, calc(1.333rem + env(safe-area-inset-bottom, 0px) / 3));
+    }
+
+    #skills > .section-tablet-bottom-spacer {
+      display: block;
+      min-height: max(6rem, calc(4rem + env(safe-area-inset-bottom, 0px)));
     }
   }
 
@@ -2638,11 +2729,14 @@
     }
   }
 
-  /* iOS Safari desktop behavior parity: force active panel paint in desktop/tablet layout. */
+  /* iOS Safari tablet+: compositor hints on .tabs-content (pairs with iOS will-change fix in Home.tsx). */
   @supports (-webkit-touch-callout: none) {
     @media (min-width: 768px) {
       #experience .tabs-content {
         overflow: visible;
+        transform: none;
+        -webkit-backface-visibility: visible;
+        backface-visibility: visible;
       }
 
       #experience .tabs-content::before {

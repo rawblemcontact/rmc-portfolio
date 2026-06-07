@@ -1,28 +1,55 @@
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 import { metaImagesPlugin } from "./vite-plugin-meta-images";
 
-export default defineConfig({
+const locatorBabelJsxWindows = path.resolve(
+  import.meta.dirname,
+  "vite-plugins/locator-babel-jsx-windows.cjs",
+);
+
+async function loadReplitDevPlugins(): Promise<Plugin[]> {
+  if (
+    process.env.NODE_ENV === "production" ||
+    process.env.REPL_ID === undefined
+  ) {
+    return [];
+  }
+
+  const [cartographerMod, devBannerMod] = await Promise.all([
+    import("@replit/vite-plugin-cartographer"),
+    import("@replit/vite-plugin-dev-banner"),
+  ]);
+
+  return [cartographerMod.cartographer(), devBannerMod.devBanner()];
+}
+
+const replitDevPlugins = await loadReplitDevPlugins();
+
+export default defineConfig(({ mode }) => ({
   base: "/",
   plugins: [
-    react(),
+    react({
+      babel: {
+        plugins:
+          mode === "development"
+            ? [
+                [
+                  locatorBabelJsxWindows,
+                  {
+                    env: "development",
+                  },
+                ],
+              ]
+            : [],
+      },
+    }),
     ...(process.env.NODE_ENV !== "production" ? [runtimeErrorOverlay()] : []),
     tailwindcss(),
     metaImagesPlugin(),
-    ...(process.env.NODE_ENV !== "production" &&
-    process.env.REPL_ID !== undefined
-      ? [
-          await import("@replit/vite-plugin-cartographer").then((m) =>
-            m.cartographer(),
-          ),
-          await import("@replit/vite-plugin-dev-banner").then((m) =>
-            m.devBanner(),
-          ),
-        ]
-      : []),
+    ...replitDevPlugins,
   ],
   resolve: {
     alias: {
@@ -67,4 +94,4 @@ export default defineConfig({
       logOverride: { "this-is-undefined-in-esbuild": "silent" },
     },
   },
-});
+}));
