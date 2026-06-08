@@ -4870,6 +4870,12 @@ type ExperienceTabId = (typeof EXPERIENCE_TAB_IDS)[number];
 /** Mobile-only horizontal tab stack; tablet+ matches desktop grid + motion. */
 const EXPERIENCE_MOBILE_MAX_PX = 767;
 
+/** iPadOS WebKit — keep section overlay compositor layer while EXPERIENCE is open. */
+const IS_IOS_TOUCH =
+  typeof window !== "undefined" &&
+  typeof CSS !== "undefined" &&
+  CSS.supports("-webkit-touch-callout", "none");
+
 const experienceTabBtnClass = (activeId: ExperienceTabId, id: ExperienceTabId) =>
   activeId === id ? "tab-btn active" : "tab-btn";
 
@@ -8289,7 +8295,15 @@ export default function Home() {
                 pointerEvents: transitionTarget === "menu" ? "none" : "auto",
                 // Dropping will-change after settle avoids Chromium keeping section text on a blurry GPU layer.
                 // iOS: keep transform layer while panel is open — dropping at panelSettled blanks content/grid on iPad.
-                willChange: !panelSettled || isTransitioning ? "transform" : "auto",
+                willChange:
+                  isTransitioning ||
+                  !panelSettled ||
+                  (IS_IOS_TOUCH &&
+                    (currentSection === "experience" ||
+                      currentSection === "projects" ||
+                      currentSection === "skills"))
+                    ? "transform"
+                    : "auto",
                 ...(currentSection === "projects-supporting"
                   ? {}
                   : { scrollbarWidth: "none", msOverflowStyle: "none" }),
