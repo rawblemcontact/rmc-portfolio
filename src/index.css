@@ -147,6 +147,19 @@
   html::-webkit-scrollbar {
     display: none;
   }
+  /* Desktop fit pass: scale root font-size at xl/2xl so rem-based text, spacing,
+   * gaps and max-widths grow proportionally — gives 1440/1920 the same content-
+   * to-viewport balance that iPad landscape already has at 1024–1180. Hard-coded
+   * px values (experience rail, mascot frame, etc.) stay anchored intentionally. */
+  @media (min-width: 1280px) {
+    html { font-size: 17.5px; }
+  }
+  @media (min-width: 1536px) {
+    html { font-size: 19px; }
+  }
+  @media (min-width: 1920px) {
+    html { font-size: 20.5px; }
+  }
   body {
     @apply font-body antialiased text-mono-2 overflow-x-hidden;
     background-color: #0a0a0a;
@@ -279,7 +292,7 @@
     }
   }
 
-  /* SKILLS / PROJECTS: overlay height from JS (sectionGridOverlayHeightPx) — panel + scroll, all breakpoints. */
+  /* SKILLS: overlay height from JS (sectionGridOverlayHeightPx) — panel + scroll, all breakpoints. */
   #skills > .portfolio-grid-overlay {
     bottom: auto;
     left: 0;
@@ -289,24 +302,39 @@
     min-height: 100%;
   }
 
-  #projects > .portfolio-grid-overlay {
-    bottom: auto;
-    left: 0;
-    right: 0;
-    width: 100%;
-    height: var(--projects-grid-overlay-height, 100%);
-    min-height: 100%;
-  }
-
-  #projects {
-    min-height: var(--projects-grid-overlay-height, 100%);
-  }
-
   #skills {
     min-height: var(--skills-grid-overlay-height, 100%);
   }
 
-  /* Tablet only (768px–1366px): PROJECTS + SKILLS scroll-end breathing room — not phone or large desktop. */
+  /* PROJECTS mobile: sync overlay height to section scrollHeight (set in section components). */
+  @media (max-width: 1024px) {
+    #projects > .portfolio-grid-overlay {
+      bottom: auto;
+      height: var(--projects-grid-overlay-height, 100%);
+      min-height: 100%;
+    }
+  }
+
+  /*
+   * PROJECTS tablet (768px–1366px): grid bg fills panel + scroll (iPad landscape >1024px included).
+   * Pairs with bindSectionGridOverlayHeightSync in PalaceProjects.
+   */
+  @media (min-width: 768px) and (max-width: 1366px) {
+    #projects > .portfolio-grid-overlay {
+      bottom: auto;
+      left: 0;
+      right: 0;
+      width: 100%;
+      height: var(--projects-grid-overlay-height, 100%);
+      min-height: 100%;
+    }
+
+    #projects {
+      min-height: var(--projects-grid-overlay-height, 100%);
+    }
+  }
+
+  /* Tablet only (768px–1366px): SKILLS scroll-end breathing room — not phone or large desktop. */
   .section-tablet-bottom-spacer {
     display: none;
     flex-shrink: 0;
@@ -353,25 +381,9 @@
   }
 
   @media (min-width: 768px) and (max-width: 1366px) {
-    /* Showcase list only — ~⅓ of SKILLS `md:pb-10` bottom pad (not project detail). */
+    /* PROJECTS showcase list — scroll-end breathing room (~⅓ SKILLS md:pb-10). */
     #projects.projects-showcase-tablet-pad {
       padding-bottom: calc(2.5rem / 3);
-    }
-
-    /*
-     * Showcase list: flex-1 / min-h-0 chain caps panel scroll height on iPad landscape.
-     * Scoped to #projects + panel direct child — never bare class (would leak to desktop wrappers).
-     */
-    [aria-label="Section: projects"] > .projects-showcase-tablet-chain,
-    #projects.projects-showcase-tablet-pad .projects-showcase-tablet-shell,
-    #projects.projects-showcase-tablet-pad .projects-showcase-tablet-chain,
-    #projects.projects-showcase-tablet-pad .projects-showcase-flow {
-      flex: 0 0 auto;
-      min-height: auto;
-    }
-
-    #projects.projects-showcase-tablet-pad .projects-showcase-tablet-chain {
-      justify-content: flex-start !important;
     }
 
     #projects.projects-showcase-tablet-pad .projects-showcase-flow > .section-tablet-bottom-spacer {
@@ -380,8 +392,181 @@
     }
 
     #skills > .section-tablet-bottom-spacer {
-      display: block;
-      min-height: max(6rem, calc(4rem + env(safe-area-inset-bottom, 0px)));
+      display: none;
+      min-height: 0;
+    }
+
+    /*
+     * SKILLS — fit header + both card rows in one viewport (tablet only).
+     * Tightens scale, gaps, and card min-heights; removes scroll-end spacer above.
+     */
+    #skills {
+      --skills-page-scale: 0.88;
+      --skills-header-line-gap: 0.4375rem;
+      --skills-rail-label-gap: 0.25rem;
+      --skills-rail-rule-gap: 0.375rem;
+      --skills-rail-block-gap: clamp(0.25rem, 0.85svh, 0.4375rem);
+      padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px)) !important;
+    }
+
+    #skills .skills-page-layout {
+      padding-top: clamp(0.125rem, 0.35svh, 0.375rem);
+    }
+
+    #skills .skills-page-grid {
+      gap: clamp(0.5rem, 1.15svh, 0.75rem);
+    }
+
+    #skills .skills-main-accent-line {
+      margin-bottom: clamp(0.625rem, 1.35svh, 0.875rem) !important;
+    }
+
+    #skills .skills-card-surface--page {
+      min-height: clamp(
+        calc(6.5rem * var(--skills-page-scale)),
+        calc(10.25svh * var(--skills-page-scale)),
+        calc(8.25rem * var(--skills-page-scale))
+      );
+    }
+
+    #skills .skills-row-cards--page {
+      gap: calc(0.4375rem * 1.25);
+    }
+
+    @media (max-height: 834px) {
+      #skills {
+        --skills-page-scale: 0.8;
+      }
+
+      #skills .skills-card-surface--page {
+        min-height: clamp(
+          calc(5.75rem * var(--skills-page-scale)),
+          calc(9svh * var(--skills-page-scale)),
+          calc(7.25rem * var(--skills-page-scale))
+        );
+      }
+
+      #skills .skills-page-grid {
+        gap: clamp(0.375rem, 0.95svh, 0.625rem);
+      }
+    }
+
+    /*
+     * iPad landscape — tighter fit when vertical space is limited (Safari chrome + short height).
+     * Scroll container stays active; content should not require scroll to reveal the toolkit row.
+     */
+    @media (orientation: landscape) {
+      #skills {
+        --skills-page-scale: 0.72;
+        --skills-header-line-gap: 0.3125rem;
+        --skills-rail-label-gap: 0.1875rem;
+        --skills-rail-rule-gap: 0.3125rem;
+        --skills-rail-block-gap: clamp(0.125rem, 0.55svh, 0.3125rem);
+        padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px)) !important;
+      }
+
+      #skills .skills-page-layout {
+        padding-top: 0;
+      }
+
+      #skills .skills-page-grid {
+        gap: clamp(0.3125rem, 0.7svh, 0.5rem);
+      }
+
+      #skills .skills-main-accent-line {
+        margin-bottom: clamp(0.375rem, 0.75svh, 0.5625rem) !important;
+      }
+
+      #skills .skills-card-surface--page {
+        min-height: clamp(
+          calc(4.5rem * var(--skills-page-scale)),
+          calc(6.75dvh * var(--skills-page-scale)),
+          calc(5.75rem * var(--skills-page-scale))
+        );
+        padding: calc(0.8125rem * var(--skills-page-scale)) calc(0.5rem * var(--skills-page-scale)) !important;
+      }
+
+      #skills .skills-card-surface--page .skills-card-column-header {
+        gap: calc(0.375rem * var(--skills-page-scale));
+        margin-bottom: calc(0.4375rem * var(--skills-page-scale));
+        padding-top: calc(0.125rem * var(--skills-page-scale));
+      }
+
+      #skills .skills-card-surface--page .skills-page-card-list {
+        gap: calc(0.25rem * var(--skills-page-scale));
+      }
+
+      #skills .skills-card-surface--page .skills-page-card-row {
+        gap: calc(0.3125rem * var(--skills-page-scale));
+        font-size: clamp(
+          calc(0.6875rem * var(--skills-page-scale)),
+          calc(0.9vw * var(--skills-page-scale)),
+          calc(0.8125rem * var(--skills-page-scale))
+        );
+        line-height: 1.22;
+      }
+
+      #skills .skills-row-cards--page {
+        gap: calc(0.375rem * 1.25);
+      }
+    }
+
+    @media (orientation: landscape) and (max-height: 820px) {
+      #skills {
+        --skills-page-scale: 0.58;
+        padding-top: max(4.375rem, calc(3.875rem + env(safe-area-inset-top, 0px))) !important;
+        padding-bottom: max(0.125rem, env(safe-area-inset-bottom, 0px)) !important;
+      }
+
+      #skills .skills-main-accent-line {
+        margin-bottom: 0.3125rem !important;
+      }
+
+      #skills .skills-card-surface--page {
+        min-height: 0;
+        padding: calc(0.5rem * var(--skills-page-scale)) calc(0.375rem * var(--skills-page-scale)) !important;
+      }
+
+      #skills .skills-card-surface--page .skills-card-column-header {
+        gap: calc(0.25rem * var(--skills-page-scale));
+        margin-bottom: calc(0.3125rem * var(--skills-page-scale));
+        padding-top: calc(0.0625rem * var(--skills-page-scale));
+      }
+
+      #skills .skills-card-surface--page .skills-subcategory-column-title {
+        font-size: calc(0.625rem * var(--skills-page-scale));
+        line-height: 1.1;
+      }
+
+      #skills .skills-card-surface--page .skills-page-card-list {
+        gap: calc(0.125rem * var(--skills-page-scale));
+      }
+
+      #skills .skills-card-surface--page .skills-page-card-row {
+        gap: calc(0.1875rem * var(--skills-page-scale));
+        font-size: calc(0.5625rem * var(--skills-page-scale));
+        line-height: 1.1;
+      }
+
+      #skills .skills-card-surface--page .skills-page-card-icon {
+        width: calc(0.8125rem * var(--skills-page-scale));
+        height: calc(0.8125rem * var(--skills-page-scale));
+      }
+
+      #skills .skills-card-surface--page .skills-page-card-icon svg {
+        width: calc(0.625rem * var(--skills-page-scale));
+        height: calc(0.625rem * var(--skills-page-scale));
+      }
+
+      #skills .skills-branch-header--page.nav-header .career-nav-section-subtitle {
+        font-size: calc(var(--section-rail-font) * 0.92);
+        line-height: 1.02;
+      }
+
+      #skills .skills-branch-header--page.nav-header .career-nav-section-title {
+        font-size: calc(var(--skills-rail-eyebrow) * 0.92);
+        line-height: 1.15;
+      }
     }
   }
 
@@ -3061,8 +3246,9 @@
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: calc(0.5rem * var(--skills-page-scale, 1.0625));
-    margin-bottom: calc(0.5rem * var(--skills-page-scale, 1.0625));
+    gap: calc(0.5625rem * var(--skills-page-scale, 1.0625));
+    margin-bottom: calc(0.625rem * var(--skills-page-scale, 1.0625));
+    padding-top: calc(0.125rem * var(--skills-page-scale, 1.0625));
   }
 
   #skills .skills-card-surface--page .skills-card-column-header__line {

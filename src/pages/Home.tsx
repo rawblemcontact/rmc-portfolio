@@ -2777,16 +2777,13 @@ const SHOWCASE_COLUMN_MAX = "max-w-[min(100%,58rem)]";
 /** Mobile/tablet section top inset — PROFILE, Experience, Projects, Skills (`lg+` uses section-specific desktop pt). */
 const SECTION_OVERLAY_TOP_INSET_MAX_LG =
   "max-lg:pt-[calc(24vh+0.625rem)] max-lg:max-sm:pt-[max(calc(5.5rem+0.625rem),calc(env(safe-area-inset-top,0px)+0.625rem))]";
-/** Mobile scroll end air — PROFILE panel scroller (tablet uses SECTION_TABLET_BOTTOM_SPACER on PROJECTS/SKILLS). */
+/** Mobile scroll end air — PROFILE panel scroller. */
 const SECTION_OVERLAY_BOTTOM_SPACER_MAX_LG =
   "hidden max-lg:block shrink-0 w-full pointer-events-none min-h-[max(3rem,calc(2rem+env(safe-area-inset-bottom,0px)))] max-lg:sm:min-h-[max(3.5rem,calc(2.25rem+env(safe-area-inset-bottom,0px)))]";
 /** Tablet only (768px–1366px): PROJECTS + SKILLS scroll-end air — visibility in index.css `.section-tablet-bottom-spacer`. */
 const SECTION_TABLET_BOTTOM_SPACER = "section-tablet-bottom-spacer";
-/** Tablet showcase list only — pairs with SKILLS `md:pb-10` (index.css `.projects-showcase-tablet-pad`). */
+/** Tablet PROJECTS showcase list — pairs with index.css `.projects-showcase-tablet-pad` bottom pad. */
 const PROJECTS_SHOWCASE_TABLET_PAD = "projects-showcase-tablet-pad";
-/** Tablet showcase — flex chain grows with content so scroll-end spacer is reachable (index.css). */
-const PROJECTS_SHOWCASE_TABLET_SHELL = "projects-showcase-tablet-shell";
-const PROJECTS_SHOWCASE_TABLET_CHAIN = "projects-showcase-tablet-chain";
 /** Same inset as PROFILE; `!` overrides `.career-overview-shell` base padding in CSS. */
 const EXPERIENCE_SHELL_TOP_INSET_MAX_LG =
   "max-lg:!pt-[calc(24vh+0.625rem)] max-lg:max-sm:!pt-[max(calc(5.5rem+0.625rem),calc(env(safe-area-inset-top,0px)+0.625rem))]";
@@ -2995,7 +2992,7 @@ const ProjectsStack = ({
 /** WRITING SAMPLES + CAREER OVERVIEW ? optical scrollbar rail (desktop lg+). */
 const PORTFOLIO_SECTION_SCROLLBAR_VISIBLE_MS = 450;
 const PORTFOLIO_OPTICAL_MIN_VIEWPORT_PX = 1024;
-/** PROJECTS/SKILLS grid overlay height sync — matches index.css (all breakpoints). */
+/** SKILLS / PROJECTS (tablet) grid overlay height sync — matches index.css. */
 const SECTION_PANEL_GRID_SELECTOR = '[aria-label^="Section:"]';
 
 function sectionGridOverlayHeightPx(section: HTMLElement): number {
@@ -4168,7 +4165,7 @@ const PalaceProjects = ({
       (videoEditingDetailNoMainCard || illustrationsDetailNoHero || activeCardNoMorph || morphDone),
   );
 
-  /** WebKit mobile/tablet: grid overlay must track section + panel scroller (iPad landscape >1024px included). */
+  /** Tablet: grid overlay tracks section + panel scroller (iPad landscape >1024px included). */
   useLayoutEffect(() => {
     const section = projectsSectionRef.current;
     if (!section) return;
@@ -4382,15 +4379,13 @@ const PalaceProjects = ({
           ? `min-h-screen shrink-0 ${SECTION_MAIN_HEADER_INSET} ${
               videoEditingDetailNoMainCard ? "overflow-x-visible" : "overflow-x-hidden"
             }`
-          : `max-lg:min-h-full lg:min-h-full overflow-x-hidden ${PROJECTS_SHOWCASE_TABLET_PAD} ${SECTION_MAIN_HEADER_INSET}`
+          : `max-lg:min-h-min lg:min-h-full overflow-x-hidden ${PROJECTS_SHOWCASE_TABLET_PAD} ${SECTION_MAIN_HEADER_INSET}`
       }`}
     >
       <SectionGridOverlay />
       <div
         className={`${PROFILE_SECTION_CONTAINER} relative z-10 flex min-w-0 w-full flex-col ${
-          projectDetailInFlow
-            ? "min-h-min shrink-0"
-            : `max-lg:min-h-full max-lg:flex-none lg:min-h-0 lg:flex-1 ${PROJECTS_SHOWCASE_TABLET_SHELL}`
+          projectDetailInFlow ? "min-h-min shrink-0" : "max-lg:min-h-min max-lg:flex-none lg:min-h-0 lg:flex-1"
         }`}
       >
         <div className={EXPERIENCE_GUTTER_SHELL_OUTER}>
@@ -4399,7 +4394,7 @@ const PalaceProjects = ({
           className={`${PROJECTS_VIEWPORT_SHELL} overflow-y-visible ${
             projectDetailInFlow
               ? "min-h-min shrink-0 justify-start"
-              : `max-lg:min-h-min max-lg:flex-none max-lg:justify-start lg:min-h-0 lg:flex-1 lg:justify-center ${PROJECTS_SHOWCASE_TABLET_CHAIN}`
+              : "max-lg:min-h-min max-lg:flex-none max-lg:justify-start lg:min-h-0 lg:flex-1 lg:justify-center"
           }`}
         >
         {/*
@@ -4411,17 +4406,8 @@ const PalaceProjects = ({
               ? `min-h-min shrink-0 justify-start ${
                   videoEditingDetailNoMainCard ? "overflow-x-visible" : "overflow-x-hidden"
                 }`
-              : `max-lg:min-h-min max-lg:flex-none max-lg:justify-start lg:min-h-0 lg:flex-1 lg:justify-center overflow-x-hidden ${PROJECTS_SHOWCASE_TABLET_CHAIN}`
+              : "max-lg:min-h-min max-lg:flex-none max-lg:justify-start lg:min-h-0 lg:flex-1 lg:justify-center overflow-x-hidden"
           }`}
-        >
-        {/*
-         * CAROUSEL + FEATURED WRITING ? in flow until project detail opens; then detail
-         * replaces this block so tall copy (e.g. VIDEO EDITING desc cards) stays inside #projects grid.
-         */}
-        {!projectDetailInFlow ? (
-        <div
-          aria-hidden={showcaseObscured || undefined}
-          className={`projects-showcase-flow flex min-h-0 w-full flex-1 flex-col justify-start ${showcaseObscured ? "pointer-events-none select-none" : ""}`}
         >
           {!activeCard ? (
           <motion.div
@@ -4468,6 +4454,15 @@ const PalaceProjects = ({
             </div>
           </motion.div>
           ) : null}
+        {/*
+         * CAROUSEL + FEATURED WRITING ? in flow until project detail opens; then detail
+         * replaces this block so tall copy (e.g. VIDEO EDITING desc cards) stays inside #projects grid.
+         */}
+        {!projectDetailInFlow ? (
+        <div
+          aria-hidden={showcaseObscured || undefined}
+          className={`projects-showcase-flow flex min-h-0 w-full flex-1 flex-col ${showcaseObscured ? "pointer-events-none select-none" : ""}`}
+        >
           <motion.div
             className="flex w-full shrink-0 flex-col"
             initial={reduceMotion ? false : { opacity: 0 }}
@@ -4874,12 +4869,6 @@ type ExperienceTabId = (typeof EXPERIENCE_TAB_IDS)[number];
 
 /** Mobile-only horizontal tab stack; tablet+ matches desktop grid + motion. */
 const EXPERIENCE_MOBILE_MAX_PX = 767;
-
-/** iPadOS WebKit — keep section overlay compositor layer while EXPERIENCE is open. */
-const IS_IOS_TOUCH =
-  typeof window !== "undefined" &&
-  typeof CSS !== "undefined" &&
-  CSS.supports("-webkit-touch-callout", "none");
 
 const experienceTabBtnClass = (activeId: ExperienceTabId, id: ExperienceTabId) =>
   activeId === id ? "tab-btn active" : "tab-btn";
@@ -8300,15 +8289,7 @@ export default function Home() {
                 pointerEvents: transitionTarget === "menu" ? "none" : "auto",
                 // Dropping will-change after settle avoids Chromium keeping section text on a blurry GPU layer.
                 // iOS: keep transform layer while panel is open — dropping at panelSettled blanks content/grid on iPad.
-                willChange:
-                  isTransitioning ||
-                  !panelSettled ||
-                  (IS_IOS_TOUCH &&
-                    (currentSection === "experience" ||
-                      currentSection === "projects" ||
-                      currentSection === "skills"))
-                    ? "transform"
-                    : "auto",
+                willChange: !panelSettled || isTransitioning ? "transform" : "auto",
                 ...(currentSection === "projects-supporting"
                   ? {}
                   : { scrollbarWidth: "none", msOverflowStyle: "none" }),
@@ -8365,10 +8346,8 @@ export default function Home() {
               <div
                 className={
                   currentSection === "projects"
-                    ? `relative z-10 flex w-full min-w-0 flex-col overflow-x-hidden overflow-y-visible max-lg:min-h-full max-lg:flex-none ${
-                        activeShowcaseProjectId
-                          ? "min-h-min shrink-0"
-                          : `lg:min-h-0 lg:flex-1 ${PROJECTS_SHOWCASE_TABLET_CHAIN}`
+                    ? `relative z-10 flex w-full min-w-0 flex-col overflow-x-hidden overflow-y-visible max-lg:min-h-min max-lg:flex-none ${
+                        activeShowcaseProjectId ? "min-h-min shrink-0" : "lg:min-h-0 lg:flex-1"
                       }`
                     : currentSection === "profile"
                       ? "flex min-h-min w-full min-w-0 max-lg:flex-none flex-col overflow-x-hidden overflow-y-visible lg:h-full lg:min-h-0 lg:flex-1"
@@ -8389,10 +8368,8 @@ export default function Home() {
                   <>
                     {currentSection === "projects" && (
                       <div
-                        className={`flex w-full min-w-0 shrink-0 flex-col overflow-x-hidden overflow-y-visible max-lg:min-h-full max-lg:flex-none ${
-                          activeShowcaseProjectId
-                            ? "min-h-min"
-                            : `lg:min-h-0 lg:flex-1 ${PROJECTS_SHOWCASE_TABLET_CHAIN}`
+                        className={`flex w-full min-w-0 shrink-0 flex-col overflow-x-hidden overflow-y-visible max-lg:min-h-min max-lg:flex-none ${
+                          activeShowcaseProjectId ? "min-h-min" : "lg:min-h-0 lg:flex-1"
                         }`}
                       >
                         <PalaceProjects
@@ -8421,10 +8398,8 @@ export default function Home() {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: SHOWCASE_SUBROUTE_FADE_S, ease: EASE.out }}
-                        className={`flex w-full min-w-0 shrink-0 flex-col overflow-x-hidden overflow-y-visible max-lg:min-h-full max-lg:flex-none ${
-                          activeShowcaseProjectId
-                            ? "min-h-min"
-                            : `lg:min-h-0 lg:flex-1 ${PROJECTS_SHOWCASE_TABLET_CHAIN}`
+                        className={`flex w-full min-w-0 shrink-0 flex-col overflow-x-hidden overflow-y-visible max-lg:min-h-min max-lg:flex-none ${
+                          activeShowcaseProjectId ? "min-h-min" : "lg:min-h-0 lg:flex-1"
                         }`}
                       >
                         <PalaceProjects
