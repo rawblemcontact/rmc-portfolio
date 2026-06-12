@@ -3360,6 +3360,11 @@
       transform: translateY(clamp(-2rem, -5svh, -3.25rem));
     }
 
+    /* Main title + green line only — visual nudge up; cards keep their layout position */
+    #skills .skills-header {
+      transform: translateY(clamp(-2.75rem, -7svh, -4.5rem));
+    }
+
     #skills .skills-profile-shell {
       flex: 0 0 auto;
     }
@@ -3900,6 +3905,12 @@
   }
   @media (prefers-reduced-motion: reduce) {
     .skills-node-pulse-once { animation: none; }
+  }
+
+  /* SLAYWIRE detail hero — same 16:9 frame as VIDEO EDITING Plyr player at content width */
+  .projects-slaywire-detail > .projects-slaywire-detail-hero {
+    aspect-ratio: 16 / 9;
+    height: auto;
   }
 
   /* VIDEO EDITING — Plyr player frame (ring border — no layout shift) */
@@ -4473,17 +4484,125 @@
   }
 }
 
-/* ─── PROJECTS — iPad portrait: taller carousel cards dominate over FEATURED WRITING ─── */
+/* ─── PROJECTS — iPad portrait: taller cards + equal vertical gap around four-up row ─── */
 @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
+  #projects {
+    --projects-cards-cluster-nudge: clamp(0.5rem, 1.5svh, 1rem);
+    /* header bottom → card top AND card bottom → FEATURED WRITING tab row */
+    --projects-four-cards-gap: clamp(0.625rem, 1.5svh, 0.875rem);
+  }
+
   #projects [data-carousel-card] {
     height: min(400px, 57svh) !important;
+  }
+
+  /* Nudge header + four cards down (does not affect the four-card edge gaps). */
+  #projects .projects-showcase-cards-cluster {
+    margin-top: var(--projects-cards-cluster-nudge);
+    gap: calc(var(--projects-four-cards-gap) - 0.25rem);
+  }
+
+  #projects .showcase-header {
+    margin-bottom: 0 !important;
+  }
+
+  #projects .showcase-header-title-stack > .section-main-header-title {
+    transform: translate(1px, -0.125rem) !important;
+  }
+
+  #projects .showcase-header-subhead-rule .career-nav-section-title {
+    transform: translateY(-2px);
+  }
+
+  /* Yellow rule — align start with “D” in DIGITAL MEDIA (overrides max-lg:left-0.5) */
+  #projects .showcase-main-accent-line > span {
+    left: -1px !important;
+  }
+
+  /* Strip carousel wrapper spacing so cluster gap is the only space above cards */
+  #projects .projects-showcase-carousel-block,
+  #projects .projects-showcase-carousel-inner,
+  #projects .projects-carousel-stack {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  /* Gap below four cards — nudged up to match optical gap above */
+  #projects .projects-showcase-featured-block {
+    margin-top: calc(var(--projects-four-cards-gap) + 0.25rem) !important;
+  }
+
+  /* SLAYWIRE project detail — portrait: vertically center block (keep md grid + 16:9 hero) */
+  #projects.projects-slaywire-detail-open {
+    min-height: 100svh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding-top: max(3.75rem, calc(env(safe-area-inset-top, 0px) + 3.25rem)) !important;
+    padding-bottom: max(3.75rem, env(safe-area-inset-bottom, 0px)) !important;
+    overflow-x: visible !important;
+  }
+
+  #projects.projects-slaywire-detail-open > .container,
+  #projects.projects-slaywire-detail-open > .container > div,
+  #projects.projects-slaywire-detail-open > .container > div > div,
+  #projects.projects-slaywire-detail-open .projects-slaywire-detail-stage {
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    min-height: 0 !important;
+  }
+
+  #projects.projects-slaywire-detail-open .projects-slaywire-detail {
+    overflow-x: visible !important;
+    width: 100%;
+  }
+
+  #projects.projects-slaywire-detail-open .projects-slaywire-detail > div:last-child {
+    margin-top: 1.125rem !important;
+  }
+}
+
+/*
+ * FEATURED WRITING mobile tab selector — crisp card-border seam (mobile + iPad portrait).
+ * Replaces the blurry backdrop-filter edge under the selected tab with project-card stroke.
+ */
+@media (max-width: 639.98px), (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
+  .featured-writing-folder > div:first-child > div.featured-writing-panel {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    filter: none !important;
+    background: var(--portfolio-section-card) !important;
+    background-image: none !important;
+    border-color: var(--portfolio-stroke-outer) !important;
+    border-bottom: 1px solid var(--portfolio-stroke-outer) !important;
+    box-shadow: none !important;
+  }
+
+  .featured-writing-inner-rule-body-top > .profile-card-surface {
+    border-top: 0 !important;
+    border-left-color: var(--portfolio-stroke-outer) !important;
+    border-right-color: var(--portfolio-stroke-outer) !important;
+    border-bottom-color: var(--portfolio-stroke-outer) !important;
   }
 }
 
 /* ─── FEATURED WRITING — iPad portrait: use mobile single-tab nav layout ─── */
 @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
+  /*
+   * Mobile tab row is shown on portrait, but Tailwind sm:h-16 / sm:pt-4 still apply
+   * and blow out the gap below the four carousel cards — collapse to mobile height.
+   */
+  #projects .featured-writing-folder > div:first-child {
+    height: auto !important;
+    min-height: 0 !important;
+    padding-top: 0 !important;
+  }
+
   /* Show the mobile prev/next selector (Tailwind 'hidden' on sm+) */
-  .featured-writing-folder > div:first-child > div.featured-writing-panel {
+  #projects .featured-writing-folder > div:first-child > div.featured-writing-panel {
     display: flex !important;
   }
 

@@ -2882,7 +2882,7 @@ const ProjectsStack = ({
   }, [loadedMediaCount]);
 
   return (
-    <div className="-mt-1 sm:-mt-1.5 flex w-full min-w-0 flex-col justify-center overflow-x-visible overflow-y-visible pt-2 pb-0 sm:pt-3">
+    <div className="projects-carousel-stack -mt-1 sm:-mt-1.5 flex w-full min-w-0 flex-col justify-center overflow-x-visible overflow-y-visible pt-2 pb-0 sm:pt-3">
       <div className="w-full min-w-0">
         <div className="min-w-0 max-w-full w-full overflow-hidden [--slide-gap:0.875rem] sm:[--slide-gap:1.25rem] lg:[--slide-gap:1rem] xl:[--slide-gap:1.125rem] max-sm:[--slide-gap:0.625rem]">
           <div className="grid w-full min-w-0 grid-cols-2 sm:grid-cols-4 gap-[var(--slide-gap)]">
@@ -4193,6 +4193,10 @@ const PalaceProjects = ({
     activeCard &&
       (videoEditingDetailNoMainCard || illustrationsDetailNoHero || activeCardNoMorph || morphDone),
   );
+  const slaywireDetailInFlow =
+    projectDetailInFlow && activeCard?.id === "project-slaywire";
+  const projectDetailAllowsOverflowX =
+    videoEditingDetailNoMainCard || slaywireDetailInFlow;
 
   /** Tablet: grid overlay tracks section + panel scroller (iPad landscape >1024px included). */
   useLayoutEffect(() => {
@@ -4406,7 +4410,9 @@ const PalaceProjects = ({
       className={`relative flex w-full min-w-0 max-w-full flex-col justify-start lg:pb-[max(1.25rem,calc(var(--slide-gap)*1.5),env(safe-area-inset-bottom,0px))] text-white scroll-mt-6 [--slide-gap:0.875rem] sm:[--slide-gap:1.25rem] lg:[--slide-gap:1rem] xl:[--slide-gap:1.125rem] ${
         projectDetailInFlow
           ? `min-h-screen shrink-0 ${SECTION_MAIN_HEADER_INSET} ${
-              videoEditingDetailNoMainCard ? "overflow-x-visible" : "overflow-x-hidden"
+              slaywireDetailInFlow ? "projects-slaywire-detail-open" : ""
+            } ${
+              projectDetailAllowsOverflowX ? "overflow-x-visible" : "overflow-x-hidden"
             }`
           : `max-lg:min-h-min lg:min-h-full overflow-x-hidden ${PROJECTS_SHOWCASE_TABLET_PAD} ${SECTION_MAIN_HEADER_INSET}`
       }`}
@@ -4422,7 +4428,9 @@ const PalaceProjects = ({
         <div
           className={`${PROJECTS_VIEWPORT_SHELL} overflow-y-visible ${
             projectDetailInFlow
-              ? "min-h-min shrink-0 justify-start"
+              ? `min-h-min shrink-0 justify-start${
+                  slaywireDetailInFlow ? " projects-slaywire-detail-stage" : ""
+                }`
               : "max-lg:min-h-min max-lg:flex-none max-lg:justify-start lg:min-h-0 lg:flex-1 lg:justify-center"
           }`}
         >
@@ -4432,15 +4440,24 @@ const PalaceProjects = ({
         <div
           className={`flex flex-col overflow-y-visible ${
             projectDetailInFlow
-              ? `min-h-min shrink-0 justify-start ${
-                  videoEditingDetailNoMainCard ? "overflow-x-visible" : "overflow-x-hidden"
+              ? `min-h-min shrink-0 justify-start${
+                  slaywireDetailInFlow ? " projects-slaywire-detail-stage" : ""
+                } ${
+                  projectDetailAllowsOverflowX ? "overflow-x-visible" : "overflow-x-hidden"
                 }`
               : "max-lg:min-h-min max-lg:flex-none max-lg:justify-start lg:min-h-0 lg:flex-1 lg:justify-center overflow-x-hidden"
           }`}
         >
+          {!projectDetailInFlow ? (
+        <div
+          className={`projects-showcase-cards-cluster flex w-full flex-col shrink-0${
+            showcaseObscured ? " pointer-events-none select-none" : ""
+          }`}
+          aria-hidden={showcaseObscured || undefined}
+        >
           {!activeCard ? (
           <motion.div
-            className="w-full shrink-0"
+            className="projects-showcase-header-block w-full shrink-0"
             initial={reduceMotion ? false : { opacity: 0, y: 30 }}
             animate={{
               opacity: projectsEntered || projectsHeaderYLocked ? 1 : 0,
@@ -4483,17 +4500,8 @@ const PalaceProjects = ({
             </div>
           </motion.div>
           ) : null}
-        {/*
-         * CAROUSEL + FEATURED WRITING ? in flow until project detail opens; then detail
-         * replaces this block so tall copy (e.g. VIDEO EDITING desc cards) stays inside #projects grid.
-         */}
-        {!projectDetailInFlow ? (
-        <div
-          aria-hidden={showcaseObscured || undefined}
-          className={`projects-showcase-flow flex min-h-0 w-full flex-1 flex-col ${showcaseObscured ? "pointer-events-none select-none" : ""}`}
-        >
           <motion.div
-            className="flex w-full shrink-0 flex-col"
+            className="projects-showcase-carousel-block flex w-full shrink-0 flex-col"
             initial={reduceMotion ? false : { opacity: 0 }}
             animate={{
               opacity: reduceMotion ? 1 : projectsOverlayRevealed ? 1 : 0,
@@ -4506,7 +4514,7 @@ const PalaceProjects = ({
             style={{ willChange: "opacity" }}
           >
             <motion.div
-              className="shrink-0"
+              className="projects-showcase-carousel-inner shrink-0"
               initial={false}
               animate={{ opacity: reduceMotion ? 1 : showcaseObscured ? 0 : 1 }}
               transition={{ duration: showcaseFadeDuration, ease: SHOWCASE_EASE }}
@@ -4518,13 +4526,18 @@ const PalaceProjects = ({
               />
             </motion.div>
           </motion.div>
-
-          {/*
-           * FEATURED WRITING outside carousel entrance opacity layer (Framer opacity isolates backdrop-filter).
-           * Gap above tabs = --slide-gap only — same as space between slider cards.
-           */}
+        </div>
+        ) : null}
+        {/*
+         * FEATURED WRITING — separate from header/carousel cluster so portrait nudges do not shift it.
+         */}
+        {!projectDetailInFlow ? (
+        <div
+          aria-hidden={showcaseObscured || undefined}
+          className={`projects-showcase-flow flex min-h-0 w-full flex-1 flex-col ${showcaseObscured ? "pointer-events-none select-none" : ""}`}
+        >
           <motion.div
-            className={`mt-[var(--slide-gap,0.875rem)] flex w-full shrink-0 min-w-0 flex-col${
+            className={`projects-showcase-featured-block mt-[var(--slide-gap,0.875rem)] flex w-full shrink-0 min-w-0 flex-col${
               !projectsOverlayRevealed && !reduceMotion ? " invisible" : ""
             }`}
             initial={false}
@@ -4551,6 +4564,8 @@ const PalaceProjects = ({
         {projectDetailInFlow && activeCard ? (
           <div
             className={`relative flex w-full min-w-0 max-w-full flex-col items-stretch${
+              activeCard.id === "project-slaywire" ? " projects-slaywire-detail" : ""
+            }${
               illustrationsDetailNoHero
                 ? " overflow-y-auto overscroll-y-contain no-scrollbar"
                 : ""
@@ -4558,7 +4573,11 @@ const PalaceProjects = ({
           >
               {!illustrationsDetailNoHero && !videoEditingDetailNoMainCard ? (
                 <div
-                  className={`project-card-surface relative z-[1] mx-auto w-full max-w-full ${PROFILE_VIEWPORT_CONTENT_MAX} ${DETAIL_CARD_H} overflow-hidden rounded-[11px] sm:rounded-xl border border-white/[0.09]`}
+                  className={`project-card-surface relative z-[1] mx-auto w-full max-w-full ${PROFILE_VIEWPORT_CONTENT_MAX} ${
+                    activeCard.id === "project-slaywire"
+                      ? "projects-slaywire-detail-hero aspect-video h-auto"
+                      : DETAIL_CARD_H
+                  } overflow-hidden rounded-[11px] sm:rounded-xl border border-white/[0.09]`}
                   style={{
                     boxShadow: `${SHOWCASE_SLIDER_MEDIA_BOX_SHADOW}, 0 18px 48px -28px rgba(0,0,0,0.9)`,
                     borderRadius: `${detailCardRadiusPx}px`,
@@ -4568,7 +4587,11 @@ const PalaceProjects = ({
                 >
                   <div
                     key={activeCard.id}
-                    className="h-full w-full"
+                    className={
+                      activeCard.id === "project-slaywire"
+                        ? "absolute inset-0 h-full w-full"
+                        : "h-full w-full"
+                    }
                     style={{
                       opacity: reduceMotion ? 1 : detailHeroMediaFadeIn ? 1 : 0,
                       ...(reduceMotion
@@ -7710,6 +7733,11 @@ export default function Home() {
   const [profileSectionMounted, setProfileSectionMounted] = useState(false);
   const [menuLockedFillId, setMenuLockedFillId] = useState<string | null>(null);
   const [activeShowcaseProjectId, setActiveShowcaseProjectId] = useState<string | null>(null);
+  const slaywireShowcaseDetailOpen =
+    currentSection === "projects" && activeShowcaseProjectId === "project-slaywire";
+  const projectsPanelOverflowX = slaywireShowcaseDetailOpen
+    ? "overflow-x-visible"
+    : "overflow-x-hidden";
   const [projectsEntranceArmed, setProjectsEntranceArmed] = useState(false);
   /** FEATURED WRITING ? PDF overlay on PROJECTS (same dismiss feel as closing side nav). */
   const [showcasePdfOverlay, setShowcasePdfOverlay] = useState<SupportingArchivePdfItem | null>(null);
@@ -8325,7 +8353,7 @@ export default function Home() {
             <motion.div
               className={`fixed inset-0 flex min-h-0 flex-col no-scrollbar ${
                 currentSection === "projects"
-                  ? "overflow-x-hidden overflow-y-auto overscroll-y-contain [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0"
+                  ? `${projectsPanelOverflowX} overflow-y-auto overscroll-y-contain [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0`
                   : currentSection === "projects-supporting"
                     ? "overflow-x-hidden overflow-y-hidden"
                     : currentSection === "experience"
@@ -8403,7 +8431,7 @@ export default function Home() {
               <div
                 className={
                   currentSection === "projects"
-                    ? `relative z-10 flex w-full min-w-0 flex-col overflow-x-hidden overflow-y-visible max-lg:min-h-min max-lg:flex-none ${
+                    ? `relative z-10 flex w-full min-w-0 flex-col ${projectsPanelOverflowX} overflow-y-visible max-lg:min-h-min max-lg:flex-none ${
                         activeShowcaseProjectId ? "min-h-min shrink-0" : "lg:min-h-0 lg:flex-1"
                       }`
                     : currentSection === "profile"
@@ -8425,7 +8453,7 @@ export default function Home() {
                   <>
                     {currentSection === "projects" && (
                       <div
-                        className={`flex w-full min-w-0 shrink-0 flex-col overflow-x-hidden overflow-y-visible max-lg:min-h-min max-lg:flex-none ${
+                        className={`flex w-full min-w-0 shrink-0 flex-col ${projectsPanelOverflowX} overflow-y-visible max-lg:min-h-min max-lg:flex-none ${
                           activeShowcaseProjectId ? "min-h-min" : "lg:min-h-0 lg:flex-1"
                         }`}
                       >
@@ -8455,7 +8483,7 @@ export default function Home() {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: SHOWCASE_SUBROUTE_FADE_S, ease: EASE.out }}
-                        className={`flex w-full min-w-0 shrink-0 flex-col overflow-x-hidden overflow-y-visible max-lg:min-h-min max-lg:flex-none ${
+                        className={`flex w-full min-w-0 shrink-0 flex-col ${projectsPanelOverflowX} overflow-y-visible max-lg:min-h-min max-lg:flex-none ${
                           activeShowcaseProjectId ? "min-h-min" : "lg:min-h-0 lg:flex-1"
                         }`}
                       >
