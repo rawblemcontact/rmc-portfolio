@@ -364,6 +364,46 @@
     }
   }
 
+  /*
+   * iPad portrait: hide RAWBLEM mascot, fill viewport height, vertically
+   * center the content block, and constrain the text column width.
+   */
+  @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
+    #profile {
+      min-height: 100svh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #profile .profile-tablet-mascot-column {
+      display: none !important;
+    }
+
+    #profile .profile-section-tablet-shell {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start !important;
+      padding-top: max(5rem, calc(env(safe-area-inset-top, 0px) + 4.5rem)) !important;
+      padding-bottom: max(2.5rem, env(safe-area-inset-bottom, 0px)) !important;
+    }
+
+    #profile .profile-tablet-layout-row {
+      align-items: flex-start;
+      width: 100%;
+      max-width: min(100%, 560px);
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    #profile .profile-tablet-text-column {
+      width: 100%;
+      max-width: 100%;
+      order: 1;
+    }
+  }
+
   /* Tablet landscape touch (iPad): PROFILE header aligns with PROJECTS. */
   @media (min-width: 1024px) and (max-width: 1366px) and (any-pointer: coarse) {
     #profile .profile-section-tablet-shell {
@@ -448,6 +488,34 @@
 
       #skills .skills-page-grid {
         gap: clamp(0.375rem, 0.95svh, 0.625rem);
+      }
+    }
+
+    /*
+     * iPad portrait — 3 columns at ~768px means each column is ~216px wide.
+     * Tighten scale, reduce gaps, and trim card min-heights so everything
+     * fits comfortably without squishing text or forcing unnecessary scroll.
+     */
+    @media (orientation: portrait) {
+      #skills {
+        --skills-page-scale: 0.84;
+        --skills-rail-block-gap: clamp(0.25rem, 0.75svh, 0.375rem);
+      }
+
+      #skills .skills-page-grid {
+        gap: clamp(0.4375rem, 1svh, 0.625rem);
+      }
+
+      #skills .skills-card-surface--page {
+        min-height: clamp(
+          calc(6rem * var(--skills-page-scale)),
+          calc(9.5svh * var(--skills-page-scale)),
+          calc(7.75rem * var(--skills-page-scale))
+        );
+      }
+
+      #skills .skills-row-cards--page {
+        gap: calc(0.375rem * 1.25);
       }
     }
 
@@ -2538,6 +2606,227 @@
     }
   }
 
+  /*
+   * iPad portrait — stack layout with equal-width tabs, vertically centered,
+   * grid background fills full viewport.
+   */
+  @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
+    /* Fill viewport so the grid overlay covers the whole screen */
+    #experience.career-viewport {
+      min-height: 100svh !important;
+      height: 100svh !important;
+      display: flex !important;
+      flex-direction: column !important;
+    }
+
+    .career-overview-shell {
+      flex: 1 1 auto !important;
+      display: flex !important;
+      flex-direction: column !important;
+      /* flex-start keeps header position fixed regardless of card height — no shift on tab change */
+      justify-content: flex-start !important;
+      padding-top: clamp(7.5rem, 26svh, 13rem) !important;
+      padding-bottom: max(2.5rem, env(safe-area-inset-bottom, 0px)) !important;
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: none !important;
+      overflow-y: visible !important;
+    }
+
+    #experience .career-overview-shell > .container {
+      padding-left: 1.25rem;
+      flex: 0 0 auto;
+    }
+
+    #experience .main-container {
+      display: flex !important;
+      flex-direction: column !important;
+      grid-template-columns: unset !important;
+      grid-template-rows: unset !important;
+      align-items: stretch !important;
+      min-height: auto !important;
+      height: auto !important;
+      max-height: none !important;
+      overflow: visible !important;
+      -webkit-backdrop-filter: none !important;
+      backdrop-filter: none !important;
+      margin-left: 0 !important;
+      width: 100% !important;
+      background: transparent !important;
+      background-image: none !important;
+      filter: none !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      gap: 0;
+    }
+
+    #experience .career-overview-rail {
+      display: flex !important;
+      flex-direction: column !important;
+      width: 100% !important;
+      min-width: 0 !important;
+      grid-column: auto !important;
+      grid-row: auto !important;
+    }
+
+    /* Header: flush left, comfortable bottom spacing before blue line */
+    #experience .nav-header {
+      display: flex;
+      order: 1;
+      padding: 0 0 16px;
+      margin: 0 0 14px;
+    }
+
+    #experience .career-nav-section-divider {
+      left: 0;
+      right: 0;
+    }
+
+    /* Tab row: equal-width buttons spanning the full container width */
+    #experience .tabs-nav {
+      order: 2;
+      width: 100% !important;
+      min-width: 0 !important;
+      flex-direction: row !important;
+      flex-wrap: nowrap;
+      gap: 8px;
+      overflow-x: visible;
+      overflow-y: hidden;
+      padding: 0 0 14px;
+      border: 0 !important;
+      border-right: 0 !important;
+      background: transparent !important;
+      background-image: none !important;
+      -webkit-backdrop-filter: none !important;
+      backdrop-filter: none !important;
+      scrollbar-width: none;
+    }
+
+    #experience .tabs-nav::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* Equal-width tabs that collectively fill the container */
+    #experience .tabs-nav .tab-btn,
+    #experience .tab-btn {
+      flex: 1 1 0 !important;
+      min-width: 0 !important;
+      width: auto;
+      padding: 11px 10px;
+      text-align: center;
+      transform: none !important;
+    }
+
+    #experience .tab-title,
+    #experience .tab-subtitle {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Content card below tabs with clean border */
+    #experience .tabs-content {
+      order: 3;
+      flex: 0 0 auto;
+      margin-left: 0 !important;
+      width: 100% !important;
+      min-width: 0 !important;
+      min-height: min-content !important;
+      /* Padding keeps content away from rounded edges so nothing clips */
+      padding: 20px 20px 24px !important;
+      border: 1px solid var(--career-overview-content-edge) !important;
+      border-radius: 16px !important;
+      background: color-mix(in srgb, var(--portfolio-section-card) 6%, transparent) !important;
+      -webkit-backdrop-filter: blur(2px) !important;
+      backdrop-filter: blur(2px) !important;
+      overflow: visible !important;
+      height: auto !important;
+      transform: none;
+      /* Remove desktop layout props */
+      isolation: auto !important;
+    }
+
+    #experience .tabs-content::before {
+      display: none;
+    }
+
+    #experience .tabs-content > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    #experience .career-tabs-content-inner {
+      background: transparent !important;
+      background-image: none !important;
+      -webkit-backdrop-filter: none !important;
+      backdrop-filter: none !important;
+      border-radius: 0;
+    }
+
+    #experience .career-tabs-content-inner.career-tabs-dim,
+    #experience .panel-header.career-tabs-dim {
+      opacity: 1 !important;
+      pointer-events: auto !important;
+    }
+
+    #experience .tab-panel {
+      position: relative !important;
+      inset: auto !important;
+      display: flex !important;
+      flex-direction: column !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      transform: none !important;
+      transition: none !important;
+      overflow: visible !important;
+      /* Reset desktop absolute-inset padding */
+      padding-top: 0 !important;
+      padding-right: 0 !important;
+      width: 100% !important;
+      min-width: 0 !important;
+    }
+
+    #experience .tab-panel:not(.active) {
+      display: none !important;
+    }
+
+    #experience .tab-panel.active {
+      display: flex !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      transform: none !important;
+    }
+
+    #experience .tab-panel.active .career-tabs-content-inner,
+    #experience .tab-panel.active .panel-header,
+    #experience .tab-panel.active .panel-content,
+    #experience .tab-panel.active .content-card {
+      opacity: 1 !important;
+      visibility: visible !important;
+      transform: none !important;
+    }
+
+    /* Let panel-header and content flow at natural height */
+    #experience .tabs-content > .tab-panel {
+      position: relative !important;
+      inset: auto !important;
+      width: 100% !important;
+      min-width: 0 !important;
+      min-height: min-content !important;
+      height: auto !important;
+      overflow: visible !important;
+    }
+
+    /* Reset desktop max-width centering on panel-header so it fills the card */
+    #experience .panel-header {
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+      max-width: 100% !important;
+      grid-template-columns: minmax(0, 100%) !important;
+    }
+  }
+
   /* Mobile only: single-column stack (tablet+ uses desktop grid above). */
   @media (max-width: 767.98px) {
     #experience .nav-header {
@@ -3046,6 +3335,50 @@
     #skills .skills-page-layout {
       padding-top: clamp(0.5rem, 1.75vh, 1.125rem);
     }
+  }
+
+  /*
+   * iPad portrait — optically center the full SKILLS block in the viewport grid.
+   * Replace the 24vh mobile hero inset with nav-only clearance, then center
+   * the shrink-wrapped content block in 100svh (wins over Tailwind justify-start).
+   */
+  @media (min-width: 768px) and (max-width: 1366px) and (orientation: portrait) {
+    #skills {
+      display: flex;
+      flex-direction: column;
+      justify-content: center !important;
+      min-height: 100svh;
+      padding-top: max(4.25rem, calc(env(safe-area-inset-top, 0px) + 3.75rem)) !important;
+      padding-bottom: max(3rem, env(safe-area-inset-bottom, 0px)) !important;
+    }
+
+    #skills > .container {
+      flex: 0 0 auto !important;
+      justify-content: flex-start !important;
+      padding-top: 0;
+      padding-bottom: 0;
+      transform: translateY(clamp(-2rem, -5svh, -3.25rem));
+    }
+
+    #skills .skills-profile-shell {
+      flex: 0 0 auto;
+    }
+
+    #skills .skills-page-layout {
+      padding-top: clamp(0.125rem, 0.35svh, 0.375rem);
+    }
+
+    #skills .skills-card-title--has-tablet-portrait .skills-card-title-default {
+      display: none;
+    }
+
+    #skills .skills-card-title--has-tablet-portrait .skills-card-title-tablet-portrait {
+      display: inline;
+    }
+  }
+
+  #skills .skills-card-title-tablet-portrait {
+    display: none;
   }
 
   #skills .skills-page-grid {
@@ -4115,4 +4448,61 @@
 .supporting-archive-pdf-row:hover,
 .supporting-archive-pdf-row:has(+ li:hover) {
   border-bottom-color: rgba(250, 204, 21, 0.55);
+}
+
+/* iPad portrait: nudge CONTACT content up to compensate for fixed nav offset */
+@media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
+  #social > .container {
+    transform: translateY(clamp(-3rem, -8svh, -5rem));
+  }
+}
+
+/* SLAYWIRE tagline suffix — hidden unless tablet portrait block below shows it */
+#projects .project-card-tagline-tablet-portrait-suffix {
+  display: none;
+}
+
+@media (min-width: 768px) and (max-width: 1366px) and (orientation: portrait) {
+  #projects .project-card-tagline-tablet-portrait-suffix {
+    display: inline !important;
+  }
+
+  #projects .project-card-tagline--has-tablet-portrait-suffix {
+    -webkit-line-clamp: 3 !important;
+    line-clamp: 3 !important;
+  }
+}
+
+/* ─── PROJECTS — iPad portrait: taller carousel cards dominate over FEATURED WRITING ─── */
+@media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
+  #projects [data-carousel-card] {
+    height: min(400px, 57svh) !important;
+  }
+}
+
+/* ─── FEATURED WRITING — iPad portrait: use mobile single-tab nav layout ─── */
+@media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
+  /* Show the mobile prev/next selector (Tailwind 'hidden' on sm+) */
+  .featured-writing-folder > div:first-child > div.featured-writing-panel {
+    display: flex !important;
+  }
+
+  /* Hide the desktop folder tab row (Tailwind 'flex' on sm+) */
+  .featured-writing-folder > div:first-child > div[role="tablist"] {
+    display: none !important;
+  }
+
+  /* Panel body: column layout (thumbnail above text) — revert sm:flex-row */
+  .featured-writing-body-card .profile-card-surface > div > div {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.75rem !important;
+  }
+
+  /* Title + button row inside panel: also column on portrait */
+  .featured-writing-body-card .profile-card-surface > div > div > div:last-child > div:first-child {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.5rem !important;
+  }
 }

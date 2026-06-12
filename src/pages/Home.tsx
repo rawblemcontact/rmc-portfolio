@@ -2202,7 +2202,7 @@ const PhantomProfile = () => {
                     </p>
                   </div>
                   <p className={`${PROFILE_CARD_INLINE_LABEL_CLASS} text-[0.68rem] sm:text-xs tracking-[0.06em]`} style={{ color: NAV_SUBHEAD_GRAY }}>
-                    WRITING, DIGITAL CONTENT, &amp; SOCIAL MEDIA
+                    WRITING, CONTENT PRODUCTION, &amp; SOCIAL MEDIA
                   </p>
                   <p className={`${PROFILE_CARD_INLINE_LABEL_CLASS} text-[0.68rem] sm:text-xs tracking-[0.06em]`} style={{ color: NAV_SUBHEAD_GRAY }}>
                     B.A. WRITING
@@ -2218,18 +2218,19 @@ const PhantomProfile = () => {
             >
               <p className={`${PROFILE_CARD_SECTION_LABEL_CLASS} mb-1.5`} style={{ color: PROFILE_ACCENT_SOFT }}>SUMMARY</p>
               <p className="font-body text-mono-2 leading-relaxed mb-4">
-                Communications-focused writer and digital media coordinator with experience producing narrative-driven web content and managing social media workflows across multiple platforms. Combines narrative storytelling with platform-native content production and distribution. Bachelor of Arts in Writing (Distinction), University of Victoria.
+              Communications-focused writer, editor and digital media coordinator with proven experience producing narrative-driven web content and managing social
+              media workflows across multiple platforms. Bachelor of Arts in Writing (Distinction), University of Victoria.
               </p>
               <p className={`${PROFILE_CARD_SECTION_LABEL_CLASS} mb-1.5`} style={{ color: PROFILE_ACCENT_SOFT }}>CURRENT WORK</p>
               <ul className="font-body text-mono-2/90 leading-relaxed mb-4 ml-3 list-disc list-outside space-y-2 pl-6 sm:pl-7 marker:text-mono-2/50">
-                <li>Currently developing SLAYWIRE, a narrative-first RPG.</li>
+                <li>RAWBLEM - Independent creative brand producing story-driven written, video, and interactive content across TikTok, Instagram Reels, YouTube Shorts, and more.</li>
                 <li>
-                  RAWBLEM - Creative brand producing narrative-driven short-form content across TikTok, Instagram Reels, and YouTube Shorts.
+                SLAYWIRE - Self-produced original narrative IP.
                 </li>
               </ul>
               <p className={`${PROFILE_CARD_SECTION_LABEL_CLASS} mb-1.5`} style={{ color: PROFILE_ACCENT_SOFT }}>AVAILABILITY</p>
               <ul className="font-body text-mono-2 leading-relaxed ml-3 list-disc list-outside space-y-2 pl-6 sm:pl-7 marker:text-mono-2/50">
-                <li>Full-Time Content, Communications, or Digital Media roles.</li>
+                <li>Full-Time Content, Communications, or Social Media roles.</li>
               </ul>
             </motion.div>
             </div>
@@ -2273,6 +2274,8 @@ type ShowcaseProjectCard = {
   /** Optional line above `title`; absolutely stacked so tagline/divider layout stays fixed. */
   readonly titlePrefix?: string;
   readonly tagline: string;
+  /** Appended to tagline on iPad portrait only (e.g. SLAYWIRE development note). */
+  readonly tabletPortraitTaglineSuffix?: string;
   readonly thumbnail?: string;
   readonly thumbnailVideo?: string;
   readonly poster?: string;
@@ -2301,7 +2304,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
   {
     id: "project-visual-design",
     title: "VISUAL DESIGN",
-    tagline: "Graphic design, illustration & branding",
+    tagline: "Graphic design, illustration & branding.",
     thumbnail: "/illustrations/illustrations-charger.png",
     focalPoint: "50% 42%",
     detailGallery: [
@@ -2382,7 +2385,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
   {
     id: "project-video-editing",
     title: "VIDEO EDITING",
-    tagline: "Short-form edits & platform-native cuts",
+    tagline: "Post-production. Assembly, color, motion, and audio.",
     thumbnailVideo: "/edits-meme1-online.mp4",
     poster: "/edits-meme1-online-poster.jpg",
     focalPoint: "50% 36%",
@@ -2481,7 +2484,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
   {
     id: "project-interactive-media",
     title: "INTERACTIVE MEDIA",
-    tagline: "Games projects and web experiences",
+    tagline: "Web experiences, game development, and animation.",
     thumbnailVideo: "/portfolio-website-thumbnail-v2.mp4",
     poster: "/portfolio-website-thumbnail-v2-poster.jpg",
     focalPoint: "50% 38%",
@@ -2548,7 +2551,8 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
   {
     id: "project-slaywire",
     title: "SLAYWIRE",
-    tagline: "Original graphic novel & narrative IP",
+    tagline: "Self-produced original narrative IP.",
+    tabletPortraitTaglineSuffix: "Coming soon!",
     thumbnail: "/slaywire-thumbnail.png",
     focalPoint: "50% 40%",
     detailOverview:
@@ -2579,33 +2583,34 @@ const supportingPdfHref = (item: SupportingArchivePdfItem) => item.href?.trim() 
 const SUPPORTING_ARCHIVE_PDF_ITEMS: SupportingArchivePdfItem[] = [
   {
     id: "cnf-article",
-    title: "Article",
-    subtitle: "Example 1 ? article",
+    title: "Do You Want to See the Truth?",
+    subtitle: "Robbie McLaughlin",
     href: "/cnf/example-1-article.pdf",
     description:
-      "Magazine-style creative nonfiction: structure, voice, and scene craft in a publication-ready article. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.",
+      "An interactive article, exploring the integration of the visual novel format with the gene creative nonfiction. Uses the limitations of written format to highlight the strengths of interactivity to tell real stories.",
   },
   {
     id: "cnf-media-literary",
-    title: "Media literary analysis",
-    subtitle: "Example 2 ? media & text",
+    title: "Addressing Ethical Issues in Gaming - Omori",
+    subtitle: "Robbie McLaughlin",
     href: "/cnf/example-2-media-literary-analysis.pdf",
     description:
-      "Pairs media with written work?examining how form, context, and craft shape meaning across text and screen. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.",
+      "A written analysis on Omori: An indie psychological-horror game developed by OMOCAT (2020). Explores the title's utilization of horror through its medium, and the use of game mechanics to destigmatize mental health.",
   },
   {
     id: "cnf-critical-essay",
-    title: "Critical literary essay",
-    subtitle: "Example 3 ? critical analysis",
+    title: "Reflections of Mammy - A Séamas O'Reilly Literary Analysis",
+    subtitle: "Robbie McLaughlin",
     href: "/cnf/example-3-critical-literary-essay.pdf",
     description:
-      "Close reading and argument: a thesis-driven essay that interprets literary texts with evidence and scholarly framing.",
+      "A structural breakdown of Séamas O'Reilly's award-winning memoir: Did Ye Hear Mammy Died? A closer look into the author's craft and technique in creative nonfiction."
   },
   {
     id: "cnf-memoir",
-    title: "Creative Nonfiction",
-    subtitle: "Example 4 ? memoir",
+    title: " Way of the Frog: Amphibious Meditations",
+    subtitle: "Robbie McLaughlin (2023)",
     href: "/cnf/example-4-memoir.pdf",
+    description: "A reflection of a small frog's enlightenment, discussing anthropomorphism, mortality, and reincarnation."
   },
 ];
 
@@ -2617,7 +2622,7 @@ const SCREENPLAY_PDF_ITEMS: SupportingArchivePdfItem[] = [
     subtitle: "Robbie McLaughlin",
     href: "/screenplays/audience-of-one-robbie-mclaughlin.pdf",
     description:
-      "A short screenplay tuned for pacing, dialogue, and character?formatted and structured like a production-ready spec. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.",
+      "Atop Peach Hill Cemetery, an aging detective must stop a disturbed sock puppeteer's fatal final act.",
   },
   {
     id: "screenplay-rock-paper-promise",
@@ -2639,10 +2644,10 @@ const SHORT_GRAPHIC_NOVEL_PDF_ITEMS: SupportingArchivePdfItem[] = [
   {
     id: "sgn-blossom-ink-bw",
     title: "Blossom",
-    subtitle: "Ink ? black & white",
+    subtitle: "Robbie McLaughlin",
     href: "/short-graphic-novels/blossom-ink-bw.pdf",
     description:
-      "Inked sequential pages in black and white: line weight, contrast, and panel flow for the graphic-novel short. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.",
+      "A walking, talking tree comes to terms with his addiction to lighting himself on fire.",
   },
   {
     id: "sgn-writ405-final",
@@ -2682,7 +2687,7 @@ const SHOWCASE_WRITING_TAB_FEATURED_ORDER = [
   SUPPORTING_ARCHIVE_PDF_ITEMS.find((x) => x.id === "cnf-media-literary")!,
   {
     ...SUPPORTING_ARCHIVE_PDF_ITEMS.find((x) => x.id === "cnf-memoir")!,
-    title: "CREATIVE NONFICTION",
+    title: "Way of the Frog: Amphibious Meditations",
   },
 ] as const satisfies readonly SupportingArchivePdfItem[];
 
@@ -2960,8 +2965,20 @@ const ProjectsStack = ({
                             titlePrefix={card.titlePrefix}
                             className={PROJECT_CARD_TITLE_CLASS}
                           />
-                          <span className="font-body mt-3 block w-full max-w-full text-left text-xs sm:text-[0.8125rem] md:text-sm lg:text-[0.9375rem] text-mono-2 leading-relaxed line-clamp-2 border-t border-white/15 pt-3 sm:pt-3.5 transition-colors group-hover:text-white/90">
+                          <span
+                            className={`font-body mt-3 block w-full max-w-full text-left text-xs sm:text-[0.8125rem] md:text-sm lg:text-[0.9375rem] text-mono-2 leading-relaxed line-clamp-2 border-t border-white/15 pt-3 sm:pt-3.5 transition-colors group-hover:text-white/90${
+                              card.tabletPortraitTaglineSuffix
+                                ? " project-card-tagline--has-tablet-portrait-suffix"
+                                : ""
+                            }`}
+                          >
                             {card.tagline}
+                            {card.tabletPortraitTaglineSuffix ? (
+                              <span className="project-card-tagline-tablet-portrait-suffix">
+                                {" "}
+                                {card.tabletPortraitTaglineSuffix}
+                              </span>
+                            ) : null}
                           </span>
                         </div>
                       </>
@@ -2973,8 +2990,20 @@ const ProjectsStack = ({
                           titlePrefix={card.titlePrefix}
                           className={PROJECT_CARD_TITLE_CLASS}
                         />
-                        <span className="font-body mt-3 block w-full max-w-full text-left text-xs sm:text-[0.8125rem] md:text-sm lg:text-[0.9375rem] text-mono-2 leading-relaxed line-clamp-2 border-t border-white/15 pt-3 sm:pt-3.5 transition-colors group-hover:text-white/90">
+                        <span
+                          className={`font-body mt-3 block w-full max-w-full text-left text-xs sm:text-[0.8125rem] md:text-sm lg:text-[0.9375rem] text-mono-2 leading-relaxed line-clamp-2 border-t border-white/15 pt-3 sm:pt-3.5 transition-colors group-hover:text-white/90${
+                            card.tabletPortraitTaglineSuffix
+                              ? " project-card-tagline--has-tablet-portrait-suffix"
+                              : ""
+                          }`}
+                        >
                           {card.tagline}
+                          {card.tabletPortraitTaglineSuffix ? (
+                            <span className="project-card-tagline-tablet-portrait-suffix">
+                              {" "}
+                              {card.tabletPortraitTaglineSuffix}
+                            </span>
+                          ) : null}
                         </span>
                       </div>
                     ) : null}
@@ -4864,7 +4893,7 @@ const ExperienceSkillTag = ({ label, Icon }: CareerOverviewSkillTagRow) => (
   </span>
 );
 
-const EXPERIENCE_TAB_IDS = ["rawblem", "uvic-esports", "starbucks", "education"] as const;
+const EXPERIENCE_TAB_IDS = ["rawblem", "uvic-esports", "education", "starbucks"] as const;
 type ExperienceTabId = (typeof EXPERIENCE_TAB_IDS)[number];
 
 /** Mobile-only horizontal tab stack; tablet+ matches desktop grid + motion. */
@@ -5064,15 +5093,16 @@ const ConfidantExperience = ({
 }) => {
   const tabsRootRef = useRef<HTMLDivElement>(null);
   const [activeExperienceTabId, setActiveExperienceTabId] = useState<ExperienceTabId>("rawblem");
+  const COMPACT_EXPERIENCE_MQ = `(max-width: ${EXPERIENCE_MOBILE_MAX_PX}px), (max-width: 1023px) and (orientation: portrait)`;
   const [isCompactExperienceLayout, setIsCompactExperienceLayout] = useState(() =>
     typeof window !== "undefined"
-      ? window.matchMedia(`(max-width: ${EXPERIENCE_MOBILE_MAX_PX}px)`).matches
+      ? window.matchMedia(COMPACT_EXPERIENCE_MQ).matches
       : false,
   );
   const rm = !!reduceMotion;
 
   useEffect(() => {
-    const mq = window.matchMedia(`(max-width: ${EXPERIENCE_MOBILE_MAX_PX}px)`);
+    const mq = window.matchMedia(COMPACT_EXPERIENCE_MQ);
     const onChange = () => setIsCompactExperienceLayout(mq.matches);
     onChange();
     mq.addEventListener("change", onChange);
@@ -5387,15 +5417,15 @@ const ConfidantExperience = ({
               experienceTabItemEntrance,
             )}
             {renderExperienceTabButton(
-              "starbucks",
-              "Barista",
-              "Starbucks",
-              experienceTabItemEntrance,
-            )}
-            {renderExperienceTabButton(
               "education",
               "Education",
               "B.A. Writing",
+              experienceTabItemEntrance,
+            )}
+            {renderExperienceTabButton(
+              "starbucks",
+              "Barista",
+              "Starbucks",
               experienceTabItemEntrance,
             )}
           </motion.nav>
@@ -5978,6 +6008,8 @@ type CoreSubskillIcon = React.ComponentType<{ size?: number; className?: string 
 /** Core competencies: 3 columns (same structure as Operational Stack). Icons: https://tabler.io/icons */
 const CORE_SUBSKILLS_CATEGORIES: {
   categoryTitle: string;
+  /** iPad portrait (768–1366px): shorter in-card title without changing other breakpoints. */
+  tabletPortraitTitle?: string;
   items: { label: string; Icon: CoreSubskillIcon }[];
 }[] = [
   {
@@ -6002,6 +6034,7 @@ const CORE_SUBSKILLS_CATEGORIES: {
   },
   {
     categoryTitle: "Research & Collaboration",
+    tabletPortraitTitle: "Research",
     items: [
       { label: "Research", Icon: IconSearch },
       { label: "Fact-Checking", Icon: IconCertificate },
@@ -7164,6 +7197,7 @@ const SkillsMainSectionHeader = ({
 /** Card column title + underline + list — after empty shell slide; mirrors experience rail + tab cadence. */
 const SkillsCardInnerContent = ({
   categoryTitle,
+  tabletPortraitTitle,
   align,
   panelSettled,
   reduceMotion,
@@ -7172,6 +7206,7 @@ const SkillsCardInnerContent = ({
   bullets,
 }: {
   categoryTitle: string;
+  tabletPortraitTitle?: string;
   align: "left" | "right";
   panelSettled: boolean;
   reduceMotion: boolean;
@@ -7237,10 +7272,17 @@ const SkillsCardInnerContent = ({
       <motion.div className="skills-card-column-header w-full shrink-0" variants={cardHeaderEntrance}>
         <motion.p
           variants={cardTitleEntrance}
-          className="skills-subcategory-column-title w-full text-center font-heading font-semibold uppercase !text-zinc-100"
+          className={`skills-subcategory-column-title w-full text-center font-heading font-semibold uppercase !text-zinc-100${
+            tabletPortraitTitle ? " skills-card-title--has-tablet-portrait" : ""
+          }`}
           title={categoryTitle}
         >
-          {categoryTitle}
+          <span className="skills-card-title-default">{categoryTitle}</span>
+          {tabletPortraitTitle ? (
+            <span className="skills-card-title-tablet-portrait" aria-hidden="true">
+              {tabletPortraitTitle}
+            </span>
+          ) : null}
         </motion.p>
         <motion.span
           className="skills-card-column-header__line block h-px w-full bg-white/[0.06]"
@@ -7429,7 +7471,7 @@ const SkillArsenal = ({
                   initial="hidden"
                   animate={panelSettled || rm ? "visible" : "hidden"}
                 >
-                  {CORE_SUBSKILLS_CATEGORIES.map(({ categoryTitle, items }) => (
+                  {CORE_SUBSKILLS_CATEGORIES.map(({ categoryTitle, tabletPortraitTitle, items }) => (
                     <motion.div
                       key={categoryTitle}
                       className="skills-row-card-slot transform-gpu"
@@ -7438,6 +7480,7 @@ const SkillArsenal = ({
                       <div className="skills-card-surface skills-card-surface--page h-full border border-white/[0.09]">
                         <SkillsCardInnerContent
                           categoryTitle={categoryTitle}
+                          tabletPortraitTitle={tabletPortraitTitle}
                           align="left"
                           panelSettled={panelSettled}
                           reduceMotion={rm}

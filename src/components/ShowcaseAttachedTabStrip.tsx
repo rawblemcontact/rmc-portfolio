@@ -132,7 +132,9 @@ export function ShowcaseAttachedTabStrip({
   }, [syncFit]);
 
   useEffect(() => {
-    const mq = window.matchMedia("(max-width: 639.98px)");
+    const mq = window.matchMedia(
+      "(max-width: 639.98px), (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait)",
+    );
     const apply = () => setIsMobileViewport(mq.matches);
     apply();
     if (typeof mq.addEventListener === "function") {
