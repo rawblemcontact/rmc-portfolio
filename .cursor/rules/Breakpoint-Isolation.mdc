@@ -1,0 +1,12 @@
+---
+alwaysApply: true
+---
+
+Desktop, tablet, and mobile are treated as separate protected experiences.
+
+When asked to modify one breakpoint:
+- Preserve the appearance and behavior of the others.
+- Reuse the existing breakpoint system.
+- Avoid changes to shared styles unless necessary.
+- If shared styles must be modified, ensure all non-target breakpoints render identically afterward.
+- Verify that no regressions occur outside the target breakpoint.
