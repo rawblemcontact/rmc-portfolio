@@ -4381,6 +4381,11 @@
   height: 0.9rem;
 }
 
+.illustration-lightbox-nav-btn {
+  top: 50vh;
+  transform: translateY(-50%);
+}
+
 .illustration-lightbox-close-btn {
   border-color: transparent;
   background-color: transparent;

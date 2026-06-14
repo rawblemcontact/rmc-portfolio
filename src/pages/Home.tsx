@@ -19,7 +19,10 @@ import React, {
   useCallback,
   useMemo,
   startTransition,
+  cloneElement,
+  isValidElement,
   type MutableRefObject,
+  type ReactElement,
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
@@ -37,6 +40,7 @@ import {
   Heart,
   ArrowRight,
   ArrowLeft,
+  ChevronUp,
   ExternalLink,
   Download,
   Menu,
@@ -983,6 +987,434 @@ const SectionHeader = ({
   return <div className={baseClass}>{content}</div>;
 };
 
+// --- HERO NAME REVEAL ---
+// ml5 "Signal & Noise" — center line sweeps in, splits to frame the stack,
+// five staggered rainbow layers (main-menu accents), name + tagline rainbow fade, lines fade.
+type HeroNameRevealStep = "hidden" | "sweep" | "reveal" | "done";
+
+type HeroNameRevealMetrics = {
+  centerLineTop: number;
+  topLineTop: number;
+  bottomLineTop: number;
+};
+
+const HERO_NAME_LINE_H = 1;
+const HERO_NAME_LINE_HALF = HERO_NAME_LINE_H / 2;
+const HERO_NAME_LINE_FADE_MS = 130;
+const HERO_NAME_LINE_FADE_EASE: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
+/** Inset above ROBBIE cap / below tagline (× display font size). */
+const HERO_NAME_FRAME_PAD_RATIO = 0.16;
+/** Horizontal bleed so sweep lines extend past the tagline copy. */
+const HERO_NAME_LINE_BLEED = "clamp(-1.25rem,-4vw,-2.5rem)";
+/** Phase 1 only — nudge name/lines down toward viewport center; settle position unchanged. */
+const HERO_PHASE1_REVEAL_Y = "calc(-33vh + 1.5rem)";
+/** Mobile — gentler Phase 1 lift so entry stays in the lower row without a harsh drop on settle. */
+const HERO_PHASE1_REVEAL_Y_MOBILE = "calc(-20vh + 1.25rem)";
+/** Mobile settle — same baseline as desktop; final offset lives in max-md translate. */
+const HERO_NAME_SETTLE_Y_MOBILE = 0;
+const HERO_NAME_SETTLE_DELAY_S = 0.08;
+const HERO_NAME_SETTLE_DUR_S = 0.95;
+/** Gap from name move-down start → video reveal start. */
+const HERO_VIDEO_REVEAL_START_GAP_S = 0.14;
+const HERO_VIDEO_REVEAL_DELAY_S = 0.22;
+const HERO_VIDEO_REVEAL_DELAY_MS = HERO_VIDEO_REVEAL_DELAY_S * 1000;
+const HERO_SETTLE_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
+/** scaleX reveal — no overshoot (y2 ≤ 1) so the card does not pop past full width at the end. */
+const HERO_VIDEO_SCALE_EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
+/** Content + glow overlap the last ~45% of the horizontal reveal instead of waiting on sliderAnimDone. */
+const HERO_VIDEO_CONTENT_FADE_DELAY_S = 0.52;
+const HERO_VIDEO_CONTENT_FADE_DUR_S = 0.43;
+const HERO_VIDEO_GLOW_DELAY_S = 0.28;
+const HERO_VIDEO_GLOW_DUR_S = 0.72;
+const HERO_VIDEO_GLOW_PEAK = 0.55;
+/** Hero video card width — matches name line span (58rem column + line bleed). */
+const HERO_VIDEO_CARD_WIDTH_CLASS =
+  "max-[639px]:w-full max-[639px]:max-w-full w-[calc(min(100%,58rem)-0.5rem+2*max(1.25rem,min(4vw,2.5rem)))] sm:w-[calc(min(100%,58rem)-1rem+2*max(1.25rem,min(4vw,2.5rem)))]";
+const HERO_NAME_SWEEP_MS = 700;
+const HERO_NAME_SPLIT_MS = 600;
+/** Rainbow layers — main-menu section accents (NAV order), staggered outside white frame. */
+const HERO_NAME_RAINBOW_MENU_IDS = ["profile", "projects", "experience", "skills", "social"] as const;
+const HERO_NAME_RAINBOW_STAGGER_MS = 55;
+const HERO_NAME_RAINBOW_LAYERS = HERO_NAME_RAINBOW_MENU_IDS.map((id, index) => ({
+  id,
+  color: SECTION_ACCENT_COLOR[id],
+  offsetPx: index + 1,
+  delayMs: HERO_NAME_RAINBOW_STAGGER_MS * (index + 1),
+}));
+const HERO_NAME_LAST_RAINBOW_DELAY_MS =
+  HERO_NAME_RAINBOW_STAGGER_MS * HERO_NAME_RAINBOW_MENU_IDS.length;
+/** Rainbow flash — spans split; last layer tail ends with line fade-out. */
+const HERO_NAME_TEXT_RAINBOW_LAYER_MS =
+  HERO_NAME_SPLIT_MS + HERO_NAME_LINE_FADE_MS;
+/** White resolve — starts when line fade begins, ends with last staggered line. */
+const HERO_NAME_TEXT_WHITE_DELAY_MS = HERO_NAME_SPLIT_MS;
+const HERO_NAME_TEXT_WHITE_LAYER_MS =
+  HERO_NAME_LAST_RAINBOW_DELAY_MS + HERO_NAME_LINE_FADE_MS;
+/** Entrance slide — lands as text + line fade-out complete. */
+const HERO_NAME_TEXT_ENTRANCE_MS =
+  HERO_NAME_TEXT_WHITE_DELAY_MS + HERO_NAME_TEXT_WHITE_LAYER_MS;
+const HERO_NAME_EASE_OUT_EXPO: [number, number, number, number] = [0.16, 1, 0.3, 1];
+/** Softer crossfade between rainbow layers and into white. */
+const HERO_NAME_TEXT_BLEND_EASE: [number, number, number, number] = [0.38, 0.02, 0.16, 1];
+const HERO_NAME_TEXT_RAINBOW_BLEND_OPACITY = [0, 0.38, 0.72, 0.96, 0.82, 0.52, 0.24, 0.08, 0] as const;
+const HERO_NAME_TEXT_RAINBOW_BLEND_TIMES = [0, 0.12, 0.26, 0.42, 0.58, 0.74, 0.86, 0.94, 1] as const;
+const HERO_NAME_TEXT_WHITE_BLEND_OPACITY = [0, 0.1, 0.32, 0.58, 0.78, 0.9, 0.96, 0.99, 1] as const;
+const HERO_NAME_TEXT_WHITE_BLEND_TIMES = [0, 0.14, 0.3, 0.48, 0.66, 0.8, 0.9, 0.96, 1] as const;
+const HERO_NAME_TEXT_MASTER_FADE_MS = 80;
+/** Entrance slide offset (reveal step) — tagline from below. */
+const HERO_TAGLINE_ENTRANCE_SLIDE_Y = "0.36em";
+
+const HeroNameRainbowFade = ({
+  text,
+  step,
+  reduceMotion,
+  block = false,
+}: {
+  text: string;
+  step: HeroNameRevealStep;
+  reduceMotion: boolean | null;
+  block?: boolean;
+}) => {
+  if (reduceMotion) {
+    return <>{text}</>;
+  }
+
+  const isVisible = step === "reveal" || step === "done";
+  const rainbowLayerDurS = HERO_NAME_TEXT_RAINBOW_LAYER_MS / 1000;
+  const whiteLayerDurS = HERO_NAME_TEXT_WHITE_LAYER_MS / 1000;
+  const layerClass = block
+    ? "pointer-events-none absolute inset-0 block"
+    : "pointer-events-none absolute inset-0 inline-block whitespace-nowrap";
+  const spacerClass = block
+    ? "invisible block"
+    : "invisible inline-block whitespace-nowrap";
+
+  const rainbowLayers = (
+    <>
+      <span className={spacerClass} aria-hidden>
+        {text}
+      </span>
+      {HERO_NAME_RAINBOW_MENU_IDS.map((id, index) => (
+        <motion.span
+          key={id}
+          aria-hidden
+          className={layerClass}
+          style={{ color: SECTION_ACCENT_COLOR[id] }}
+          initial={false}
+          animate={{ opacity: !isVisible ? 0 : [...HERO_NAME_TEXT_RAINBOW_BLEND_OPACITY] }}
+          transition={{
+            duration: rainbowLayerDurS,
+            delay: isVisible ? (HERO_NAME_RAINBOW_STAGGER_MS * (index + 1)) / 1000 : 0,
+            times: [...HERO_NAME_TEXT_RAINBOW_BLEND_TIMES],
+            ease: HERO_NAME_TEXT_BLEND_EASE,
+          }}
+        >
+          {text}
+        </motion.span>
+      ))}
+      <motion.span
+        className={layerClass}
+        initial={false}
+        animate={{ opacity: !isVisible ? 0 : [...HERO_NAME_TEXT_WHITE_BLEND_OPACITY] }}
+        transition={{
+          duration: whiteLayerDurS,
+          delay: isVisible ? HERO_NAME_TEXT_WHITE_DELAY_MS / 1000 : 0,
+          times: [...HERO_NAME_TEXT_WHITE_BLEND_TIMES],
+          ease: HERO_NAME_TEXT_BLEND_EASE,
+        }}
+      >
+        {text}
+      </motion.span>
+    </>
+  );
+
+  if (block) {
+    return <span className="relative block">{rainbowLayers}</span>;
+  }
+
+  return (
+    <motion.span
+      className="relative inline-block"
+      initial={false}
+      animate={{ opacity: isVisible ? 1 : 0 }}
+      transition={{
+        duration: isVisible ? HERO_NAME_TEXT_MASTER_FADE_MS / 1000 : 0,
+        delay: 0,
+        ease: HERO_NAME_TEXT_BLEND_EASE,
+      }}
+    >
+      {rainbowLayers}
+    </motion.span>
+  );
+};
+
+const HeroNameRevealLinePair = ({
+  color,
+  centerLineTop,
+  topLineTop,
+  bottomLineTop,
+  linesVisible,
+  linesSplit,
+  step,
+  delayMs = 0,
+  offsetPx = 0,
+  easeInOutExpo,
+  easeOutExpo,
+}: {
+  color: string;
+  centerLineTop: number;
+  topLineTop: number;
+  bottomLineTop: number;
+  linesVisible: boolean;
+  linesSplit: boolean;
+  step: HeroNameRevealStep;
+  delayMs?: number;
+  offsetPx?: number;
+  easeInOutExpo: [number, number, number, number];
+  easeOutExpo: [number, number, number, number];
+}) => {
+  const delayS = delayMs / 1000;
+  const isFadingOut = step === "done";
+  const line1Top = linesSplit ? topLineTop - offsetPx : centerLineTop;
+  const line2Top = linesSplit ? bottomLineTop + offsetPx : centerLineTop;
+  const sharedStyle = {
+    height: HERO_NAME_LINE_H,
+    transformOrigin: "50% 50%",
+    left: HERO_NAME_LINE_BLEED,
+    right: HERO_NAME_LINE_BLEED,
+    backgroundColor: color,
+  } as const;
+  const sharedTransition = {
+    top: {
+      duration: HERO_NAME_SPLIT_MS / 1000,
+      ease: easeOutExpo,
+      delay: isFadingOut ? 0 : delayS,
+    },
+    scaleX: {
+      duration: isFadingOut ? 0 : HERO_NAME_SWEEP_MS / 1000,
+      ease: easeInOutExpo,
+      delay: isFadingOut ? 0 : delayS,
+    },
+    opacity: {
+      duration: isFadingOut
+        ? HERO_NAME_LINE_FADE_MS / 1000
+        : step === "sweep"
+          ? HERO_NAME_SWEEP_MS / 1000
+          : 0,
+      ease: isFadingOut ? HERO_NAME_LINE_FADE_EASE : easeOutExpo,
+      delay: step === "reveal" ? 0 : delayS,
+    },
+  };
+
+  const lineScale = step === "hidden" ? 0 : 1;
+  const lineOpacity = step === "done" ? 0 : step === "hidden" ? 0 : 1;
+
+  return (
+    <>
+      <motion.span
+        aria-hidden
+        className="pointer-events-none absolute z-[3]"
+        style={sharedStyle}
+        initial={false}
+        animate={{
+          top: line1Top,
+          scaleX: lineScale,
+          opacity: lineOpacity,
+        }}
+        transition={sharedTransition}
+      />
+      <motion.span
+        aria-hidden
+        className="pointer-events-none absolute z-[3]"
+        style={sharedStyle}
+        initial={false}
+        animate={{
+          top: line2Top,
+          scaleX: lineScale,
+          opacity: lineOpacity,
+        }}
+        transition={sharedTransition}
+      />
+    </>
+  );
+};
+
+const HeroNameReveal = ({
+  heroReady,
+  reduceMotion,
+  button,
+}: {
+  heroReady: boolean;
+  reduceMotion: boolean | null;
+  button: React.ReactNode;
+}) => {
+  const containerRef = useRef<HTMLSpanElement>(null);
+  const robbieRef = useRef<HTMLSpanElement>(null);
+  const mclaughlinRef = useRef<HTMLSpanElement>(null);
+  const taglineRef = useRef<HTMLParagraphElement>(null);
+  const [step, setStep] = useState<HeroNameRevealStep>("hidden");
+  const [metrics, setMetrics] = useState<HeroNameRevealMetrics>({
+    centerLineTop: 0,
+    topLineTop: 0,
+    bottomLineTop: 0,
+  });
+
+  const easeInOutExpo: [number, number, number, number] = [0.87, 0, 0.13, 1];
+  const easeOutExpo: [number, number, number, number] = [0.16, 1, 0.3, 1];
+
+  const measureMetrics = useCallback(() => {
+    const container = containerRef.current;
+    const robbie = robbieRef.current;
+    const mclaughlin = mclaughlinRef.current;
+    const tagline = taglineRef.current;
+    if (!container || !robbie || !mclaughlin || !tagline) return null;
+
+    const fontSize = Number.parseFloat(getComputedStyle(robbie).fontSize) || 28;
+    const framePad = fontSize * HERO_NAME_FRAME_PAD_RATIO;
+    const containerTop = container.getBoundingClientRect().top;
+    const robbieRect = robbie.getBoundingClientRect();
+    const taglineRect = tagline.getBoundingClientRect();
+
+    return {
+      centerLineTop:
+        (robbieRect.top + taglineRect.bottom) / 2 - containerTop - HERO_NAME_LINE_HALF,
+      topLineTop: robbieRect.top - containerTop - HERO_NAME_LINE_HALF - framePad,
+      bottomLineTop: taglineRect.bottom - containerTop - HERO_NAME_LINE_HALF + framePad,
+    } satisfies HeroNameRevealMetrics;
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!heroReady) {
+      setStep("hidden");
+      return;
+    }
+
+    const nextMetrics = measureMetrics();
+    if (!nextMetrics) return;
+    setMetrics(nextMetrics);
+
+    if (reduceMotion) {
+      setStep("done");
+      return;
+    }
+
+    setStep("sweep");
+    const revealTimer = window.setTimeout(() => {
+      const refreshed = measureMetrics();
+      if (refreshed) setMetrics(refreshed);
+      setStep("reveal");
+    }, HERO_NAME_SWEEP_MS);
+    const fadeLinesTimer = window.setTimeout(
+      () => setStep("done"),
+      HERO_NAME_SWEEP_MS + HERO_NAME_SPLIT_MS,
+    );
+
+    return () => {
+      window.clearTimeout(revealTimer);
+      window.clearTimeout(fadeLinesTimer);
+    };
+  }, [heroReady, reduceMotion, measureMetrics]);
+
+  useEffect(() => {
+    if (!heroReady) return;
+
+    const handleResize = () => {
+      const nextMetrics = measureMetrics();
+      if (nextMetrics) setMetrics(nextMetrics);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [heroReady, measureMetrics]);
+
+  const linesVisible = step === "sweep" || step === "reveal";
+  const linesSplit = step === "reveal" || step === "done";
+  const textEntranceSettled = step === "reveal" || step === "done";
+  const textEntranceTransition = {
+    duration: reduceMotion ? 0 : HERO_NAME_TEXT_ENTRANCE_MS / 1000,
+    ease: HERO_NAME_TEXT_BLEND_EASE,
+  };
+
+  return (
+    <div className="relative m-0 w-full max-w-full overflow-visible font-display [font-kerning:none]">
+      <span
+        ref={containerRef}
+        className="relative block w-full overflow-visible"
+      >
+        <HeroNameRevealLinePair
+          color="#ffffff"
+          centerLineTop={metrics.centerLineTop}
+          topLineTop={metrics.topLineTop}
+          bottomLineTop={metrics.bottomLineTop}
+          linesVisible={linesVisible}
+          linesSplit={linesSplit}
+          step={step}
+          easeInOutExpo={easeInOutExpo}
+          easeOutExpo={easeOutExpo}
+        />
+        {HERO_NAME_RAINBOW_LAYERS.map((layer) => (
+          <HeroNameRevealLinePair
+            key={layer.id}
+            color={layer.color}
+            centerLineTop={metrics.centerLineTop}
+            topLineTop={metrics.topLineTop}
+            bottomLineTop={metrics.bottomLineTop}
+            linesVisible={linesVisible}
+            linesSplit={linesSplit}
+            step={step}
+            delayMs={layer.delayMs}
+            offsetPx={layer.offsetPx}
+            easeInOutExpo={easeInOutExpo}
+            easeOutExpo={easeOutExpo}
+          />
+        ))}
+        <h1 className="relative z-[1] m-0 max-w-full font-display [font-kerning:none] max-md:flex max-md:flex-wrap max-md:items-baseline max-md:justify-center max-md:gap-x-[0.35em] max-md:text-center">
+        <span
+          ref={robbieRef}
+          className="relative block text-[clamp(2.28rem,8.85vw,5.95rem)] max-[400px]:text-[clamp(2rem,8.1vw,5.95rem)] font-black uppercase leading-[0.8] tracking-[-0.036em] text-mono-0 max-md:inline-block max-md:w-auto sm:leading-[0.78]"
+        >
+          <HeroNameRainbowFade text="ROBBIE" step={step} reduceMotion={reduceMotion} />
+        </span>
+        <div className="relative z-[1] mt-[0.04em] flex w-full min-w-0 max-w-full items-end justify-between gap-1.5 max-md:contents max-md:mt-0 max-[400px]:gap-1 sm:gap-5">
+          <span
+            ref={mclaughlinRef}
+            className="min-w-0 flex-1 text-[clamp(2.28rem,8.85vw,5.95rem)] max-[400px]:text-[clamp(2rem,8.1vw,5.95rem)] font-black uppercase leading-[0.8] tracking-[-0.036em] text-mono-0 max-md:inline-block max-md:w-auto max-md:flex-none sm:leading-[0.78]"
+          >
+            <HeroNameRainbowFade text="MCLAUGHLIN" step={step} reduceMotion={reduceMotion} />
+          </span>
+          <div className="shrink-0 self-end max-md:hidden">{button}</div>
+        </div>
+        </h1>
+        <p
+          ref={taglineRef}
+          className="relative z-[1] m-0 mt-2.5 max-w-[min(100%,40rem)] max-[639px]:box-border max-[639px]:max-w-full max-[400px]:text-[0.74rem] pl-[0.2rem] pr-1 font-display text-[clamp(0.8rem,2.25vw,0.92rem)] font-medium uppercase leading-snug tracking-eyebrow-tight text-mono-2/88 max-md:mx-auto max-md:pl-0 max-md:pr-0 max-md:text-center sm:mt-3 sm:max-w-[46rem] sm:pl-[0.32rem] sm:pr-0 sm:text-[clamp(0.8rem,2.25vw,0.92rem)] md:pl-[0.4rem]"
+        >
+          <motion.span
+            className="block"
+            initial={false}
+            animate={{ y: textEntranceSettled ? 0 : HERO_TAGLINE_ENTRANCE_SLIDE_Y }}
+            transition={textEntranceTransition}
+          >
+            <HeroNameRainbowFade
+              text="Writer / digital media / narrative systems"
+              step={step}
+              reduceMotion={reduceMotion}
+              block
+            />
+          </motion.span>
+        </p>
+        {isValidElement(button) && (
+          <div className="hidden max-md:flex max-md:justify-center max-md:mt-3 max-md:w-full">
+            {cloneElement(button as ReactElement<{ className?: string }>, {
+              className: [button.props.className, "max-md:self-center"].filter(Boolean).join(" "),
+            })}
+          </div>
+        )}
+      </span>
+    </div>
+  );
+};
+
 // --- HERO SECTION ---
 const Hero = ({
   onStart,
@@ -1023,6 +1455,7 @@ const Hero = ({
   const [heroMediaReady, setHeroMediaReady] = useState(false);
   const [heroRevealDelayDone, setHeroRevealDelayDone] = useState(false);
   const [sliderPhaseActive, setSliderPhaseActive] = useState(false);
+  const [videoRevealActive, setVideoRevealActive] = useState(false);
   const [sliderAnimDone, setSliderAnimDone] = useState(false);
   const [heroSlideIndex, setHeroSlideIndex] = useState(initialHeroSlideIndex);
   const [heroSlideDirection, setHeroSlideDirection] = useState<1 | -1>(1);
@@ -1037,7 +1470,16 @@ const Hero = ({
   const [heroZoomOverrides, setHeroZoomOverrides] = useState<Record<string, number>>({});
   const [bakeCopied, setBakeCopied] = useState(false);
   const [defaultsApplied, setDefaultsApplied] = useState(false);
+  const [isMobileHeroLayout, setIsMobileHeroLayout] = useState(false);
   const heroTouchStartYRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const update = () => setIsMobileHeroLayout(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
 
   useEffect(() => {
     try {
@@ -1227,18 +1669,34 @@ const Hero = ({
   useEffect(() => {
     if (!(fontsReady && heroMediaReady && heroRevealDelayDone)) {
       setSliderPhaseActive(false);
+      setVideoRevealActive(false);
       setSliderAnimDone(false);
       return;
     }
     if (reduceMotion) {
       setSliderPhaseActive(true);
+      setVideoRevealActive(true);
       setSliderAnimDone(true);
       return;
     }
-    // Phase 1 text: last element completes at ~0.6s. Hold 0.5s ? slider phase at 1.1s.
-    const t = window.setTimeout(() => setSliderPhaseActive(true), 1100);
+    // Phase 1 name reveal: ~1.6s (ml5 line sweep + split + text). Hold briefly → slider phase.
+    const t = window.setTimeout(() => setSliderPhaseActive(true), 1700);
     return () => window.clearTimeout(t);
   }, [fontsReady, heroMediaReady, heroRevealDelayDone, reduceMotion]);
+
+  // Mount video card when horizontal reveal should begin (synced with name settle).
+  useEffect(() => {
+    if (!sliderPhaseActive) {
+      setVideoRevealActive(false);
+      return;
+    }
+    if (reduceMotion) {
+      setVideoRevealActive(true);
+      return;
+    }
+    const t = window.setTimeout(() => setVideoRevealActive(true), HERO_VIDEO_REVEAL_DELAY_MS);
+    return () => window.clearTimeout(t);
+  }, [sliderPhaseActive, reduceMotion]);
 
   const onStartClick = () => {
     onStart();
@@ -1246,6 +1704,8 @@ const Hero = ({
 
   const heroGridDriftDelay = useGridDriftAnimationDelay();
   const heroReady = fontsReady && heroMediaReady && heroRevealDelayDone;
+  const heroPhase1RevealY = isMobileHeroLayout ? HERO_PHASE1_REVEAL_Y_MOBILE : HERO_PHASE1_REVEAL_Y;
+  const heroNameSettleY = isMobileHeroLayout ? HERO_NAME_SETTLE_Y_MOBILE : 0;
   const currentHeroSlide = heroSlides[heroSlideIndex];
   const currentFocal = heroFocalOverrides[currentHeroSlide.id] ?? heroFocalLocked[currentHeroSlide.id] ?? parseFocalPoint(currentHeroSlide.focalPoint);
   const currentZoom = heroZoomOverrides[currentHeroSlide.id] ?? heroZoomLocked[currentHeroSlide.id] ?? currentHeroSlide.zoom ?? 1;
@@ -1308,28 +1768,44 @@ const Hero = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.12, ease: [0.22, 1, 0.36, 1] }}
-        className="relative z-[5] mx-auto grid h-full w-full max-w-[1680px] grid-rows-[minmax(0,2fr)_minmax(0,1fr)] px-4 pt-[max(1rem,env(safe-area-inset-top,0px))] pb-4 md:max-lg:grid-rows-[minmax(0,1.72fr)_minmax(0,1.28fr)] md:px-6 md:pt-[max(1.5rem,env(safe-area-inset-top,0px))] md:pb-5 md:max-lg:px-5 md:max-lg:pt-3 md:max-lg:pb-[max(1.25rem,env(safe-area-inset-bottom,0px))] lg:px-8 lg:pt-[max(2rem,env(safe-area-inset-top,0px))] lg:pb-6"
+        className="relative z-[5] mx-auto grid h-full w-full max-w-[1680px] grid-rows-[minmax(0,1.55fr)_minmax(0,1fr)] px-4 pt-[max(1rem,env(safe-area-inset-top,0px))] pb-4 max-lg:grid-rows-[minmax(0,1.5fr)_minmax(0,1fr)] md:max-lg:grid-rows-[minmax(0,1.38fr)_minmax(0,1fr)] md:px-6 md:pt-[max(1.5rem,env(safe-area-inset-top,0px))] md:pb-5 md:max-lg:px-5 md:max-lg:pt-3 md:max-lg:pb-[max(1.25rem,env(safe-area-inset-bottom,0px))] lg:grid-rows-[minmax(0,2fr)_minmax(0,1fr)] lg:px-8 lg:pt-[max(2rem,env(safe-area-inset-top,0px))] lg:pb-6"
       >
-        <div className="relative flex min-h-0 items-start justify-center">
-          <div className="absolute inset-x-0 top-0 w-full max-w-full">
-          {sliderPhaseActive && (
+        <div className="relative flex min-h-0 items-center justify-center max-lg:items-end max-lg:pb-2 md:max-lg:pb-3">
+          <div className="absolute inset-0 flex w-full items-center justify-center max-lg:items-end max-lg:pb-2 md:max-lg:translate-y-8 md:max-lg:pb-1 max-[400px]:px-3 sm:px-0">
+          {videoRevealActive && (
           <motion.div
-            className="overflow-hidden rounded-[11px] sm:rounded-xl"
-            initial={{ scaleY: 0.022 }}
-            animate={{ scaleY: 1 }}
-            transition={reduceMotion ? { duration: 0 } : { duration: 0.95, ease: [0.16, 1, 0.3, 1], delay: 0.08 }}
+            className={`relative mx-auto max-[639px]:overflow-hidden sm:overflow-visible rounded-[11px] sm:rounded-xl ${HERO_VIDEO_CARD_WIDTH_CLASS}`}
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={
+              reduceMotion
+                ? { duration: 0 }
+                : { duration: HERO_NAME_SETTLE_DUR_S, ease: HERO_VIDEO_SCALE_EASE }
+            }
             onAnimationComplete={() => setSliderAnimDone(true)}
-            style={{ transformOrigin: "center center", willChange: "transform" }}
+            style={{ transformOrigin: "center center" }}
           >
-          <motion.div
-            className="relative mx-auto w-full max-w-full h-[clamp(200px,min(52vh,calc(100svh-11rem-max(1rem,env(safe-area-inset-top,0px)))),620px)] md:max-lg:h-[clamp(176px,min(36vh,calc(100svh-16.5rem-max(1rem,env(safe-area-inset-top,0px)))),460px)] lg:h-[clamp(240px,min(54vh,calc(100svh-11.5rem-max(1.5rem,env(safe-area-inset-top,0px)))),680px)] xl:h-[clamp(260px,min(56vh,calc(100svh-12rem-max(2rem,env(safe-area-inset-top,0px)))),760px)] overflow-hidden rounded-[11px] sm:rounded-xl border border-white/[0.09] bg-black"
-            animate={{
-              boxShadow: sliderAnimDone
-                ? "0 36px 88px rgba(0,0,0,0.6), inset 0 -40px 70px rgba(0,0,0,0.52), 0 0 28px 4px rgba(255,255,255,0.04)"
-                : "0 36px 88px rgba(0,0,0,0.6), inset 0 -40px 70px rgba(0,0,0,0.52), 0 0 28px 4px rgba(255,255,255,0.02)",
+          <motion.span
+            aria-hidden
+            className="pointer-events-none absolute -inset-4 max-sm:-inset-3 sm:-inset-7 -z-[1] rounded-[16px] sm:rounded-[20px] blur-3xl"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: HERO_VIDEO_GLOW_PEAK }}
+            transition={
+              reduceMotion
+                ? { duration: 0 }
+                : { delay: HERO_VIDEO_GLOW_DELAY_S, duration: HERO_VIDEO_GLOW_DUR_S, ease: HERO_VIDEO_SCALE_EASE }
+            }
+            style={{
+              background:
+                "radial-gradient(ellipse 90% 74% at 50% 44%, rgba(255,255,255,0.11) 0%, rgba(255,255,255,0.035) 46%, transparent 72%)",
             }}
-            initial={{ boxShadow: "0 36px 88px rgba(0,0,0,0.6), inset 0 -40px 70px rgba(0,0,0,0.52), 0 0 28px 4px rgba(255,255,255,0.02)" }}
-            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          />
+          <motion.div
+            className="relative z-[1] mx-auto w-full h-[clamp(200px,min(52vh,calc(100svh-11rem-max(1rem,env(safe-area-inset-top,0px)))),620px)] md:max-lg:h-[clamp(200px,min(44vh,calc(100svh-14rem-max(1rem,env(safe-area-inset-top,0px)))),500px)] lg:h-[clamp(240px,min(54vh,calc(100svh-11.5rem-max(1.5rem,env(safe-area-inset-top,0px)))),680px)] xl:h-[clamp(260px,min(56vh,calc(100svh-12rem-max(2rem,env(safe-area-inset-top,0px)))),760px)] overflow-hidden rounded-[11px] sm:rounded-xl border border-white/[0.09] bg-black"
+            style={{
+              boxShadow:
+                "0 36px 88px rgba(0,0,0,0.6), inset 0 -40px 70px rgba(0,0,0,0.52), 0 0 28px 4px rgba(255,255,255,0.04)",
+            }}
             onMouseEnter={() => setHeroSlidePaused(true)}
             onMouseLeave={() => setHeroSlidePaused(false)}
             onTouchStart={(e) => {
@@ -1349,8 +1825,16 @@ const Hero = ({
 
             <motion.div
               initial={{ opacity: 0 }}
-              animate={{ opacity: sliderAnimDone ? 1 : 0 }}
-              transition={reduceMotion ? { duration: 0 } : { duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+              animate={{ opacity: 1 }}
+              transition={
+                reduceMotion
+                  ? { duration: 0 }
+                  : {
+                      delay: HERO_VIDEO_CONTENT_FADE_DELAY_S,
+                      duration: HERO_VIDEO_CONTENT_FADE_DUR_S,
+                      ease: HERO_VIDEO_SCALE_EASE,
+                    }
+              }
               className="absolute inset-0"
             >
             <AnimatePresence initial={false} custom={heroSlideDirection}>
@@ -1411,59 +1895,50 @@ const Hero = ({
           )}
           </div>
         </div>
-        <div className="relative z-40 flex min-h-0 flex-col items-center justify-center overflow-visible pt-0">
+        <div className="relative z-40 flex min-h-0 flex-col items-center justify-center overflow-visible pt-0 max-lg:justify-start max-lg:pt-2 max-md:justify-center max-md:pt-0 md:max-lg:justify-center md:max-lg:pt-0">
           {/* Y-transform wrapper: starts above final position during Phase 1,
               settles when sliderPhaseActive fires with slider open */}
           <motion.div
-            className="mx-auto flex h-full w-full max-w-[1220px] flex-col items-center justify-center gap-0 px-1 py-2 sm:px-2 sm:py-3 [@media(min-width:744px)_and_(max-width:1366px)]:pb-5"
-            initial={{ y: "-33vh" }}
-            animate={{ y: sliderPhaseActive ? 0 : "-33vh" }}
-            transition={reduceMotion ? { duration: 0 } : { duration: 0.95, ease: [0.16, 1, 0.3, 1], delay: 0.08 }}
+            className="mx-auto flex h-full w-full max-w-[1220px] flex-col items-center justify-center gap-0 px-1 py-2 max-lg:justify-start max-lg:py-1 max-md:justify-center max-md:py-2 sm:px-2 sm:py-2 md:max-lg:justify-center md:max-lg:py-2 lg:py-3"
+            initial={{ y: heroPhase1RevealY }}
+            animate={{ y: sliderPhaseActive ? heroNameSettleY : heroPhase1RevealY }}
+            transition={
+              reduceMotion
+                ? { duration: 0 }
+                : { duration: HERO_NAME_SETTLE_DUR_S, ease: HERO_SETTLE_EASE, delay: HERO_NAME_SETTLE_DELAY_S }
+            }
           >
             <div
               ref={heroInViewRef}
-              className="-translate-y-3 mx-auto flex w-full max-w-[min(100%,58rem)] flex-col px-1 sm:-translate-y-4 sm:px-2 [@media(min-width:744px)_and_(max-width:1366px)]:-translate-y-6"
+              className="-translate-y-3 mx-auto flex w-full min-w-0 max-w-[min(100%,58rem)] flex-col px-1 max-md:-translate-y-[94px] max-[639px]:px-0.5 sm:px-2 md:max-lg:translate-y-3 lg:[@media(min-width:744px)_and_(max-width:1366px)]:-translate-y-6"
             >
-              <div className="w-full min-w-0 text-left">
-                <motion.div
-                  initial={{ opacity: 0, y: 14 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.55, delay: 0.06, ease: EASE.out }}
-                >
-                  <h1 className="m-0 max-w-full font-display [font-kerning:none]">
-                    <span className="block text-[clamp(2.28rem,8.85vw,5.95rem)] font-black uppercase leading-[0.8] tracking-[-0.036em] text-mono-0 sm:leading-[0.78]">
-                      ROBBIE
-                    </span>
-                    <div className="mt-[0.02em] flex min-w-0 items-end justify-between gap-3 sm:gap-5">
-                      <span className="min-w-0 flex-1 text-[clamp(2.28rem,8.85vw,5.95rem)] font-black uppercase leading-[0.8] tracking-[-0.036em] text-mono-0 sm:leading-[0.78]">
-                        MCLAUGHLIN
-                      </span>
-                      <motion.div
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={sliderAnimDone ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
-                        transition={{ duration: 0.42, delay: sliderAnimDone ? 0.15 : 0, ease: EASE.out }}
-                        className="shrink-0 self-end"
+              <div className="w-full min-w-0 text-left max-md:text-center">
+                <HeroNameReveal
+                  heroReady={heroReady}
+                  reduceMotion={reduceMotion}
+                  button={
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={sliderAnimDone ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
+                      transition={{ duration: 0.42, delay: sliderAnimDone ? 0.15 : 0, ease: EASE.out }}
+                      className="shrink-0 self-end"
+                    >
+                      <motion.button
+                        type="button"
+                        onClick={onStartClick}
+                        className="playstore-button playstore-button--primary box-border !min-h-0 h-[calc(clamp(2.28rem,8.85vw,5.95rem)*0.78)] max-h-[4.85rem] items-center px-3 !py-0 max-[639px]:max-w-none max-[639px]:px-2.5 sm:px-5 md:px-8 [&_.texts]:text-[clamp(0.76rem,1.45vw,0.92rem)] [&_.texts]:tracking-[0.07em] max-[639px]:[&_.texts]:gap-1 max-[639px]:[&_.texts]:text-[0.68rem] max-[639px]:[&_.texts]:tracking-[0.04em] sm:[&_.texts]:text-[clamp(0.84rem,1.7vw,1rem)] sm:[&_.texts]:tracking-[0.1em] md:[&_.texts]:text-[clamp(0.9rem,1.55vw,1.08rem)]"
+                        whileHover={{ y: -1 }}
+                        whileTap={TAP}
+                        transition={SPRING.ui}
                       >
-                        <motion.button
-                          type="button"
-                          onClick={onStartClick}
-                          className="playstore-button playstore-button--primary box-border !min-h-0 h-[calc(clamp(2.28rem,8.85vw,5.95rem)*0.78)] max-h-[4.85rem] items-center px-5 !py-0 sm:px-7 md:px-8 [&_.texts]:text-[clamp(0.84rem,1.7vw,1rem)] [&_.texts]:tracking-[0.1em] sm:[&_.texts]:text-[clamp(0.9rem,1.55vw,1.08rem)]"
-                          whileHover={{ y: -1 }}
-                          whileTap={TAP}
-                          transition={SPRING.ui}
-                        >
-                          <span className="texts inline-flex items-center gap-2">
-                            PORTFOLIO
-                            <ArrowRight className="h-[1.05em] w-[1.05em] max-h-[1.25rem] max-w-[1.25rem] shrink-0 sm:max-h-[1.35rem] sm:max-w-[1.35rem]" aria-hidden />
-                          </span>
-                        </motion.button>
-                      </motion.div>
-                    </div>
-                  </h1>
-                  <p className="m-0 mt-2.5 max-w-[min(100%,40rem)] pl-[0.2rem] font-display text-[clamp(0.8rem,2.25vw,0.92rem)] font-medium uppercase leading-snug tracking-eyebrow-tight text-mono-2/88 sm:mt-3 sm:max-w-[46rem] sm:pl-[0.32rem] md:pl-[0.4rem]">
-                    Writer / digital media / narrative systems
-                  </p>
-                </motion.div>
+                        <span className="texts inline-flex items-center gap-2 max-[639px]:gap-1">
+                          PORTFOLIO
+                          <ArrowRight className="h-[1.05em] w-[1.05em] max-h-[1.25rem] max-w-[1.25rem] shrink-0 max-[639px]:h-[0.9em] max-[639px]:w-[0.9em] sm:max-h-[1.35rem] sm:max-w-[1.35rem]" aria-hidden />
+                        </span>
+                      </motion.button>
+                    </motion.div>
+                  }
+                />
               </div>
             </div>
           </motion.div>
@@ -2311,73 +2786,102 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
       {
         id: "illustrations-01",
         src: "/illustrations/illustrations-charger.png",
-        alt: "Charger — Slaywire character concept art",
+        alt: "CHARGER - SLAYWIRE Character Concept Art (2023)",
+        caption: "CHARGER - SLAYWIRE Character Concept Art (2023)",
+        artistStatement: "Digital-ink style illustration for the lead protagonist of SLAYWIRE.\n\nTools: Procreate and Photoshop.",
         focalPoint: "50% 42%",
       },
       {
         id: "illustrations-02",
         src: "/illustrations/illustrations-fragment.png",
-        alt: "Fragment — Slaywire character concept art",
+        alt: "FRAGMENT - SLAYWIRE Character Concept Art (2023)",
+        caption: "FRAGMENT - SLAYWIRE Character Concept Art (2023)",
+        artistStatement: "Digital-ink style illustration for the main antagonist of SLAYWIRE.\n\nTools: Procreate and Photoshop.",
         focalPoint: "50% 45%",
       },
       {
         id: "illustrations-03",
         src: "/illustrations/illustrations-wisely.png",
-        alt: "Wisely of the Emotus Automata — Slaywire character concept art",
+        alt: "WISELY - SLAYWIRE Character Concept Art (2023)",
+        caption: "WISELY - SLAYWIRE Character Concept Art (2023)",
+        artistStatement: "Digital-ink style illustration for a key character in SLAYWIRE.\n\nTools: Procreate and Photoshop.",
         focalPoint: "50% 42%",
       },
       {
         id: "illustrations-04",
         src: "/illustrations/illustrations-star-fox.png",
-        alt: "Star Fox illustration",
+        alt: "SPACE ANIMAL - Illustration (2023)",
+        caption: "SPACE ANIMAL - Illustration (2023)",
+        artistStatement: "Digital Ink style homage to Star Fox (1993).\n\nThis is a noncommerical and transformative project. All trademarks and copyrights belong to their respective owners.\n\nTools: Clip Studio Paint.",
         focalPoint: "50% 50%",
       },
       {
         id: "illustrations-05",
         src: "/illustrations/illustrations-strong-as-duck.png",
-        alt: "Strong as Duck illustration",
+        alt: "STRONG AS DUCK! - Illustration (2025)",
+        caption: "STRONG AS DUCK! - Illustration (2025)",
+        artistStatement: "Designed for print, featured in a RAWBLEM merch release.\n\nUses digital ink and flat color marker.\n\nTools: Clip Studio Paint",
         focalPoint: "50% 38%",
       },
       {
         id: "illustrations-06",
         src: "/illustrations/illustrations-slaywire.png",
-        alt: "Slaywire promotional illustration",
+        alt: "SLAYWIRE - Promotional Illustration (2022)",
+        caption: "SLAYWIRE - Promotional Illustration (2022)",
+        artistStatement: "Digital-ink and texture brush artwork featuring DE, a key character in SLAYWIRE.\n\nTools: Procreate and Photoshop",
         focalPoint: "50% 45%",
       },
       {
         id: "illustrations-07",
         src: "/illustrations/illustrations-dish-cat.png",
-        alt: "Dish cat line art illustration",
+        alt: "DISHCAT - Illustration (2024)",
+        caption: "DISHCAT - Illustration (2024)",
+        artistStatement: "Commissioned work for an individual client.\n\nTools: Clip Studio Paint",
         focalPoint: "50% 50%",
       },
       {
         id: "illustrations-08",
         src: "/illustrations/illustrations-melee-poster.png",
-        alt: "Vancouver Island Melee Power Rankings Winter 2020 poster design",
+        alt: "Vancouver Island Melee Power Rankings: Winter - Poster Design (2020)",
+        caption: "Vancouver Island Melee Power Rankings: Winter - Poster Design (2020)",
+        artistStatement:
+          "Designed for the Vancouver Island UVIC E-Sports Community.\n\nManually captured in-game snapshots to capture dynamic poses for each character featured in this work, using Dolphin Emulator + an in-game greenscreen hack and an owned copy of Super Smash Bros. Melee for the Nintendo Gamecube (Nintendo, 2001).\n\nThis is a noncommerical and transformative project. All trademarks and copyrights belong to their respective owners.\n\nTools: Photoshop, GIMP\n\nSubtools: Dolphin Emulator, Screenshot Tools, Debug Background Colors Mod (UnclePunch, 2020)",
         focalPoint: "50% 42%",
       },
       {
         id: "illustrations-09",
         src: "/illustrations/illustrations-melee-banner.png",
-        alt: "Vancouver Island Melee interim rankings banner design",
+        alt: "Vancouver Island Melee Power Rankings: Interim Rankings: March - Poster Design (2020)",
+        caption: "Vancouver Island Melee Power Rankings: Interim Rankings: March - Poster Design (2020)",
+        artistStatement:
+          "Designed for the Vancouver Island UVIC E-Sports Community.\n\nA visual homage to Pokémon Emerald (2005) and its famous gym leader ranking system. Implemented as both a creative and functional solution to a four-person tie for the seasons's final rankings.\n\nUses in-game character models and background references, but each featured character in this design was recreated and modified by hand, using a 1px brush in Photoshop, dot by dot.\n\nAll re-models and re-designs visually resemble each ranked competitors likeness (with permission).\n\nThis is a noncommerical and transformative project. All trademarks and copyrights belong to their respective owners.\n\nTools: Photoshop, GIMP",
         focalPoint: "50% 38%",
       },
       {
         id: "illustrations-10",
         src: "/illustrations/illustrations-rawblem-logo.png",
-        alt: "RAWBLEM brand logo design",
+        alt: "RAWBLEM Logo - Brand Design (2025)",
+        caption: "RAWBLEM Logo - Brand Design (2025)",
+        artistStatement:
+          "Hand-drawn, digital ink style logo with matching custom typography.\n\nTools: Clip Studio Paint, Photoshop, Inkscape (for SVG formats).",
         focalPoint: "50% 45%",
       },
       {
         id: "illustrations-11",
         src: "/illustrations/illustrations-mr-meowrange.png",
-        alt: "Mr. Meowrange — mascot character illustration",
+        alt: "MR.MEOWRANGE - Mascot Character Illustration (2025)",
+        caption: "MR.MEOWRANGE - Mascot Character Illustration (2025)",
+        artistStatement:
+          "Designed for print, featured in a RAWBLEM merch release.\n\nCombines digital ink lineart with blended watercolor marker.\n\nTools: Clip Studio Paint, Photoshop",
         focalPoint: "50% 50%",
       },
       {
         id: "illustrations-12",
         src: "/illustrations/illustrations-manamelon.png",
-        alt: "Manamelon — watermelon manatee character illustration",
+        alt: "MANAMELON - Mascot Character Illustration (2025)",
+        caption: "MANAMELON - Mascot Character Illustration (2025)",
+        artistStatement:
+          "Designed for print, featured in a RAWBLEM merch release.\n\nUses digital ink and flat color marker.\n\nTools: Clip Studio Paint, Photoshop",
         focalPoint: "50% 50%",
       },
     ],
@@ -3740,6 +4244,30 @@ const ShowcaseIllustrationLightbox = ({
     activeSlide?.artistStatement?.trim() ||
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.";
 
+  // Collapsed height in px (~2 lines of text-xs leading-relaxed).
+  const COLLAPSED_DESC_H = 60;
+  const descContentRef = useRef<HTMLDivElement>(null);
+  const [descOverflows, setDescOverflows] = useState(false);
+  const [descContentH, setDescContentH] = useState(0);
+  const [descExpanded, setDescExpanded] = useState(false);
+
+  // Reset expand state and re-measure whenever the slide changes.
+  useEffect(() => {
+    setDescExpanded(false);
+  }, [activeIndex]);
+
+  useLayoutEffect(() => {
+    const el = descContentRef.current;
+    if (!el) {
+      setDescOverflows(false);
+      setDescContentH(0);
+      return;
+    }
+    const h = el.scrollHeight;
+    setDescContentH(Math.min(h, 240));
+    setDescOverflows(h > COLLAPSED_DESC_H + 6);
+  }, [artistStatement]);
+
   const handleShowPrev = useCallback(() => {
     emblaApi?.scrollPrev();
   }, [emblaApi]);
@@ -3822,6 +4350,28 @@ const ShowcaseIllustrationLightbox = ({
         onClick={onClose}
       />
 
+      {hasPrev ? (
+        <button
+          type="button"
+          aria-label="Previous illustration"
+          onClick={handleShowPrev}
+          className="pdf-viewer-chrome-btn illustration-lightbox-chrome-btn illustration-lightbox-nav-btn fixed left-3 z-30 sm:left-5"
+        >
+          <ArrowLeft aria-hidden />
+        </button>
+      ) : null}
+
+      {hasNext ? (
+        <button
+          type="button"
+          aria-label="Next illustration"
+          onClick={handleShowNext}
+          className="pdf-viewer-chrome-btn illustration-lightbox-chrome-btn illustration-lightbox-nav-btn fixed right-3 z-30 sm:right-5"
+        >
+          <ArrowRight aria-hidden />
+        </button>
+      ) : null}
+
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
         <div
           className="relative flex min-h-0 flex-1 flex-col py-6 sm:py-8"
@@ -3835,17 +4385,6 @@ const ShowcaseIllustrationLightbox = ({
           >
             <X aria-hidden />
           </button>
-
-          {hasPrev ? (
-            <button
-              type="button"
-              aria-label="Previous illustration"
-              onClick={handleShowPrev}
-              className="pdf-viewer-chrome-btn illustration-lightbox-chrome-btn absolute left-3 top-1/2 z-20 -translate-y-1/2 sm:left-5"
-            >
-              <ArrowLeft aria-hidden />
-            </button>
-          ) : null}
 
           <div
             ref={emblaRef}
@@ -3875,29 +4414,68 @@ const ShowcaseIllustrationLightbox = ({
               })}
             </div>
           </div>
-
-          {hasNext ? (
-            <button
-              type="button"
-              aria-label="Next illustration"
-              onClick={handleShowNext}
-              className="pdf-viewer-chrome-btn illustration-lightbox-chrome-btn absolute right-3 top-1/2 z-20 -translate-y-1/2 sm:right-5"
-            >
-              <ArrowRight aria-hidden />
-            </button>
-          ) : null}
         </div>
 
-        <section className="relative shrink-0 border-t border-white/[0.1] bg-black/90 px-4 py-3 pr-20 sm:px-6 sm:py-4 sm:pr-24">
+        <section
+          className={`group relative shrink-0 border-t border-white/[0.1] bg-black/90 px-4 py-3 pr-20 sm:px-6 sm:py-4 sm:pr-24${descOverflows ? " cursor-pointer" : ""}`}
+          onClick={descOverflows ? () => setDescExpanded((v) => !v) : undefined}
+        >
+          {descOverflows ? (
+            <button
+              type="button"
+              onClick={(e) => e.stopPropagation()}
+              aria-label={descExpanded ? "Show less" : "Show more"}
+              tabIndex={-1}
+              className="pointer-events-none absolute right-4 top-3 z-10 flex select-none items-center gap-1 border-0 bg-transparent p-0 font-heading text-[0.72rem] uppercase tracking-eyebrow-tight text-mono-2/80 transition-colors duration-150 group-hover:text-[color:var(--palette-yellow-projects)] group-active:text-[color:var(--palette-yellow-projects)] sm:right-6 sm:top-4 sm:text-[0.78rem]"
+            >
+              <span>{descExpanded ? "less" : "more"}</span>
+              <motion.span
+                animate={{ rotate: descExpanded ? 0 : 180 }}
+                transition={{ duration: reduceMotion ? 0 : 0.28, ease: EASE.out }}
+                className="flex"
+              >
+                <ChevronUp aria-hidden className="h-3.5 w-3.5" />
+              </motion.span>
+            </button>
+          ) : null}
           {caption ? (
             <p className="font-display text-sm leading-snug tracking-tight text-white sm:text-base">
               {caption}
             </p>
           ) : null}
           {artistStatement ? (
-            <p className="mt-1 line-clamp-2 font-body text-xs leading-relaxed text-mono-2 sm:mt-1.5 sm:text-sm">
-              {artistStatement}
-            </p>
+            <div className="mt-1 sm:mt-1.5">
+              <motion.div
+                animate={{ height: descExpanded ? descContentH || "auto" : COLLAPSED_DESC_H }}
+                transition={{ duration: reduceMotion ? 0 : 0.3, ease: EASE.out }}
+                className="relative overflow-hidden"
+              >
+                <div ref={descContentRef} className="space-y-2 font-body text-xs leading-relaxed text-mono-2 sm:text-sm">
+                  {artistStatement.split(/\n\n+/).map((paragraph, paragraphIndex) => {
+                    const text = paragraph.trim();
+                    const toolsMatch = text.match(/^(Tools|Subtools):(.*)/is);
+                    const isDisclaimer = /^This is a non\w*commercial/i.test(text);
+                    return (
+                      <p key={paragraphIndex}>
+                        {toolsMatch ? (
+                          <><span className="underline">{toolsMatch[1]}:</span>{toolsMatch[2]}</>
+                        ) : isDisclaimer ? (
+                          <em>{text}</em>
+                        ) : text}
+                      </p>
+                    );
+                  })}
+                </div>
+                {descOverflows ? (
+                  <motion.div
+                    aria-hidden
+                    animate={{ opacity: descExpanded ? 0 : 1 }}
+                    transition={{ duration: reduceMotion ? 0 : 0.2, ease: EASE.out }}
+                    className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-black to-transparent"
+                  />
+                ) : null}
+              </motion.div>
+            </div>
           ) : null}
           {openableIndices.length > 1 ? (
             <p className="pointer-events-none absolute bottom-3 right-4 font-heading text-[0.65rem] uppercase tracking-eyebrow-tight text-mono-2/80 sm:bottom-4 sm:right-6 sm:text-[0.7rem]">

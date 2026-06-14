@@ -162,6 +162,7 @@ Reference: **`SkillArsenal`** in `Home.tsx`. Skill: `.cursor/skills/portfoliov2-
 | `portfoliov2-repository-agent` | General repo, SHOWCASE |
 | `portfoliov2-profile-viewport-gutters` | PROFILE/SKILLS margin parity |
 | `portfoliov2-responsive-qa` | Breakpoints, overflow |
+| `responsive-audit` | Manual `/responsive-audit` only — scoped or full breakpoint audit + fix loop |
 | `portfoliov2-browser` | Post-change UI checks |
 | `portfoliov2-terminal` | dev/build failures |
 | `portfoliov2-github` | branches, PRs |
