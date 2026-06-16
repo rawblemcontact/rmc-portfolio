@@ -1012,11 +1012,11 @@ const HERO_PHASE1_REVEAL_Y = "calc(-33vh + 1.5rem)";
 const HERO_PHASE1_REVEAL_Y_MOBILE = "calc(-20vh + 1.25rem)";
 /** Mobile settle — same baseline as desktop; final offset lives in max-md translate. */
 const HERO_NAME_SETTLE_Y_MOBILE = 0;
-const HERO_NAME_SETTLE_DELAY_S = 0.08;
+const HERO_NAME_SETTLE_DELAY_S = 0.2;
 const HERO_NAME_SETTLE_DUR_S = 0.95;
 /** Gap from name move-down start → video reveal start. */
 const HERO_VIDEO_REVEAL_START_GAP_S = 0.14;
-const HERO_VIDEO_REVEAL_DELAY_S = 0.22;
+const HERO_VIDEO_REVEAL_DELAY_S = HERO_NAME_SETTLE_DELAY_S + 0.18;
 const HERO_VIDEO_REVEAL_DELAY_MS = HERO_VIDEO_REVEAL_DELAY_S * 1000;
 const HERO_SETTLE_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 /** scaleX reveal — no overshoot (y2 ≤ 1) so the card does not pop past full width at the end. */
@@ -1029,7 +1029,7 @@ const HERO_VIDEO_GLOW_DUR_S = 0.72;
 const HERO_VIDEO_GLOW_PEAK = 0.55;
 /** Hero video card width — matches name line span (58rem column + line bleed). */
 const HERO_VIDEO_CARD_WIDTH_CLASS =
-  "max-[639px]:w-full max-[639px]:max-w-full w-[calc(min(100%,58rem)-0.5rem+2*max(1.25rem,min(4vw,2.5rem)))] sm:w-[calc(min(100%,58rem)-1rem+2*max(1.25rem,min(4vw,2.5rem)))]";
+  "max-[639px]:w-full max-[639px]:max-w-full w-[calc(min(100%,58rem)-8.4rem+2*max(1.25rem,min(4vw,2.5rem)))] sm:w-[calc(min(100%,58rem)-8.9rem+2*max(1.25rem,min(4vw,2.5rem)))]";
 const HERO_NAME_SWEEP_MS = 700;
 const HERO_NAME_SPLIT_MS = 600;
 /** Rainbow layers — main-menu section accents (NAV order), staggered outside white frame. */
@@ -1271,7 +1271,8 @@ const HeroNameReveal = ({
 
     const fontSize = Number.parseFloat(getComputedStyle(robbie).fontSize) || 28;
     const framePad = fontSize * HERO_NAME_FRAME_PAD_RATIO;
-    const containerTop = container.getBoundingClientRect().top;
+    const containerRect = container.getBoundingClientRect();
+    const containerTop = containerRect.top;
     const robbieRect = robbie.getBoundingClientRect();
     const taglineRect = tagline.getBoundingClientRect();
 
@@ -1334,6 +1335,9 @@ const HeroNameReveal = ({
     duration: reduceMotion ? 0 : HERO_NAME_TEXT_ENTRANCE_MS / 1000,
     ease: HERO_NAME_TEXT_BLEND_EASE,
   };
+  const auxVisible = step === "reveal" || step === "done";
+  const auxRainbowLayerDurS = HERO_NAME_TEXT_RAINBOW_LAYER_MS / 1000;
+  const auxWhiteLayerDurS = HERO_NAME_TEXT_WHITE_LAYER_MS / 1000;
 
   return (
     <div className="relative m-0 w-full max-w-full overflow-visible font-display [font-kerning:none]">
@@ -1368,41 +1372,130 @@ const HeroNameReveal = ({
             easeOutExpo={easeOutExpo}
           />
         ))}
-        <h1 className="relative z-[1] m-0 max-w-full font-display [font-kerning:none] max-md:flex max-md:flex-wrap max-md:items-baseline max-md:justify-center max-md:gap-x-[0.35em] max-md:text-center">
-        <span
-          ref={robbieRef}
-          className="relative block text-[clamp(2.28rem,8.85vw,5.95rem)] max-[400px]:text-[clamp(2rem,8.1vw,5.95rem)] font-black uppercase leading-[0.8] tracking-[-0.036em] text-mono-0 max-md:inline-block max-md:w-auto sm:leading-[0.78]"
-        >
-          <HeroNameRainbowFade text="ROBBIE" step={step} reduceMotion={reduceMotion} />
-        </span>
-        <div className="relative z-[1] mt-[0.04em] flex w-full min-w-0 max-w-full items-end justify-between gap-1.5 max-md:contents max-md:mt-0 max-[400px]:gap-1 sm:gap-5">
-          <span
-            ref={mclaughlinRef}
-            className="min-w-0 flex-1 text-[clamp(2.28rem,8.85vw,5.95rem)] max-[400px]:text-[clamp(2rem,8.1vw,5.95rem)] font-black uppercase leading-[0.8] tracking-[-0.036em] text-mono-0 max-md:inline-block max-md:w-auto max-md:flex-none sm:leading-[0.78]"
+        {/* Grid: col-1 = name box + tagline, col-2 = button pinned far-right at MCLAUGHLIN baseline */}
+        <div className="relative z-[1] grid w-full grid-cols-[auto_1fr] items-end max-md:flex max-md:flex-col max-md:items-center">
+          {/* Name rectangle — col 1, row 1 */}
+          <div className="col-start-1 row-start-1 w-fit rounded-[11px] border border-transparent bg-transparent px-3 pt-3 pb-[0.234375rem] sm:rounded-xl sm:px-4 sm:pt-3.5 sm:pb-[0.28125rem] max-md:text-center">
+            <h1 className="relative m-0 max-w-full font-display [font-kerning:none] max-md:flex max-md:flex-wrap max-md:items-baseline max-md:justify-center max-md:gap-x-[0.35em]">
+              {/* ROBBIE row — name left, white techwear accent fills remaining space */}
+              <div className="flex w-full items-end gap-2 sm:gap-3 max-md:contents">
+                <span
+                  ref={robbieRef}
+                  className="relative shrink-0 text-[clamp(2.28rem,8.85vw,5.95rem)] max-[400px]:text-[clamp(2rem,8.1vw,5.95rem)] font-black uppercase leading-[0.8] tracking-[-0.036em] text-mono-0 max-md:inline-block max-md:w-auto sm:leading-[0.78]"
+                >
+                  <HeroNameRainbowFade text="ROBBIE" step={step} reduceMotion={reduceMotion} />
+                </span>
+                <motion.div
+                  aria-hidden
+                  className="relative h-full flex-1 self-end mr-[0.18rem] overflow-hidden rounded-[7px] sm:rounded-[9px] max-md:hidden"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: reduceMotion ? 1 : auxVisible ? 1 : 0 }}
+                  transition={{
+                    duration: reduceMotion ? 0 : HERO_NAME_TEXT_MASTER_FADE_MS / 1000,
+                    delay: 0,
+                    ease: HERO_NAME_TEXT_BLEND_EASE,
+                  }}
+                  style={{
+                    height: "calc(1.04cap - 0.02em)",
+                    marginBottom: "0.02em",
+                    fontSize: "clamp(2.28rem, 8.85vw, 5.95rem)",
+                    backgroundColor: "#ffffff",
+                  }}
+                >
+                  {reduceMotion ? (
+                    <div className="absolute inset-0 grid h-full w-full grid-cols-3 text-black">
+                      <div className="flex items-center justify-center">
+                        <IconPencil className="h-[78%] w-[78%] text-current" fill="currentColor" stroke={1.1} />
+                      </div>
+                      <div className="flex items-center justify-center border-l-4 border-current">
+                        <IconDeviceDesktop className="h-[78%] w-[78%] text-current" fill="currentColor" stroke={1.1} />
+                      </div>
+                      <div className="flex items-center justify-center border-l-4 border-current">
+                        <IconVideo className="h-[78%] w-[78%] text-current" fill="currentColor" stroke={1.1} />
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      {HERO_NAME_RAINBOW_MENU_IDS.map((id, index) => (
+                        <motion.div
+                          key={`aux-rainbow-${id}`}
+                          className="absolute inset-0 grid h-full w-full grid-cols-3 text-white"
+                          style={{ backgroundColor: SECTION_ACCENT_COLOR[id] }}
+                          initial={false}
+                          animate={{ opacity: !auxVisible ? 0 : [...HERO_NAME_TEXT_RAINBOW_BLEND_OPACITY] }}
+                          transition={{
+                            duration: auxRainbowLayerDurS,
+                            delay: auxVisible ? (HERO_NAME_RAINBOW_STAGGER_MS * (index + 1)) / 1000 : 0,
+                            times: [...HERO_NAME_TEXT_RAINBOW_BLEND_TIMES],
+                            ease: HERO_NAME_TEXT_BLEND_EASE,
+                          }}
+                        >
+                          <div className="flex items-center justify-center">
+                            <IconPencil className="h-[78%] w-[78%] text-current" fill="currentColor" stroke={1.1} />
+                          </div>
+                          <div className="flex items-center justify-center border-l-4 border-current">
+                            <IconDeviceDesktop className="h-[78%] w-[78%] text-current" fill="currentColor" stroke={1.1} />
+                          </div>
+                          <div className="flex items-center justify-center border-l-4 border-current">
+                            <IconVideo className="h-[78%] w-[78%] text-current" fill="currentColor" stroke={1.1} />
+                          </div>
+                        </motion.div>
+                      ))}
+                      <motion.div
+                        className="absolute inset-0 grid h-full w-full grid-cols-3 bg-white text-black"
+                        initial={false}
+                        animate={{ opacity: !auxVisible ? 0 : [...HERO_NAME_TEXT_WHITE_BLEND_OPACITY] }}
+                        transition={{
+                          duration: auxWhiteLayerDurS,
+                          delay: auxVisible ? HERO_NAME_TEXT_WHITE_DELAY_MS / 1000 : 0,
+                          times: [...HERO_NAME_TEXT_WHITE_BLEND_TIMES],
+                          ease: HERO_NAME_TEXT_BLEND_EASE,
+                        }}
+                      >
+                        <div className="flex items-center justify-center">
+                          <IconPencil className="h-[78%] w-[78%] text-current" fill="currentColor" stroke={1.1} />
+                        </div>
+                        <div className="flex items-center justify-center border-l-4 border-current">
+                          <IconDeviceDesktop className="h-[78%] w-[78%] text-current" fill="currentColor" stroke={1.1} />
+                        </div>
+                        <div className="flex items-center justify-center border-l-4 border-current">
+                          <IconVideo className="h-[78%] w-[78%] text-current" fill="currentColor" stroke={1.1} />
+                        </div>
+                      </motion.div>
+                    </>
+                  )}
+                </motion.div>
+              </div>
+              <span
+                ref={mclaughlinRef}
+                className="block text-[clamp(2.28rem,8.85vw,5.95rem)] max-[400px]:text-[clamp(2rem,8.1vw,5.95rem)] font-black uppercase leading-[0.8] tracking-[-0.036em] text-mono-0 mt-[0.04em] max-md:inline-block max-md:w-auto max-md:mt-0 sm:leading-[0.78]"
+              >
+                <HeroNameRainbowFade text="MCLAUGHLIN" step={step} reduceMotion={reduceMotion} />
+              </span>
+            </h1>
+          </div>
+          {/* Button — col 2, row 1, nudged inward from edge */}
+          <div className="col-start-2 row-start-1 self-end justify-self-end -translate-x-1 -translate-y-[0.56rem] pl-1.5 pr-1.5 max-md:hidden sm:-translate-x-1.5 sm:-translate-y-[0.56rem] sm:pl-5 sm:pr-4">{button}</div>
+          {/* Tagline rectangle — col 1, row 2, same width as name box */}
+          <p
+            ref={taglineRef}
+            className="col-start-1 row-start-2 m-0 mt-0 w-full rounded-[11px] border border-transparent bg-transparent pl-[1.16rem] pr-3 py-[0.4rem] max-[639px]:box-border max-[400px]:text-[0.74rem] font-display text-[clamp(0.8rem,2.25vw,0.92rem)] font-medium uppercase leading-snug tracking-eyebrow-tight text-white max-md:text-center sm:mt-0 sm:rounded-xl sm:pl-[1.42rem] sm:pr-4 sm:py-[0.45rem] sm:text-[clamp(0.8rem,2.25vw,0.92rem)]"
           >
-            <HeroNameRainbowFade text="MCLAUGHLIN" step={step} reduceMotion={reduceMotion} />
-          </span>
-          <div className="shrink-0 self-end max-md:hidden">{button}</div>
+            <motion.span
+              className="block"
+              initial={false}
+              animate={{ y: textEntranceSettled ? 0 : HERO_TAGLINE_ENTRANCE_SLIDE_Y }}
+              transition={textEntranceTransition}
+            >
+              <HeroNameRainbowFade
+                text="Writer · digital media · narrative systems"
+                step={step}
+                reduceMotion={reduceMotion}
+                block
+              />
+            </motion.span>
+          </p>
         </div>
-        </h1>
-        <p
-          ref={taglineRef}
-          className="relative z-[1] m-0 mt-2.5 max-w-[min(100%,40rem)] max-[639px]:box-border max-[639px]:max-w-full max-[400px]:text-[0.74rem] pl-[0.2rem] pr-1 font-display text-[clamp(0.8rem,2.25vw,0.92rem)] font-medium uppercase leading-snug tracking-eyebrow-tight text-mono-2/88 max-md:mx-auto max-md:pl-0 max-md:pr-0 max-md:text-center sm:mt-3 sm:max-w-[46rem] sm:pl-[0.32rem] sm:pr-0 sm:text-[clamp(0.8rem,2.25vw,0.92rem)] md:pl-[0.4rem]"
-        >
-          <motion.span
-            className="block"
-            initial={false}
-            animate={{ y: textEntranceSettled ? 0 : HERO_TAGLINE_ENTRANCE_SLIDE_Y }}
-            transition={textEntranceTransition}
-          >
-            <HeroNameRainbowFade
-              text="Writer / digital media / narrative systems"
-              step={step}
-              reduceMotion={reduceMotion}
-              block
-            />
-          </motion.span>
-        </p>
         {isValidElement(button) && (
           <div className="hidden max-md:flex max-md:justify-center max-md:mt-3 max-md:w-full">
             {cloneElement(button as ReactElement<{ className?: string }>, {
@@ -1801,7 +1894,7 @@ const Hero = ({
             }}
           />
           <motion.div
-            className="relative z-[1] mx-auto w-full h-[clamp(200px,min(52vh,calc(100svh-11rem-max(1rem,env(safe-area-inset-top,0px)))),620px)] md:max-lg:h-[clamp(200px,min(44vh,calc(100svh-14rem-max(1rem,env(safe-area-inset-top,0px)))),500px)] lg:h-[clamp(240px,min(54vh,calc(100svh-11.5rem-max(1.5rem,env(safe-area-inset-top,0px)))),680px)] xl:h-[clamp(260px,min(56vh,calc(100svh-12rem-max(2rem,env(safe-area-inset-top,0px)))),760px)] overflow-hidden rounded-[11px] sm:rounded-xl border border-white/[0.09] bg-black"
+            className="relative z-[1] mx-auto w-full h-[clamp(200px,min(52vh,calc(100svh-11rem-max(1rem,env(safe-area-inset-top,0px)))),620px)] md:max-lg:h-[clamp(200px,min(44vh,calc(100svh-14rem-max(1rem,env(safe-area-inset-top,0px)))),500px)] lg:h-[clamp(240px,min(54vh,calc(100svh-11.5rem-max(1.5rem,env(safe-area-inset-top,0px)))),680px)] xl:h-[clamp(260px,min(56vh,calc(100svh-12rem-max(2rem,env(safe-area-inset-top,0px)))),760px)] overflow-hidden rounded-[11px] sm:rounded-xl border border-white/[0.3] bg-black"
             style={{
               boxShadow:
                 "0 36px 88px rgba(0,0,0,0.6), inset 0 -40px 70px rgba(0,0,0,0.52), 0 0 28px 4px rgba(255,255,255,0.04)",
