@@ -1063,20 +1063,56 @@ const HERO_NAME_TEXT_WHITE_BLEND_TIMES = [0, 0.14, 0.3, 0.48, 0.66, 0.8, 0.9, 0.
 const HERO_NAME_TEXT_MASTER_FADE_MS = 80;
 /** Entrance slide offset (reveal step) — tagline from below. */
 const HERO_TAGLINE_ENTRANCE_SLIDE_Y = "0.36em";
+/** Optical crop — trims right edge of final "E" in ROBBIE (px). */
+const HERO_ROBBIE_E_RIGHT_CROP_PX = 5;
+
+const HeroNameRainbowGlyphs = ({
+  text,
+  eRightCropPx,
+}: {
+  text: string;
+  eRightCropPx?: number;
+}) => {
+  if (!eRightCropPx || text.length === 0) {
+    return <>{text}</>;
+  }
+
+  const lastChar = text[text.length - 1];
+  if (lastChar !== "E") {
+    return <>{text}</>;
+  }
+
+  return (
+    <>
+      {text.slice(0, -1)}
+      <span
+        className="inline-block overflow-hidden align-baseline"
+        style={{
+          clipPath: `inset(0 ${eRightCropPx}px 0 0)`,
+          marginRight: `-${eRightCropPx}px`,
+        }}
+      >
+        {lastChar}
+      </span>
+    </>
+  );
+};
 
 const HeroNameRainbowFade = ({
   text,
   step,
   reduceMotion,
   block = false,
+  eRightCropPx,
 }: {
   text: string;
   step: HeroNameRevealStep;
   reduceMotion: boolean | null;
   block?: boolean;
+  eRightCropPx?: number;
 }) => {
   if (reduceMotion) {
-    return <>{text}</>;
+    return <HeroNameRainbowGlyphs text={text} eRightCropPx={eRightCropPx} />;
   }
 
   const isVisible = step === "reveal" || step === "done";
@@ -1092,7 +1128,7 @@ const HeroNameRainbowFade = ({
   const rainbowLayers = (
     <>
       <span className={spacerClass} aria-hidden>
-        {text}
+        <HeroNameRainbowGlyphs text={text} eRightCropPx={eRightCropPx} />
       </span>
       {HERO_NAME_RAINBOW_MENU_IDS.map((id, index) => (
         <motion.span
@@ -1109,7 +1145,7 @@ const HeroNameRainbowFade = ({
             ease: HERO_NAME_TEXT_BLEND_EASE,
           }}
         >
-          {text}
+          <HeroNameRainbowGlyphs text={text} eRightCropPx={eRightCropPx} />
         </motion.span>
       ))}
       <motion.span
@@ -1123,7 +1159,7 @@ const HeroNameRainbowFade = ({
           ease: HERO_NAME_TEXT_BLEND_EASE,
         }}
       >
-        {text}
+        <HeroNameRainbowGlyphs text={text} eRightCropPx={eRightCropPx} />
       </motion.span>
     </>
   );
@@ -1239,6 +1275,110 @@ const HeroNameRevealLinePair = ({
   );
 };
 
+/** Hero name accent strip — first column icon (replaces Tabler pencil mark in hero only). */
+function HeroAccentFirstIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 1200 1200"
+      xmlns="http://www.w3.org/2000/svg"
+      className={`origin-center scale-[1.22] ${className ?? ""}`.trim()}
+      aria-hidden
+    >
+      <path
+        fill="currentColor"
+        d="m348 933.47-131.95 55.172 55.172-131.95zm566.06-553.78s-135.47 141.19-199.97 206.26h-106.27c-74.25 0-134.39 60.188-134.39 134.39 0 28.406 15.516 53.203 38.484 66.422l-124.26 123.98-91.312-91.312c3.8438-1.2656 7.125-3.6562 9.4219-6.8438 47.156-10.734 84.516-48.938 92.953-98.297l0.375-2.3438 423-423zm-240.61 417.19 22.922 17.156c11.625 8.7188 13.266 25.547 3.5625 36.328-23.297 25.922-62.391 30.094-90.609 9.7031l-68.391-49.312 13.969-13.875zm-172.92-528.79c13.359-13.828 32.812-19.875 51.656-16.031l173.16 35.344c11.531 2.3438 20.531 8.6719 29.766 15.469l-167.11 167.16-38.719-14.906c-20.344-7.8281-43.406-3.1875-59.156 11.953l-85.641 82.219c-12.188 11.719-20.344 27.047-23.156 43.734l-19.594 114.98c-6.8906 40.5-42 70.125-83.062 70.125-18.094 0-32.391-14.531-32.766-32.062l27.469-226.64c1.5-12.141 6.8906-23.484 15.422-32.297zm474.47 144.42c10.359 0 18.75 8.3906 18.75 18.75v243.74c0 10.359-8.3906 18.75-18.75 18.75h-67.641c-17.484 0-34.641 4.9219-49.5 14.156l-69.188 42.984c-8.9062 5.5312-19.219 8.4844-29.719 8.4844h-208.97c-21.562 0-39.047-17.484-39.047-39.047 0-53.531 43.359-96.891 96.891-96.891h114.05c6.375 0 12-3.1875 15.422-8.0625 0.89062-0.65625 1.7812-1.3594 2.5781-2.1562l199.13-200.72zm-458.9 81.609c5.25-5.0625 12.938-6.6094 19.734-3.9844l23.156 8.9062-149.02 148.97 8.2969-48.703c1.5-8.7656 5.7656-16.828 12.188-22.969zm366.37-265.55c21.984-21.984 57.609-21.984 79.547 0l14.109 14.109c22.078 22.078 21.141 57.375 0 79.547l-33.844 33.844-93.656-93.656z"
+      />
+    </svg>
+  );
+}
+
+/** Hero name accent strip — second column icon (replaces Tabler desktop mark in hero only). */
+function HeroAccentSecondIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 1200 1200"
+      xmlns="http://www.w3.org/2000/svg"
+      className={`origin-center scale-[1.08] ${className ?? ""}`.trim()}
+      aria-hidden
+    >
+      <path
+        fill="currentColor"
+        d="m37.641 931.69c0 17.25 14.062 31.266 31.266 31.266h109.45v-62.156h-109.45c-17.25 0-31.266 14.016-31.266 30.891z"
+      />
+      <path
+        fill="currentColor"
+        d="m380.06 962.95h305.53c4.4062-22.875 14.438-44.109 28.453-62.156h-333.98z"
+      />
+      <path
+        fill="currentColor"
+        d="m175.13 772.87h628.31l-66.938-89.812c-21.234-28.453-30.094-63.328-24.844-98.25 5.2031-34.875 23.672-65.766 52.125-87 9.2344-6.7969 20.062-10.406 30.891-10.406 16.031 0 31.688 7.2188 42.094 21.234l112.69 150.74c2.0156-10.031 3.1875-20.859 3.1875-31.688v-368.06c0-80.203-64.969-145.18-145.13-145.18l-632.39 0.046875c-80.203 0-145.13 64.969-145.13 145.18v368.06c0 80.203 64.969 145.18 145.13 145.18zm178.03-454.26c0-30.891 33.281-50.531 60.562-35.672l225.32 125.11c28.078 15.656 28.078 55.734 0 71.391l-225.32 125.11c-26.859 14.812-60.562-4.8281-60.562-35.672z"
+      />
+      <path
+        fill="currentColor"
+        d="m1090.6 897.79c-13.5-2.2031-26.484-1.3594-38.578 1.7812-7.5 1.9219-15.422-1.2188-20.016-7.4531l-42.234-56.672 136.78-183.56c26.438-35.531 19.078-85.781-16.547-112.31l-157.55 211.6-157.6-211.6c-35.625 26.531-42.984 76.781-16.547 112.31l136.78 183.56-42.234 56.672c-4.6406 6.1875-12.516 9.375-20.016 7.4062-13.734-3.5625-28.734-4.1719-44.344-0.65625-37.078 8.25-66.141 38.766-72.328 76.172-9.7969 59.062 35.766 110.44 93.234 110.44 52.172 0 94.547-42.375 94.547-94.406 0-17.766-4.9688-34.406-13.547-48.609-4.0781-6.75-3.2812-15.328 1.4062-21.609l40.641-54.469 40.547 54.469c4.6875 6.3281 5.4375 14.906 1.4062 21.609-11.297 18.703-16.359 41.531-12.047 65.719 7.1719 40.078 40.406 71.484 80.859 76.594 61.359 7.7344 113.16-43.688 106.12-104.81-4.7812-41.531-37.453-75.469-78.797-82.125zm-261.19 132.47c-21.609 0-39.234-17.625-39.234-39.188 0-21.609 17.625-39.281 39.234-39.281s39.281 17.578 39.281 39.281-17.625 39.188-39.281 39.188zm123.05-201.71c-13.641 0-24.703-11.062-24.703-24.609 0-13.594 11.062-24.656 24.703-24.656s24.656 11.062 24.656 24.656-11.062 24.609-24.656 24.609zm123 201.71c-21.703 0-39.328-17.625-39.328-39.188 0-21.609 17.625-39.281 39.328-39.281s39.234 17.578 39.234 39.281-17.625 39.188-39.234 39.188z"
+      />
+      <path
+        fill="currentColor"
+        d="m261.42 841.08h35.391c17.109 0 30.984 17.109 30.984 30.984v119.53c0 17.109-13.875 30.984-30.984 30.984h-35.391c-17.109 0-30.984-17.109-30.984-30.984v-119.53c0-17.109 13.875-30.984 30.984-30.984z"
+      />
+    </svg>
+  );
+}
+
+/** Hero name accent strip — third column icon (replaces Tabler video mark in hero only). */
+function HeroAccentThirdIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 1200 1200"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden
+    >
+      <path
+        fill="currentColor"
+        d="m843.74 600c155.06 0 281.26-126.19 281.26-281.26 0-155.06-126.19-281.26-281.26-281.26-146.06 0-266.63 112.12-279.94 254.81-53.062-43.125-120-67.312-188.81-67.312-165.37 0-300 134.63-300 300 0 165.37 134.63 300 300 300 32.062 0 63.562-5.0625 93.75-15v165c0 41.438 33.562 75 75 75h236.06l106.88 107.06c3.5625 3.5625 8.4375 5.4375 13.312 5.4375 2.4375 0 4.875-0.375 7.125-1.5 7.125-2.8125 11.625-9.75 11.625-17.25v-93.75h37.5c41.438 0 75-33.562 75-75v-262.5c0-41.438-33.562-75-75-75h-303.19c12.188-30 19.312-61.875 21.375-94.125 48.562 36.75 107.25 56.625 169.31 56.625zm-468.74 112.5c-5.0625 0-9.9375-2.0625-13.312-5.625l-142.69-144.94c-42-42.75-42-112.12 0-154.69 20.438-20.812 47.625-32.25 76.5-32.25s56.25 11.438 76.688 32.25l2.8125 2.8125 2.8125-2.8125c20.438-20.812 47.625-32.25 76.688-32.25s56.062 11.438 76.5 32.25c42 42.562 42 111.94 0 154.69l-142.69 144.94c-3.375 3.5625-8.25 5.625-13.312 5.625zm468.74-637.5c134.44 0 243.74 109.31 243.74 243.74 0 134.43-109.31 243.74-243.74 243.74-64.5 0-124.87-24.75-170.63-69.75-6.375-61.312-32.062-119.62-72.938-165.74-0.1875-2.625-0.1875-5.4375-0.1875-8.25 0-134.44 109.31-243.74 243.74-243.74zm112.5 600c20.625 0 37.5 16.875 37.5 37.5v262.5c0 20.625-16.875 37.5-37.5 37.5h-56.25c-10.312 0-18.75 8.4375-18.75 18.75v67.312l-80.438-80.625c-3.5625-3.375-8.25-5.4375-13.312-5.4375h-243.74c-20.625 0-37.5-16.875-37.5-37.5v-262.5c0-20.625 16.875-37.5 37.5-37.5z"
+      />
+      <path
+        fill="currentColor"
+        d="m712.5 431.26h243.74c30.938 0 56.25-25.312 56.25-56.25v-75c0-30.938-25.312-56.25-56.25-56.25h-71.625l5.8125-35.25c3.1875-19.312-2.0625-38.812-14.812-53.812-12.562-14.812-31.125-23.438-50.625-23.438-7.125 0-13.5 3.9375-16.688 10.312l-51 102.19h-44.812c-20.625 0-37.5 16.875-37.5 37.5v112.5c0 20.625 16.875 37.5 37.5 37.5zm123-260.44c4.5 1.6875 8.4375 4.5 11.625 8.0625 5.4375 6.5625 7.6875 15.188 6.375 23.438l-9.5625 57.188c-0.9375 5.4375 0.75 10.875 4.3125 15.188 3.5625 4.125 8.8125 6.5625 14.25 6.5625h93.75c10.312 0 18.75 8.4375 18.75 18.75v75c0 10.312-8.4375 18.75-18.75 18.75h-168.74v-126.74z"
+      />
+      <path
+        fill="currentColor"
+        d="m581.26 768.74c0 10.312 8.4375 18.75 18.75 18.75h168.74c10.312 0 18.75-8.4375 18.75-18.75s-8.4375-18.75-18.75-18.75h-168.74c-10.312 0-18.75 8.4375-18.75 18.75z"
+      />
+      <path
+        fill="currentColor"
+        d="m581.26 843.74c0 10.312 8.4375 18.75 18.75 18.75h300c10.312 0 18.75-8.4375 18.75-18.75s-8.4375-18.75-18.75-18.75h-300c-10.312 0-18.75 8.4375-18.75 18.75z"
+      />
+      <path
+        fill="currentColor"
+        d="m900 900h-300c-10.312 0-18.75 8.4375-18.75 18.75s8.4375 18.75 18.75 18.75h300c10.312 0 18.75-8.4375 18.75-18.75s-8.4375-18.75-18.75-18.75z"
+      />
+    </svg>
+  );
+}
+
+type HeroAccentIconKey = "first" | "second" | "third";
+type HeroAccentLayoutControl = {
+  sizePct: number;
+  offsetX: number;
+  offsetY: number;
+};
+
+/** Baseline box in each accent cell; `sizePct` scales relative to this. */
+const HERO_ACCENT_BASELINE_PCT = 78;
+
+/** Locked hero accent layout — sizePct compensates for each icon's intrinsic SVG scale. */
+const HERO_ACCENT_LAYOUT: Record<HeroAccentIconKey, HeroAccentLayoutControl> = {
+  first: { sizePct: 86, offsetX: -1, offsetY: 1 },
+  second: { sizePct: 78, offsetX: 2, offsetY: 2 },
+  third: { sizePct: 83, offsetX: 0, offsetY: 1 },
+};
+
+const HERO_ACCENT_ICON_KEYS: HeroAccentIconKey[] = ["first", "second", "third"];
+/** Two 3px dividers; remaining width splits evenly across three icon columns. */
+const HERO_ACCENT_STRIP_DIVIDER_CLASS = "w-[3px] shrink-0 self-stretch bg-current";
+
 const HeroNameReveal = ({
   heroReady,
   reduceMotion,
@@ -1339,6 +1479,48 @@ const HeroNameReveal = ({
   const auxRainbowLayerDurS = HERO_NAME_TEXT_RAINBOW_LAYER_MS / 1000;
   const auxWhiteLayerDurS = HERO_NAME_TEXT_WHITE_LAYER_MS / 1000;
 
+  const renderAccentIconCell = useCallback(
+    (iconKey: HeroAccentIconKey) => {
+      const control = HERO_ACCENT_LAYOUT[iconKey];
+      const IconComponent =
+        iconKey === "first" ? HeroAccentFirstIcon : iconKey === "second" ? HeroAccentSecondIcon : HeroAccentThirdIcon;
+      const sizeScale = control.sizePct / HERO_ACCENT_BASELINE_PCT;
+
+      return (
+        <div className="relative h-full min-h-0 w-full min-w-0">
+          <div
+            className="pointer-events-none absolute left-1/2 top-1/2 flex items-center justify-center"
+            style={{
+              width: `${HERO_ACCENT_BASELINE_PCT}%`,
+              height: `${HERO_ACCENT_BASELINE_PCT}%`,
+              transform: `translate(calc(-50% + ${control.offsetX}px), calc(-50% + ${control.offsetY}px)) scale(${sizeScale})`,
+              transformOrigin: "center center",
+            }}
+          >
+            <IconComponent className="h-full w-full text-current" />
+          </div>
+        </div>
+      );
+    },
+    [],
+  );
+
+  const renderAccentIconStrip = useCallback(
+    () => (
+      <div className="flex h-full w-full min-w-0">
+        {HERO_ACCENT_ICON_KEYS.map((iconKey, index) => (
+          <React.Fragment key={iconKey}>
+            {index > 0 && <div className={HERO_ACCENT_STRIP_DIVIDER_CLASS} aria-hidden />}
+            <div className="relative h-full min-w-0 flex-1 basis-0 overflow-hidden">
+              {renderAccentIconCell(iconKey)}
+            </div>
+          </React.Fragment>
+        ))}
+      </div>
+    ),
+    [renderAccentIconCell],
+  );
+
   return (
     <div className="relative m-0 w-full max-w-full overflow-visible font-display [font-kerning:none]">
       <span
@@ -1383,7 +1565,12 @@ const HeroNameReveal = ({
                   ref={robbieRef}
                   className="relative shrink-0 text-[clamp(2.28rem,8.85vw,5.95rem)] max-[400px]:text-[clamp(2rem,8.1vw,5.95rem)] font-black uppercase leading-[0.8] tracking-[-0.036em] text-mono-0 max-md:inline-block max-md:w-auto sm:leading-[0.78]"
                 >
-                  <HeroNameRainbowFade text="ROBBIE" step={step} reduceMotion={reduceMotion} />
+                  <HeroNameRainbowFade
+                    text="ROBBIE"
+                    step={step}
+                    reduceMotion={reduceMotion}
+                    eRightCropPx={HERO_ROBBIE_E_RIGHT_CROP_PX}
+                  />
                 </span>
                 <motion.div
                   aria-hidden
@@ -1396,30 +1583,20 @@ const HeroNameReveal = ({
                     ease: HERO_NAME_TEXT_BLEND_EASE,
                   }}
                   style={{
-                    height: "calc(1.04cap - 0.02em)",
+                    height: "calc(1.04cap - 0.02em + 1px)",
                     marginBottom: "0.02em",
                     fontSize: "clamp(2.28rem, 8.85vw, 5.95rem)",
                     backgroundColor: "#ffffff",
                   }}
                 >
                   {reduceMotion ? (
-                    <div className="absolute inset-0 grid h-full w-full grid-cols-3 text-black">
-                      <div className="flex items-center justify-center">
-                        <IconPencil className="h-[78%] w-[78%] text-current" fill="currentColor" stroke={1.1} />
-                      </div>
-                      <div className="flex items-center justify-center border-l-4 border-current">
-                        <IconDeviceDesktop className="h-[78%] w-[78%] text-current" fill="currentColor" stroke={1.1} />
-                      </div>
-                      <div className="flex items-center justify-center border-l-4 border-current">
-                        <IconVideo className="h-[78%] w-[78%] text-current" fill="currentColor" stroke={1.1} />
-                      </div>
-                    </div>
+                    <div className="absolute inset-0 text-black">{renderAccentIconStrip()}</div>
                   ) : (
                     <>
                       {HERO_NAME_RAINBOW_MENU_IDS.map((id, index) => (
                         <motion.div
                           key={`aux-rainbow-${id}`}
-                          className="absolute inset-0 grid h-full w-full grid-cols-3 text-white"
+                          className="absolute inset-0 text-white"
                           style={{ backgroundColor: SECTION_ACCENT_COLOR[id] }}
                           initial={false}
                           animate={{ opacity: !auxVisible ? 0 : [...HERO_NAME_TEXT_RAINBOW_BLEND_OPACITY] }}
@@ -1430,19 +1607,11 @@ const HeroNameReveal = ({
                             ease: HERO_NAME_TEXT_BLEND_EASE,
                           }}
                         >
-                          <div className="flex items-center justify-center">
-                            <IconPencil className="h-[78%] w-[78%] text-current" fill="currentColor" stroke={1.1} />
-                          </div>
-                          <div className="flex items-center justify-center border-l-4 border-current">
-                            <IconDeviceDesktop className="h-[78%] w-[78%] text-current" fill="currentColor" stroke={1.1} />
-                          </div>
-                          <div className="flex items-center justify-center border-l-4 border-current">
-                            <IconVideo className="h-[78%] w-[78%] text-current" fill="currentColor" stroke={1.1} />
-                          </div>
+                          {renderAccentIconStrip()}
                         </motion.div>
                       ))}
                       <motion.div
-                        className="absolute inset-0 grid h-full w-full grid-cols-3 bg-white text-black"
+                        className="absolute inset-0 bg-white text-black"
                         initial={false}
                         animate={{ opacity: !auxVisible ? 0 : [...HERO_NAME_TEXT_WHITE_BLEND_OPACITY] }}
                         transition={{
@@ -1452,15 +1621,7 @@ const HeroNameReveal = ({
                           ease: HERO_NAME_TEXT_BLEND_EASE,
                         }}
                       >
-                        <div className="flex items-center justify-center">
-                          <IconPencil className="h-[78%] w-[78%] text-current" fill="currentColor" stroke={1.1} />
-                        </div>
-                        <div className="flex items-center justify-center border-l-4 border-current">
-                          <IconDeviceDesktop className="h-[78%] w-[78%] text-current" fill="currentColor" stroke={1.1} />
-                        </div>
-                        <div className="flex items-center justify-center border-l-4 border-current">
-                          <IconVideo className="h-[78%] w-[78%] text-current" fill="currentColor" stroke={1.1} />
-                        </div>
+                        {renderAccentIconStrip()}
                       </motion.div>
                     </>
                   )}
@@ -1475,11 +1636,11 @@ const HeroNameReveal = ({
             </h1>
           </div>
           {/* Button — col 2, row 1, nudged inward from edge */}
-          <div className="col-start-2 row-start-1 self-end justify-self-end -translate-x-1 -translate-y-[0.56rem] pl-1.5 pr-1.5 max-md:hidden sm:-translate-x-1.5 sm:-translate-y-[0.56rem] sm:pl-5 sm:pr-4">{button}</div>
+          <div className="col-start-2 row-start-1 self-end justify-self-end -translate-x-1 -translate-y-[0.44rem] pl-1.5 pr-1.5 max-md:hidden sm:-translate-x-1.5 sm:-translate-y-[0.44rem] sm:pl-5 sm:pr-4">{button}</div>
           {/* Tagline rectangle — col 1, row 2, same width as name box */}
           <p
             ref={taglineRef}
-            className="col-start-1 row-start-2 m-0 mt-0 w-full rounded-[11px] border border-transparent bg-transparent pl-[1.16rem] pr-3 py-[0.4rem] max-[639px]:box-border max-[400px]:text-[0.74rem] font-display text-[clamp(0.8rem,2.25vw,0.92rem)] font-medium uppercase leading-snug tracking-eyebrow-tight text-white max-md:text-center sm:mt-0 sm:rounded-xl sm:pl-[1.42rem] sm:pr-4 sm:py-[0.45rem] sm:text-[clamp(0.8rem,2.25vw,0.92rem)]"
+            className="col-start-1 row-start-2 m-0 mt-0 w-full translate-x-px rounded-[11px] border border-transparent bg-transparent pl-[1.16rem] pr-3 py-[0.4rem] max-[639px]:box-border max-[400px]:text-[0.74rem] font-display text-[clamp(0.8rem,2.25vw,0.92rem)] font-medium uppercase leading-snug tracking-[0.085em] text-white max-md:text-center sm:mt-0 sm:rounded-xl sm:pl-[1.42rem] sm:pr-4 sm:py-[0.45rem] sm:text-[clamp(0.8rem,2.25vw,0.92rem)]"
           >
             <motion.span
               className="block"
@@ -1488,7 +1649,7 @@ const HeroNameReveal = ({
               transition={textEntranceTransition}
             >
               <HeroNameRainbowFade
-                text="Writer · digital media · narrative systems"
+                text="Writer · content production · social media"
                 step={step}
                 reduceMotion={reduceMotion}
                 block
@@ -2019,14 +2180,14 @@ const Hero = ({
                       <motion.button
                         type="button"
                         onClick={onStartClick}
-                        className="playstore-button playstore-button--primary box-border !min-h-0 h-[calc(clamp(2.28rem,8.85vw,5.95rem)*0.78)] max-h-[4.85rem] items-center px-3 !py-0 max-[639px]:max-w-none max-[639px]:px-2.5 sm:px-5 md:px-8 [&_.texts]:text-[clamp(0.76rem,1.45vw,0.92rem)] [&_.texts]:tracking-[0.07em] max-[639px]:[&_.texts]:gap-1 max-[639px]:[&_.texts]:text-[0.68rem] max-[639px]:[&_.texts]:tracking-[0.04em] sm:[&_.texts]:text-[clamp(0.84rem,1.7vw,1rem)] sm:[&_.texts]:tracking-[0.1em] md:[&_.texts]:text-[clamp(0.9rem,1.55vw,1.08rem)]"
+                        className="playstore-button playstore-button--primary box-border !min-h-0 h-[calc(clamp(2.28rem,8.85vw,5.95rem)*0.78)] max-h-[4.85rem] items-center px-3 !py-0 max-[639px]:max-w-none max-[639px]:px-2.5 sm:px-5 md:px-8 [&_.texts]:text-[clamp(0.82rem,1.58vw,0.97rem)] [&_.texts]:tracking-[0.085em] max-[639px]:[&_.texts]:gap-1 max-[639px]:[&_.texts]:text-[0.74rem] sm:[&_.texts]:text-[clamp(0.9rem,1.82vw,1.05rem)] md:[&_.texts]:text-[clamp(0.96rem,1.68vw,1.12rem)]"
                         whileHover={{ y: -1 }}
                         whileTap={TAP}
                         transition={SPRING.ui}
                       >
                         <span className="texts inline-flex items-center gap-2 max-[639px]:gap-1">
                           PORTFOLIO
-                          <ArrowRight className="h-[1.05em] w-[1.05em] max-h-[1.25rem] max-w-[1.25rem] shrink-0 max-[639px]:h-[0.9em] max-[639px]:w-[0.9em] sm:max-h-[1.35rem] sm:max-w-[1.35rem]" aria-hidden />
+                          <ArrowRight className="h-[1.1em] w-[1.1em] max-h-[1.32rem] max-w-[1.32rem] shrink-0 max-[639px]:h-[0.95em] max-[639px]:w-[0.95em] sm:max-h-[1.42rem] sm:max-w-[1.42rem]" aria-hidden />
                         </span>
                       </motion.button>
                     </motion.div>
