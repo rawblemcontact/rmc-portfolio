@@ -1027,9 +1027,23 @@ const HERO_VIDEO_CONTENT_FADE_DUR_S = 0.43;
 const HERO_VIDEO_GLOW_DELAY_S = 0.28;
 const HERO_VIDEO_GLOW_DUR_S = 0.72;
 const HERO_VIDEO_GLOW_PEAK = 0.55;
+/** Subtle edge darkening on hero video card media. */
+const HERO_VIDEO_CARD_VIGNETTE =
+  "radial-gradient(ellipse 74% 70% at 50% 48%, transparent 26%, rgba(0,0,0,0.4) 100%)";
 /** Hero video card width — matches name line span (58rem column + line bleed). */
 const HERO_VIDEO_CARD_WIDTH_CLASS =
   "max-[639px]:w-full max-[639px]:max-w-full w-[calc(min(100%,58rem)-8.4rem+2*max(1.25rem,min(4vw,2.5rem)))] sm:w-[calc(min(100%,58rem)-8.9rem+2*max(1.25rem,min(4vw,2.5rem)))]";
+/** Mobile hero name — desktop-like lockup; w-fit so accent ends at MCLAUGHLIN edge. */
+const HERO_NAME_MOBILE_SHELL_CLASS =
+  "max-md:mx-auto max-md:w-full max-md:max-w-full max-md:items-center";
+const HERO_NAME_MOBILE_NAME_BOX_CLASS = "max-md:w-fit max-md:max-w-full";
+const HERO_NAME_MOBILE_TAGLINE_CLASS =
+  "max-md:mt-0 max-md:w-full max-md:max-w-full max-md:self-center max-md:translate-x-[1.5px] max-md:pl-0 max-md:pr-0 max-md:text-center max-md:tracking-[0.068em] max-md:text-[clamp(0.62rem,2.7vw,0.8rem)]";
+const HERO_NAME_MOBILE_DISPLAY_FONT_CLASS =
+  "max-md:text-[clamp(2.95rem,12.6vw,4.4rem)] max-md:max-[400px]:text-[clamp(2.75rem,11.6vw,4.4rem)]";
+const HERO_NAME_MOBILE_PORTFOLIO_BUTTON_CLASS =
+  "max-md:h-[calc(clamp(2.95rem,12.6vw,4.4rem)*0.9)] max-md:max-h-[4.4rem] max-md:px-4 max-md:[&_.texts]:gap-1.5 max-md:[&_.texts]:text-[clamp(0.8rem,3.1vw,0.92rem)]";
+const HERO_MOBILE_TEXT_BLOCK_OFFSET_CLASS = "max-md:translate-y-0 max-md:pt-2";
 const HERO_NAME_SWEEP_MS = 700;
 const HERO_NAME_SPLIT_MS = 600;
 /** Rainbow layers — main-menu section accents (NAV order), staggered outside white frame. */
@@ -1061,8 +1075,8 @@ const HERO_NAME_TEXT_RAINBOW_BLEND_TIMES = [0, 0.12, 0.26, 0.42, 0.58, 0.74, 0.8
 const HERO_NAME_TEXT_WHITE_BLEND_OPACITY = [0, 0.1, 0.32, 0.58, 0.78, 0.9, 0.96, 0.99, 1] as const;
 const HERO_NAME_TEXT_WHITE_BLEND_TIMES = [0, 0.14, 0.3, 0.48, 0.66, 0.8, 0.9, 0.96, 1] as const;
 const HERO_NAME_TEXT_MASTER_FADE_MS = 80;
-/** Entrance slide offset (reveal step) — tagline from below. */
-const HERO_TAGLINE_ENTRANCE_SLIDE_Y = "0.36em";
+/** Settled optical nudge — tagline up without shifting hero layout metrics. */
+const HERO_TAGLINE_OPTICAL_OFFSET_Y = -2;
 /** Optical crop — trims right edge of final "E" in ROBBIE (px). */
 const HERO_ROBBIE_E_RIGHT_CROP_PX = 5;
 
@@ -1086,7 +1100,6 @@ const HeroNameRainbowGlyphs = ({
     <>
       {text.slice(0, -1)}
       <span
-        className="inline-block overflow-hidden align-baseline"
         style={{
           clipPath: `inset(0 ${eRightCropPx}px 0 0)`,
           marginRight: `-${eRightCropPx}px`,
@@ -1470,11 +1483,6 @@ const HeroNameReveal = ({
 
   const linesVisible = step === "sweep" || step === "reveal";
   const linesSplit = step === "reveal" || step === "done";
-  const textEntranceSettled = step === "reveal" || step === "done";
-  const textEntranceTransition = {
-    duration: reduceMotion ? 0 : HERO_NAME_TEXT_ENTRANCE_MS / 1000,
-    ease: HERO_NAME_TEXT_BLEND_EASE,
-  };
   const auxVisible = step === "reveal" || step === "done";
   const auxRainbowLayerDurS = HERO_NAME_TEXT_RAINBOW_LAYER_MS / 1000;
   const auxWhiteLayerDurS = HERO_NAME_TEXT_WHITE_LAYER_MS / 1000;
@@ -1554,16 +1562,17 @@ const HeroNameReveal = ({
             easeOutExpo={easeOutExpo}
           />
         ))}
+        <div className={`max-md:flex max-md:flex-col ${HERO_NAME_MOBILE_SHELL_CLASS}`}>
         {/* Grid: col-1 = name box + tagline, col-2 = button pinned far-right at MCLAUGHLIN baseline */}
-        <div className="relative z-[1] grid w-full grid-cols-[auto_1fr] items-end max-md:flex max-md:flex-col max-md:items-center">
+        <div className="relative z-[1] grid w-full grid-cols-[auto_1fr] items-end max-md:flex max-md:w-fit max-md:max-w-full max-md:flex-col max-md:items-center">
           {/* Name rectangle — col 1, row 1 */}
-          <div className="col-start-1 row-start-1 w-fit rounded-[11px] border border-transparent bg-transparent px-3 pt-3 pb-[0.234375rem] sm:rounded-xl sm:px-4 sm:pt-3.5 sm:pb-[0.28125rem] max-md:text-center">
-            <h1 className="relative m-0 max-w-full font-display [font-kerning:none] max-md:flex max-md:flex-wrap max-md:items-baseline max-md:justify-center max-md:gap-x-[0.35em]">
-              {/* ROBBIE row — name left, white techwear accent fills remaining space */}
-              <div className="flex w-full items-end gap-2 sm:gap-3 max-md:contents">
+          <div className={`col-start-1 row-start-1 w-fit min-w-0 rounded-[11px] border border-transparent bg-transparent px-3 pt-3 pb-[0.234375rem] sm:rounded-xl sm:px-4 sm:pt-3.5 sm:pb-[0.28125rem] max-md:px-0 max-md:pt-0 ${HERO_NAME_MOBILE_NAME_BOX_CLASS}`}>
+            <h1 className="relative m-0 w-full max-w-full min-w-0 font-display [font-kerning:none]">
+              {/* ROBBIE row — name left, accent strip fills remaining horizontal space (desktop parity). */}
+              <div className="flex w-full min-w-0 items-end gap-2 sm:gap-3 max-md:gap-1.5">
                 <span
                   ref={robbieRef}
-                  className="relative shrink-0 text-[clamp(2.28rem,8.85vw,5.95rem)] max-[400px]:text-[clamp(2rem,8.1vw,5.95rem)] font-black uppercase leading-[0.8] tracking-[-0.036em] text-mono-0 max-md:inline-block max-md:w-auto sm:leading-[0.78]"
+                  className={`relative shrink-0 text-[clamp(2.28rem,8.85vw,5.95rem)] max-[400px]:text-[clamp(2rem,8.1vw,5.95rem)] font-black uppercase leading-[0.8] tracking-[-0.036em] text-mono-0 sm:leading-[0.78] ${HERO_NAME_MOBILE_DISPLAY_FONT_CLASS}`}
                 >
                   <HeroNameRainbowFade
                     text="ROBBIE"
@@ -1574,7 +1583,7 @@ const HeroNameReveal = ({
                 </span>
                 <motion.div
                   aria-hidden
-                  className="relative h-full flex-1 self-end mr-[0.18rem] overflow-hidden rounded-[7px] sm:rounded-[9px] max-md:hidden"
+                  className={`relative h-full min-w-0 flex-1 self-end mr-[0.18rem] overflow-hidden rounded-[7px] border-2 border-white text-[clamp(2.28rem,8.85vw,5.95rem)] sm:rounded-[9px] max-md:mr-0 ${HERO_NAME_MOBILE_DISPLAY_FONT_CLASS}`}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: reduceMotion ? 1 : auxVisible ? 1 : 0 }}
                   transition={{
@@ -1585,12 +1594,14 @@ const HeroNameReveal = ({
                   style={{
                     height: "calc(1.04cap - 0.02em + 1px)",
                     marginBottom: "0.02em",
-                    fontSize: "clamp(2.28rem, 8.85vw, 5.95rem)",
-                    backgroundColor: "#ffffff",
                   }}
                 >
+                  <div
+                    className="absolute inset-0 overflow-hidden"
+                    style={{ clipPath: "inset(0 1px 0 1px)" }}
+                  >
                   {reduceMotion ? (
-                    <div className="absolute inset-0 text-black">{renderAccentIconStrip()}</div>
+                    <div className="absolute inset-0 bg-black text-white">{renderAccentIconStrip()}</div>
                   ) : (
                     <>
                       {HERO_NAME_RAINBOW_MENU_IDS.map((id, index) => (
@@ -1611,7 +1622,7 @@ const HeroNameReveal = ({
                         </motion.div>
                       ))}
                       <motion.div
-                        className="absolute inset-0 bg-white text-black"
+                        className="absolute inset-0 bg-black text-white"
                         initial={false}
                         animate={{ opacity: !auxVisible ? 0 : [...HERO_NAME_TEXT_WHITE_BLEND_OPACITY] }}
                         transition={{
@@ -1625,11 +1636,12 @@ const HeroNameReveal = ({
                       </motion.div>
                     </>
                   )}
+                  </div>
                 </motion.div>
               </div>
               <span
                 ref={mclaughlinRef}
-                className="block text-[clamp(2.28rem,8.85vw,5.95rem)] max-[400px]:text-[clamp(2rem,8.1vw,5.95rem)] font-black uppercase leading-[0.8] tracking-[-0.036em] text-mono-0 mt-[0.04em] max-md:inline-block max-md:w-auto max-md:mt-0 sm:leading-[0.78]"
+                className={`block text-[clamp(2.28rem,8.85vw,5.95rem)] max-[400px]:text-[clamp(2rem,8.1vw,5.95rem)] font-black uppercase leading-[0.8] tracking-[-0.036em] text-mono-0 mt-[0.04em] sm:leading-[0.78] ${HERO_NAME_MOBILE_DISPLAY_FONT_CLASS}`}
               >
                 <HeroNameRainbowFade text="MCLAUGHLIN" step={step} reduceMotion={reduceMotion} />
               </span>
@@ -1640,13 +1652,12 @@ const HeroNameReveal = ({
           {/* Tagline rectangle — col 1, row 2, same width as name box */}
           <p
             ref={taglineRef}
-            className="col-start-1 row-start-2 m-0 mt-0 w-full translate-x-px rounded-[11px] border border-transparent bg-transparent pl-[1.16rem] pr-3 py-[0.4rem] max-[639px]:box-border max-[400px]:text-[0.74rem] font-display text-[clamp(0.8rem,2.25vw,0.92rem)] font-medium uppercase leading-snug tracking-[0.085em] text-white max-md:text-center sm:mt-0 sm:rounded-xl sm:pl-[1.42rem] sm:pr-4 sm:py-[0.45rem] sm:text-[clamp(0.8rem,2.25vw,0.92rem)]"
+            className={`col-start-1 row-start-2 m-0 mt-0 w-full translate-x-px rounded-[11px] border border-transparent bg-transparent pl-[1.16rem] pr-3 py-[0.4rem] max-[639px]:box-border max-[400px]:text-[0.74rem] font-display text-[clamp(0.8rem,2.25vw,0.92rem)] font-medium uppercase leading-snug tracking-[0.085em] text-white sm:mt-0 sm:rounded-xl sm:pl-[1.42rem] sm:pr-4 sm:py-[0.45rem] sm:text-[clamp(0.8rem,2.25vw,0.92rem)] ${HERO_NAME_MOBILE_TAGLINE_CLASS}`}
           >
             <motion.span
               className="block"
               initial={false}
-              animate={{ y: textEntranceSettled ? 0 : HERO_TAGLINE_ENTRANCE_SLIDE_Y }}
-              transition={textEntranceTransition}
+              animate={{ y: HERO_TAGLINE_OPTICAL_OFFSET_Y }}
             >
               <HeroNameRainbowFade
                 text="Writer · content production · social media"
@@ -1664,6 +1675,7 @@ const HeroNameReveal = ({
             })}
           </div>
         )}
+        </div>
       </span>
     </div>
   );
@@ -2055,7 +2067,7 @@ const Hero = ({
             }}
           />
           <motion.div
-            className="relative z-[1] mx-auto w-full h-[clamp(200px,min(52vh,calc(100svh-11rem-max(1rem,env(safe-area-inset-top,0px)))),620px)] md:max-lg:h-[clamp(200px,min(44vh,calc(100svh-14rem-max(1rem,env(safe-area-inset-top,0px)))),500px)] lg:h-[clamp(240px,min(54vh,calc(100svh-11.5rem-max(1.5rem,env(safe-area-inset-top,0px)))),680px)] xl:h-[clamp(260px,min(56vh,calc(100svh-12rem-max(2rem,env(safe-area-inset-top,0px)))),760px)] overflow-hidden rounded-[11px] sm:rounded-xl border border-white/[0.3] bg-black"
+            className="relative z-[1] mx-auto w-full h-[clamp(200px,min(52vh,calc(100svh-11rem-max(1rem,env(safe-area-inset-top,0px)))),620px)] md:max-lg:h-[clamp(200px,min(44vh,calc(100svh-14rem-max(1rem,env(safe-area-inset-top,0px)))),500px)] lg:h-[clamp(240px,min(54vh,calc(100svh-11.5rem-max(1.5rem,env(safe-area-inset-top,0px)))),680px)] xl:h-[clamp(260px,min(56vh,calc(100svh-12rem-max(2rem,env(safe-area-inset-top,0px)))),760px)] overflow-hidden rounded-[11px] sm:rounded-xl border border-white bg-black"
             style={{
               boxShadow:
                 "0 36px 88px rgba(0,0,0,0.6), inset 0 -40px 70px rgba(0,0,0,0.52), 0 0 28px 4px rgba(255,255,255,0.04)",
@@ -2143,17 +2155,22 @@ const Hero = ({
               </motion.article>
             </AnimatePresence>
             </motion.div>
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-0 z-[2]"
+              style={{ background: HERO_VIDEO_CARD_VIGNETTE }}
+            />
 
           </motion.div>
           </motion.div>
           )}
           </div>
         </div>
-        <div className="relative z-40 flex min-h-0 flex-col items-center justify-center overflow-visible pt-0 max-lg:justify-start max-lg:pt-2 max-md:justify-center max-md:pt-0 md:max-lg:justify-center md:max-lg:pt-0">
+        <div className="relative z-40 flex min-h-0 flex-col items-center justify-center overflow-visible pt-0 max-lg:justify-start max-lg:pt-2 max-md:justify-start max-md:pt-1 md:max-lg:justify-center md:max-lg:pt-0">
           {/* Y-transform wrapper: starts above final position during Phase 1,
               settles when sliderPhaseActive fires with slider open */}
           <motion.div
-            className="mx-auto flex h-full w-full max-w-[1220px] flex-col items-center justify-center gap-0 px-1 py-2 max-lg:justify-start max-lg:py-1 max-md:justify-center max-md:py-2 sm:px-2 sm:py-2 md:max-lg:justify-center md:max-lg:py-2 lg:py-3"
+            className="mx-auto flex h-full w-full max-w-[1220px] flex-col items-center justify-center gap-0 px-1 py-2 max-lg:justify-start max-lg:py-1 max-md:justify-start max-md:py-2 sm:px-2 sm:py-2 md:max-lg:justify-center md:max-lg:py-2 lg:py-3"
             initial={{ y: heroPhase1RevealY }}
             animate={{ y: sliderPhaseActive ? heroNameSettleY : heroPhase1RevealY }}
             transition={
@@ -2164,9 +2181,9 @@ const Hero = ({
           >
             <div
               ref={heroInViewRef}
-              className="-translate-y-3 mx-auto flex w-full min-w-0 max-w-[min(100%,58rem)] flex-col px-1 max-md:-translate-y-[94px] max-[639px]:px-0.5 sm:px-2 md:max-lg:translate-y-3 lg:[@media(min-width:744px)_and_(max-width:1366px)]:-translate-y-6"
+              className={`-translate-y-3 mx-auto flex w-full min-w-0 max-w-[min(100%,58rem)] flex-col px-1 max-md:px-3 ${HERO_MOBILE_TEXT_BLOCK_OFFSET_CLASS} sm:px-2 md:max-lg:translate-y-3 lg:[@media(min-width:744px)_and_(max-width:1366px)]:-translate-y-6`}
             >
-              <div className="w-full min-w-0 text-left max-md:text-center">
+              <div className="w-full min-w-0 text-left max-md:flex max-md:justify-center">
                 <HeroNameReveal
                   heroReady={heroReady}
                   reduceMotion={reduceMotion}
@@ -2180,14 +2197,14 @@ const Hero = ({
                       <motion.button
                         type="button"
                         onClick={onStartClick}
-                        className="playstore-button playstore-button--primary box-border !min-h-0 h-[calc(clamp(2.28rem,8.85vw,5.95rem)*0.78)] max-h-[4.85rem] items-center px-3 !py-0 max-[639px]:max-w-none max-[639px]:px-2.5 sm:px-5 md:px-8 [&_.texts]:text-[clamp(0.82rem,1.58vw,0.97rem)] [&_.texts]:tracking-[0.085em] max-[639px]:[&_.texts]:gap-1 max-[639px]:[&_.texts]:text-[0.74rem] sm:[&_.texts]:text-[clamp(0.9rem,1.82vw,1.05rem)] md:[&_.texts]:text-[clamp(0.96rem,1.68vw,1.12rem)]"
+                        className={`playstore-button playstore-button--primary box-border !min-h-0 h-[calc(clamp(2.28rem,8.85vw,5.95rem)*0.78)] max-h-[4.85rem] items-center px-3 !py-0 max-[639px]:max-w-none max-[639px]:px-2.5 sm:px-5 md:px-8 [&_.texts]:text-[clamp(0.82rem,1.58vw,0.97rem)] [&_.texts]:tracking-[0.085em] max-[639px]:[&_.texts]:gap-1 max-[639px]:[&_.texts]:text-[0.74rem] sm:[&_.texts]:text-[clamp(0.9rem,1.82vw,1.05rem)] md:[&_.texts]:text-[clamp(0.96rem,1.68vw,1.12rem)] ${HERO_NAME_MOBILE_PORTFOLIO_BUTTON_CLASS}`}
                         whileHover={{ y: -1 }}
                         whileTap={TAP}
                         transition={SPRING.ui}
                       >
                         <span className="texts inline-flex items-center gap-2 max-[639px]:gap-1">
                           PORTFOLIO
-                          <ArrowRight className="h-[1.1em] w-[1.1em] max-h-[1.32rem] max-w-[1.32rem] shrink-0 max-[639px]:h-[0.95em] max-[639px]:w-[0.95em] sm:max-h-[1.42rem] sm:max-w-[1.42rem]" aria-hidden />
+                          <ArrowRight className="h-[1.1em] w-[1.1em] max-h-[1.32rem] max-w-[1.32rem] shrink-0 max-md:h-[1.08em] max-md:w-[1.08em] max-md:max-h-[1.38rem] max-md:max-w-[1.38rem] max-[639px]:h-[0.95em] max-[639px]:w-[0.95em] sm:max-h-[1.42rem] sm:max-w-[1.42rem]" aria-hidden />
                         </span>
                       </motion.button>
                     </motion.div>
