@@ -726,6 +726,15 @@
     filter: none;
   }
 
+  /* PROJECTS carousel cards — solid fill, no glass blur */
+  #projects .project-card-surface {
+    background: #000;
+    background-image: none;
+    filter: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
   /* PROFILE parity: same glass tokens as `.profile-card-surface` */
   #skills .skills-card-surface {
     position: relative;
@@ -1172,6 +1181,7 @@
   .section-main-header-title,
   #profile .section-main-header-title,
   #projects .showcase-header-title-stack > .section-main-header-title,
+  #projects .showcase-header-title-rule > .section-main-header-title,
   #experience .nav-header .section-main-header-title,
   #skills .skills-header .section-main-header-title,
   #skills .skills-main-header-chrome .section-main-header-title,
@@ -1678,18 +1688,26 @@
     --showcase-lh-subhead: var(--section-subhead-lh);
   }
 
-  /* PROJECTS main → subhead + yellow rule (line spans subhead width) */
+  /* PROJECTS main title + yellow rule (line spans PROJECTS title width) */
   #projects .showcase-header-title-stack {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: var(--showcase-header-label-gap);
     width: 100%;
     max-width: 100%;
     min-width: 0;
   }
 
-  #projects .showcase-header-title-stack > .section-main-header-title {
+  #projects .showcase-header-title-rule {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: fit-content;
+    max-width: 100%;
+    gap: var(--showcase-header-line-gap);
+  }
+
+  #projects .showcase-header-title-rule > .section-main-header-title {
     margin: 0 0 0 -0.08em;
     padding: 0;
     width: auto;
@@ -1699,13 +1717,10 @@
     transform: translateY(-0.125rem);
   }
 
-  #projects .showcase-header-subhead-rule {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    width: fit-content;
-    max-width: 100%;
-    gap: var(--showcase-header-line-gap);
+  #projects .showcase-header-title-rule .showcase-main-accent-line {
+    margin-top: 0;
+    width: 100%;
+    min-width: 0;
   }
 
   #projects .showcase-header-subhead-rule .career-nav-section-title {
@@ -4480,6 +4495,12 @@
 }
 
 /* SLAYWIRE tagline suffix — hidden unless tablet portrait block below shows it */
+/* Carousel card tagline — descender room; font sizes from Home.tsx utilities. */
+#projects .project-card-tagline {
+  overflow: visible;
+  padding-bottom: 0.125rem;
+}
+
 #projects .project-card-tagline-tablet-portrait-suffix {
   display: none;
 }
@@ -4495,6 +4516,17 @@
   }
 }
 
+/* Carousel card height bump — FEATURED WRITING margin shrinks by the same amount (nothing else moves). */
+#projects {
+  --showcase-carousel-height-bump: 1.25rem;
+  /* Subhead + rule gap reclaimed by taller carousel cards (header shrinks, cards grow — FEATURED WRITING fixed). */
+  --showcase-subhead-reclaim: 1.5rem;
+}
+
+#projects .projects-showcase-featured-block {
+  margin-top: max(0px, calc(var(--slide-gap, 0.875rem) - var(--showcase-carousel-height-bump))) !important;
+}
+
 /* ─── PROJECTS — iPad portrait: taller cards + equal vertical gap around four-up row ─── */
 @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
   #projects {
@@ -4504,7 +4536,7 @@
   }
 
   #projects [data-carousel-card] {
-    height: min(400px, 57svh) !important;
+    height: min(444px, 57svh) !important;
   }
 
   /* Nudge header + four cards down (does not affect the four-card edge gaps). */
@@ -4517,17 +4549,14 @@
     margin-bottom: 0 !important;
   }
 
-  #projects .showcase-header-title-stack > .section-main-header-title {
+  #projects .showcase-header-title-rule > .section-main-header-title {
     transform: translate(1px, -0.125rem) !important;
   }
 
-  #projects .showcase-header-subhead-rule .career-nav-section-title {
-    transform: translateY(-2px);
-  }
-
-  /* Yellow rule — align start with “D” in DIGITAL MEDIA (overrides max-lg:left-0.5) */
-  #projects .showcase-main-accent-line > span {
-    left: -1px !important;
+  /* Yellow rule — spans PROJECTS title width (title-rule w-fit) */
+  #projects .showcase-header-title-rule .showcase-main-accent-line > span {
+    left: 0 !important;
+    right: 0 !important;
   }
 
   /* Strip carousel wrapper spacing so cluster gap is the only space above cards */
@@ -4540,9 +4569,12 @@
     padding-bottom: 0 !important;
   }
 
-  /* Gap below four cards — nudged up to match optical gap above */
+  /* Gap below four cards — nudged up to match optical gap above; subtract carousel height bump */
   #projects .projects-showcase-featured-block {
-    margin-top: calc(var(--projects-four-cards-gap) + 0.25rem) !important;
+    margin-top: max(
+      0px,
+      calc(var(--projects-four-cards-gap) + 0.25rem - var(--showcase-carousel-height-bump))
+    ) !important;
   }
 
   /* SLAYWIRE project detail — portrait: vertically center block (keep md grid + 16:9 hero) */

@@ -28,6 +28,12 @@ import React, {
 import { createPortal } from "react-dom";
 import { Button } from "../components/ui/button";
 import { FillIcon } from "../components/FillIcon";
+import {
+  HeroAccentLayoutDebugPanel,
+  type HeroAccentIconKey,
+  type HeroAccentLayoutControl,
+} from "../components/HeroAccentLayoutDebugPanel";
+import { usePortfolioDebugEnabled } from "../lib/portfolioDebugMode";
 import { UserFilledIcon } from "../components/icons/UserFilledIcon";
 import { DUR, EASE, HOVER, SHOWCASE_PDF_PROJECTS_FADE_OUT_S, SIDE_NAV_OVERLAY_FADE_S, SPRING, TAP } from "../lib/motion";
 import { 
@@ -1349,43 +1355,20 @@ function HeroAccentThirdIcon({ className }: { className?: string }) {
     >
       <path
         fill="currentColor"
-        d="m843.74 600c155.06 0 281.26-126.19 281.26-281.26 0-155.06-126.19-281.26-281.26-281.26-146.06 0-266.63 112.12-279.94 254.81-53.062-43.125-120-67.312-188.81-67.312-165.37 0-300 134.63-300 300 0 165.37 134.63 300 300 300 32.062 0 63.562-5.0625 93.75-15v165c0 41.438 33.562 75 75 75h236.06l106.88 107.06c3.5625 3.5625 8.4375 5.4375 13.312 5.4375 2.4375 0 4.875-0.375 7.125-1.5 7.125-2.8125 11.625-9.75 11.625-17.25v-93.75h37.5c41.438 0 75-33.562 75-75v-262.5c0-41.438-33.562-75-75-75h-303.19c12.188-30 19.312-61.875 21.375-94.125 48.562 36.75 107.25 56.625 169.31 56.625zm-468.74 112.5c-5.0625 0-9.9375-2.0625-13.312-5.625l-142.69-144.94c-42-42.75-42-112.12 0-154.69 20.438-20.812 47.625-32.25 76.5-32.25s56.25 11.438 76.688 32.25l2.8125 2.8125 2.8125-2.8125c20.438-20.812 47.625-32.25 76.688-32.25s56.062 11.438 76.5 32.25c42 42.562 42 111.94 0 154.69l-142.69 144.94c-3.375 3.5625-8.25 5.625-13.312 5.625zm468.74-637.5c134.44 0 243.74 109.31 243.74 243.74 0 134.43-109.31 243.74-243.74 243.74-64.5 0-124.87-24.75-170.63-69.75-6.375-61.312-32.062-119.62-72.938-165.74-0.1875-2.625-0.1875-5.4375-0.1875-8.25 0-134.44 109.31-243.74 243.74-243.74zm112.5 600c20.625 0 37.5 16.875 37.5 37.5v262.5c0 20.625-16.875 37.5-37.5 37.5h-56.25c-10.312 0-18.75 8.4375-18.75 18.75v67.312l-80.438-80.625c-3.5625-3.375-8.25-5.4375-13.312-5.4375h-243.74c-20.625 0-37.5-16.875-37.5-37.5v-262.5c0-20.625 16.875-37.5 37.5-37.5z"
-      />
-      <path
-        fill="currentColor"
-        d="m712.5 431.26h243.74c30.938 0 56.25-25.312 56.25-56.25v-75c0-30.938-25.312-56.25-56.25-56.25h-71.625l5.8125-35.25c3.1875-19.312-2.0625-38.812-14.812-53.812-12.562-14.812-31.125-23.438-50.625-23.438-7.125 0-13.5 3.9375-16.688 10.312l-51 102.19h-44.812c-20.625 0-37.5 16.875-37.5 37.5v112.5c0 20.625 16.875 37.5 37.5 37.5zm123-260.44c4.5 1.6875 8.4375 4.5 11.625 8.0625 5.4375 6.5625 7.6875 15.188 6.375 23.438l-9.5625 57.188c-0.9375 5.4375 0.75 10.875 4.3125 15.188 3.5625 4.125 8.8125 6.5625 14.25 6.5625h93.75c10.312 0 18.75 8.4375 18.75 18.75v75c0 10.312-8.4375 18.75-18.75 18.75h-168.74v-126.74z"
-      />
-      <path
-        fill="currentColor"
-        d="m581.26 768.74c0 10.312 8.4375 18.75 18.75 18.75h168.74c10.312 0 18.75-8.4375 18.75-18.75s-8.4375-18.75-18.75-18.75h-168.74c-10.312 0-18.75 8.4375-18.75 18.75z"
-      />
-      <path
-        fill="currentColor"
-        d="m581.26 843.74c0 10.312 8.4375 18.75 18.75 18.75h300c10.312 0 18.75-8.4375 18.75-18.75s-8.4375-18.75-18.75-18.75h-300c-10.312 0-18.75 8.4375-18.75 18.75z"
-      />
-      <path
-        fill="currentColor"
-        d="m900 900h-300c-10.312 0-18.75 8.4375-18.75 18.75s8.4375 18.75 18.75 18.75h300c10.312 0 18.75-8.4375 18.75-18.75s-8.4375-18.75-18.75-18.75z"
+        d="m311.47 243.75h73.488l-21.43 75h-73.484zm176.03 56.25v225h-131.25v67.238c0 12.004-4.7695 23.516-13.258 32.004-8.4883 8.4883-20 13.258-32.008 13.258-12.004 0-23.516-4.7695-32.004-13.258l-99.242-99.242h-48.488c-24.855-0.027344-48.684-9.9141-66.258-27.492-17.578-17.574-27.465-41.402-27.492-66.258v-300c0.027344-24.855 9.9141-48.684 27.492-66.258 17.574-17.578 41.402-27.465 66.258-27.492h450c24.855 0.027344 48.684 9.9141 66.258 27.492 17.578 17.574 27.465 41.402 27.492 66.258v37.5h-56.25c-34.797 0.042969-68.156 13.883-92.762 38.488s-38.445 57.965-38.488 92.762zm18.75-75c0.003906-4.9727-1.9727-9.7461-5.4883-13.262s-8.2891-5.4922-13.262-5.4883h-52.816l14.602-51.105c1.8164-6.4375 0.066406-13.352-4.5898-18.152-4.6562-4.8008-11.516-6.7578-18.004-5.1367-6.4883 1.6211-11.625 6.5742-13.477 13l-17.543 61.395h-73.488l14.602-51.105c1.8164-6.4375 0.066406-13.352-4.5898-18.152-4.6562-4.8008-11.516-6.7578-18.004-5.1367-6.4883 1.6211-11.625 6.5742-13.477 13l-17.543 61.395h-58.172c-6.6992 0-12.887 3.5742-16.238 9.375-3.3477 5.8008-3.3477 12.949 0 18.75 3.3516 5.8008 9.5391 9.375 16.238 9.375h47.457l-21.43 75h-63.527c-6.6992 0-12.887 3.5742-16.238 9.375-3.3477 5.8008-3.3477 12.949 0 18.75 3.3516 5.8008 9.5391 9.375 16.238 9.375h52.816l-14.602 51.105c-1.3594 4.7812-0.76562 9.9102 1.6484 14.258 2.418 4.3438 6.4609 7.5547 11.242 8.9219 1.6797 0.47266 3.418 0.71094 5.1641 0.71484 4.0703-0.007812 8.0312-1.3359 11.281-3.7891 3.25-2.457 5.6133-5.8984 6.7344-9.8164l17.543-61.395h73.488l-14.602 51.105c-1.3594 4.7812-0.76562 9.9102 1.6484 14.258 2.418 4.3438 6.4609 7.5547 11.242 8.9219 1.6797 0.47266 3.418 0.71094 5.1641 0.71484 4.0703-0.007812 8.0312-1.3359 11.281-3.7891 3.25-2.457 5.6133-5.8984 6.7344-9.8164l17.543-61.395h58.172c6.6992 0 12.887-3.5742 16.238-9.375 3.3477-5.8008 3.3477-12.949 0-18.75-3.3516-5.8008-9.5391-9.375-16.238-9.375h-47.457l21.43-75h63.527c4.9727 0.003906 9.7461-1.9727 13.262-5.4883s5.4922-8.2891 5.4883-13.262zm206.25 187.5v168.75h37.539l-0.039062-168.75zm243.75 18.75h-56.25c-6.4453 0-12.438-3.3086-15.871-8.7617-3.4297-5.457-3.8203-12.289-1.0312-18.102 16.809-35.047 15.309-65.094 6.3359-79.32-1.4805-2.3594-4.5234-6.3164-8.1836-6.3164-5.3477-0.47656-10.656 1.2812-14.668 4.8516-3.0352 3.5625-4.5195 8.1914-4.1172 12.855-0.76562 31.617-13.707 61.719-36.129 84.027-10.609 11.805-23.941 20.844-38.836 26.328v107.12c21.332 17.078 47.684 26.676 75 27.32h93.75c4.9727-0.003906 9.7383-1.9805 13.254-5.4961s5.4922-8.2812 5.4961-13.254v-112.5c-0.003906-4.9727-1.9805-9.7383-5.4961-13.254s-8.2812-5.4922-13.254-5.4961zm206.25-131.25v300c-0.027344 24.855-9.9141 48.684-27.492 66.258-17.574 17.578-41.402 27.465-66.258 27.492h-160.99l-99.242 99.242c-8.4883 8.4883-20 13.258-32.008 13.258-12.004 0-23.516-4.7695-32.004-13.258-8.4883-8.4883-13.258-20-13.258-32.004v-67.238h-112.5c-24.855-0.027344-48.684-9.9141-66.258-27.492-17.578-17.574-27.465-41.402-27.492-66.258v-300c0.027344-24.855 9.9141-48.684 27.492-66.258 17.574-17.578 41.402-27.465 66.258-27.492h450c24.855 0.027344 48.684 9.9141 66.258 27.492 17.578 17.574 27.465 41.402 27.492 66.258zm-150 150c-0.015625-14.914-5.9492-29.211-16.492-39.758-10.547-10.543-24.844-16.477-39.758-16.492h-28.949c10.523-29.098 8.3047-61.281-6.1172-88.66-8.2305-14.379-23.371-23.418-39.934-23.84-15.688-0.66016-30.918 5.3633-41.914 16.57-10.133 11.047-15.301 25.766-14.301 40.723-1.5977 21.242-10.809 41.188-25.945 56.176-3.7266 3.9297-7.8594 7.457-12.324 10.523-1.6875-8.5117-6.2734-16.18-12.977-21.691-6.7031-5.5156-15.109-8.5352-23.789-8.5508h-37.5c-9.9414 0.011719-19.473 3.9688-26.504 10.996-7.0273 7.0312-10.984 16.562-10.996 26.504v168.75c0.011719 9.9414 3.9688 19.473 10.996 26.504 7.0312 7.0273 16.562 10.984 26.504 10.996h37.5c7.1875-0.019531 14.219-2.1016 20.258-6.0039 6.0352-3.8984 10.824-9.4531 13.793-16 23.73 14.168 50.809 21.762 78.449 22.004h93.75c14.914-0.015625 29.211-5.9492 39.758-16.492 10.543-10.547 16.477-24.844 16.492-39.758zm-843.75 581.25c-12.613-0.023438-25.184-1.4062-37.5-4.125v69.75c0 23.445 12.508 45.109 32.812 56.832 20.305 11.723 45.32 11.723 65.625 0 20.305-11.723 32.812-33.387 32.812-56.832v-65.062c-6-0.375-12.375-0.5625-18.75-0.5625zm356.25-233.62v129.75c15.27-8.793 26.945-22.691 32.977-39.246 6.0312-16.555 6.0312-34.703 0-51.258-6.0312-16.555-17.707-30.453-32.977-39.246zm150 46.125h-56.25c-6.6992 0-12.887 3.5742-16.238 9.375-3.3477 5.8008-3.3477 12.949 0 18.75 3.3516 5.8008 9.5391 9.375 16.238 9.375h56.25c6.6992 0 12.887-3.5742 16.238-9.375 3.3477-5.8008 3.3477-12.949 0-18.75-3.3516-5.8008-9.5391-9.375-16.238-9.375zm5.9336 94.719-56.25-18.75c-4.7188-1.5859-9.875-1.2305-14.332 0.98828-4.457 2.2227-7.8477 6.125-9.4219 10.848-1.5781 4.7227-1.2109 9.8789 1.0195 14.328 2.2305 4.4531 6.1406 7.832 10.867 9.3984l56.25 18.75c6.3477 2.0977 13.332 0.66016 18.332-3.7773s7.2578-11.203 5.9258-17.754c-1.332-6.5547-6.0547-11.898-12.391-14.031zm-62.184-132.22c2.0156 0 4.0195-0.32812 5.9336-0.96875l56.25-18.75c4.7266-1.5664 8.6367-4.9453 10.867-9.3984 2.2305-4.4492 2.5977-9.6055 1.0195-14.328-1.5742-4.7227-4.9648-8.625-9.4219-10.848-4.457-2.2188-9.6133-2.5742-14.332-0.98828l-56.25 18.75c-5.6719 1.8984-10.102 6.3867-11.922 12.086-1.8164 5.6992-0.80859 11.926 2.7227 16.754 3.5273 4.832 9.1484 7.6914 15.133 7.6914zm-393.75 187.5v-262.5h-56.25c-46.891 0-90.219 25.016-113.66 65.625-23.449 40.609-23.449 90.641 0 131.25 23.445 40.609 66.773 65.625 113.66 65.625zm248.84-355.48c-3.9336-1.0938-8.1172-0.88281-11.922 0.59766-3.8086 1.4844-7.0312 4.1562-9.1914 7.6211-2.0312 3.3164-50.113 77.859-190.23 84.145v263.73c140.11 6.2852 188.19 80.824 190.17 84.035v-0.003906c2.8359 4.7227 7.5977 7.957 13.031 8.8516s10.984-0.64062 15.18-4.2031c4.1992-3.5625 6.6172-8.793 6.6172-14.297v-412.5c-0.007812-4.0742-1.3477-8.0391-3.8125-11.281-2.4648-3.2461-5.9219-5.5977-9.8477-6.6992z"
       />
     </svg>
   );
 }
-
-type HeroAccentIconKey = "first" | "second" | "third";
-type HeroAccentLayoutControl = {
-  sizePct: number;
-  offsetX: number;
-  offsetY: number;
-};
 
 /** Baseline box in each accent cell; `sizePct` scales relative to this. */
 const HERO_ACCENT_BASELINE_PCT = 78;
 
 /** Locked hero accent layout — sizePct compensates for each icon's intrinsic SVG scale. */
 const HERO_ACCENT_LAYOUT: Record<HeroAccentIconKey, HeroAccentLayoutControl> = {
-  first: { sizePct: 86, offsetX: -1, offsetY: 1 },
-  second: { sizePct: 78, offsetX: 2, offsetY: 2 },
-  third: { sizePct: 83, offsetX: 0, offsetY: 1 },
+  first: { sizePct: 88, offsetX: -1, offsetY: 0 },
+  second: { sizePct: 80, offsetX: 1, offsetY: 0 },
+  third: { sizePct: 74, offsetX: 0, offsetY: 0 },
 };
 
 const HERO_ACCENT_ICON_KEYS: HeroAccentIconKey[] = ["first", "second", "third"];
@@ -1406,11 +1389,15 @@ const HeroNameReveal = ({
   const mclaughlinRef = useRef<HTMLSpanElement>(null);
   const taglineRef = useRef<HTMLParagraphElement>(null);
   const [step, setStep] = useState<HeroNameRevealStep>("hidden");
+  const [accentDebugControls, setAccentDebugControls] = useState<
+    Record<HeroAccentIconKey, HeroAccentLayoutControl>
+  >(() => ({ ...HERO_ACCENT_LAYOUT }));
   const [metrics, setMetrics] = useState<HeroNameRevealMetrics>({
     centerLineTop: 0,
     topLineTop: 0,
     bottomLineTop: 0,
   });
+  const portfolioDebugEnabled = usePortfolioDebugEnabled();
 
   const easeInOutExpo: [number, number, number, number] = [0.87, 0, 0.13, 1];
   const easeOutExpo: [number, number, number, number] = [0.16, 1, 0.3, 1];
@@ -1486,10 +1473,25 @@ const HeroNameReveal = ({
   const auxVisible = step === "reveal" || step === "done";
   const auxRainbowLayerDurS = HERO_NAME_TEXT_RAINBOW_LAYER_MS / 1000;
   const auxWhiteLayerDurS = HERO_NAME_TEXT_WHITE_LAYER_MS / 1000;
+  const activeAccentLayout = portfolioDebugEnabled ? accentDebugControls : HERO_ACCENT_LAYOUT;
+
+  const handleAccentDebugChange = useCallback(
+    (iconKey: HeroAccentIconKey, patch: Partial<HeroAccentLayoutControl>) => {
+      setAccentDebugControls((prev) => ({
+        ...prev,
+        [iconKey]: { ...prev[iconKey], ...patch },
+      }));
+    },
+    [],
+  );
+
+  const handleAccentDebugReset = useCallback(() => {
+    setAccentDebugControls({ ...HERO_ACCENT_LAYOUT });
+  }, []);
 
   const renderAccentIconCell = useCallback(
     (iconKey: HeroAccentIconKey) => {
-      const control = HERO_ACCENT_LAYOUT[iconKey];
+      const control = activeAccentLayout[iconKey];
       const IconComponent =
         iconKey === "first" ? HeroAccentFirstIcon : iconKey === "second" ? HeroAccentSecondIcon : HeroAccentThirdIcon;
       const sizeScale = control.sizePct / HERO_ACCENT_BASELINE_PCT;
@@ -1510,7 +1512,7 @@ const HeroNameReveal = ({
         </div>
       );
     },
-    [],
+    [activeAccentLayout],
   );
 
   const renderAccentIconStrip = useCallback(
@@ -1531,6 +1533,17 @@ const HeroNameReveal = ({
 
   return (
     <div className="relative m-0 w-full max-w-full overflow-visible font-display [font-kerning:none]">
+      {portfolioDebugEnabled &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <HeroAccentLayoutDebugPanel
+            controls={accentDebugControls}
+            defaults={HERO_ACCENT_LAYOUT}
+            onChange={handleAccentDebugChange}
+            onReset={handleAccentDebugReset}
+          />,
+          document.body,
+        )}
       <span
         ref={containerRef}
         className="relative block w-full overflow-visible"
@@ -2197,7 +2210,7 @@ const Hero = ({
                       <motion.button
                         type="button"
                         onClick={onStartClick}
-                        className={`playstore-button playstore-button--primary box-border !min-h-0 h-[calc(clamp(2.28rem,8.85vw,5.95rem)*0.78)] max-h-[4.85rem] items-center px-3 !py-0 max-[639px]:max-w-none max-[639px]:px-2.5 sm:px-5 md:px-8 [&_.texts]:text-[clamp(0.82rem,1.58vw,0.97rem)] [&_.texts]:tracking-[0.085em] max-[639px]:[&_.texts]:gap-1 max-[639px]:[&_.texts]:text-[0.74rem] sm:[&_.texts]:text-[clamp(0.9rem,1.82vw,1.05rem)] md:[&_.texts]:text-[clamp(0.96rem,1.68vw,1.12rem)] ${HERO_NAME_MOBILE_PORTFOLIO_BUTTON_CLASS}`}
+                        className={`playstore-button playstore-button--primary box-border !border-2 !min-h-0 h-[calc(clamp(2.28rem,8.85vw,5.95rem)*0.78)] max-h-[4.85rem] items-center px-3 !py-0 max-[639px]:max-w-none max-[639px]:px-2.5 sm:px-5 md:px-8 [&_.texts]:text-[clamp(0.82rem,1.58vw,0.97rem)] [&_.texts]:tracking-[0.085em] max-[639px]:[&_.texts]:gap-1 max-[639px]:[&_.texts]:text-[0.74rem] sm:[&_.texts]:text-[clamp(0.9rem,1.82vw,1.05rem)] md:[&_.texts]:text-[clamp(0.96rem,1.68vw,1.12rem)] ${HERO_NAME_MOBILE_PORTFOLIO_BUTTON_CLASS}`}
                         whileHover={{ y: -1 }}
                         whileTap={TAP}
                         transition={SPRING.ui}
@@ -3549,9 +3562,32 @@ const DETAIL_HERO_MEDIA_FADE_EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
 /** Align copy schedule with hero fade: ~double-rAF after morph before opacity transition (ms from morph end). */
 const DETAIL_HERO_FADE_START_RAF_PAD_MS = 40;
 
-/** Match showcase carousel card height (same as `motion.button` project cards). Capped with svh so SHOWCASE + FEATURED fit one screen with bottom gutter ? no scroll. */
+/** Match detail hero / FLIP anchor height. Carousel four-up cards use SHOWCASE_CAROUSEL_CARD_H (+bump, gap-compensated). */
 const DETAIL_CARD_H =
-  "h-[min(280px,45svh)] sm:h-[min(308px,48svh)] md:h-[min(328px,50svh)] lg:h-[min(352px,52svh)] xl:h-[min(368px,54svh)] 2xl:h-[min(384px,56svh)]";
+  "h-[min(220px,36svh)] sm:h-[min(244px,40svh)] md:h-[min(260px,42svh)] lg:h-[min(276px,44svh)] xl:h-[min(290px,46svh)] 2xl:h-[min(304px,48svh)]";
+/** Four-up carousel — +1.25rem vs DETAIL_CARD_H + --showcase-subhead-reclaim (subhead removed; cards grow upward). */
+const SHOWCASE_CAROUSEL_CARD_H =
+  "h-[min(264px,36svh)] sm:h-[min(288px,40svh)] md:h-[min(304px,42svh)] lg:h-[min(320px,44svh)] xl:h-[min(334px,46svh)] 2xl:h-[min(348px,48svh)]";
+/** DESCRIPTION SECTION — black panel + title/tagline (bottom third of each showcase card). */
+const PROJECT_CARD_DESCRIPTION_SECTION =
+  "absolute inset-x-0 bottom-0 z-[1] flex h-1/3 min-h-0 flex-col overflow-hidden bg-black";
+/** Thumbnail media — top two-thirds only; DESCRIPTION SECTION owns the bottom third. */
+const PROJECT_CARD_THUMBNAIL_SECTION =
+  "absolute inset-x-0 top-0 z-0 h-2/3 min-h-0 overflow-hidden";
+const PROJECT_CARD_THUMBNAIL_IMAGE_BLEED =
+  "absolute top-0 z-0 h-2/3 min-h-0 -left-4 -right-4 overflow-hidden sm:-left-5 sm:-right-5";
+/** Same shape as hero media vignette; edge opacity reduced 25% (0.4 → 0.3). */
+const PROJECT_CARD_THUMBNAIL_VIGNETTE =
+  "radial-gradient(ellipse 74% 70% at 50% 48%, transparent 26%, rgba(0,0,0,0.3) 100%)";
+/** Tagline row — description below inset grey divider. */
+const PROJECT_CARD_TAGLINE_DIVIDER =
+  "-mx-px shrink-0 border-t border-white/15";
+const PROJECT_CARD_TAGLINE_PANEL =
+  "flex min-h-0 flex-1 flex-col justify-start gap-1.5 px-2.5 pb-3 pt-0 sm:gap-2 sm:px-3 sm:pb-3.5";
+const PROJECT_CARD_TITLE_INSET =
+  "shrink-0 -translate-x-0.5 px-2.5 pb-1.5 pt-2.5 sm:px-3 sm:pb-2 sm:pt-3";
+const PROJECT_CARD_TAGLINE_CLASS =
+  "project-card-tagline font-body block w-full text-left text-xs leading-snug sm:text-[0.8125rem] md:text-sm lg:text-[0.9375rem] text-mono-2 transition-colors group-hover:text-white/90";
 /** SHOWCASE carousel inner column cap (detail overlay / career rail — not PROFILE viewport gutters). */
 const SHOWCASE_COLUMN_MAX = "max-w-[min(100%,58rem)]";
 /** Mobile/tablet section top inset — PROFILE, Experience, Projects, Skills (`lg+` uses section-specific desktop pt). */
@@ -3669,9 +3705,9 @@ const ProjectsStack = ({
                   onClick={(e) => onSelect(card.id, e.currentTarget)}
                   whileTap={{ scale: 0.985 }}
                   transition={{ duration: 0.28 / SHOWCASE_TIME_DIV, ease: cardEase }}
-                  className={`group project-card-surface relative w-full [container-type:inline-size] ${DETAIL_CARD_H} rounded-[11px] sm:rounded-xl border border-white/[0.09] shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)] text-center overflow-hidden transition-[opacity,background-color,border-color] duration-300 ease-out ${
+                  className={`group project-card-surface relative w-full [container-type:inline-size] ${SHOWCASE_CAROUSEL_CARD_H} rounded-[11px] sm:rounded-xl border border-[var(--portfolio-glass-stroke)] shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)] text-center overflow-hidden transition-[opacity,background-color,border-color] duration-300 ease-out ${
                     contentReady
-                      ? "hover:border-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] hover:bg-[var(--portfolio-section-card-hover)] [background:var(--portfolio-section-card)]"
+                      ? "hover:border-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] hover:bg-black [background:#000]"
                       : "[background:transparent!important] hover:[background:transparent!important]"
                   } hover:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
                     focusProjectId && focusProjectId !== card.id ? "opacity-0 pointer-events-none" : "opacity-100"
@@ -3688,8 +3724,8 @@ const ProjectsStack = ({
                         <div
                           className={
                             card.thumbnailVideo
-                              ? "absolute inset-0 overflow-hidden"
-                              : "absolute inset-y-0 -left-4 -right-4 sm:-left-5 sm:-right-5"
+                              ? PROJECT_CARD_THUMBNAIL_SECTION
+                              : PROJECT_CARD_THUMBNAIL_IMAGE_BLEED
                           }
                         >
                           {card.thumbnailVideo ? (
@@ -3726,22 +3762,54 @@ const ProjectsStack = ({
                               />
                             </div>
                           )}
+                          <span
+                            aria-hidden
+                            className="pointer-events-none absolute inset-0 z-[1]"
+                            style={{ background: PROJECT_CARD_THUMBNAIL_VIGNETTE }}
+                          />
                         </div>
-                        <div
-                          className={
-                            card.thumbnailVideo
-                              ? "absolute inset-x-0 bottom-0 h-40 sm:h-44 bg-gradient-to-t from-black via-black/88 via-35% to-transparent"
-                              : "absolute inset-x-[-1rem] bottom-0 h-40 sm:h-44 bg-gradient-to-t from-black via-black/88 via-35% to-transparent sm:inset-x-[-1.25rem]"
-                          }
-                        />
-                        <div className="absolute inset-x-0 bottom-0 px-2.5 py-3.5 sm:px-3 sm:py-4">
+                        <div className={PROJECT_CARD_DESCRIPTION_SECTION}>
+                          <div className={PROJECT_CARD_TITLE_INSET}>
+                            <ShowcaseStackedTitle
+                              title={card.title}
+                              titlePrefix={card.titlePrefix}
+                              className={PROJECT_CARD_TITLE_CLASS}
+                            />
+                          </div>
+                          <div className={PROJECT_CARD_TAGLINE_PANEL}>
+                            <div className={PROJECT_CARD_TAGLINE_DIVIDER} aria-hidden />
+                            <span
+                              className={`${PROJECT_CARD_TAGLINE_CLASS}${
+                                card.tabletPortraitTaglineSuffix
+                                  ? " project-card-tagline--has-tablet-portrait-suffix"
+                                  : ""
+                              }`}
+                            >
+                              {card.tagline}
+                              {card.tabletPortraitTaglineSuffix ? (
+                                <span className="project-card-tagline-tablet-portrait-suffix">
+                                  {" "}
+                                  {card.tabletPortraitTaglineSuffix}
+                                </span>
+                              ) : null}
+                            </span>
+                          </div>
+                        </div>
+                      </>
+                    ) : null}
+                    {!card.thumbnail && !card.thumbnailVideo ? (
+                      <div className={PROJECT_CARD_DESCRIPTION_SECTION}>
+                        <div className={PROJECT_CARD_TITLE_INSET}>
                           <ShowcaseStackedTitle
                             title={card.title}
                             titlePrefix={card.titlePrefix}
                             className={PROJECT_CARD_TITLE_CLASS}
                           />
+                        </div>
+                        <div className={PROJECT_CARD_TAGLINE_PANEL}>
+                          <div className={PROJECT_CARD_TAGLINE_DIVIDER} aria-hidden />
                           <span
-                            className={`font-body mt-3 block w-full max-w-full text-left text-xs sm:text-[0.8125rem] md:text-sm lg:text-[0.9375rem] text-mono-2 leading-relaxed line-clamp-2 border-t border-white/15 pt-3 sm:pt-3.5 transition-colors group-hover:text-white/90${
+                            className={`${PROJECT_CARD_TAGLINE_CLASS}${
                               card.tabletPortraitTaglineSuffix
                                 ? " project-card-tagline--has-tablet-portrait-suffix"
                                 : ""
@@ -3756,30 +3824,6 @@ const ProjectsStack = ({
                             ) : null}
                           </span>
                         </div>
-                      </>
-                    ) : null}
-                    {!card.thumbnail && !card.thumbnailVideo ? (
-                      <div className="absolute inset-x-0 bottom-0 px-2.5 py-3.5 sm:px-3 sm:py-4">
-                        <ShowcaseStackedTitle
-                          title={card.title}
-                          titlePrefix={card.titlePrefix}
-                          className={PROJECT_CARD_TITLE_CLASS}
-                        />
-                        <span
-                          className={`font-body mt-3 block w-full max-w-full text-left text-xs sm:text-[0.8125rem] md:text-sm lg:text-[0.9375rem] text-mono-2 leading-relaxed line-clamp-2 border-t border-white/15 pt-3 sm:pt-3.5 transition-colors group-hover:text-white/90${
-                            card.tabletPortraitTaglineSuffix
-                              ? " project-card-tagline--has-tablet-portrait-suffix"
-                              : ""
-                          }`}
-                        >
-                          {card.tagline}
-                          {card.tabletPortraitTaglineSuffix ? (
-                            <span className="project-card-tagline-tablet-portrait-suffix">
-                              {" "}
-                              {card.tabletPortraitTaglineSuffix}
-                            </span>
-                          ) : null}
-                        </span>
                       </div>
                     ) : null}
                   </div>
@@ -5322,18 +5366,15 @@ const PalaceProjects = ({
               className={`showcase-header flex w-full min-w-0 shrink-0 flex-col items-start mb-6 sm:mb-8 md:mb-10 ${SECTION_MAIN_HEADER_TITLE_CLASS}`}
             >
               <div className="showcase-header-title-stack relative z-10 w-full min-w-0">
-                <p className="career-nav-section-subtitle section-main-header-title font-display text-left">PROJECTS</p>
-                <div className="showcase-header-subhead-rule w-fit max-w-full max-lg:w-full">
-                  <p className="career-nav-section-title text-left" style={{ color: NAV_SUBHEAD_GRAY }}>
-                    Digital Media &amp; Writing Showcase
-                  </p>
+                <div className="showcase-header-title-rule w-fit max-w-full">
+                  <p className="career-nav-section-subtitle section-main-header-title font-display text-left">PROJECTS</p>
                   <div
                     ref={projectsDividerRef}
                     className="showcase-main-accent-line relative min-h-[2px] w-full"
                     aria-hidden
                   >
                     <motion.span
-                      className="absolute bottom-0 left-0 right-0 max-lg:left-0.5 h-[2px] origin-left"
+                      className="absolute bottom-0 left-0 right-0 h-[2px] origin-left"
                       style={{ backgroundColor: PROJECTS_ACCENT_SOFT }}
                       initial={false}
                       animate={{ scaleX: projectsEntered ? 1 : 0 }}
@@ -5386,7 +5427,7 @@ const PalaceProjects = ({
           className={`projects-showcase-flow flex min-h-0 w-full flex-1 flex-col ${showcaseObscured ? "pointer-events-none select-none" : ""}`}
         >
           <motion.div
-            className={`projects-showcase-featured-block mt-[var(--slide-gap,0.875rem)] flex w-full shrink-0 min-w-0 flex-col${
+            className={`projects-showcase-featured-block flex w-full shrink-0 min-w-0 flex-col${
               !projectsOverlayRevealed && !reduceMotion ? " invisible" : ""
             }`}
             initial={false}
@@ -9152,6 +9193,8 @@ export default function Home() {
               ease: PANEL_TRANSITION.ease,
             }}
           >
+            {/* Grid backdrop: fills any gaps between slides (e.g. 100svh hero vs 100vh container on iOS) */}
+            <SectionGridOverlay />
             <div
               ref={slidesRef}
               tabIndex={0}
@@ -9246,6 +9289,8 @@ export default function Home() {
                 ease: PANEL_TRANSITION.ease,
               }}
             >
+              {/* Grid backdrop: ensures the panel background always has grid texture regardless of section coverage */}
+              <SectionGridOverlay />
               {!reduceMotion && transitionTarget !== "menu" && transitionTarget === currentSection && (
                 <div
                   className="absolute left-0 top-0 bottom-0 z-20 w-[2px] pointer-events-none"
