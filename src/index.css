@@ -334,6 +334,46 @@
     }
   }
 
+  /*
+   * PROJECTS tablet landscape — shrink-wrap showcase (no viewport stretch / black gap below).
+   * lg–xl (1024–1366) Tailwind used min-h-full + flex-1 + justify-center for desktop centering;
+   * in landscape the stack is shorter than the panel so flex growth leaves empty black space.
+   */
+  @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) {
+    #projects.projects-showcase-tablet-pad {
+      min-height: 0 !important;
+      height: auto !important;
+      align-self: flex-start !important;
+      padding-bottom: max(0.5rem, calc(0.625rem + env(safe-area-inset-bottom, 0px) * 0.25)) !important;
+    }
+
+    #projects.projects-showcase-tablet-pad > .portfolio-grid-overlay {
+      min-height: 0 !important;
+      height: var(--projects-grid-overlay-height, auto) !important;
+    }
+
+    #projects.projects-showcase-tablet-pad > .container,
+    #projects.projects-showcase-tablet-pad .projects-showcase-viewport,
+    #projects.projects-showcase-tablet-pad .projects-showcase-stage,
+    #projects.projects-showcase-tablet-pad .projects-showcase-flow {
+      flex: 0 0 auto !important;
+      min-height: 0 !important;
+      justify-content: flex-start !important;
+    }
+
+    #projects.projects-showcase-tablet-pad .projects-showcase-flow > .section-tablet-bottom-spacer {
+      display: block !important;
+      min-height: max(0.75rem, calc(0.875rem + env(safe-area-inset-bottom, 0px) / 3)) !important;
+    }
+
+    [aria-label="Section: projects"] > div.relative.z-10.flex,
+    [aria-label="Section: projects"] > div.relative.z-10.flex > div.flex {
+      flex: 0 0 auto !important;
+      min-height: 0 !important;
+      align-self: flex-start !important;
+    }
+  }
+
   /* Tablet only (768px–1366px): SKILLS scroll-end breathing room — not phone or large desktop. */
   .section-tablet-bottom-spacer {
     display: none;
@@ -551,7 +591,7 @@
           calc(6.75dvh * var(--skills-page-scale)),
           calc(5.75rem * var(--skills-page-scale))
         );
-        padding: calc(0.8125rem * var(--skills-page-scale)) calc(0.5rem * var(--skills-page-scale)) !important;
+        padding: calc(0.9375rem * var(--skills-page-scale)) calc(0.5rem * var(--skills-page-scale)) !important;
       }
 
       #skills .skills-card-surface--page .skills-card-column-header {
@@ -592,7 +632,7 @@
 
       #skills .skills-card-surface--page {
         min-height: 0;
-        padding: calc(0.5rem * var(--skills-page-scale)) calc(0.375rem * var(--skills-page-scale)) !important;
+        padding: calc(0.5625rem * var(--skills-page-scale)) calc(0.375rem * var(--skills-page-scale)) !important;
       }
 
       #skills .skills-card-surface--page .skills-card-column-header {
@@ -617,13 +657,19 @@
       }
 
       #skills .skills-card-surface--page .skills-page-card-icon {
-        width: calc(0.8125rem * var(--skills-page-scale));
+        overflow: visible;
+        width: calc(1rem * var(--skills-page-scale));
+        min-width: calc(0.8125rem * var(--skills-page-scale));
         height: calc(0.8125rem * var(--skills-page-scale));
       }
 
       #skills .skills-card-surface--page .skills-page-card-icon svg {
-        width: calc(0.625rem * var(--skills-page-scale));
+        display: block;
+        width: auto;
         height: calc(0.625rem * var(--skills-page-scale));
+        max-width: calc(1rem * var(--skills-page-scale));
+        max-height: calc(0.625rem * var(--skills-page-scale));
+        overflow: visible;
       }
 
       #skills .skills-branch-header--page.nav-header .career-nav-section-subtitle {
@@ -1705,6 +1751,7 @@
     width: fit-content;
     max-width: 100%;
     gap: var(--showcase-header-line-gap);
+    transform: translateY(2px);
   }
 
   #projects .showcase-header-title-rule > .section-main-header-title {
@@ -2891,7 +2938,7 @@
       display: flex;
       order: 1;
       padding: 0 0 12px;
-      margin: 0 0 10px;
+      margin: 0 0 14px;
     }
 
     #experience .career-nav-section-divider {
@@ -2908,7 +2955,7 @@
       gap: 8px;
       overflow-x: auto;
       overflow-y: hidden;
-      padding: 0 0 2px;
+      padding: 0 0 14px;
       border: 0 !important;
       border-right: 0 !important;
       background: transparent !important;
@@ -2947,7 +2994,7 @@
       width: 100% !important;
       min-width: 0 !important;
       min-height: min-content !important;
-      padding: 20px 0 0;
+      padding: 0 0 max(1.25rem, env(safe-area-inset-bottom, 0px));
       border: 0 !important;
       border-radius: 0;
       background: transparent !important;
@@ -3058,7 +3105,7 @@
       display: flex;
       order: 1;
       padding: 0 0 12px;
-      margin: 0 0 10px;
+      margin: 0 0 14px;
     }
 
     #experience .career-nav-section-divider {
@@ -3075,7 +3122,8 @@
       gap: 8px;
       overflow-x: auto;
       overflow-y: hidden;
-      padding: 0 0 2px;
+      /* More breathing room between tab row and content card */
+      padding: 0 0 14px;
       border: 0;
       border-bottom: 0;
       background: transparent;
@@ -3112,7 +3160,8 @@
       margin-left: 0;
       width: 100%;
       min-width: 0;
-      padding: 20px 0 0;
+      /* Top space above card; bottom clears safe area */
+      padding: 0 0 max(1.25rem, env(safe-area-inset-bottom, 0px));
       border: 0;
       border-radius: 0;
       background: transparent;
@@ -3149,9 +3198,9 @@
 
     #experience .panel-title-row {
       display: flex;
-      flex-wrap: wrap;
+      flex-direction: column;
       align-items: flex-start;
-      gap: 8px 12px;
+      gap: 6px;
       min-height: 0;
     }
 
@@ -3167,15 +3216,20 @@
       margin-left: 0;
       text-align: left;
       white-space: nowrap;
-      font-size: clamp(1.12rem, 4.4vw, 1.28rem);
-      line-height: 1.12;
+      /* Smaller than role title — date is secondary context, not a headline */
+      font-size: clamp(0.875rem, 3.3vw, 0.96rem);
+      line-height: 1.2;
     }
 
     #experience .panel-description {
       min-height: 0;
-      font-size: clamp(0.9rem, 3.45vw, 0.98rem);
-      line-height: 1.34;
+      font-size: clamp(0.875rem, 3.3vw, 0.96rem);
+      line-height: 1.36;
       text-wrap: pretty;
+    }
+
+    #experience #education .panel-description > .panel-meta-sep {
+      display: none;
     }
 
     #experience .experience-skill-tags {
@@ -3197,7 +3251,8 @@
 
     #experience .content-card {
       width: 100%;
-      padding: 14px;
+      /* Slightly more horizontal padding on narrow screens for readability */
+      padding: 14px 16px;
       border-radius: 11px;
     }
 
@@ -3207,8 +3262,8 @@
 
     #experience .feature-list li {
       gap: 10px;
-      font-size: clamp(0.9rem, 3.35vw, 0.98rem);
-      line-height: 1.38;
+      font-size: clamp(0.875rem, 3.3vw, 0.96rem);
+      line-height: 1.4;
     }
 
     #experience .feature-list li::before {
@@ -3221,6 +3276,12 @@
     #experience .career-skill-grid,
     #experience .career-project-grid {
       grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    /* Education: gap between the content card and the stats row */
+    #experience #education .panel-content {
+      gap: 12px;
     }
   }
 
@@ -3601,6 +3662,38 @@
     }
   }
 
+  /* Tablet portrait — wins over sm padding; top/bottom inset matches title→divider gap. */
+  @media (min-width: 768px) and (max-width: 1366px) and (orientation: portrait) {
+    #skills {
+      --skills-card-inset-y: calc(0.6875rem * var(--skills-page-scale));
+    }
+
+    #skills .skills-row-card-slot > * {
+      flex: 0 0 auto;
+      min-height: 0;
+      height: auto;
+    }
+
+    #skills .skills-card-surface--page {
+      min-height: 0;
+      height: auto !important;
+      padding-top: var(--skills-card-inset-y);
+      padding-bottom: var(--skills-card-inset-y);
+      padding-left: calc(0.75rem * var(--skills-page-scale));
+      padding-right: calc(0.75rem * var(--skills-page-scale));
+    }
+
+    #skills .skills-card-surface--page .skills-card-column-header {
+      gap: var(--skills-card-inset-y);
+      padding-top: 0;
+      margin-bottom: calc(0.4375rem * var(--skills-page-scale));
+    }
+
+    #skills .skills-card-surface--page > div {
+      flex: 0 0 auto;
+    }
+  }
+
   #skills .skills-card-surface--page .skills-card-column-header {
     display: flex;
     flex-direction: column;
@@ -3608,6 +3701,55 @@
     gap: calc(0.5625rem * var(--skills-page-scale, 1.0625));
     margin-bottom: calc(0.625rem * var(--skills-page-scale, 1.0625));
     padding-top: calc(0.125rem * var(--skills-page-scale, 1.0625));
+  }
+
+  /* Mobile — card top inset matches title→divider gap; cards hug content so padding-bottom is the inner bottom gap. */
+  @media (max-width: 767.98px) {
+    /* Content-sized section — synced min-height was capping scroll extent on phone. */
+    #skills {
+      min-height: auto;
+      --skills-card-inset-y: calc(0.6875rem * var(--skills-page-scale, 1.0625));
+      --skills-card-inset-y-bottom: calc(0.625rem * var(--skills-page-scale, 1.0625));
+    }
+
+    #skills > .section-tablet-bottom-spacer {
+      display: none !important;
+      min-height: 0 !important;
+      height: 0 !important;
+    }
+
+    #skills .skills-row-card-slot > * {
+      flex: 0 0 auto;
+      min-height: 0;
+      height: auto;
+    }
+
+    #skills .skills-card-surface--page {
+      min-height: 0;
+      height: auto !important;
+      padding-top: var(--skills-card-inset-y);
+      padding-bottom: var(--skills-card-inset-y-bottom);
+    }
+
+    #skills .skills-card-surface--page > div {
+      flex: 0 0 auto;
+    }
+
+    @media (min-width: 640px) {
+      #skills {
+        --skills-card-inset-y-bottom: calc(0.6875rem * var(--skills-page-scale, 1.0625));
+      }
+    }
+
+    #skills .skills-card-surface--page .skills-card-column-header {
+      gap: var(--skills-card-inset-y);
+      padding-top: 0;
+    }
+
+    /* Main title + green line — slight nudge up; cards keep layout position */
+    #skills .skills-header {
+      transform: translateY(-0.4375rem);
+    }
   }
 
   #skills .skills-card-surface--page .skills-card-column-header__line {
@@ -3651,13 +3793,24 @@
 
   #skills .skills-card-surface--page .skills-page-card-icon {
     margin-top: calc(0.0625rem * var(--skills-page-scale, 1.0625));
-    width: calc(1rem * var(--skills-page-scale, 1.0625));
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    overflow: visible;
+    width: calc(1.125rem * var(--skills-page-scale, 1.0625));
+    min-width: calc(1rem * var(--skills-page-scale, 1.0625));
     height: calc(1rem * var(--skills-page-scale, 1.0625));
   }
 
   #skills .skills-card-surface--page .skills-page-card-icon svg {
-    width: calc(0.875rem * var(--skills-page-scale, 1.0625));
+    display: block;
+    flex-shrink: 0;
+    width: auto;
     height: calc(0.875rem * var(--skills-page-scale, 1.0625));
+    max-width: calc(1.125rem * var(--skills-page-scale, 1.0625));
+    max-height: calc(0.875rem * var(--skills-page-scale, 1.0625));
+    overflow: visible;
   }
 
   /* All six subcolumn headings (core + toolkit); pins zinc-100 vs parent `text-white` wrappers */
@@ -3974,41 +4127,80 @@
     }
   }
   .video-editing-works-arrow {
+    --works-arrow-motion-dur: 0.34s;
+    --works-arrow-motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
     transform: translateY(-50%);
     animation: video-editing-works-arrow-pulse 1.85s ease-in-out infinite;
+    -webkit-tap-highlight-color: transparent;
     transition:
-      transform 0.22s cubic-bezier(0.16, 1, 0.32, 1),
-      color 0.22s ease,
-      filter 0.22s ease,
-      opacity 0.22s ease;
+      transform var(--works-arrow-motion-dur) var(--works-arrow-motion-ease),
+      color var(--works-arrow-motion-dur) var(--works-arrow-motion-ease),
+      filter var(--works-arrow-motion-dur) var(--works-arrow-motion-ease),
+      opacity var(--works-arrow-motion-dur) var(--works-arrow-motion-ease);
   }
-  .video-editing-works-arrow:hover,
-  .video-editing-works-arrow:active {
+  /* Hover accent + nudge — fine pointer only (avoids sticky :hover on touch). */
+  @media (hover: hover) and (pointer: fine) {
+    .video-editing-works-arrow:hover,
+    .video-editing-works-arrow:active {
+      animation: none;
+      opacity: 1;
+      color: var(--palette-yellow-projects);
+      filter: drop-shadow(0 0 7px color-mix(in srgb, var(--palette-yellow-projects) 62%, transparent));
+    }
+    .video-editing-works-arrow--prev:hover .video-editing-works-arrow-glyph,
+    .video-editing-works-arrow--prev:active .video-editing-works-arrow-glyph {
+      transform: translateX(-4px);
+    }
+    .video-editing-works-arrow--next:hover .video-editing-works-arrow-glyph,
+    .video-editing-works-arrow--next:active .video-editing-works-arrow-glyph {
+      transform: translateX(4px);
+    }
+  }
+  /* Touch/tablet tap — JS toggled class; releases after pointerup (no sticky hover). */
+  .video-editing-works-arrow.video-editing-works-arrow--pressed {
     animation: none;
     opacity: 1;
     color: var(--palette-yellow-projects);
     filter: drop-shadow(0 0 7px color-mix(in srgb, var(--palette-yellow-projects) 62%, transparent));
   }
-  .video-editing-works-arrow-glyph {
-    transition: transform 0.22s cubic-bezier(0.16, 1, 0.32, 1);
-  }
-  .video-editing-works-arrow--prev:hover .video-editing-works-arrow-glyph,
-  .video-editing-works-arrow--prev:active .video-editing-works-arrow-glyph {
+  .video-editing-works-arrow--prev.video-editing-works-arrow--pressed .video-editing-works-arrow-glyph {
     transform: translateX(-4px);
   }
-  .video-editing-works-arrow--next:hover .video-editing-works-arrow-glyph,
-  .video-editing-works-arrow--next:active .video-editing-works-arrow-glyph {
+  .video-editing-works-arrow--next.video-editing-works-arrow--pressed .video-editing-works-arrow-glyph {
     transform: translateX(4px);
+  }
+  .video-editing-works-arrow-glyph {
+    transition: transform var(--works-arrow-motion-dur, 0.34s) var(--works-arrow-motion-ease, cubic-bezier(0.22, 1, 0.36, 1));
+  }
+  /* Phone: horizontal swipes on thumb tiles must scroll the strip, not trap on buttons. */
+  @media (pointer: coarse) {
+    .video-editing-works-strip {
+      -webkit-overflow-scrolling: touch;
+    }
+    .video-editing-works-strip .video-editing-works-strip-thumb {
+      touch-action: pan-x pinch-zoom;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .video-editing-works-strip .video-editing-works-strip-thumb:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--palette-yellow-projects) 48%, rgb(186 186 186));
+    }
   }
   @media (prefers-reduced-motion: reduce) {
     .video-editing-works-arrow {
       animation: none;
       opacity: 0.85;
     }
-    .video-editing-works-arrow--prev:hover .video-editing-works-arrow-glyph,
-    .video-editing-works-arrow--prev:active .video-editing-works-arrow-glyph,
-    .video-editing-works-arrow--next:hover .video-editing-works-arrow-glyph,
-    .video-editing-works-arrow--next:active .video-editing-works-arrow-glyph {
+    @media (hover: hover) and (pointer: fine) {
+      .video-editing-works-arrow--prev:hover .video-editing-works-arrow-glyph,
+      .video-editing-works-arrow--prev:active .video-editing-works-arrow-glyph,
+      .video-editing-works-arrow--next:hover .video-editing-works-arrow-glyph,
+      .video-editing-works-arrow--next:active .video-editing-works-arrow-glyph {
+        transform: none;
+      }
+    }
+    .video-editing-works-arrow--prev.video-editing-works-arrow--pressed .video-editing-works-arrow-glyph,
+    .video-editing-works-arrow--next.video-editing-works-arrow--pressed .video-editing-works-arrow-glyph {
       transform: none;
     }
   }
@@ -4514,6 +4706,16 @@
     -webkit-line-clamp: 3 !important;
     line-clamp: 3 !important;
   }
+
+  /* Four cards — 2×2 grid (same row layout as mobile); card sizing tokens unchanged. */
+  #projects .projects-carousel-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Cards → FEATURED WRITING (global bump subtract was collapsing this to ~0). */
+  #projects .projects-showcase-featured-block {
+    margin-top: clamp(1rem, 2.25svh, 1.375rem) !important;
+  }
 }
 
 /* Carousel card height bump — FEATURED WRITING margin shrinks by the same amount (nothing else moves). */
@@ -4521,10 +4723,23 @@
   --showcase-carousel-height-bump: 1.25rem;
   /* Subhead + rule gap reclaimed by taller carousel cards (header shrinks, cards grow — FEATURED WRITING fixed). */
   --showcase-subhead-reclaim: 1.5rem;
+  --projects-section-nudge-y: -4px;
+}
+
+#projects > .container {
+  margin-top: var(--projects-section-nudge-y);
 }
 
 #projects .projects-showcase-featured-block {
   margin-top: max(0px, calc(var(--slide-gap, 0.875rem) - var(--showcase-carousel-height-bump))) !important;
+}
+
+/* PROJECTS mobile — small scroll-end gap below FEATURED WRITING */
+@media (max-width: 767.98px) {
+  #projects .projects-showcase-flow > .section-tablet-bottom-spacer {
+    display: block;
+    min-height: max(0.75rem, calc(0.875rem + env(safe-area-inset-bottom, 0px) * 0.25));
+  }
 }
 
 /* ─── PROJECTS — iPad portrait: taller cards + equal vertical gap around four-up row ─── */
@@ -4569,12 +4784,9 @@
     padding-bottom: 0 !important;
   }
 
-  /* Gap below four cards — nudged up to match optical gap above; subtract carousel height bump */
+  /* Gap below four cards → FEATURED WRITING tab row */
   #projects .projects-showcase-featured-block {
-    margin-top: max(
-      0px,
-      calc(var(--projects-four-cards-gap) + 0.25rem - var(--showcase-carousel-height-bump))
-    ) !important;
+    margin-top: clamp(1rem, 2.25svh, 1.375rem) !important;
   }
 
   /* SLAYWIRE project detail — portrait: vertically center block (keep md grid + 16:9 hero) */
@@ -4659,12 +4871,5 @@
     flex-direction: column !important;
     align-items: stretch !important;
     gap: 0.75rem !important;
-  }
-
-  /* Title + button row inside panel: also column on portrait */
-  .featured-writing-body-card .profile-card-surface > div > div > div:last-child > div:first-child {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 0.5rem !important;
   }
 }

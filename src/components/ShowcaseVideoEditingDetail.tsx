@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import Plyr from "plyr";
@@ -164,13 +164,377 @@ export function ShowcaseVideoEditingDetail({
   detailFadeCubic,
   detailSlideCubic,
 }: ShowcaseVideoEditingDetailProps) {
+  const WORKS_ARROW_TAP_FEEDBACK_MS = 260;
+  const WORKS_STRIP_SCROLL_SYNC_MS = 220;
+  const WORKS_STRIP_PROGRAMMATIC_LOCK_MS = 750;
+  const STRIP_SWIPE_ARROW_THRESHOLD_PX = 3;
+  const STRIP_SWIPE_TAP_CANCEL_PX = 10;
   const videos = useMemo(() => card.detailVideos ?? [], [card.detailVideos]);
   const [activeVideoIndex, setActiveVideoIndex] = useState(0);
-  const thumbRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const [pressedWorksArrow, setPressedWorksArrow] = useState<"prev" | "next" | null>(null);
+  const thumbRefs = useRef<Array<HTMLElement | null>>([]);
+  const thumbStripRef = useRef<HTMLDivElement | null>(null);
+  const activeVideoIndexRef = useRef(0);
+  const worksArrowReleaseTimerRef = useRef<number | null>(null);
+  const worksStripScrollSyncTimerRef = useRef<number | null>(null);
+  const worksStripNavLockUntilRef = useRef(0);
+  const stripProgrammaticScrollRef = useRef(false);
+  const worksStripSupportsScrollEndRef = useRef(false);
+  const worksArrowSwipePulseRef = useRef(0);
+  const stripSwipeArrowRef = useRef({
+    gestureId: 0,
+    arrowFiredForGestureId: -1,
+    startX: 0,
+    startY: 0,
+    lastX: 0,
+    lastY: 0,
+    suppressTap: false,
+  });
+
+  const usesFinePointerHover = useCallback(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+  }, []);
+
+
+  const clearWorksArrowReleaseTimer = useCallback(() => {
+    if (worksArrowReleaseTimerRef.current !== null) {
+      window.clearTimeout(worksArrowReleaseTimerRef.current);
+      worksArrowReleaseTimerRef.current = null;
+    }
+  }, []);
+
+  const clearWorksStripScrollSyncTimer = useCallback(() => {
+    if (worksStripScrollSyncTimerRef.current !== null) {
+      window.clearTimeout(worksStripScrollSyncTimerRef.current);
+      worksStripScrollSyncTimerRef.current = null;
+    }
+  }, []);
+
+  const scheduleWorksArrowRelease = useCallback(() => {
+    clearWorksArrowReleaseTimer();
+    worksArrowReleaseTimerRef.current = window.setTimeout(() => {
+      setPressedWorksArrow(null);
+      worksArrowReleaseTimerRef.current = null;
+    }, reduceMotion ? 0 : WORKS_ARROW_TAP_FEEDBACK_MS);
+  }, [clearWorksArrowReleaseTimer, reduceMotion]);
+
+  const triggerWorksArrowFeedback = useCallback(
+    (side: "prev" | "next", options?: { fromFinePointerArrow?: boolean }) => {
+      if (options?.fromFinePointerArrow && usesFinePointerHover()) return;
+      clearWorksArrowReleaseTimer();
+      worksArrowSwipePulseRef.current += 1;
+      const pulseId = worksArrowSwipePulseRef.current;
+      setPressedWorksArrow(null);
+      requestAnimationFrame(() => {
+        if (worksArrowSwipePulseRef.current !== pulseId) return;
+        setPressedWorksArrow(side);
+        scheduleWorksArrowRelease();
+      });
+    },
+    [clearWorksArrowReleaseTimer, scheduleWorksArrowRelease, usesFinePointerHover],
+  );
+
+  const lockWorksStripScrollSync = useCallback(() => {
+    worksStripNavLockUntilRef.current = Date.now() + WORKS_STRIP_PROGRAMMATIC_LOCK_MS;
+    stripProgrammaticScrollRef.current = true;
+    window.setTimeout(() => {
+      stripProgrammaticScrollRef.current = false;
+    }, WORKS_STRIP_PROGRAMMATIC_LOCK_MS);
+  }, []);
+
+  const resetStripSwipeArrowGesture = useCallback((clientX: number, clientY: number) => {
+    const ref = stripSwipeArrowRef.current;
+    ref.gestureId += 1;
+    ref.startX = clientX;
+    ref.startY = clientY;
+    ref.lastX = clientX;
+    ref.lastY = clientY;
+    ref.suppressTap = false;
+  }, []);
+
+  const tryFireStripSwipeArrowFromMotion = useCallback(
+    (clientX: number, clientY: number) => {
+      if (stripProgrammaticScrollRef.current) return false;
+
+      const ref = stripSwipeArrowRef.current;
+      if (ref.arrowFiredForGestureId === ref.gestureId) return false;
+
+      ref.lastX = clientX;
+      ref.lastY = clientY;
+
+      const dx = clientX - ref.startX;
+      const dy = clientY - ref.startY;
+      if (Math.abs(dx) >= STRIP_SWIPE_TAP_CANCEL_PX || Math.abs(dy) >= STRIP_SWIPE_TAP_CANCEL_PX) {
+        ref.suppressTap = true;
+      }
+      if (Math.abs(dx) < STRIP_SWIPE_ARROW_THRESHOLD_PX) return false;
+      if (Math.abs(dx) < Math.abs(dy)) return false;
+
+      ref.arrowFiredForGestureId = ref.gestureId;
+      ref.suppressTap = true;
+      triggerWorksArrowFeedback(dx < 0 ? "next" : "prev");
+      return true;
+    },
+    [triggerWorksArrowFeedback],
+  );
+
+  const resolveThumbIndexFromStripScroll = useCallback((): number | null => {
+    const strip = thumbStripRef.current;
+    if (!strip || videos.length <= 1) return null;
+
+    const stripRect = strip.getBoundingClientRect();
+    const stripCenter = stripRect.left + stripRect.width / 2;
+    let bestIndex = 0;
+    let bestDistance = Number.POSITIVE_INFINITY;
+
+    thumbRefs.current.forEach((thumb, index) => {
+      if (!thumb) return;
+      const thumbRect = thumb.getBoundingClientRect();
+      const thumbCenter = thumbRect.left + thumbRect.width / 2;
+      const distance = Math.abs(thumbCenter - stripCenter);
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        bestIndex = index;
+      }
+    });
+
+    return bestIndex;
+  }, [videos.length]);
+
+  const navigateToWorkIndex = useCallback(
+    (
+      nextIndex: number,
+      options?: {
+        arrowSide?: "prev" | "next";
+        fromFinePointerArrow?: boolean;
+        scrollStrip?: boolean;
+        skipArrowFeedback?: boolean;
+      },
+    ) => {
+      const prevIndex = activeVideoIndexRef.current;
+      if (nextIndex === prevIndex) return;
+
+      if (options?.arrowSide && !options.skipArrowFeedback) {
+        triggerWorksArrowFeedback(options.arrowSide, {
+          fromFinePointerArrow: options.fromFinePointerArrow,
+        });
+      }
+
+      activeVideoIndexRef.current = nextIndex;
+      setActiveVideoIndex(nextIndex);
+
+      if (options?.scrollStrip === false) return;
+
+      lockWorksStripScrollSync();
+      thumbRefs.current[nextIndex]?.scrollIntoView({
+        behavior: reduceMotion ? "auto" : "smooth",
+        block: "nearest",
+        inline: "center",
+      });
+    },
+    [lockWorksStripScrollSync, reduceMotion, triggerWorksArrowFeedback],
+  );
+
+  const syncActiveVideoFromStripScroll = useCallback(() => {
+    if (Date.now() < worksStripNavLockUntilRef.current) return;
+
+    const nextIndex = resolveThumbIndexFromStripScroll();
+    if (nextIndex === null) return;
+
+    const prevIndex = activeVideoIndexRef.current;
+    if (nextIndex === prevIndex) return;
+
+    activeVideoIndexRef.current = nextIndex;
+    setActiveVideoIndex(nextIndex);
+  }, [resolveThumbIndexFromStripScroll]);
+
+  const queueWorksStripScrollSync = useCallback(() => {
+    clearWorksStripScrollSyncTimer();
+    worksStripScrollSyncTimerRef.current = window.setTimeout(() => {
+      worksStripScrollSyncTimerRef.current = null;
+      syncActiveVideoFromStripScroll();
+    }, WORKS_STRIP_SCROLL_SYNC_MS);
+  }, [clearWorksStripScrollSyncTimer, syncActiveVideoFromStripScroll]);
+
+  const handleWorksArrowPointerDown = useCallback(
+    (side: "prev" | "next") => () => {
+      triggerWorksArrowFeedback(side, { fromFinePointerArrow: true });
+    },
+    [triggerWorksArrowFeedback],
+  );
+
+  const handleWorksArrowPointerRelease = useCallback(() => {
+    if (usesFinePointerHover()) return;
+    scheduleWorksArrowRelease();
+  }, [scheduleWorksArrowRelease, usesFinePointerHover]);
+
+  const handleSelectAdjacentWork = useCallback(
+    (direction: -1 | 1, trigger?: HTMLButtonElement | null) => {
+      const prevIndex = activeVideoIndexRef.current;
+      const nextIndex = (prevIndex + direction + videos.length) % videos.length;
+      navigateToWorkIndex(nextIndex, {
+        arrowSide: direction === -1 ? "prev" : "next",
+        fromFinePointerArrow: Boolean(trigger),
+        skipArrowFeedback: Boolean(trigger) && !usesFinePointerHover(),
+      });
+      trigger?.blur();
+    },
+    [navigateToWorkIndex, usesFinePointerHover, videos.length],
+  );
 
   useEffect(() => {
+    activeVideoIndexRef.current = activeVideoIndex;
+  }, [activeVideoIndex]);
+
+  useEffect(() => {
+    const strip = thumbStripRef.current;
+    if (!strip || videos.length <= 1) return;
+
+    worksStripSupportsScrollEndRef.current = "onscrollend" in window;
+
+    let activeTouchId: number | null = null;
+    let pointerArrowTracking = false;
+    let activePointerId: number | null = null;
+
+    const findTouchById = (list: TouchList, id: number) => {
+      for (let index = 0; index < list.length; index += 1) {
+        if (list[index]?.identifier === id) return list[index];
+      }
+      return null;
+    };
+
+    const onScroll = () => {
+      if (Date.now() < worksStripNavLockUntilRef.current) return;
+      if (!worksStripSupportsScrollEndRef.current) {
+        queueWorksStripScrollSync();
+      }
+    };
+
+    const onScrollEnd = () => {
+      stripProgrammaticScrollRef.current = false;
+      queueWorksStripScrollSync();
+    };
+
+    const runMotionFromPointerEvent = (event: PointerEvent) => {
+      const coalescedEvents =
+        typeof event.getCoalescedEvents === "function" ? event.getCoalescedEvents() : [event];
+      for (const coalesced of coalescedEvents) {
+        if (tryFireStripSwipeArrowFromMotion(coalesced.clientX, coalesced.clientY)) break;
+      }
+    };
+
+    const handleTouchMotion = (event: TouchEvent) => {
+      if (activeTouchId === null) return;
+      const touch = findTouchById(event.touches, activeTouchId);
+      if (!touch) return;
+      tryFireStripSwipeArrowFromMotion(touch.clientX, touch.clientY);
+    };
+
+    const onStripTouchStart = (event: TouchEvent) => {
+      const touch = event.touches[0];
+      if (!touch) return;
+      activeTouchId = touch.identifier;
+      resetStripSwipeArrowGesture(touch.clientX, touch.clientY);
+    };
+
+    const onWindowTouchEnd = (event: TouchEvent) => {
+      if (activeTouchId === null) return;
+      const touch = findTouchById(event.changedTouches, activeTouchId);
+      if (!touch) return;
+      tryFireStripSwipeArrowFromMotion(touch.clientX, touch.clientY);
+      activeTouchId = null;
+    };
+
+    const onPointerDown = (event: PointerEvent) => {
+      if (event.pointerType === "mouse" || event.pointerType === "touch") return;
+      pointerArrowTracking = true;
+      activePointerId = event.pointerId;
+      resetStripSwipeArrowGesture(event.clientX, event.clientY);
+    };
+
+    const onPointerMove = (event: PointerEvent) => {
+      if (event.pointerType === "touch") return;
+      if (!pointerArrowTracking || event.pointerId !== activePointerId) return;
+      runMotionFromPointerEvent(event);
+    };
+
+    const onPointerUp = (event: PointerEvent) => {
+      if (event.pointerType === "touch") return;
+      if (event.pointerId !== activePointerId) return;
+      tryFireStripSwipeArrowFromMotion(event.clientX, event.clientY);
+      pointerArrowTracking = false;
+      activePointerId = null;
+    };
+
+    strip.addEventListener("scroll", onScroll, { passive: true });
+    strip.addEventListener("scrollend", onScrollEnd, { passive: true });
+    strip.addEventListener("touchstart", onStripTouchStart, { passive: true });
+    strip.addEventListener("touchmove", handleTouchMotion, { passive: true });
+    strip.addEventListener("pointerdown", onPointerDown, { passive: true });
+    strip.addEventListener("pointermove", onPointerMove, { passive: true });
+    strip.addEventListener("pointerup", onPointerUp, { passive: true });
+    strip.addEventListener("pointercancel", onPointerUp, { passive: true });
+    window.addEventListener("touchmove", handleTouchMotion, { passive: true });
+    window.addEventListener("touchend", onWindowTouchEnd, { passive: true });
+    window.addEventListener("touchcancel", onWindowTouchEnd, { passive: true });
+
+    return () => {
+      strip.removeEventListener("scroll", onScroll);
+      strip.removeEventListener("scrollend", onScrollEnd);
+      strip.removeEventListener("touchstart", onStripTouchStart);
+      strip.removeEventListener("touchmove", handleTouchMotion);
+      strip.removeEventListener("pointerdown", onPointerDown);
+      strip.removeEventListener("pointermove", onPointerMove);
+      strip.removeEventListener("pointerup", onPointerUp);
+      strip.removeEventListener("pointercancel", onPointerUp);
+      window.removeEventListener("touchmove", handleTouchMotion);
+      window.removeEventListener("touchend", onWindowTouchEnd);
+      window.removeEventListener("touchcancel", onWindowTouchEnd);
+    };
+  }, [
+    queueWorksStripScrollSync,
+    resetStripSwipeArrowGesture,
+    tryFireStripSwipeArrowFromMotion,
+    videos.length,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      clearWorksArrowReleaseTimer();
+      clearWorksStripScrollSyncTimer();
+    };
+  }, [clearWorksArrowReleaseTimer, clearWorksStripScrollSyncTimer]);
+
+  useEffect(() => {
+    activeVideoIndexRef.current = 0;
     setActiveVideoIndex(0);
-  }, [card.title]);
+    lockWorksStripScrollSync();
+    requestAnimationFrame(() => {
+      thumbStripRef.current?.scrollTo({ left: 0, behavior: "auto" });
+    });
+  }, [card.title, lockWorksStripScrollSync]);
+
+  const handleSelectVideo = useCallback((index: number) => {
+    navigateToWorkIndex(index, { scrollStrip: false });
+  }, [navigateToWorkIndex]);
+
+  const handleThumbSelect = useCallback(
+    (index: number) => {
+      if (stripSwipeArrowRef.current.suppressTap) return;
+      handleSelectVideo(index);
+    },
+    [handleSelectVideo],
+  );
+
+  const handleThumbKeyDown = useCallback(
+    (index: number) => (event: React.KeyboardEvent<HTMLElement>) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      handleThumbSelect(index);
+    },
+    [handleThumbSelect],
+  );
 
   if (!videos.length) return null;
 
@@ -183,20 +547,6 @@ export function ShowcaseVideoEditingDetail({
     detailRole: activeVideo.detailRole?.trim() || card.detailRole?.trim() || "?",
     detailImpact: activeVideo.detailImpact?.trim() || card.detailImpact?.trim() || "?",
     detailTools: activeVideo.detailTools?.length ? activeVideo.detailTools : card.detailTools,
-  };
-
-  const handleSelectVideo = (index: number) => {
-    setActiveVideoIndex(index);
-    thumbRefs.current[index]?.scrollIntoView({
-      behavior: reduceMotion ? "auto" : "smooth",
-      block: "nearest",
-      inline: "center",
-    });
-  };
-
-  const handleSelectAdjacentWork = (direction: -1 | 1) => {
-    const nextIndex = (safeIndex + direction + videos.length) % videos.length;
-    handleSelectVideo(nextIndex);
   };
 
   const worksArrowBtnClass =
@@ -267,15 +617,22 @@ export function ShowcaseVideoEditingDetail({
               {videos.length > 1 ? (
                 <button
                   type="button"
-                  className={`${worksArrowBtnClass} video-editing-works-arrow--prev -left-1.5 sm:-left-2`}
+                  className={`${worksArrowBtnClass} video-editing-works-arrow--prev -left-2.5 sm:-left-2${
+                    pressedWorksArrow === "prev" ? " video-editing-works-arrow--pressed" : ""
+                  }`}
                   aria-label="Previous selected work"
-                  onClick={() => handleSelectAdjacentWork(-1)}
+                  onPointerDown={handleWorksArrowPointerDown("prev")}
+                  onPointerUp={handleWorksArrowPointerRelease}
+                  onPointerCancel={handleWorksArrowPointerRelease}
+                  onPointerLeave={handleWorksArrowPointerRelease}
+                  onClick={(event) => handleSelectAdjacentWork(-1, event.currentTarget)}
                 >
                   <ChevronLeft className="video-editing-works-arrow-glyph h-[0.9625rem] w-[0.9625rem] sm:h-[1.1rem] sm:w-[1.1rem]" strokeWidth={2.25} aria-hidden />
                 </button>
               ) : null}
             <div
-              className={`no-scrollbar flex min-w-0 snap-x snap-mandatory gap-2 overflow-x-auto pb-0.5 sm:gap-2.5 ${
+              ref={thumbStripRef}
+              className={`video-editing-works-strip no-scrollbar flex min-w-0 snap-x snap-mandatory gap-2 overflow-x-auto pb-0.5 sm:gap-2.5 touch-pan-x ${
                 videos.length > 1
                   ? "mx-4 w-[calc(100%-2rem)] sm:mx-6 sm:w-[calc(100%-3rem)]"
                   : "w-full"
@@ -287,20 +644,22 @@ export function ShowcaseVideoEditingDetail({
                 const selectorSubtitle = video.selectorSubtitle?.trim() || "Video edit";
                 const selectorDuration = video.selectorDuration?.trim() || "";
                 return (
-                  <button
+                  <div
                     key={video.id}
                     ref={(el) => {
                       thumbRefs.current[index] = el;
                     }}
-                    type="button"
-                    className={`group relative flex shrink-0 snap-start flex-col text-left basis-[calc((100%-0.5rem)/2)] sm:basis-[calc((100%-0.625rem)/2)] md:basis-[calc((100%-1.25rem)/3)] lg:basis-[calc((100%-1.875rem)/4)] ${
+                    role="button"
+                    tabIndex={0}
+                    className={`video-editing-works-strip-thumb group relative flex shrink-0 snap-start flex-col text-left touch-pan-x cursor-pointer basis-[calc((100%-0.5rem)/2)] sm:basis-[calc((100%-0.625rem)/2)] md:basis-[calc((100%-1.25rem)/3)] lg:basis-[calc((100%-1.875rem)/4)] ${
                       active
                         ? "text-white"
                         : "text-mono-2"
                     }`}
                     aria-label={`Select edit thumbnail ${index + 1}`}
                     aria-pressed={active}
-                    onClick={() => handleSelectVideo(index)}
+                    onClick={() => handleThumbSelect(index)}
+                    onKeyDown={handleThumbKeyDown(index)}
                   >
                     <span
                       className={`relative block h-[4.9rem] w-full overflow-hidden rounded-[10px] border transition-colors ${
@@ -342,16 +701,22 @@ export function ShowcaseVideoEditingDetail({
                     <span className="mt-0.5 block font-body text-[12px] leading-tight text-mono-2">
                       {selectorSubtitle}
                     </span>
-                  </button>
+                  </div>
                 );
               })}
             </div>
               {videos.length > 1 ? (
                 <button
                   type="button"
-                  className={`${worksArrowBtnClass} video-editing-works-arrow--next -right-1.5 sm:-right-2`}
+                  className={`${worksArrowBtnClass} video-editing-works-arrow--next -right-2.5 sm:-right-2${
+                    pressedWorksArrow === "next" ? " video-editing-works-arrow--pressed" : ""
+                  }`}
                   aria-label="Next selected work"
-                  onClick={() => handleSelectAdjacentWork(1)}
+                  onPointerDown={handleWorksArrowPointerDown("next")}
+                  onPointerUp={handleWorksArrowPointerRelease}
+                  onPointerCancel={handleWorksArrowPointerRelease}
+                  onPointerLeave={handleWorksArrowPointerRelease}
+                  onClick={(event) => handleSelectAdjacentWork(1, event.currentTarget)}
                 >
                   <ChevronRight className="video-editing-works-arrow-glyph h-[0.9625rem] w-[0.9625rem] sm:h-[1.1rem] sm:w-[1.1rem]" strokeWidth={2.25} aria-hidden />
                 </button>

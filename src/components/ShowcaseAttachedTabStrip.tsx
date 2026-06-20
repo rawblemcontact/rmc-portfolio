@@ -343,7 +343,7 @@ export function ShowcaseAttachedTabStrip({
                         : [
                             TAB_PANEL_SURFACE,
                             "featured-writing-tab-idle-edge",
-                            "text-mono-2/50 hover:bg-white/[0.05] hover:text-mono-2/88",
+                            "text-mono-2/42 hover:bg-white/[0.05] hover:text-mono-2/88",
                           ].join(" "),
                     ].join(" ")}
                   >

@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
+/**
+ * Dev-only draggable horizontal/vertical ruler overlay (cyan Y, magenta X).
+ * Re-enable: set `SHOW_DEBUG_RULER_TOOL = true` in `src/App.tsx`.
+ */
+
 type DragMode = "cross" | "horizontal" | "vertical" | null;
 
 function clamp(value: number, min: number, max: number) {

@@ -99,9 +99,9 @@ function AdobeSuiteIcon({
 }) {
   return (
     <svg
-      viewBox="0 -2.5 20 20"
-      width={size + 2}
-      height={size + 2}
+      viewBox="-1.5 -4 23 24"
+      width={size}
+      height={size}
       className={className}
       xmlns="http://www.w3.org/2000/svg"
     >
@@ -227,16 +227,42 @@ function CapCutIcon({
 }) {
   return (
     <svg
-      viewBox="0 0 147.02681 109.47481"
+      viewBox="-4 -4 155 117"
       width={size}
       height={size}
       className={`block shrink-0 ${className ?? ""}`}
       preserveAspectRatio="xMidYMid meet"
+      overflow="visible"
       xmlns="http://www.w3.org/2000/svg"
     >
       <path
         d="M 16.397972,109.02936 C 9.6553448,107.52313 4.1553948,103.36396 1.2959418,97.608906 l -0.85502602,-1.72086 -0.09451,-9.74227 -0.09451,-9.74227 7.76015302,-4.06768 c 4.2680852,-2.23723 13.5028302,-6.98438 20.5216562,-10.54924 11.217349,-5.69727 12.712788,-6.54096 12.358895,-6.97253 -1.097188,-1.33804 -6.568991,-4.30779 -22.304446,-12.10542 -9.4647242,-4.6902 -17.4661382,-8.81712 -17.78092122,-9.17092 -0.507014,-0.56987 -0.592061,-1.45862 -0.745213,-7.787582 -0.210823,-8.712173 0.05343,-10.848678 1.77371302,-14.340614 C 3.4376348,8.1578797 5.3279258,6.0524497 8.6002358,3.8751297 11.83796,1.7208227 14.625541,0.71410668 18.476115,0.30852468 20.240367,0.12269568 37.383897,1.2268069e-4 61.60963,1.2968069e-4 c 43.40031,1.1e-5 42.07681,-0.0473500007 46.2957,1.65673401931 2.9774,1.202627 5.24678,2.695028 7.43291,4.888074 2.51989,2.52786 3.36338,3.9602703 4.15523,7.0563743 0.34474,1.347915 0.6803,2.504249 0.74568,2.569631 0.0654,0.06538 5.49222,-2.563163 12.05965,-5.841211 7.40966,-3.6984443 12.2915,-5.9600893 12.86506,-5.9600893 h 0.9243 v 8.3841543 8.384154 l -28.08129,13.971795 c -15.44471,7.68448 -30.45051,15.06982 -33.34622,16.41186 -2.89572,1.34203 -5.28354,2.58086 -5.30628,2.75294 -0.0983,0.74424 5.86013,4.16851 13.70004,7.87329 10.93954,5.16951 52.71149,25.98419 53.42485,26.62123 0.49238,0.4397 0.54755,1.23765 0.54755,7.91907 v 7.430114 l -0.98534,0.34349 c -0.54194,0.18892 -1.39792,0.34349 -1.90218,0.34349 -0.57132,0 -5.21253,-2.1876 -12.31546,-5.804804 -6.26925,-3.19264 -11.51947,-5.73011 -11.66716,-5.63883 -0.14769,0.0913 -0.35885,0.73081 -0.46925,1.42119 -0.29075,1.81829 -1.31626,4.40044 -2.39363,6.026974 -0.92963,1.40348 -4.46036,4.51871 -6.56146,5.7893 -1.99184,1.20452 -5.70662,2.23841 -9.24987,2.57441 -2.17321,0.20608 -17.97923,0.31551 -43.31455,0.29987 -32.135388,-0.0198 -40.257687,-0.10615 -41.76994,-0.44398 z M 99.46852,94.470196 c 1.41773,-0.18333 3.02782,-0.64395 4.06749,-1.16365 1.63624,-0.81792 1.73817,-0.93979 2.0729,-2.4785 0.19363,-0.89005 0.45063,-2.53884 0.57112,-3.66397 l 0.21908,-2.0457 -15.72317,-7.91271 c -19.07138,-9.59771 -24.63738,-12.27967 -26.83362,-12.92968 -2.52829,-0.74829 -6.1604,-0.63952 -8.71668,0.26104 -1.16617,0.41084 -10.638558,5.19536 -21.049754,10.63227 l -18.929448,9.88529 -0.08754,3.54724 -0.08754,3.54724 1.100835,1.06697 c 0.981224,0.95104 1.347693,1.08969 3.372817,1.27606 3.687154,0.33933 77.38596,0.31916 80.02351,-0.0219 z M 73.05834,40.783326 c 5.41075,-2.85989 15.0801,-7.71109 21.48745,-10.78044 13.19588,-6.321308 12.31428,-5.616721 11.9458,-9.547199 -0.2088,-2.22724 -0.97451,-3.652061 -2.34296,-4.359711 -2.66497,-1.378111 -3.04297,-1.390022 -44.29538,-1.395747 -25.31644,-0.0035 -39.740281,0.107281 -40.828285,0.313617 -1.019446,0.193334 -2.115028,0.668931 -2.780436,1.206999 l -1.098091,0.887948 -0.0881,3.637115 -0.0881,3.637115 15.106507,7.548813 c 8.308579,4.15185 17.040695,8.60505 19.404705,9.896 5.43971,2.97055 8.72406,4.14547 11.60392,4.15112 l 2.13525,0.004 z"
         fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+/** DaVinci Resolve — padded viewBox so the mark is not clipped at card icon sizes. */
+function DavinciResolveIcon({
+  size = 18,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) {
+  return (
+    <svg
+      viewBox="-1 -1 26 26"
+      width={size}
+      height={size}
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+    >
+      <path
+        fill="currentColor"
+        d="M17.621 0 5.977.004c-1.37 0-2.756.345-3.762 1.11a4.925 4.925 0 0 0-1.61 2.003C.233 3.93 0 5.02 0 5.951l.012 12.2c.002 1.604.479 3.057 1.461 4.112.984 1.056 2.462 1.683 4.331 1.691L16.856 24c1.26.005 3.095-.036 4.303-.714 1.075-.605 2.025-1.556 2.497-2.984.278-.84.345-2.084.344-3.147l-.021-11.13c-.002-.888-.15-2.023-.547-2.934-.425-.976-1.181-1.815-2.322-2.425C20.353.26 19.123 0 17.622 0zm0 .93c1.378 0 2.538.295 3.04.565.977.523 1.544 1.166 1.889 1.96.315.721.47 1.793.473 2.572l.018 11.13c.002 1.013-.097 2.257-.298 2.86-.396 1.202-1.146 1.946-2.063 2.462-.814.457-2.612.593-3.82.588l-11.05-.044c-1.657-.007-2.832-.534-3.626-1.386-.792-.851-1.212-2.06-1.212-3.485L.999 5.95c0-.829.196-1.827.474-2.437.345-.757.75-1.207 1.365-1.674C3.585 1.27 4.868.97 6.08.97zm-5.66 3.423c-1.976.089-3.204 1.658-3.214 3.29.019 1.443 1.635 3.481 2.884 4.53.12.099.154.109.33.18.062.025.198-.047.327-.135.36-.245.993-.947 1.648-1.738a7.67 7.67 0 0 0 1.031-1.683c.409-.89.261-1.599.235-1.888a3.983 3.983 0 0 0-.99-1.692 3.36 3.36 0 0 0-2.251-.864zm4.172 7.922a10.185 10.185 0 0 0-3.244.61c-.15.058-.26.1-.374.17-.057.036-.11.135-.105.292.017.433.29 1.278.624 2.27.384 1.135 1.066 2.27 1.844 2.74a3.23 3.23 0 0 0 2.53.342c.832-.243 1.595-.868 1.962-1.546.986-1.818.19-3.548-1.121-4.417-.447-.296-1.133-.445-1.89-.46-.074 0-.15-.002-.226-.001zm-8.432.038a6.201 6.201 0 0 0-.752.047c-.596.078-.932.273-1.29.51a3.177 3.177 0 0 0-1.365 1.979c-.075.552-.086 1.053.033 1.507.433 1.389 1.326 2.222 2.847 2.452.636.028 1.37-.063 1.99-.45 1.269-.782 2.08-3.17 2.412-4.742.053-.176.035-.357-.013-.42-.005-.067-.044-.113-.19-.183-.398-.192-1.32-.417-2.375-.6a7.68 7.68 0 0 0-1.297-.1z"
       />
     </svg>
   );
@@ -458,7 +484,7 @@ const TOOL_ICONS: Record<
   "Adobe Creative Suite": AdobeSuiteIcon,
   "Canva": CanvaIcon,
   "Procreate": ProcreateIcon,
-  "DaVinci Resolve": SiDavinciresolve,
+  "DaVinci Resolve": DavinciResolveIcon,
   "CapCut": CapCutIcon,
   Audacity: AudacityIcon,
   "Arc Studio": ArcStudioIcon,
@@ -3033,6 +3059,8 @@ type ShowcaseProjectCard = {
   /** Optional line above `title`; absolutely stacked so tagline/divider layout stays fixed. */
   readonly titlePrefix?: string;
   readonly tagline: string;
+  /** Replaces `tagline` below `md` (phone showcase + project detail). */
+  readonly mobileTagline?: string;
   /** Appended to tagline on iPad portrait only (e.g. SLAYWIRE development note). */
   readonly tabletPortraitTaglineSuffix?: string;
   readonly thumbnail?: string;
@@ -3063,7 +3091,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
   {
     id: "project-visual-design",
     title: "VISUAL DESIGN",
-    tagline: "Graphic design, illustration & branding.",
+    tagline: "Graphic design, illustration and branding.",
     thumbnail: "/illustrations/illustrations-charger.png",
     focalPoint: "50% 42%",
     detailGallery: [
@@ -3173,7 +3201,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
   {
     id: "project-video-editing",
     title: "VIDEO EDITING",
-    tagline: "Post-production. Assembly, color, motion, and audio.",
+    tagline: "Assembly, color, motion, and audio.",
     thumbnailVideo: "/edits-meme1-online.mp4",
     poster: "/edits-meme1-online-poster.jpg",
     focalPoint: "50% 36%",
@@ -3272,7 +3300,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
   {
     id: "project-interactive-media",
     title: "INTERACTIVE MEDIA",
-    tagline: "Web experiences, game development, and animation.",
+    tagline: "Web design, game dev, and animation.",
     thumbnailVideo: "/portfolio-website-thumbnail-v2.mp4",
     poster: "/portfolio-website-thumbnail-v2-poster.jpg",
     focalPoint: "50% 38%",
@@ -3587,7 +3615,17 @@ const PROJECT_CARD_TAGLINE_PANEL =
 const PROJECT_CARD_TITLE_INSET =
   "shrink-0 -translate-x-0.5 px-2.5 pb-1.5 pt-2.5 sm:px-3 sm:pb-2 sm:pt-3";
 const PROJECT_CARD_TAGLINE_CLASS =
-  "project-card-tagline font-body block w-full text-left text-xs leading-snug sm:text-[0.8125rem] md:text-sm lg:text-[0.9375rem] text-mono-2 transition-colors group-hover:text-white/90";
+  "project-card-tagline font-body block w-full text-left text-xs leading-snug sm:text-[0.8125rem] md:text-sm lg:text-[0.9375rem] text-mono-2/70 transition-colors group-hover:text-white/90";
+
+const showcaseTaglineCopy = (card: Pick<ShowcaseProjectCard, "tagline" | "mobileTagline">) =>
+  card.mobileTagline ? (
+    <>
+      <span className="max-md:hidden">{card.tagline}</span>
+      <span className="hidden max-md:inline">{card.mobileTagline}</span>
+    </>
+  ) : (
+    card.tagline
+  );
 /** SHOWCASE carousel inner column cap (detail overlay / career rail — not PROFILE viewport gutters). */
 const SHOWCASE_COLUMN_MAX = "max-w-[min(100%,58rem)]";
 /** Mobile/tablet section top inset — PROFILE, Experience, Projects, Skills (`lg+` uses section-specific desktop pt). */
@@ -3696,7 +3734,7 @@ const ProjectsStack = ({
     <div className="projects-carousel-stack -mt-1 sm:-mt-1.5 flex w-full min-w-0 flex-col justify-center overflow-x-visible overflow-y-visible pt-2 pb-0 sm:pt-3">
       <div className="w-full min-w-0">
         <div className="min-w-0 max-w-full w-full overflow-hidden [--slide-gap:0.875rem] sm:[--slide-gap:1.25rem] lg:[--slide-gap:1rem] xl:[--slide-gap:1.125rem] max-sm:[--slide-gap:0.625rem]">
-          <div className="grid w-full min-w-0 grid-cols-2 sm:grid-cols-4 gap-[var(--slide-gap)]">
+          <div className="projects-carousel-grid grid w-full min-w-0 grid-cols-2 sm:grid-cols-4 gap-[var(--slide-gap)]">
             {PROJECT_CARDS.map((card, index) => (
               <div key={card.id} className="min-w-0">
                 <motion.button
@@ -3785,7 +3823,7 @@ const ProjectsStack = ({
                                   : ""
                               }`}
                             >
-                              {card.tagline}
+                              {showcaseTaglineCopy(card)}
                               {card.tabletPortraitTaglineSuffix ? (
                                 <span className="project-card-tagline-tablet-portrait-suffix">
                                   {" "}
@@ -3815,7 +3853,7 @@ const ProjectsStack = ({
                                 : ""
                             }`}
                           >
-                            {card.tagline}
+                            {showcaseTaglineCopy(card)}
                             {card.tabletPortraitTaglineSuffix ? (
                               <span className="project-card-tagline-tablet-portrait-suffix">
                                 {" "}
@@ -3843,40 +3881,100 @@ const PORTFOLIO_OPTICAL_MIN_VIEWPORT_PX = 1024;
 /** SKILLS / PROJECTS (tablet) grid overlay height sync — matches index.css. */
 const SECTION_PANEL_GRID_SELECTOR = '[aria-label^="Section:"]';
 
-function sectionGridOverlayHeightPx(section: HTMLElement): number {
-  const viewportH = Math.round(window.visualViewport?.height ?? window.innerHeight);
-  const panel = section.closest<HTMLElement>(SECTION_PANEL_GRID_SELECTOR);
-  const panelH = panel
-    ? Math.max(panel.clientHeight, panel.offsetHeight, panel.scrollHeight)
-    : 0;
-  return Math.max(section.offsetHeight, section.scrollHeight, viewportH, panelH);
+function sectionGridOverlayHeightPx(
+  section: HTMLElement,
+  cssVar: "--projects-grid-overlay-height" | "--skills-grid-overlay-height",
+): number {
+  // Drop prior synced min-height so orientation changes can shrink (avoids scrollHeight ratchet).
+  section.style.setProperty(cssVar, "0px");
+  void section.offsetHeight;
+
+  // PROJECTS showcase: measure to the bottom of the content stack, not flex-stretched shells.
+  if (
+    cssVar === "--projects-grid-overlay-height" &&
+    section.id === "projects" &&
+    section.classList.contains("projects-showcase-tablet-pad")
+  ) {
+    const stackBottom =
+      section.querySelector<HTMLElement>(".projects-showcase-flow") ??
+      section.querySelector<HTMLElement>(".projects-showcase-featured-block") ??
+      section.querySelector<HTMLElement>(".projects-showcase-cards-cluster");
+    if (stackBottom) {
+      const sectionBox = section.getBoundingClientRect();
+      const bottomBox = stackBottom.getBoundingClientRect();
+      const padBottom = parseFloat(getComputedStyle(section).paddingBottom) || 0;
+      return Math.max(0, Math.ceil(bottomBox.bottom - sectionBox.top + padBottom));
+    }
+  }
+
+  const contentShell = section.querySelector<HTMLElement>(
+    ":scope > div:not(.portfolio-grid-overlay)",
+  );
+  const contentH = contentShell
+    ? Math.max(contentShell.offsetHeight, contentShell.scrollHeight)
+    : Math.max(section.offsetHeight, section.scrollHeight);
+
+  return contentH;
 }
 
 function bindSectionGridOverlayHeightSync(
   section: HTMLElement,
   cssVar: "--projects-grid-overlay-height" | "--skills-grid-overlay-height",
 ) {
+  const panel = section.closest<HTMLElement>(SECTION_PANEL_GRID_SELECTOR);
+
   const sync = () => {
-    section.style.setProperty(cssVar, `${sectionGridOverlayHeightPx(section)}px`);
+    section.style.setProperty(cssVar, `${sectionGridOverlayHeightPx(section, cssVar)}px`);
+  };
+
+  const syncAfterOrientation = () => {
+    if (panel) panel.scrollTop = 0;
+    sync();
+    window.requestAnimationFrame(() => {
+      sync();
+      window.requestAnimationFrame(sync);
+    });
+    window.setTimeout(sync, 120);
+    window.setTimeout(sync, 320);
   };
 
   sync();
   const ro = new ResizeObserver(sync);
   ro.observe(section);
-  const panel = section.closest<HTMLElement>(SECTION_PANEL_GRID_SELECTOR);
   if (panel) ro.observe(panel);
   const contentShell = section.querySelector<HTMLElement>(":scope > div:not(.portfolio-grid-overlay)");
   if (contentShell) ro.observe(contentShell);
 
   window.addEventListener("resize", sync);
+  window.addEventListener("orientationchange", syncAfterOrientation);
   window.visualViewport?.addEventListener("resize", sync);
   window.visualViewport?.addEventListener("scroll", sync);
+  const orientationMq =
+    typeof window.matchMedia === "function"
+      ? window.matchMedia("(orientation: portrait)")
+      : null;
+  const onOrientationMq = () => syncAfterOrientation();
+  if (orientationMq) {
+    if (typeof orientationMq.addEventListener === "function") {
+      orientationMq.addEventListener("change", onOrientationMq);
+    } else {
+      orientationMq.addListener(onOrientationMq);
+    }
+  }
 
   return () => {
     ro.disconnect();
     window.removeEventListener("resize", sync);
+    window.removeEventListener("orientationchange", syncAfterOrientation);
     window.visualViewport?.removeEventListener("resize", sync);
     window.visualViewport?.removeEventListener("scroll", sync);
+    if (orientationMq) {
+      if (typeof orientationMq.removeEventListener === "function") {
+        orientationMq.removeEventListener("change", onOrientationMq);
+      } else {
+        orientationMq.removeListener(onOrientationMq);
+      }
+    }
     section.style.removeProperty(cssVar);
   };
 }
@@ -4479,7 +4577,7 @@ const ShowcaseVisualDesignDetail = ({
           <ShowcaseStackedTitle title={card.title} titlePrefix={card.titlePrefix} />
         </h3>
         <p className="m-0 w-full pl-[2px] font-body text-sm sm:text-base leading-snug text-mono-2">
-          {card.tagline}
+          {showcaseTaglineCopy(card)}
         </p>
       </motion.div>
       <motion.div className="order-2 mt-5 w-full" aria-hidden>
@@ -4954,24 +5052,24 @@ function ShowcaseWritingFeaturedPanel({
   onOpenPdfInSupporting: (item: SupportingArchivePdfItem) => void;
 }) {
   return (
-    <div className="flex w-full min-w-0 max-w-full flex-col gap-3 text-left sm:flex-row sm:items-start sm:gap-4">
+    <div className="featured-writing-panel-body flex w-full min-w-0 max-w-full flex-col gap-3 text-left sm:flex-row sm:items-start sm:gap-4">
       <FeaturedWritingPdfThumbnail
         pdfSrc={supportingPdfHref(item)}
         widthPx={previewWidthPx}
         className="shrink-0 self-start"
         onActivate={() => onOpenPdfInSupporting(item)}
       />
-      <div className="flex min-h-0 min-w-0 w-full flex-1 flex-col gap-2.5 sm:min-w-0 sm:gap-3">
-        <div className="flex min-w-0 flex-col gap-2.5 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
-          <div className="min-w-0 space-y-1">
-            <p className="font-display text-lg leading-[1.15] tracking-tight text-white sm:text-xl md:text-2xl md:leading-tight">
-              {item.title}
-            </p>
-            <p className="font-body text-xs leading-snug text-mono-2/75 sm:text-sm">{item.subtitle}</p>
-          </div>
+      <div className="featured-writing-content-col flex min-h-0 min-w-0 w-full flex-1 flex-col gap-2.5 sm:min-w-0 sm:gap-3">
+        <div className="featured-writing-title-row grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] grid-rows-[auto_auto] items-start gap-x-2.5 gap-y-1 sm:gap-x-3">
+          <p className="featured-writing-item-title col-start-1 row-start-1 min-w-0 font-display text-lg leading-[1.15] tracking-tight text-white sm:text-xl md:text-2xl md:leading-tight">
+            {item.title}
+          </p>
+          <p className="featured-writing-item-subtitle col-start-1 row-start-2 min-w-0 font-body text-xs leading-snug text-mono-2/75 sm:text-sm">
+            {item.subtitle}
+          </p>
           <button
             type="button"
-            className="featured-writing-view-cta inline-flex w-fit shrink-0 items-center gap-2 self-start rounded-[11px] sm:rounded-xl px-2.5 py-1.5 font-heading text-[10px] sm:text-xs font-semibold tracking-eyebrow-tight uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_56%,rgb(186_186_186))] transition-[background-color,color,border-color,box-shadow] duration-300 ease-out hover:text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_62%,rgb(186_186_186))] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:mr-[6px] sm:px-3 sm:py-2"
+            className="featured-writing-view-cta col-start-2 row-start-1 inline-flex w-fit shrink-0 items-center gap-2 self-start justify-self-end rounded-[11px] sm:rounded-xl px-2.5 py-1.5 font-heading text-[10px] sm:text-xs font-semibold tracking-eyebrow-tight uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_56%,rgb(186_186_186))] transition-[background-color,color,border-color,box-shadow] duration-300 ease-out hover:text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_62%,rgb(186_186_186))] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black mr-[6px] sm:px-3 sm:py-2"
             onClick={() => onOpenPdfInSupporting(item)}
           >
             VIEW
@@ -5307,38 +5405,38 @@ const PalaceProjects = ({
             } ${
               projectDetailAllowsOverflowX ? "overflow-x-visible" : "overflow-x-hidden"
             }`
-          : `max-lg:min-h-min lg:min-h-full overflow-x-hidden ${PROJECTS_SHOWCASE_TABLET_PAD} ${SECTION_MAIN_HEADER_INSET}`
+          : `max-2xl:min-h-min 2xl:min-h-full overflow-x-hidden ${PROJECTS_SHOWCASE_TABLET_PAD} ${SECTION_MAIN_HEADER_INSET}`
       }`}
     >
       <SectionGridOverlay />
       <div
         className={`${PROFILE_SECTION_CONTAINER} relative z-10 flex min-w-0 w-full flex-col ${
-          projectDetailInFlow ? "min-h-min shrink-0" : "max-lg:min-h-min max-lg:flex-none lg:min-h-0 lg:flex-1"
+          projectDetailInFlow ? "min-h-min shrink-0" : "max-2xl:min-h-min max-2xl:flex-none 2xl:min-h-0 2xl:flex-1"
         }`}
       >
         <div className={EXPERIENCE_GUTTER_SHELL_OUTER}>
           <div className={EXPERIENCE_GUTTER_SHELL_INNER}>
         <div
-          className={`${PROJECTS_VIEWPORT_SHELL} overflow-y-visible ${
+          className={`projects-showcase-viewport ${PROJECTS_VIEWPORT_SHELL} overflow-y-visible ${
             projectDetailInFlow
               ? `min-h-min shrink-0 justify-start${
                   slaywireDetailInFlow ? " projects-slaywire-detail-stage" : ""
                 }`
-              : "max-lg:min-h-min max-lg:flex-none max-lg:justify-start lg:min-h-0 lg:flex-1 lg:justify-center"
+              : "max-lg:min-h-min max-lg:flex-none max-lg:justify-start max-2xl:min-h-min max-2xl:flex-none max-2xl:justify-start 2xl:min-h-0 2xl:flex-1 2xl:justify-center"
           }`}
         >
         {/*
          * Column inherits --slide-gap from #projects. Spacer + section pb = bottom air; overlay scrolls if needed (no clipping).
          */}
         <div
-          className={`flex flex-col overflow-y-visible ${
+          className={`projects-showcase-stage flex flex-col overflow-y-visible ${
             projectDetailInFlow
               ? `min-h-min shrink-0 justify-start${
                   slaywireDetailInFlow ? " projects-slaywire-detail-stage" : ""
                 } ${
                   projectDetailAllowsOverflowX ? "overflow-x-visible" : "overflow-x-hidden"
                 }`
-              : "max-lg:min-h-min max-lg:flex-none max-lg:justify-start lg:min-h-0 lg:flex-1 lg:justify-center overflow-x-hidden"
+              : "max-lg:min-h-min max-lg:flex-none max-lg:justify-start max-2xl:min-h-min max-2xl:flex-none max-2xl:justify-start 2xl:min-h-0 2xl:flex-1 2xl:justify-center overflow-x-hidden"
           }`}
         >
           {!projectDetailInFlow ? (
@@ -5424,7 +5522,7 @@ const PalaceProjects = ({
         {!projectDetailInFlow ? (
         <div
           aria-hidden={showcaseObscured || undefined}
-          className={`projects-showcase-flow flex min-h-0 w-full flex-1 flex-col ${showcaseObscured ? "pointer-events-none select-none" : ""}`}
+          className={`projects-showcase-flow flex min-h-0 w-full flex-none flex-col 2xl:flex-1 ${showcaseObscured ? "pointer-events-none select-none" : ""}`}
         >
           <motion.div
             className={`projects-showcase-featured-block flex w-full shrink-0 min-w-0 flex-col${
@@ -5554,7 +5652,7 @@ const PalaceProjects = ({
                     <ShowcaseStackedTitle title={activeCard.title} titlePrefix={activeCard.titlePrefix} />
                   </h3>
                   <p className="m-0 w-full pl-[2px] font-body text-sm sm:text-base leading-snug text-mono-2">
-                    {activeCard.tagline}
+                    {showcaseTaglineCopy(activeCard)}
                   </p>
                 </div>
                 <div className="mt-5 w-full" aria-hidden>
@@ -5948,14 +6046,18 @@ const ExperienceTabPanelBody = ({ tabId }: { tabId: ExperienceTabId }) => {
             </div>
             <p className="panel-description">
               Bachelor&apos;s Degree, Writing
-              <span className="panel-meta-sep" aria-hidden="true">
+              <span className="panel-meta-sep max-md:hidden" aria-hidden="true">
                 •
               </span>
-              University of Victoria
-              <span className="panel-meta-sep" aria-hidden="true">
-                •
+              <span className="max-md:block max-md:mt-0.5">
+                <span className="max-md:hidden">
+                  University of Victoria
+                  <span className="panel-meta-sep" aria-hidden="true">
+                    •
+                  </span>
+                </span>
+                Victoria, BC
               </span>
-              Victoria, BC
             </p>
             <div className="experience-skill-tags" aria-label="Relevant skills">
               {CAREER_OVERVIEW_SKILL_TAG_ROWS.education.map((row) => (
@@ -6326,7 +6428,7 @@ const ConfidantExperience = ({
             {renderExperienceTabButton(
               "uvic-esports",
               "Social Media",
-              "UVIC E-Sports",
+              "UVic E-Sports",
               experienceTabItemEntrance,
             )}
             {renderExperienceTabButton(
@@ -9326,12 +9428,12 @@ export default function Home() {
                 className={
                   currentSection === "projects"
                     ? `relative z-10 flex w-full min-w-0 flex-col ${projectsPanelOverflowX} overflow-y-visible max-lg:min-h-min max-lg:flex-none ${
-                        activeShowcaseProjectId ? "min-h-min shrink-0" : "lg:min-h-0 lg:flex-1"
+                        activeShowcaseProjectId ? "min-h-min shrink-0" : "max-2xl:min-h-min max-2xl:flex-none 2xl:min-h-0 2xl:flex-1"
                       }`
                     : currentSection === "profile"
                       ? "flex min-h-min w-full min-w-0 max-lg:flex-none flex-col overflow-x-hidden overflow-y-visible lg:h-full lg:min-h-0 lg:flex-1"
                     : currentSection === "skills"
-                      ? "flex min-h-full w-full min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-visible"
+                      ? "flex min-h-min w-full min-w-0 max-md:flex-none flex-col overflow-x-hidden overflow-y-visible md:min-h-full md:flex-1"
                     : currentSection === "experience"
                       ? "flex min-h-min w-full min-w-0 max-lg:flex-none flex-col overflow-x-hidden overflow-y-visible lg:h-full lg:min-h-0 lg:flex-1"
                       : "flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden"
@@ -9348,7 +9450,7 @@ export default function Home() {
                     {currentSection === "projects" && (
                       <div
                         className={`flex w-full min-w-0 shrink-0 flex-col ${projectsPanelOverflowX} overflow-y-visible max-lg:min-h-min max-lg:flex-none ${
-                          activeShowcaseProjectId ? "min-h-min" : "lg:min-h-0 lg:flex-1"
+                          activeShowcaseProjectId ? "min-h-min" : "max-2xl:min-h-min max-2xl:flex-none 2xl:min-h-0 2xl:flex-1"
                         }`}
                       >
                         <PalaceProjects
@@ -9378,7 +9480,7 @@ export default function Home() {
                         exit={{ opacity: 0 }}
                         transition={{ duration: SHOWCASE_SUBROUTE_FADE_S, ease: EASE.out }}
                         className={`flex w-full min-w-0 shrink-0 flex-col ${projectsPanelOverflowX} overflow-y-visible max-lg:min-h-min max-lg:flex-none ${
-                          activeShowcaseProjectId ? "min-h-min" : "lg:min-h-0 lg:flex-1"
+                          activeShowcaseProjectId ? "min-h-min" : "max-2xl:min-h-min max-2xl:flex-none 2xl:min-h-0 2xl:flex-1"
                         }`}
                       >
                         <PalaceProjects
@@ -9422,7 +9524,7 @@ export default function Home() {
                     <SkillArsenal panelSettled={panelSettled} reduceMotion={reduceMotion} />
                   ) : (
                     <motion.div
-                      className="flex min-h-full w-full min-w-0 flex-1 flex-col"
+                      className="flex min-h-min w-full min-w-0 max-md:flex-none flex-col md:min-h-full md:flex-1"
                       animate={{
                         opacity: skillsContentFade === "hide-instant" ? 0 : 1,
                       }}
