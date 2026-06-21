@@ -4,7 +4,7 @@ import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
 /** Default height is fixed; width can grow (e.g. to match active tab). */
 const DEFAULT_W = 120;
-const FIXED_H = 184;
+const FIXED_H = 216;
 
 const dataUrlByKey = new Map<string, string>();
 

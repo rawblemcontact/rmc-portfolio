@@ -1040,16 +1040,25 @@ const HERO_NAME_FRAME_PAD_RATIO = 0.16;
 const HERO_NAME_LINE_BLEED = "clamp(-1.25rem,-4vw,-2.5rem)";
 /** Phase 1 only — nudge name/lines down toward viewport center; settle position unchanged. */
 const HERO_PHASE1_REVEAL_Y = "calc(-33vh + 1.5rem)";
-/** Mobile — gentler Phase 1 lift so entry stays in the lower row without a harsh drop on settle. */
-const HERO_PHASE1_REVEAL_Y_MOBILE = "calc(-20vh + 1.25rem)";
-/** Mobile settle — same baseline as desktop; final offset lives in max-md translate. */
-const HERO_NAME_SETTLE_Y_MOBILE = 0;
+/** Mobile Phase 1 — layout centers the lockup in 100svh; motion value stays at 0. */
+/** Mobile settle — mirrors legacy `calc(20vh - 1.25rem)` + extra down nudge (px for Framer tween). */
+const HERO_MOBILE_SETTLE_DOWN_NUDGE_REM = 3.5;
+function heroMobileSettleOffsetPx(): number {
+  if (typeof window === "undefined") return 0;
+  const rootFontSize = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+  return Math.max(
+    0,
+    window.innerHeight * 0.2 - rootFontSize * 1.25 + rootFontSize * HERO_MOBILE_SETTLE_DOWN_NUDGE_REM,
+  );
+}
 const HERO_NAME_SETTLE_DELAY_S = 0.2;
 const HERO_NAME_SETTLE_DUR_S = 0.95;
 /** Gap from name move-down start → video reveal start. */
 const HERO_VIDEO_REVEAL_START_GAP_S = 0.14;
 const HERO_VIDEO_REVEAL_DELAY_S = HERO_NAME_SETTLE_DELAY_S + 0.18;
 const HERO_VIDEO_REVEAL_DELAY_MS = HERO_VIDEO_REVEAL_DELAY_S * 1000;
+/** Mobile-only — extra hold before hero video card scaleX reveal. */
+const HERO_VIDEO_REVEAL_DELAY_MOBILE_EXTRA_S = 0.1;
 const HERO_SETTLE_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 /** scaleX reveal — no overshoot (y2 ≤ 1) so the card does not pop past full width at the end. */
 const HERO_VIDEO_SCALE_EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
@@ -1075,7 +1084,6 @@ const HERO_NAME_MOBILE_DISPLAY_FONT_CLASS =
   "max-md:text-[clamp(2.95rem,12.6vw,4.4rem)] max-md:max-[400px]:text-[clamp(2.75rem,11.6vw,4.4rem)]";
 const HERO_NAME_MOBILE_PORTFOLIO_BUTTON_CLASS =
   "max-md:h-[calc(clamp(2.95rem,12.6vw,4.4rem)*0.9)] max-md:max-h-[4.4rem] max-md:px-4 max-md:[&_.texts]:gap-1.5 max-md:[&_.texts]:text-[clamp(0.8rem,3.1vw,0.92rem)]";
-const HERO_MOBILE_TEXT_BLOCK_OFFSET_CLASS = "max-md:translate-y-0 max-md:pt-2";
 const HERO_NAME_SWEEP_MS = 700;
 const HERO_NAME_SPLIT_MS = 600;
 /** Rainbow layers — main-menu section accents (NAV order), staggered outside white frame. */
@@ -1776,6 +1784,7 @@ const Hero = ({
   const [bakeCopied, setBakeCopied] = useState(false);
   const [defaultsApplied, setDefaultsApplied] = useState(false);
   const [isMobileHeroLayout, setIsMobileHeroLayout] = useState(false);
+  const mobileNameY = useMotionValue(0);
   const heroTouchStartYRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -1999,9 +2008,36 @@ const Hero = ({
       setVideoRevealActive(true);
       return;
     }
-    const t = window.setTimeout(() => setVideoRevealActive(true), HERO_VIDEO_REVEAL_DELAY_MS);
+    const videoRevealDelayMs =
+      HERO_VIDEO_REVEAL_DELAY_MS +
+      (isMobileHeroLayout ? HERO_VIDEO_REVEAL_DELAY_MOBILE_EXTRA_S * 1000 : 0);
+    const t = window.setTimeout(() => setVideoRevealActive(true), videoRevealDelayMs);
     return () => window.clearTimeout(t);
-  }, [sliderPhaseActive, reduceMotion]);
+  }, [isMobileHeroLayout, sliderPhaseActive, reduceMotion]);
+
+  /** Mobile — imperative y tween (center → legacy final); avoids layout-mode + animate prop conflicts. */
+  useEffect(() => {
+    if (!isMobileHeroLayout) return;
+
+    if (!sliderPhaseActive) {
+      mobileNameY.set(0);
+      return;
+    }
+
+    if (reduceMotion) {
+      mobileNameY.set(heroMobileSettleOffsetPx());
+      return;
+    }
+
+    mobileNameY.set(0);
+    const controls = animate(mobileNameY, heroMobileSettleOffsetPx(), {
+      duration: HERO_NAME_SETTLE_DUR_S,
+      ease: HERO_SETTLE_EASE,
+      delay: HERO_NAME_SETTLE_DELAY_S,
+    });
+
+    return () => controls.stop();
+  }, [isMobileHeroLayout, mobileNameY, reduceMotion, sliderPhaseActive]);
 
   const onStartClick = () => {
     onStart();
@@ -2009,8 +2045,14 @@ const Hero = ({
 
   const heroGridDriftDelay = useGridDriftAnimationDelay();
   const heroReady = fontsReady && heroMediaReady && heroRevealDelayDone;
-  const heroPhase1RevealY = isMobileHeroLayout ? HERO_PHASE1_REVEAL_Y_MOBILE : HERO_PHASE1_REVEAL_Y;
-  const heroNameSettleY = isMobileHeroLayout ? HERO_NAME_SETTLE_Y_MOBILE : 0;
+  const desktopHeroMotionY = sliderPhaseActive ? 0 : HERO_PHASE1_REVEAL_Y;
+  const desktopHeroMotionTransition = reduceMotion
+    ? { duration: 0 }
+    : {
+        duration: HERO_NAME_SETTLE_DUR_S,
+        ease: HERO_SETTLE_EASE,
+        delay: HERO_NAME_SETTLE_DELAY_S,
+      };
   const currentHeroSlide = heroSlides[heroSlideIndex];
   const currentFocal = heroFocalOverrides[currentHeroSlide.id] ?? heroFocalLocked[currentHeroSlide.id] ?? parseFocalPoint(currentHeroSlide.focalPoint);
   const currentZoom = heroZoomOverrides[currentHeroSlide.id] ?? heroZoomLocked[currentHeroSlide.id] ?? currentHeroSlide.zoom ?? 1;
@@ -2073,7 +2115,9 @@ const Hero = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.12, ease: [0.22, 1, 0.36, 1] }}
-        className="relative z-[5] mx-auto grid h-full w-full max-w-[1680px] grid-rows-[minmax(0,1.55fr)_minmax(0,1fr)] px-4 pt-[max(1rem,env(safe-area-inset-top,0px))] pb-4 max-lg:grid-rows-[minmax(0,1.5fr)_minmax(0,1fr)] md:max-lg:grid-rows-[minmax(0,1.38fr)_minmax(0,1fr)] md:px-6 md:pt-[max(1.5rem,env(safe-area-inset-top,0px))] md:pb-5 md:max-lg:px-5 md:max-lg:pt-3 md:max-lg:pb-[max(1.25rem,env(safe-area-inset-bottom,0px))] lg:grid-rows-[minmax(0,2fr)_minmax(0,1fr)] lg:px-8 lg:pt-[max(2rem,env(safe-area-inset-top,0px))] lg:pb-6"
+        className={`relative z-[5] mx-auto grid h-full w-full max-w-[1680px] grid-rows-[minmax(0,1.55fr)_minmax(0,1fr)] px-4 pt-[max(1rem,env(safe-area-inset-top,0px))] pb-4 max-lg:grid-rows-[minmax(0,1.5fr)_minmax(0,1fr)] md:max-lg:grid-rows-[minmax(0,1.38fr)_minmax(0,1fr)] md:px-6 md:pt-[max(1.5rem,env(safe-area-inset-top,0px))] md:pb-5 md:max-lg:px-5 md:max-lg:pt-3 md:max-lg:pb-[max(1.25rem,env(safe-area-inset-bottom,0px))] lg:grid-rows-[minmax(0,2fr)_minmax(0,1fr)] lg:px-8 lg:pt-[max(2rem,env(safe-area-inset-top,0px))] lg:pb-6${
+          isMobileHeroLayout && !sliderPhaseActive ? " max-md:grid-rows-1" : ""
+        }`}
       >
         <div className="relative flex min-h-0 items-center justify-center max-lg:items-end max-lg:pb-2 md:max-lg:pb-3">
           <div className="absolute inset-0 flex w-full items-center justify-center max-lg:items-end max-lg:pb-2 md:max-lg:translate-y-8 md:max-lg:pb-1 max-[400px]:px-3 sm:px-0">
@@ -2205,22 +2249,24 @@ const Hero = ({
           )}
           </div>
         </div>
-        <div className="relative z-40 flex min-h-0 flex-col items-center justify-center overflow-visible pt-0 max-lg:justify-start max-lg:pt-2 max-md:justify-start max-md:pt-1 md:max-lg:justify-center md:max-lg:pt-0">
-          {/* Y-transform wrapper: starts above final position during Phase 1,
-              settles when sliderPhaseActive fires with slider open */}
+        <div
+          className={`relative z-40 flex min-h-0 flex-col items-center overflow-visible pt-0 max-lg:justify-start max-lg:pt-2 md:max-lg:justify-center md:max-lg:pt-0${
+            isMobileHeroLayout
+              ? " max-md:col-span-full max-md:col-start-1 max-md:row-span-full max-md:row-start-1 max-md:absolute max-md:inset-0 max-md:z-[45] max-md:justify-center max-md:pt-0"
+              : ""
+          }`}
+        >
+          {/* Y-transform wrapper: mobile centers in viewport then tweens down; desktop uses phase-1 lift → settle. */}
           <motion.div
-            className="mx-auto flex h-full w-full max-w-[1220px] flex-col items-center justify-center gap-0 px-1 py-2 max-lg:justify-start max-lg:py-1 max-md:justify-start max-md:py-2 sm:px-2 sm:py-2 md:max-lg:justify-center md:max-lg:py-2 lg:py-3"
-            initial={{ y: heroPhase1RevealY }}
-            animate={{ y: sliderPhaseActive ? heroNameSettleY : heroPhase1RevealY }}
-            transition={
-              reduceMotion
-                ? { duration: 0 }
-                : { duration: HERO_NAME_SETTLE_DUR_S, ease: HERO_SETTLE_EASE, delay: HERO_NAME_SETTLE_DELAY_S }
-            }
+            className="mx-auto flex h-full w-full max-w-[1220px] flex-col items-center justify-center gap-0 px-1 py-2 max-lg:justify-start max-lg:py-1 max-md:justify-center max-md:py-0 sm:px-2 sm:py-2 md:max-lg:justify-center md:max-lg:py-2 lg:py-3"
+            style={isMobileHeroLayout ? { y: mobileNameY } : undefined}
+            initial={isMobileHeroLayout ? false : { y: HERO_PHASE1_REVEAL_Y }}
+            animate={isMobileHeroLayout ? undefined : { y: desktopHeroMotionY }}
+            transition={isMobileHeroLayout ? undefined : desktopHeroMotionTransition}
           >
             <div
               ref={heroInViewRef}
-              className={`-translate-y-3 mx-auto flex w-full min-w-0 max-w-[min(100%,58rem)] flex-col px-1 max-md:px-3 ${HERO_MOBILE_TEXT_BLOCK_OFFSET_CLASS} sm:px-2 md:max-lg:translate-y-3 lg:[@media(min-width:744px)_and_(max-width:1366px)]:-translate-y-6`}
+              className="mx-auto flex w-full min-w-0 max-w-[min(100%,58rem)] flex-col px-1 max-md:translate-y-0 max-md:px-3 max-md:pt-2 sm:px-2 md:-translate-y-3 md:max-lg:translate-y-3 lg:[@media(min-width:744px)_and_(max-width:1366px)]:-translate-y-6"
             >
               <div className="w-full min-w-0 text-left max-md:flex max-md:justify-center">
                 <HeroNameReveal
@@ -3595,7 +3641,7 @@ const DETAIL_CARD_H =
   "h-[min(220px,36svh)] sm:h-[min(244px,40svh)] md:h-[min(260px,42svh)] lg:h-[min(276px,44svh)] xl:h-[min(290px,46svh)] 2xl:h-[min(304px,48svh)]";
 /** Four-up carousel — +1.25rem vs DETAIL_CARD_H + --showcase-subhead-reclaim (subhead removed; cards grow upward). */
 const SHOWCASE_CAROUSEL_CARD_H =
-  "h-[min(264px,36svh)] sm:h-[min(288px,40svh)] md:h-[min(304px,42svh)] lg:h-[min(320px,44svh)] xl:h-[min(334px,46svh)] 2xl:h-[min(348px,48svh)]";
+  "h-[min(264px,36svh)] sm:h-[min(288px,40svh)] md:h-[min(304px,42svh)] lg:h-[min(380px,49svh)] xl:h-[min(400px,51svh)] 2xl:h-[min(420px,53svh)]";
 /** DESCRIPTION SECTION — black panel + title/tagline (bottom third of each showcase card). */
 const PROJECT_CARD_DESCRIPTION_SECTION =
   "absolute inset-x-0 bottom-0 z-[1] flex h-1/3 min-h-0 flex-col overflow-hidden bg-black";
@@ -3880,6 +3926,8 @@ const PORTFOLIO_SECTION_SCROLLBAR_VISIBLE_MS = 450;
 const PORTFOLIO_OPTICAL_MIN_VIEWPORT_PX = 1024;
 /** SKILLS / PROJECTS (tablet) grid overlay height sync — matches index.css. */
 const SECTION_PANEL_GRID_SELECTOR = '[aria-label^="Section:"]';
+/** Phone-only — panel scroller keeps PROJECTS scrollTop when detail opens; reset on in-flow detail. */
+const PROJECTS_MOBILE_PANEL_MQ = "(max-width: 767px)";
 
 function sectionGridOverlayHeightPx(
   section: HTMLElement,
@@ -5195,6 +5243,17 @@ const PalaceProjects = ({
     if (!section) return;
     return bindSectionGridOverlayHeightSync(section, "--projects-grid-overlay-height");
   }, [projectDetailInFlow, activeProjectId, projectsOverlayRevealed, entranceArmed]);
+
+  /** Mobile: opening project detail must start at top — panel scroller retains PROJECTS scroll otherwise. */
+  useLayoutEffect(() => {
+    if (!activeProjectId || !projectDetailInFlow) return;
+    if (typeof window === "undefined" || !window.matchMedia(PROJECTS_MOBILE_PANEL_MQ).matches) return;
+    const section = projectsSectionRef.current;
+    if (!section) return;
+    const panel = section.closest<HTMLElement>(SECTION_PANEL_GRID_SELECTOR);
+    if (!panel) return;
+    panel.scrollTop = 0;
+  }, [activeProjectId, projectDetailInFlow]);
 
   const [detailHdrReveal, setDetailHdrReveal] = useState(false);
   const [detailRuleReveal, setDetailRuleReveal] = useState(false);
