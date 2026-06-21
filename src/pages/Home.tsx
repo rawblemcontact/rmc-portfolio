@@ -3359,9 +3359,9 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
       {
         id: "interactive-media-1",
         url: "/portfolio-website-thumbnail-v2.mp4",
-        label: "INTERACTIVE MEDIA",
+        label: "UNDERTALE FHE",
         thumbnailSrc: "/portfolio-website-thumbnail-v2-poster.jpg",
-        selectorTitle: "INTERACTIVE MEDIA",
+        selectorTitle: "UNDERTALE FHE",
         selectorSubtitle: "Games projects and web experiences",
         detailOverview:
           "Playable and interactive work?from GameMaker prototypes to motion-forward web UI?where feel, pacing, and user flow are the design problem.",
@@ -3422,6 +3422,60 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     detailRole: "Writer, illustrator, and world/visual development.",
     detailTools: ["Digital illustration", "Layout & print-minded pacing"],
     detailImpact: "A durable IP bible and finished spreads that support pitching and incremental publishing.",
+    detailVideos: [
+      {
+        id: "slaywire-cover",
+        url: "/slaywire-thumbnail.png",
+        label: "1",
+        thumbnailSrc: "/slaywire-thumbnail.png",
+        selectorTitle: "SLAYWIRE",
+        selectorSubtitle: "Cover art",
+        detailOverview:
+          "Original long-form illustrated narrative—worldbuilding, cast, and visual development for a standalone graphic novel.",
+        detailRole: "Writer, illustrator, and world/visual development.",
+        detailTools: ["Digital illustration", "Layout & print-minded pacing"],
+        detailImpact: "A durable IP bible and finished spreads that support pitching and incremental publishing.",
+      },
+      {
+        id: "slaywire-de",
+        url: "/illustrations/illustrations-slaywire.png",
+        label: "2",
+        thumbnailSrc: "/illustrations/illustrations-slaywire.png",
+        selectorTitle: "DE",
+        selectorSubtitle: "Character illustration",
+        detailOverview:
+          "Digital-ink and texture brush artwork featuring DE, a key character in SLAYWIRE—cast design tied to the larger narrative bible.",
+        detailRole: "Character design, rendering, and promotional illustration.",
+        detailTools: ["Procreate", "Photoshop"],
+        detailImpact: "Anchor visual for pitching character-led moments in the IP.",
+      },
+      {
+        id: "slaywire-world",
+        url: "/slaywire-thumbnail.png",
+        label: "3",
+        thumbnailSrc: "/slaywire-thumbnail.png",
+        selectorTitle: "WORLD",
+        selectorSubtitle: "Visual development",
+        detailOverview:
+          "Mood, palette, and layout exploration for print-minded pacing—spreads built to read on the page, not just on screen.",
+        detailRole: "Worldbuilding visuals and spread composition.",
+        detailTools: ["Digital illustration", "Layout & print-minded pacing"],
+        detailImpact: "Cohesive art direction that scales from pitch deck to finished chapter work.",
+      },
+      {
+        id: "slaywire-promo",
+        url: "/illustrations/illustrations-slaywire.png",
+        label: "4",
+        thumbnailSrc: "/illustrations/illustrations-slaywire.png",
+        selectorTitle: "PROMO",
+        selectorSubtitle: "Promotional illustration",
+        detailOverview:
+          "Digital-ink and texture brush artwork featuring DE—a pitch-ready promo piece tied to the SLAYWIRE cast and world bible.",
+        detailRole: "Promotional illustration and IP-facing visual assets.",
+        detailTools: ["Procreate", "Photoshop"],
+        detailImpact: "Reusable promo art for decks, social, and incremental publishing beats.",
+      },
+    ],
   },
 ];
 
@@ -5164,7 +5218,9 @@ const PalaceProjects = ({
   const activeCard = activeProjectId ? PROJECT_CARDS.find((c) => c.id === activeProjectId) ?? null : null;
   const illustrationsDetailNoHero = Boolean(activeCard?.detailGallery?.length);
   const videoEditingDetailNoMainCard =
-    activeCard?.id === "project-video-editing" || activeCard?.id === "project-interactive-media";
+    activeCard?.id === "project-video-editing" ||
+    activeCard?.id === "project-interactive-media" ||
+    activeCard?.id === "project-slaywire";
   const noMorphProjectIds = new Set([
     "project-interactive-media",
     "project-slaywire",
@@ -5234,6 +5290,10 @@ const PalaceProjects = ({
   );
   const slaywireDetailInFlow =
     projectDetailInFlow && activeCard?.id === "project-slaywire";
+  const interactiveMediaDetailInFlow =
+    projectDetailInFlow && activeCard?.id === "project-interactive-media";
+  const videoEditingProjectDetailInFlow =
+    projectDetailInFlow && activeCard?.id === "project-video-editing";
   const projectDetailAllowsOverflowX =
     videoEditingDetailNoMainCard || slaywireDetailInFlow;
 
@@ -5462,6 +5522,10 @@ const PalaceProjects = ({
           ? `min-h-screen shrink-0 ${SECTION_MAIN_HEADER_INSET} ${
               slaywireDetailInFlow ? "projects-slaywire-detail-open" : ""
             } ${
+              interactiveMediaDetailInFlow ? "projects-interactive-media-detail-open" : ""
+            } ${
+              videoEditingProjectDetailInFlow ? "projects-video-editing-detail-open" : ""
+            } ${
               projectDetailAllowsOverflowX ? "overflow-x-visible" : "overflow-x-hidden"
             }`
           : `max-2xl:min-h-min 2xl:min-h-full overflow-x-hidden ${PROJECTS_SHOWCASE_TABLET_PAD} ${SECTION_MAIN_HEADER_INSET}`
@@ -5611,7 +5675,7 @@ const PalaceProjects = ({
         {projectDetailInFlow && activeCard ? (
           <div
             className={`relative flex w-full min-w-0 max-w-full flex-col items-stretch${
-              activeCard.id === "project-slaywire" ? " projects-slaywire-detail" : ""
+              interactiveMediaDetailInFlow ? " projects-interactive-media-detail-stage" : ""
             }${
               illustrationsDetailNoHero
                 ? " overflow-y-auto overscroll-y-contain no-scrollbar"
@@ -5620,11 +5684,7 @@ const PalaceProjects = ({
           >
               {!illustrationsDetailNoHero && !videoEditingDetailNoMainCard ? (
                 <div
-                  className={`project-card-surface relative z-[1] mx-auto w-full max-w-full ${PROFILE_VIEWPORT_CONTENT_MAX} ${
-                    activeCard.id === "project-slaywire"
-                      ? "projects-slaywire-detail-hero aspect-video h-auto"
-                      : DETAIL_CARD_H
-                  } overflow-hidden rounded-[11px] sm:rounded-xl border border-white/[0.09]`}
+                  className={`project-card-surface relative z-[1] mx-auto w-full max-w-full ${PROFILE_VIEWPORT_CONTENT_MAX} ${DETAIL_CARD_H} overflow-hidden rounded-[11px] sm:rounded-xl border border-white/[0.09]`}
                   style={{
                     boxShadow: `${SHOWCASE_SLIDER_MEDIA_BOX_SHADOW}, 0 18px 48px -28px rgba(0,0,0,0.9)`,
                     borderRadius: `${detailCardRadiusPx}px`,
@@ -5634,11 +5694,7 @@ const PalaceProjects = ({
                 >
                   <div
                     key={activeCard.id}
-                    className={
-                      activeCard.id === "project-slaywire"
-                        ? "absolute inset-0 h-full w-full"
-                        : "h-full w-full"
-                    }
+                    className="h-full w-full"
                     style={{
                       opacity: reduceMotion ? 1 : detailHeroMediaFadeIn ? 1 : 0,
                       ...(reduceMotion
@@ -5659,6 +5715,8 @@ const PalaceProjects = ({
               <div
                 className={`relative z-[1] mx-auto w-full max-w-full min-w-0 ${PROFILE_VIEWPORT_CONTENT_MAX} pb-8 ${
                   illustrationsDetailNoHero || videoEditingDetailNoMainCard ? "mt-0 flex flex-col" : "mt-5"
+                }${
+                  interactiveMediaDetailInFlow ? " projects-interactive-media-detail-inner" : ""
                 }`}
               >
                 {illustrationsDetailNoHero && activeCard.detailGallery?.length ? (
@@ -5689,8 +5747,8 @@ const PalaceProjects = ({
                 {!illustrationsDetailNoHero && !videoEditingDetailNoMainCard ? (
                 <>
                 <div
-                  className={`flex w-full max-w-full flex-col items-stretch gap-y-1.5 text-left ${
-                    illustrationsDetailNoHero ? "order-1 mt-0" : ""
+                  className={`flex w-full max-w-full flex-col items-stretch gap-y-1.5 text-left${
+                    illustrationsDetailNoHero ? " order-1 mt-0" : ""
                   }`}
                   style={
                     reduceMotion

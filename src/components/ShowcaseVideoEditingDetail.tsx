@@ -53,6 +53,35 @@ function toPlyrSource(video: ShowcaseDetailVideo): ResolvedPlyrSource | null {
   return { kind: "file", url: video.url, mime: "video/mp4" };
 }
 
+function isImageMedia(video: ShowcaseDetailVideo): boolean {
+  return IMAGE_EXT_RE.test(video.url);
+}
+
+function VideoEditingImagePlayer({
+  video,
+  focalPoint = "50% 50%",
+  className = "",
+}: {
+  video: ShowcaseDetailVideo;
+  focalPoint?: string;
+  className?: string;
+}) {
+  const src = isImageMedia(video) ? video.url : video.thumbnailSrc;
+  if (!src || !IMAGE_EXT_RE.test(src)) return null;
+
+  return (
+    <div className={`relative aspect-video w-full ${className}`.trim()}>
+      <img
+        src={src}
+        alt={video.selectorTitle?.trim() || video.label}
+        className="absolute inset-0 h-full w-full object-cover"
+        style={{ objectPosition: focalPoint }}
+        decoding="async"
+      />
+    </div>
+  );
+}
+
 function VideoEditingPlyrPlayer({
   video,
   className = "",
@@ -128,6 +157,7 @@ type ShowcaseVideoEditingDetailProps = {
     readonly id?: string;
     readonly title: string;
     readonly tagline: string;
+    readonly focalPoint?: string;
     readonly detailOverview?: string;
     readonly detailRole?: string;
     readonly detailTools?: readonly string[];
@@ -536,6 +566,9 @@ export function ShowcaseVideoEditingDetail({
     [handleThumbSelect],
   );
 
+  const isInteractiveMedia = card.id === "project-interactive-media";
+  const isSlaywire = card.id === "project-slaywire";
+
   if (!videos.length) return null;
 
   const safeIndex = Math.min(activeVideoIndex, videos.length - 1);
@@ -551,7 +584,23 @@ export function ShowcaseVideoEditingDetail({
 
   const worksArrowBtnClass =
     "video-editing-works-arrow absolute top-[2.45rem] z-10 flex h-[1.65rem] w-[1.65rem] items-center justify-center border-0 bg-transparent p-0 text-white/85 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:h-[1.925rem] sm:w-[1.925rem]";
-  const isInteractiveMedia = card.id === "project-interactive-media";
+  const worksStripThumbBasisClass = isInteractiveMedia
+    ? "basis-[calc((100%-0.5rem)/2)] sm:basis-[calc((100%-0.625rem)/2)] md:basis-[calc((100%-1.25rem)/3)] lg:basis-[calc((100%-1.25rem)/3)]"
+    : "basis-[calc((100%-0.5rem)/2)] sm:basis-[calc((100%-0.625rem)/2)] md:basis-[calc((100%-1.25rem)/3)] lg:basis-[calc((100%-1.875rem)/4)]";
+  const worksStripOuterClass =
+    videos.length > 1
+      ? isInteractiveMedia
+        ? "relative -mx-5 w-[calc(100%+2.5rem)] overflow-visible sm:-mx-7 sm:w-[calc(100%+3.5rem)]"
+        : "relative -mx-4 w-[calc(100%+2rem)] overflow-visible sm:-mx-6 sm:w-[calc(100%+3rem)]"
+      : "relative w-full min-w-0";
+  const worksStripClass =
+    videos.length > 1
+      ? isInteractiveMedia
+        ? "mx-5 w-[calc(100%-2.5rem)] sm:mx-7 sm:w-[calc(100%-3.5rem)]"
+        : "mx-4 w-[calc(100%-2rem)] sm:mx-6 sm:w-[calc(100%-3rem)]"
+      : "w-full";
+  const worksArrowPrevOffsetClass = isInteractiveMedia ? "left-0" : "-left-2.5 sm:-left-2";
+  const worksArrowNextOffsetClass = isInteractiveMedia ? "right-0" : "-right-2.5 sm:-right-2";
 
   return (
     <>
@@ -580,7 +629,9 @@ export function ShowcaseVideoEditingDetail({
         </p>
       </motion.div>
       <motion.div
-        className="video-editing-detail order-3 mt-[calc(0.75rem+1px)] w-full min-w-0 max-w-full overflow-x-visible sm:mt-[calc(1rem+1px)] md:mt-[calc(1.25rem+1px)]"
+        className={`video-editing-detail order-3 mt-[calc(0.75rem+1px)] w-full min-w-0 max-w-full overflow-x-visible sm:mt-[calc(1rem+1px)] md:mt-[calc(1.25rem+1px)]${
+          isInteractiveMedia ? " video-editing-detail--interactive-media" : ""
+        }${isSlaywire ? " video-editing-detail--slaywire" : ""}`}
         style={
           reduceMotion
             ? { opacity: detailPlayerReveal ? 1 : 0 }
@@ -593,250 +644,261 @@ export function ShowcaseVideoEditingDetail({
               }
         }
       >
-        <div className="video-editing-carousel video-editing-carousel--solo" role="group" aria-label="Featured edits">
-          <div className="video-editing-player video-editing-player--plyr group relative overflow-hidden rounded-[11px] ring-1 ring-white/[0.09] sm:rounded-xl">
-            <VideoEditingPlyrPlayer
-              video={activeVideo}
-              className={isInteractiveMedia ? "video-editing-player--interactive-media" : ""}
-            />
-            <div className="pointer-events-none absolute inset-x-0 top-0 z-10 bg-gradient-to-b from-black/70 via-black/30 to-transparent px-3 pt-2 pb-8 opacity-0 transition-opacity duration-200 ease-out group-hover:opacity-100 group-focus-within:opacity-100 sm:px-3.5 sm:pt-2.5">
-              <p className="truncate font-body text-[12px] leading-none text-white sm:text-[13px]">
-                <span className="font-display tracking-[-0.01em]">{activeSelectorTitle}</span>
-                {activeSelectorSubtitle ? <span className="text-mono-2"> · {activeSelectorSubtitle}</span> : null}
-              </p>
-            </div>
-          </div>
-          <div className="mt-3 w-full min-w-0 overflow-x-visible">
-            <div
-              className={
-                videos.length > 1
-                  ? "relative -mx-4 w-[calc(100%+2rem)] overflow-visible sm:-mx-6 sm:w-[calc(100%+3rem)]"
-                  : "relative w-full min-w-0"
-              }
-            >
-              {videos.length > 1 ? (
-                <button
-                  type="button"
-                  className={`${worksArrowBtnClass} video-editing-works-arrow--prev -left-2.5 sm:-left-2${
-                    pressedWorksArrow === "prev" ? " video-editing-works-arrow--pressed" : ""
-                  }`}
-                  aria-label="Previous selected work"
-                  onPointerDown={handleWorksArrowPointerDown("prev")}
-                  onPointerUp={handleWorksArrowPointerRelease}
-                  onPointerCancel={handleWorksArrowPointerRelease}
-                  onPointerLeave={handleWorksArrowPointerRelease}
-                  onClick={(event) => handleSelectAdjacentWork(-1, event.currentTarget)}
-                >
-                  <ChevronLeft className="video-editing-works-arrow-glyph h-[0.9625rem] w-[0.9625rem] sm:h-[1.1rem] sm:w-[1.1rem]" strokeWidth={2.25} aria-hidden />
-                </button>
-              ) : null}
-            <div
-              ref={thumbStripRef}
-              className={`video-editing-works-strip no-scrollbar flex min-w-0 snap-x snap-mandatory gap-2 overflow-x-auto pb-0.5 sm:gap-2.5 touch-pan-x ${
-                videos.length > 1
-                  ? "mx-4 w-[calc(100%-2rem)] sm:mx-6 sm:w-[calc(100%-3rem)]"
-                  : "w-full"
-              }`}
-            >
-              {videos.map((video, index) => {
-                const active = index === safeIndex;
-                const selectorTitle = video.selectorTitle?.trim() || `Edit ${index + 1}`;
-                const selectorSubtitle = video.selectorSubtitle?.trim() || "Video edit";
-                const selectorDuration = video.selectorDuration?.trim() || "";
-                return (
-                  <div
-                    key={video.id}
-                    ref={(el) => {
-                      thumbRefs.current[index] = el;
-                    }}
-                    role="button"
-                    tabIndex={0}
-                    className={`video-editing-works-strip-thumb group relative flex shrink-0 snap-start flex-col text-left touch-pan-x cursor-pointer basis-[calc((100%-0.5rem)/2)] sm:basis-[calc((100%-0.625rem)/2)] md:basis-[calc((100%-1.25rem)/3)] lg:basis-[calc((100%-1.875rem)/4)] ${
-                      active
-                        ? "text-white"
-                        : "text-mono-2"
-                    }`}
-                    aria-label={`Select edit thumbnail ${index + 1}`}
-                    aria-pressed={active}
-                    onClick={() => handleThumbSelect(index)}
-                    onKeyDown={handleThumbKeyDown(index)}
-                  >
-                    <span
-                      className={`relative block h-[4.9rem] w-full overflow-hidden rounded-[10px] border transition-colors ${
-                        active
-                          ? "border-[color:color-mix(in_srgb,var(--palette-yellow-projects)_70%,white)]"
-                          : "border-white/[0.14]"
+        <div
+          className="video-editing-carousel video-editing-carousel--solo"
+          role="group"
+          aria-label={isSlaywire ? "Selected media" : "Featured edits"}
+        >
+          <div className="video-editing-detail-body">
+            <div className="video-editing-detail-media-col min-w-0">
+              <div
+                className={`video-editing-player video-editing-player--plyr group relative overflow-hidden rounded-[11px] sm:rounded-xl${
+                  isInteractiveMedia
+                    ? " border border-solid border-[color:var(--portfolio-glass-stroke)] shadow-[var(--portfolio-glass-shadow)]"
+                    : " ring-1 ring-white/[0.09]"
+                }${isInteractiveMedia ? " video-editing-player--interactive-media" : ""}${
+                  isImageMedia(activeVideo) ? " video-editing-player--image" : ""
+                }`}
+              >
+                {isImageMedia(activeVideo) ? (
+                  <VideoEditingImagePlayer
+                    video={activeVideo}
+                    focalPoint={card.focalPoint ?? "50% 50%"}
+                  />
+                ) : (
+                  <VideoEditingPlyrPlayer video={activeVideo} />
+                )}
+                <div className="pointer-events-none absolute inset-x-0 top-0 z-10 bg-gradient-to-b from-black/70 via-black/30 to-transparent px-3 pt-2 pb-8 opacity-0 transition-opacity duration-200 ease-out group-hover:opacity-100 group-focus-within:opacity-100 sm:px-3.5 sm:pt-2.5">
+                  <p className="truncate font-body text-[12px] leading-none text-white sm:text-[13px]">
+                    <span className="font-display tracking-[-0.01em]">{activeSelectorTitle}</span>
+                    {activeSelectorSubtitle ? <span className="text-mono-2"> · {activeSelectorSubtitle}</span> : null}
+                  </p>
+                </div>
+              </div>
+              <div className="video-editing-detail-works mt-3 w-full min-w-0 overflow-x-visible">
+                <div className={worksStripOuterClass}>
+                  {videos.length > 1 ? (
+                    <button
+                      type="button"
+                      className={`${worksArrowBtnClass} video-editing-works-arrow--prev ${worksArrowPrevOffsetClass}${
+                        pressedWorksArrow === "prev" ? " video-editing-works-arrow--pressed" : ""
                       }`}
+                      aria-label="Previous selected work"
+                      onPointerDown={handleWorksArrowPointerDown("prev")}
+                      onPointerUp={handleWorksArrowPointerRelease}
+                      onPointerCancel={handleWorksArrowPointerRelease}
+                      onPointerLeave={handleWorksArrowPointerRelease}
+                      onClick={(event) => handleSelectAdjacentWork(-1, event.currentTarget)}
                     >
-                      {video.thumbnailSrc && IMAGE_EXT_RE.test(video.thumbnailSrc) ? (
-                        <img
-                          src={video.thumbnailSrc}
-                          className="absolute inset-0 h-full w-full object-cover"
-                          alt=""
-                          loading="lazy"
-                          decoding="async"
-                          aria-hidden
-                        />
-                      ) : VIDEO_EXT_RE.test(video.thumbnailSrc ?? video.url) ? (
-                        <video
-                          src={video.thumbnailSrc ?? video.url}
-                          className="absolute inset-0 h-full w-full object-cover"
-                          muted
-                          preload="metadata"
-                          playsInline
-                          aria-hidden
-                        />
-                      ) : (
-                        <span className="absolute inset-0 bg-black/45" aria-hidden />
-                      )}
-                      {selectorDuration ? (
-                        <span className="absolute right-1.5 bottom-1.5 rounded bg-black/70 px-1 py-[2px] font-mono text-[10px] leading-none text-white">
-                          {selectorDuration}
-                        </span>
-                      ) : null}
-                    </span>
-                    <span className="mt-1.5 block font-heading text-sm leading-tight uppercase text-white">
-                      {selectorTitle}
-                    </span>
-                    <span className="mt-0.5 block font-body text-[12px] leading-tight text-mono-2">
-                      {selectorSubtitle}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-              {videos.length > 1 ? (
-                <button
-                  type="button"
-                  className={`${worksArrowBtnClass} video-editing-works-arrow--next -right-2.5 sm:-right-2${
-                    pressedWorksArrow === "next" ? " video-editing-works-arrow--pressed" : ""
-                  }`}
-                  aria-label="Next selected work"
-                  onPointerDown={handleWorksArrowPointerDown("next")}
-                  onPointerUp={handleWorksArrowPointerRelease}
-                  onPointerCancel={handleWorksArrowPointerRelease}
-                  onPointerLeave={handleWorksArrowPointerRelease}
-                  onClick={(event) => handleSelectAdjacentWork(1, event.currentTarget)}
-                >
-                  <ChevronRight className="video-editing-works-arrow-glyph h-[0.9625rem] w-[0.9625rem] sm:h-[1.1rem] sm:w-[1.1rem]" strokeWidth={2.25} aria-hidden />
-                </button>
-              ) : null}
-            </div>
-            <motion.div className="w-full pt-2.5 sm:pt-3" aria-hidden>
-              <motion.div
-                className="mx-auto block h-px w-full max-w-full shrink-0 bg-white/[0.09]"
-                style={{
-                  clipPath: detailRuleReveal ? "inset(0 0 0 0)" : "inset(0 50% 0 50%)",
-                  ...(reduceMotion
-                    ? {}
-                    : detailRuleReveal
-                      ? {
-                          transitionProperty: "clip-path",
-                          transitionDuration: `${detailRuleExpandMs}ms`,
-                          transitionTimingFunction: detailSlideCubic,
-                        }
-                      : {}),
-                }}
-              />
-            </motion.div>
-          </div>
-          <div className="mt-3.5 w-full min-w-0 sm:mt-4">
-            <div className="flex w-full min-w-0 flex-col items-stretch gap-y-1.5 text-left">
-              <p className="m-0 w-full font-heading text-sm sm:text-base leading-snug tracking-eyebrow-tight uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]">
-                Now playing
-              </p>
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.div
-                  key={activeVideo.id}
-                  initial={reduceMotion ? false : { opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={reduceMotion ? undefined : { opacity: 0 }}
-                  transition={
-                    reduceMotion
-                      ? undefined
-                      : {
-                          duration: 0.22,
-                          ease: [0.22, 1, 0.36, 1],
-                        }
-                  }
-                  className="flex w-full min-w-0 flex-col items-stretch gap-y-1.5 text-left"
-                >
-                  <h3 className="m-0 w-full font-display text-2xl md:text-3xl leading-[1.1] tracking-[-0.015em] text-white">
-                    {activeSelectorTitle}
-                  </h3>
-                  {activeSelectorSubtitle ? (
-                    <p className="m-0 w-full pl-[2px] font-body text-sm sm:text-base leading-snug text-mono-2">
-                      {activeSelectorSubtitle}
-                    </p>
+                      <ChevronLeft className="video-editing-works-arrow-glyph h-[0.9625rem] w-[0.9625rem] sm:h-[1.1rem] sm:w-[1.1rem]" strokeWidth={2.25} aria-hidden />
+                    </button>
                   ) : null}
-                </motion.div>
-              </AnimatePresence>
+                  <div
+                    ref={thumbStripRef}
+                    className={`video-editing-works-strip no-scrollbar flex min-w-0 snap-x snap-mandatory gap-2 overflow-x-auto pb-0.5 sm:gap-2.5 touch-pan-x ${worksStripClass}`}
+                  >
+                    {videos.map((video, index) => {
+                      const active = index === safeIndex;
+                      const selectorTitle = video.selectorTitle?.trim() || `Edit ${index + 1}`;
+                      const selectorSubtitle =
+                        video.selectorSubtitle?.trim() || (isSlaywire ? "Illustration" : "Video edit");
+                      const selectorDuration = video.selectorDuration?.trim() || "";
+                      return (
+                        <div
+                          key={video.id}
+                          ref={(el) => {
+                            thumbRefs.current[index] = el;
+                          }}
+                          role="button"
+                          tabIndex={0}
+                          className={`video-editing-works-strip-thumb group relative flex shrink-0 snap-start flex-col text-left touch-pan-x cursor-pointer ${worksStripThumbBasisClass} ${
+                            active ? "text-white" : "text-mono-2"
+                          }`}
+                          aria-label={`Select ${isSlaywire ? "media" : "edit"} thumbnail ${index + 1}`}
+                          aria-pressed={active}
+                          onClick={() => handleThumbSelect(index)}
+                          onKeyDown={handleThumbKeyDown(index)}
+                        >
+                          <span
+                            className={`video-editing-works-strip-thumb-art relative block h-[4.9rem] w-full overflow-hidden rounded-[10px] border transition-colors ${
+                              active
+                                ? "border-[color:color-mix(in_srgb,var(--palette-yellow-projects)_70%,white)]"
+                                : "border-white/[0.14]"
+                            }`}
+                          >
+                            {video.thumbnailSrc && IMAGE_EXT_RE.test(video.thumbnailSrc) ? (
+                              <img
+                                src={video.thumbnailSrc}
+                                className="absolute inset-0 h-full w-full object-cover"
+                                alt=""
+                                loading="lazy"
+                                decoding="async"
+                                aria-hidden
+                              />
+                            ) : VIDEO_EXT_RE.test(video.thumbnailSrc ?? video.url) ? (
+                              <video
+                                src={video.thumbnailSrc ?? video.url}
+                                className="absolute inset-0 h-full w-full object-cover"
+                                muted
+                                preload="metadata"
+                                playsInline
+                                aria-hidden
+                              />
+                            ) : (
+                              <span className="absolute inset-0 bg-black/45" aria-hidden />
+                            )}
+                            {selectorDuration ? (
+                              <span className="absolute right-1.5 bottom-1.5 rounded bg-black/70 px-1 py-[2px] font-mono text-[10px] leading-none text-white">
+                                {selectorDuration}
+                              </span>
+                            ) : null}
+                          </span>
+                          <span className="video-editing-works-strip-thumb-caption">
+                            <span className="mt-1.5 block font-heading text-sm leading-tight uppercase text-white">
+                              {selectorTitle}
+                            </span>
+                            <span className="mt-0.5 block font-body text-[12px] leading-tight text-mono-2">
+                              {selectorSubtitle}
+                            </span>
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {videos.length > 1 ? (
+                    <button
+                      type="button"
+                      className={`${worksArrowBtnClass} video-editing-works-arrow--next ${worksArrowNextOffsetClass}${
+                        pressedWorksArrow === "next" ? " video-editing-works-arrow--pressed" : ""
+                      }`}
+                      aria-label="Next selected work"
+                      onPointerDown={handleWorksArrowPointerDown("next")}
+                      onPointerUp={handleWorksArrowPointerRelease}
+                      onPointerCancel={handleWorksArrowPointerRelease}
+                      onPointerLeave={handleWorksArrowPointerRelease}
+                      onClick={(event) => handleSelectAdjacentWork(1, event.currentTarget)}
+                    >
+                      <ChevronRight className="video-editing-works-arrow-glyph h-[0.9625rem] w-[0.9625rem] sm:h-[1.1rem] sm:w-[1.1rem]" strokeWidth={2.25} aria-hidden />
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+
+            <div className="video-editing-detail-meta-col w-full min-w-0">
+              <motion.div className="video-editing-detail-divider-wrap w-full pt-2.5 sm:pt-3" aria-hidden>
+                <motion.div
+                  className="video-editing-detail-divider mx-auto block h-px w-full max-w-full shrink-0 bg-white/[0.09]"
+                  style={{
+                    clipPath: detailRuleReveal ? "inset(0 0 0 0)" : "inset(0 50% 0 50%)",
+                    ...(reduceMotion
+                      ? {}
+                      : detailRuleReveal
+                        ? {
+                            transitionProperty: "clip-path",
+                            transitionDuration: `${detailRuleExpandMs}ms`,
+                            transitionTimingFunction: detailSlideCubic,
+                          }
+                        : {}),
+                  }}
+                />
+              </motion.div>
+              <div className="video-editing-detail-now-playing mt-3.5 w-full min-w-0 sm:mt-4">
+                <div className="flex w-full min-w-0 flex-col items-stretch gap-y-1.5 text-left">
+                  <AnimatePresence mode="wait" initial={false}>
+                    <motion.div
+                      key={activeVideo.id}
+                      initial={reduceMotion ? false : { opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={reduceMotion ? undefined : { opacity: 0 }}
+                      transition={
+                        reduceMotion
+                          ? undefined
+                          : {
+                              duration: 0.22,
+                              ease: [0.22, 1, 0.36, 1],
+                            }
+                      }
+                      className="flex w-full min-w-0 flex-col items-stretch gap-y-1.5 text-left"
+                    >
+                      <h3 className="m-0 w-full font-display text-2xl md:text-3xl leading-[1.1] tracking-[-0.015em] text-white">
+                        {activeSelectorTitle}
+                      </h3>
+                      {activeSelectorSubtitle ? (
+                        <p className="m-0 w-full pl-[2px] font-body text-sm sm:text-base leading-snug text-mono-2">
+                          {activeSelectorSubtitle}
+                        </p>
+                      ) : null}
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+              </div>
+              <div className="video-editing-detail-overview mt-3.5 w-full min-w-0 sm:mt-4">
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.div
+                    key={activeVideo.id}
+                    initial={reduceMotion ? false : { opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={reduceMotion ? undefined : { opacity: 0 }}
+                    transition={
+                      reduceMotion
+                        ? undefined
+                        : {
+                            duration: 0.22,
+                            ease: [0.22, 1, 0.36, 1],
+                          }
+                    }
+                    className={
+                      isInteractiveMedia
+                        ? "video-editing-detail-cards-im flex flex-col gap-2 sm:gap-3"
+                        : "flex flex-col gap-2 sm:gap-3"
+                    }
+                  >
+                    <section className={`${showcaseDetailCardClass} min-w-0`}>
+                      <p className="mb-1.5 font-heading text-xs leading-snug tracking-eyebrow-tight uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]">
+                        OVERVIEW
+                      </p>
+                      <p className="whitespace-pre-line font-body text-sm leading-snug text-mono-2 sm:text-base">
+                        {activeDetails.detailOverview}
+                      </p>
+                    </section>
+                    <section className={`${showcaseDetailCardClass} min-w-0`}>
+                      <p className="mb-1.5 font-heading text-xs leading-snug tracking-eyebrow-tight uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]">
+                        ROLE
+                      </p>
+                      <p className="whitespace-pre-line font-body text-sm leading-snug text-mono-2 sm:text-base">
+                        {activeDetails.detailRole}
+                      </p>
+                    </section>
+                    <section className={`${showcaseDetailCardClass} min-w-0`}>
+                      <p className="mb-1.5 font-heading text-xs leading-snug tracking-eyebrow-tight uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]">
+                        IMPACT
+                      </p>
+                      <p className="whitespace-pre-line font-body text-sm leading-snug text-mono-2 sm:text-base">
+                        {activeDetails.detailImpact}
+                      </p>
+                    </section>
+                    <section className={`${showcaseDetailCardClass} min-w-0`}>
+                      <p className="mb-1.5 font-heading text-xs leading-snug tracking-eyebrow-tight uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]">
+                        TOOLS
+                      </p>
+                      {activeDetails.detailTools?.length ? (
+                        <ul className="ml-1 list-disc list-outside space-y-1 pl-6 marker:text-mono-2/70 sm:pl-7">
+                          {activeDetails.detailTools.map((tool, index) => (
+                            <li key={`${tool}-${index}`} className="font-body text-sm leading-snug text-mono-2 sm:text-base">
+                              {tool}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="font-body text-sm text-mono-2/55 sm:text-base">?</p>
+                      )}
+                    </section>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
             </div>
           </div>
-        </div>
-        <div className="mt-3.5 w-full min-w-0 sm:mt-4">
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div
-              key={activeVideo.id}
-              initial={reduceMotion ? false : { opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={reduceMotion ? undefined : { opacity: 0 }}
-              transition={
-                reduceMotion
-                  ? undefined
-                  : {
-                      duration: 0.22,
-                      ease: [0.22, 1, 0.36, 1],
-                    }
-              }
-              className="flex flex-col gap-2 sm:gap-3"
-            >
-              <div className="grid grid-cols-1 gap-2 sm:gap-3 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-                <section className={`${showcaseDetailCardClass} min-w-0`}>
-                  <p className="mb-1.5 font-heading text-xs leading-snug tracking-eyebrow-tight uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]">
-                    OVERVIEW
-                  </p>
-                  <p className="whitespace-pre-line font-body text-sm leading-snug text-mono-2 sm:text-base">
-                    {activeDetails.detailOverview}
-                  </p>
-                </section>
-                <section className={`${showcaseDetailCardClass} min-w-0`}>
-                  <p className="mb-1.5 font-heading text-xs leading-snug tracking-eyebrow-tight uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]">
-                    ROLE
-                  </p>
-                  <p className="whitespace-pre-line font-body text-sm leading-snug text-mono-2 sm:text-base">
-                    {activeDetails.detailRole}
-                  </p>
-                </section>
-              </div>
-              <div className="grid grid-cols-1 gap-2 sm:gap-3 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-                <section className={`${showcaseDetailCardClass} min-w-0`}>
-                  <p className="mb-1.5 font-heading text-xs leading-snug tracking-eyebrow-tight uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]">
-                    IMPACT
-                  </p>
-                  <p className="whitespace-pre-line font-body text-sm leading-snug text-mono-2 sm:text-base">
-                    {activeDetails.detailImpact}
-                  </p>
-                </section>
-                <section className={`${showcaseDetailCardClass} min-w-0`}>
-                  <p className="mb-1.5 font-heading text-xs leading-snug tracking-eyebrow-tight uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]">
-                    TOOLS
-                  </p>
-                  {activeDetails.detailTools?.length ? (
-                    <ul className="ml-1 list-disc list-outside space-y-1 pl-6 marker:text-mono-2/70 sm:pl-7">
-                      {activeDetails.detailTools.map((tool, index) => (
-                        <li key={`${tool}-${index}`} className="font-body text-sm leading-snug text-mono-2 sm:text-base">
-                          {tool}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="font-body text-sm text-mono-2/55 sm:text-base">?</p>
-                  )}
-                </section>
-              </div>
-            </motion.div>
-          </AnimatePresence>
         </div>
       </motion.div>
     </>
