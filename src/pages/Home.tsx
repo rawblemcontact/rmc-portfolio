@@ -28,12 +28,22 @@ import React, {
 import { createPortal } from "react-dom";
 import { Button } from "../components/ui/button";
 import { FillIcon } from "../components/FillIcon";
+import { ProfileDesktopLayoutDebugPanel } from "../components/ProfileDesktopLayoutDebugPanel";
 import {
   HeroAccentLayoutDebugPanel,
   type HeroAccentIconKey,
   type HeroAccentLayoutControl,
 } from "../components/HeroAccentLayoutDebugPanel";
-import { usePortfolioDebugEnabled } from "../lib/portfolioDebugMode";
+import {
+  readSectionDesktopLayoutDebugValues,
+  saveSectionDesktopLayoutDebugValues,
+  EXPERIENCE_DESKTOP_LAYOUT_DEBUG_DEFAULTS,
+  PROFILE_DESKTOP_LAYOUT_DEBUG_DEFAULTS,
+  PROJECTS_DESKTOP_LAYOUT_DEBUG_DEFAULTS,
+  type ProfileDesktopLayoutDebugValues,
+  usePortfolioDebugEnabled,
+  useRuleOfThirdsEnabled,
+} from "../lib/portfolioDebugMode";
 import { UserFilledIcon } from "../components/icons/UserFilledIcon";
 import { DUR, EASE, HOVER, SHOWCASE_PDF_PROJECTS_FADE_OUT_S, SIDE_NAV_OVERLAY_FADE_S, SPRING, TAP } from "../lib/motion";
 import { 
@@ -2859,12 +2869,16 @@ const PROFILE_CARD_SECTION_LABEL_CLASS = `${PROFILE_CARD_INLINE_LABEL_CLASS} pro
 /** Tablet band (768–1366px) — mascot must be in-layout before panel open; no whileInView entrance. */
 const PROFILE_TABLET_MIN_PX = 768;
 const PROFILE_TABLET_MAX_PX = 1366;
+const PROFILE_DESKTOP_DEBUG_MIN_PX = 1024;
 const matchesProfileTabletViewport = () =>
   typeof window !== "undefined" &&
   window.matchMedia(`(min-width: ${PROFILE_TABLET_MIN_PX}px) and (max-width: ${PROFILE_TABLET_MAX_PX}px)`).matches;
+const matchesProfileDesktopDebugViewport = () =>
+  typeof window !== "undefined" && window.matchMedia(`(min-width: ${PROFILE_DESKTOP_DEBUG_MIN_PX}px)`).matches;
 
 const PhantomProfile = () => {
   const reduceMotion = useReducedMotion();
+  const portfolioDebugEnabled = usePortfolioDebugEnabled();
   const profileLeftRef = useRef<HTMLDivElement>(null);
   const dividerRef = useRef<HTMLDivElement>(null);
   const rawblemRef = useRef<HTMLDivElement>(null);
@@ -2872,6 +2886,11 @@ const PhantomProfile = () => {
   const dividerInView = useInView(dividerRef, { once: false, amount: 0.5 });
   const rawblemInView = useInView(rawblemRef, { once: false, amount: 0.2 });
   const [profileTabletViewport, setProfileTabletViewport] = useState(matchesProfileTabletViewport);
+  const [profileDesktopViewport, setProfileDesktopViewport] = useState(
+    matchesProfileDesktopDebugViewport,
+  );
+  const [profileDesktopLayoutDebugValues, setProfileDesktopLayoutDebugValues] =
+    useState<ProfileDesktopLayoutDebugValues>(() => readSectionDesktopLayoutDebugValues("profile"));
   const [overlayRevealed, setOverlayRevealed] = useState(false);
   const [rawblemFloatReady, setRawblemFloatReady] = useState(false);
   const [profileHeaderSlide, setProfileHeaderSlide] = useState(false);
@@ -2887,6 +2906,71 @@ const PhantomProfile = () => {
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
   }, []);
+
+  useEffect(() => {
+    const mq = window.matchMedia(`(min-width: ${PROFILE_DESKTOP_DEBUG_MIN_PX}px)`);
+    const onChange = () => setProfileDesktopViewport(mq.matches);
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  const profileDesktopDebugActive = portfolioDebugEnabled && profileDesktopViewport;
+
+  const handleProfileDesktopLayoutDebugChange = useCallback(
+    (patch: Partial<ProfileDesktopLayoutDebugValues>) => {
+      setProfileDesktopLayoutDebugValues((prev) => ({ ...prev, ...patch }));
+    },
+    [],
+  );
+
+  const handleProfileDesktopLayoutDebugReset = useCallback(() => {
+    setProfileDesktopLayoutDebugValues(PROFILE_DESKTOP_LAYOUT_DEBUG_DEFAULTS);
+  }, []);
+
+  const handleProfileDesktopLayoutDebugSave = useCallback(() => {
+    saveSectionDesktopLayoutDebugValues("profile", profileDesktopLayoutDebugValues);
+    const lockInSnippet = [
+      "PROFILE_DESKTOP_LAYOUT_DEBUG_DEFAULTS = {",
+      `  leftOffsetX: ${profileDesktopLayoutDebugValues.leftOffsetX},`,
+      `  leftOffsetY: ${profileDesktopLayoutDebugValues.leftOffsetY},`,
+      `  rightOffsetX: ${profileDesktopLayoutDebugValues.rightOffsetX},`,
+      `  rightOffsetY: ${profileDesktopLayoutDebugValues.rightOffsetY},`,
+      `  leftScale: ${profileDesktopLayoutDebugValues.leftScale.toFixed(2)},`,
+      `  leftWidthScale: ${profileDesktopLayoutDebugValues.leftWidthScale.toFixed(2)},`,
+      `  rightScale: ${profileDesktopLayoutDebugValues.rightScale.toFixed(2)},`,
+      `  rightWidthScale: ${profileDesktopLayoutDebugValues.rightWidthScale.toFixed(2)},`,
+      "};",
+    ].join("\n");
+    console.info("[Profile Desktop Layout Lock In]\n" + lockInSnippet);
+    navigator.clipboard?.writeText(lockInSnippet).catch(() => {
+      // Clipboard writes can fail in some browser contexts; localStorage save still succeeds.
+    });
+  }, [profileDesktopLayoutDebugValues]);
+
+  const activeProfileDesktopLayout = profileDesktopDebugActive
+    ? profileDesktopLayoutDebugValues
+    : PROFILE_DESKTOP_LAYOUT_DEBUG_DEFAULTS;
+
+  const profileLeftDebugStyle = profileDesktopViewport
+    ? {
+        transform: `translate(${activeProfileDesktopLayout.leftOffsetX}px, ${activeProfileDesktopLayout.leftOffsetY}px)`,
+        transformOrigin: "left top",
+        width: `${activeProfileDesktopLayout.leftWidthScale * 100}%`,
+        maxWidth: "none",
+        zoom: activeProfileDesktopLayout.leftScale,
+      }
+    : undefined;
+
+  const profileRightDebugStyle = profileDesktopViewport
+    ? {
+        transform: `translate(${activeProfileDesktopLayout.rightOffsetX}px, ${activeProfileDesktopLayout.rightOffsetY}px)`,
+        transformOrigin: "right top",
+        width: `${activeProfileDesktopLayout.rightWidthScale * 100}%`,
+        maxWidth: "none",
+        zoom: activeProfileDesktopLayout.rightScale,
+      }
+    : undefined;
 
   useLayoutEffect(() => {
     if (profileMascotInstant) setRawblemFloatReady(true);
@@ -2923,6 +3007,21 @@ const PhantomProfile = () => {
   return (
     <section id="profile" className="relative w-full min-w-0 overflow-x-hidden overflow-y-visible bg-black text-white scroll-mt-6 max-lg:min-h-min lg:min-h-screen">
       <SectionGridOverlay />
+      {profileDesktopDebugActive &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <ProfileDesktopLayoutDebugPanel
+            sectionLabel="Profile"
+            leftLabel="Left"
+            rightLabel="Right"
+            values={profileDesktopLayoutDebugValues}
+            defaults={PROFILE_DESKTOP_LAYOUT_DEBUG_DEFAULTS}
+            onChange={handleProfileDesktopLayoutDebugChange}
+            onSave={handleProfileDesktopLayoutDebugSave}
+            onReset={handleProfileDesktopLayoutDebugReset}
+          />,
+          document.body,
+        )}
       <motion.div className={`${PROFILE_SECTION_CONTAINER} ${PROFILE_SECTION_TOP_INSET} profile-section-tablet-shell max-lg:pb-0 lg:pb-12 lg:min-h-screen lg:flex lg:items-center`}>
         <div className={EXPERIENCE_GUTTER_SHELL_OUTER}>
           <div className={EXPERIENCE_GUTTER_SHELL_INNER}>
@@ -2930,7 +3029,7 @@ const PhantomProfile = () => {
 
           {profileMascotInstant ? (
             <div ref={rawblemRef} className={`${PROFILE_MASCOT_COLUMN} profile-tablet-mascot-column max-sm:hidden`}>
-              <div className={PROFILE_MASCOT_FRAME}>
+              <div className={PROFILE_MASCOT_FRAME} style={profileRightDebugStyle}>
                 <motion.img
                   src="/rawblem3.svg"
                   alt="RAWBLEM"
@@ -2961,7 +3060,7 @@ const PhantomProfile = () => {
             }}
             className={`${PROFILE_MASCOT_COLUMN} profile-tablet-mascot-column max-sm:hidden`}
           >
-            <div className={PROFILE_MASCOT_FRAME}>
+            <div className={PROFILE_MASCOT_FRAME} style={profileRightDebugStyle}>
               <motion.img
                 src="/rawblem3.svg"
                 alt="RAWBLEM"
@@ -2982,7 +3081,11 @@ const PhantomProfile = () => {
           </motion.div>
           )}
 
-          <div ref={profileLeftRef} className={`${PROFILE_LEFT_COLUMN} profile-tablet-text-column`}>
+          <div
+            ref={profileLeftRef}
+            className={`${PROFILE_LEFT_COLUMN} profile-tablet-text-column`}
+            style={profileLeftDebugStyle}
+          >
              <SectionHeader
                title="PROFILE"
                color="text-white"
@@ -5208,8 +5311,14 @@ const PalaceProjects = ({
   featuredPdfViewerActive?: boolean;
 }) => {
   const reduceMotion = useReducedMotion();
+  const portfolioDebugEnabled = usePortfolioDebugEnabled();
   const projectsSectionRef = useRef<HTMLElement>(null);
   const projectsDividerRef = useRef<HTMLDivElement | null>(null);
+  const [projectsDesktopViewport, setProjectsDesktopViewport] = useState(
+    matchesProfileDesktopDebugViewport,
+  );
+  const [projectsDesktopLayoutDebugValues, setProjectsDesktopLayoutDebugValues] =
+    useState<ProfileDesktopLayoutDebugValues>(() => readSectionDesktopLayoutDebugValues("projects"));
   const [projectsEntered, setProjectsEntered] = useState(reduceMotion || entranceArmed);
   /** Keep header y at 0 after first enter — disarming entrance on panel exit must not replay y slide. */
   const [projectsHeaderYLocked, setProjectsHeaderYLocked] = useState(reduceMotion || entranceArmed);
@@ -5234,6 +5343,71 @@ const PalaceProjects = ({
         ? SHOWCASE_PDF_PROJECTS_FADE_OUT_S
         : 0.14
       : SIDE_NAV_OVERLAY_FADE_S;
+
+  useEffect(() => {
+    const mq = window.matchMedia(`(min-width: ${PROFILE_DESKTOP_DEBUG_MIN_PX}px)`);
+    const onChange = () => setProjectsDesktopViewport(mq.matches);
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  const projectsDesktopDebugActive = portfolioDebugEnabled && projectsDesktopViewport;
+
+  const handleProjectsDesktopLayoutDebugChange = useCallback(
+    (patch: Partial<ProfileDesktopLayoutDebugValues>) => {
+      setProjectsDesktopLayoutDebugValues((prev) => ({ ...prev, ...patch }));
+    },
+    [],
+  );
+
+  const handleProjectsDesktopLayoutDebugReset = useCallback(() => {
+    setProjectsDesktopLayoutDebugValues(PROJECTS_DESKTOP_LAYOUT_DEBUG_DEFAULTS);
+  }, []);
+
+  const handleProjectsDesktopLayoutDebugSave = useCallback(() => {
+    saveSectionDesktopLayoutDebugValues("projects", projectsDesktopLayoutDebugValues);
+    const lockInSnippet = [
+      "PROJECTS_DESKTOP_LAYOUT = {",
+      `  leftOffsetX: ${projectsDesktopLayoutDebugValues.leftOffsetX},`,
+      `  leftOffsetY: ${projectsDesktopLayoutDebugValues.leftOffsetY},`,
+      `  rightOffsetX: ${projectsDesktopLayoutDebugValues.rightOffsetX},`,
+      `  rightOffsetY: ${projectsDesktopLayoutDebugValues.rightOffsetY},`,
+      `  leftScale: ${projectsDesktopLayoutDebugValues.leftScale.toFixed(2)},`,
+      `  leftWidthScale: ${projectsDesktopLayoutDebugValues.leftWidthScale.toFixed(2)},`,
+      `  rightScale: ${projectsDesktopLayoutDebugValues.rightScale.toFixed(2)},`,
+      `  rightWidthScale: ${projectsDesktopLayoutDebugValues.rightWidthScale.toFixed(2)},`,
+      "};",
+    ].join("\n");
+    console.info("[Projects Desktop Layout Lock In]\n" + lockInSnippet);
+    navigator.clipboard?.writeText(lockInSnippet).catch(() => {
+      // Clipboard writes can fail in some browser contexts; localStorage save still succeeds.
+    });
+  }, [projectsDesktopLayoutDebugValues]);
+
+  const activeProjectsDesktopLayout = projectsDesktopDebugActive
+    ? projectsDesktopLayoutDebugValues
+    : PROJECTS_DESKTOP_LAYOUT_DEBUG_DEFAULTS;
+
+  const projectsLeftDebugStyle = projectsDesktopViewport
+    ? {
+        transform: `translate(${activeProjectsDesktopLayout.leftOffsetX}px, ${activeProjectsDesktopLayout.leftOffsetY}px)`,
+        transformOrigin: "left top",
+        width: `${activeProjectsDesktopLayout.leftWidthScale * 100}%`,
+        maxWidth: "none",
+        zoom: activeProjectsDesktopLayout.leftScale,
+      }
+    : undefined;
+
+  const projectsRightDebugStyle = projectsDesktopViewport
+    ? {
+        transform: `translate(${activeProjectsDesktopLayout.rightOffsetX}px, ${activeProjectsDesktopLayout.rightOffsetY}px)`,
+        transformOrigin: "right top",
+        width: `${activeProjectsDesktopLayout.rightWidthScale * 100}%`,
+        maxWidth: "none",
+        zoom: activeProjectsDesktopLayout.rightScale,
+      }
+    : undefined;
 
   useEffect(() => {
     if (reduceMotion) {
@@ -5532,6 +5706,21 @@ const PalaceProjects = ({
       }`}
     >
       <SectionGridOverlay />
+      {projectsDesktopDebugActive &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <ProfileDesktopLayoutDebugPanel
+            sectionLabel="Projects"
+            leftLabel="Left"
+            rightLabel="Right"
+            values={projectsDesktopLayoutDebugValues}
+            defaults={PROJECTS_DESKTOP_LAYOUT_DEBUG_DEFAULTS}
+            onChange={handleProjectsDesktopLayoutDebugChange}
+            onSave={handleProjectsDesktopLayoutDebugSave}
+            onReset={handleProjectsDesktopLayoutDebugReset}
+          />,
+          document.body,
+        )}
       <div
         className={`${PROFILE_SECTION_CONTAINER} relative z-10 flex min-w-0 w-full flex-col ${
           projectDetailInFlow ? "min-h-min shrink-0" : "max-2xl:min-h-min max-2xl:flex-none 2xl:min-h-0 2xl:flex-1"
@@ -5567,6 +5756,7 @@ const PalaceProjects = ({
           className={`projects-showcase-cards-cluster flex w-full flex-col shrink-0${
             showcaseObscured ? " pointer-events-none select-none" : ""
           }`}
+          style={projectsLeftDebugStyle}
           aria-hidden={showcaseObscured || undefined}
         >
           {!activeCard ? (
@@ -5646,6 +5836,7 @@ const PalaceProjects = ({
         <div
           aria-hidden={showcaseObscured || undefined}
           className={`projects-showcase-flow flex min-h-0 w-full flex-none flex-col 2xl:flex-1 ${showcaseObscured ? "pointer-events-none select-none" : ""}`}
+          style={projectsRightDebugStyle}
         >
           <motion.div
             className={`projects-showcase-featured-block flex w-full shrink-0 min-w-0 flex-col${
@@ -6224,7 +6415,13 @@ const ConfidantExperience = ({
   reduceMotion?: boolean | null;
 }) => {
   const tabsRootRef = useRef<HTMLDivElement>(null);
+  const portfolioDebugEnabled = usePortfolioDebugEnabled();
   const [activeExperienceTabId, setActiveExperienceTabId] = useState<ExperienceTabId>("rawblem");
+  const [experienceDesktopViewport, setExperienceDesktopViewport] = useState(
+    matchesProfileDesktopDebugViewport,
+  );
+  const [experienceDesktopLayoutDebugValues, setExperienceDesktopLayoutDebugValues] =
+    useState<ProfileDesktopLayoutDebugValues>(() => readSectionDesktopLayoutDebugValues("experience"));
   const COMPACT_EXPERIENCE_MQ = `(max-width: ${EXPERIENCE_MOBILE_MAX_PX}px), (max-width: 1023px) and (orientation: portrait)`;
   const [isCompactExperienceLayout, setIsCompactExperienceLayout] = useState(() =>
     typeof window !== "undefined"
@@ -6232,6 +6429,71 @@ const ConfidantExperience = ({
       : false,
   );
   const rm = !!reduceMotion;
+
+  useEffect(() => {
+    const mq = window.matchMedia(`(min-width: ${PROFILE_DESKTOP_DEBUG_MIN_PX}px)`);
+    const onChange = () => setExperienceDesktopViewport(mq.matches);
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  const experienceDesktopDebugActive = portfolioDebugEnabled && experienceDesktopViewport;
+
+  const handleExperienceDesktopLayoutDebugChange = useCallback(
+    (patch: Partial<ProfileDesktopLayoutDebugValues>) => {
+      setExperienceDesktopLayoutDebugValues((prev) => ({ ...prev, ...patch }));
+    },
+    [],
+  );
+
+  const handleExperienceDesktopLayoutDebugReset = useCallback(() => {
+    setExperienceDesktopLayoutDebugValues(EXPERIENCE_DESKTOP_LAYOUT_DEBUG_DEFAULTS);
+  }, []);
+
+  const handleExperienceDesktopLayoutDebugSave = useCallback(() => {
+    saveSectionDesktopLayoutDebugValues("experience", experienceDesktopLayoutDebugValues);
+    const lockInSnippet = [
+      "EXPERIENCE_DESKTOP_LAYOUT = {",
+      `  leftOffsetX: ${experienceDesktopLayoutDebugValues.leftOffsetX},`,
+      `  leftOffsetY: ${experienceDesktopLayoutDebugValues.leftOffsetY},`,
+      `  rightOffsetX: ${experienceDesktopLayoutDebugValues.rightOffsetX},`,
+      `  rightOffsetY: ${experienceDesktopLayoutDebugValues.rightOffsetY},`,
+      `  leftScale: ${experienceDesktopLayoutDebugValues.leftScale.toFixed(2)},`,
+      `  leftWidthScale: ${experienceDesktopLayoutDebugValues.leftWidthScale.toFixed(2)},`,
+      `  rightScale: ${experienceDesktopLayoutDebugValues.rightScale.toFixed(2)},`,
+      `  rightWidthScale: ${experienceDesktopLayoutDebugValues.rightWidthScale.toFixed(2)},`,
+      "};",
+    ].join("\n");
+    console.info("[Experience Desktop Layout Lock In]\n" + lockInSnippet);
+    navigator.clipboard?.writeText(lockInSnippet).catch(() => {
+      // Clipboard writes can fail in some browser contexts; localStorage save still succeeds.
+    });
+  }, [experienceDesktopLayoutDebugValues]);
+
+  const activeExperienceDesktopLayout = experienceDesktopDebugActive
+    ? experienceDesktopLayoutDebugValues
+    : EXPERIENCE_DESKTOP_LAYOUT_DEBUG_DEFAULTS;
+
+  const experienceLeftDebugStyle = experienceDesktopViewport
+    ? {
+        transform: `translate(${activeExperienceDesktopLayout.leftOffsetX}px, ${activeExperienceDesktopLayout.leftOffsetY}px)`,
+        transformOrigin: "left top",
+        width: `${activeExperienceDesktopLayout.leftWidthScale * 100}%`,
+        maxWidth: "none",
+        zoom: activeExperienceDesktopLayout.leftScale,
+      }
+    : undefined;
+
+  const experienceRightDebugStyle = experienceDesktopViewport
+    ? {
+        transform: `translate(${activeExperienceDesktopLayout.rightOffsetX}px, ${activeExperienceDesktopLayout.rightOffsetY}px)`,
+        transformOrigin: "right top",
+        width: `${activeExperienceDesktopLayout.rightWidthScale * 100}%`,
+        maxWidth: "none",
+        zoom: activeExperienceDesktopLayout.rightScale,
+      }
+    : undefined;
 
   useEffect(() => {
     const mq = window.matchMedia(COMPACT_EXPERIENCE_MQ);
@@ -6499,6 +6761,21 @@ const ConfidantExperience = ({
       className="career-viewport bg-black font-body text-white max-lg:relative max-lg:h-auto max-lg:min-h-0 max-lg:w-full max-lg:overflow-visible"
     >
       <SectionGridOverlay />
+      {experienceDesktopDebugActive &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <ProfileDesktopLayoutDebugPanel
+            sectionLabel="Experience"
+            leftLabel="Left rail"
+            rightLabel="Right panel"
+            values={experienceDesktopLayoutDebugValues}
+            defaults={EXPERIENCE_DESKTOP_LAYOUT_DEBUG_DEFAULTS}
+            onChange={handleExperienceDesktopLayoutDebugChange}
+            onSave={handleExperienceDesktopLayoutDebugSave}
+            onReset={handleExperienceDesktopLayoutDebugReset}
+          />,
+          document.body,
+        )}
       <div ref={tabsRootRef} className={`career-overview-shell no-scrollbar ${EXPERIENCE_SHELL_TOP_INSET_MAX_LG}`}>
         <div className="container mx-auto px-5 sm:px-6">
         <div className={`mx-auto w-full ${SHOWCASE_COLUMN_MAX} ${EXPERIENCE_GUTTER_OUTER_MAX_LG} lg:px-1 lg:sm:px-2`}>
@@ -6509,7 +6786,7 @@ const ConfidantExperience = ({
             initial="hidden"
             animate={panelSettled ? "visible" : "hidden"}
           >
-          <motion.div className="career-overview-rail">
+          <motion.div className="career-overview-rail" style={experienceLeftDebugStyle}>
           <motion.div
             className="nav-header"
             variants={experienceRailHeaderEntrance}
@@ -6562,14 +6839,17 @@ const ConfidantExperience = ({
             )}
           </motion.nav>
           </motion.div>
-          <motion.div
-            className="tabs-content"
-            variants={experienceCardEntrance}
-            initial="hidden"
-            animate={panelSettled ? "visible" : "hidden"}
-          >
-            {renderExperienceTabPanels()}
-          </motion.div>
+          {/* Plain shell — Framer entrance on `.tabs-content` overwrites inline transform if applied there. */}
+          <div className="experience-desktop-right-shell" style={experienceRightDebugStyle}>
+            <motion.div
+              className="tabs-content"
+              variants={experienceCardEntrance}
+              initial="hidden"
+              animate={panelSettled ? "visible" : "hidden"}
+            >
+              {renderExperienceTabPanels()}
+            </motion.div>
+          </div>
           </motion.div>
           </div>
         </div>
@@ -7704,8 +7984,7 @@ const SKILLS_EXPAND_EASE = [0.22, 1, 0.36, 1] as const;
 const SKILLS_EXPAND_EXIT_DUR = skillsAnimS(0.28);
 const SKILLS_EXPAND_ENTER_DUR = SKILLS_EXPAND_EXIT_DUR * 1.5; // 50% longer fade-in
 
-/** Rule-of-thirds overlay for positioning. Set showRuleOfThirds = true to show on viewport. Preserved for future use. */
-const showRuleOfThirds = false;
+/** Rule-of-thirds overlay for positioning — toggle with Q in dev. */
 const RuleOfThirdsOverlay = styled.div`
   position: absolute;
   inset: 0;
@@ -7815,6 +8094,7 @@ const SkillsSubskillsPanel = ({
   /** Both skills panels visible: tighter type/spacing so each card reads without inner scrolling. */
   dualInline?: boolean;
 }) => {
+  const ruleOfThirdsEnabled = useRuleOfThirdsEnabled();
   const panelHeader = SKILLS_DATA[slide];
   const headerCompact = dualInline && variant === "inline";
 
@@ -7953,7 +8233,7 @@ const SkillsSubskillsPanel = ({
     onClick={variant === "overlay" ? (e) => e.stopPropagation() : undefined}
   >
     <CardBlackFace>
-      {showRuleOfThirds && <RuleOfThirdsOverlay />}
+      {ruleOfThirdsEnabled && <RuleOfThirdsOverlay />}
       {variant === "overlay" && onClose ? (
         <button
           type="button"
@@ -8813,6 +9093,7 @@ const ResumeView = () => {
 
 
 export default function Home() {
+  const ruleOfThirdsEnabled = useRuleOfThirdsEnabled();
   // Content mask: keeps main content invisible until after first paint so the
   // background (black) is the only thing visible during JS hydration. No artificial
   // delay ? the state flips on the first effect run (immediately after mount).
@@ -9351,7 +9632,7 @@ export default function Home() {
       )}
 
       {/* Rule-of-thirds overlay on viewport (positioning aid) */}
-      {showRuleOfThirds && <ViewportRuleOfThirdsOverlay aria-hidden />}
+      {ruleOfThirdsEnabled && <ViewportRuleOfThirdsOverlay aria-hidden />}
 
       {isResumeMode ? (
         <motion.div 

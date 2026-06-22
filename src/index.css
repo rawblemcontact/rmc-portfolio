@@ -339,7 +339,7 @@
    * lg–xl (1024–1366) Tailwind used min-h-full + flex-1 + justify-center for desktop centering;
    * in landscape the stack is shorter than the panel so flex growth leaves empty black space.
    */
-  @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) {
+  @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse) {
     #projects.projects-showcase-tablet-pad {
       min-height: 0 !important;
       height: auto !important;
@@ -460,8 +460,8 @@
     }
   }
 
-  @media (min-width: 768px) and (max-width: 1366px) {
-    /* PROJECTS showcase list — scroll-end breathing room (~⅓ SKILLS md:pb-10). */
+  @media (min-width: 768px) and (max-width: 1366px) and (any-pointer: coarse) {
+    /* PROJECTS showcase list — scroll-end breathing room (touch tablet only). */
     #projects.projects-showcase-tablet-pad {
       padding-bottom: calc(2.5rem / 3);
     }
@@ -470,7 +470,9 @@
       display: block;
       min-height: max(2rem, calc(1.333rem + env(safe-area-inset-bottom, 0px) / 3));
     }
+  }
 
+  @media (min-width: 768px) and (max-width: 1366px) and (any-pointer: coarse) {
     #skills > .section-tablet-bottom-spacer {
       display: none;
       min-height: 0;
@@ -1360,13 +1362,13 @@
     --career-lh-display: var(--section-main-lh-display);
     --career-font-eyebrow: var(--section-subhead-font);
     --career-font-panel-headline: var(--section-rail-font);
-    --career-font-panel-meta: clamp(0.96875rem, calc(1.04vw + 0.03125rem), 1.03125rem);
+    --career-font-panel-meta: clamp(0.875rem, calc(0.94vw + 0.028rem), 0.928rem);
     --career-font-tab-lead: 0.78125rem;
     --career-font-tab-sub: 0.71875rem;
     --career-font-card-head: 1.09375rem;
-    --career-font-card-body: clamp(0.96875rem, calc(1.02vw + 0.03125rem), 1.09375rem);
-    --career-font-body: clamp(0.96875rem, calc(1.06vw + 0.03125rem), 1.09375rem);
-    --career-font-body-sm: clamp(0.90625rem, calc(0.98vw + 0.03125rem), 0.96875rem);
+    --career-font-card-body: clamp(0.875rem, calc(0.92vw + 0.028rem), 0.984rem);
+    --career-font-body: clamp(0.875rem, calc(0.95vw + 0.028rem), 0.984rem);
+    --career-font-body-sm: clamp(0.8125rem, calc(0.88vw + 0.028rem), 0.872rem);
     --career-font-stat: 1.53125rem;
     --career-font-caption: 0.71875rem;
     --career-lh-headline: 1.08;
@@ -1813,7 +1815,8 @@
     line-height: var(--section-subhead-lh);
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    text-wrap: balance;
+    text-wrap: nowrap;
+    white-space: nowrap;
     max-width: 100%;
   }
 
@@ -1951,7 +1954,7 @@
     --career-overview-content-max: 680px;
     flex: 1;
     min-width: 0;
-    padding: 22px 28px 28px;
+    padding: 28px;
     position: relative;
     overflow: hidden;
     isolation: isolate;
@@ -2614,9 +2617,17 @@
       padding-right: 14px;
     }
 
-    #experience .tabs-content {
+    #experience .experience-desktop-right-shell {
       grid-column: 2;
       grid-row: 1;
+      align-self: start;
+      justify-self: start;
+      min-width: 0;
+    }
+
+    #experience .tabs-content {
+      grid-column: auto;
+      grid-row: auto;
       align-self: start;
       margin-left: var(--career-rail-card-offset, 5%);
       overflow: visible;
@@ -2794,8 +2805,15 @@
     }
 
     /* Content card below tabs with clean border */
-    #experience .tabs-content {
+    #experience .experience-desktop-right-shell {
       order: 3;
+      flex: 0 0 auto;
+      width: 100% !important;
+      min-width: 0 !important;
+    }
+
+    #experience .tabs-content {
+      order: unset;
       flex: 0 0 auto;
       margin-left: 0 !important;
       width: 100% !important;
@@ -2987,8 +3005,15 @@
       white-space: nowrap;
     }
 
-    #experience .tabs-content {
+    #experience .experience-desktop-right-shell {
       order: 3;
+      flex: 0 0 auto;
+      width: 100% !important;
+      min-width: 0 !important;
+    }
+
+    #experience .tabs-content {
+      order: unset;
       flex: 0 0 auto;
       margin-left: 0 !important;
       width: 100% !important;
@@ -3155,8 +3180,14 @@
       white-space: nowrap;
     }
 
-    #experience .tabs-content {
+    #experience .experience-desktop-right-shell {
       order: 3;
+      width: 100%;
+      min-width: 0;
+    }
+
+    #experience .tabs-content {
+      order: unset;
       margin-left: 0;
       width: 100%;
       min-width: 0;
@@ -5159,6 +5190,747 @@
   #projects.projects-slaywire-detail-open .video-editing-detail {
     overflow-x: visible !important;
     width: 100%;
+  }
+}
+
+/* PROJECTS — desktop fit: proportional type + spacing + card scale (fine pointer lg+ / >1366). */
+@media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
+  #projects {
+    --projects-fit: 0.92;
+    /* Desktop type scale — display → headline → card → ui → body → eyebrow */
+    --projects-type-display: clamp(1.875rem, calc(0.6vw + 1.3rem), 2.125rem);
+    --projects-type-headline: clamp(1.1875rem, calc(0.22vw + 1.02rem), 1.3125rem);
+    --projects-type-card: clamp(0.75rem, 7cqi, 0.9375rem);
+    --projects-type-ui: clamp(0.75rem, calc(0.12vw + 0.68rem), 0.8125rem);
+    --projects-type-body: clamp(0.8125rem, calc(0.14vw + 0.74rem), 0.9375rem);
+    --projects-type-eyebrow: clamp(0.6875rem, calc(0.06vw + 0.6rem), 0.75rem);
+    padding-top: max(0.5rem, env(safe-area-inset-top, 0px)) !important;
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px)) !important;
+    --slide-gap: calc(1rem * var(--projects-fit));
+    min-height: 100% !important;
+    flex: 1 1 auto !important;
+  }
+
+  [aria-label="Section: projects"] > div.relative.z-10.flex,
+  [aria-label="Section: projects"] > div.relative.z-10.flex > div {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: 100% !important;
+  }
+
+  #projects .showcase-header {
+    margin-bottom: calc(1.75rem * var(--projects-fit)) !important;
+  }
+
+  #projects .showcase-header-title-rule > .section-main-header-title {
+    font-size: var(--projects-type-display) !important;
+    line-height: 0.95 !important;
+    letter-spacing: -0.02em !important;
+  }
+
+  #projects .projects-carousel-stack {
+    margin-top: calc(-0.25rem * var(--projects-fit)) !important;
+    padding-top: calc(0.625rem * var(--projects-fit)) !important;
+  }
+
+  #projects [data-carousel-card] {
+    height: clamp(
+      calc(300px * var(--projects-fit)),
+      calc(46svh * var(--projects-fit)),
+      calc(400px * var(--projects-fit))
+    ) !important;
+  }
+
+  #projects .project-card-title {
+    font-size: var(--projects-type-card) !important;
+    line-height: 1.3 !important;
+    letter-spacing: -0.015em !important;
+  }
+
+  #projects [data-carousel-card] .project-card-title-inset {
+    padding: calc(0.625rem * var(--projects-fit)) calc(0.75rem * var(--projects-fit))
+      calc(0.375rem * var(--projects-fit)) !important;
+  }
+
+  #projects .project-card-tagline {
+    font-size: var(--projects-type-body) !important;
+    line-height: 1.4 !important;
+    color: color-mix(in srgb, var(--color-mono-2) 72%, transparent) !important;
+  }
+
+  #projects [data-carousel-card] .flex.min-h-0.flex-1.flex-col {
+    gap: calc(0.375rem * var(--projects-fit)) !important;
+    padding: 0 calc(0.75rem * var(--projects-fit)) calc(0.75rem * var(--projects-fit)) !important;
+  }
+
+  #projects .projects-showcase-featured-block {
+    margin-top: max(0px, calc(var(--slide-gap, 0.875rem) - var(--showcase-carousel-height-bump, 1.25rem))) !important;
+  }
+
+  #projects .featured-writing-folder > div:first-child {
+    height: calc(3.5rem * var(--projects-fit)) !important;
+    min-height: calc(3.5rem * var(--projects-fit)) !important;
+    padding-top: calc(0.875rem * var(--projects-fit)) !important;
+  }
+
+  #projects .featured-writing-folder [role="tablist"] button,
+  #projects .featured-writing-folder [role="tablist"] button span {
+    font-size: var(--projects-type-ui) !important;
+    line-height: 1.25 !important;
+  }
+
+  #projects .featured-writing-body-card .profile-card-surface {
+    padding: calc(0.75rem * var(--projects-fit)) calc(0.875rem * var(--projects-fit)) !important;
+  }
+
+  #projects .featured-writing-folder [role="tablist"] button {
+    padding-left: calc(0.375rem * var(--projects-fit)) !important;
+    padding-right: calc(0.375rem * var(--projects-fit)) !important;
+  }
+
+  #projects .featured-writing-panel-body {
+    gap: calc(0.875rem * var(--projects-fit)) !important;
+  }
+
+  #projects .featured-writing-item-title {
+    font-size: var(--projects-type-headline) !important;
+    line-height: 1.15 !important;
+    letter-spacing: -0.015em !important;
+  }
+
+  #projects .featured-writing-item-subtitle {
+    font-size: var(--projects-type-body) !important;
+    line-height: 1.4 !important;
+    color: color-mix(in srgb, var(--color-mono-2) 68%, transparent) !important;
+  }
+
+  #projects .featured-writing-content-col > p:not(.featured-writing-item-title):not(.featured-writing-item-subtitle) {
+    font-size: var(--projects-type-body) !important;
+    line-height: 1.45 !important;
+  }
+
+  #projects .featured-writing-view-cta {
+    font-size: var(--projects-type-eyebrow) !important;
+    line-height: 1.2 !important;
+    letter-spacing: 0.06em !important;
+    padding: calc(0.375rem * var(--projects-fit)) calc(0.625rem * var(--projects-fit)) !important;
+  }
+
+  #projects .featured-writing-raised {
+    height: clamp(
+      calc(180px * var(--projects-fit)),
+      calc(23svh * var(--projects-fit)),
+      calc(216px * var(--projects-fit))
+    ) !important;
+  }
+
+  #projects .projects-showcase-flow {
+    flex: 0 0 auto !important;
+  }
+
+  #projects .projects-showcase-flow > .section-tablet-bottom-spacer {
+    display: none !important;
+    min-height: 0 !important;
+  }
+
+  #projects > .container,
+  #projects > .container > div,
+  #projects > .container > div > div,
+  #projects .projects-showcase-viewport,
+  #projects .projects-showcase-stage {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  #projects .projects-showcase-viewport,
+  #projects .projects-showcase-stage {
+    justify-content: center !important;
+    padding-bottom: 0 !important;
+  }
+}
+
+@media (min-width: 1024px) and (pointer: fine) and (max-height: 820px),
+       (min-width: 1367px) and (max-height: 820px) {
+  #projects {
+    --projects-fit: 0.86;
+  }
+
+  #projects [data-carousel-card] {
+    height: clamp(
+      calc(312px * var(--projects-fit)),
+      calc(56svh * var(--projects-fit)),
+      calc(372px * var(--projects-fit))
+    ) !important;
+  }
+
+  #projects .featured-writing-raised {
+    height: clamp(
+      calc(172px * var(--projects-fit)),
+      calc(25.5svh * var(--projects-fit)),
+      calc(200px * var(--projects-fit))
+    ) !important;
+  }
+
+  #projects .projects-showcase-viewport,
+  #projects .projects-showcase-stage {
+    padding-bottom: 0 !important;
+  }
+}
+
+@media (min-width: 1024px) and (pointer: fine) and (min-height: 900px),
+       (min-width: 1367px) and (min-height: 900px) {
+  #projects [data-carousel-card] {
+    height: clamp(
+      calc(320px * var(--projects-fit)),
+      calc(54svh * var(--projects-fit)),
+      calc(440px * var(--projects-fit))
+    ) !important;
+  }
+
+  #projects .featured-writing-raised {
+    height: clamp(
+      calc(190px * var(--projects-fit)),
+      calc(27svh * var(--projects-fit)),
+      calc(236px * var(--projects-fit))
+    ) !important;
+  }
+
+  #projects .showcase-header {
+    margin-bottom: calc(1.25rem * var(--projects-fit)) !important;
+  }
+}
+
+/* Beat Tailwind max-2xl:flex-none on the showcase shell — fill panel height on desktop. */
+@media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
+  section#projects.projects-showcase-tablet-pad > .container {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    margin-top: 0 !important;
+  }
+}
+
+/* SKILLS — desktop fit: uniform scale of original layout (fine pointer lg+ / >1366). */
+@media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
+  section#skills.no-scrollbar {
+    --skills-fit: 0.9;
+    padding-top: max(0.5rem, env(safe-area-inset-top, 0px)) !important;
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px)) !important;
+    min-height: 100% !important;
+    flex: 1 1 auto !important;
+  }
+
+  [aria-label="Section: skills"] > div.relative.z-10.flex,
+  [aria-label="Section: skills"] > div.relative.z-10.flex > div {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: 100% !important;
+  }
+
+  #skills > .container {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    justify-content: center !important;
+  }
+
+  #skills .skills-profile-shell {
+    flex: 0 0 auto !important;
+    /* Keep 3-up cards narrower without creating large empty space between slots. */
+    max-width: min(100%, 56rem) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  #skills > .section-tablet-bottom-spacer {
+    display: none !important;
+    min-height: 0 !important;
+  }
+
+  #skills {
+    --skills-header-line-gap: calc(0.75rem * var(--skills-fit));
+    --skills-rail-label-gap: calc(0.375rem * var(--skills-fit));
+    --skills-rail-rule-gap: calc(0.5625rem * var(--skills-fit));
+    --skills-rail-block-gap: calc(0.5rem * var(--skills-fit));
+  }
+
+  #skills .skills-main-header-chrome .section-main-header-title {
+    font-size: clamp(
+      calc(2rem * var(--skills-fit)),
+      calc((1.1vw + 1.5625rem) * var(--skills-fit)),
+      calc(2.25rem * var(--skills-fit))
+    ) !important;
+    line-height: 0.95 !important;
+    letter-spacing: -0.02em !important;
+  }
+
+  #skills .skills-main-accent-line {
+    margin-bottom: calc(2.5rem * var(--skills-fit)) !important;
+  }
+
+  #skills .skills-main-header-chrome {
+    margin-bottom: var(--skills-header-line-gap) !important;
+  }
+
+  #skills .skills-page-layout {
+    padding-top: clamp(
+      calc(0.5rem * var(--skills-fit)),
+      calc(1.75vh * var(--skills-fit)),
+      calc(1.125rem * var(--skills-fit))
+    ) !important;
+  }
+
+  #skills .skills-page-grid {
+    gap: clamp(
+      calc(1.125rem * var(--skills-fit)),
+      calc(3vh * var(--skills-fit)),
+      calc(2rem * var(--skills-fit))
+    ) !important;
+  }
+
+  #skills .skills-branch-header--page.nav-header {
+    --skills-rail-display: calc(var(--section-rail-font) * var(--skills-fit));
+    --skills-rail-eyebrow: calc(var(--section-rail-eyebrow-font) * var(--skills-fit));
+  }
+
+  #skills .skills-card-surface--page {
+    --skills-page-scale: calc(1.1 * var(--skills-fit));
+    min-height: clamp(
+      calc(10.75rem * var(--skills-page-scale)),
+      calc(18.5svh * var(--skills-page-scale)),
+      calc(12.75rem * var(--skills-page-scale))
+    ) !important;
+    border-radius: calc(0.9rem * var(--skills-page-scale)) !important;
+    padding: calc(1.125rem * var(--skills-page-scale)) calc(0.625rem * var(--skills-page-scale)) !important;
+  }
+
+  #skills .skills-card-surface--page .skills-card-column-header {
+    gap: calc(0.5625rem * var(--skills-page-scale)) !important;
+    margin-bottom: calc(0.625rem * var(--skills-page-scale)) !important;
+    padding-top: calc(0.125rem * var(--skills-page-scale)) !important;
+  }
+
+  #skills .skills-row-cards--page {
+    --skills-row-gap: calc(0.75rem * 1.328125 * var(--skills-fit));
+    gap: var(--skills-row-gap) !important;
+  }
+
+}
+
+@media (min-width: 1024px) and (pointer: fine) and (min-height: 900px),
+       (min-width: 1367px) and (min-height: 900px) {
+  #skills .skills-main-accent-line {
+    margin-bottom: calc(2rem * var(--skills-fit)) !important;
+  }
+}
+
+@media (min-width: 1024px) and (pointer: fine) and (max-height: 820px),
+       (min-width: 1367px) and (max-height: 820px) {
+  section#skills.no-scrollbar {
+    --skills-fit: 0.86;
+  }
+
+  #skills .skills-main-accent-line {
+    margin-bottom: calc(1.5rem * var(--skills-fit)) !important;
+  }
+
+  #skills .skills-page-grid {
+    gap: clamp(
+      calc(1rem * var(--skills-fit)),
+      calc(2.5vh * var(--skills-fit)),
+      calc(1.5rem * var(--skills-fit))
+    ) !important;
+  }
+}
+
+/* EXPERIENCE — desktop (1280+): iPad landscape layout + proportional scale. */
+@media (min-width: 1280px) {
+  #experience {
+    /* 1 = iPad landscape reference; stepped scale on wider desktops (plain number for calc(px * fit)). */
+    --experience-fit: 1;
+    --experience-type-bump: 0px;
+    /* Desktop: preserve iPad-landscape optical density without over-compressing the block. */
+    --experience-density-boost: 1.06;
+    --experience-scale: calc(var(--experience-fit) * var(--experience-density-boost));
+    --experience-rail-w: clamp(236px, calc(16.8vw * var(--experience-fit)), 284px);
+    --experience-rail-inner-w: calc(var(--experience-rail-w) * 0.834);
+    --experience-rail-gap: clamp(1.35rem, 1.7vw, 2.35rem);
+    --experience-card-w: clamp(28.35rem, 36.7875vw, 39.4875rem);
+  }
+
+  /* Shell — top pad anchors block; flex-start keeps rail fixed when tab card height changes */
+  #experience .career-overview-shell {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    --experience-desktop-block-min-h: calc(
+      600px * var(--experience-scale) + 33 * var(--experience-type-bump)
+    );
+    --experience-desktop-center-pad: max(
+      calc((100svh - var(--experience-desktop-block-min-h)) / 2),
+      calc(1rem * var(--experience-scale))
+    );
+    min-height: 100% !important;
+    padding-top: max(var(--experience-desktop-center-pad), env(safe-area-inset-top, 0px)) !important;
+    padding-bottom: max(calc(1.5rem * var(--experience-scale)), env(safe-area-inset-bottom, 0px)) !important;
+    --career-layout-nudge: calc(14px * var(--experience-scale));
+    --career-rail-card-offset: 5%;
+    --career-overview-content-edge: var(--portfolio-stroke-outer);
+    --career-nav-divider-stroke: rgba(255, 255, 255, 0.14);
+    /* Semantic type roles — portfolio tokens at fit 1, scale with --experience-scale */
+    --experience-type-display: clamp(
+      calc(1.875rem * var(--experience-scale) + var(--experience-type-bump)),
+      calc((0.6vw + 1.3rem) * var(--experience-scale) + var(--experience-type-bump)),
+      calc(2.125rem * var(--experience-scale) + var(--experience-type-bump))
+    );
+    --experience-type-subhead: clamp(
+      calc(0.9375rem * var(--experience-scale) + var(--experience-type-bump)),
+      calc((0.38vw + 0.82rem) * var(--experience-scale) + var(--experience-type-bump)),
+      calc(1.125rem * var(--experience-scale) + var(--experience-type-bump))
+    );
+    --experience-type-headline: clamp(
+      calc(1.125rem * var(--experience-scale) + var(--experience-type-bump)),
+      calc((0.72vw + 0.88rem) * var(--experience-scale) + var(--experience-type-bump)),
+      calc(1.375rem * var(--experience-scale) + var(--experience-type-bump))
+    );
+    --experience-type-tab: calc(0.78125rem * var(--experience-scale) + var(--experience-type-bump));
+    --experience-type-body: clamp(
+      calc(0.84375rem * var(--experience-scale) + var(--experience-type-bump)),
+      calc((0.918vw + 0.028rem) * var(--experience-scale) + var(--experience-type-bump)),
+      calc(0.95625rem * var(--experience-scale) + var(--experience-type-bump))
+    );
+    --experience-type-eyebrow: calc(0.71875rem * var(--experience-scale) + var(--experience-type-bump));
+    /* Hierarchy roles — distinct steps; sizes stay near current visual weight */
+    --experience-type-rail-eyebrow: calc(var(--experience-type-subhead) * 0.9);
+    --experience-type-meta: calc(var(--experience-type-body) * 0.94);
+    --experience-type-stat: calc(var(--experience-type-headline) * 0.92);
+    --experience-lh-rail-eyebrow: 1.12;
+    --experience-lh-panel: 1.06;
+    --experience-lh-meta: 1.34;
+    --experience-lh-body: 1.42;
+    --experience-lh-tab-lead: 1.26;
+    --experience-lh-tab-sub: 1.22;
+    --experience-lh-stat: 1.04;
+    --career-font-display: var(--experience-type-display);
+    --career-font-eyebrow: var(--experience-type-rail-eyebrow);
+    --career-font-panel-headline: var(--experience-type-headline);
+    --career-font-panel-meta: var(--experience-type-meta);
+    --career-font-tab-lead: var(--experience-type-tab);
+    --career-font-tab-sub: var(--experience-type-eyebrow);
+    --career-font-card-head: calc(var(--experience-type-headline) * 0.96);
+    --career-font-card-body: var(--experience-type-body);
+    --career-font-body: var(--experience-type-body);
+    --career-font-body-sm: calc(var(--experience-type-eyebrow) * 0.96);
+    --career-font-stat: var(--experience-type-stat);
+    --career-font-caption: var(--experience-type-eyebrow);
+    --career-tab-hover-shift: calc(13.5px * var(--experience-scale));
+  }
+
+  #experience .career-overview-shell > .container {
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: none;
+    padding-left: calc(1rem * var(--experience-scale));
+    padding-right: calc(1rem * var(--experience-scale));
+  }
+
+  #experience .career-overview-shell > .container > div {
+    width: 100%;
+    max-width: none;
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  #experience .career-overview-shell > .container > div > div {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  /* Grid shell — rail + card, content-driven height */
+  #experience .main-container {
+    display: grid !important;
+    grid-template-columns: var(--experience-rail-w) var(--experience-card-w) !important;
+    grid-template-rows: auto !important;
+    align-items: start !important;
+    align-self: start !important;
+    min-height: var(--experience-desktop-block-min-h) !important;
+    max-height: none !important;
+    margin-top: 0 !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    width: calc(var(--experience-rail-w) + var(--experience-rail-gap) + var(--experience-card-w)) !important;
+    background: transparent !important;
+    background-image: none !important;
+    filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+
+  #experience .career-overview-rail {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: start !important;
+    width: var(--experience-rail-w) !important;
+    min-width: var(--experience-rail-w) !important;
+    padding-top: 0;
+  }
+
+  #experience .nav-header {
+    width: var(--experience-rail-inner-w) !important;
+    max-width: var(--experience-rail-inner-w) !important;
+    box-sizing: border-box;
+    padding: 0 calc(12px * var(--experience-scale))
+      calc(14px * var(--experience-scale)) calc(8px * var(--experience-scale)) !important;
+    margin: 0 0 calc(12px * var(--experience-scale)) !important;
+  }
+
+  #experience .nav-header .section-main-header-title {
+    transform: none;
+  }
+
+  #experience .career-nav-section-divider {
+    left: calc(8px * var(--experience-scale));
+    right: calc(12px * var(--experience-scale));
+  }
+
+  #experience .tabs-nav {
+    width: var(--experience-rail-inner-w) !important;
+    min-width: 0 !important;
+    max-width: var(--experience-rail-inner-w) !important;
+    box-sizing: border-box;
+    padding: 0 calc(12px * var(--experience-scale)) calc(20px * var(--experience-scale))
+      calc(8px * var(--experience-scale)) !important;
+    gap: calc(11px * var(--experience-scale)) !important;
+    border: 0 !important;
+    border-right: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    background-image: none !important;
+    filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  #experience .tabs-nav .tab-btn {
+    width: 100%;
+    box-sizing: border-box;
+    min-width: 0;
+    padding-left: calc(12px * var(--experience-scale)) !important;
+    padding-right: calc(14px * var(--experience-scale)) !important;
+  }
+
+  #experience .tab-btn {
+    padding: calc(14px * var(--experience-scale)) !important;
+    gap: calc(12px * var(--experience-scale)) !important;
+    border-radius: calc(11px * var(--experience-scale)) !important;
+  }
+
+  #experience .experience-desktop-right-shell {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: start !important;
+    justify-self: start;
+    min-width: 0;
+  }
+
+  #experience .tabs-content {
+    --career-overview-content-max: 100%;
+    grid-column: auto;
+    grid-row: auto;
+    align-self: start !important;
+    justify-self: start;
+    width: var(--experience-card-w);
+    max-width: var(--experience-card-w);
+    margin-left: var(--experience-rail-gap) !important;
+    padding: calc(36px * var(--experience-scale)) !important;
+    overflow: visible !important;
+    background: transparent !important;
+    background-image: none !important;
+    filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    border: 1px solid var(--career-overview-content-edge) !important;
+    border-radius: calc(16px * var(--experience-scale)) !important;
+  }
+
+  #experience .tabs-content::before {
+    display: none;
+  }
+
+  #experience .career-tabs-content-inner {
+    border-radius: calc(14px * var(--experience-scale)) !important;
+  }
+
+  #experience .nav-header .section-main-header-title,
+  #experience .nav-header .career-nav-section-subtitle {
+    font-size: var(--experience-type-display) !important;
+    line-height: var(--career-lh-display) !important;
+    letter-spacing: var(--section-main-letter-spacing) !important;
+  }
+
+  #experience .nav-header .career-nav-section-title {
+    font-size: var(--experience-type-rail-eyebrow) !important;
+    line-height: var(--experience-lh-rail-eyebrow) !important;
+  }
+
+  #experience .panel-title,
+  #experience .card-title {
+    font-size: var(--experience-type-headline) !important;
+    line-height: var(--experience-lh-panel) !important;
+  }
+
+  #experience .panel-period,
+  #experience .panel-description {
+    font-size: var(--experience-type-meta) !important;
+    line-height: var(--experience-lh-meta) !important;
+  }
+
+  #experience .card-text,
+  #experience .feature-list li {
+    font-size: var(--experience-type-body) !important;
+    line-height: var(--experience-lh-body) !important;
+  }
+
+  #experience .tab-title {
+    font-size: var(--experience-type-tab) !important;
+    line-height: var(--experience-lh-tab-lead) !important;
+  }
+
+  #experience .tab-subtitle,
+  #experience .experience-skill-tag,
+  #experience .stat-label {
+    font-size: var(--experience-type-eyebrow) !important;
+    line-height: var(--experience-lh-tab-sub) !important;
+  }
+
+  #experience .stat-value {
+    font-size: var(--experience-type-stat) !important;
+    line-height: var(--experience-lh-stat) !important;
+  }
+
+  #experience .panel-header {
+    row-gap: calc(5px * var(--experience-scale)) !important;
+    margin-bottom: calc(10px * var(--experience-scale)) !important;
+    padding-bottom: calc(8px * var(--experience-scale)) !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    max-width: 100% !important;
+    grid-template-columns: minmax(0, 100%) !important;
+  }
+
+  #experience .panel-content {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    max-width: 100% !important;
+  }
+
+  #experience .feature-list {
+    gap: calc(9px * var(--experience-scale)) !important;
+  }
+
+  #experience .feature-list li {
+    gap: calc(10px * var(--experience-scale)) !important;
+  }
+
+  #experience .content-card {
+    padding: calc(18px * var(--experience-scale)) calc(20px * var(--experience-scale)) !important;
+    border-radius: calc(11px * var(--experience-scale)) !important;
+  }
+
+  #experience .experience-skill-tag {
+    min-height: calc(22px * var(--experience-scale));
+    padding: calc(4px * var(--experience-scale)) calc(10px * var(--experience-scale)) !important;
+    border-radius: calc(6px * var(--experience-scale)) !important;
+  }
+
+  #experience .experience-skill-tag-icon {
+    width: calc(13px * var(--experience-density-boost)) !important;
+    height: calc(13px * var(--experience-density-boost)) !important;
+  }
+
+  #experience .card-icon {
+    width: calc(36px * var(--experience-density-boost)) !important;
+    height: calc(36px * var(--experience-density-boost)) !important;
+  }
+
+  #experience .card-icon svg {
+    width: calc(18px * var(--experience-density-boost)) !important;
+    height: calc(18px * var(--experience-density-boost)) !important;
+  }
+
+  #experience .stat-item {
+    padding: calc(18px * var(--experience-scale)) !important;
+    border-radius: calc(10px * var(--experience-scale)) !important;
+  }
+
+  #experience .tab-panel,
+  #experience .tab-panel.active {
+    position: relative !important;
+    inset: auto !important;
+    display: none;
+    transform: none !important;
+    transition: none !important;
+    overflow: visible !important;
+    padding-top: 0 !important;
+    padding-right: 0 !important;
+    padding-bottom: 0 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  #experience .tab-panel.active {
+    display: flex !important;
+    flex-direction: column !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  #experience .tab-panel:not(.active) {
+    display: none !important;
+  }
+}
+
+@media (min-width: 1280px) and (pointer: fine), (min-width: 1536px) {
+  #experience {
+    --experience-fit: 0.98;
+  }
+}
+
+@media (min-width: 1440px) and (pointer: fine) {
+  #experience {
+    --experience-fit: 0.96;
+  }
+}
+
+@media (min-width: 1536px) and (pointer: fine), (min-width: 1920px) {
+  #experience {
+    --experience-fit: 0.94;
+  }
+}
+
+@media (min-width: 1920px) and (pointer: fine) {
+  #experience {
+    --experience-fit: 0.92;
+  }
+}
+
+/* Desktop fine pointer — +2px type bump + recentered anchor */
+@media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
+  #experience {
+    --experience-type-bump: 1px;
+  }
+}
+
+@media (min-width: 1280px) and (pointer: fine) and (max-height: 820px),
+       (min-width: 1536px) and (max-height: 820px) {
+  #experience {
+    --experience-fit: 1;
   }
 }
 
