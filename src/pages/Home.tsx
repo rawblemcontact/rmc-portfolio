@@ -35,6 +35,7 @@ import {
   type HeroAccentLayoutControl,
 } from "../components/HeroAccentLayoutDebugPanel";
 import {
+  buildDesktopLayoutSideStyle,
   readSectionDesktopLayoutDebugValues,
   saveSectionDesktopLayoutDebugValues,
   EXPERIENCE_DESKTOP_LAYOUT_DEBUG_DEFAULTS,
@@ -2915,7 +2916,8 @@ const PhantomProfile = () => {
     return () => mq.removeEventListener("change", onChange);
   }, []);
 
-  const profileDesktopDebugActive = portfolioDebugEnabled && profileDesktopViewport;
+  const profileDesktopLayoutActive = profileDesktopViewport && !profileTabletViewport;
+  const profileDesktopDebugActive = portfolioDebugEnabled && profileDesktopLayoutActive;
 
   const handleProfileDesktopLayoutDebugChange = useCallback(
     (patch: Partial<ProfileDesktopLayoutDebugValues>) => {
@@ -2952,24 +2954,12 @@ const PhantomProfile = () => {
     ? profileDesktopLayoutDebugValues
     : PROFILE_DESKTOP_LAYOUT_DEBUG_DEFAULTS;
 
-  const profileLeftDebugStyle = profileDesktopViewport
-    ? {
-        transform: `translate(${activeProfileDesktopLayout.leftOffsetX}px, ${activeProfileDesktopLayout.leftOffsetY}px)`,
-        transformOrigin: "left top",
-        width: `${activeProfileDesktopLayout.leftWidthScale * 100}%`,
-        maxWidth: "none",
-        zoom: activeProfileDesktopLayout.leftScale,
-      }
+  const profileLeftDebugStyle = profileDesktopLayoutActive
+    ? buildDesktopLayoutSideStyle(activeProfileDesktopLayout, "left", "transform")
     : undefined;
 
-  const profileRightDebugStyle = profileDesktopViewport
-    ? {
-        transform: `translate(${activeProfileDesktopLayout.rightOffsetX}px, ${activeProfileDesktopLayout.rightOffsetY}px)`,
-        transformOrigin: "right top",
-        width: `${activeProfileDesktopLayout.rightWidthScale * 100}%`,
-        maxWidth: "none",
-        zoom: activeProfileDesktopLayout.rightScale,
-      }
+  const profileRightDebugStyle = profileDesktopLayoutActive
+    ? buildDesktopLayoutSideStyle(activeProfileDesktopLayout, "right", "transform")
     : undefined;
 
   useLayoutEffect(() => {
@@ -5390,23 +5380,11 @@ const PalaceProjects = ({
     : PROJECTS_DESKTOP_LAYOUT_DEBUG_DEFAULTS;
 
   const projectsLeftDebugStyle = projectsDesktopViewport
-    ? {
-        transform: `translate(${activeProjectsDesktopLayout.leftOffsetX}px, ${activeProjectsDesktopLayout.leftOffsetY}px)`,
-        transformOrigin: "left top",
-        width: `${activeProjectsDesktopLayout.leftWidthScale * 100}%`,
-        maxWidth: "none",
-        zoom: activeProjectsDesktopLayout.leftScale,
-      }
+    ? buildDesktopLayoutSideStyle(activeProjectsDesktopLayout, "left", "crisp")
     : undefined;
 
   const projectsRightDebugStyle = projectsDesktopViewport
-    ? {
-        transform: `translate(${activeProjectsDesktopLayout.rightOffsetX}px, ${activeProjectsDesktopLayout.rightOffsetY}px)`,
-        transformOrigin: "right top",
-        width: `${activeProjectsDesktopLayout.rightWidthScale * 100}%`,
-        maxWidth: "none",
-        zoom: activeProjectsDesktopLayout.rightScale,
-      }
+    ? buildDesktopLayoutSideStyle(activeProjectsDesktopLayout, "right", "crisp")
     : undefined;
 
   useEffect(() => {
@@ -6476,23 +6454,11 @@ const ConfidantExperience = ({
     : EXPERIENCE_DESKTOP_LAYOUT_DEBUG_DEFAULTS;
 
   const experienceLeftDebugStyle = experienceDesktopViewport
-    ? {
-        transform: `translate(${activeExperienceDesktopLayout.leftOffsetX}px, ${activeExperienceDesktopLayout.leftOffsetY}px)`,
-        transformOrigin: "left top",
-        width: `${activeExperienceDesktopLayout.leftWidthScale * 100}%`,
-        maxWidth: "none",
-        zoom: activeExperienceDesktopLayout.leftScale,
-      }
+    ? buildDesktopLayoutSideStyle(activeExperienceDesktopLayout, "left", "crisp")
     : undefined;
 
   const experienceRightDebugStyle = experienceDesktopViewport
-    ? {
-        transform: `translate(${activeExperienceDesktopLayout.rightOffsetX}px, ${activeExperienceDesktopLayout.rightOffsetY}px)`,
-        transformOrigin: "right top",
-        width: `${activeExperienceDesktopLayout.rightWidthScale * 100}%`,
-        maxWidth: "none",
-        zoom: activeExperienceDesktopLayout.rightScale,
-      }
+    ? buildDesktopLayoutSideStyle(activeExperienceDesktopLayout, "right", "crisp")
     : undefined;
 
   useEffect(() => {

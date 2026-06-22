@@ -3,6 +3,7 @@ import {
   useContext,
   useEffect,
   useState,
+  type CSSProperties,
   type ReactNode,
 } from "react";
 
@@ -49,14 +50,14 @@ export const EXPERIENCE_DESKTOP_LAYOUT_DEBUG_DEFAULTS: ProfileDesktopLayoutDebug
 
 /** Locked desktop PROJECTS layout — tuned via debug panel (Jun 2026). */
 export const PROJECTS_DESKTOP_LAYOUT_DEBUG_DEFAULTS: ProfileDesktopLayoutDebugValues = {
-  leftOffsetX: 35,
+  leftOffsetX: 81,
   leftOffsetY: 31,
-  rightOffsetX: -36,
-  rightOffsetY: 25,
+  rightOffsetX: 81,
+  rightOffsetY: 39,
   leftScale: 0.95,
-  leftWidthScale: 1,
+  leftWidthScale: 0.89,
   rightScale: 0.95,
-  rightWidthScale: 1,
+  rightWidthScale: 0.89,
 };
 
 const SECTION_DESKTOP_LAYOUT_DEBUG_DEFAULTS: Record<
@@ -70,6 +71,36 @@ const SECTION_DESKTOP_LAYOUT_DEBUG_DEFAULTS: Record<
 
 function sectionDesktopLayoutDefaults(sectionId: DesktopLayoutSectionId) {
   return SECTION_DESKTOP_LAYOUT_DEBUG_DEFAULTS[sectionId];
+}
+
+export type DesktopLayoutApplyMode = "crisp" | "transform";
+
+/** PROFILE uses transform (flex-safe); PROJECTS/EXPERIENCE use crisp zoom + width. */
+export function buildDesktopLayoutSideStyle(
+  values: ProfileDesktopLayoutDebugValues,
+  side: "left" | "right",
+  mode: DesktopLayoutApplyMode,
+): CSSProperties {
+  const offsetX = side === "left" ? values.leftOffsetX : values.rightOffsetX;
+  const offsetY = side === "left" ? values.leftOffsetY : values.rightOffsetY;
+  const scale = side === "left" ? values.leftScale : values.rightScale;
+  const widthScale = side === "left" ? values.leftWidthScale : values.rightWidthScale;
+  const transformOrigin = side === "left" ? "left top" : "right top";
+
+  if (mode === "transform") {
+    return {
+      transform: `translate(${offsetX}px, ${offsetY}px) scale(${scale}) scaleX(${widthScale})`,
+      transformOrigin,
+    };
+  }
+
+  return {
+    transform: `translate(${offsetX}px, ${offsetY}px)`,
+    transformOrigin,
+    width: `${widthScale * 100}%`,
+    maxWidth: "none",
+    zoom: scale,
+  };
 }
 
 function sanitizeProfileDesktopLayoutValue(value: unknown, fallback: number) {
