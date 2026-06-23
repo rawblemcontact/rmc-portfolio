@@ -31,9 +31,20 @@ import { FillIcon } from "../components/FillIcon";
 import { ProfileDesktopLayoutDebugPanel } from "../components/ProfileDesktopLayoutDebugPanel";
 import {
   HeroAccentLayoutDebugPanel,
+  HERO_MAIN_GLOBAL_LAYOUT_DEFAULTS,
+  HERO_PORTFOLIO_BUTTON_GLOBAL_LAYOUT_DEFAULTS,
+  HERO_VIDEO_GLOBAL_LAYOUT_DEFAULTS,
+  buildHeroGlobalLayoutStyle,
   type HeroAccentIconKey,
   type HeroAccentLayoutControl,
+  type HeroGlobalLayoutControl,
 } from "../components/HeroAccentLayoutDebugPanel";
+import {
+  MainMenuLayoutDebugPanel,
+  MAIN_MENU_GLOBAL_LAYOUT_DEFAULTS,
+  buildMainMenuGlobalLayoutStyle,
+  type MainMenuGlobalLayoutControl,
+} from "../components/MainMenuLayoutDebugPanel";
 import {
   buildDesktopLayoutSideStyle,
   readSectionDesktopLayoutDebugValues,
@@ -42,6 +53,8 @@ import {
   PROFILE_DESKTOP_LAYOUT_DEBUG_DEFAULTS,
   PROJECTS_DESKTOP_LAYOUT_DEBUG_DEFAULTS,
   type ProfileDesktopLayoutDebugValues,
+  useHeroDebugEnabled,
+  useMainMenuDebugEnabled,
   usePortfolioDebugEnabled,
   useRuleOfThirdsEnabled,
 } from "../lib/portfolioDebugMode";
@@ -1419,15 +1432,38 @@ const HERO_ACCENT_LAYOUT: Record<HeroAccentIconKey, HeroAccentLayoutControl> = {
 const HERO_ACCENT_ICON_KEYS: HeroAccentIconKey[] = ["first", "second", "third"];
 /** Two 3px dividers; remaining width splits evenly across three icon columns. */
 const HERO_ACCENT_STRIP_DIVIDER_CLASS = "w-[3px] shrink-0 self-stretch bg-current";
+const HERO_DESKTOP_DEBUG_MIN_PX = 1024;
+const matchesHeroDesktopDebugViewport = () =>
+  typeof window !== "undefined" && window.matchMedia(`(min-width: ${HERO_DESKTOP_DEBUG_MIN_PX}px)`).matches;
 
 const HeroNameReveal = ({
   heroReady,
   reduceMotion,
   button,
+  heroMainGlobalDebugStyle,
+  heroPortfolioButtonGlobalDebugStyle,
+  heroDesktopViewport,
+  videoGlobalDebugControls,
+  mainGlobalDebugControls,
+  portfolioButtonGlobalDebugControls,
+  onVideoGlobalDebugChange,
+  onMainGlobalDebugChange,
+  onPortfolioButtonGlobalDebugChange,
+  onGlobalDebugReset,
 }: {
   heroReady: boolean;
   reduceMotion: boolean | null;
   button: React.ReactNode;
+  heroMainGlobalDebugStyle?: React.CSSProperties;
+  heroPortfolioButtonGlobalDebugStyle?: React.CSSProperties;
+  heroDesktopViewport: boolean;
+  videoGlobalDebugControls: HeroGlobalLayoutControl;
+  mainGlobalDebugControls: HeroGlobalLayoutControl;
+  portfolioButtonGlobalDebugControls: HeroGlobalLayoutControl;
+  onVideoGlobalDebugChange: (patch: Partial<HeroGlobalLayoutControl>) => void;
+  onMainGlobalDebugChange: (patch: Partial<HeroGlobalLayoutControl>) => void;
+  onPortfolioButtonGlobalDebugChange: (patch: Partial<HeroGlobalLayoutControl>) => void;
+  onGlobalDebugReset: () => void;
 }) => {
   const containerRef = useRef<HTMLSpanElement>(null);
   const robbieRef = useRef<HTMLSpanElement>(null);
@@ -1442,7 +1478,7 @@ const HeroNameReveal = ({
     topLineTop: 0,
     bottomLineTop: 0,
   });
-  const portfolioDebugEnabled = usePortfolioDebugEnabled();
+  const heroDebugEnabled = useHeroDebugEnabled();
 
   const easeInOutExpo: [number, number, number, number] = [0.87, 0, 0.13, 1];
   const easeOutExpo: [number, number, number, number] = [0.16, 1, 0.3, 1];
@@ -1518,7 +1554,7 @@ const HeroNameReveal = ({
   const auxVisible = step === "reveal" || step === "done";
   const auxRainbowLayerDurS = HERO_NAME_TEXT_RAINBOW_LAYER_MS / 1000;
   const auxWhiteLayerDurS = HERO_NAME_TEXT_WHITE_LAYER_MS / 1000;
-  const activeAccentLayout = portfolioDebugEnabled ? accentDebugControls : HERO_ACCENT_LAYOUT;
+  const activeAccentLayout = heroDebugEnabled ? accentDebugControls : HERO_ACCENT_LAYOUT;
 
   const handleAccentDebugChange = useCallback(
     (iconKey: HeroAccentIconKey, patch: Partial<HeroAccentLayoutControl>) => {
@@ -1532,7 +1568,8 @@ const HeroNameReveal = ({
 
   const handleAccentDebugReset = useCallback(() => {
     setAccentDebugControls({ ...HERO_ACCENT_LAYOUT });
-  }, []);
+    onGlobalDebugReset();
+  }, [onGlobalDebugReset]);
 
   const renderAccentIconCell = useCallback(
     (iconKey: HeroAccentIconKey) => {
@@ -1576,19 +1613,7 @@ const HeroNameReveal = ({
     [renderAccentIconCell],
   );
 
-  return (
-    <div className="relative m-0 w-full max-w-full overflow-visible font-display [font-kerning:none]">
-      {portfolioDebugEnabled &&
-        typeof document !== "undefined" &&
-        createPortal(
-          <HeroAccentLayoutDebugPanel
-            controls={accentDebugControls}
-            defaults={HERO_ACCENT_LAYOUT}
-            onChange={handleAccentDebugChange}
-            onReset={handleAccentDebugReset}
-          />,
-          document.body,
-        )}
+  const heroMainContent = (
       <span
         ref={containerRef}
         className="relative block w-full overflow-visible"
@@ -1706,7 +1731,15 @@ const HeroNameReveal = ({
             </h1>
           </div>
           {/* Button — col 2, row 1, nudged inward from edge */}
-          <div className="col-start-2 row-start-1 self-end justify-self-end -translate-x-1 -translate-y-[0.44rem] pl-1.5 pr-1.5 max-md:hidden sm:-translate-x-1.5 sm:-translate-y-[0.44rem] sm:pl-5 sm:pr-4">{button}</div>
+          <div className="col-start-2 row-start-1 self-end justify-self-end -translate-x-1 -translate-y-[0.44rem] pl-1.5 pr-1.5 max-md:hidden sm:-translate-x-1.5 sm:-translate-y-[0.44rem] sm:pl-5 sm:pr-4">
+            {heroDesktopViewport ? (
+              <div className="w-fit min-w-0 max-w-full" style={heroPortfolioButtonGlobalDebugStyle}>
+                {button}
+              </div>
+            ) : (
+              button
+            )}
+          </div>
           {/* Tagline rectangle — col 1, row 2, same width as name box */}
           <p
             ref={taglineRef}
@@ -1735,6 +1768,37 @@ const HeroNameReveal = ({
         )}
         </div>
       </span>
+  );
+
+  return (
+    <div className="relative m-0 w-full max-w-full overflow-visible font-display [font-kerning:none]">
+      {heroDebugEnabled &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <HeroAccentLayoutDebugPanel
+            controls={accentDebugControls}
+            defaults={HERO_ACCENT_LAYOUT}
+            videoGlobalControls={videoGlobalDebugControls}
+            mainGlobalControls={mainGlobalDebugControls}
+            portfolioButtonGlobalControls={portfolioButtonGlobalDebugControls}
+            videoGlobalDefaults={HERO_VIDEO_GLOBAL_LAYOUT_DEFAULTS}
+            mainGlobalDefaults={HERO_MAIN_GLOBAL_LAYOUT_DEFAULTS}
+            portfolioButtonGlobalDefaults={HERO_PORTFOLIO_BUTTON_GLOBAL_LAYOUT_DEFAULTS}
+            onChange={handleAccentDebugChange}
+            onVideoGlobalChange={onVideoGlobalDebugChange}
+            onMainGlobalChange={onMainGlobalDebugChange}
+            onPortfolioButtonGlobalChange={onPortfolioButtonGlobalDebugChange}
+            onReset={handleAccentDebugReset}
+          />,
+          document.body,
+        )}
+      {heroDesktopViewport ? (
+        <div className="w-fit min-w-0 max-w-full" style={heroMainGlobalDebugStyle}>
+          {heroMainContent}
+        </div>
+      ) : (
+        heroMainContent
+      )}
     </div>
   );
 };
@@ -1797,6 +1861,57 @@ const Hero = ({
   const [isMobileHeroLayout, setIsMobileHeroLayout] = useState(false);
   const mobileNameY = useMotionValue(0);
   const heroTouchStartYRef = useRef<number | null>(null);
+  const heroDebugEnabled = useHeroDebugEnabled();
+  const [videoGlobalDebugControls, setVideoGlobalDebugControls] = useState<HeroGlobalLayoutControl>(
+    () => ({ ...HERO_VIDEO_GLOBAL_LAYOUT_DEFAULTS }),
+  );
+  const [mainGlobalDebugControls, setMainGlobalDebugControls] = useState<HeroGlobalLayoutControl>(
+    () => ({ ...HERO_MAIN_GLOBAL_LAYOUT_DEFAULTS }),
+  );
+  const [portfolioButtonGlobalDebugControls, setPortfolioButtonGlobalDebugControls] =
+    useState<HeroGlobalLayoutControl>(() => ({ ...HERO_PORTFOLIO_BUTTON_GLOBAL_LAYOUT_DEFAULTS }));
+  const [heroDesktopViewport, setHeroDesktopViewport] = useState(matchesHeroDesktopDebugViewport);
+
+  useEffect(() => {
+    const mq = window.matchMedia(`(min-width: ${HERO_DESKTOP_DEBUG_MIN_PX}px)`);
+    const onChange = () => setHeroDesktopViewport(mq.matches);
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  const activeVideoLayout = heroDebugEnabled ? videoGlobalDebugControls : HERO_VIDEO_GLOBAL_LAYOUT_DEFAULTS;
+  const activeMainLayout = heroDebugEnabled ? mainGlobalDebugControls : HERO_MAIN_GLOBAL_LAYOUT_DEFAULTS;
+  const activePortfolioButtonLayout = heroDebugEnabled
+    ? portfolioButtonGlobalDebugControls
+    : HERO_PORTFOLIO_BUTTON_GLOBAL_LAYOUT_DEFAULTS;
+  const heroVideoGlobalDebugStyle = heroDesktopViewport
+    ? buildHeroGlobalLayoutStyle(activeVideoLayout, "center center")
+    : undefined;
+  const heroMainGlobalDebugStyle = heroDesktopViewport
+    ? buildHeroGlobalLayoutStyle(activeMainLayout)
+    : undefined;
+  const heroPortfolioButtonGlobalDebugStyle = heroDesktopViewport
+    ? buildHeroGlobalLayoutStyle(activePortfolioButtonLayout)
+    : undefined;
+
+  const handleVideoGlobalDebugChange = useCallback((patch: Partial<HeroGlobalLayoutControl>) => {
+    setVideoGlobalDebugControls((prev) => ({ ...prev, ...patch }));
+  }, []);
+
+  const handleMainGlobalDebugChange = useCallback((patch: Partial<HeroGlobalLayoutControl>) => {
+    setMainGlobalDebugControls((prev) => ({ ...prev, ...patch }));
+  }, []);
+
+  const handlePortfolioButtonGlobalDebugChange = useCallback((patch: Partial<HeroGlobalLayoutControl>) => {
+    setPortfolioButtonGlobalDebugControls((prev) => ({ ...prev, ...patch }));
+  }, []);
+
+  const handleGlobalDebugReset = useCallback(() => {
+    setVideoGlobalDebugControls({ ...HERO_VIDEO_GLOBAL_LAYOUT_DEFAULTS });
+    setMainGlobalDebugControls({ ...HERO_MAIN_GLOBAL_LAYOUT_DEFAULTS });
+    setPortfolioButtonGlobalDebugControls({ ...HERO_PORTFOLIO_BUTTON_GLOBAL_LAYOUT_DEFAULTS });
+  }, []);
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 767px)");
@@ -2112,6 +2227,131 @@ const Hero = ({
     setDefaultsApplied(true);
     window.setTimeout(() => setDefaultsApplied(false), 1400);
   };
+
+  const heroVideoCard = (
+    <motion.div
+      className={`relative mx-auto max-[639px]:overflow-hidden sm:overflow-visible rounded-[11px] sm:rounded-xl ${HERO_VIDEO_CARD_WIDTH_CLASS}`}
+      initial={{ scaleX: 0 }}
+      animate={{ scaleX: 1 }}
+      transition={
+        reduceMotion
+          ? { duration: 0 }
+          : { duration: HERO_NAME_SETTLE_DUR_S, ease: HERO_VIDEO_SCALE_EASE }
+      }
+      onAnimationComplete={() => setSliderAnimDone(true)}
+      style={{ transformOrigin: "center center" }}
+    >
+      <motion.span
+        aria-hidden
+        className="pointer-events-none absolute -inset-4 max-sm:-inset-3 sm:-inset-7 -z-[1] rounded-[16px] sm:rounded-[20px] blur-3xl"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: HERO_VIDEO_GLOW_PEAK }}
+        transition={
+          reduceMotion
+            ? { duration: 0 }
+            : { delay: HERO_VIDEO_GLOW_DELAY_S, duration: HERO_VIDEO_GLOW_DUR_S, ease: HERO_VIDEO_SCALE_EASE }
+        }
+        style={{
+          background:
+            "radial-gradient(ellipse 90% 74% at 50% 44%, rgba(255,255,255,0.11) 0%, rgba(255,255,255,0.035) 46%, transparent 72%)",
+        }}
+      />
+      <motion.div
+        className="relative z-[1] mx-auto w-full h-[clamp(200px,min(52vh,calc(100svh-11rem-max(1rem,env(safe-area-inset-top,0px)))),620px)] md:max-lg:h-[clamp(200px,min(44vh,calc(100svh-14rem-max(1rem,env(safe-area-inset-top,0px)))),500px)] lg:h-[clamp(240px,min(54vh,calc(100svh-11.5rem-max(1.5rem,env(safe-area-inset-top,0px)))),680px)] xl:h-[clamp(260px,min(56vh,calc(100svh-12rem-max(2rem,env(safe-area-inset-top,0px)))),760px)] overflow-hidden rounded-[11px] sm:rounded-xl border border-white bg-black"
+        style={{
+          boxShadow:
+            "0 36px 88px rgba(0,0,0,0.6), inset 0 -40px 70px rgba(0,0,0,0.52), 0 0 28px 4px rgba(255,255,255,0.04)",
+        }}
+        onMouseEnter={() => setHeroSlidePaused(true)}
+        onMouseLeave={() => setHeroSlidePaused(false)}
+        onTouchStart={(e) => {
+          heroTouchStartYRef.current = e.touches[0]?.clientY ?? null;
+        }}
+        onTouchEnd={(e) => {
+          const startY = heroTouchStartYRef.current;
+          const endY = e.changedTouches[0]?.clientY;
+          heroTouchStartYRef.current = null;
+          if (startY == null || endY == null) return;
+          const delta = startY - endY;
+          if (Math.abs(delta) < 34) return;
+          if (delta > 0) goToNextHeroSlide();
+          else goToPrevHeroSlide();
+        }}
+      >
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={
+            reduceMotion
+              ? { duration: 0 }
+              : {
+                  delay: HERO_VIDEO_CONTENT_FADE_DELAY_S,
+                  duration: HERO_VIDEO_CONTENT_FADE_DUR_S,
+                  ease: HERO_VIDEO_SCALE_EASE,
+                }
+          }
+          className="absolute inset-0"
+        >
+          <AnimatePresence initial={false} custom={heroSlideDirection}>
+            <motion.article
+              key={currentHeroSlide.id}
+              custom={heroSlideDirection}
+              initial={{ y: heroSlideDirection > 0 ? "100%" : "-100%" }}
+              animate={{ y: "0%" }}
+              exit={{ y: heroSlideDirection > 0 ? "-100%" : "100%" }}
+              transition={{ duration: reduceMotion ? 0.12 : 0.64, ease: [0.2, 0.9, 0.25, 1] }}
+              className="absolute inset-0 transform-gpu"
+              style={{ willChange: "transform" }}
+            >
+              <motion.div
+                initial={{ y: heroSlideDirection > 0 ? "6%" : "-6%" }}
+                animate={{ y: 0 }}
+                exit={{ y: heroSlideDirection > 0 ? "-6%" : "6%" }}
+                transition={{ duration: reduceMotion ? 0.12 : 0.64, ease: [0.2, 0.9, 0.25, 1] }}
+                className="absolute inset-0 transform-gpu"
+                style={{ willChange: "transform" }}
+              >
+                {currentHeroSlide.thumbnailVideo ? (
+                  <video
+                    src={currentHeroSlide.thumbnailVideo}
+                    poster={currentHeroSlide.poster}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    className={`h-full w-full ${currentFitClass}`}
+                    style={{
+                      objectPosition: currentFocalString,
+                      transform: `scale(${currentZoom})`,
+                      transformOrigin: currentFocalString,
+                    }}
+                  />
+                ) : (
+                  <img
+                    src={currentHeroSlide.thumbnail}
+                    alt={currentHeroSlide.title}
+                    className={`h-full w-full ${currentFitClass}`}
+                    style={{
+                      objectPosition: currentFocalString,
+                      transform: `scale(${currentZoom})`,
+                      transformOrigin: currentFocalString,
+                    }}
+                    loading="eager"
+                  />
+                )}
+              </motion.div>
+            </motion.article>
+          </AnimatePresence>
+        </motion.div>
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-0 z-[2]"
+          style={{ background: HERO_VIDEO_CARD_VIGNETTE }}
+        />
+      </motion.div>
+    </motion.div>
+  );
+
   return (
     <section
       id="hero"
@@ -2132,132 +2372,14 @@ const Hero = ({
       >
         <div className="relative flex min-h-0 items-center justify-center max-lg:items-end max-lg:pb-2 md:max-lg:pb-3">
           <div className="absolute inset-0 flex w-full items-center justify-center max-lg:items-end max-lg:pb-2 md:max-lg:translate-y-8 md:max-lg:pb-1 max-[400px]:px-3 sm:px-0">
-          {videoRevealActive && (
-          <motion.div
-            className={`relative mx-auto max-[639px]:overflow-hidden sm:overflow-visible rounded-[11px] sm:rounded-xl ${HERO_VIDEO_CARD_WIDTH_CLASS}`}
-            initial={{ scaleX: 0 }}
-            animate={{ scaleX: 1 }}
-            transition={
-              reduceMotion
-                ? { duration: 0 }
-                : { duration: HERO_NAME_SETTLE_DUR_S, ease: HERO_VIDEO_SCALE_EASE }
-            }
-            onAnimationComplete={() => setSliderAnimDone(true)}
-            style={{ transformOrigin: "center center" }}
-          >
-          <motion.span
-            aria-hidden
-            className="pointer-events-none absolute -inset-4 max-sm:-inset-3 sm:-inset-7 -z-[1] rounded-[16px] sm:rounded-[20px] blur-3xl"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: HERO_VIDEO_GLOW_PEAK }}
-            transition={
-              reduceMotion
-                ? { duration: 0 }
-                : { delay: HERO_VIDEO_GLOW_DELAY_S, duration: HERO_VIDEO_GLOW_DUR_S, ease: HERO_VIDEO_SCALE_EASE }
-            }
-            style={{
-              background:
-                "radial-gradient(ellipse 90% 74% at 50% 44%, rgba(255,255,255,0.11) 0%, rgba(255,255,255,0.035) 46%, transparent 72%)",
-            }}
-          />
-          <motion.div
-            className="relative z-[1] mx-auto w-full h-[clamp(200px,min(52vh,calc(100svh-11rem-max(1rem,env(safe-area-inset-top,0px)))),620px)] md:max-lg:h-[clamp(200px,min(44vh,calc(100svh-14rem-max(1rem,env(safe-area-inset-top,0px)))),500px)] lg:h-[clamp(240px,min(54vh,calc(100svh-11.5rem-max(1.5rem,env(safe-area-inset-top,0px)))),680px)] xl:h-[clamp(260px,min(56vh,calc(100svh-12rem-max(2rem,env(safe-area-inset-top,0px)))),760px)] overflow-hidden rounded-[11px] sm:rounded-xl border border-white bg-black"
-            style={{
-              boxShadow:
-                "0 36px 88px rgba(0,0,0,0.6), inset 0 -40px 70px rgba(0,0,0,0.52), 0 0 28px 4px rgba(255,255,255,0.04)",
-            }}
-            onMouseEnter={() => setHeroSlidePaused(true)}
-            onMouseLeave={() => setHeroSlidePaused(false)}
-            onTouchStart={(e) => {
-              heroTouchStartYRef.current = e.touches[0]?.clientY ?? null;
-            }}
-            onTouchEnd={(e) => {
-              const startY = heroTouchStartYRef.current;
-              const endY = e.changedTouches[0]?.clientY;
-              heroTouchStartYRef.current = null;
-              if (startY == null || endY == null) return;
-              const delta = startY - endY;
-              if (Math.abs(delta) < 34) return;
-              if (delta > 0) goToNextHeroSlide();
-              else goToPrevHeroSlide();
-            }}
-          >
-
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={
-                reduceMotion
-                  ? { duration: 0 }
-                  : {
-                      delay: HERO_VIDEO_CONTENT_FADE_DELAY_S,
-                      duration: HERO_VIDEO_CONTENT_FADE_DUR_S,
-                      ease: HERO_VIDEO_SCALE_EASE,
-                    }
-              }
-              className="absolute inset-0"
-            >
-            <AnimatePresence initial={false} custom={heroSlideDirection}>
-              <motion.article
-                key={currentHeroSlide.id}
-                custom={heroSlideDirection}
-                initial={{ y: heroSlideDirection > 0 ? "100%" : "-100%" }}
-                animate={{ y: "0%" }}
-                exit={{ y: heroSlideDirection > 0 ? "-100%" : "100%" }}
-                transition={{ duration: reduceMotion ? 0.12 : 0.64, ease: [0.2, 0.9, 0.25, 1] }}
-                className="absolute inset-0 transform-gpu"
-                style={{ willChange: "transform" }}
-              >
-                <motion.div
-                  initial={{ y: heroSlideDirection > 0 ? "6%" : "-6%" }}
-                  animate={{ y: 0 }}
-                  exit={{ y: heroSlideDirection > 0 ? "-6%" : "6%" }}
-                  transition={{ duration: reduceMotion ? 0.12 : 0.64, ease: [0.2, 0.9, 0.25, 1] }}
-                  className="absolute inset-0 transform-gpu"
-                  style={{ willChange: "transform" }}
-                >
-                  {currentHeroSlide.thumbnailVideo ? (
-                    <video
-                      src={currentHeroSlide.thumbnailVideo}
-                      poster={currentHeroSlide.poster}
-                      autoPlay
-                      muted
-                      loop
-                      playsInline
-                      className={`h-full w-full ${currentFitClass}`}
-                      style={{
-                        objectPosition: currentFocalString,
-                        transform: `scale(${currentZoom})`,
-                        transformOrigin: currentFocalString,
-                      }}
-                    />
-                  ) : (
-                    <img
-                      src={currentHeroSlide.thumbnail}
-                      alt={currentHeroSlide.title}
-                      className={`h-full w-full ${currentFitClass}`}
-                      style={{
-                        objectPosition: currentFocalString,
-                        transform: `scale(${currentZoom})`,
-                        transformOrigin: currentFocalString,
-                      }}
-                      loading="eager"
-                    />
-                  )}
-                </motion.div>
-
-              </motion.article>
-            </AnimatePresence>
-            </motion.div>
-            <span
-              aria-hidden
-              className="pointer-events-none absolute inset-0 z-[2]"
-              style={{ background: HERO_VIDEO_CARD_VIGNETTE }}
-            />
-
-          </motion.div>
-          </motion.div>
-          )}
+          {videoRevealActive &&
+            (heroDesktopViewport ? (
+              <div className="mx-auto w-fit min-w-0 max-w-full" style={heroVideoGlobalDebugStyle}>
+                {heroVideoCard}
+              </div>
+            ) : (
+              heroVideoCard
+            ))}
           </div>
         </div>
         <div
@@ -2283,6 +2405,16 @@ const Hero = ({
                 <HeroNameReveal
                   heroReady={heroReady}
                   reduceMotion={reduceMotion}
+                  heroMainGlobalDebugStyle={heroMainGlobalDebugStyle}
+                  heroPortfolioButtonGlobalDebugStyle={heroPortfolioButtonGlobalDebugStyle}
+                  heroDesktopViewport={heroDesktopViewport}
+                  videoGlobalDebugControls={videoGlobalDebugControls}
+                  mainGlobalDebugControls={mainGlobalDebugControls}
+                  portfolioButtonGlobalDebugControls={portfolioButtonGlobalDebugControls}
+                  onVideoGlobalDebugChange={handleVideoGlobalDebugChange}
+                  onMainGlobalDebugChange={handleMainGlobalDebugChange}
+                  onPortfolioButtonGlobalDebugChange={handlePortfolioButtonGlobalDebugChange}
+                  onGlobalDebugReset={handleGlobalDebugReset}
                   button={
                     <motion.div
                       initial={{ opacity: 0, y: 8 }}
@@ -2421,6 +2553,10 @@ const RainbowMenuSlide = ({
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [pressedNavId, setPressedNavId] = useState<string | null>(null);
   const pressedNavClearTimerRef = useRef<number | null>(null);
+  const mainMenuDebugEnabled = useMainMenuDebugEnabled();
+  const [mainMenuGlobalDebugControls, setMainMenuGlobalDebugControls] =
+    useState<MainMenuGlobalLayoutControl>(() => ({ ...MAIN_MENU_GLOBAL_LAYOUT_DEFAULTS }));
+  const [mainMenuDesktopViewport, setMainMenuDesktopViewport] = useState(matchesHeroDesktopDebugViewport);
   const menuGridDriftDelay = useGridDriftAnimationDelay();
   const mainMenuDividerDelayS = PROFILE_TITLE_DELAY_S;
   const mainMenuDividerDurS = SKILLS_SECTION_HEADER_SLIDE_DUR_S * 1.15;
@@ -2433,6 +2569,34 @@ const RainbowMenuSlide = ({
   const mainMenuIndexDelayBaseS = mainMenuItemsStartDelayS + SKILLS_STAGGER * 2;
   const mainMenuLabelDelayBaseS = mainMenuIndexDelayBaseS + NAV_ITEMS.length * SKILLS_STAGGER;
   const menuTimelineActive = active && introReady;
+
+  const handleMainMenuGlobalDebugChange = useCallback((patch: Partial<MainMenuGlobalLayoutControl>) => {
+    setMainMenuGlobalDebugControls((prev) => ({ ...prev, ...patch }));
+  }, []);
+
+  const handleMainMenuGlobalDebugReset = useCallback(() => {
+    setMainMenuGlobalDebugControls({ ...MAIN_MENU_GLOBAL_LAYOUT_DEFAULTS });
+  }, []);
+
+  const activeMainMenuLayout = mainMenuDebugEnabled
+    ? mainMenuGlobalDebugControls
+    : MAIN_MENU_GLOBAL_LAYOUT_DEFAULTS;
+  const mainMenuGlobalLayoutStyle = mainMenuDesktopViewport
+    ? buildMainMenuGlobalLayoutStyle(activeMainMenuLayout)
+    : undefined;
+  const mainMenuLayoutApplies =
+    mainMenuDesktopViewport &&
+    (activeMainMenuLayout.offsetX !== 0 ||
+      activeMainMenuLayout.offsetY !== 0 ||
+      activeMainMenuLayout.scale !== 1);
+
+  useEffect(() => {
+    const mq = window.matchMedia(`(min-width: ${HERO_DESKTOP_DEBUG_MIN_PX}px)`);
+    const onChange = () => setMainMenuDesktopViewport(mq.matches);
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
 
   useEffect(() => {
     if (!active) {
@@ -2476,7 +2640,19 @@ const RainbowMenuSlide = ({
         className="pointer-events-none absolute inset-0 z-0 grid-drift-bg portfolio-grid-overlay"
         style={{ ...gridOverlayStyle, animationDelay: menuGridDriftDelay }}
       />
+      {mainMenuDebugEnabled &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <MainMenuLayoutDebugPanel
+            controls={mainMenuGlobalDebugControls}
+            defaults={MAIN_MENU_GLOBAL_LAYOUT_DEFAULTS}
+            onChange={handleMainMenuGlobalDebugChange}
+            onReset={handleMainMenuGlobalDebugReset}
+          />,
+          document.body,
+        )}
       <div className="relative z-10 w-full max-w-4xl">
+        <div className="w-full" style={mainMenuLayoutApplies ? mainMenuGlobalLayoutStyle : undefined}>
         <div className="flex items-end justify-between gap-6 mb-10">
           <div>
             <motion.p
@@ -2604,6 +2780,7 @@ const RainbowMenuSlide = ({
               />
             </motion.button>
           ))}
+        </div>
         </div>
       </div>
     </section>
@@ -2940,6 +3117,7 @@ const PhantomProfile = () => {
       `  rightOffsetY: ${profileDesktopLayoutDebugValues.rightOffsetY},`,
       `  leftScale: ${profileDesktopLayoutDebugValues.leftScale.toFixed(2)},`,
       `  leftWidthScale: ${profileDesktopLayoutDebugValues.leftWidthScale.toFixed(2)},`,
+      `  leftHeightScale: ${profileDesktopLayoutDebugValues.leftHeightScale.toFixed(2)},`,
       `  rightScale: ${profileDesktopLayoutDebugValues.rightScale.toFixed(2)},`,
       `  rightWidthScale: ${profileDesktopLayoutDebugValues.rightWidthScale.toFixed(2)},`,
       "};",
@@ -2955,7 +3133,7 @@ const PhantomProfile = () => {
     : PROFILE_DESKTOP_LAYOUT_DEBUG_DEFAULTS;
 
   const profileLeftDebugStyle = profileDesktopLayoutActive
-    ? buildDesktopLayoutSideStyle(activeProfileDesktopLayout, "left", "transform")
+    ? buildDesktopLayoutSideStyle(activeProfileDesktopLayout, "left", "crisp-contained")
     : undefined;
 
   const profileRightDebugStyle = profileDesktopLayoutActive
@@ -3006,6 +3184,7 @@ const PhantomProfile = () => {
             rightLabel="Right"
             values={profileDesktopLayoutDebugValues}
             defaults={PROFILE_DESKTOP_LAYOUT_DEBUG_DEFAULTS}
+            showLeftHeightScale
             onChange={handleProfileDesktopLayoutDebugChange}
             onSave={handleProfileDesktopLayoutDebugSave}
             onReset={handleProfileDesktopLayoutDebugReset}
@@ -3074,8 +3253,8 @@ const PhantomProfile = () => {
           <div
             ref={profileLeftRef}
             className={`${PROFILE_LEFT_COLUMN} profile-tablet-text-column`}
-            style={profileLeftDebugStyle}
           >
+            <div className="w-fit min-w-0 max-w-full" style={profileLeftDebugStyle}>
              <SectionHeader
                title="PROFILE"
                color="text-white"
@@ -3157,6 +3336,7 @@ const PhantomProfile = () => {
                 <li>Full-Time Content, Communications, or Social Media roles.</li>
               </ul>
             </motion.div>
+            </div>
             </div>
           </div>
         </motion.div>
@@ -6441,6 +6621,7 @@ const ConfidantExperience = ({
       `  leftWidthScale: ${experienceDesktopLayoutDebugValues.leftWidthScale.toFixed(2)},`,
       `  rightScale: ${experienceDesktopLayoutDebugValues.rightScale.toFixed(2)},`,
       `  rightWidthScale: ${experienceDesktopLayoutDebugValues.rightWidthScale.toFixed(2)},`,
+      `  rightHeightScale: ${experienceDesktopLayoutDebugValues.rightHeightScale.toFixed(2)},`,
       "};",
     ].join("\n");
     console.info("[Experience Desktop Layout Lock In]\n" + lockInSnippet);
@@ -6458,7 +6639,7 @@ const ConfidantExperience = ({
     : undefined;
 
   const experienceRightDebugStyle = experienceDesktopViewport
-    ? buildDesktopLayoutSideStyle(activeExperienceDesktopLayout, "right", "crisp")
+    ? buildDesktopLayoutSideStyle(activeExperienceDesktopLayout, "right", "crisp-contained")
     : undefined;
 
   useEffect(() => {
@@ -6736,6 +6917,7 @@ const ConfidantExperience = ({
             rightLabel="Right panel"
             values={experienceDesktopLayoutDebugValues}
             defaults={EXPERIENCE_DESKTOP_LAYOUT_DEBUG_DEFAULTS}
+            showRightHeightScale
             onChange={handleExperienceDesktopLayoutDebugChange}
             onSave={handleExperienceDesktopLayoutDebugSave}
             onReset={handleExperienceDesktopLayoutDebugReset}
@@ -6806,7 +6988,8 @@ const ConfidantExperience = ({
           </motion.nav>
           </motion.div>
           {/* Plain shell — Framer entrance on `.tabs-content` overwrites inline transform if applied there. */}
-          <div className="experience-desktop-right-shell" style={experienceRightDebugStyle}>
+          <div className="experience-desktop-right-shell">
+            <div className="w-fit min-w-0 max-w-full" style={experienceRightDebugStyle}>
             <motion.div
               className="tabs-content"
               variants={experienceCardEntrance}
@@ -6815,6 +6998,7 @@ const ConfidantExperience = ({
             >
               {renderExperienceTabPanels()}
             </motion.div>
+            </div>
           </div>
           </motion.div>
           </div>
@@ -7996,9 +8180,26 @@ const RuleOfThirdsOverlay = styled.div`
 /** Fixed viewport rule-of-thirds overlay (above content panels, below top controls z-50). */
 const ViewportRuleOfThirdsOverlay = styled(RuleOfThirdsOverlay)`
   position: fixed;
-  inset: 0;
+  top: max(
+    calc(0.875rem + 0.625rem + 2.75rem),
+    calc(env(safe-area-inset-top, 0px) + 1.125rem + 2.75rem)
+  );
+  right: 0;
+  bottom: 0;
+  left: 0;
   z-index: 45;
   border-radius: 0;
+
+  @media (min-width: 640px) {
+    top: max(
+      calc(0.875rem + 0.625rem + 3.5rem),
+      calc(env(safe-area-inset-top, 0px) + 1.125rem + 3.5rem)
+    );
+  }
+
+  @media (min-width: 1024px) {
+    top: calc(1.5rem + 3.5rem);
+  }
 `;
 
 /** Background marquee (not inside cards): same outline style; runs on its own layer behind panels. */

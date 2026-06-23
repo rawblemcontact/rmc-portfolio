@@ -7,6 +7,8 @@ type ProfileDesktopLayoutDebugPanelProps = {
   rightLabel: string;
   values: ProfileDesktopLayoutDebugValues;
   defaults: ProfileDesktopLayoutDebugValues;
+  showLeftHeightScale?: boolean;
+  showRightHeightScale?: boolean;
   onChange: (patch: Partial<ProfileDesktopLayoutDebugValues>) => void;
   onSave: () => void;
   onReset: () => void;
@@ -18,6 +20,8 @@ export function ProfileDesktopLayoutDebugPanel({
   rightLabel,
   values,
   defaults,
+  showLeftHeightScale = false,
+  showRightHeightScale = false,
   onChange,
   onSave,
   onReset,
@@ -173,6 +177,23 @@ export function ProfileDesktopLayoutDebugPanel({
             />
           </label>
 
+          {showLeftHeightScale ? (
+            <label className="block">
+              <span className="mb-1 block font-mono text-[10px] uppercase tracking-[0.12em] text-mono-2/80">
+                {leftLabel} height ({values.leftHeightScale.toFixed(2)}x)
+              </span>
+              <input
+                type="range"
+                min={0.7}
+                max={1.3}
+                step={0.01}
+                value={values.leftHeightScale}
+                onChange={(event) => onChange({ leftHeightScale: Number(event.target.value) })}
+                className="h-1.5 w-full accent-zinc-200"
+              />
+            </label>
+          ) : null}
+
           <label className="block">
             <span className="mb-1 block font-mono text-[10px] uppercase tracking-[0.12em] text-mono-2/80">
               {rightLabel} X ({values.rightOffsetX}px)
@@ -233,15 +254,32 @@ export function ProfileDesktopLayoutDebugPanel({
             />
           </label>
 
+          {showRightHeightScale ? (
+            <label className="block">
+              <span className="mb-1 block font-mono text-[10px] uppercase tracking-[0.12em] text-mono-2/80">
+                {rightLabel} height ({values.rightHeightScale.toFixed(2)}x)
+              </span>
+              <input
+                type="range"
+                min={0.7}
+                max={1.3}
+                step={0.01}
+                value={values.rightHeightScale}
+                onChange={(event) => onChange({ rightHeightScale: Number(event.target.value) })}
+                className="h-1.5 w-full accent-zinc-200"
+              />
+            </label>
+          ) : null}
+
           <pre className="max-h-24 overflow-auto rounded-sm border border-white/10 bg-black/70 p-2 font-mono text-[10px] leading-relaxed text-mono-2/80">
 {`leftOffsetX: ${values.leftOffsetX}
 leftOffsetY: ${values.leftOffsetY}
 leftScale: ${values.leftScale.toFixed(2)}
-leftWidthScale: ${values.leftWidthScale.toFixed(2)}
+leftWidthScale: ${values.leftWidthScale.toFixed(2)}${showLeftHeightScale ? `\nleftHeightScale: ${values.leftHeightScale.toFixed(2)}` : ""}
 rightOffsetX: ${values.rightOffsetX}
 rightOffsetY: ${values.rightOffsetY}
 rightScale: ${values.rightScale.toFixed(2)}
-rightWidthScale: ${values.rightWidthScale.toFixed(2)}`}
+rightWidthScale: ${values.rightWidthScale.toFixed(2)}${showRightHeightScale ? `\nrightHeightScale: ${values.rightHeightScale.toFixed(2)}` : ""}`}
           </pre>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -262,7 +300,9 @@ rightWidthScale: ${values.rightWidthScale.toFixed(2)}`}
           </div>
 
           <p className="font-mono text-[9px] uppercase tracking-[0.1em] text-mono-2/60">
-            Defaults: Lx {defaults.leftOffsetX}px / Ly {defaults.leftOffsetY}px / Ls {defaults.leftScale.toFixed(2)} / Lw {defaults.leftWidthScale.toFixed(2)} / Rx {defaults.rightOffsetX}px / Ry {defaults.rightOffsetY}px / Rs {defaults.rightScale.toFixed(2)} / Rw {defaults.rightWidthScale.toFixed(2)}
+            Defaults: Lx {defaults.leftOffsetX}px / Ly {defaults.leftOffsetY}px / Ls {defaults.leftScale.toFixed(2)} / Lw {defaults.leftWidthScale.toFixed(2)}
+            {showLeftHeightScale ? ` / Lh ${defaults.leftHeightScale.toFixed(2)}` : ""} / Rx {defaults.rightOffsetX}px / Ry {defaults.rightOffsetY}px / Rs {defaults.rightScale.toFixed(2)} / Rw {defaults.rightWidthScale.toFixed(2)}
+            {showRightHeightScale ? ` / Rh ${defaults.rightHeightScale.toFixed(2)}` : ""}
           </p>
         </div>
       )}
