@@ -30,6 +30,21 @@ import { Button } from "../components/ui/button";
 import { FillIcon } from "../components/FillIcon";
 import { ProfileDesktopLayoutDebugPanel } from "../components/ProfileDesktopLayoutDebugPanel";
 import {
+  ProfileRedLineDebugPanel,
+  PROFILE_RED_LINE_DEBUG_DEFAULTS,
+  buildProfileRedLinePillDebugStyle,
+  buildProfileRedLineSpanDebugStyle,
+  type ProfileRedLineDebugValues,
+} from "../components/ProfileRedLineDebugPanel";
+import {
+  ProjectDetailLayoutDebugPanel,
+  PROJECT_DETAIL_LAYOUT_DEBUG_DEFAULTS,
+  buildProjectDetailLayoutStyle,
+  projectDetailLayoutDefaultsForProject,
+  projectDetailLayoutHasLockedDefaults,
+  type ProjectDetailLayoutDebugValues,
+} from "../components/ProjectDetailLayoutDebugPanel";
+import {
   HeroAccentLayoutDebugPanel,
   HERO_MAIN_GLOBAL_LAYOUT_DEFAULTS,
   HERO_PORTFOLIO_BUTTON_GLOBAL_LAYOUT_DEFAULTS,
@@ -3069,6 +3084,8 @@ const PhantomProfile = () => {
   );
   const [profileDesktopLayoutDebugValues, setProfileDesktopLayoutDebugValues] =
     useState<ProfileDesktopLayoutDebugValues>(() => readSectionDesktopLayoutDebugValues("profile"));
+  const [profileRedLineDebugValues, setProfileRedLineDebugValues] =
+    useState<ProfileRedLineDebugValues>(PROFILE_RED_LINE_DEBUG_DEFAULTS);
   const [overlayRevealed, setOverlayRevealed] = useState(false);
   const [rawblemFloatReady, setRawblemFloatReady] = useState(false);
   const [profileHeaderSlide, setProfileHeaderSlide] = useState(false);
@@ -3140,6 +3157,22 @@ const PhantomProfile = () => {
     ? buildDesktopLayoutSideStyle(activeProfileDesktopLayout, "right", "transform")
     : undefined;
 
+  const profileRedLineSpanDebugStyle = portfolioDebugEnabled
+    ? buildProfileRedLineSpanDebugStyle(profileRedLineDebugValues)
+    : undefined;
+
+  const profileRedLinePillDebugStyle = portfolioDebugEnabled
+    ? buildProfileRedLinePillDebugStyle(profileRedLineDebugValues)
+    : undefined;
+
+  const handleProfileRedLineDebugChange = useCallback((patch: Partial<ProfileRedLineDebugValues>) => {
+    setProfileRedLineDebugValues((prev) => ({ ...prev, ...patch }));
+  }, []);
+
+  const handleProfileRedLineDebugReset = useCallback(() => {
+    setProfileRedLineDebugValues(PROFILE_RED_LINE_DEBUG_DEFAULTS);
+  }, []);
+
   useLayoutEffect(() => {
     if (profileMascotInstant) setRawblemFloatReady(true);
   }, [profileMascotInstant]);
@@ -3188,6 +3221,16 @@ const PhantomProfile = () => {
             onChange={handleProfileDesktopLayoutDebugChange}
             onSave={handleProfileDesktopLayoutDebugSave}
             onReset={handleProfileDesktopLayoutDebugReset}
+          />,
+          document.body,
+        )}
+      {portfolioDebugEnabled &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <ProfileRedLineDebugPanel
+            values={profileRedLineDebugValues}
+            onChange={handleProfileRedLineDebugChange}
+            onReset={handleProfileRedLineDebugReset}
           />,
           document.body,
         )}
@@ -3275,7 +3318,11 @@ const PhantomProfile = () => {
                <motion.span
                  aria-hidden
                 className="absolute bottom-0 left-0.5 right-0 h-[2px] origin-left"
-                style={{ backgroundColor: PROFILE_ACCENT_SOFT }}
+                style={
+                  portfolioDebugEnabled
+                    ? profileRedLineSpanDebugStyle
+                    : { backgroundColor: PROFILE_ACCENT_SOFT }
+                }
                  initial={false}
                  animate={{ scaleX: dividerInView ? 1 : 0 }}
                  transition={{ duration: RED_LINE_DURATION_MS / 1000, delay: RED_LINE_DELAY_MS / 1000, ease: [0.16, 1, 0.3, 1] }}
@@ -3283,6 +3330,7 @@ const PhantomProfile = () => {
             </div>
             <motion.div
               className={`profile-card-surface relative ${PROFILE_METADATA_PILL_GAP} w-full rounded-[0_1rem] px-4 py-4 sm:px-5 sm:py-5`}
+              style={profileRedLinePillDebugStyle}
               initial={{ x: -24, opacity: 0 }}
               animate={{ x: overlayRevealed ? 0 : -24, opacity: overlayRevealed ? 1 : 0 }}
               transition={{ duration: BUTTON_FADE_DURATION_MS / 1000, delay: overlayRevealed ? BUTTONS_DELAY_AFTER_SUMMARY_MS / 1000 : 0, ease: [0.16, 1, 0.3, 1] }}
@@ -3751,6 +3799,74 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     ],
   },
 ];
+
+const PROJECT_DETAIL_LAYOUT_STORAGE_KEY = "portfolio.debug.projectDetailLayout.v1";
+
+function sanitizeProjectDetailLayoutValue(value: unknown, fallback: number) {
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
+
+function normalizeProjectDetailLayoutDebugValues(
+  values: Partial<ProjectDetailLayoutDebugValues> | undefined,
+): ProjectDetailLayoutDebugValues {
+  return {
+    offsetX: sanitizeProjectDetailLayoutValue(
+      values?.offsetX,
+      PROJECT_DETAIL_LAYOUT_DEBUG_DEFAULTS.offsetX,
+    ),
+    offsetY: sanitizeProjectDetailLayoutValue(
+      values?.offsetY,
+      PROJECT_DETAIL_LAYOUT_DEBUG_DEFAULTS.offsetY,
+    ),
+    scale: sanitizeProjectDetailLayoutValue(
+      values?.scale,
+      PROJECT_DETAIL_LAYOUT_DEBUG_DEFAULTS.scale,
+    ),
+    widthScale: sanitizeProjectDetailLayoutValue(
+      values?.widthScale,
+      PROJECT_DETAIL_LAYOUT_DEBUG_DEFAULTS.widthScale,
+    ),
+    heightScale: sanitizeProjectDetailLayoutValue(
+      values?.heightScale,
+      PROJECT_DETAIL_LAYOUT_DEBUG_DEFAULTS.heightScale,
+    ),
+  };
+}
+
+function readProjectDetailLayoutDebugValuesByProject(): Record<string, ProjectDetailLayoutDebugValues> {
+  let stored: Record<string, ProjectDetailLayoutDebugValues> = {};
+  if (typeof window !== "undefined") {
+    try {
+      const raw = window.localStorage.getItem(PROJECT_DETAIL_LAYOUT_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Record<string, Partial<ProjectDetailLayoutDebugValues>>;
+        stored = Object.fromEntries(
+          Object.entries(parsed).map(([projectId, values]) => [
+            projectId,
+            normalizeProjectDetailLayoutDebugValues(values),
+          ]),
+        );
+      }
+    } catch {
+      stored = {};
+    }
+  }
+  // Locked projects: code constants are source of truth (ignore stale localStorage).
+  for (const card of PROJECT_CARDS) {
+    if (projectDetailLayoutHasLockedDefaults(card.id)) {
+      stored[card.id] = projectDetailLayoutDefaultsForProject(card.id);
+    }
+  }
+  return stored;
+}
+
+function saveProjectDetailLayoutDebugValuesByProject(
+  valuesByProject: Record<string, ProjectDetailLayoutDebugValues>,
+) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(PROJECT_DETAIL_LAYOUT_STORAGE_KEY, JSON.stringify(valuesByProject));
+  console.info("[Project Detail Layout Saved]", valuesByProject);
+}
 
 const cardEase = [0.25, 0.46, 0.45, 0.94] as const;
 
@@ -5489,6 +5605,8 @@ const PalaceProjects = ({
   );
   const [projectsDesktopLayoutDebugValues, setProjectsDesktopLayoutDebugValues] =
     useState<ProfileDesktopLayoutDebugValues>(() => readSectionDesktopLayoutDebugValues("projects"));
+  const [projectDetailLayoutDebugValuesByProject, setProjectDetailLayoutDebugValuesByProject] =
+    useState<Record<string, ProjectDetailLayoutDebugValues>>(readProjectDetailLayoutDebugValuesByProject);
   const [projectsEntered, setProjectsEntered] = useState(reduceMotion || entranceArmed);
   /** Keep header y at 0 after first enter — disarming entrance on panel exit must not replay y slide. */
   const [projectsHeaderYLocked, setProjectsHeaderYLocked] = useState(reduceMotion || entranceArmed);
@@ -5567,6 +5685,61 @@ const PalaceProjects = ({
     ? buildDesktopLayoutSideStyle(activeProjectsDesktopLayout, "right", "crisp")
     : undefined;
 
+  const activeProjectDetailLayoutDefaults = activeCard
+    ? projectDetailLayoutDefaultsForProject(activeCard.id)
+    : PROJECT_DETAIL_LAYOUT_DEBUG_DEFAULTS;
+
+  const activeProjectDetailLayout = activeCard
+    ? projectsDesktopDebugActive
+      ? (projectDetailLayoutDebugValuesByProject[activeCard.id] ?? activeProjectDetailLayoutDefaults)
+      : activeProjectDetailLayoutDefaults
+    : PROJECT_DETAIL_LAYOUT_DEBUG_DEFAULTS;
+
+  const handleProjectDetailLayoutDebugChange = useCallback(
+    (patch: Partial<ProjectDetailLayoutDebugValues>) => {
+      if (!activeCard) return;
+      const defaults = projectDetailLayoutDefaultsForProject(activeCard.id);
+      setProjectDetailLayoutDebugValuesByProject((prev) => ({
+        ...prev,
+        [activeCard.id]: {
+          ...(prev[activeCard.id] ?? defaults),
+          ...patch,
+        },
+      }));
+    },
+    [activeCard],
+  );
+
+  const handleProjectDetailLayoutDebugReset = useCallback(() => {
+    if (!activeCard) return;
+    setProjectDetailLayoutDebugValuesByProject((prev) => ({
+      ...prev,
+      [activeCard.id]: projectDetailLayoutDefaultsForProject(activeCard.id),
+    }));
+  }, [activeCard]);
+
+  const handleProjectDetailLayoutDebugSave = useCallback(() => {
+    if (!activeCard) return;
+    const nextValuesByProject = {
+      ...projectDetailLayoutDebugValuesByProject,
+      [activeCard.id]: activeProjectDetailLayout,
+    };
+    saveProjectDetailLayoutDebugValuesByProject(nextValuesByProject);
+    const lockInSnippet = [
+      `${activeCard.id}: {`,
+      `  offsetX: ${activeProjectDetailLayout.offsetX},`,
+      `  offsetY: ${activeProjectDetailLayout.offsetY},`,
+      `  scale: ${activeProjectDetailLayout.scale.toFixed(2)},`,
+      `  widthScale: ${activeProjectDetailLayout.widthScale.toFixed(2)},`,
+      `  heightScale: ${activeProjectDetailLayout.heightScale.toFixed(2)},`,
+      "},",
+    ].join("\n");
+    console.info("[Project Detail Layout Lock In]\n" + lockInSnippet);
+    navigator.clipboard?.writeText(lockInSnippet).catch(() => {
+      // Clipboard writes can fail in some browser contexts; localStorage save still succeeds.
+    });
+  }, [activeCard, activeProjectDetailLayout, projectDetailLayoutDebugValuesByProject]);
+
   useEffect(() => {
     if (reduceMotion) {
       setProjectsEntered(true);
@@ -5628,6 +5801,14 @@ const PalaceProjects = ({
     projectDetailInFlow && activeCard?.id === "project-video-editing";
   const projectDetailAllowsOverflowX =
     videoEditingDetailNoMainCard || slaywireDetailInFlow;
+
+  const projectDetailLayoutStyle =
+    projectsDesktopViewport &&
+    projectDetailInFlow &&
+    activeCard &&
+    (projectsDesktopDebugActive || projectDetailLayoutHasLockedDefaults(activeCard.id))
+      ? buildProjectDetailLayoutStyle(activeProjectDetailLayout)
+      : undefined;
 
   /** Tablet: grid overlay tracks section + panel scroller (iPad landscape >1024px included). */
   useLayoutEffect(() => {
@@ -5879,6 +6060,21 @@ const PalaceProjects = ({
           />,
           document.body,
         )}
+      {projectsDesktopDebugActive &&
+        projectDetailInFlow &&
+        activeCard &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <ProjectDetailLayoutDebugPanel
+            projectLabel={showcaseProjectDisplayTitle(activeCard)}
+            values={activeProjectDetailLayout}
+            defaults={activeProjectDetailLayoutDefaults}
+            onChange={handleProjectDetailLayoutDebugChange}
+            onSave={handleProjectDetailLayoutDebugSave}
+            onReset={handleProjectDetailLayoutDebugReset}
+          />,
+          document.body,
+        )}
       <div
         className={`${PROFILE_SECTION_CONTAINER} relative z-10 flex min-w-0 w-full flex-col ${
           projectDetailInFlow ? "min-h-min shrink-0" : "max-2xl:min-h-min max-2xl:flex-none 2xl:min-h-0 2xl:flex-1"
@@ -6030,6 +6226,7 @@ const PalaceProjects = ({
                 ? " overflow-y-auto overscroll-y-contain no-scrollbar"
                 : ""
             }`}
+            style={projectDetailLayoutStyle}
           >
               {!illustrationsDetailNoHero && !videoEditingDetailNoMainCard ? (
                 <div

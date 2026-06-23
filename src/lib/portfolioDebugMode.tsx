@@ -34,7 +34,7 @@ export const PROFILE_DESKTOP_LAYOUT_DEBUG_DEFAULTS: ProfileDesktopLayoutDebugVal
   leftOffsetY: 60,
   rightOffsetX: -117,
   rightOffsetY: 66,
-  leftScale: 0.89,
+  leftScale: 0.9,
   leftWidthScale: 0.8,
   leftHeightScale: 1,
   rightScale: 1.03,
