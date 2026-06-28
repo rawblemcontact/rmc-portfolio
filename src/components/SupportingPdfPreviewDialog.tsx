@@ -134,7 +134,7 @@ export function SupportingPdfPreviewDialog({
         aria-hidden={showGridLoader}
       >
         <motion.div
-          className={`relative flex max-h-[min(90dvh,920px)] w-full max-w-[min(96vw,72rem)] flex-col overflow-hidden rounded-xl border border-white/[0.12] bg-black shadow-[0_24px_80px_rgba(0,0,0,0.72)] ring-1 ring-white/[0.06] ${
+          className={`relative flex max-h-[min(90dvh,920px)] w-full max-w-[min(96vw,72rem)] flex-col overflow-hidden rounded-xl border border-white/[0.12] bg-black ring-1 ring-white/[0.06] ${
             showGridLoader ? "pointer-events-none invisible" : "pointer-events-auto"
           }`}
           onClick={(e) => e.stopPropagation()}
@@ -160,7 +160,7 @@ export function SupportingPdfPreviewDialog({
                 type="button"
                 aria-label="Close PDF preview"
                 onClick={onClose}
-                className="pdf-viewer-chrome-btn"
+                className="pdf-viewer-chrome-btn pdf-viewer-control-btn"
               >
                 <X aria-hidden />
               </button>
@@ -183,17 +183,9 @@ export function SupportingPdfPreviewDialog({
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label="Open PDF in new tab"
-                      className="pdf-viewer-chrome-btn"
+                      className="pdf-viewer-chrome-btn pdf-viewer-control-btn"
                     >
                       <ExternalLink aria-hidden />
-                    </a>
-                    <a
-                      href={pdfSrc}
-                      download
-                      aria-label="Download PDF"
-                      className="pdf-viewer-chrome-btn"
-                    >
-                      <Download aria-hidden />
                     </a>
                   </>
                 ) : (
@@ -210,6 +202,16 @@ export function SupportingPdfPreviewDialog({
                 suppressLoadingOverlay
               />
             </div>
+            {pdfSrc ? (
+              <a
+                href={pdfSrc}
+                download
+                aria-label="Download PDF"
+                className="pdf-viewer-chrome-btn pdf-viewer-control-btn pdf-viewer-download-btn absolute bottom-5 right-5 z-20"
+              >
+                <Download aria-hidden />
+              </a>
+            ) : null}
         </motion.div>
       </motion.div>
     </motion.div>,

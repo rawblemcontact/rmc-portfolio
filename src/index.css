@@ -849,8 +849,8 @@
     --fw-rule-body-top: var(--fw-card-stroke);
     --fw-tab-idle: rgba(255, 255, 255, 0.15);
     --fw-tab-idle-hover: rgba(255, 255, 255, 0.25);
-    --fw-tab-active-bg: color-mix(in srgb, var(--portfolio-section-card) 18%, transparent);
-    --fw-tab-idle-bg: color-mix(in srgb, var(--portfolio-section-card) 10%, transparent);
+    --fw-tab-active-bg: var(--portfolio-glass-fill);
+    --fw-tab-idle-bg: var(--portfolio-glass-fill);
     --fw-tab-radius: 9px;
   }
 
@@ -1014,12 +1014,12 @@
 
   /* Same height grow as active on click; do not set margin-bottom here (-mb-px is active-only). */
   .featured-writing-tab-idle-edge:hover {
-    --fw-tab-bg-current: color-mix(in srgb, var(--portfolio-section-card) 12%, transparent);
+    --fw-tab-bg-current: var(--portfolio-glass-fill);
     --fw-tab-stroke-current: var(--fw-tab-idle-hover);
     height: calc(2.75rem * 1.05);
     min-height: calc(2.75rem * 1.05);
     z-index: 3;
-    background: color-mix(in srgb, var(--portfolio-section-card) 12%, transparent);
+    background: var(--portfolio-glass-fill);
     -webkit-backdrop-filter: var(--portfolio-glass-blur);
     backdrop-filter: var(--portfolio-glass-blur);
   }
@@ -4967,7 +4967,7 @@
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 9999px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 0;
   background-color: #000;
   color: #fff;
   transition:
@@ -4979,24 +4979,35 @@
 
 .pdf-viewer-chrome-btn:hover,
 .pdf-viewer-chrome-btn:active {
-  border-color: color-mix(in srgb, var(--palette-yellow-projects) 48%, rgb(186, 186, 186));
   background-color: #fff;
   color: #000;
 }
 
 .pdf-viewer-chrome-btn:focus-visible {
   outline: none;
-  border-color: color-mix(in srgb, var(--palette-yellow-projects) 48%, rgb(186, 186, 186));
   background-color: #fff;
   color: #000;
-  box-shadow: 0 0 0 2px
-    color-mix(in srgb, var(--palette-yellow-projects) 48%, rgb(186, 186, 186));
+  box-shadow: none;
 }
 
 .pdf-viewer-chrome-btn svg {
   width: 1rem;
   height: 1rem;
   flex-shrink: 0;
+}
+
+.pdf-viewer-control-btn {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.pdf-viewer-download-btn {
+  background-color: transparent;
+}
+
+.pdf-viewer-download-btn:hover,
+.pdf-viewer-download-btn:active {
+  background-color: #fff;
 }
 
 /* Visual design lightbox controls: slightly smaller so chrome clears artwork. */
@@ -5067,6 +5078,24 @@
   text-transform: uppercase;
   white-space: nowrap;
   color: color-mix(in srgb, rgb(186 186 186) 40.5%, transparent);
+}
+
+.pdf-loading-indicator__ellipsis {
+  display: inline-block;
+  width: 3ch;
+  overflow: hidden;
+  vertical-align: baseline;
+  white-space: nowrap;
+  animation: pdf-loading-ellipsis 1.2s steps(4, end) infinite;
+}
+
+@keyframes pdf-loading-ellipsis {
+  0% {
+    width: 0;
+  }
+  100% {
+    width: 3ch;
+  }
 }
 @media (min-width: 640px) {
   .pdf-loading-indicator__loader {
@@ -5640,6 +5669,23 @@
 
   #projects .projects-showcase-featured-block {
     margin-top: max(0px, calc(var(--slide-gap, 0.875rem) - var(--showcase-carousel-height-bump, 1.25rem))) !important;
+  }
+
+  #projects.projects-visual-design-detail-open .visual-design-detail-header > .font-heading {
+    font-size: 1rem !important;
+    line-height: 1.375 !important;
+  }
+
+  #projects.projects-visual-design-detail-open .visual-design-detail-header > h3.font-display {
+    font-size: 1.875rem !important;
+    line-height: 1.1 !important;
+    transform: translateY(1.5px);
+  }
+
+  #projects.projects-visual-design-detail-open .visual-design-detail-header > .font-body {
+    font-size: 1rem !important;
+    line-height: 1.375 !important;
+    transform: translateY(1.5px);
   }
 
   #projects .featured-writing-folder > div:first-child {

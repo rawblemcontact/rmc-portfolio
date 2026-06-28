@@ -35,7 +35,7 @@ export const PROJECT_VIDEO_STYLE_DETAIL_LAYOUT_DEFAULTS: ProjectDetailLayoutDebu
 /** Locked desktop VISUAL DESIGN layout (Jun 2026). */
 export const PROJECT_VISUAL_DESIGN_DETAIL_LAYOUT_DEFAULTS: ProjectDetailLayoutDebugValues = {
   offsetX: 0,
-  offsetY: 118,
+  offsetY: 126,
   scale: 0.86,
   widthScale: 1,
   heightScale: 0.98,

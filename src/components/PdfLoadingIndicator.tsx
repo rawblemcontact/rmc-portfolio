@@ -42,13 +42,25 @@ export function PdfLoadingIndicator({
       <motion.p
         className="pdf-loading-indicator__label font-display"
         initial={{ opacity: reduceMotion ? 1 : 0 }}
-        animate={{ opacity: exiting ? 0 : 1 }}
-        transition={fadeTransition}
+        animate={
+          exiting
+            ? { opacity: 0 }
+            : reduceMotion
+              ? { opacity: 1 }
+              : { opacity: [0.42, 0.9, 0.42] }
+        }
+        transition={
+          exiting
+            ? fadeTransition
+            : reduceMotion
+              ? { duration: 0 }
+              : { duration: 1.8, ease: "easeInOut", repeat: Infinity }
+        }
         onAnimationComplete={() => {
           if (exiting) onExitComplete?.();
         }}
       >
-        PDF LOADING...
+        FILE LOADING...
       </motion.p>
     </motion.div>
   );

@@ -873,17 +873,105 @@ function TextFade({
   );
 }
 
+const TOP_NAV_DESKTOP_MIN_PX = 1024;
+const TOP_NAV_TABLET_MIN_PX = 768;
+const TOP_NAV_TABLET_MAX_PX = 1366;
+const TOP_NAV_TABLET_PORTRAIT_MQ = `(min-width: ${TOP_NAV_TABLET_MIN_PX}px) and (max-width: 1023.98px)`;
+const TOP_NAV_TABLET_LANDSCAPE_MQ = `(min-width: ${TOP_NAV_TABLET_MIN_PX}px) and (max-width: ${TOP_NAV_TABLET_MAX_PX}px) and (orientation: landscape) and (any-pointer: coarse)`;
+const TOP_NAV_BACK_BUTTON_OFFSET_Y_MOBILE = -1.2;
+const TOP_NAV_BACK_BUTTON_OFFSET_Y_TABLET = 3.8;
+const TOP_NAV_BACK_BUTTON_OFFSET_Y_DESKTOP = 7.1;
+
+const matchesTopNavTabletViewport = () => {
+  if (typeof window === "undefined") return false;
+  return (
+    window.matchMedia(TOP_NAV_TABLET_PORTRAIT_MQ).matches ||
+    window.matchMedia(TOP_NAV_TABLET_LANDSCAPE_MQ).matches
+  );
+};
+
 const BackToMenuButton = ({
   show,
   onBack,
   ariaLabel = "Back to menu",
   fadeOut = false,
+  buttonDebug,
+  debugActive = false,
 }: {
   show: boolean;
   onBack: () => void;
   ariaLabel?: string;
   fadeOut?: boolean;
-}) => (
+  buttonDebug: NavIconButtonDebugValues;
+  debugActive?: boolean;
+}) => {
+  const [isTabletViewport, setIsTabletViewport] = useState(matchesTopNavTabletViewport);
+  const [isDesktopViewport, setIsDesktopViewport] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia(`(min-width: ${TOP_NAV_DESKTOP_MIN_PX}px)`).matches &&
+      !matchesTopNavTabletViewport(),
+  );
+
+  useEffect(() => {
+    const desktopMq = window.matchMedia(`(min-width: ${TOP_NAV_DESKTOP_MIN_PX}px)`);
+    const portraitMq = window.matchMedia(TOP_NAV_TABLET_PORTRAIT_MQ);
+    const landscapeMq = window.matchMedia(TOP_NAV_TABLET_LANDSCAPE_MQ);
+    const sync = () => {
+      const tablet = portraitMq.matches || landscapeMq.matches;
+      setIsTabletViewport(tablet);
+      setIsDesktopViewport(desktopMq.matches && !tablet);
+    };
+    sync();
+    if (typeof desktopMq.addEventListener === "function") {
+      desktopMq.addEventListener("change", sync);
+      portraitMq.addEventListener("change", sync);
+      landscapeMq.addEventListener("change", sync);
+      return () => {
+        desktopMq.removeEventListener("change", sync);
+        portraitMq.removeEventListener("change", sync);
+        landscapeMq.removeEventListener("change", sync);
+      };
+    }
+    desktopMq.addListener(sync);
+    portraitMq.addListener(sync);
+    landscapeMq.addListener(sync);
+    return () => {
+      desktopMq.removeListener(sync);
+      portraitMq.removeListener(sync);
+      landscapeMq.removeListener(sync);
+    };
+  }, []);
+
+  const baseOffsetY = isDesktopViewport
+    ? TOP_NAV_BACK_BUTTON_OFFSET_Y_DESKTOP
+    : isTabletViewport
+      ? TOP_NAV_BACK_BUTTON_OFFSET_Y_TABLET
+      : TOP_NAV_BACK_BUTTON_OFFSET_Y_MOBILE;
+  const offsetY = baseOffsetY + (debugActive ? buttonDebug.offsetY : 0);
+
+  const useTabletDesktopSizing = isDesktopViewport || isTabletViewport;
+  const iconSizePx = debugActive
+    ? (buttonDebug.iconSize ?? 22)
+    : isDesktopViewport
+      ? 25
+      : isTabletViewport
+        ? 22
+        : 21;
+
+  const buttonStyle = useTabletDesktopSizing
+    ? {
+        width: `${buttonDebug.size}px`,
+        height: `${buttonDebug.size}px`,
+        minWidth: `${buttonDebug.size}px`,
+        minHeight: `${buttonDebug.size}px`,
+        transform: `translate(${buttonDebug.offsetX}px, ${offsetY}px)`,
+      }
+    : {
+        transform: `translate(0px, ${offsetY}px)`,
+      };
+
+  return (
   <AnimatePresence>
     {show && (
       <motion.div
@@ -900,15 +988,22 @@ const BackToMenuButton = ({
             onClick={onBack}
             size="icon"
             aria-label={ariaLabel}
-            className={`${TOP_NAV_ICON_BUTTON_CLASS} [&_svg]:!size-[18px] sm:[&_svg]:!size-[22px]`}
+            className={TOP_NAV_ICON_BUTTON_CLASS}
+            style={buttonStyle}
           >
-            <ArrowLeft size={22} strokeWidth={2} aria-hidden />
+            <ArrowLeft
+              size={iconSizePx}
+              strokeWidth={2}
+              aria-hidden
+              style={{ width: iconSizePx, height: iconSizePx, minWidth: iconSizePx, minHeight: iconSizePx }}
+            />
           </Button>
         </motion.div>
       </motion.div>
     )}
   </AnimatePresence>
-);
+  );
+};
 
 const SectionHeader = ({
   title,
@@ -1085,10 +1180,32 @@ function measureHeroPhase1RevealOffsetPx(motionEl: HTMLElement, lockupEl: HTMLEl
   if (transform && transform !== "none") {
     translateY = new DOMMatrixReadOnly(transform).m42;
   }
-  const lockupRect = lockupEl.getBoundingClientRect();
-  const settleCenterY = lockupRect.top + lockupRect.height / 2 - translateY;
+  const centerParts = Array.from(lockupEl.querySelectorAll<HTMLElement>("[data-hero-center-part='true']"));
+  const targetRect =
+    centerParts.length > 0
+      ? centerParts
+          .map((node) => node.getBoundingClientRect())
+          .reduce(
+            (acc, rect) => ({
+              top: Math.min(acc.top, rect.top),
+              bottom: Math.max(acc.bottom, rect.bottom),
+              left: Math.min(acc.left, rect.left),
+              right: Math.max(acc.right, rect.right),
+            }),
+            {
+              top: Number.POSITIVE_INFINITY,
+              bottom: Number.NEGATIVE_INFINITY,
+              left: Number.POSITIVE_INFINITY,
+              right: Number.NEGATIVE_INFINITY,
+            },
+          )
+      : lockupEl.getBoundingClientRect();
+  const settleCenterY = (targetRect.top + targetRect.bottom) / 2 - translateY;
+  const isMobileViewport = window.innerWidth < 768;
   const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
-  const viewportCenterY = (window.visualViewport?.offsetTop ?? 0) + viewportHeight / 2;
+  const viewportCenterY = isMobileViewport
+    ? window.innerHeight / 2
+    : (window.visualViewport?.offsetTop ?? 0) + viewportHeight / 2;
   return viewportCenterY - settleCenterY;
 }
 /** Mobile Phase 1 — layout centers the lockup in 100svh; motion value stays at 0. */
@@ -1101,6 +1218,15 @@ function heroMobileSettleOffsetPx(): number {
     0,
     window.innerHeight * 0.2 - rootFontSize * 1.25 + rootFontSize * HERO_MOBILE_SETTLE_DOWN_NUDGE_REM,
   );
+}
+function heroDesktopSettleOffsetPx(): number {
+  if (typeof window === "undefined") return 0;
+  const rootFontSize = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+  const width = window.innerWidth;
+  if (width < 768) return 0;
+  if (width < 1024) return 0.75 * rootFontSize;
+  if (width <= 1366) return -1.5 * rootFontSize;
+  return -0.75 * rootFontSize;
 }
 const HERO_NAME_SETTLE_DELAY_S = 0.2;
 const HERO_NAME_SETTLE_DUR_S = 0.95;
@@ -1680,9 +1806,12 @@ const HeroNameReveal = ({
         ))}
         <div className={`max-md:flex max-md:flex-col ${HERO_NAME_MOBILE_SHELL_CLASS}`}>
         {/* Grid: col-1 = name box + tagline, col-2 = button pinned far-right at MCLAUGHLIN baseline */}
-        <div className="relative z-[1] grid w-full grid-cols-[auto_1fr] items-end max-md:flex max-md:w-fit max-md:max-w-full max-md:flex-col max-md:items-center">
+        <div className="relative z-[1] grid w-full grid-cols-[auto_1fr] items-end max-md:flex max-md:w-full max-md:max-w-full max-md:flex-col max-md:items-center">
           {/* Name rectangle — col 1, row 1 */}
-          <div className={`col-start-1 row-start-1 w-fit min-w-0 rounded-[11px] border border-transparent bg-transparent px-3 pt-3 pb-[0.234375rem] sm:rounded-xl sm:px-4 sm:pt-3.5 sm:pb-[0.28125rem] max-md:px-0 max-md:pt-0 ${HERO_NAME_MOBILE_NAME_BOX_CLASS}`}>
+          <div
+            data-hero-center-part="true"
+            className={`col-start-1 row-start-1 w-fit min-w-0 rounded-[11px] border border-transparent bg-transparent px-3 pt-3 pb-[0.234375rem] sm:rounded-xl sm:px-4 sm:pt-3.5 sm:pb-[0.28125rem] max-md:px-0 max-md:pt-0 ${HERO_NAME_MOBILE_NAME_BOX_CLASS}`}
+          >
             <h1 className="relative m-0 w-full max-w-full min-w-0 font-display [font-kerning:none]">
               {/* ROBBIE row — name left, accent strip fills remaining horizontal space (desktop parity). */}
               <div className="flex w-full min-w-0 items-end gap-2 sm:gap-3 max-md:gap-1.5">
@@ -1776,6 +1905,7 @@ const HeroNameReveal = ({
           {/* Tagline rectangle — col 1, row 2, same width as name box */}
           <p
             ref={taglineRef}
+            data-hero-center-part="true"
             className={`col-start-1 row-start-2 m-0 mt-0 w-full translate-x-px rounded-[11px] border border-transparent bg-transparent pl-[1.16rem] pr-3 py-[0.4rem] max-[639px]:box-border max-[400px]:text-[0.74rem] font-display text-[clamp(0.8rem,2.25vw,0.92rem)] font-medium uppercase leading-snug tracking-[0.085em] text-white sm:mt-0 sm:rounded-xl sm:pl-[1.42rem] sm:pr-4 sm:py-[0.45rem] sm:text-[clamp(0.8rem,2.25vw,0.92rem)] ${HERO_NAME_MOBILE_TAGLINE_CLASS}`}
           >
             <motion.span
@@ -2223,7 +2353,7 @@ const Hero = ({
     sliderPhaseActive,
   ]);
 
-  /** Desktop/tablet — same imperative settle tween; phase-1 offset applied before line metrics run. */
+  /** Desktop/tablet — same imperative settle tween; starts centered, then settles to legacy breakpoint offsets. */
   useEffect(() => {
     if (isMobileHeroLayout || !heroPhase1LayoutReady) return;
 
@@ -2233,12 +2363,12 @@ const Hero = ({
     }
 
     if (reduceMotion) {
-      desktopNameY.set(0);
+      desktopNameY.set(heroDesktopSettleOffsetPx());
       return;
     }
 
     desktopNameY.set(heroPhase1RevealY);
-    const controls = animate(desktopNameY, 0, {
+    const controls = animate(desktopNameY, heroDesktopSettleOffsetPx(), {
       duration: HERO_NAME_SETTLE_DUR_S,
       ease: HERO_SETTLE_EASE,
       delay: HERO_NAME_SETTLE_DELAY_S,
@@ -2483,7 +2613,7 @@ const Hero = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.12, ease: [0.22, 1, 0.36, 1] }}
-        className={`relative z-[5] mx-auto grid h-full w-full max-w-[1680px] grid-rows-[minmax(0,1.55fr)_minmax(0,1fr)] px-4 pt-[max(1rem,env(safe-area-inset-top,0px))] pb-4 max-lg:grid-rows-[minmax(0,1.5fr)_minmax(0,1fr)] md:max-lg:grid-rows-[minmax(0,1.38fr)_minmax(0,1fr)] md:px-6 md:pt-[max(1.5rem,env(safe-area-inset-top,0px))] md:pb-5 md:max-lg:px-5 md:max-lg:pt-3 md:max-lg:pb-[max(1.25rem,env(safe-area-inset-bottom,0px))] lg:grid-rows-[minmax(0,2fr)_minmax(0,1fr)] lg:px-8 lg:pt-[max(2rem,env(safe-area-inset-top,0px))] lg:pb-6${
+        className={`relative z-[5] mx-auto grid h-full w-full max-w-[1680px] grid-rows-[minmax(0,1.55fr)_minmax(0,1fr)] px-4 pt-[max(1rem,env(safe-area-inset-top,0px))] pb-4 max-md:pt-[max(1rem,env(safe-area-inset-top,0px))] max-md:pb-[max(1rem,env(safe-area-inset-bottom,0px))] max-lg:grid-rows-[minmax(0,1.5fr)_minmax(0,1fr)] md:max-lg:grid-rows-[minmax(0,1.38fr)_minmax(0,1fr)] md:px-6 md:pt-[max(1.5rem,env(safe-area-inset-top,0px))] md:pb-5 md:max-lg:px-5 md:max-lg:pt-3 md:max-lg:pb-[max(1.25rem,env(safe-area-inset-bottom,0px))] lg:grid-rows-[minmax(0,2fr)_minmax(0,1fr)] lg:px-8 lg:pt-[max(2rem,env(safe-area-inset-top,0px))] lg:pb-6 [@media(min-width:744px)_and_(max-width:1366px)_and_(orientation:landscape)_and_(any-pointer:coarse)]:pt-[max(1.25rem,env(safe-area-inset-top,0px))] [@media(min-width:744px)_and_(max-width:1366px)_and_(orientation:landscape)_and_(any-pointer:coarse)]:pb-[max(1.25rem,env(safe-area-inset-bottom,0px))]${
           isMobileHeroLayout && !sliderPhaseActive ? " max-md:grid-rows-1" : ""
         }`}
       >
@@ -2513,9 +2643,9 @@ const Hero = ({
             style={{ y: isMobileHeroLayout ? mobileNameY : desktopNameY }}
             initial={false}
           >
-            <div
+              <div
               ref={heroInViewRef}
-              className="mx-auto flex w-full min-w-0 max-w-[min(100%,58rem)] flex-col px-1 max-md:translate-y-0 max-md:px-3 max-md:pt-2 sm:px-2 md:-translate-y-3 md:max-lg:translate-y-3 lg:[@media(min-width:744px)_and_(max-width:1366px)]:-translate-y-6"
+              className="mx-auto flex w-full min-w-0 max-w-[min(100%,58rem)] flex-col px-1 max-[639px]:px-0 max-[400px]:px-3 max-md:pt-2 sm:px-2"
             >
               <div className="w-full min-w-0 text-left max-md:flex max-md:justify-center">
                 <HeroNameReveal
@@ -2907,10 +3037,12 @@ const SideNavOverlay = ({
   open,
   onClose,
   onNavigate,
+  exitButtonDebug,
 }: {
   open: boolean;
   onClose: () => void;
   onNavigate: (id: string) => void;
+  exitButtonDebug: NavIconButtonDebugValues;
 }) => {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const openRef = useRef(open);
@@ -2981,7 +3113,7 @@ const SideNavOverlay = ({
             exit={{ x: "100%" }}
             transition={SPRING.panel}
           >
-            <div className="flex items-center justify-between mb-6">
+            <div className="relative mb-6 flex items-center justify-between pr-16 sm:pr-[4.5rem]">
               <div className="flex flex-col gap-y-1.5">
                 <p className="font-heading text-[9px] sm:text-[10px] tracking-eyebrow-tight leading-snug uppercase -ml-[0.12em]" style={{ color: NAV_SUBHEAD_GRAY }}>
                   NAVIGATION
@@ -2990,13 +3122,24 @@ const SideNavOverlay = ({
                   MENU
                 </p>
               </div>
-              <motion.div whileTap={TAP} transition={SPRING.ui}>
+              <motion.div
+                whileTap={TAP}
+                transition={SPRING.ui}
+                className="absolute right-0 top-0"
+              >
                 <Button
                   type="button"
                   variant="ghost"
                   onClick={onClose}
                   aria-label="Close menu"
-                  className={`${TOP_NAV_ICON_BUTTON_CLASS} [&_svg]:!size-[18px] sm:[&_svg]:!size-5`}
+                  className={`${TOP_NAV_ICON_BUTTON_CLASS} relative before:absolute before:-inset-1 before:content-[''] [&_svg]:!size-[18px] sm:[&_svg]:!size-5`}
+                  style={{
+                    width: `${exitButtonDebug.size}px`,
+                    height: `${exitButtonDebug.size}px`,
+                    minWidth: `${exitButtonDebug.size}px`,
+                    minHeight: `${exitButtonDebug.size}px`,
+                    transform: `translate(${exitButtonDebug.offsetX}px, ${exitButtonDebug.offsetY + 21}px)`,
+                  }}
                 >
                   <X size={22} strokeWidth={1} aria-hidden />
                 </Button>
@@ -3123,6 +3266,207 @@ const SideNavOverlay = ({
     </AnimatePresence>
   );
 };
+
+type NavIconButtonDebugValues = {
+  offsetX: number;
+  offsetY: number;
+  size: number;
+  iconSize?: number;
+};
+
+const SIDE_NAV_EXIT_BUTTON_DEBUG_DEFAULTS: NavIconButtonDebugValues = {
+  offsetX: 4,
+  offsetY: -2,
+  size: 20,
+};
+
+const TOP_NAV_BACK_BUTTON_DEBUG_DEFAULTS: NavIconButtonDebugValues = {
+  offsetX: 0,
+  offsetY: 0,
+  size: 44,
+  iconSize: 22,
+};
+
+function NavIconButtonDebugPanel({
+  title,
+  values,
+  onChange,
+  onReset,
+  initialPanelPosition,
+  unlimitedOffsetX = false,
+  showIconSize = false,
+}: {
+  title: string;
+  values: NavIconButtonDebugValues;
+  onChange: (patch: Partial<NavIconButtonDebugValues>) => void;
+  onReset: () => void;
+  initialPanelPosition?: { x: number; y: number };
+  unlimitedOffsetX?: boolean;
+  showIconSize?: boolean;
+}) {
+  const [panelPosition, setPanelPosition] = useState(() => {
+    if (initialPanelPosition) return initialPanelPosition;
+    if (typeof window === "undefined") return { x: 12, y: 80 };
+    return {
+      x: Math.max(12, window.innerWidth - 320 - 12),
+      y: 80,
+    };
+  });
+  const dragStateRef = useRef<{
+    startX: number;
+    startY: number;
+    originX: number;
+    originY: number;
+  } | null>(null);
+
+  const clampPosition = useCallback((x: number, y: number) => {
+    if (typeof window === "undefined") return { x, y };
+    const panelWidthPx = 320;
+    const panelHeightPx = showIconSize ? 420 : 360;
+    const maxX = Math.max(0, window.innerWidth - panelWidthPx);
+    const maxY = Math.max(0, window.innerHeight - panelHeightPx);
+    return {
+      x: Math.min(Math.max(0, x), maxX),
+      y: Math.min(Math.max(0, y), maxY),
+    };
+  }, [showIconSize]);
+
+  const handleDragStart = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      if (event.button !== 0) return;
+      const next = clampPosition(panelPosition.x, panelPosition.y);
+      setPanelPosition(next);
+      dragStateRef.current = {
+        startX: event.clientX,
+        startY: event.clientY,
+        originX: next.x,
+        originY: next.y,
+      };
+      event.preventDefault();
+    },
+    [clampPosition, panelPosition.x, panelPosition.y],
+  );
+
+  useEffect(() => {
+    const handlePointerMove = (event: PointerEvent) => {
+      const drag = dragStateRef.current;
+      if (!drag) return;
+      const deltaX = event.clientX - drag.startX;
+      const deltaY = event.clientY - drag.startY;
+      setPanelPosition(clampPosition(drag.originX + deltaX, drag.originY + deltaY));
+    };
+
+    const handlePointerUp = () => {
+      dragStateRef.current = null;
+    };
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+    };
+  }, [clampPosition]);
+
+  return (
+    <div
+      className="fixed z-[130] w-[min(92vw,20rem)] rounded-md border border-white/20 bg-black/85 p-2.5 text-white shadow-[0_14px_38px_rgba(0,0,0,0.45)] backdrop-blur-sm"
+      style={{ left: `${panelPosition.x}px`, top: `${panelPosition.y}px` }}
+    >
+      <div
+        role="button"
+        tabIndex={-1}
+        onPointerDown={handleDragStart}
+        className="mb-2 cursor-move rounded-sm border border-white/20 bg-black/65 px-2 py-1.5 font-mono text-[0.64rem] uppercase tracking-[0.14em] text-white/90"
+      >
+        {title}
+      </div>
+
+      <label className="mb-2 block">
+        <span className="mb-1 block font-mono text-[10px] uppercase tracking-[0.12em] text-mono-2/80">
+          X ({values.offsetX}px)
+        </span>
+        {unlimitedOffsetX ? (
+          <input
+            type="number"
+            step={1}
+            value={values.offsetX}
+            onChange={(event) => {
+              const next = Number(event.target.value);
+              if (Number.isFinite(next)) onChange({ offsetX: next });
+            }}
+            className="w-full rounded-sm border border-white/20 bg-black/65 px-2 py-1 font-mono text-[11px] text-white"
+          />
+        ) : (
+          <input
+            type="range"
+            min={-320}
+            max={320}
+            step={1}
+            value={values.offsetX}
+            onChange={(event) => onChange({ offsetX: Number(event.target.value) })}
+            className="h-1.5 w-full accent-zinc-200"
+          />
+        )}
+      </label>
+
+      <label className="mb-2 block">
+        <span className="mb-1 block font-mono text-[10px] uppercase tracking-[0.12em] text-mono-2/80">
+          Y ({values.offsetY}px)
+        </span>
+        <input
+          type="range"
+          min={-320}
+          max={320}
+          step={1}
+          value={values.offsetY}
+          onChange={(event) => onChange({ offsetY: Number(event.target.value) })}
+          className="h-1.5 w-full accent-zinc-200"
+        />
+      </label>
+
+      <label className="mb-2 block">
+        <span className="mb-1 block font-mono text-[10px] uppercase tracking-[0.12em] text-mono-2/80">
+          Size ({values.size}px)
+        </span>
+        <input
+          type="range"
+          min={20}
+          max={140}
+          step={1}
+          value={values.size}
+          onChange={(event) => onChange({ size: Number(event.target.value) })}
+          className="h-1.5 w-full accent-zinc-200"
+        />
+      </label>
+
+      {showIconSize ? (
+        <label className="mb-2 block">
+          <span className="mb-1 block font-mono text-[10px] uppercase tracking-[0.12em] text-mono-2/80">
+            Icon ({values.iconSize ?? 22}px)
+          </span>
+          <input
+            type="range"
+            min={12}
+            max={48}
+            step={1}
+            value={values.iconSize ?? 22}
+            onChange={(event) => onChange({ iconSize: Number(event.target.value) })}
+            className="h-1.5 w-full accent-zinc-200"
+          />
+        </label>
+      ) : null}
+
+      <button
+        type="button"
+        onClick={onReset}
+        className="inline-flex items-center justify-center border border-white/20 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-mono-2 hover:border-white/45 hover:text-white"
+      >
+        Reset
+      </button>
+    </div>
+  );
+}
 
 // --- PROFILE (About) ---
 const SectionGridOverlay = () => {
@@ -5154,7 +5498,7 @@ const ShowcaseVisualDesignDetail = ({
   return (
     <>
       <motion.div
-        className="order-1 mt-0 flex w-full flex-col items-stretch gap-y-1.5 text-left"
+        className="visual-design-detail-header order-1 mt-0 flex w-full flex-col items-stretch gap-y-1.5 text-left"
         style={
           reduceMotion
             ? { opacity: detailHdrReveal ? 1 : 0 }
@@ -5176,23 +5520,6 @@ const ShowcaseVisualDesignDetail = ({
         <p className="m-0 w-full pl-[2px] font-body text-sm sm:text-base leading-snug text-mono-2">
           {showcaseTaglineCopy(card)}
         </p>
-      </motion.div>
-      <motion.div className="order-2 mt-5 w-full" aria-hidden>
-        <motion.div
-          className="mx-auto block h-px w-full max-w-full shrink-0 bg-white/[0.09]"
-          style={{
-            clipPath: detailRuleReveal ? "inset(0 0 0 0)" : "inset(0 50% 0 50%)",
-            ...(reduceMotion
-              ? {}
-              : detailRuleReveal
-                ? {
-                    transitionProperty: "clip-path",
-                    transitionDuration: `${DETAIL_RULE_EXPAND_MS}ms`,
-                    transitionTimingFunction: DETAIL_SLIDE_CUBIC,
-                  }
-                : {}),
-          }}
-        />
       </motion.div>
       <motion.div
         className="order-3 mt-4 w-full sm:mt-5"
@@ -5383,7 +5710,7 @@ const ShowcaseIllustrationLightbox = ({
               type="button"
               aria-label="Previous illustration"
               onClick={handleShowPrev}
-              className="pdf-viewer-chrome-btn illustration-lightbox-chrome-btn illustration-lightbox-nav-btn fixed left-3 z-30 hidden md:inline-flex"
+              className="pdf-viewer-chrome-btn illustration-lightbox-chrome-btn illustration-lightbox-nav-btn absolute left-3 z-30 hidden md:inline-flex"
             >
               <ArrowLeft aria-hidden />
             </button>
@@ -5394,7 +5721,7 @@ const ShowcaseIllustrationLightbox = ({
               type="button"
               aria-label="Next illustration"
               onClick={handleShowNext}
-              className="pdf-viewer-chrome-btn illustration-lightbox-chrome-btn illustration-lightbox-nav-btn fixed right-3 z-30 hidden md:inline-flex"
+              className="pdf-viewer-chrome-btn illustration-lightbox-chrome-btn illustration-lightbox-nav-btn absolute right-3 z-30 hidden md:inline-flex"
             >
               <ArrowRight aria-hidden />
             </button>
@@ -5472,7 +5799,7 @@ const ShowcaseIllustrationLightbox = ({
             </button>
           ) : null}
           {caption ? (
-            <p className="min-h-[1.15rem] line-clamp-1 font-display text-[0.8rem] leading-snug tracking-tight text-white sm:min-h-0 sm:line-clamp-none sm:text-[0.86rem]">
+            <p className="min-h-[1.15rem] line-clamp-1 font-display text-[calc(0.8rem+2pt)] leading-snug tracking-tight text-white sm:min-h-0 sm:line-clamp-none sm:text-[calc(0.86rem+2pt)]">
               {caption}
             </p>
           ) : (
@@ -5490,7 +5817,7 @@ const ShowcaseIllustrationLightbox = ({
                 }`}
                 ref={descViewportRef}
               >
-                <div ref={descContentRef} className="space-y-2 font-body text-xs leading-relaxed text-mono-2 sm:text-sm">
+                <div ref={descContentRef} className="space-y-2 font-body text-xs leading-relaxed text-mono-2/70 sm:text-sm">
                   {artistStatement.split(/\n\n+/).map((paragraph, paragraphIndex) => {
                     const text = paragraph.trim();
                     const toolsMatch = text.match(/^(Tools|Subtools):(.*)/is);
@@ -5498,7 +5825,7 @@ const ShowcaseIllustrationLightbox = ({
                     return (
                       <p key={paragraphIndex}>
                         {toolsMatch ? (
-                          <><span className="underline">{toolsMatch[1]}:</span>{toolsMatch[2]}</>
+                          <><span className="font-semibold underline">{toolsMatch[1]}:</span>{toolsMatch[2]}</>
                         ) : isDisclaimer ? (
                           <em>{text}</em>
                         ) : text}
@@ -9669,6 +9996,14 @@ export default function Home() {
   useEffect(() => { setAppReady(true); }, []);
 
   const [isResumeMode, setIsResumeMode] = useState(false);
+  const [showSideNavExitDebugPanel, setShowSideNavExitDebugPanel] = useState(false);
+  const [showTopNavBackDebugPanel, setShowTopNavBackDebugPanel] = useState(false);
+  const [sideNavExitButtonDebug, setSideNavExitButtonDebug] = useState<NavIconButtonDebugValues>(
+    SIDE_NAV_EXIT_BUTTON_DEBUG_DEFAULTS,
+  );
+  const [topNavBackButtonDebug, setTopNavBackButtonDebug] = useState<NavIconButtonDebugValues>(
+    TOP_NAV_BACK_BUTTON_DEBUG_DEFAULTS,
+  );
   const [archivePdfNavActive, setArchivePdfNavActive] = useState(false);
   const [isSideNavOpen, setIsSideNavOpen] = useState(false);
   const [currentSection, setCurrentSection] = useState<string | null>(null);
@@ -9778,6 +10113,31 @@ export default function Home() {
   useEffect(() => {
     if (currentSection !== "skills") setSkillsContentFade("visible");
   }, [currentSection]);
+
+  useEffect(() => {
+    const isEditableTarget = (target: EventTarget | null) => {
+      if (!(target instanceof HTMLElement)) return false;
+      if (target.isContentEditable) return true;
+      const tag = target.tagName;
+      return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.repeat || event.metaKey || event.ctrlKey || event.altKey) return;
+      if (isEditableTarget(event.target)) return;
+      const key = event.key.toLowerCase();
+      if (key === "l") {
+        event.preventDefault();
+        setShowSideNavExitDebugPanel((value) => !value);
+        return;
+      }
+      if (key === "b") {
+        event.preventDefault();
+        setShowTopNavBackDebugPanel((value) => !value);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -10153,14 +10513,38 @@ export default function Home() {
           open={isSideNavOpen}
           onClose={() => setIsSideNavOpen(false)}
           onNavigate={navigateFromMenu}
+          exitButtonDebug={sideNavExitButtonDebug}
         />
       )}
+
+      {showSideNavExitDebugPanel ? (
+        <NavIconButtonDebugPanel
+          title="Side Nav Exit Debug (L)"
+          values={sideNavExitButtonDebug}
+          onChange={(patch) => setSideNavExitButtonDebug((current) => ({ ...current, ...patch }))}
+          onReset={() => setSideNavExitButtonDebug(SIDE_NAV_EXIT_BUTTON_DEBUG_DEFAULTS)}
+        />
+      ) : null}
+
+      {showTopNavBackDebugPanel ? (
+        <NavIconButtonDebugPanel
+          title="Top Nav Back Debug (B)"
+          values={topNavBackButtonDebug}
+          onChange={(patch) => setTopNavBackButtonDebug((current) => ({ ...current, ...patch }))}
+          onReset={() => setTopNavBackButtonDebug(TOP_NAV_BACK_BUTTON_DEBUG_DEFAULTS)}
+          initialPanelPosition={{ x: 12, y: 200 }}
+          unlimitedOffsetX
+          showIconSize
+        />
+      ) : null}
 
       {/* Back to menu ? above panels so it stays clickable when viewing a section */}
       {!isResumeMode && (
         <BackToMenuButton
           show={currentSection !== null && !isSideNavOpen}
           fadeOut={navButtonsFaded}
+          buttonDebug={topNavBackButtonDebug}
+          debugActive={showTopNavBackDebugPanel}
           ariaLabel={
             currentSection === "projects" && activeShowcaseProjectId
               ? "Back to showcase"

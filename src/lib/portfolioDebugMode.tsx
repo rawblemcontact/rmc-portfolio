@@ -9,6 +9,7 @@ import {
 
 const PortfolioDebugContext = createContext(false);
 const RuleOfThirdsContext = createContext(false);
+const RulerDebugContext = createContext(false);
 const HeroDebugContext = createContext(false);
 const MainMenuDebugContext = createContext(false);
 const DESKTOP_LAYOUT_STORAGE_KEY_PREFIX = "portfolio.debug.desktopLayout.v1";
@@ -30,7 +31,7 @@ export type ProfileDesktopLayoutDebugValues = {
 
 /** Locked desktop PROFILE layout — tuned via debug panel (Jun 2026). */
 export const PROFILE_DESKTOP_LAYOUT_DEBUG_DEFAULTS: ProfileDesktopLayoutDebugValues = {
-  leftOffsetX: 60,
+  leftOffsetX: 58,
   leftOffsetY: 50,
   rightOffsetX: -117,
   rightOffsetY: 57,
@@ -246,6 +247,10 @@ function isMainMenuDebugToggleKey(event: KeyboardEvent) {
   return event.key === "m" || event.key === "M";
 }
 
+function isRulerDebugToggleKey(event: KeyboardEvent) {
+  return event.key === "r" || event.key === "R";
+}
+
 function isEditableTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) return false;
   const tag = target.tagName;
@@ -255,6 +260,7 @@ function isEditableTarget(target: EventTarget | null) {
 export function PortfolioDebugProvider({ children }: { children: ReactNode }) {
   const [enabled, setEnabled] = useState(false);
   const [ruleOfThirdsEnabled, setRuleOfThirdsEnabled] = useState(false);
+  const [rulerDebugEnabled, setRulerDebugEnabled] = useState(false);
   const [heroDebugEnabled, setHeroDebugEnabled] = useState(false);
   const [mainMenuDebugEnabled, setMainMenuDebugEnabled] = useState(false);
   const isDev = import.meta.env.DEV;
@@ -296,6 +302,13 @@ export function PortfolioDebugProvider({ children }: { children: ReactNode }) {
         if (event.metaKey || event.ctrlKey || event.altKey) return;
         event.preventDefault();
         setRuleOfThirdsEnabled((value) => !value);
+        return;
+      }
+
+      if (isRulerDebugToggleKey(event)) {
+        if (event.metaKey || event.ctrlKey || event.altKey) return;
+        event.preventDefault();
+        setRulerDebugEnabled((value) => !value);
       }
     };
 
@@ -308,7 +321,9 @@ export function PortfolioDebugProvider({ children }: { children: ReactNode }) {
       <HeroDebugContext.Provider value={isDev && heroDebugEnabled}>
         <MainMenuDebugContext.Provider value={isDev && mainMenuDebugEnabled}>
           <RuleOfThirdsContext.Provider value={isDev && ruleOfThirdsEnabled}>
-            {children}
+            <RulerDebugContext.Provider value={isDev && rulerDebugEnabled}>
+              {children}
+            </RulerDebugContext.Provider>
           </RuleOfThirdsContext.Provider>
         </MainMenuDebugContext.Provider>
       </HeroDebugContext.Provider>
@@ -330,4 +345,8 @@ export function useMainMenuDebugEnabled() {
 
 export function useRuleOfThirdsEnabled() {
   return useContext(RuleOfThirdsContext);
+}
+
+export function useRulerDebugEnabled() {
+  return useContext(RulerDebugContext);
 }
