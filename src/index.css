@@ -3233,6 +3233,7 @@
       align-items: flex-start;
       gap: 6px;
       min-height: 0;
+      margin-top: 6px;
     }
 
     #experience .panel-title {
@@ -4116,7 +4117,9 @@
    * INTERACTIVE MEDIA — stacked detail width on mobile / tablet (portrait tablet parity).
    */
   @media (max-width: 1023px), ((min-width: 1024px) and (pointer: coarse)) {
-    #projects.projects-interactive-media-detail-open .projects-interactive-media-detail-inner {
+    #projects.projects-interactive-media-detail-open .projects-interactive-media-detail-inner,
+    #projects.projects-video-editing-detail-open .projects-interactive-media-detail-inner,
+    #projects.projects-slaywire-detail-open .projects-interactive-media-detail-inner {
       max-width: min(100%, 43rem) !important;
     }
   }
@@ -4302,8 +4305,8 @@
     #projects.projects-slaywire-detail-open
       .video-editing-detail:not(.video-editing-detail--interactive-media)
       .video-editing-detail-overview > div > section .font-heading.text-xs {
-      font-size: 0.6125rem;
-      margin-bottom: 0.2375rem;
+      font-size: 0.6875rem;
+      margin-bottom: 0.275rem;
       line-height: 1.25;
     }
 
@@ -4325,8 +4328,8 @@
     #projects.projects-slaywire-detail-open
       .video-editing-detail:not(.video-editing-detail--interactive-media)
       .video-editing-detail-overview > div > section .font-body.sm\:text-base {
-      font-size: 0.76875rem;
-      line-height: 1.325;
+      font-size: 0.875rem;
+      line-height: 1.35;
     }
 
     #projects.projects-interactive-media-detail-open
@@ -4338,9 +4341,45 @@
     #projects.projects-slaywire-detail-open
       .video-editing-detail:not(.video-editing-detail--interactive-media)
       .video-editing-detail-overview > div > section ul {
-      font-size: 0.76875rem;
-      line-height: 1.325;
+      font-size: 0.875rem;
+      line-height: 1.35;
       margin-top: 0;
+    }
+
+    /*
+     * Selector thumbnail captions — sit below now-playing title (1.25rem),
+     * above now-playing subtitle (0.76875rem) and card body (0.875rem).
+     */
+    #projects.projects-interactive-media-detail-open
+      .video-editing-detail--interactive-media
+      .video-editing-works-strip-thumb-caption
+      .font-heading,
+    #projects.projects-video-editing-detail-open
+      .video-editing-detail:not(.video-editing-detail--interactive-media)
+      .video-editing-works-strip-thumb-caption
+      .font-heading,
+    #projects.projects-slaywire-detail-open
+      .video-editing-detail:not(.video-editing-detail--interactive-media)
+      .video-editing-works-strip-thumb-caption
+      .font-heading {
+      font-size: 0.9375rem;
+      line-height: 1.25;
+    }
+
+    #projects.projects-interactive-media-detail-open
+      .video-editing-detail--interactive-media
+      .video-editing-works-strip-thumb-caption
+      .font-body,
+    #projects.projects-video-editing-detail-open
+      .video-editing-detail:not(.video-editing-detail--interactive-media)
+      .video-editing-works-strip-thumb-caption
+      .font-body,
+    #projects.projects-slaywire-detail-open
+      .video-editing-detail:not(.video-editing-detail--interactive-media)
+      .video-editing-works-strip-thumb-caption
+      .font-body {
+      font-size: 0.8125rem;
+      line-height: 1.3;
     }
 
     #projects.projects-interactive-media-detail-open
@@ -4972,8 +5011,18 @@
 }
 
 .illustration-lightbox-nav-btn {
-  top: 50vh;
+  top: 50%;
   transform: translateY(-50%);
+}
+
+@media (max-width: 767.98px) {
+  .illustration-lightbox-nav-btn {
+    display: none !important;
+  }
+
+  .illustration-lightbox-media-viewport {
+    min-height: min(58dvh, 34rem);
+  }
 }
 
 .illustration-lightbox-close-btn {
@@ -4984,8 +5033,10 @@
 .illustration-lightbox-close-btn:hover,
 .illustration-lightbox-close-btn:active,
 .illustration-lightbox-close-btn:focus-visible {
-  border-color: color-mix(in srgb, var(--palette-yellow-projects) 48%, rgb(186, 186, 186));
-  background-color: #fff;
+  border-color: transparent;
+  background-color: transparent;
+  color: #fff;
+  box-shadow: none;
 }
 
 /* PDF viewer — loader stack (Satoshi label under fold animation) */
@@ -5193,6 +5244,325 @@
   }
 }
 
+/*
+ * PROJECTS — tablet landscape (iPad): fold-fit — trim carousel + FEATURED WRITING
+ * so the full stack clears the panel bottom. Horizontal layout unchanged.
+ */
+@media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse) {
+  #projects.projects-showcase-tablet-pad .projects-showcase-stage {
+    transform: translateY(-3.5svh);
+  }
+
+  #projects.projects-showcase-tablet-pad .showcase-header {
+    margin-bottom: 1.375rem !important;
+  }
+
+  #projects.projects-showcase-tablet-pad .projects-carousel-stack {
+    margin-top: 0 !important;
+    padding-top: 0.5rem !important;
+  }
+
+  #projects.projects-showcase-tablet-pad [data-carousel-card] {
+    height: min(348px, 45.5svh) !important;
+  }
+
+  #projects.projects-showcase-tablet-pad .projects-showcase-featured-block {
+    margin-top: 0.75rem !important;
+  }
+
+  #projects.projects-showcase-tablet-pad .featured-writing-folder > div:first-child {
+    height: 2.875rem !important;
+    min-height: 2.875rem !important;
+    padding-top: 0.75rem !important;
+  }
+
+  #projects.projects-showcase-tablet-pad .featured-writing-raised {
+    height: min(168px, 21.5svh) !important;
+  }
+
+  #projects.projects-showcase-tablet-pad .featured-writing-body-card .profile-card-surface {
+    padding: 0.6875rem 0.8125rem !important;
+  }
+
+  #projects.projects-showcase-tablet-pad .featured-writing-panel-body {
+    gap: 0.6875rem !important;
+  }
+
+  /* Body panel copy only (not tabs) — match PROJECTS headline/body hierarchy. */
+  #projects.projects-showcase-tablet-pad .featured-writing-body-card .featured-writing-item-title {
+    font-size: clamp(1.1875rem, calc(0.22vw + 1.02rem), 1.3125rem) !important;
+    line-height: 1.15 !important;
+    letter-spacing: -0.015em !important;
+  }
+
+  #projects.projects-showcase-tablet-pad .featured-writing-body-card .featured-writing-item-subtitle {
+    font-size: clamp(0.8125rem, calc(0.14vw + 0.74rem), 0.9375rem) !important;
+    line-height: 1.4 !important;
+  }
+
+  #projects.projects-showcase-tablet-pad
+    .featured-writing-body-card
+    .featured-writing-content-col
+    > p:not(.featured-writing-item-title):not(.featured-writing-item-subtitle) {
+    font-size: clamp(0.8125rem, calc(0.14vw + 0.74rem), 0.9375rem) !important;
+    line-height: 1.45 !important;
+  }
+
+  #projects.projects-showcase-tablet-pad .projects-showcase-flow > .section-tablet-bottom-spacer {
+    min-height: max(0.5rem, calc(0.625rem + env(safe-area-inset-bottom, 0px) / 4)) !important;
+  }
+
+  @media (max-height: 768px) {
+    #projects.projects-showcase-tablet-pad .showcase-header {
+      margin-bottom: 1.125rem !important;
+    }
+
+    #projects.projects-showcase-tablet-pad [data-carousel-card] {
+      height: min(332px, 43.25svh) !important;
+    }
+
+    #projects.projects-showcase-tablet-pad .featured-writing-raised {
+      height: min(156px, 20svh) !important;
+    }
+  }
+
+  /*
+   * Video-style project details — horizontally center the 43rem column in the panel.
+   */
+  #projects.projects-interactive-media-detail-open .projects-interactive-media-detail-stage,
+  #projects.projects-video-editing-detail-open .projects-interactive-media-detail-stage,
+  #projects.projects-slaywire-detail-open .projects-interactive-media-detail-stage {
+    align-items: center !important;
+    width: min(100%, 43rem) !important;
+    max-width: min(100%, 43rem) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  #projects.projects-interactive-media-detail-open .projects-interactive-media-detail-inner,
+  #projects.projects-video-editing-detail-open .projects-interactive-media-detail-inner,
+  #projects.projects-slaywire-detail-open .projects-interactive-media-detail-inner {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /*
+   * SLAYWIRE + VIDEO EDITING detail — landscape fit parity with INTERACTIVE MEDIA
+   * (43rem column via .projects-interactive-media-detail-inner in Home.tsx + compact meta).
+   */
+  #projects.projects-video-editing-detail-open
+    .video-editing-detail:not(.video-editing-detail--interactive-media)
+    .video-editing-detail-now-playing
+    > div
+    > .font-heading,
+  #projects.projects-slaywire-detail-open
+    .video-editing-detail:not(.video-editing-detail--interactive-media)
+    .video-editing-detail-now-playing
+    > div
+    > .font-heading {
+    font-size: 0.75rem;
+  }
+
+  #projects.projects-video-editing-detail-open
+    .video-editing-detail:not(.video-editing-detail--interactive-media)
+    .video-editing-detail-now-playing
+    h3.font-display,
+  #projects.projects-slaywire-detail-open
+    .video-editing-detail:not(.video-editing-detail--interactive-media)
+    .video-editing-detail-now-playing
+    h3.font-display {
+    font-size: 1.25rem;
+    line-height: 1.1;
+    transform: translateY(1.5px);
+  }
+
+  #projects.projects-video-editing-detail-open
+    .video-editing-detail:not(.video-editing-detail--interactive-media)
+    .video-editing-detail-now-playing
+    .font-body.text-sm,
+  #projects.projects-slaywire-detail-open
+    .video-editing-detail:not(.video-editing-detail--interactive-media)
+    .video-editing-detail-now-playing
+    .font-body.text-sm {
+    font-size: 0.7875rem;
+    transform: translateY(1.5px);
+  }
+
+  #projects.projects-video-editing-detail-open
+    .video-editing-detail:not(.video-editing-detail--interactive-media)
+    .video-editing-detail-now-playing
+    .font-body.sm\:text-base,
+  #projects.projects-slaywire-detail-open
+    .video-editing-detail:not(.video-editing-detail--interactive-media)
+    .video-editing-detail-now-playing
+    .font-body.sm\:text-base {
+    font-size: 0.875rem;
+    transform: translateY(1.5px);
+  }
+
+  #projects.projects-video-editing-detail-open
+    .video-editing-detail:not(.video-editing-detail--interactive-media)
+    .video-editing-detail-overview
+    > div,
+  #projects.projects-slaywire-detail-open
+    .video-editing-detail:not(.video-editing-detail--interactive-media)
+    .video-editing-detail-overview
+    > div {
+    gap: 0.675rem;
+  }
+
+  #projects.projects-video-editing-detail-open
+    .video-editing-detail:not(.video-editing-detail--interactive-media)
+    .video-editing-detail-overview
+    > div
+    > section.profile-card-surface,
+  #projects.projects-slaywire-detail-open
+    .video-editing-detail:not(.video-editing-detail--interactive-media)
+    .video-editing-detail-overview
+    > div
+    > section.profile-card-surface {
+    padding: 0.7875rem 0.9rem;
+    border-radius: 12px;
+  }
+
+  #projects.projects-video-editing-detail-open
+    .video-editing-detail:not(.video-editing-detail--interactive-media)
+    .video-editing-detail-overview
+    > div
+    > section
+    .font-heading.text-xs,
+  #projects.projects-slaywire-detail-open
+    .video-editing-detail:not(.video-editing-detail--interactive-media)
+    .video-editing-detail-overview
+    > div
+    > section
+    .font-heading.text-xs {
+    font-size: 0.675rem;
+    margin-bottom: calc(0.375rem * 0.9);
+  }
+
+  #projects.projects-video-editing-detail-open
+    .video-editing-detail:not(.video-editing-detail--interactive-media)
+    .video-editing-detail-overview
+    > div
+    > section
+    .font-body.text-sm,
+  #projects.projects-slaywire-detail-open
+    .video-editing-detail:not(.video-editing-detail--interactive-media)
+    .video-editing-detail-overview
+    > div
+    > section
+    .font-body.text-sm {
+    font-size: 0.7875rem;
+  }
+
+  #projects.projects-video-editing-detail-open
+    .video-editing-detail:not(.video-editing-detail--interactive-media)
+    .video-editing-detail-overview
+    > div
+    > section
+    .font-body.sm\:text-base,
+  #projects.projects-slaywire-detail-open
+    .video-editing-detail:not(.video-editing-detail--interactive-media)
+    .video-editing-detail-overview
+    > div
+    > section
+    .font-body.sm\:text-base {
+    font-size: 0.9rem;
+  }
+
+  #projects.projects-video-editing-detail-open
+    .video-editing-detail:not(.video-editing-detail--interactive-media)
+    .video-editing-detail-overview
+    > div
+    > section
+    ul,
+  #projects.projects-slaywire-detail-open
+    .video-editing-detail:not(.video-editing-detail--interactive-media)
+    .video-editing-detail-overview
+    > div
+    > section
+    ul {
+    font-size: 0.9rem;
+  }
+
+  /* VIDEO EDITING — works strip: 3-up + bleed matches INTERACTIVE MEDIA */
+  #projects.projects-video-editing-detail-open .video-editing-detail-works > .relative {
+    margin-left: -1.75rem;
+    margin-right: -1.75rem;
+    width: calc(100% + 3.5rem);
+  }
+
+  #projects.projects-video-editing-detail-open .video-editing-detail-works .video-editing-works-strip {
+    margin-left: 1.75rem;
+    margin-right: 1.75rem;
+    width: calc(100% - 3.5rem);
+  }
+
+  #projects.projects-video-editing-detail-open
+    .video-editing-detail-works
+    .video-editing-works-strip
+    .video-editing-works-strip-thumb {
+    flex-basis: calc((100% - 1.25rem) / 3) !important;
+    max-width: calc((100% - 1.25rem) / 3);
+  }
+
+  #projects.projects-video-editing-detail-open .video-editing-works-arrow--prev {
+    left: 0 !important;
+  }
+
+  #projects.projects-video-editing-detail-open .video-editing-works-arrow--next {
+    right: 0 !important;
+  }
+
+  /*
+   * VISUAL DESIGN detail — shrink-wrap + panel scroll (no nested scroller / desktop offset).
+   * Top inset inherits SECTION_MAIN_HEADER_INSET (pt-22 at lg+) like other project details.
+   */
+  #projects.projects-visual-design-detail-open {
+    min-height: 0 !important;
+    height: auto !important;
+    align-self: flex-start !important;
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px)) !important;
+    overflow-x: visible !important;
+  }
+
+  #projects.projects-visual-design-detail-open > .container,
+  #projects.projects-visual-design-detail-open > .container > div,
+  #projects.projects-visual-design-detail-open > .container > div > div,
+  #projects.projects-visual-design-detail-open .projects-showcase-viewport,
+  #projects.projects-visual-design-detail-open .projects-showcase-stage {
+    flex: 0 0 auto !important;
+    min-height: 0 !important;
+    justify-content: flex-start !important;
+  }
+
+  #projects.projects-visual-design-detail-open .projects-visual-design-detail-stage {
+    overflow: visible !important;
+    transform: none !important;
+    zoom: 1 !important;
+    width: min(100%, 43rem) !important;
+    max-width: min(100%, 43rem) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    align-items: center !important;
+  }
+
+  #projects.projects-visual-design-detail-open .projects-visual-design-detail-inner {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  #projects.projects-visual-design-detail-open .showcase-illustrations-grid {
+    gap: 0.625rem !important;
+  }
+
+  #projects.projects-visual-design-detail-open .showcase-illustrations-grid > * {
+    margin-bottom: 0.625rem !important;
+  }
+}
+
 /* PROJECTS — desktop fit: proportional type + spacing + card scale (fine pointer lg+ / >1366). */
 @media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
   #projects {
@@ -5220,6 +5590,11 @@
 
   #projects .showcase-header {
     margin-bottom: calc(1.75rem * var(--projects-fit)) !important;
+  }
+
+  #projects.projects-visual-design-detail-open .projects-showcase-stage {
+    overflow-y: auto !important;
+    overscroll-behavior-y: auto;
   }
 
   #projects .showcase-header-title-rule > .section-main-header-title {
@@ -5314,6 +5689,11 @@
     line-height: 1.2 !important;
     letter-spacing: 0.06em !important;
     padding: calc(0.375rem * var(--projects-fit)) calc(0.625rem * var(--projects-fit)) !important;
+  }
+
+  #projects .featured-writing-view-cta-label {
+    display: inline-block;
+    transform: translateY(1px);
   }
 
   #projects .featured-writing-raised {

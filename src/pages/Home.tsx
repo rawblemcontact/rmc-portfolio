@@ -62,6 +62,7 @@ import {
 } from "../components/MainMenuLayoutDebugPanel";
 import {
   buildDesktopLayoutSideStyle,
+  buildProjectsShowcaseDesktopClusterStyle,
   readSectionDesktopLayoutDebugValues,
   saveSectionDesktopLayoutDebugValues,
   EXPERIENCE_DESKTOP_LAYOUT_DEBUG_DEFAULTS,
@@ -1077,8 +1078,19 @@ const HERO_NAME_LINE_FADE_EASE: [number, number, number, number] = [0.25, 0.1, 0
 const HERO_NAME_FRAME_PAD_RATIO = 0.16;
 /** Horizontal bleed so sweep lines extend past the tagline copy. */
 const HERO_NAME_LINE_BLEED = "clamp(-1.25rem,-4vw,-2.5rem)";
-/** Phase 1 only — nudge name/lines down toward viewport center; settle position unchanged. */
-const HERO_PHASE1_REVEAL_Y = "calc(-33vh + 1.5rem)";
+/** Map title lockup center at settle (y=0) to viewport vertical center for phase 1. */
+function measureHeroPhase1RevealOffsetPx(motionEl: HTMLElement, lockupEl: HTMLElement): number {
+  const transform = window.getComputedStyle(motionEl).transform;
+  let translateY = 0;
+  if (transform && transform !== "none") {
+    translateY = new DOMMatrixReadOnly(transform).m42;
+  }
+  const lockupRect = lockupEl.getBoundingClientRect();
+  const settleCenterY = lockupRect.top + lockupRect.height / 2 - translateY;
+  const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+  const viewportCenterY = (window.visualViewport?.offsetTop ?? 0) + viewportHeight / 2;
+  return viewportCenterY - settleCenterY;
+}
 /** Mobile Phase 1 — layout centers the lockup in 100svh; motion value stays at 0. */
 /** Mobile settle — mirrors legacy `calc(20vh - 1.25rem)` + extra down nudge (px for Framer tween). */
 const HERO_MOBILE_SETTLE_DOWN_NUDGE_REM = 3.5;
@@ -1448,8 +1460,14 @@ const HERO_ACCENT_ICON_KEYS: HeroAccentIconKey[] = ["first", "second", "third"];
 /** Two 3px dividers; remaining width splits evenly across three icon columns. */
 const HERO_ACCENT_STRIP_DIVIDER_CLASS = "w-[3px] shrink-0 self-stretch bg-current";
 const HERO_DESKTOP_DEBUG_MIN_PX = 1024;
+/** Tablet band — same as PROFILE/PROJECTS; iPad landscape lives here, not desktop layout. */
+const HERO_TABLET_MIN_PX = 768;
+const HERO_TABLET_MAX_PX = 1366;
 const matchesHeroDesktopDebugViewport = () =>
   typeof window !== "undefined" && window.matchMedia(`(min-width: ${HERO_DESKTOP_DEBUG_MIN_PX}px)`).matches;
+const matchesHeroTabletViewport = () =>
+  typeof window !== "undefined" &&
+  window.matchMedia(`(min-width: ${HERO_TABLET_MIN_PX}px) and (max-width: ${HERO_TABLET_MAX_PX}px)`).matches;
 
 const HeroNameReveal = ({
   heroReady,
@@ -1875,6 +1893,10 @@ const Hero = ({
   const [defaultsApplied, setDefaultsApplied] = useState(false);
   const [isMobileHeroLayout, setIsMobileHeroLayout] = useState(false);
   const mobileNameY = useMotionValue(0);
+  const desktopNameY = useMotionValue(0);
+  const heroNameMotionRef = useRef<HTMLDivElement>(null);
+  const [heroPhase1RevealY, setHeroPhase1RevealY] = useState(0);
+  const [heroPhase1LayoutReady, setHeroPhase1LayoutReady] = useState(false);
   const heroTouchStartYRef = useRef<number | null>(null);
   const heroDebugEnabled = useHeroDebugEnabled();
   const [videoGlobalDebugControls, setVideoGlobalDebugControls] = useState<HeroGlobalLayoutControl>(
@@ -1886,6 +1908,7 @@ const Hero = ({
   const [portfolioButtonGlobalDebugControls, setPortfolioButtonGlobalDebugControls] =
     useState<HeroGlobalLayoutControl>(() => ({ ...HERO_PORTFOLIO_BUTTON_GLOBAL_LAYOUT_DEFAULTS }));
   const [heroDesktopViewport, setHeroDesktopViewport] = useState(matchesHeroDesktopDebugViewport);
+  const [heroTabletViewport, setHeroTabletViewport] = useState(matchesHeroTabletViewport);
 
   useEffect(() => {
     const mq = window.matchMedia(`(min-width: ${HERO_DESKTOP_DEBUG_MIN_PX}px)`);
@@ -1895,18 +1918,31 @@ const Hero = ({
     return () => mq.removeEventListener("change", onChange);
   }, []);
 
+  useEffect(() => {
+    const mq = window.matchMedia(
+      `(min-width: ${HERO_TABLET_MIN_PX}px) and (max-width: ${HERO_TABLET_MAX_PX}px)`,
+    );
+    const onChange = () => setHeroTabletViewport(mq.matches);
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  /** Locked global layout (video / main / portfolio) — fine desktop only; not iPad landscape band. */
+  const heroDesktopLayoutActive = heroDesktopViewport && !heroTabletViewport;
+
   const activeVideoLayout = heroDebugEnabled ? videoGlobalDebugControls : HERO_VIDEO_GLOBAL_LAYOUT_DEFAULTS;
   const activeMainLayout = heroDebugEnabled ? mainGlobalDebugControls : HERO_MAIN_GLOBAL_LAYOUT_DEFAULTS;
   const activePortfolioButtonLayout = heroDebugEnabled
     ? portfolioButtonGlobalDebugControls
     : HERO_PORTFOLIO_BUTTON_GLOBAL_LAYOUT_DEFAULTS;
-  const heroVideoGlobalDebugStyle = heroDesktopViewport
+  const heroVideoGlobalDebugStyle = heroDesktopLayoutActive
     ? buildHeroGlobalLayoutStyle(activeVideoLayout, "center center")
     : undefined;
-  const heroMainGlobalDebugStyle = heroDesktopViewport
+  const heroMainGlobalDebugStyle = heroDesktopLayoutActive
     ? buildHeroGlobalLayoutStyle(activeMainLayout)
     : undefined;
-  const heroPortfolioButtonGlobalDebugStyle = heroDesktopViewport
+  const heroPortfolioButtonGlobalDebugStyle = heroDesktopLayoutActive
     ? buildHeroGlobalLayoutStyle(activePortfolioButtonLayout)
     : undefined;
 
@@ -2158,10 +2194,10 @@ const Hero = ({
 
   /** Mobile — imperative y tween (center → legacy final); avoids layout-mode + animate prop conflicts. */
   useEffect(() => {
-    if (!isMobileHeroLayout) return;
+    if (!isMobileHeroLayout || !heroPhase1LayoutReady) return;
 
     if (!sliderPhaseActive) {
-      mobileNameY.set(0);
+      mobileNameY.set(heroPhase1RevealY);
       return;
     }
 
@@ -2170,7 +2206,7 @@ const Hero = ({
       return;
     }
 
-    mobileNameY.set(0);
+    mobileNameY.set(heroPhase1RevealY);
     const controls = animate(mobileNameY, heroMobileSettleOffsetPx(), {
       duration: HERO_NAME_SETTLE_DUR_S,
       ease: HERO_SETTLE_EASE,
@@ -2178,7 +2214,45 @@ const Hero = ({
     });
 
     return () => controls.stop();
-  }, [isMobileHeroLayout, mobileNameY, reduceMotion, sliderPhaseActive]);
+  }, [
+    heroPhase1LayoutReady,
+    heroPhase1RevealY,
+    isMobileHeroLayout,
+    mobileNameY,
+    reduceMotion,
+    sliderPhaseActive,
+  ]);
+
+  /** Desktop/tablet — same imperative settle tween; phase-1 offset applied before line metrics run. */
+  useEffect(() => {
+    if (isMobileHeroLayout || !heroPhase1LayoutReady) return;
+
+    if (!sliderPhaseActive) {
+      desktopNameY.set(heroPhase1RevealY);
+      return;
+    }
+
+    if (reduceMotion) {
+      desktopNameY.set(0);
+      return;
+    }
+
+    desktopNameY.set(heroPhase1RevealY);
+    const controls = animate(desktopNameY, 0, {
+      duration: HERO_NAME_SETTLE_DUR_S,
+      ease: HERO_SETTLE_EASE,
+      delay: HERO_NAME_SETTLE_DELAY_S,
+    });
+
+    return () => controls.stop();
+  }, [
+    desktopNameY,
+    heroPhase1LayoutReady,
+    heroPhase1RevealY,
+    isMobileHeroLayout,
+    reduceMotion,
+    sliderPhaseActive,
+  ]);
 
   const onStartClick = () => {
     onStart();
@@ -2186,14 +2260,42 @@ const Hero = ({
 
   const heroGridDriftDelay = useGridDriftAnimationDelay();
   const heroReady = fontsReady && heroMediaReady && heroRevealDelayDone;
-  const desktopHeroMotionY = sliderPhaseActive ? 0 : HERO_PHASE1_REVEAL_Y;
-  const desktopHeroMotionTransition = reduceMotion
-    ? { duration: 0 }
-    : {
-        duration: HERO_NAME_SETTLE_DUR_S,
-        ease: HERO_SETTLE_EASE,
-        delay: HERO_NAME_SETTLE_DELAY_S,
-      };
+
+  useLayoutEffect(() => {
+    if (!heroReady) {
+      setHeroPhase1LayoutReady(false);
+      return;
+    }
+
+    const updatePhase1RevealY = () => {
+      const motionEl = heroNameMotionRef.current;
+      const lockupEl = heroInViewRef.current;
+      if (!motionEl || !lockupEl) return;
+
+      if (isMobileHeroLayout) {
+        mobileNameY.set(0);
+      } else {
+        desktopNameY.set(0);
+      }
+
+      const phase1 = measureHeroPhase1RevealOffsetPx(motionEl, lockupEl);
+
+      if (isMobileHeroLayout) {
+        mobileNameY.set(phase1);
+      } else {
+        desktopNameY.set(phase1);
+      }
+
+      setHeroPhase1RevealY(phase1);
+      setHeroPhase1LayoutReady(true);
+    };
+
+    updatePhase1RevealY();
+    window.addEventListener("resize", updatePhase1RevealY);
+    return () => window.removeEventListener("resize", updatePhase1RevealY);
+  }, [desktopNameY, heroReady, isMobileHeroLayout, mobileNameY, heroDesktopViewport]);
+
+  const heroNameRevealReady = heroReady && heroPhase1LayoutReady;
   const currentHeroSlide = heroSlides[heroSlideIndex];
   const currentFocal = heroFocalOverrides[currentHeroSlide.id] ?? heroFocalLocked[currentHeroSlide.id] ?? parseFocalPoint(currentHeroSlide.focalPoint);
   const currentZoom = heroZoomOverrides[currentHeroSlide.id] ?? heroZoomLocked[currentHeroSlide.id] ?? currentHeroSlide.zoom ?? 1;
@@ -2388,7 +2490,7 @@ const Hero = ({
         <div className="relative flex min-h-0 items-center justify-center max-lg:items-end max-lg:pb-2 md:max-lg:pb-3">
           <div className="absolute inset-0 flex w-full items-center justify-center max-lg:items-end max-lg:pb-2 md:max-lg:translate-y-8 md:max-lg:pb-1 max-[400px]:px-3 sm:px-0">
           {videoRevealActive &&
-            (heroDesktopViewport ? (
+            (heroDesktopLayoutActive ? (
               <div className="mx-auto w-fit min-w-0 max-w-full" style={heroVideoGlobalDebugStyle}>
                 {heroVideoCard}
               </div>
@@ -2406,11 +2508,10 @@ const Hero = ({
         >
           {/* Y-transform wrapper: mobile centers in viewport then tweens down; desktop uses phase-1 lift → settle. */}
           <motion.div
+            ref={heroNameMotionRef}
             className="mx-auto flex h-full w-full max-w-[1220px] flex-col items-center justify-center gap-0 px-1 py-2 max-lg:justify-start max-lg:py-1 max-md:justify-center max-md:py-0 sm:px-2 sm:py-2 md:max-lg:justify-center md:max-lg:py-2 lg:py-3"
-            style={isMobileHeroLayout ? { y: mobileNameY } : undefined}
-            initial={isMobileHeroLayout ? false : { y: HERO_PHASE1_REVEAL_Y }}
-            animate={isMobileHeroLayout ? undefined : { y: desktopHeroMotionY }}
-            transition={isMobileHeroLayout ? undefined : desktopHeroMotionTransition}
+            style={{ y: isMobileHeroLayout ? mobileNameY : desktopNameY }}
+            initial={false}
           >
             <div
               ref={heroInViewRef}
@@ -2418,11 +2519,11 @@ const Hero = ({
             >
               <div className="w-full min-w-0 text-left max-md:flex max-md:justify-center">
                 <HeroNameReveal
-                  heroReady={heroReady}
+                  heroReady={heroNameRevealReady}
                   reduceMotion={reduceMotion}
                   heroMainGlobalDebugStyle={heroMainGlobalDebugStyle}
                   heroPortfolioButtonGlobalDebugStyle={heroPortfolioButtonGlobalDebugStyle}
-                  heroDesktopViewport={heroDesktopViewport}
+                  heroDesktopViewport={heroDesktopLayoutActive}
                   videoGlobalDebugControls={videoGlobalDebugControls}
                   mainGlobalDebugControls={mainGlobalDebugControls}
                   portfolioButtonGlobalDebugControls={portfolioButtonGlobalDebugControls}
@@ -3465,24 +3566,24 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
       {
         id: "illustrations-01",
         src: "/illustrations/illustrations-charger.png",
-        alt: "CHARGER - SLAYWIRE Character Concept Art (2023)",
-        caption: "CHARGER - SLAYWIRE Character Concept Art (2023)",
+        alt: "CHARGER - SLAYWIRE Concept Art (2023)",
+        caption: "CHARGER - SLAYWIRE Concept Art (2023)",
         artistStatement: "Digital-ink style illustration for the lead protagonist of SLAYWIRE.\n\nTools: Procreate and Photoshop.",
         focalPoint: "50% 42%",
       },
       {
         id: "illustrations-02",
         src: "/illustrations/illustrations-fragment.png",
-        alt: "FRAGMENT - SLAYWIRE Character Concept Art (2023)",
-        caption: "FRAGMENT - SLAYWIRE Character Concept Art (2023)",
+        alt: "FRAGMENT - SLAYWIRE Concept Art (2023)",
+        caption: "FRAGMENT - SLAYWIRE Concept Art (2023)",
         artistStatement: "Digital-ink style illustration for the main antagonist of SLAYWIRE.\n\nTools: Procreate and Photoshop.",
         focalPoint: "50% 45%",
       },
       {
         id: "illustrations-03",
         src: "/illustrations/illustrations-wisely.png",
-        alt: "WISELY - SLAYWIRE Character Concept Art (2023)",
-        caption: "WISELY - SLAYWIRE Character Concept Art (2023)",
+        alt: "WISELY - SLAYWIRE Concept Art (2023)",
+        caption: "WISELY - SLAYWIRE Concept Art (2023)",
         artistStatement: "Digital-ink style illustration for a key character in SLAYWIRE.\n\nTools: Procreate and Photoshop.",
         focalPoint: "50% 42%",
       },
@@ -3497,8 +3598,8 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
       {
         id: "illustrations-05",
         src: "/illustrations/illustrations-strong-as-duck.png",
-        alt: "STRONG AS DUCK! - Illustration (2025)",
-        caption: "STRONG AS DUCK! - Illustration (2025)",
+        alt: "STRONG AS DUCK! - Mascot Design (2025)",
+        caption: "STRONG AS DUCK! - Mascot Design (2025)",
         artistStatement: "Designed for print, featured in a RAWBLEM merch release.\n\nUses digital ink and flat color marker.\n\nTools: Clip Studio Paint",
         focalPoint: "50% 38%",
       },
@@ -3521,8 +3622,8 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
       {
         id: "illustrations-08",
         src: "/illustrations/illustrations-melee-poster.png",
-        alt: "Vancouver Island Melee Power Rankings: Winter - Poster Design (2020)",
-        caption: "Vancouver Island Melee Power Rankings: Winter - Poster Design (2020)",
+        alt: "Vancouver Island Melee - Poster Design (2020)",
+        caption: "Vancouver Island Melee - Poster Design (2020)",
         artistStatement:
           "Designed for the Vancouver Island UVIC E-Sports Community.\n\nManually captured in-game snapshots to capture dynamic poses for each character featured in this work, using Dolphin Emulator + an in-game greenscreen hack and an owned copy of Super Smash Bros. Melee for the Nintendo Gamecube (Nintendo, 2001).\n\nThis is a noncommerical and transformative project. All trademarks and copyrights belong to their respective owners.\n\nTools: Photoshop, GIMP\n\nSubtools: Dolphin Emulator, Screenshot Tools, Debug Background Colors Mod (UnclePunch, 2020)",
         focalPoint: "50% 42%",
@@ -3530,8 +3631,8 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
       {
         id: "illustrations-09",
         src: "/illustrations/illustrations-melee-banner.png",
-        alt: "Vancouver Island Melee Power Rankings: Interim Rankings: March - Poster Design (2020)",
-        caption: "Vancouver Island Melee Power Rankings: Interim Rankings: March - Poster Design (2020)",
+        alt: "Vancouver Island Melee - Poster Design (2020)",
+        caption: "Vancouver Island Melee - Poster Design (2020)",
         artistStatement:
           "Designed for the Vancouver Island UVIC E-Sports Community.\n\nA visual homage to Pokémon Emerald (2005) and its famous gym leader ranking system. Implemented as both a creative and functional solution to a four-person tie for the seasons's final rankings.\n\nUses in-game character models and background references, but each featured character in this design was recreated and modified by hand, using a 1px brush in Photoshop, dot by dot.\n\nAll re-models and re-designs visually resemble each ranked competitors likeness (with permission).\n\nThis is a noncommerical and transformative project. All trademarks and copyrights belong to their respective owners.\n\nTools: Photoshop, GIMP",
         focalPoint: "50% 38%",
@@ -3548,8 +3649,8 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
       {
         id: "illustrations-11",
         src: "/illustrations/illustrations-mr-meowrange.png",
-        alt: "MR.MEOWRANGE - Mascot Character Illustration (2025)",
-        caption: "MR.MEOWRANGE - Mascot Character Illustration (2025)",
+        alt: "MR.MEOWRANGE - Mascot Design (2025)",
+        caption: "MR.MEOWRANGE - Mascot Design (2025)",
         artistStatement:
           "Designed for print, featured in a RAWBLEM merch release.\n\nCombines digital ink lineart with blended watercolor marker.\n\nTools: Clip Studio Paint, Photoshop",
         focalPoint: "50% 50%",
@@ -3557,8 +3658,8 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
       {
         id: "illustrations-12",
         src: "/illustrations/illustrations-manamelon.png",
-        alt: "MANAMELON - Mascot Character Illustration (2025)",
-        caption: "MANAMELON - Mascot Character Illustration (2025)",
+        alt: "MANAMELON - Mascot Design (2025)",
+        caption: "MANAMELON - Mascot Design (2025)",
         artistStatement:
           "Designed for print, featured in a RAWBLEM merch release.\n\nUses digital ink and flat color marker.\n\nTools: Clip Studio Paint, Photoshop",
         focalPoint: "50% 50%",
@@ -4127,6 +4228,11 @@ const SECTION_OVERLAY_BOTTOM_SPACER_MAX_LG =
 const SECTION_TABLET_BOTTOM_SPACER = "section-tablet-bottom-spacer";
 /** Tablet PROJECTS showcase list — pairs with index.css `.projects-showcase-tablet-pad` bottom pad. */
 const PROJECTS_SHOWCASE_TABLET_PAD = "projects-showcase-tablet-pad";
+/** iPad horizontal — landscape + coarse pointer within PROFILE tablet band. */
+const PROJECTS_TABLET_LANDSCAPE_MQ = `(min-width: ${PROFILE_TABLET_MIN_PX}px) and (max-width: ${PROFILE_TABLET_MAX_PX}px) and (orientation: landscape) and (any-pointer: coarse)`;
+const matchesProjectsTabletLandscapeViewport = () =>
+  typeof window !== "undefined" && window.matchMedia(PROJECTS_TABLET_LANDSCAPE_MQ).matches;
+const PROJECTS_TABLET_LANDSCAPE_WIDTH_SCALE = 1.05;
 /** Same inset as PROFILE; `!` overrides `.career-overview-shell` base padding in CSS. */
 const EXPERIENCE_SHELL_TOP_INSET_MAX_LG =
   "max-lg:!pt-[calc(24vh+0.625rem)] max-lg:max-sm:!pt-[max(calc(5.5rem+0.625rem),calc(env(safe-area-inset-top,0px)+0.625rem))]";
@@ -5151,6 +5257,7 @@ const ShowcaseIllustrationLightbox = ({
   // Collapsed height in px (~2 lines of text-xs leading-relaxed).
   const COLLAPSED_DESC_H = 60;
   const descContentRef = useRef<HTMLDivElement>(null);
+  const descViewportRef = useRef<HTMLDivElement>(null);
   const [descOverflows, setDescOverflows] = useState(false);
   const [descContentH, setDescContentH] = useState(0);
   const [descExpanded, setDescExpanded] = useState(false);
@@ -5159,6 +5266,18 @@ const ShowcaseIllustrationLightbox = ({
   useEffect(() => {
     setDescExpanded(false);
   }, [activeIndex]);
+
+  useEffect(() => {
+    if (!descExpanded && descViewportRef.current) {
+      descViewportRef.current.scrollTop = 0;
+    }
+    if (!emblaApi) return;
+    const reinitDelayMs = reduceMotion ? 0 : 320;
+    const timerId = window.setTimeout(() => {
+      emblaApi.reInit();
+    }, reinitDelayMs);
+    return () => window.clearTimeout(timerId);
+  }, [descExpanded, emblaApi, reduceMotion]);
 
   useLayoutEffect(() => {
     const el = descContentRef.current;
@@ -5254,33 +5373,33 @@ const ShowcaseIllustrationLightbox = ({
         onClick={onClose}
       />
 
-      {hasPrev ? (
-        <button
-          type="button"
-          aria-label="Previous illustration"
-          onClick={handleShowPrev}
-          className="pdf-viewer-chrome-btn illustration-lightbox-chrome-btn illustration-lightbox-nav-btn fixed left-3 z-30 sm:left-5"
-        >
-          <ArrowLeft aria-hidden />
-        </button>
-      ) : null}
-
-      {hasNext ? (
-        <button
-          type="button"
-          aria-label="Next illustration"
-          onClick={handleShowNext}
-          className="pdf-viewer-chrome-btn illustration-lightbox-chrome-btn illustration-lightbox-nav-btn fixed right-3 z-30 sm:right-5"
-        >
-          <ArrowRight aria-hidden />
-        </button>
-      ) : null}
-
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
         <div
           className="relative flex min-h-0 flex-1 flex-col py-6 sm:py-8"
           onClick={(event) => event.stopPropagation()}
         >
+          {hasPrev ? (
+            <button
+              type="button"
+              aria-label="Previous illustration"
+              onClick={handleShowPrev}
+              className="pdf-viewer-chrome-btn illustration-lightbox-chrome-btn illustration-lightbox-nav-btn fixed left-3 z-30 hidden md:inline-flex"
+            >
+              <ArrowLeft aria-hidden />
+            </button>
+          ) : null}
+
+          {hasNext ? (
+            <button
+              type="button"
+              aria-label="Next illustration"
+              onClick={handleShowNext}
+              className="pdf-viewer-chrome-btn illustration-lightbox-chrome-btn illustration-lightbox-nav-btn fixed right-3 z-30 hidden md:inline-flex"
+            >
+              <ArrowRight aria-hidden />
+            </button>
+          ) : null}
+
           <button
             type="button"
             aria-label="Close illustration preview"
@@ -5292,24 +5411,34 @@ const ShowcaseIllustrationLightbox = ({
 
           <div
             ref={emblaRef}
-            className="min-h-0 flex-1 overflow-hidden touch-pan-y [-webkit-touch-callout:none]"
+            className="illustration-lightbox-media-viewport h-full min-h-0 flex-1 overflow-hidden touch-pan-y [-webkit-touch-callout:none]"
             aria-roledescription="carousel"
           >
-            <div className="flex h-full min-h-[min(78dvh,920px)] touch-pan-y [-webkit-touch-callout:none]">
+            <div className="flex h-full min-h-0 touch-pan-y [-webkit-touch-callout:none] lg:min-h-[min(78dvh,920px)]">
               {openableIndices.map((slideIndex) => {
                 const slide = slides[slideIndex]!;
                 const label = slide.alt?.trim() || `Illustration ${slideIndex + 1}`;
+                const shrinkForCloseButton = new Set([
+                  "illustrations-01", // CHARGER
+                  "illustrations-02", // FRAGMENT
+                  "illustrations-03", // WISELY
+                  "illustrations-11", // MR. MEOWRANGE
+                ]).has(slide.id);
 
                 return (
                   <div
                     key={slide.id}
-                    className="flex h-full min-w-0 flex-[0_0_100%] items-center justify-center px-4 py-4 sm:px-6 sm:py-6"
+                    className="flex h-full min-w-0 flex-[0_0_100%] items-center justify-center px-4 py-0 sm:px-6 sm:py-0 lg:py-6"
                     aria-label={label}
                   >
                     <img
                       src={slide.src}
                       alt={label}
-                      className="max-h-[min(78dvh,920px)] w-auto max-w-[min(96vw,72rem)] object-contain object-center select-none"
+                      className={`h-full w-auto max-w-[min(96vw,72rem)] object-contain object-center select-none ${
+                        shrinkForCloseButton
+                          ? "max-h-[calc(100%-2.8rem)] sm:max-h-[calc(100%-3.3rem)] lg:max-h-[min(66dvh,800px)]"
+                          : "max-h-full lg:max-h-[min(78dvh,920px)]"
+                      }`}
                       draggable={false}
                       decoding="async"
                     />
@@ -5330,7 +5459,7 @@ const ShowcaseIllustrationLightbox = ({
               onClick={(e) => e.stopPropagation()}
               aria-label={descExpanded ? "Show less" : "Show more"}
               tabIndex={-1}
-              className="pointer-events-none absolute right-4 top-3 z-10 flex select-none items-center gap-1 border-0 bg-transparent p-0 font-heading text-[0.72rem] uppercase tracking-eyebrow-tight text-mono-2/80 transition-colors duration-150 group-hover:text-[color:var(--palette-yellow-projects)] group-active:text-[color:var(--palette-yellow-projects)] sm:right-6 sm:top-4 sm:text-[0.78rem]"
+              className="pointer-events-none absolute right-4 top-3 z-10 flex select-none items-center gap-1 border-0 bg-transparent p-0 font-heading text-[0.7rem] uppercase tracking-eyebrow-tight text-mono-2/80 transition-colors duration-150 group-hover:text-[color:var(--palette-yellow-projects)] group-active:text-[color:var(--palette-yellow-projects)] sm:right-6 sm:top-4 sm:text-[0.76rem]"
             >
               <span>{descExpanded ? "less" : "more"}</span>
               <motion.span
@@ -5343,16 +5472,23 @@ const ShowcaseIllustrationLightbox = ({
             </button>
           ) : null}
           {caption ? (
-            <p className="font-display text-sm leading-snug tracking-tight text-white sm:text-base">
+            <p className="min-h-[1.15rem] line-clamp-1 font-display text-[0.8rem] leading-snug tracking-tight text-white sm:min-h-0 sm:line-clamp-none sm:text-[0.86rem]">
               {caption}
             </p>
-          ) : null}
+          ) : (
+            <div className="h-[1.15rem] sm:hidden" aria-hidden />
+          )}
           {artistStatement ? (
             <div className="mt-1 sm:mt-1.5">
               <motion.div
                 animate={{ height: descExpanded ? descContentH || "auto" : COLLAPSED_DESC_H }}
                 transition={{ duration: reduceMotion ? 0 : 0.3, ease: EASE.out }}
-                className="relative overflow-hidden"
+                className={`relative ${
+                  descExpanded
+                    ? "no-scrollbar overflow-y-auto overscroll-y-contain"
+                    : "overflow-hidden"
+                }`}
+                ref={descViewportRef}
               >
                 <div ref={descContentRef} className="space-y-2 font-body text-xs leading-relaxed text-mono-2 sm:text-sm">
                   {artistStatement.split(/\n\n+/).map((paragraph, paragraphIndex) => {
@@ -5563,8 +5699,8 @@ function ShowcaseWritingFeaturedPanel({
             className="featured-writing-view-cta col-start-2 row-start-1 inline-flex w-fit shrink-0 items-center gap-2 self-start justify-self-end rounded-[11px] sm:rounded-xl px-2.5 py-1.5 font-heading text-[10px] sm:text-xs font-semibold tracking-eyebrow-tight uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_56%,rgb(186_186_186))] transition-[background-color,color,border-color,box-shadow] duration-300 ease-out hover:text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_62%,rgb(186_186_186))] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black mr-[6px] sm:px-3 sm:py-2"
             onClick={() => onOpenPdfInSupporting(item)}
           >
-            VIEW
-            <ExternalLink className="h-3.5 w-3.5 shrink-0 opacity-80" aria-hidden />
+            <span className="featured-writing-view-cta-label">VIEW</span>
+            <ExternalLink className="h-3 w-3 shrink-0 opacity-80 max-md:-translate-y-px md:h-3.5 md:w-3.5" aria-hidden />
           </button>
         </div>
         {item.description ? (
@@ -5603,6 +5739,9 @@ const PalaceProjects = ({
   const [projectsDesktopViewport, setProjectsDesktopViewport] = useState(
     matchesProfileDesktopDebugViewport,
   );
+  const [projectsTabletLandscapeViewport, setProjectsTabletLandscapeViewport] = useState(
+    matchesProjectsTabletLandscapeViewport,
+  );
   const [projectsDesktopLayoutDebugValues, setProjectsDesktopLayoutDebugValues] =
     useState<ProfileDesktopLayoutDebugValues>(() => readSectionDesktopLayoutDebugValues("projects"));
   const [projectDetailLayoutDebugValuesByProject, setProjectDetailLayoutDebugValuesByProject] =
@@ -5639,6 +5778,19 @@ const PalaceProjects = ({
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
   }, []);
+
+  useEffect(() => {
+    const mq = window.matchMedia(PROJECTS_TABLET_LANDSCAPE_MQ);
+    const onChange = () => setProjectsTabletLandscapeViewport(mq.matches);
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  const projectsShowcaseClusterStyleActive =
+    projectsDesktopViewport || projectsTabletLandscapeViewport;
+  const projectsShowcaseDesktopCrispCluster =
+    projectsDesktopViewport && !projectsTabletLandscapeViewport;
 
   const projectsDesktopDebugActive = portfolioDebugEnabled && projectsDesktopViewport;
 
@@ -5677,12 +5829,32 @@ const PalaceProjects = ({
     ? projectsDesktopLayoutDebugValues
     : PROJECTS_DESKTOP_LAYOUT_DEBUG_DEFAULTS;
 
-  const projectsLeftDebugStyle = projectsDesktopViewport
-    ? buildDesktopLayoutSideStyle(activeProjectsDesktopLayout, "left", "crisp")
+  const projectsShowcaseLayoutValues = useMemo(() => {
+    const base = activeProjectsDesktopLayout;
+    if (!projectsTabletLandscapeViewport) return base;
+    const widthScale =
+      (projectsDesktopViewport ? base.leftWidthScale : 1) * PROJECTS_TABLET_LANDSCAPE_WIDTH_SCALE;
+    return {
+      ...base,
+      leftWidthScale: widthScale,
+      rightWidthScale: widthScale,
+    };
+  }, [activeProjectsDesktopLayout, projectsTabletLandscapeViewport, projectsDesktopViewport]);
+
+  const projectsLeftDebugStyle = projectsShowcaseClusterStyleActive
+    ? buildProjectsShowcaseDesktopClusterStyle(
+        projectsShowcaseLayoutValues,
+        "left",
+        projectsShowcaseDesktopCrispCluster ? "crisp" : "transform",
+      )
     : undefined;
 
-  const projectsRightDebugStyle = projectsDesktopViewport
-    ? buildDesktopLayoutSideStyle(activeProjectsDesktopLayout, "right", "crisp")
+  const projectsRightDebugStyle = projectsShowcaseClusterStyleActive
+    ? buildProjectsShowcaseDesktopClusterStyle(
+        projectsShowcaseLayoutValues,
+        "right",
+        projectsShowcaseDesktopCrispCluster ? "crisp" : "transform",
+      )
     : undefined;
 
   const activeProjectDetailLayoutDefaults = activeCard
@@ -5799,11 +5971,19 @@ const PalaceProjects = ({
     projectDetailInFlow && activeCard?.id === "project-interactive-media";
   const videoEditingProjectDetailInFlow =
     projectDetailInFlow && activeCard?.id === "project-video-editing";
+  const videoStyleDetailTabletLandscapeFit =
+    projectsTabletLandscapeViewport &&
+    (videoEditingProjectDetailInFlow || slaywireDetailInFlow);
+  const visualDesignDetailInFlow =
+    projectDetailInFlow && activeCard?.id === "project-visual-design";
   const projectDetailAllowsOverflowX =
     videoEditingDetailNoMainCard || slaywireDetailInFlow;
 
+  const projectsProjectDetailLayoutActive =
+    projectsDesktopViewport && !projectsTabletLandscapeViewport;
+
   const projectDetailLayoutStyle =
-    projectsDesktopViewport &&
+    projectsProjectDetailLayoutActive &&
     projectDetailInFlow &&
     activeCard &&
     (projectsDesktopDebugActive || projectDetailLayoutHasLockedDefaults(activeCard.id))
@@ -5817,10 +5997,15 @@ const PalaceProjects = ({
     return bindSectionGridOverlayHeightSync(section, "--projects-grid-overlay-height");
   }, [projectDetailInFlow, activeProjectId, projectsOverlayRevealed, entranceArmed]);
 
-  /** Mobile: opening project detail must start at top — panel scroller retains PROJECTS scroll otherwise. */
+  /** Mobile / iPad landscape VISUAL DESIGN: opening detail must start at top — panel scroller retains scroll otherwise. */
   useLayoutEffect(() => {
     if (!activeProjectId || !projectDetailInFlow) return;
-    if (typeof window === "undefined" || !window.matchMedia(PROJECTS_MOBILE_PANEL_MQ).matches) return;
+    if (typeof window === "undefined") return;
+    const isMobile = window.matchMedia(PROJECTS_MOBILE_PANEL_MQ).matches;
+    const isVisualDesignTabletLandscape =
+      activeProjectId === "project-visual-design" &&
+      window.matchMedia(PROJECTS_TABLET_LANDSCAPE_MQ).matches;
+    if (!isMobile && !isVisualDesignTabletLandscape) return;
     const section = projectsSectionRef.current;
     if (!section) return;
     const panel = section.closest<HTMLElement>(SECTION_PANEL_GRID_SELECTOR);
@@ -6039,6 +6224,8 @@ const PalaceProjects = ({
             } ${
               videoEditingProjectDetailInFlow ? "projects-video-editing-detail-open" : ""
             } ${
+              visualDesignDetailInFlow ? "projects-visual-design-detail-open" : ""
+            } ${
               projectDetailAllowsOverflowX ? "overflow-x-visible" : "overflow-x-hidden"
             }`
           : `max-2xl:min-h-min 2xl:min-h-full overflow-x-hidden ${PROJECTS_SHOWCASE_TABLET_PAD} ${SECTION_MAIN_HEADER_INSET}`
@@ -6102,14 +6289,16 @@ const PalaceProjects = ({
                 } ${
                   projectDetailAllowsOverflowX ? "overflow-x-visible" : "overflow-x-hidden"
                 }`
-              : "max-lg:min-h-min max-lg:flex-none max-lg:justify-start max-2xl:min-h-min max-2xl:flex-none max-2xl:justify-start 2xl:min-h-0 2xl:flex-1 2xl:justify-center overflow-x-hidden"
+              : `max-lg:min-h-min max-lg:flex-none max-lg:justify-start max-2xl:min-h-min max-2xl:flex-none max-2xl:justify-start 2xl:min-h-0 2xl:flex-1 2xl:justify-center overflow-x-hidden${
+                  projectsShowcaseClusterStyleActive ? " items-center" : ""
+                }`
           }`}
         >
           {!projectDetailInFlow ? (
         <div
-          className={`projects-showcase-cards-cluster flex w-full flex-col shrink-0${
-            showcaseObscured ? " pointer-events-none select-none" : ""
-          }`}
+          className={`projects-showcase-cards-cluster flex flex-col shrink-0${
+            projectsShowcaseClusterStyleActive ? " min-w-0 self-center" : " w-full"
+          }${showcaseObscured ? " pointer-events-none select-none" : ""}`}
           style={projectsLeftDebugStyle}
           aria-hidden={showcaseObscured || undefined}
         >
@@ -6189,7 +6378,9 @@ const PalaceProjects = ({
         {!projectDetailInFlow ? (
         <div
           aria-hidden={showcaseObscured || undefined}
-          className={`projects-showcase-flow flex min-h-0 w-full flex-none flex-col 2xl:flex-1 ${showcaseObscured ? "pointer-events-none select-none" : ""}`}
+          className={`projects-showcase-flow flex min-h-0 flex-none flex-col 2xl:flex-1${
+            projectsShowcaseClusterStyleActive ? " min-w-0 self-center" : " w-full"
+          } ${showcaseObscured ? "pointer-events-none select-none" : ""}`}
           style={projectsRightDebugStyle}
         >
           <motion.div
@@ -6220,9 +6411,16 @@ const PalaceProjects = ({
         {projectDetailInFlow && activeCard ? (
           <div
             className={`relative flex w-full min-w-0 max-w-full flex-col items-stretch${
-              interactiveMediaDetailInFlow ? " projects-interactive-media-detail-stage" : ""
+              interactiveMediaDetailInFlow || videoStyleDetailTabletLandscapeFit
+                ? " projects-interactive-media-detail-stage"
+                : ""
             }${
-              illustrationsDetailNoHero
+              visualDesignDetailInFlow && projectsTabletLandscapeViewport
+                ? " projects-visual-design-detail-stage"
+                : ""
+            }${
+              illustrationsDetailNoHero &&
+              !projectsTabletLandscapeViewport
                 ? " overflow-y-auto overscroll-y-contain no-scrollbar"
                 : ""
             }`}
@@ -6262,7 +6460,13 @@ const PalaceProjects = ({
                 className={`relative z-[1] mx-auto w-full max-w-full min-w-0 ${PROFILE_VIEWPORT_CONTENT_MAX} pb-8 ${
                   illustrationsDetailNoHero || videoEditingDetailNoMainCard ? "mt-0 flex flex-col" : "mt-5"
                 }${
-                  interactiveMediaDetailInFlow ? " projects-interactive-media-detail-inner" : ""
+                  interactiveMediaDetailInFlow || videoStyleDetailTabletLandscapeFit
+                    ? " projects-interactive-media-detail-inner"
+                    : ""
+                }${
+                  visualDesignDetailInFlow && projectsTabletLandscapeViewport
+                    ? " projects-visual-design-detail-inner"
+                    : ""
                 }`}
               >
                 {illustrationsDetailNoHero && activeCard.detailGallery?.length ? (

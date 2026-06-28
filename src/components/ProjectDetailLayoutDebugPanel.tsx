@@ -25,11 +25,11 @@ export const PROJECT_DETAIL_LAYOUT_DEBUG_DEFAULTS: ProjectDetailLayoutDebugValue
 
 /** Locked desktop layout shared by video-style project details (Jun 2026). */
 export const PROJECT_VIDEO_STYLE_DETAIL_LAYOUT_DEFAULTS: ProjectDetailLayoutDebugValues = {
-  offsetX: 0,
-  offsetY: 8,
+  offsetX: -36,
+  offsetY: 11,
   scale: 0.94,
   widthScale: 1,
-  heightScale: 0.95,
+  heightScale: 0.94,
 };
 
 /** Locked desktop VISUAL DESIGN layout (Jun 2026). */

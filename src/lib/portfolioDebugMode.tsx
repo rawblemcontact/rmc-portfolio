@@ -30,10 +30,10 @@ export type ProfileDesktopLayoutDebugValues = {
 
 /** Locked desktop PROFILE layout — tuned via debug panel (Jun 2026). */
 export const PROFILE_DESKTOP_LAYOUT_DEBUG_DEFAULTS: ProfileDesktopLayoutDebugValues = {
-  leftOffsetX: 84,
-  leftOffsetY: 60,
+  leftOffsetX: 60,
+  leftOffsetY: 50,
   rightOffsetX: -117,
-  rightOffsetY: 66,
+  rightOffsetY: 57,
   leftScale: 0.9,
   leftWidthScale: 0.8,
   leftHeightScale: 1,
@@ -58,9 +58,9 @@ export const EXPERIENCE_DESKTOP_LAYOUT_DEBUG_DEFAULTS: ProfileDesktopLayoutDebug
 
 /** Locked desktop PROJECTS layout — tuned via debug panel (Jun 2026). */
 export const PROJECTS_DESKTOP_LAYOUT_DEBUG_DEFAULTS: ProfileDesktopLayoutDebugValues = {
-  leftOffsetX: 119,
+  leftOffsetX: 0,
   leftOffsetY: 16,
-  rightOffsetX: 120,
+  rightOffsetX: 0,
   rightOffsetY: 29,
   leftScale: 0.96,
   leftWidthScale: 0.84,
@@ -126,6 +126,40 @@ export function buildDesktopLayoutSideStyle(
   }
 
   return style;
+}
+
+/** PROJECTS showcase clusters — horizontal center in fold; vertical offsets unchanged (desktop only). */
+export function buildProjectsShowcaseDesktopClusterStyle(
+  values: ProfileDesktopLayoutDebugValues,
+  side: "left" | "right",
+  mode: "crisp" | "transform" = "crisp",
+): CSSProperties {
+  const offsetX = side === "left" ? values.leftOffsetX : values.rightOffsetX;
+  const offsetY = side === "left" ? values.leftOffsetY : values.rightOffsetY;
+  const scale = side === "left" ? values.leftScale : values.rightScale;
+  const widthScale = side === "left" ? values.leftWidthScale : values.rightWidthScale;
+  const heightScale = side === "left" ? values.leftHeightScale : values.rightHeightScale;
+  const uniformScale = scale * heightScale;
+  const widthPercent = heightScale !== 0 ? (widthScale / heightScale) * 100 : widthScale * 100;
+
+  if (mode === "transform") {
+    return {
+      width: `${widthPercent}%`,
+      maxWidth: "none",
+      alignSelf: "center",
+      transform: `translate(${offsetX}px, ${offsetY}px) scale(${uniformScale})`,
+      transformOrigin: "center top",
+    };
+  }
+
+  return {
+    width: `${widthPercent}%`,
+    maxWidth: "none",
+    alignSelf: "center",
+    transform: `translate(${offsetX}px, ${offsetY}px)`,
+    transformOrigin: "center top",
+    zoom: uniformScale,
+  };
 }
 
 function sanitizeProfileDesktopLayoutValue(value: unknown, fallback: number) {

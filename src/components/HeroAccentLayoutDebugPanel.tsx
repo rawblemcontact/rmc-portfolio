@@ -31,7 +31,7 @@ export const HERO_VIDEO_GLOBAL_LAYOUT_DEFAULTS: HeroGlobalLayoutControl = {
 };
 
 export const HERO_MAIN_GLOBAL_LAYOUT_DEFAULTS: HeroGlobalLayoutControl = {
-  offsetX: 54,
+  offsetX: 55,
   offsetY: -24,
   scale: 0.95,
   widthScale: 1,
