@@ -2685,6 +2685,21 @@
     }
   }
 
+  /* iPad horizontal only: trim EXPERIENCE card top inner gap by 25%. */
+  @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse) {
+    #experience .tabs-content {
+      padding-top: calc(17px * 0.98 * 0.99 * 0.99) !important;
+    }
+
+    #experience .tab-panel {
+      padding-top: clamp(
+        calc(19px * 0.98 * 0.99 * 0.99),
+        calc(2.68svh * 0.98 * 0.99 * 0.99),
+        calc(33px * 0.98 * 0.99 * 0.99)
+      ) !important;
+    }
+  }
+
   /*
    * iPad portrait — stack layout with equal-width tabs, vertically centered,
    * grid background fills full viewport.
@@ -6319,6 +6334,163 @@
 
   #experience .tab-panel:not(.active) {
     display: none !important;
+  }
+}
+
+/* iPad horizontal — EXPERIENCE rail header parity with PROFILE section main + subhead. */
+@media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse) {
+  #experience .nav-header .section-main-header-title,
+  #experience .nav-header .career-nav-section-subtitle {
+    font-size: var(--section-main-font-display) !important;
+    line-height: var(--section-main-lh-display) !important;
+    letter-spacing: var(--section-main-letter-spacing) !important;
+    font-weight: 700 !important;
+  }
+
+  #experience .nav-header .career-nav-section-title {
+    font-size: var(--section-subhead-font) !important;
+    line-height: var(--section-subhead-lh) !important;
+  }
+
+  /*
+   * Resume card (right panel) — type steps tuned to left rail:
+   * section main → section subhead → tab lead → tab sub → eyebrow.
+   * Card headline sits between subhead and tab lead; meta/tags align to tab tiers.
+   */
+  #experience .tabs-content {
+    --experience-ipad-card-headline: clamp(
+      0.9375rem,
+      calc(0.42vw + 0.82rem),
+      1.0625rem
+    );
+    --experience-ipad-card-meta: clamp(0.75rem, calc(0.32vw + 0.7rem), 0.8125rem);
+    --experience-ipad-card-body: clamp(0.8125rem, calc(0.3vw + 0.72rem), 0.875rem);
+    --experience-ipad-card-eyebrow: clamp(0.6875rem, calc(0.22vw + 0.62rem), 0.75rem);
+    --experience-ipad-card-tag: calc(var(--experience-ipad-card-eyebrow) * 0.9);
+    --experience-ipad-card-stat: clamp(0.9375rem, calc(0.4vw + 0.8rem), 1.0625rem);
+    --experience-ipad-lh-headline: 1.08;
+    --experience-ipad-lh-meta: 1.32;
+    --experience-ipad-lh-body: 1.42;
+    --experience-ipad-lh-eyebrow: 1.28;
+    --experience-ipad-lh-stat: 1.06;
+  }
+
+  #experience .tabs-content .panel-title-row {
+    min-height: calc(1.42 * var(--experience-ipad-card-headline)) !important;
+  }
+
+  #experience .tabs-content .panel-title,
+  #experience .tabs-content .card-title {
+    font-size: var(--experience-ipad-card-headline) !important;
+    line-height: var(--experience-ipad-lh-headline) !important;
+  }
+
+  #experience .tabs-content .panel-period,
+  #experience .tabs-content .panel-description {
+    font-size: var(--experience-ipad-card-meta) !important;
+    line-height: var(--experience-ipad-lh-meta) !important;
+  }
+
+  #experience .tabs-content .panel-description {
+    min-height: calc(1.85 * var(--experience-ipad-card-meta)) !important;
+  }
+
+  #experience .tabs-content .panel-badge {
+    font-size: var(--experience-ipad-card-eyebrow) !important;
+    line-height: var(--experience-ipad-lh-eyebrow) !important;
+  }
+
+  #experience .tabs-content .card-text,
+  #experience .tabs-content .feature-list li {
+    font-size: var(--experience-ipad-card-body) !important;
+    line-height: var(--experience-ipad-lh-body) !important;
+  }
+
+  #experience .tabs-content .experience-skill-tag {
+    font-size: var(--experience-ipad-card-tag) !important;
+    line-height: var(--experience-ipad-lh-eyebrow) !important;
+  }
+
+  #experience .tabs-content .stat-label {
+    font-size: var(--experience-ipad-card-eyebrow) !important;
+    line-height: var(--experience-ipad-lh-eyebrow) !important;
+  }
+
+  #experience .tabs-content .stat-value {
+    font-size: var(--experience-ipad-card-stat) !important;
+    line-height: var(--experience-ipad-lh-stat) !important;
+  }
+}
+
+/*
+ * Desktop fine pointer — EXPERIENCE resume card hierarchy (parity with iPad card logic).
+ * Sizes derive from --experience-type-* so they scale with the left rail on desktop.
+ */
+@media (min-width: 1280px) and (pointer: fine) {
+  #experience .tabs-content {
+    --experience-desktop-card-headline: var(--experience-type-headline);
+    --experience-desktop-card-date: var(--experience-type-meta);
+    --experience-desktop-card-description: var(--experience-type-meta);
+    --experience-desktop-card-body: var(--experience-type-body);
+    --experience-desktop-card-eyebrow: var(--experience-type-eyebrow);
+    --experience-desktop-card-tag: calc(var(--experience-type-eyebrow) * 0.9);
+    --experience-desktop-card-stat: clamp(
+      calc(var(--experience-type-tab) * 1.12),
+      calc(var(--experience-type-headline) * 0.9),
+      var(--experience-type-headline)
+    );
+    --experience-desktop-lh-headline: var(--experience-lh-panel);
+    --experience-desktop-lh-meta: var(--experience-lh-meta);
+    --experience-desktop-lh-body: var(--experience-lh-body);
+    --experience-desktop-lh-eyebrow: var(--experience-lh-tab-sub);
+    --experience-desktop-lh-stat: var(--experience-lh-stat);
+  }
+
+  #experience .tabs-content .panel-title-row {
+    min-height: calc(1.42 * var(--experience-desktop-card-headline)) !important;
+  }
+
+  #experience .tabs-content .panel-title,
+  #experience .tabs-content .card-title {
+    font-size: var(--experience-desktop-card-headline) !important;
+    line-height: var(--experience-desktop-lh-headline) !important;
+  }
+
+  #experience .tabs-content .panel-period {
+    font-size: var(--experience-desktop-card-date) !important;
+    line-height: var(--experience-desktop-lh-meta) !important;
+  }
+
+  #experience .tabs-content .panel-description {
+    font-size: var(--experience-desktop-card-description) !important;
+    line-height: var(--experience-desktop-lh-meta) !important;
+    min-height: calc(1.85 * var(--experience-desktop-card-description)) !important;
+  }
+
+  #experience .tabs-content .panel-badge {
+    font-size: var(--experience-desktop-card-eyebrow) !important;
+    line-height: var(--experience-desktop-lh-eyebrow) !important;
+  }
+
+  #experience .tabs-content .card-text,
+  #experience .tabs-content .feature-list li {
+    font-size: var(--experience-desktop-card-body) !important;
+    line-height: var(--experience-desktop-lh-body) !important;
+  }
+
+  #experience .tabs-content .experience-skill-tag {
+    font-size: var(--experience-desktop-card-tag) !important;
+    line-height: var(--experience-desktop-lh-eyebrow) !important;
+  }
+
+  #experience .tabs-content .stat-label {
+    font-size: var(--experience-desktop-card-eyebrow) !important;
+    line-height: var(--experience-desktop-lh-eyebrow) !important;
+  }
+
+  #experience .tabs-content .stat-value {
+    font-size: var(--experience-desktop-card-stat) !important;
+    line-height: var(--experience-desktop-lh-stat) !important;
   }
 }
 

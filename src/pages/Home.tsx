@@ -107,7 +107,6 @@ import { SupportingPdfPreviewDialog } from "../components/SupportingPdfPreviewDi
 import {
   SiArc,
   SiBytedance,
-  SiDavinciresolve,
   SiHootsuite,
   SiInstagram,
   SiTiktok,
@@ -7071,7 +7070,7 @@ const CAREER_OVERVIEW_SKILL_TAG_ROWS: {
 } = {
   rawblem: [
     { label: "Content Production", Icon: IconVideo },
-    { label: "DaVinci Resolve", Icon: SiDavinciresolve },
+    { label: "DaVinci Resolve", Icon: DavinciResolveIcon },
     { label: "Hootsuite", Icon: SiHootsuite },
   ],
   uvic: [
@@ -7103,6 +7102,21 @@ type ExperienceTabId = (typeof EXPERIENCE_TAB_IDS)[number];
 
 /** Mobile-only horizontal tab stack; tablet+ matches desktop grid + motion. */
 const EXPERIENCE_MOBILE_MAX_PX = 767;
+const EXPERIENCE_TABLET_LANDSCAPE_MQ = `(min-width: ${PROFILE_TABLET_MIN_PX}px) and (max-width: ${PROFILE_TABLET_MAX_PX}px) and (orientation: landscape) and (any-pointer: coarse)`;
+const matchesExperienceTabletLandscapeViewport = () =>
+  typeof window !== "undefined" && window.matchMedia(EXPERIENCE_TABLET_LANDSCAPE_MQ).matches;
+const EXPERIENCE_TABLET_LANDSCAPE_LOCKED_LAYOUT: ProfileDesktopLayoutDebugValues = {
+  leftOffsetX: 68,
+  leftOffsetY: -29,
+  rightOffsetX: 67,
+  rightOffsetY: -7,
+  leftScale: 0.95,
+  leftWidthScale: 0.97,
+  leftHeightScale: 1,
+  rightScale: 0.95,
+  rightWidthScale: 0.75,
+  rightHeightScale: 0.89,
+};
 
 /** iPadOS WebKit — keep section overlay compositor layer while EXPERIENCE is open. */
 const IS_IOS_TOUCH =
@@ -7301,13 +7315,21 @@ const ConfidantExperience = ({
   reduceMotion?: boolean | null;
 }) => {
   const tabsRootRef = useRef<HTMLDivElement>(null);
+  const experienceLandscapePanelMinWidthRef = useRef<number | null>(null);
   const portfolioDebugEnabled = usePortfolioDebugEnabled();
   const [activeExperienceTabId, setActiveExperienceTabId] = useState<ExperienceTabId>("rawblem");
   const [experienceDesktopViewport, setExperienceDesktopViewport] = useState(
     matchesProfileDesktopDebugViewport,
   );
+  const [experienceTabletLandscapeViewport, setExperienceTabletLandscapeViewport] = useState(
+    matchesExperienceTabletLandscapeViewport,
+  );
   const [experienceDesktopLayoutDebugValues, setExperienceDesktopLayoutDebugValues] =
-    useState<ProfileDesktopLayoutDebugValues>(() => readSectionDesktopLayoutDebugValues("experience"));
+    useState<ProfileDesktopLayoutDebugValues>(() =>
+      matchesExperienceTabletLandscapeViewport()
+        ? EXPERIENCE_TABLET_LANDSCAPE_LOCKED_LAYOUT
+        : readSectionDesktopLayoutDebugValues("experience"),
+    );
   const COMPACT_EXPERIENCE_MQ = `(max-width: ${EXPERIENCE_MOBILE_MAX_PX}px), (max-width: 1023px) and (orientation: portrait)`;
   const [isCompactExperienceLayout, setIsCompactExperienceLayout] = useState(() =>
     typeof window !== "undefined"
@@ -7324,7 +7346,21 @@ const ConfidantExperience = ({
     return () => mq.removeEventListener("change", onChange);
   }, []);
 
-  const experienceDesktopDebugActive = portfolioDebugEnabled && experienceDesktopViewport;
+  useEffect(() => {
+    const mq = window.matchMedia(EXPERIENCE_TABLET_LANDSCAPE_MQ);
+    const onChange = () => setExperienceTabletLandscapeViewport(mq.matches);
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  const experienceDesktopDebugActive =
+    portfolioDebugEnabled && experienceTabletLandscapeViewport;
+
+  useEffect(() => {
+    if (!experienceDesktopDebugActive) return;
+    setExperienceDesktopLayoutDebugValues(EXPERIENCE_TABLET_LANDSCAPE_LOCKED_LAYOUT);
+  }, [experienceDesktopDebugActive]);
 
   const handleExperienceDesktopLayoutDebugChange = useCallback(
     (patch: Partial<ProfileDesktopLayoutDebugValues>) => {
@@ -7334,13 +7370,20 @@ const ConfidantExperience = ({
   );
 
   const handleExperienceDesktopLayoutDebugReset = useCallback(() => {
-    setExperienceDesktopLayoutDebugValues(EXPERIENCE_DESKTOP_LAYOUT_DEBUG_DEFAULTS);
-  }, []);
+    setExperienceDesktopLayoutDebugValues(
+      experienceTabletLandscapeViewport
+        ? EXPERIENCE_TABLET_LANDSCAPE_LOCKED_LAYOUT
+        : EXPERIENCE_DESKTOP_LAYOUT_DEBUG_DEFAULTS,
+    );
+  }, [experienceTabletLandscapeViewport]);
 
   const handleExperienceDesktopLayoutDebugSave = useCallback(() => {
     saveSectionDesktopLayoutDebugValues("experience", experienceDesktopLayoutDebugValues);
+    const lockInTarget = experienceTabletLandscapeViewport
+      ? "EXPERIENCE_TABLET_LANDSCAPE_LOCKED_LAYOUT"
+      : "EXPERIENCE_DESKTOP_LAYOUT";
     const lockInSnippet = [
-      "EXPERIENCE_DESKTOP_LAYOUT = {",
+      `${lockInTarget} = {`,
       `  leftOffsetX: ${experienceDesktopLayoutDebugValues.leftOffsetX},`,
       `  leftOffsetY: ${experienceDesktopLayoutDebugValues.leftOffsetY},`,
       `  rightOffsetX: ${experienceDesktopLayoutDebugValues.rightOffsetX},`,
@@ -7356,18 +7399,40 @@ const ConfidantExperience = ({
     navigator.clipboard?.writeText(lockInSnippet).catch(() => {
       // Clipboard writes can fail in some browser contexts; localStorage save still succeeds.
     });
-  }, [experienceDesktopLayoutDebugValues]);
+  }, [experienceDesktopLayoutDebugValues, experienceTabletLandscapeViewport]);
 
-  const activeExperienceDesktopLayout = experienceDesktopDebugActive
-    ? experienceDesktopLayoutDebugValues
-    : EXPERIENCE_DESKTOP_LAYOUT_DEBUG_DEFAULTS;
+  const activeExperienceDesktopLayout = experienceTabletLandscapeViewport
+    ? experienceDesktopDebugActive
+      ? experienceDesktopLayoutDebugValues
+      : EXPERIENCE_TABLET_LANDSCAPE_LOCKED_LAYOUT
+    : experienceDesktopDebugActive
+      ? experienceDesktopLayoutDebugValues
+      : EXPERIENCE_DESKTOP_LAYOUT_DEBUG_DEFAULTS;
 
-  const experienceLeftDebugStyle = experienceDesktopViewport
+  const experienceLayoutStyleActive =
+    experienceDesktopViewport || experienceTabletLandscapeViewport;
+
+  const experienceLeftDebugStyle = experienceLayoutStyleActive
     ? buildDesktopLayoutSideStyle(activeExperienceDesktopLayout, "left", "crisp")
     : undefined;
 
-  const experienceRightDebugStyle = experienceDesktopViewport
+  const experienceRightDebugStyle = experienceLayoutStyleActive
     ? buildDesktopLayoutSideStyle(activeExperienceDesktopLayout, "right", "crisp-contained")
+    : undefined;
+  const experienceLandscapeLockedWidth =
+    experienceTabletLandscapeViewport && experienceLandscapePanelMinWidthRef.current
+      ? experienceLandscapePanelMinWidthRef.current
+      : null;
+  const experienceRightWrapperStyle = experienceLandscapeLockedWidth
+    ? {
+        ...(experienceRightDebugStyle ?? {}),
+        width: `${experienceLandscapeLockedWidth}px`,
+        minWidth: `${experienceLandscapeLockedWidth}px`,
+        maxWidth: `${experienceLandscapeLockedWidth}px`,
+      }
+    : experienceRightDebugStyle;
+  const experienceLandscapeEducationWidthLockStyle = experienceLandscapeLockedWidth
+    ? { width: "100%" as const }
     : undefined;
 
   useEffect(() => {
@@ -7377,6 +7442,19 @@ const ConfidantExperience = ({
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
   }, []);
+
+  useEffect(() => {
+    if (!experienceTabletLandscapeViewport) return;
+    if (activeExperienceTabId === "education") return;
+    const root = tabsRootRef.current;
+    const tabsContent = root?.querySelector<HTMLElement>(".tabs-content");
+    if (!tabsContent) return;
+    const width = tabsContent.getBoundingClientRect().width;
+    if (width > 0) {
+      experienceLandscapePanelMinWidthRef.current = width;
+    }
+  }, [activeExperienceTabId, experienceTabletLandscapeViewport]);
+
   const handleExperienceTabKeyDown = useCallback(
     (tabId: ExperienceTabId, e: React.KeyboardEvent<HTMLButtonElement>) => {
       if (e.key === "Enter" || e.key === " ") {
@@ -7644,7 +7722,11 @@ const ConfidantExperience = ({
             leftLabel="Left rail"
             rightLabel="Right panel"
             values={experienceDesktopLayoutDebugValues}
-            defaults={EXPERIENCE_DESKTOP_LAYOUT_DEBUG_DEFAULTS}
+            defaults={
+              experienceTabletLandscapeViewport
+                ? EXPERIENCE_TABLET_LANDSCAPE_LOCKED_LAYOUT
+                : EXPERIENCE_DESKTOP_LAYOUT_DEBUG_DEFAULTS
+            }
             showRightHeightScale
             onChange={handleExperienceDesktopLayoutDebugChange}
             onSave={handleExperienceDesktopLayoutDebugSave}
@@ -7717,9 +7799,10 @@ const ConfidantExperience = ({
           </motion.div>
           {/* Plain shell — Framer entrance on `.tabs-content` overwrites inline transform if applied there. */}
           <div className="experience-desktop-right-shell">
-            <div className="w-fit min-w-0 max-w-full" style={experienceRightDebugStyle}>
+            <div className="w-fit min-w-0 max-w-full" style={experienceRightWrapperStyle}>
             <motion.div
               className="tabs-content"
+              style={experienceLandscapeEducationWidthLockStyle}
               variants={experienceCardEntrance}
               initial="hidden"
               animate={panelSettled ? "visible" : "hidden"}
