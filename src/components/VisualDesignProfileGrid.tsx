@@ -151,7 +151,7 @@ const VisualDesignProfileLightbox = ({
               {lightboxLabel}
             </p>
             {openableIndices.length > 1 ? (
-              <p className="font-heading mt-1 text-[0.65rem] uppercase tracking-eyebrow-tight text-mono-2/80 sm:text-[0.7rem]">
+              <p className="font-heading mt-1 text-[0.6875rem] uppercase tracking-eyebrow-tight text-mono-2/80 sm:text-[0.7rem]">
                 {activeOpenablePos + 1} / {openableIndices.length}
               </p>
             ) : null}

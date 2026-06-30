@@ -3176,7 +3176,7 @@ const SideNavOverlay = ({
                 >
                   <div className="flex items-center justify-between w-full">
                     <div className="flex items-center min-w-0 flex-1">
-                      <span className="font-mono text-[0.65rem] sm:text-xs text-mono-2/70 tabular-nums w-7 shrink-0">
+                      <span className="font-mono text-[0.6875rem] sm:text-xs text-mono-2/70 tabular-nums w-7 shrink-0">
                         {String(idx + 1).padStart(2, "0")}
                       </span>
                       <FillIcon
@@ -3208,7 +3208,7 @@ const SideNavOverlay = ({
 
             <div className="mt-auto pt-6 border-t border-white/10">
               <div className="mb-3">
-                <span className="text-mono-2/90 font-mono text-[0.65rem] sm:text-xs uppercase tracking-widest">
+                <span className="text-mono-2/90 font-mono text-[0.6875rem] sm:text-xs uppercase tracking-widest">
                   CONTACT
                 </span>
               </div>
@@ -5337,7 +5337,7 @@ const SupportingProjectsSection = ({
               <div key={section.heading}>
                 <h3
                   ref={sectionIndex === 0 ? archiveFirstYellowRuleRef : undefined}
-                  className="font-heading text-[0.65rem] sm:text-xs tracking-eyebrow leading-snug uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] mb-3 pb-2 border-b border-[color:color-mix(in_srgb,var(--palette-yellow-projects)_26%,rgb(186_186_186))]"
+                  className="font-heading text-[0.6875rem] sm:text-xs tracking-eyebrow leading-snug uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] mb-3 pb-2 border-b border-[color:color-mix(in_srgb,var(--palette-yellow-projects)_26%,rgb(186_186_186))]"
                 >
                   {section.heading}
                 </h3>
@@ -5362,7 +5362,7 @@ const SupportingProjectsSection = ({
                             {item.subtitle}
                           </span>
                         </div>
-                        <span className="font-mono text-[0.6rem] sm:text-[0.65rem] tracking-[0.14em] uppercase text-mono-2/70 group-hover:text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] shrink-0 pt-1 transition-colors duration-200">
+                        <span className="font-mono text-[0.6875rem] sm:text-xs tracking-[0.14em] uppercase text-mono-2/70 group-hover:text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] shrink-0 pt-1 transition-colors duration-200">
                           VIEW
                         </span>
                         <FileText
@@ -5844,7 +5844,7 @@ const ShowcaseIllustrationLightbox = ({
             </div>
           ) : null}
           {openableIndices.length > 1 ? (
-            <p className="pointer-events-none absolute bottom-3 right-4 font-heading text-[0.65rem] uppercase tracking-eyebrow-tight text-mono-2/80 sm:bottom-4 sm:right-6 sm:text-[0.7rem]">
+            <p className="pointer-events-none absolute bottom-3 right-4 font-heading text-[0.6875rem] uppercase tracking-eyebrow-tight text-mono-2/80 sm:bottom-4 sm:right-6 sm:text-[0.7rem]">
               {activeOpenablePos + 1} / {openableIndices.length}
             </p>
           ) : null}
@@ -9266,7 +9266,7 @@ const SkillsSubskillsPanel = ({
                   const cardInner = (
                     <>
                       <p
-                        className={`${dualInline ? "mb-2 pb-1.5 text-[9.5px] leading-tight tracking-[0.06em] sm:mb-2.5 sm:pb-2 sm:text-[11px] md:text-xs" : "mb-3.5 pb-2.5 text-[12px] sm:text-[13px] tracking-eyebrow-tight"} skills-subcategory-column-title w-full min-w-0 border-b border-white/[0.06] text-center font-heading font-semibold uppercase !text-zinc-100 text-balance whitespace-normal`}
+                        className={`${dualInline ? "mb-2 pb-1.5 text-[0.625rem] leading-tight tracking-[0.06em] sm:mb-2.5 sm:pb-2 sm:text-[0.6875rem] md:text-xs" : "mb-3.5 pb-2.5 text-[12px] sm:text-[13px] tracking-eyebrow-tight"} skills-subcategory-column-title w-full min-w-0 border-b border-white/[0.06] text-center font-heading font-semibold uppercase !text-zinc-100 text-balance whitespace-normal`}
                         title={categoryTitle}
                       >
                         {categoryTitle}
@@ -9275,7 +9275,7 @@ const SkillsSubskillsPanel = ({
                         {items.map(({ label, Icon }) => (
                           <li
                             key={label}
-                            className={`${dualInline ? "gap-1.5 text-[10px] leading-tight sm:gap-2 sm:text-[11px] md:text-xs" : "gap-3"} group flex min-w-0 items-center transition-transform duration-200 ease-out hover:translate-x-[2px]`}
+                            className={`${dualInline ? "gap-1.5 text-[0.6875rem] leading-tight sm:gap-2 sm:text-[0.6875rem] md:text-xs" : "gap-3"} group flex min-w-0 items-center transition-transform duration-200 ease-out hover:translate-x-[2px]`}
                           >
                             <span className={`${dualInline ? "h-4 w-4 sm:h-[18px] sm:w-[18px]" : "h-5 w-5"} inline-flex shrink-0 items-center justify-center`}>
                               <Icon size={dualInline ? 16 : 18} className="text-portfolio-green" />
@@ -9350,7 +9350,7 @@ const SkillsSubskillsPanel = ({
                   const cardInner = (
                     <>
                       <p
-                        className={`${dualInline ? "mb-2 pb-1.5 text-[9.5px] leading-tight tracking-[0.06em] sm:mb-2.5 sm:pb-2 sm:text-[11px] md:text-xs" : "mb-3.5 pb-2.5 text-[12px] sm:text-[13px] tracking-eyebrow-tight"} skills-subcategory-column-title w-full min-w-0 border-b border-white/[0.06] text-center font-heading font-semibold uppercase !text-zinc-100 text-balance whitespace-normal`}
+                        className={`${dualInline ? "mb-2 pb-1.5 text-[0.625rem] leading-tight tracking-[0.06em] sm:mb-2.5 sm:pb-2 sm:text-[0.6875rem] md:text-xs" : "mb-3.5 pb-2.5 text-[12px] sm:text-[13px] tracking-eyebrow-tight"} skills-subcategory-column-title w-full min-w-0 border-b border-white/[0.06] text-center font-heading font-semibold uppercase !text-zinc-100 text-balance whitespace-normal`}
                         title={title}
                       >
                         {label}
@@ -9359,7 +9359,7 @@ const SkillsSubskillsPanel = ({
                         {items.map((tool) => (
                           <li
                             key={tool}
-                            className={`${dualInline ? "gap-1.5 text-[10px] leading-tight sm:gap-2 sm:text-[11px] md:text-xs" : "gap-3"} group flex min-w-0 items-center transition-transform duration-200 ease-out hover:translate-x-[2px]`}
+                            className={`${dualInline ? "gap-1.5 text-[0.6875rem] leading-tight sm:gap-2 sm:text-[0.6875rem] md:text-xs" : "gap-3"} group flex min-w-0 items-center transition-transform duration-200 ease-out hover:translate-x-[2px]`}
                           >
                             <span className={`${dualInline ? "h-4 w-4 sm:h-[18px] sm:w-[18px]" : "h-5 w-5"} inline-flex shrink-0 items-center justify-center`}>
                               <ToolIcon name={tool} size={dualInline ? 16 : 18} />

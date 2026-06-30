@@ -256,5 +256,6 @@ If metrics pass but screenshot looks wrong, iterate.
 
 ## Related commands
 
+- Typography hierarchy audit (single pass, subtle refinements): `/typography-audit` — [typography-audit](../typography-audit/SKILL.md)
 - Full breakpoint audit/fix loop: `/responsive-audit` — [responsive-audit](../responsive-audit/SKILL.md)
 - General responsive QA checklist: [portfoliov2-responsive-qa](../portfoliov2-responsive-qa/SKILL.md)
