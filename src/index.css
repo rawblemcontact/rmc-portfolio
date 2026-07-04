@@ -372,6 +372,20 @@
       min-height: 0 !important;
       align-self: flex-start !important;
     }
+
+    /* Hide native scrollbar; panel overflow-y scroll is unchanged. */
+    [aria-label="Section: projects"] {
+      -ms-overflow-style: none !important;
+      scrollbar-width: none !important;
+      scrollbar-color: transparent transparent !important;
+    }
+
+    [aria-label="Section: projects"]::-webkit-scrollbar {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
+      background: transparent !important;
+    }
   }
 
   /* Tablet only (768px–1366px): SKILLS scroll-end breathing room — not phone or large desktop. */
@@ -1972,6 +1986,56 @@
     backface-visibility: hidden;
   }
 
+  /* Static host: padding/size only. Chrome + body animate as siblings (no nested scale). */
+  #experience .tabs-content.experience-card-entrance-host {
+    background: transparent !important;
+    background-image: none !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+    filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    transform: none !important;
+    -webkit-backface-visibility: visible;
+    backface-visibility: visible;
+    overflow: visible !important;
+  }
+
+  #experience .tabs-content.experience-card-entrance-host > .experience-card-entrance-shell,
+  #experience .experience-card-entrance-shell {
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 0 !important;
+    width: auto !important;
+    max-width: none !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    pointer-events: none !important;
+    isolation: isolate;
+    /* Explicit surface — do not rely on nested `.tabs-content` cascade */
+    background: color-mix(in srgb, var(--portfolio-section-card) 6%, transparent) !important;
+    background-image: none !important;
+    filter: none !important;
+    -webkit-backdrop-filter: blur(2px) !important;
+    backdrop-filter: blur(2px) !important;
+    border: 1px solid var(--career-overview-content-edge, var(--portfolio-stroke-outer)) !important;
+    border-radius: 16px !important;
+    box-shadow: none !important;
+  }
+
+  #experience .tabs-content.experience-card-entrance-host > .experience-card-entrance-motion {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Mobile never uses the split entrance shell (single tabs-content only). */
+  @media (max-width: 767.98px) {
+    #experience .experience-card-entrance-shell {
+      display: none !important;
+    }
+  }
+
   #experience .career-tabs-content-inner {
     position: relative;
     width: 100%;
@@ -2102,7 +2166,7 @@
   }
 
   #experience .panel-title {
-    color: var(--section-rail-muted);
+    color: #fff;
     max-width: min(100%, 30ch);
     font-size: var(--career-font-panel-headline);
     font-weight: 700;
@@ -2299,14 +2363,14 @@
   }
 
   #experience .card-text {
-    color: rgba(255, 255, 255, 0.58);
+    color: #fff;
     font-size: var(--career-font-card-body);
     line-height: var(--career-lh-body-sm);
     text-wrap: pretty;
   }
 
   #experience .card-text strong {
-    color: rgba(255, 255, 255, 0.82);
+    color: #fff;
     font-weight: 700;
   }
 
@@ -2370,12 +2434,14 @@
   }
 
   #experience .feature-list li {
+    --experience-bullet-size: 6px;
+    --experience-bullet-lh: var(--career-lh-body, 1.45);
     display: flex;
     align-items: flex-start;
     gap: 12px;
     width: 100%;
     min-width: 0;
-    color: rgba(255, 255, 255, 0.78);
+    color: #fff;
     font-size: var(--career-font-body);
     line-height: var(--career-lh-body);
     text-wrap: pretty;
@@ -2391,12 +2457,23 @@
 
   #experience .feature-list li::before {
     content: "";
-    width: 7px;
-    height: 7px;
-    margin-top: 0.5em;
+    display: block;
+    box-sizing: border-box;
+    /* Fixed square — prevents oval/subpixel stretch across breakpoints */
+    width: var(--experience-bullet-size);
+    height: var(--experience-bullet-size);
+    min-width: var(--experience-bullet-size);
+    min-height: var(--experience-bullet-size);
+    max-width: var(--experience-bullet-size);
+    max-height: var(--experience-bullet-size);
+    aspect-ratio: 1 / 1;
+    flex: 0 0 var(--experience-bullet-size);
+    align-self: flex-start;
+    /* First-line center: half line-box minus half bullet (em = li font-size) */
+    margin-top: calc(0.5em * var(--experience-bullet-lh) - var(--experience-bullet-size) / 2);
     background: var(--palette-blue);
     border-radius: 50%;
-    flex-shrink: 0;
+    overflow: hidden;
   }
 
   @media (max-height: 780px) and (min-width: 901px) {
@@ -2410,6 +2487,7 @@
     }
 
     #experience .feature-list li {
+      --experience-bullet-lh: var(--career-lh-body-sm);
       font-size: var(--career-font-body-sm);
       line-height: var(--career-lh-body-sm);
     }
@@ -2425,6 +2503,7 @@
     }
 
     #experience .feature-list li {
+      --experience-bullet-lh: var(--career-lh-body-sm);
       font-size: var(--career-font-body-sm);
       line-height: var(--career-lh-body-sm);
     }
@@ -2640,26 +2719,18 @@
       align-self: start;
       margin-left: var(--career-rail-card-offset, 5%);
       overflow: visible;
-      /* Frost on ::before so entrance transform does not recomposite blur (end stutter) */
-      background: transparent;
+      /* Same single-layer frost as tablet-portrait resume card */
+      background: color-mix(in srgb, var(--portfolio-section-card) 6%, transparent);
       background-image: none;
       filter: none;
-      -webkit-backdrop-filter: none;
-      backdrop-filter: none;
+      -webkit-backdrop-filter: blur(2px);
+      backdrop-filter: blur(2px);
       border: 1px solid var(--career-overview-content-edge);
       border-radius: 16px;
     }
 
     #experience .tabs-content::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      z-index: 0;
-      border-radius: inherit;
-      pointer-events: none;
-      background: color-mix(in srgb, var(--portfolio-section-card) 6%, transparent);
-      -webkit-backdrop-filter: blur(2px);
-      backdrop-filter: blur(2px);
+      display: none;
     }
 
     #experience .tabs-content > * {
@@ -2668,11 +2739,48 @@
     }
 
     #experience .career-tabs-content-inner {
-      -webkit-backdrop-filter: blur(2px);
-      backdrop-filter: blur(2px);
-      background: color-mix(in srgb, var(--portfolio-section-card) 8%, transparent);
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+      background: transparent;
       background-image: none;
       border-radius: 14px;
+    }
+
+    /* Drop inner bullet card chrome — body copy sits in the outer resume card. */
+    #experience .content-card {
+      background: transparent !important;
+      background-image: none !important;
+      filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      backdrop-filter: none !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      transition: none;
+    }
+
+    #experience .content-card:hover {
+      background: transparent !important;
+      background-image: none !important;
+      border: 0 !important;
+      border-color: transparent !important;
+      transform: none !important;
+      box-shadow: none !important;
+      -webkit-backdrop-filter: none !important;
+      backdrop-filter: none !important;
+    }
+
+    #experience .panel-content {
+      width: 100%;
+      max-width: 100%;
+      margin-left: 0;
+      margin-right: 0;
+    }
+
+    #experience .feature-list {
+      width: 100%;
+      max-width: none;
     }
 
     #experience .tab-panel {
@@ -2834,6 +2942,12 @@
       flex: 0 0 auto;
       width: 100% !important;
       min-width: 0 !important;
+    }
+
+    /* Override w-fit shell so shorter panels (Education) match other resume card widths */
+    #experience .experience-desktop-right-shell > .w-fit {
+      width: 100% !important;
+      max-width: 100% !important;
     }
 
     #experience .tabs-content {
@@ -3317,15 +3431,10 @@
     }
 
     #experience .feature-list li {
+      --experience-bullet-lh: 1.4;
       gap: 10px;
       font-size: clamp(0.875rem, 3.3vw, 0.96rem);
       line-height: 1.4;
-    }
-
-    #experience .feature-list li::before {
-      width: 6px;
-      height: 6px;
-      margin-top: 0.52em;
     }
 
     #experience .stats-grid,
@@ -6200,11 +6309,12 @@
     margin-left: var(--experience-rail-gap) !important;
     padding: calc(36px * var(--experience-scale)) !important;
     overflow: visible !important;
-    background: transparent !important;
+    /* Same single-layer frost as tablet-portrait resume card */
+    background: color-mix(in srgb, var(--portfolio-section-card) 6%, transparent) !important;
     background-image: none !important;
     filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    backdrop-filter: none !important;
+    -webkit-backdrop-filter: blur(2px) !important;
+    backdrop-filter: blur(2px) !important;
     border: 1px solid var(--career-overview-content-edge) !important;
     border-radius: calc(16px * var(--experience-scale)) !important;
   }
@@ -6213,8 +6323,16 @@
     display: none;
   }
 
+  #experience .experience-card-entrance-shell {
+    border-radius: calc(16px * var(--experience-scale)) !important;
+  }
+
   #experience .career-tabs-content-inner {
     border-radius: calc(14px * var(--experience-scale)) !important;
+    background: transparent !important;
+    background-image: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
   }
 
   #experience .nav-header .section-main-header-title,
@@ -6243,6 +6361,7 @@
 
   #experience .card-text,
   #experience .feature-list li {
+    --experience-bullet-lh: var(--experience-lh-body);
     font-size: var(--experience-type-body) !important;
     line-height: var(--experience-lh-body) !important;
   }
@@ -6289,8 +6408,8 @@
   }
 
   #experience .content-card {
-    padding: calc(18px * var(--experience-scale)) calc(20px * var(--experience-scale)) !important;
-    border-radius: calc(11px * var(--experience-scale)) !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
   }
 
   #experience .experience-skill-tag {
@@ -6411,8 +6530,13 @@
 
   #experience .tabs-content .card-text,
   #experience .tabs-content .feature-list li {
+    --experience-bullet-lh: var(--experience-ipad-lh-body);
     font-size: var(--experience-ipad-card-body) !important;
     line-height: var(--experience-ipad-lh-body) !important;
+  }
+
+  #experience .tabs-content .feature-list li::before {
+    margin-top: calc(0.5em * var(--experience-bullet-lh) - var(--experience-bullet-size) / 2 + 2px);
   }
 
   #experience .tabs-content .experience-skill-tag {
@@ -6483,6 +6607,7 @@
 
   #experience .tabs-content .card-text,
   #experience .tabs-content .feature-list li {
+    --experience-bullet-lh: var(--experience-desktop-lh-body);
     font-size: var(--experience-desktop-card-body) !important;
     line-height: var(--experience-desktop-lh-body) !important;
   }
@@ -6500,6 +6625,31 @@
   #experience .tabs-content .stat-value {
     font-size: var(--experience-desktop-card-stat) !important;
     line-height: var(--experience-desktop-lh-stat) !important;
+  }
+
+  /*
+   * Desktop entrance scales `.tabs-content`; when that transform/will-change settles,
+   * ::before circles can re-rasterize at uneven sizes. Own layer + hard px lock.
+   */
+  #experience .feature-list li::before {
+    width: 6px !important;
+    height: 6px !important;
+    min-width: 6px !important;
+    min-height: 6px !important;
+    max-width: 6px !important;
+    max-height: 6px !important;
+    flex: none !important;
+    flex-grow: 0 !important;
+    flex-shrink: 0 !important;
+    flex-basis: 6px !important;
+    aspect-ratio: auto !important;
+    border-radius: 50% !important;
+    background-color: var(--palette-blue) !important;
+    background-image: none !important;
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    contain: strict;
   }
 }
 

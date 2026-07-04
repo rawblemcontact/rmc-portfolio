@@ -64,6 +64,8 @@ export type ShowcaseAttachedTabStripProps = {
   panel?:
     | React.ReactNode
     | ((ctx: {
+        /** Tab id requested for render. */
+        tabId: ShowcaseTabId;
         /** Full anchor-tab width for the preview column. */
         previewColumnWidthPx: number;
         /** PDF preview width inside the column gutters. */
@@ -85,9 +87,16 @@ export function ShowcaseAttachedTabStrip({
 }: ShowcaseAttachedTabStripProps) {
   const tabListRef = useRef<HTMLDivElement>(null);
   const bodyPadRef = useRef<HTMLDivElement>(null);
+  const folderRef = useRef<HTMLDivElement>(null);
   const [tabGeom, setTabGeom] = useState({ ml: 0, w: 0 });
   const [bodyContentWidth, setBodyContentWidth] = useState(0);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const [isPhoneViewport, setIsPhoneViewport] = useState(false);
+  /**
+   * Phone-only: distance from projects panel viewport top to Featured Writing folder top,
+   * captured on tab select and restored after layout so natural tab heights do not jolt scroll.
+   */
+  const folderAnchorOffsetRef = useRef<number | null>(null);
   const [mobileSwitchDir, setMobileSwitchDir] = useState<1 | -1>(1);
   const mobileSwipeStartRef = useRef<{ x: number; y: number } | null>(null);
   const activeTabIndex = TAB_ORDER.indexOf(activeId);
@@ -145,19 +154,50 @@ export function ShowcaseAttachedTabStrip({
     return () => mq.removeListener(apply);
   }, []);
 
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 639.98px)");
+    const apply = () => setIsPhoneViewport(mq.matches);
+    apply();
+    if (typeof mq.addEventListener === "function") {
+      mq.addEventListener("change", apply);
+      return () => mq.removeEventListener("change", apply);
+    }
+    mq.addListener(apply);
+    return () => mq.removeListener(apply);
+  }, []);
+
+  const captureFolderScrollAnchor = useCallback(() => {
+    if (!isPhoneViewport) return;
+    const folder = folderRef.current;
+    const scrollEl = folder?.closest<HTMLElement>('[aria-label="Section: projects"]');
+    if (!folder || !scrollEl) return;
+    folderAnchorOffsetRef.current =
+      folder.getBoundingClientRect().top - scrollEl.getBoundingClientRect().top;
+  }, [isPhoneViewport]);
+
   const handleSelectPrevTab = useCallback(() => {
     if (!canSelectPrev) return;
+    captureFolderScrollAnchor();
     setMobileSwitchDir(-1);
     const previous = TAB_ORDER[activeTabIndex - 1];
     if (previous) onTabChange(previous);
-  }, [activeTabIndex, canSelectPrev, onTabChange]);
+  }, [activeTabIndex, canSelectPrev, captureFolderScrollAnchor, onTabChange]);
 
   const handleSelectNextTab = useCallback(() => {
     if (!canSelectNext) return;
+    captureFolderScrollAnchor();
     setMobileSwitchDir(1);
     const next = TAB_ORDER[activeTabIndex + 1];
     if (next) onTabChange(next);
-  }, [activeTabIndex, canSelectNext, onTabChange]);
+  }, [activeTabIndex, canSelectNext, captureFolderScrollAnchor, onTabChange]);
+
+  const handleSelectTab = useCallback(
+    (id: ShowcaseTabId) => {
+      captureFolderScrollAnchor();
+      onTabChange(id);
+    },
+    [captureFolderScrollAnchor, onTabChange],
+  );
 
   const handleMobileSelectorTouchStart = useCallback(
     (event: React.TouchEvent<HTMLDivElement>) => {
@@ -211,12 +251,35 @@ export function ShowcaseAttachedTabStrip({
   const resolvedPanel =
     typeof panel === "function"
       ? panel({
+          tabId: activeId,
           previewColumnWidthPx,
           previewWidthPx,
           tabInsetLeftPx: tabInsetLeft,
           previewGutterPx,
         })
       : panel;
+
+  /**
+   * Phone-only: tabs keep natural height. After content swaps, nudge projects-panel
+   * scrollTop so the Featured Writing folder stays at the same viewport offset.
+   */
+  useLayoutEffect(() => {
+    if (!isPhoneViewport) {
+      folderAnchorOffsetRef.current = null;
+      return;
+    }
+    const savedOffset = folderAnchorOffsetRef.current;
+    if (savedOffset == null) return;
+    const folder = folderRef.current;
+    const scrollEl = folder?.closest<HTMLElement>('[aria-label="Section: projects"]');
+    if (!folder || !scrollEl) return;
+
+    const newOffset =
+      folder.getBoundingClientRect().top - scrollEl.getBoundingClientRect().top;
+    scrollEl.scrollTop += newOffset - savedOffset;
+    folderAnchorOffsetRef.current =
+      folder.getBoundingClientRect().top - scrollEl.getBoundingClientRect().top;
+  }, [activeId, isPhoneViewport]);
 
   return (
     <div className={`flex w-full flex-col ${className}`}>
@@ -225,7 +288,10 @@ export function ShowcaseAttachedTabStrip({
           "featured-writing-shell flex min-w-0 w-full max-w-full flex-col",
         ].join(" ")}
       >
-        <div className="featured-writing-folder relative flex min-w-0 w-full flex-col">
+        <div
+          ref={folderRef}
+          className="featured-writing-folder relative flex min-w-0 w-full flex-col"
+        >
           <div className="relative flex h-[3.5rem] min-h-[3.5rem] shrink-0 flex-col gap-0 overflow-visible pt-3 max-sm:h-[3.9rem] max-sm:min-h-[3.9rem] sm:h-16 sm:min-h-16 sm:pt-4">
             <div
               className="featured-writing-panel relative z-[3] -mb-px hidden max-sm:flex h-[3.15rem] min-h-[3.15rem] w-full items-center justify-between rounded-t-[9px] border border-white/[0.14] border-b-0 px-2.5"
@@ -322,7 +388,7 @@ export function ShowcaseAttachedTabStrip({
                     id={`showcase-tab-${id}`}
                     aria-selected={active}
                     tabIndex={0}
-                    onClick={() => onTabChange(id)}
+                    onClick={() => handleSelectTab(id)}
                     style={
                       active
                         ? {

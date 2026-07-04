@@ -877,7 +877,7 @@ const TOP_NAV_TABLET_MIN_PX = 768;
 const TOP_NAV_TABLET_MAX_PX = 1366;
 const TOP_NAV_TABLET_PORTRAIT_MQ = `(min-width: ${TOP_NAV_TABLET_MIN_PX}px) and (max-width: 1023.98px)`;
 const TOP_NAV_TABLET_LANDSCAPE_MQ = `(min-width: ${TOP_NAV_TABLET_MIN_PX}px) and (max-width: ${TOP_NAV_TABLET_MAX_PX}px) and (orientation: landscape) and (any-pointer: coarse)`;
-const TOP_NAV_BACK_BUTTON_OFFSET_Y_MOBILE = -1.2;
+const TOP_NAV_BACK_BUTTON_OFFSET_Y_MOBILE = -0.2;
 const TOP_NAV_BACK_BUTTON_OFFSET_Y_TABLET = 3.8;
 const TOP_NAV_BACK_BUTTON_OFFSET_Y_DESKTOP = 7.1;
 
@@ -1172,7 +1172,35 @@ const HERO_NAME_LINE_FADE_EASE: [number, number, number, number] = [0.25, 0.1, 0
 const HERO_NAME_FRAME_PAD_RATIO = 0.16;
 /** Horizontal bleed so sweep lines extend past the tagline copy. */
 const HERO_NAME_LINE_BLEED = "clamp(-1.25rem,-4vw,-2.5rem)";
-/** Map title lockup center at settle (y=0) to viewport vertical center for phase 1. */
+/** Safe-area top inset in px (matches `env(safe-area-inset-top, 0px)`). */
+function readSafeAreaInsetTopPx(): number {
+  const probe = document.createElement("div");
+  probe.style.cssText =
+    "position:absolute;visibility:hidden;pointer-events:none;height:env(safe-area-inset-top,0px)";
+  document.body.appendChild(probe);
+  const px = probe.offsetHeight;
+  document.body.removeChild(probe);
+  return px;
+}
+
+/**
+ * Top edge of `ViewportRuleOfThirdsOverlay` — mobile band only (<768).
+ * Mirrors the styled overlay: nav chrome below TOP_NAV_FIXED_TOP.
+ */
+function measureViewportRuleOfThirdsTopPx(): number {
+  const rootFontSize = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+  const navChromeRem = window.innerWidth >= 640 ? 3.5 : 2.75;
+  const fromFixed = (0.875 + 0.625 + navChromeRem) * rootFontSize;
+  const fromSafe = readSafeAreaInsetTopPx() + (1.125 + navChromeRem) * rootFontSize;
+  return Math.max(fromFixed, fromSafe);
+}
+
+/** Vertical center of the rule-of-thirds ruler region (overlay top → viewport bottom). */
+function measureViewportRuleOfThirdsCenterYPx(): number {
+  return (measureViewportRuleOfThirdsTopPx() + window.innerHeight) / 2;
+}
+
+/** Map title lockup center at settle (y=0) to phase-1 reveal center. Mobile: ROT ruler center. */
 function measureHeroPhase1RevealOffsetPx(motionEl: HTMLElement, lockupEl: HTMLElement): number {
   const transform = window.getComputedStyle(motionEl).transform;
   let translateY = 0;
@@ -1203,7 +1231,7 @@ function measureHeroPhase1RevealOffsetPx(motionEl: HTMLElement, lockupEl: HTMLEl
   const isMobileViewport = window.innerWidth < 768;
   const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
   const viewportCenterY = isMobileViewport
-    ? window.innerHeight / 2
+    ? measureViewportRuleOfThirdsCenterYPx()
     : (window.visualViewport?.offsetTop ?? 0) + viewportHeight / 2;
   return viewportCenterY - settleCenterY;
 }
@@ -6323,15 +6351,20 @@ const PalaceProjects = ({
     return bindSectionGridOverlayHeightSync(section, "--projects-grid-overlay-height");
   }, [projectDetailInFlow, activeProjectId, projectsOverlayRevealed, entranceArmed]);
 
-  /** Mobile / iPad landscape VISUAL DESIGN: opening detail must start at top — panel scroller retains scroll otherwise. */
+  /** Mobile / iPad landscape VISUAL DESIGN: panel scroller retains scroll across detail open/close — reset to top. */
   useLayoutEffect(() => {
-    if (!activeProjectId || !projectDetailInFlow) return;
     if (typeof window === "undefined") return;
     const isMobile = window.matchMedia(PROJECTS_MOBILE_PANEL_MQ).matches;
     const isVisualDesignTabletLandscape =
       activeProjectId === "project-visual-design" &&
       window.matchMedia(PROJECTS_TABLET_LANDSCAPE_MQ).matches;
-    if (!isMobile && !isVisualDesignTabletLandscape) return;
+    const enteringDetail = Boolean(activeProjectId && projectDetailInFlow);
+    if (enteringDetail) {
+      if (!isMobile && !isVisualDesignTabletLandscape) return;
+    } else if (!isMobile) {
+      // Back to PROJECTS list — mobile only (detail scroll was applied to the list).
+      return;
+    }
     const section = projectsSectionRef.current;
     if (!section) return;
     const panel = section.closest<HTMLElement>(SECTION_PANEL_GRID_SELECTOR);
@@ -6721,9 +6754,9 @@ const PalaceProjects = ({
               activeId={showcaseTabId}
               onTabChange={setShowcaseTabId}
               className="w-full min-w-0"
-              panel={({ previewColumnWidthPx }) => (
+              panel={({ tabId, previewColumnWidthPx }) => (
                 <ShowcaseWritingFeaturedPanel
-                  item={SHOWCASE_WRITING_TAB_FEATURED[showcaseTabId]}
+                  item={SHOWCASE_WRITING_TAB_FEATURED[tabId]}
                   previewWidthPx={previewColumnWidthPx}
                   onOpenPdfInSupporting={onOpenFeaturedPdfInSupporting}
                 />
@@ -6983,7 +7016,7 @@ const ProjectPoint = ({ text }: { text: string }) => (
 // --- EXPERIENCE ---
 const EXPERIENCE_DATA = [
   {
-    role: "Digital Content & Interactive Media",
+    role: "Digital Content Production",
     company: "RAWBLEM",
     location: "Victoria, BC",
     period: "2024 - Present",
@@ -7331,16 +7364,28 @@ const ConfidantExperience = ({
         : readSectionDesktopLayoutDebugValues("experience"),
     );
   const COMPACT_EXPERIENCE_MQ = `(max-width: ${EXPERIENCE_MOBILE_MAX_PX}px), (max-width: 1023px) and (orientation: portrait)`;
+  const EXPERIENCE_MOBILE_MQ = `(max-width: ${EXPERIENCE_MOBILE_MAX_PX}px)`;
   const [isCompactExperienceLayout, setIsCompactExperienceLayout] = useState(() =>
     typeof window !== "undefined"
       ? window.matchMedia(COMPACT_EXPERIENCE_MQ).matches
       : false,
+  );
+  const [isMobileExperienceLayout, setIsMobileExperienceLayout] = useState(() =>
+    typeof window !== "undefined" ? window.matchMedia(EXPERIENCE_MOBILE_MQ).matches : false,
   );
   const rm = !!reduceMotion;
 
   useEffect(() => {
     const mq = window.matchMedia(`(min-width: ${PROFILE_DESKTOP_DEBUG_MIN_PX}px)`);
     const onChange = () => setExperienceDesktopViewport(mq.matches);
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  useEffect(() => {
+    const mq = window.matchMedia(EXPERIENCE_MOBILE_MQ);
+    const onChange = () => setIsMobileExperienceLayout(mq.matches);
     onChange();
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
@@ -7661,20 +7706,54 @@ const ConfidantExperience = ({
       ? parseFloat(getComputedStyle(tabsNavEl).getPropertyValue("--career-tab-hover-shift")) || 6
       : 6;
 
+    const tabletCoarseMq = window.matchMedia(
+      `(min-width: ${PROFILE_TABLET_MIN_PX}px) and (max-width: ${PROFILE_TABLET_MAX_PX}px) and (any-pointer: coarse)`,
+    );
+    const tabletLandscapeMq = window.matchMedia(EXPERIENCE_TABLET_LANDSCAPE_MQ);
+    /** iPad + Magic Keyboard / trackpad: primary pointer stays touch, so use any-*. */
+    const canFineHoverMq = window.matchMedia("(any-hover: hover) and (any-pointer: fine)");
+
     const buttonCleanups: Array<() => void> = [];
     root.querySelectorAll<HTMLElement>(".tab-btn").forEach((button) => {
+      /**
+       * Hover slide via mouseenter (iPad trackpad hover does not use pointerType "mouse").
+       * Tablet landscape: only when a fine hover device is present; suppress touch-synthesized mouseenter.
+       * Leave uses the same CSS transform transition as desktop (smooth return).
+       */
+      let ignoreTouchMouseHoverUntil = 0;
+
+      const onTouchStart = function (this: HTMLElement) {
+        ignoreTouchMouseHoverUntil = performance.now() + 700;
+        if (tabletLandscapeMq.matches) this.style.transform = "translateX(0)";
+      };
+
       const onMouseEnter = function (this: HTMLElement) {
+        if (tabletLandscapeMq.matches) {
+          if (!canFineHoverMq.matches) return;
+          if (performance.now() < ignoreTouchMouseHoverUntil) return;
+        }
         this.style.transform = `translateX(${tabHoverShiftPx}px)`;
       };
+
       const onMouseLeave = function (this: HTMLElement) {
         this.style.transform = "translateX(0)";
       };
 
+      /** Tablet portrait sticky hover: mouseleave may not fire after tap. */
+      const onClick = function (this: HTMLElement) {
+        if (!tabletCoarseMq.matches || tabletLandscapeMq.matches) return;
+        this.style.transform = "translateX(0)";
+      };
+
+      button.addEventListener("touchstart", onTouchStart, { passive: true });
       button.addEventListener("mouseenter", onMouseEnter);
       button.addEventListener("mouseleave", onMouseLeave);
+      button.addEventListener("click", onClick);
       buttonCleanups.push(() => {
+        button.removeEventListener("touchstart", onTouchStart);
         button.removeEventListener("mouseenter", onMouseEnter);
         button.removeEventListener("mouseleave", onMouseLeave);
+        button.removeEventListener("click", onClick);
       });
     });
 
@@ -7797,18 +7876,43 @@ const ConfidantExperience = ({
             )}
           </motion.nav>
           </motion.div>
-          {/* Plain shell — Framer entrance on `.tabs-content` overwrites inline transform if applied there. */}
+          {/* Mobile: single tabs-content (unchanged). Tablet/desktop: sibling shell + content entrance. */}
           <div className="experience-desktop-right-shell">
             <div className="w-fit min-w-0 max-w-full" style={experienceRightWrapperStyle}>
-            <motion.div
-              className="tabs-content"
-              style={experienceLandscapeEducationWidthLockStyle}
-              variants={experienceCardEntrance}
-              initial="hidden"
-              animate={panelSettled ? "visible" : "hidden"}
-            >
-              {renderExperienceTabPanels()}
-            </motion.div>
+            {isMobileExperienceLayout ? (
+              <motion.div
+                className="tabs-content"
+                style={experienceLandscapeEducationWidthLockStyle}
+                variants={experienceCardEntrance}
+                initial="hidden"
+                animate={panelSettled ? "visible" : "hidden"}
+              >
+                {renderExperienceTabPanels()}
+              </motion.div>
+            ) : (
+              <div
+                className="tabs-content experience-card-entrance-host"
+                style={experienceLandscapeEducationWidthLockStyle}
+              >
+                <motion.div
+                  className="experience-card-entrance-shell"
+                  style={{ transformOrigin: "0% 0%" }}
+                  variants={experienceCardEntrance}
+                  initial="hidden"
+                  animate={panelSettled ? "visible" : "hidden"}
+                  aria-hidden
+                />
+                <motion.div
+                  className="experience-card-entrance-motion w-full min-w-0"
+                  style={{ transformOrigin: "0% 0%" }}
+                  variants={experienceCardEntrance}
+                  initial="hidden"
+                  animate={panelSettled ? "visible" : "hidden"}
+                >
+                  {renderExperienceTabPanels()}
+                </motion.div>
+              </div>
+            )}
             </div>
           </div>
           </motion.div>
@@ -7959,7 +8063,7 @@ const SKILLS_MAJOR_CATEGORIES: {
   },
   {
     id: "tools",
-    label: "TOOLKIT",
+    label: "TOOLS & SOFTWARE",
     panels: [
       { title: "DESIGN & PRODUCTIVITY", titleCase: "Design & Productivity", subtitle: "Toolkit", items: ["Microsoft Office 365", "Adobe Creative Suite", "Canva", "Procreate", "Cursor"] },
       { title: "VIDEO & WRITING", titleCase: "Video & Writing", subtitle: "Production Tools", items: ["DaVinci Resolve", "CapCut", "Audacity", "Arc Studio", "OBS Studio"] },
@@ -8247,7 +8351,7 @@ const SKILLS_DATA = {
   core: {
     title: "CORE COMPETENCIES",
     /** Paired subhead under rail title (EXPERIENCE panel-description color). */
-    subtitle: "SKILLS EMBODIED",
+    subtitle: "",
     categories: [
       {
         title: "Writing & Narrative",
@@ -8282,8 +8386,8 @@ const SKILLS_DATA = {
     ],
   },
   tools: {
-    title: "Toolkit",
-    subtitle: "SKILLS APPLIED",
+    title: "Tools & Software",
+    subtitle: "",
     categories: [
       {
         title: "Design & Productivity",
@@ -9112,7 +9216,9 @@ const SkillsSubskillsPanel = ({
     >
       <div className="career-nav-section-labels min-w-0 items-center pr-0 text-center">
         <p className="career-nav-section-subtitle">{panelHeader.title}</p>
-        <p className="career-nav-section-title" style={{ color: NAV_SUBHEAD_GRAY }}>{panelHeader.subtitle}</p>
+        {panelHeader.subtitle ? (
+          <p className="career-nav-section-title" style={{ color: NAV_SUBHEAD_GRAY }}>{panelHeader.subtitle}</p>
+        ) : null}
       </div>
       <div className="career-nav-section-divider" aria-hidden />
     </motion.div>
@@ -9127,7 +9233,9 @@ const SkillsSubskillsPanel = ({
     >
       <div className="career-nav-section-labels min-w-0 pr-0">
         <p className="career-nav-section-subtitle">{panelHeader.title}</p>
-        <p className="career-nav-section-title" style={{ color: NAV_SUBHEAD_GRAY }}>{panelHeader.subtitle}</p>
+        {panelHeader.subtitle ? (
+          <p className="career-nav-section-title" style={{ color: NAV_SUBHEAD_GRAY }}>{panelHeader.subtitle}</p>
+        ) : null}
       </div>
       <div className="career-nav-section-divider" aria-hidden />
       {SKILLS_SHOW_IDEA_GEAR_DECOR ? (
@@ -9490,7 +9598,9 @@ const SkillsBranchRailHeader = ({
           variants={labelsEntrance}
         >
           <p className="career-nav-section-subtitle whitespace-nowrap">{sectionSubtitle}</p>
-          <p className="career-nav-section-title whitespace-nowrap">{sectionTitle}</p>
+          {sectionTitle ? (
+            <p className="career-nav-section-title whitespace-nowrap">{sectionTitle}</p>
+          ) : null}
         </motion.div>
         <div className="skills-branch-accent-line relative min-h-[2px] w-full" aria-hidden>
           <motion.span
@@ -9894,7 +10004,6 @@ const SkillArsenal = ({
                   align="right"
                   sectionSubtitle={SKILLS_DATA.tools.title}
                   sectionTitle={SKILLS_DATA.tools.subtitle}
-                  sharedAccentLineWidthPx={sharedRailAccentWidthPx}
                   revealDelay={skillsBulletsRevealDelay}
                   panelSettled={panelSettled}
                   reduceMotion={rm}
@@ -10103,6 +10212,8 @@ export default function Home() {
   const heroInViewRef = useRef<HTMLDivElement | null>(null);
   const isHeroInView = useInView(heroInViewRef, { margin: "-100px 0px 0px 0px" });
   const slidesRef = useRef<HTMLDivElement | null>(null);
+  /** Section overlay scroller — shared across pages; must reset on section change. */
+  const sectionPanelRef = useRef<HTMLDivElement | null>(null);
   const slideOrder = ["hero", "menu"];
   const [currentSlideId, setCurrentSlideId] = useState<string>("hero");
   const [menuIntroReady, setMenuIntroReady] = useState(false);
@@ -10191,6 +10302,13 @@ export default function Home() {
     if (currentSection !== "projects") {
       setActiveShowcaseProjectId(null);
     }
+  }, [currentSection]);
+
+  /** Clear panel scroll when switching pages so the next section opens at the top (mobile retains scrollTop otherwise). */
+  useLayoutEffect(() => {
+    if (!currentSection) return;
+    const panel = sectionPanelRef.current;
+    if (panel) panel.scrollTop = 0;
   }, [currentSection]);
 
   useEffect(() => {
@@ -10778,6 +10896,7 @@ export default function Home() {
           {/* Section panel: layered black, accent edge when incoming, content settle */}
           {currentSection && (
             <motion.div
+              ref={sectionPanelRef}
               className={`fixed inset-0 flex min-h-0 flex-col no-scrollbar ${
                 currentSection === "projects"
                   ? `${projectsPanelOverflowX} overflow-y-auto overscroll-y-contain [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0`
