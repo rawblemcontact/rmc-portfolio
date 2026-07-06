@@ -826,6 +826,41 @@ const SECTION_ACCENT_COLOR: Record<string, string> = {
 };
 
 const CMD_HOVER = { duration: 0.25, ease: [0.16, 1, 0.3, 1] as const };
+const CMD_HOVER_MS = CMD_HOVER.duration * 1000;
+
+/** Accent underline wait before section nav; 0 when hover line is already fully extended. */
+function cmdNavLineRemainingMs(
+  id: string,
+  hoveredId: string | null,
+  lineHoverSinceRef: MutableRefObject<Partial<Record<string, number>>>,
+): number {
+  const hoverStarted = lineHoverSinceRef.current[id];
+  if (
+    hoveredId === id &&
+    hoverStarted !== undefined &&
+    performance.now() - hoverStarted >= CMD_HOVER_MS
+  ) {
+    return 0;
+  }
+  const startedAt = hoverStarted ?? performance.now();
+  if (hoverStarted === undefined) {
+    lineHoverSinceRef.current[id] = startedAt;
+  }
+  return Math.max(0, CMD_HOVER_MS - (performance.now() - startedAt));
+}
+
+function isCmdNavLineFullyOut(
+  id: string,
+  hoveredId: string | null,
+  lineHoverSinceRef: MutableRefObject<Partial<Record<string, number>>>,
+): boolean {
+  const hoverStarted = lineHoverSinceRef.current[id];
+  return (
+    hoveredId === id &&
+    hoverStarted !== undefined &&
+    performance.now() - hoverStarted >= CMD_HOVER_MS
+  );
+}
 
 function TextFade({
   direction,
@@ -3072,34 +3107,69 @@ const SideNavOverlay = ({
   exitButtonDebug: NavIconButtonDebugValues;
 }) => {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const openRef = useRef(open);
-  openRef.current = open;
-  const [canFineHover, setCanFineHover] = useState(true);
+  const [pendingNavId, setPendingNavId] = useState<string | null>(null);
+  const lineHoverSinceRef = useRef<Partial<Record<string, number>>>({});
+  const navTimerRef = useRef<number | null>(null);
 
-  const setAccentId = useCallback((id: string | null) => {
-    if (id !== null && !openRef.current) return;
+  const clearNavTimer = useCallback(() => {
+    if (navTimerRef.current !== null) {
+      window.clearTimeout(navTimerRef.current);
+      navTimerRef.current = null;
+    }
+  }, []);
+
+  const markHoverStart = useCallback((id: string) => {
+    lineHoverSinceRef.current[id] = performance.now();
     setHoveredId(id);
   }, []);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mediaQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
-    const syncHover = () => setCanFineHover(mediaQuery.matches);
-    syncHover();
-    if (typeof mediaQuery.addEventListener === "function") {
-      mediaQuery.addEventListener("change", syncHover);
-      return () => mediaQuery.removeEventListener("change", syncHover);
-    }
-    mediaQuery.addListener(syncHover);
-    return () => mediaQuery.removeListener(syncHover);
-  }, []);
+  const handleNavClick = useCallback(
+    (id: string) => {
+      if (pendingNavId !== null) return;
+
+      const lineFullyOut = isCmdNavLineFullyOut(id, hoveredId, lineHoverSinceRef);
+      const remaining = cmdNavLineRemainingMs(id, hoveredId, lineHoverSinceRef);
+
+      const finishNav = () => {
+        navTimerRef.current = null;
+        setPendingNavId(null);
+        onNavigate(id);
+        onClose();
+      };
+
+      if (lineFullyOut) {
+        clearNavTimer();
+        onNavigate(id);
+        onClose();
+        return;
+      }
+
+      setHoveredId(id);
+      setPendingNavId(id);
+      clearNavTimer();
+      if (remaining === 0) {
+        finishNav();
+        return;
+      }
+      navTimerRef.current = window.setTimeout(finishNav, remaining);
+    },
+    [clearNavTimer, hoveredId, onClose, onNavigate, pendingNavId],
+  );
 
   useEffect(() => {
-    setHoveredId(null);
-    if (!open && document.activeElement instanceof HTMLElement) {
-      document.activeElement.blur();
+    if (!open) {
+      clearNavTimer();
+      setPendingNavId(null);
+      setHoveredId(null);
+      lineHoverSinceRef.current = {};
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+      return;
     }
-  }, [open]);
+  }, [clearNavTimer, open]);
+
+  useEffect(() => () => clearNavTimer(), [clearNavTimer]);
 
   useEffect(() => {
     if (!open) return;
@@ -3178,26 +3248,17 @@ const SideNavOverlay = ({
                 <motion.button
                   key={item.id}
                   type="button"
-                  onClick={() => {
-                    setAccentId(null);
-                    onNavigate(item.id);
-                    onClose();
-                  }}
-                  onHoverStart={() => {
-                    if (canFineHover) setAccentId(item.id);
-                  }}
+                  onClick={() => handleNavClick(item.id)}
+                  onHoverStart={() => markHoverStart(item.id)}
                   onHoverEnd={() => {
-                    if (canFineHover) setAccentId(null);
+                    if (pendingNavId === item.id) return;
+                    setHoveredId(null);
                   }}
-                  onFocus={() => {
-                    if (canFineHover) setAccentId(item.id);
+                  onFocus={() => markHoverStart(item.id)}
+                  onBlur={() => {
+                    if (pendingNavId === item.id) return;
+                    setHoveredId(null);
                   }}
-                  onBlur={() => setAccentId(null)}
-                  onPointerDown={(e) => {
-                    if (e.pointerType === "touch") setAccentId(item.id);
-                  }}
-                  onPointerUp={() => setAccentId(null)}
-                  onPointerCancel={() => setAccentId(null)}
                   className="group relative w-full text-left py-3 sm:py-3.5 border-b border-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black focus-visible:ring-inset"
                   whileTap={TAP}
                   transition={SPRING.ui}
@@ -3210,13 +3271,13 @@ const SideNavOverlay = ({
                       <FillIcon
                         icon={item.icon}
                         filledIcon={item.id === "profile" ? UserFilledIcon : undefined}
-                        forceFilled={hoveredId === item.id}
+                        forceFilled={hoveredId === item.id || pendingNavId === item.id}
                         className="w-4 h-4 md:w-[1.125rem] md:h-[1.125rem] text-white shrink-0 ml-2 md:ml-3"
                         strokeWidth={1.5}
                       />
                       <motion.span
                         className="font-display text-sm sm:text-base tracking-[0em] leading-snug uppercase text-white pl-2 sm:pl-3 block"
-                        animate={{ x: hoveredId === item.id ? 6 : 0 }}
+                        animate={{ x: hoveredId === item.id || pendingNavId === item.id ? 6 : 0 }}
                         transition={CMD_HOVER}
                       >
                         {item.label}
@@ -3227,7 +3288,7 @@ const SideNavOverlay = ({
                     aria-hidden
                     className={`absolute bottom-0 left-0 right-0 h-[2px] origin-left ${item.color}`}
                     initial={false}
-                    animate={{ scaleX: hoveredId === item.id ? 1 : 0 }}
+                    animate={{ scaleX: hoveredId === item.id || pendingNavId === item.id ? 1 : 0 }}
                     transition={CMD_HOVER}
                   />
                 </motion.button>
@@ -3845,7 +3906,7 @@ const PhantomProfile = () => {
               media workflows across multiple platforms. Bachelor of Arts in Writing (Distinction), University of Victoria.
               </p>
               <p className={`${PROFILE_CARD_SECTION_LABEL_CLASS} mb-1.5`} style={{ color: PROFILE_ACCENT_SOFT }}>CURRENT WORK</p>
-              <ul className="font-body text-mono-2/90 leading-relaxed mb-4 ml-3 list-disc list-outside space-y-2 pl-6 sm:pl-7 marker:text-mono-2/50">
+              <ul className="font-body text-mono-2 leading-relaxed mb-4 ml-3 list-disc list-outside space-y-2 pl-6 sm:pl-7 marker:text-mono-2/50">
                 <li>RAWBLEM - Independent creative brand producing story-driven written, video, and interactive content across TikTok, Instagram Reels, YouTube Shorts, and more.</li>
                 <li>
                 SLAYWIRE - Self-produced original narrative IP.
@@ -5758,7 +5819,7 @@ const ShowcaseIllustrationLightbox = ({
             type="button"
             aria-label="Close illustration preview"
             onClick={onClose}
-            className="pdf-viewer-chrome-btn illustration-lightbox-chrome-btn illustration-lightbox-close-btn absolute right-3 top-3 z-30 sm:right-5 sm:top-5"
+            className="pdf-viewer-chrome-btn illustration-lightbox-chrome-btn illustration-lightbox-close-btn absolute right-3 top-3 z-30 translate-x-[10px] sm:right-5 sm:top-5"
           >
             <X aria-hidden />
           </button>
