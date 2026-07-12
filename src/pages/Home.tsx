@@ -1281,6 +1281,60 @@ function heroMobileSettleOffsetPx(): number {
     window.innerHeight * 0.2 - rootFontSize * 1.25 + rootFontSize * HERO_MOBILE_SETTLE_DOWN_NUDGE_REM,
   );
 }
+
+/** Keep in sync with hero video card mobile height clamp (`min(37.54vh,…)`). */
+function measureHeroMobileVideoHeightPx(): number {
+  if (typeof window === "undefined") return 0;
+  const rootFontSize = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+  const safeTop = readSafeAreaInsetTopPx();
+  const vhBand = window.innerHeight * 0.3754;
+  const remCap = window.innerHeight - 11 * rootFontSize - Math.max(rootFontSize, safeTop);
+  return Math.min(448, Math.max(145, Math.min(vhBand, remCap)));
+}
+
+/**
+ * How far to shift the settled mobile stack so its midpoint matches the ROT ruler center.
+ * Lockup + PORTFOLIO live under the name Y transform — pass assumed vs actual name Y
+ * so we can measure without snapping the DOM (avoids a flash before the settle tween).
+ */
+function measureMobileHeroRotCenterNudgePx(assumedNameY: number, actualNameY: number): number {
+  const lockup = document.querySelector<HTMLElement>('[data-hero-name-lockup="true"]');
+  const videoEl =
+    document.querySelector<HTMLElement>("#hero [data-hero-mobile-video-slot='true']") ??
+    document.querySelector<HTMLElement>("#hero article");
+  const btns = [...document.querySelectorAll<HTMLElement>("#hero button")].filter((b) => {
+    const r = b.getBoundingClientRect();
+    return r.height > 20 && r.width > 40;
+  });
+  if (!lockup || btns.length === 0) return 0;
+
+  const nameDy = assumedNameY - actualNameY;
+  const lockupRect = lockup.getBoundingClientRect();
+  const lockupTop = lockupRect.top + nameDy;
+  const lockupBottom = lockupRect.bottom + nameDy;
+  const btnBottom = Math.max(...btns.map((b) => b.getBoundingClientRect().bottom)) + nameDy;
+
+  let stackTop: number;
+  let stackBottom: number;
+
+  if (videoEl) {
+    const videoRect = videoEl.getBoundingClientRect();
+    stackTop = Math.min(videoRect.top, lockupTop);
+    stackBottom = Math.max(videoRect.bottom, lockupBottom, btnBottom);
+  } else {
+    /* Video not mounted — estimate from row bottom + known card height. */
+    const row = document.querySelector<HTMLElement>("#hero [data-hero-mobile-video-row='true']");
+    const rowBottom = row?.getBoundingClientRect().bottom ?? lockupTop;
+    const videoH = measureHeroMobileVideoHeightPx();
+    const videoTop = rowBottom - videoH;
+    stackTop = Math.min(videoTop, lockupTop);
+    stackBottom = Math.max(rowBottom, lockupBottom, btnBottom);
+  }
+
+  const stackMid = (stackTop + stackBottom) / 2;
+  return measureViewportRuleOfThirdsCenterYPx() - stackMid;
+}
+
 function heroDesktopSettleOffsetPx(): number {
   if (typeof window === "undefined") return 0;
   const rootFontSize = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
@@ -1318,11 +1372,11 @@ const HERO_NAME_MOBILE_SHELL_CLASS =
   "max-md:mx-auto max-md:w-full max-md:max-w-full max-md:items-center";
 const HERO_NAME_MOBILE_NAME_BOX_CLASS = "max-md:w-fit max-md:max-w-full";
 const HERO_NAME_MOBILE_TAGLINE_CLASS =
-  "max-md:mt-0 max-md:w-full max-md:max-w-full max-md:self-center max-md:translate-x-[1.5px] max-md:pl-0 max-md:pr-0 max-md:text-center max-md:tracking-[0.068em] max-md:text-[clamp(0.62rem,2.7vw,0.8rem)]";
+  "max-md:mt-0 max-md:w-fit max-md:max-w-full max-md:self-center max-md:translate-x-[0.28rem] max-md:pl-0 max-md:pr-0 max-md:text-center max-md:tracking-[0.045em] max-md:whitespace-nowrap max-md:text-[clamp(0.55rem,2.95vw,0.924rem)] max-md:max-[400px]:text-[clamp(0.55rem,2.95vw,0.924rem)]";
 const HERO_NAME_MOBILE_DISPLAY_FONT_CLASS =
-  "max-md:text-[clamp(2.95rem,12.6vw,4.4rem)] max-md:max-[400px]:text-[clamp(2.75rem,11.6vw,4.4rem)]";
+  "max-md:text-[clamp(3.407rem,14.55vw,5.082rem)] max-md:max-[400px]:text-[clamp(3.176rem,13.4vw,5.082rem)]";
 const HERO_NAME_MOBILE_PORTFOLIO_BUTTON_CLASS =
-  "max-md:h-[calc(clamp(2.95rem,12.6vw,4.4rem)*0.9)] max-md:max-h-[4.4rem] max-md:px-4 max-md:[&_.texts]:gap-1.5 max-md:[&_.texts]:text-[clamp(0.8rem,3.1vw,0.92rem)]";
+  "max-md:h-[calc(clamp(3.245rem,13.86vw,4.84rem)*0.9)] max-md:max-h-[4.84rem] max-md:px-4 max-md:[&_.texts]:gap-1.5 max-md:[&_.texts]:text-[clamp(0.88rem,3.41vw,1.012rem)]";
 const HERO_NAME_SWEEP_MS = 700;
 const HERO_NAME_SPLIT_MS = 600;
 /** Rainbow layers — main-menu section accents (NAV order), staggered outside white frame. */
@@ -1411,10 +1465,10 @@ const HeroNameRainbowFade = ({
   const rainbowLayerDurS = HERO_NAME_TEXT_RAINBOW_LAYER_MS / 1000;
   const whiteLayerDurS = HERO_NAME_TEXT_WHITE_LAYER_MS / 1000;
   const layerClass = block
-    ? "pointer-events-none absolute inset-0 block"
+    ? "pointer-events-none absolute inset-0 block whitespace-nowrap"
     : "pointer-events-none absolute inset-0 inline-block whitespace-nowrap";
   const spacerClass = block
-    ? "invisible block"
+    ? "invisible block whitespace-nowrap"
     : "invisible inline-block whitespace-nowrap";
 
   const rainbowLayers = (
@@ -1699,6 +1753,8 @@ const HeroNameReveal = ({
     topLineTop: 0,
     bottomLineTop: 0,
   });
+  /** Mobile — font-size so tagline glyph width matches ROBBIE + accent lockup. */
+  const [mobileTaglineFontPx, setMobileTaglineFontPx] = useState<number | null>(null);
   const heroDebugEnabled = useHeroDebugEnabled();
 
   const easeInOutExpo: [number, number, number, number] = [0.87, 0, 0.13, 1];
@@ -1769,6 +1825,74 @@ const HeroNameReveal = ({
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [heroReady, measureMetrics]);
+
+  /** Mobile — scale tagline type so its one-line width matches the name lockup. */
+  useLayoutEffect(() => {
+    if (!heroReady) {
+      setMobileTaglineFontPx(null);
+      return;
+    }
+
+    const mq = window.matchMedia("(max-width: 767px)");
+    const lockup = containerRef.current?.querySelector<HTMLElement>('[data-hero-name-lockup="true"]');
+    const tagline = taglineRef.current;
+    if (!lockup || !tagline) return;
+
+    const measureIntrinsicGlyphWidth = () => {
+      const spacer = tagline.querySelector<HTMLElement>(".invisible");
+      if (spacer) {
+        const w = Math.max(spacer.scrollWidth, spacer.getBoundingClientRect().width);
+        if (w > 4) return w;
+      }
+      return Math.max(tagline.scrollWidth, tagline.getBoundingClientRect().width);
+    };
+
+    const fitTaglineToLockup = () => {
+      if (!mq.matches) {
+        setMobileTaglineFontPx(null);
+        return;
+      }
+
+      const targetW = lockup.getBoundingClientRect().width;
+      if (targetW < 8) return;
+
+      const prev = {
+        fontSize: tagline.style.fontSize,
+        width: tagline.style.width,
+        maxWidth: tagline.style.maxWidth,
+      };
+
+      /* Unconstrained probe — avoid max-width:100% clipping the measured glyph width. */
+      tagline.style.maxWidth = "none";
+      tagline.style.width = "max-content";
+      tagline.style.fontSize = "100px";
+      void tagline.offsetWidth;
+      const probeW = measureIntrinsicGlyphWidth();
+      tagline.style.fontSize = prev.fontSize;
+      tagline.style.width = prev.width;
+      tagline.style.maxWidth = prev.maxWidth;
+
+      if (probeW < 4) return;
+
+      const nextPx = (targetW / probeW) * 100;
+      const clamped = Math.min(40, Math.max(7, nextPx));
+      setMobileTaglineFontPx((prevPx) => {
+        if (prevPx != null && Math.abs(prevPx - clamped) < 0.08) return prevPx;
+        return clamped;
+      });
+    };
+
+    fitTaglineToLockup();
+    const ro = new ResizeObserver(() => fitTaglineToLockup());
+    ro.observe(lockup);
+    window.addEventListener("resize", fitTaglineToLockup);
+    mq.addEventListener("change", fitTaglineToLockup);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", fitTaglineToLockup);
+      mq.removeEventListener("change", fitTaglineToLockup);
+    };
+  }, [heroReady, step]);
 
   const linesVisible = step === "sweep" || step === "reveal";
   const linesSplit = step === "reveal" || step === "done";
@@ -1872,6 +1996,7 @@ const HeroNameReveal = ({
           {/* Name rectangle — col 1, row 1 */}
           <div
             data-hero-center-part="true"
+            data-hero-name-lockup="true"
             className={`col-start-1 row-start-1 w-fit min-w-0 rounded-[11px] border border-transparent bg-transparent px-3 pt-3 pb-[0.234375rem] sm:rounded-xl sm:px-4 sm:pt-3.5 sm:pb-[0.28125rem] max-md:px-0 max-md:pt-0 ${HERO_NAME_MOBILE_NAME_BOX_CLASS}`}
           >
             <h1 className="relative m-0 w-full max-w-full min-w-0 font-display [font-kerning:none]">
@@ -1969,9 +2094,10 @@ const HeroNameReveal = ({
             ref={taglineRef}
             data-hero-center-part="true"
             className={`col-start-1 row-start-2 m-0 mt-0 w-full translate-x-px rounded-[11px] border border-transparent bg-transparent pl-[1.16rem] pr-3 py-[0.4rem] max-[639px]:box-border max-[400px]:text-[0.74rem] font-display text-[clamp(0.8rem,2.25vw,0.92rem)] font-medium uppercase leading-snug tracking-[0.085em] text-white sm:mt-0 sm:rounded-xl sm:pl-[1.42rem] sm:pr-4 sm:py-[0.45rem] sm:text-[clamp(0.8rem,2.25vw,0.92rem)] ${HERO_NAME_MOBILE_TAGLINE_CLASS}`}
+            style={mobileTaglineFontPx != null ? { fontSize: mobileTaglineFontPx } : undefined}
           >
             <motion.span
-              className="block"
+              className="block max-md:whitespace-nowrap"
               initial={false}
               animate={{ y: HERO_TAGLINE_OPTICAL_OFFSET_Y }}
             >
@@ -2084,11 +2210,16 @@ const Hero = ({
   const [bakeCopied, setBakeCopied] = useState(false);
   const [defaultsApplied, setDefaultsApplied] = useState(false);
   const [isMobileHeroLayout, setIsMobileHeroLayout] = useState(false);
+  /** Mobile: video card width synced to ROBBIE+rectangle / MCLAUGHLIN lockup. */
+  const [mobileLockupWidthPx, setMobileLockupWidthPx] = useState<number | null>(null);
   const mobileNameY = useMotionValue(0);
+  /** Mobile video Y — settles in parallel with name so the stack centers in the ROT ruler. */
+  const mobileVideoY = useMotionValue(0);
   const desktopNameY = useMotionValue(0);
   const heroNameMotionRef = useRef<HTMLDivElement>(null);
   const [heroPhase1RevealY, setHeroPhase1RevealY] = useState(0);
   const [heroPhase1LayoutReady, setHeroPhase1LayoutReady] = useState(false);
+  const sliderPhaseActiveRef = useRef(false);
   const heroTouchStartYRef = useRef<number | null>(null);
   const heroDebugEnabled = useHeroDebugEnabled();
   const [videoGlobalDebugControls, setVideoGlobalDebugControls] = useState<HeroGlobalLayoutControl>(
@@ -2351,19 +2482,24 @@ const Hero = ({
   // Reset all animation phases when assets aren't ready.
   useEffect(() => {
     if (!(fontsReady && heroMediaReady && heroRevealDelayDone)) {
+      sliderPhaseActiveRef.current = false;
       setSliderPhaseActive(false);
       setVideoRevealActive(false);
       setSliderAnimDone(false);
       return;
     }
     if (reduceMotion) {
+      sliderPhaseActiveRef.current = true;
       setSliderPhaseActive(true);
       setVideoRevealActive(true);
       setSliderAnimDone(true);
       return;
     }
     // Phase 1 name reveal: ~1.6s (ml5 line sweep + split + text). Hold briefly → slider phase.
-    const t = window.setTimeout(() => setSliderPhaseActive(true), 1700);
+    const t = window.setTimeout(() => {
+      sliderPhaseActiveRef.current = true;
+      setSliderPhaseActive(true);
+    }, 1700);
     return () => window.clearTimeout(t);
   }, [fontsReady, heroMediaReady, heroRevealDelayDone, reduceMotion]);
 
@@ -2373,46 +2509,75 @@ const Hero = ({
       setVideoRevealActive(false);
       return;
     }
-    if (reduceMotion) {
+    if (reduceMotion || isMobileHeroLayout) {
+      /* Mobile: mount immediately so ROT-center measure has real video geometry;
+       * scaleX still delayed via the card transition. */
       setVideoRevealActive(true);
       return;
     }
-    const videoRevealDelayMs =
-      HERO_VIDEO_REVEAL_DELAY_MS +
-      (isMobileHeroLayout ? HERO_VIDEO_REVEAL_DELAY_MOBILE_EXTRA_S * 1000 : 0);
-    const t = window.setTimeout(() => setVideoRevealActive(true), videoRevealDelayMs);
+    const t = window.setTimeout(() => setVideoRevealActive(true), HERO_VIDEO_REVEAL_DELAY_MS);
     return () => window.clearTimeout(t);
   }, [isMobileHeroLayout, sliderPhaseActive, reduceMotion]);
 
-  /** Mobile — imperative y tween (center → legacy final); avoids layout-mode + animate prop conflicts. */
+  /** Mobile — name + video settle together to ROT-centered finals (no post-animation nudge). */
   useEffect(() => {
     if (!isMobileHeroLayout || !heroPhase1LayoutReady) return;
 
     if (!sliderPhaseActive) {
+      sliderPhaseActiveRef.current = false;
       mobileNameY.set(heroPhase1RevealY);
+      mobileVideoY.set(0);
       return;
     }
 
+    sliderPhaseActiveRef.current = true;
+
+    /* Wait for video mount so ROT measure uses real card height (avoids restart hitch). */
+    if (!videoRevealActive && !reduceMotion) {
+      mobileNameY.set(heroPhase1RevealY);
+      mobileVideoY.set(0);
+      return;
+    }
+
+    const settle = heroMobileSettleOffsetPx();
+    mobileVideoY.set(0);
+    const rotNudge = measureMobileHeroRotCenterNudgePx(settle, mobileNameY.get());
+
+    const nameTarget = settle + rotNudge;
+    const videoTarget = rotNudge;
+
     if (reduceMotion) {
-      mobileNameY.set(heroMobileSettleOffsetPx());
+      mobileNameY.set(nameTarget);
+      mobileVideoY.set(videoTarget);
       return;
     }
 
     mobileNameY.set(heroPhase1RevealY);
-    const controls = animate(mobileNameY, heroMobileSettleOffsetPx(), {
+    mobileVideoY.set(0);
+    const nameControls = animate(mobileNameY, nameTarget, {
+      duration: HERO_NAME_SETTLE_DUR_S,
+      ease: HERO_SETTLE_EASE,
+      delay: HERO_NAME_SETTLE_DELAY_S,
+    });
+    const videoControls = animate(mobileVideoY, videoTarget, {
       duration: HERO_NAME_SETTLE_DUR_S,
       ease: HERO_SETTLE_EASE,
       delay: HERO_NAME_SETTLE_DELAY_S,
     });
 
-    return () => controls.stop();
+    return () => {
+      nameControls.stop();
+      videoControls.stop();
+    };
   }, [
     heroPhase1LayoutReady,
     heroPhase1RevealY,
     isMobileHeroLayout,
     mobileNameY,
+    mobileVideoY,
     reduceMotion,
     sliderPhaseActive,
+    videoRevealActive,
   ]);
 
   /** Desktop/tablet — same imperative settle tween; starts centered, then settles to legacy breakpoint offsets. */
@@ -2464,6 +2629,13 @@ const Hero = ({
       const lockupEl = heroInViewRef.current;
       if (!motionEl || !lockupEl) return;
 
+      /* After settle starts, do not yank Y back to phase-1 on resize / VV ticks. */
+      if (sliderPhaseActiveRef.current) {
+        if (isMobileHeroLayout) return;
+        desktopNameY.set(heroDesktopSettleOffsetPx());
+        return;
+      }
+
       if (isMobileHeroLayout) {
         mobileNameY.set(0);
       } else {
@@ -2488,6 +2660,39 @@ const Hero = ({
   }, [desktopNameY, heroReady, isMobileHeroLayout, mobileNameY, heroDesktopViewport]);
 
   const heroNameRevealReady = heroReady && heroPhase1LayoutReady;
+
+  /** Mobile — match video card width to ROBBIE + accent rectangle (name lockup). */
+  useLayoutEffect(() => {
+    if (!isMobileHeroLayout || !heroNameRevealReady) {
+      setMobileLockupWidthPx(null);
+      return;
+    }
+
+    const measure = () => {
+      const lockup = document.querySelector<HTMLElement>('[data-hero-name-lockup="true"]');
+      if (!lockup) return;
+      const width = lockup.getBoundingClientRect().width;
+      if (width > 0) {
+        setMobileLockupWidthPx((prev) => {
+          const next = Math.round(width);
+          return prev === next ? prev : next;
+        });
+      }
+    };
+
+    measure();
+    const raf = window.requestAnimationFrame(measure);
+    const lockup = document.querySelector<HTMLElement>('[data-hero-name-lockup="true"]');
+    const ro = lockup ? new ResizeObserver(measure) : null;
+    if (lockup && ro) ro.observe(lockup);
+    window.addEventListener("resize", measure);
+    return () => {
+      window.cancelAnimationFrame(raf);
+      ro?.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [heroNameRevealReady, isMobileHeroLayout, sliderAnimDone]);
+
   const currentHeroSlide = heroSlides[heroSlideIndex];
   const currentFocal = heroFocalOverrides[currentHeroSlide.id] ?? heroFocalLocked[currentHeroSlide.id] ?? parseFocalPoint(currentHeroSlide.focalPoint);
   const currentZoom = heroZoomOverrides[currentHeroSlide.id] ?? heroZoomLocked[currentHeroSlide.id] ?? currentHeroSlide.zoom ?? 1;
@@ -2537,18 +2742,32 @@ const Hero = ({
     window.setTimeout(() => setDefaultsApplied(false), 1400);
   };
 
+  const heroVideoScaleDelayS = isMobileHeroLayout
+    ? HERO_VIDEO_REVEAL_DELAY_S + HERO_VIDEO_REVEAL_DELAY_MOBILE_EXTRA_S
+    : 0;
+
   const heroVideoCard = (
     <motion.div
-      className={`relative mx-auto max-[639px]:overflow-hidden sm:overflow-visible rounded-[11px] sm:rounded-xl ${HERO_VIDEO_CARD_WIDTH_CLASS}`}
+      data-hero-mobile-video-slot={isMobileHeroLayout ? "true" : undefined}
+      className={`relative mx-auto max-[639px]:overflow-hidden sm:overflow-visible rounded-[11px] sm:rounded-xl ${HERO_VIDEO_CARD_WIDTH_CLASS} max-md:max-w-full`}
       initial={{ scaleX: 0 }}
       animate={{ scaleX: 1 }}
       transition={
         reduceMotion
           ? { duration: 0 }
-          : { duration: HERO_NAME_SETTLE_DUR_S, ease: HERO_VIDEO_SCALE_EASE }
+          : {
+              duration: HERO_NAME_SETTLE_DUR_S,
+              ease: HERO_VIDEO_SCALE_EASE,
+              delay: heroVideoScaleDelayS,
+            }
       }
       onAnimationComplete={() => setSliderAnimDone(true)}
-      style={{ transformOrigin: "center center" }}
+      style={{
+        transformOrigin: "center center",
+        ...(isMobileHeroLayout && mobileLockupWidthPx
+          ? { width: mobileLockupWidthPx, maxWidth: "100%" }
+          : null),
+      }}
     >
       <motion.span
         aria-hidden
@@ -2566,7 +2785,7 @@ const Hero = ({
         }}
       />
       <motion.div
-        className="relative z-[1] mx-auto w-full h-[clamp(200px,min(52vh,calc(100svh-11rem-max(1rem,env(safe-area-inset-top,0px)))),620px)] md:max-lg:h-[clamp(200px,min(44vh,calc(100svh-14rem-max(1rem,env(safe-area-inset-top,0px)))),500px)] lg:h-[clamp(240px,min(54vh,calc(100svh-11.5rem-max(1.5rem,env(safe-area-inset-top,0px)))),680px)] xl:h-[clamp(260px,min(56vh,calc(100svh-12rem-max(2rem,env(safe-area-inset-top,0px)))),760px)] overflow-hidden rounded-[11px] sm:rounded-xl border border-white bg-black"
+        className="relative z-[1] mx-auto w-full h-[clamp(145px,min(37.54vh,calc(100svh-11rem-max(1rem,env(safe-area-inset-top,0px)))),448px)] md:max-lg:h-[clamp(200px,min(44vh,calc(100svh-14rem-max(1rem,env(safe-area-inset-top,0px)))),500px)] lg:h-[clamp(240px,min(54vh,calc(100svh-11.5rem-max(1.5rem,env(safe-area-inset-top,0px)))),680px)] xl:h-[clamp(260px,min(56vh,calc(100svh-12rem-max(2rem,env(safe-area-inset-top,0px)))),760px)] overflow-hidden rounded-[11px] sm:rounded-xl border border-white bg-black"
         style={{
           boxShadow:
             "0 36px 88px rgba(0,0,0,0.6), inset 0 -40px 70px rgba(0,0,0,0.52), 0 0 28px 4px rgba(255,255,255,0.04)",
@@ -2679,13 +2898,24 @@ const Hero = ({
           isMobileHeroLayout && !sliderPhaseActive ? " max-md:grid-rows-1" : ""
         }`}
       >
-        <div className="relative flex min-h-0 items-center justify-center max-lg:items-end max-lg:pb-2 md:max-lg:pb-3">
+        <div
+          data-hero-mobile-video-row={isMobileHeroLayout ? "true" : undefined}
+          className="relative flex min-h-0 items-center justify-center max-lg:items-end max-lg:pb-2 md:max-lg:pb-3"
+        >
           <div className="absolute inset-0 flex w-full items-center justify-center max-lg:items-end max-lg:pb-2 md:max-lg:translate-y-8 md:max-lg:pb-1 max-[400px]:px-3 sm:px-0">
           {videoRevealActive &&
             (heroDesktopLayoutActive ? (
               <div className="mx-auto w-fit min-w-0 max-w-full" style={heroVideoGlobalDebugStyle}>
                 {heroVideoCard}
               </div>
+            ) : isMobileHeroLayout ? (
+              <motion.div
+                className="mx-auto w-full max-w-full"
+                style={{ y: mobileVideoY }}
+                initial={false}
+              >
+                {heroVideoCard}
+              </motion.div>
             ) : (
               heroVideoCard
             ))}
@@ -2725,10 +2955,11 @@ const Hero = ({
                   onGlobalDebugReset={handleGlobalDebugReset}
                   button={
                     <motion.div
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={sliderAnimDone ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
+                      initial={{ opacity: 0 }}
+                      animate={sliderAnimDone ? { opacity: 1 } : { opacity: 0 }}
                       transition={{ duration: 0.42, delay: sliderAnimDone ? 0.15 : 0, ease: EASE.out }}
-                      className="shrink-0 self-end"
+                      className={`shrink-0 self-end${sliderAnimDone ? "" : " pointer-events-none"}`}
+                      aria-hidden={!sliderAnimDone}
                     >
                       <motion.button
                         type="button"

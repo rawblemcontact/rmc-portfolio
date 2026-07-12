@@ -88,13 +88,26 @@ export function ShowcaseAttachedTabStrip({
   const tabListRef = useRef<HTMLDivElement>(null);
   const bodyPadRef = useRef<HTMLDivElement>(null);
   const folderRef = useRef<HTMLDivElement>(null);
+  /** Phone-only: outer pad keeps page scroll height at tallest tab; card itself stays natural. */
+  const panelShellRef = useRef<HTMLDivElement>(null);
+  /** Natural (unpadded) active tab content — measured separately from the page-height reserve. */
+  const activeNaturalRef = useRef<HTMLDivElement>(null);
+  const hiddenPanelMeasureRefs = useRef<Record<ShowcaseTabId, HTMLDivElement | null>>({
+    "tab-1": null,
+    "tab-2": null,
+    "tab-3": null,
+    "tab-4": null,
+    "tab-5": null,
+    "tab-6": null,
+  });
+  const mobilePanelTallestRef = useRef(0);
   const [tabGeom, setTabGeom] = useState({ ml: 0, w: 0 });
   const [bodyContentWidth, setBodyContentWidth] = useState(0);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [isPhoneViewport, setIsPhoneViewport] = useState(false);
   /**
    * Phone-only: distance from projects panel viewport top to Featured Writing folder top,
-   * captured on tab select and restored after layout so natural tab heights do not jolt scroll.
+   * captured on tab select and restored after layout (belt-and-suspenders with height reserve).
    */
   const folderAnchorOffsetRef = useRef<number | null>(null);
   const [mobileSwitchDir, setMobileSwitchDir] = useState<1 | -1>(1);
@@ -260,14 +273,45 @@ export function ShowcaseAttachedTabStrip({
       : panel;
 
   /**
-   * Phone-only: tabs keep natural height. After content swaps, nudge projects-panel
-   * scrollTop so the Featured Writing folder stays at the same viewport offset.
+   * Phone-only: keep projects scroll height at the tallest Featured Writing panel via
+   * paddingBottom on an outer shell. The body card / tab section itself stays content-sized
+   * so shorter/longer blurbs shrink or grow naturally without jolting page position.
    */
   useLayoutEffect(() => {
+    const shell = panelShellRef.current;
     if (!isPhoneViewport) {
+      mobilePanelTallestRef.current = 0;
+      if (shell) {
+        shell.style.minHeight = "";
+        shell.style.paddingBottom = "";
+      }
       folderAnchorOffsetRef.current = null;
       return;
     }
+
+    let tallest = 0;
+    for (const id of TAB_ORDER) {
+      const probe = hiddenPanelMeasureRefs.current[id];
+      if (!probe) continue;
+      tallest = Math.max(tallest, Math.ceil(probe.getBoundingClientRect().height));
+    }
+    const activeNatural = activeNaturalRef.current;
+    const activeH = activeNatural
+      ? Math.ceil(activeNatural.getBoundingClientRect().height)
+      : 0;
+    if (activeH > 0) {
+      tallest = Math.max(tallest, activeH);
+    }
+    if (tallest > 0) {
+      mobilePanelTallestRef.current = Math.max(mobilePanelTallestRef.current, tallest);
+    }
+    const reserved = mobilePanelTallestRef.current;
+    const pad = reserved > 0 && activeH > 0 ? Math.max(0, reserved - activeH) : 0;
+    if (shell) {
+      shell.style.minHeight = "";
+      shell.style.paddingBottom = pad > 0 ? `${pad}px` : "";
+    }
+
     const savedOffset = folderAnchorOffsetRef.current;
     if (savedOffset == null) return;
     const folder = folderRef.current;
@@ -279,7 +323,7 @@ export function ShowcaseAttachedTabStrip({
     scrollEl.scrollTop += newOffset - savedOffset;
     folderAnchorOffsetRef.current =
       folder.getBoundingClientRect().top - scrollEl.getBoundingClientRect().top;
-  }, [activeId, isPhoneViewport]);
+  }, [activeId, isPhoneViewport, previewColumnWidthPx]);
 
   return (
     <div className={`flex w-full flex-col ${className}`}>
@@ -422,25 +466,55 @@ export function ShowcaseAttachedTabStrip({
             </div>
           </div>
 
-          <div
-            className={[
-              "featured-writing-body-card featured-writing-inner-rule-body-top relative z-[1] flex flex-col overflow-visible",
-            ].join(" ")}
-            role="region"
-            aria-label="Featured writing content"
-          >
+          <div ref={panelShellRef} className="relative min-w-0 w-full">
             <div
-              ref={bodyPadRef}
-              className="profile-card-surface rounded-t-none rounded-b-[11px] px-3 py-3 sm:rounded-b-xl sm:px-4 sm:py-3.5"
+              className={[
+                "featured-writing-body-card featured-writing-inner-rule-body-top relative z-[1] flex flex-col overflow-visible",
+              ].join(" ")}
+              role="region"
+              aria-label="Featured writing content"
             >
               <div
-                className="relative min-w-0"
-                style={{
-                  marginLeft: tabInsetLeft,
-                  width: `calc(100% - ${tabInsetLeft}px)`,
-                }}
+                ref={bodyPadRef}
+                className="profile-card-surface rounded-t-none rounded-b-[11px] px-3 py-3 sm:rounded-b-xl sm:px-4 sm:py-3.5"
               >
-                {resolvedPanel != null ? resolvedPanel : null}
+                <div
+                  className="relative min-w-0"
+                  style={{
+                    marginLeft: tabInsetLeft,
+                    width: `calc(100% - ${tabInsetLeft}px)`,
+                  }}
+                >
+                  <div ref={activeNaturalRef} className="min-w-0">
+                    {resolvedPanel != null ? resolvedPanel : null}
+                  </div>
+                  {isPhoneViewport && typeof panel === "function" ? (
+                    <div
+                      aria-hidden
+                      inert
+                      className="pointer-events-none absolute left-0 top-0 -z-10 w-full"
+                      style={{ visibility: "hidden" }}
+                    >
+                      {TAB_ORDER.map((id) => (
+                        <div
+                          key={`fw-measure-${id}`}
+                          ref={(el) => {
+                            hiddenPanelMeasureRefs.current[id] = el;
+                          }}
+                          className="min-w-0 w-full"
+                        >
+                          {panel({
+                            tabId: id,
+                            previewColumnWidthPx,
+                            previewWidthPx,
+                            tabInsetLeftPx: tabInsetLeft,
+                            previewGutterPx,
+                          })}
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
               </div>
             </div>
           </div>
