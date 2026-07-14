@@ -46,7 +46,9 @@ export default defineConfig(({ mode }) => ({
             : [],
       },
     }),
-    ...(process.env.NODE_ENV !== "production" ? [runtimeErrorOverlay()] : []),
+    ...(process.env.NODE_ENV !== "production" && process.env.REPL_ID !== undefined
+      ? [runtimeErrorOverlay()]
+      : []),
     tailwindcss(),
     metaImagesPlugin(),
     ...replitDevPlugins,

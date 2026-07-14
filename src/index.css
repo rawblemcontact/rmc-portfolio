@@ -5297,7 +5297,7 @@
     line-clamp: 3 !important;
   }
 
-  /* Four cards — 2×2 grid (same row layout as mobile); card sizing tokens unchanged. */
+  /* Four cards — 2×2 within the same total height as the portrait four-card row. */
   #projects .projects-carousel-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -5340,8 +5340,61 @@
     --projects-four-cards-gap: clamp(0.625rem, 1.5svh, 0.875rem);
   }
 
+  #projects .projects-showcase-stage {
+    transform: translateY(-2%);
+  }
+
+  /* Inline-block baseline strut was inflating grid rows (~5px) and clipping card borders. */
+  #projects .projects-carousel-grid > * {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  #projects .projects-carousel-grid [data-carousel-card] {
+    display: block !important;
+    vertical-align: top;
+    width: 100%;
+  }
+
+  #projects .projects-carousel-stack > div > div.overflow-hidden {
+    overflow: visible !important;
+  }
+
   #projects [data-carousel-card] {
-    height: min(444px, 57svh) !important;
+    height: calc(((min(444px, 57svh) - var(--slide-gap)) / 2) * 1.05) !important;
+  }
+
+  #projects [data-carousel-card] .project-card-thumbnail-section {
+    height: 60% !important;
+  }
+
+  #projects [data-carousel-card] .project-card-description-section {
+    height: 40% !important;
+    transform: none !important;
+    /* Keep black fill inside the stroke so it cannot paint over the card border. */
+    left: 1px !important;
+    right: 1px !important;
+    width: auto !important;
+  }
+
+  #projects [data-carousel-card] .project-card-tagline-panel > div:first-child {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  /* Equal space above title and between title → divider (matches title inset pt). */
+  #projects [data-carousel-card] .project-card-title-inset {
+    padding-bottom: 0.75rem !important;
+  }
+
+  /* Body → card bottom matches divider → body (sm:gap-2). */
+  #projects [data-carousel-card] .project-card-tagline-panel {
+    padding-bottom: 0.5rem !important;
+  }
+
+  #projects [data-carousel-card] .project-card-tagline {
+    padding-bottom: 0 !important;
   }
 
   /* Nudge header + four cards down (does not affect the four-card edge gaps). */
@@ -6738,7 +6791,7 @@
   }
 
   /* Panel body: column layout (thumbnail above text) — revert sm:flex-row */
-  .featured-writing-body-card .profile-card-surface > div > div {
+  #projects .featured-writing-panel-body {
     flex-direction: column !important;
     align-items: stretch !important;
     gap: 0.75rem !important;

@@ -30,6 +30,17 @@ import { Button } from "../components/ui/button";
 import { FillIcon } from "../components/FillIcon";
 import { ProfileDesktopLayoutDebugPanel } from "../components/ProfileDesktopLayoutDebugPanel";
 import {
+  ProjectsTabletThumbnailDebugPanel,
+  buildProjectsTabletThumbnailLockInSnippet,
+  buildProjectsTabletThumbnailStyle,
+  readProjectsTabletThumbnailDebugValues,
+  saveProjectsTabletThumbnailDebugValues,
+  seedProjectsTabletThumbnailDefaultsFromCards,
+  type ProjectsTabletThumbnailControl,
+  type ProjectsTabletThumbnailDebugValues,
+  type ProjectsTabletThumbnailId,
+} from "../components/ProjectsTabletThumbnailDebugPanel";
+import {
   ProfileRedLineDebugPanel,
   PROFILE_RED_LINE_DEBUG_DEFAULTS,
   buildProfileRedLinePillDebugStyle,
@@ -1189,24 +1200,11 @@ const SectionHeader = ({
 };
 
 // --- HERO NAME REVEAL ---
-// ml5 "Signal & Noise" — center line sweeps in, splits to frame the stack,
-// five staggered rainbow layers (main-menu accents), name + tagline rainbow fade, lines fade.
+// Timed entrance — name + tagline + accent rainbow color fade (line sweep removed).
 type HeroNameRevealStep = "hidden" | "sweep" | "reveal" | "done";
 
-type HeroNameRevealMetrics = {
-  centerLineTop: number;
-  topLineTop: number;
-  bottomLineTop: number;
-};
-
-const HERO_NAME_LINE_H = 1;
-const HERO_NAME_LINE_HALF = HERO_NAME_LINE_H / 2;
+/** Kept for color-fade timing parity with the former line fade-out. */
 const HERO_NAME_LINE_FADE_MS = 130;
-const HERO_NAME_LINE_FADE_EASE: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
-/** Inset above ROBBIE cap / below tagline (× display font size). */
-const HERO_NAME_FRAME_PAD_RATIO = 0.16;
-/** Horizontal bleed so sweep lines extend past the tagline copy. */
-const HERO_NAME_LINE_BLEED = "clamp(-1.25rem,-4vw,-2.5rem)";
 /** Safe-area top inset in px (matches `env(safe-area-inset-top, 0px)`). */
 function readSafeAreaInsetTopPx(): number {
   const probe = document.createElement("div");
@@ -1379,35 +1377,60 @@ const HERO_NAME_MOBILE_PORTFOLIO_BUTTON_CLASS =
   "max-md:h-[calc(clamp(3.245rem,13.86vw,4.84rem)*0.9)] max-md:max-h-[4.84rem] max-md:px-4 max-md:[&_.texts]:gap-1.5 max-md:[&_.texts]:text-[clamp(0.88rem,3.41vw,1.012rem)]";
 const HERO_NAME_SWEEP_MS = 700;
 const HERO_NAME_SPLIT_MS = 600;
-/** Rainbow layers — main-menu section accents (NAV order), staggered outside white frame. */
+/** Rainbow accents — main-menu section colors (NAV order) for name/tagline/accent fades. */
 const HERO_NAME_RAINBOW_MENU_IDS = ["profile", "projects", "experience", "skills", "social"] as const;
-const HERO_NAME_RAINBOW_STAGGER_MS = 55;
-const HERO_NAME_RAINBOW_LAYERS = HERO_NAME_RAINBOW_MENU_IDS.map((id, index) => ({
-  id,
-  color: SECTION_ACCENT_COLOR[id],
-  offsetPx: index + 1,
-  delayMs: HERO_NAME_RAINBOW_STAGGER_MS * (index + 1),
-}));
+/** >1 shortens color-fade durations (2.25 = 50% faster twice from baseline). */
+const HERO_NAME_COLOR_FADE_SPEED = 2.25;
+const heroNameColorFadeMs = (ms: number) => Math.round(ms / HERO_NAME_COLOR_FADE_SPEED);
+const HERO_NAME_RAINBOW_STAGGER_MS = heroNameColorFadeMs(72);
 const HERO_NAME_LAST_RAINBOW_DELAY_MS =
   HERO_NAME_RAINBOW_STAGGER_MS * HERO_NAME_RAINBOW_MENU_IDS.length;
-/** Rainbow flash — spans split; last layer tail ends with line fade-out. */
-const HERO_NAME_TEXT_RAINBOW_LAYER_MS =
-  HERO_NAME_SPLIT_MS + HERO_NAME_LINE_FADE_MS;
-/** White resolve — starts when line fade begins, ends with last staggered line. */
-const HERO_NAME_TEXT_WHITE_DELAY_MS = HERO_NAME_SPLIT_MS;
+/** Rainbow flash — soft crossfade through section accents into white. */
+const HERO_NAME_TEXT_RAINBOW_LAYER_MS = heroNameColorFadeMs(
+  HERO_NAME_SPLIT_MS + HERO_NAME_LINE_FADE_MS + 280,
+);
+/** White resolve — starts after the color cascade begins to settle. */
+const HERO_NAME_TEXT_WHITE_DELAY_MS = heroNameColorFadeMs(HERO_NAME_SPLIT_MS + 80);
 const HERO_NAME_TEXT_WHITE_LAYER_MS =
-  HERO_NAME_LAST_RAINBOW_DELAY_MS + HERO_NAME_LINE_FADE_MS;
-/** Entrance slide — lands as text + line fade-out complete. */
+  HERO_NAME_LAST_RAINBOW_DELAY_MS + heroNameColorFadeMs(HERO_NAME_LINE_FADE_MS + 220);
+/** Entrance — white resolve complete (from reveal start). */
 const HERO_NAME_TEXT_ENTRANCE_MS =
   HERO_NAME_TEXT_WHITE_DELAY_MS + HERO_NAME_TEXT_WHITE_LAYER_MS;
+/** Brief hold after color fades resolve before settle / video. */
+const HERO_NAME_COLOR_FADE_BEAT_MS = 320;
+/** Name reveal start → color fades done + beat (gates settle phase). */
+const HERO_NAME_PHASE1_COMPLETE_MS =
+  HERO_NAME_SWEEP_MS + HERO_NAME_TEXT_ENTRANCE_MS + HERO_NAME_COLOR_FADE_BEAT_MS;
 const HERO_NAME_EASE_OUT_EXPO: [number, number, number, number] = [0.16, 1, 0.3, 1];
-/** Softer crossfade between rainbow layers and into white. */
-const HERO_NAME_TEXT_BLEND_EASE: [number, number, number, number] = [0.38, 0.02, 0.16, 1];
-const HERO_NAME_TEXT_RAINBOW_BLEND_OPACITY = [0, 0.38, 0.72, 0.96, 0.82, 0.52, 0.24, 0.08, 0] as const;
-const HERO_NAME_TEXT_RAINBOW_BLEND_TIMES = [0, 0.12, 0.26, 0.42, 0.58, 0.74, 0.86, 0.94, 1] as const;
-const HERO_NAME_TEXT_WHITE_BLEND_OPACITY = [0, 0.1, 0.32, 0.58, 0.78, 0.9, 0.96, 0.99, 1] as const;
-const HERO_NAME_TEXT_WHITE_BLEND_TIMES = [0, 0.14, 0.3, 0.48, 0.66, 0.8, 0.9, 0.96, 1] as const;
-const HERO_NAME_TEXT_MASTER_FADE_MS = 80;
+/** Gentle ease across rainbow layers and into white. */
+const HERO_NAME_TEXT_BLEND_EASE: [number, number, number, number] = [0.33, 0.0, 0.2, 1];
+const HERO_NAME_TEXT_RAINBOW_BLEND_OPACITY = [0, 0.18, 0.42, 0.68, 0.78, 0.55, 0.3, 0.12, 0] as const;
+const HERO_NAME_TEXT_RAINBOW_BLEND_TIMES = [0, 0.14, 0.3, 0.46, 0.6, 0.74, 0.86, 0.94, 1] as const;
+const HERO_NAME_TEXT_WHITE_BLEND_OPACITY = [0, 0.05, 0.14, 0.3, 0.5, 0.7, 0.86, 0.95, 1] as const;
+const HERO_NAME_TEXT_WHITE_BLEND_TIMES = [0, 0.1, 0.22, 0.38, 0.54, 0.7, 0.84, 0.93, 1] as const;
+const HERO_NAME_TEXT_MASTER_FADE_MS = heroNameColorFadeMs(280);
+
+/** Shared transitions — ROBBIE / MCLAUGHLIN / tagline / accent strip stay locked in sync. */
+const heroNameMasterFadeTransition = (isVisible: boolean) => ({
+  duration: isVisible ? HERO_NAME_TEXT_MASTER_FADE_MS / 1000 : 0,
+  delay: 0,
+  ease: HERO_NAME_TEXT_BLEND_EASE,
+});
+
+const heroNameRainbowLayerTransition = (isVisible: boolean, index: number) => ({
+  duration: HERO_NAME_TEXT_RAINBOW_LAYER_MS / 1000,
+  delay: isVisible ? (HERO_NAME_RAINBOW_STAGGER_MS * (index + 1)) / 1000 : 0,
+  times: [...HERO_NAME_TEXT_RAINBOW_BLEND_TIMES],
+  ease: HERO_NAME_TEXT_BLEND_EASE,
+});
+
+const heroNameWhiteLayerTransition = (isVisible: boolean) => ({
+  duration: HERO_NAME_TEXT_WHITE_LAYER_MS / 1000,
+  delay: isVisible ? HERO_NAME_TEXT_WHITE_DELAY_MS / 1000 : 0,
+  times: [...HERO_NAME_TEXT_WHITE_BLEND_TIMES],
+  ease: HERO_NAME_TEXT_BLEND_EASE,
+});
+
 /** Settled optical nudge — tagline up without shifting hero layout metrics. */
 const HERO_TAGLINE_OPTICAL_OFFSET_Y = -2;
 /** Optical crop — trims right edge of final "E" in ROBBIE (px). */
@@ -1462,8 +1485,6 @@ const HeroNameRainbowFade = ({
   }
 
   const isVisible = step === "reveal" || step === "done";
-  const rainbowLayerDurS = HERO_NAME_TEXT_RAINBOW_LAYER_MS / 1000;
-  const whiteLayerDurS = HERO_NAME_TEXT_WHITE_LAYER_MS / 1000;
   const layerClass = block
     ? "pointer-events-none absolute inset-0 block whitespace-nowrap"
     : "pointer-events-none absolute inset-0 inline-block whitespace-nowrap";
@@ -1471,8 +1492,13 @@ const HeroNameRainbowFade = ({
     ? "invisible block whitespace-nowrap"
     : "invisible inline-block whitespace-nowrap";
 
-  const rainbowLayers = (
-    <>
+  return (
+    <motion.span
+      className={block ? "relative block" : "relative inline-block"}
+      initial={false}
+      animate={{ opacity: isVisible ? 1 : 0 }}
+      transition={heroNameMasterFadeTransition(isVisible)}
+    >
       <span className={spacerClass} aria-hidden>
         <HeroNameRainbowGlyphs text={text} eRightCropPx={eRightCropPx} />
       </span>
@@ -1484,12 +1510,7 @@ const HeroNameRainbowFade = ({
           style={{ color: SECTION_ACCENT_COLOR[id] }}
           initial={false}
           animate={{ opacity: !isVisible ? 0 : [...HERO_NAME_TEXT_RAINBOW_BLEND_OPACITY] }}
-          transition={{
-            duration: rainbowLayerDurS,
-            delay: isVisible ? (HERO_NAME_RAINBOW_STAGGER_MS * (index + 1)) / 1000 : 0,
-            times: [...HERO_NAME_TEXT_RAINBOW_BLEND_TIMES],
-            ease: HERO_NAME_TEXT_BLEND_EASE,
-          }}
+          transition={heroNameRainbowLayerTransition(isVisible, index)}
         >
           <HeroNameRainbowGlyphs text={text} eRightCropPx={eRightCropPx} />
         </motion.span>
@@ -1498,126 +1519,11 @@ const HeroNameRainbowFade = ({
         className={layerClass}
         initial={false}
         animate={{ opacity: !isVisible ? 0 : [...HERO_NAME_TEXT_WHITE_BLEND_OPACITY] }}
-        transition={{
-          duration: whiteLayerDurS,
-          delay: isVisible ? HERO_NAME_TEXT_WHITE_DELAY_MS / 1000 : 0,
-          times: [...HERO_NAME_TEXT_WHITE_BLEND_TIMES],
-          ease: HERO_NAME_TEXT_BLEND_EASE,
-        }}
+        transition={heroNameWhiteLayerTransition(isVisible)}
       >
         <HeroNameRainbowGlyphs text={text} eRightCropPx={eRightCropPx} />
       </motion.span>
-    </>
-  );
-
-  if (block) {
-    return <span className="relative block">{rainbowLayers}</span>;
-  }
-
-  return (
-    <motion.span
-      className="relative inline-block"
-      initial={false}
-      animate={{ opacity: isVisible ? 1 : 0 }}
-      transition={{
-        duration: isVisible ? HERO_NAME_TEXT_MASTER_FADE_MS / 1000 : 0,
-        delay: 0,
-        ease: HERO_NAME_TEXT_BLEND_EASE,
-      }}
-    >
-      {rainbowLayers}
     </motion.span>
-  );
-};
-
-const HeroNameRevealLinePair = ({
-  color,
-  centerLineTop,
-  topLineTop,
-  bottomLineTop,
-  linesVisible,
-  linesSplit,
-  step,
-  delayMs = 0,
-  offsetPx = 0,
-  easeInOutExpo,
-  easeOutExpo,
-}: {
-  color: string;
-  centerLineTop: number;
-  topLineTop: number;
-  bottomLineTop: number;
-  linesVisible: boolean;
-  linesSplit: boolean;
-  step: HeroNameRevealStep;
-  delayMs?: number;
-  offsetPx?: number;
-  easeInOutExpo: [number, number, number, number];
-  easeOutExpo: [number, number, number, number];
-}) => {
-  const delayS = delayMs / 1000;
-  const isFadingOut = step === "done";
-  const line1Top = linesSplit ? topLineTop - offsetPx : centerLineTop;
-  const line2Top = linesSplit ? bottomLineTop + offsetPx : centerLineTop;
-  const sharedStyle = {
-    height: HERO_NAME_LINE_H,
-    transformOrigin: "50% 50%",
-    left: HERO_NAME_LINE_BLEED,
-    right: HERO_NAME_LINE_BLEED,
-    backgroundColor: color,
-  } as const;
-  const sharedTransition = {
-    top: {
-      duration: HERO_NAME_SPLIT_MS / 1000,
-      ease: easeOutExpo,
-      delay: isFadingOut ? 0 : delayS,
-    },
-    scaleX: {
-      duration: isFadingOut ? 0 : HERO_NAME_SWEEP_MS / 1000,
-      ease: easeInOutExpo,
-      delay: isFadingOut ? 0 : delayS,
-    },
-    opacity: {
-      duration: isFadingOut
-        ? HERO_NAME_LINE_FADE_MS / 1000
-        : step === "sweep"
-          ? HERO_NAME_SWEEP_MS / 1000
-          : 0,
-      ease: isFadingOut ? HERO_NAME_LINE_FADE_EASE : easeOutExpo,
-      delay: step === "reveal" ? 0 : delayS,
-    },
-  };
-
-  const lineScale = step === "hidden" ? 0 : 1;
-  const lineOpacity = step === "done" ? 0 : step === "hidden" ? 0 : 1;
-
-  return (
-    <>
-      <motion.span
-        aria-hidden
-        className="pointer-events-none absolute z-[3]"
-        style={sharedStyle}
-        initial={false}
-        animate={{
-          top: line1Top,
-          scaleX: lineScale,
-          opacity: lineOpacity,
-        }}
-        transition={sharedTransition}
-      />
-      <motion.span
-        aria-hidden
-        className="pointer-events-none absolute z-[3]"
-        style={sharedStyle}
-        initial={false}
-        animate={{
-          top: line2Top,
-          scaleX: lineScale,
-          opacity: lineOpacity,
-        }}
-        transition={sharedTransition}
-      />
-    </>
   );
 };
 
@@ -1741,56 +1647,20 @@ const HeroNameReveal = ({
   onGlobalDebugReset: () => void;
 }) => {
   const containerRef = useRef<HTMLSpanElement>(null);
-  const robbieRef = useRef<HTMLSpanElement>(null);
-  const mclaughlinRef = useRef<HTMLSpanElement>(null);
   const taglineRef = useRef<HTMLParagraphElement>(null);
   const [step, setStep] = useState<HeroNameRevealStep>("hidden");
   const [accentDebugControls, setAccentDebugControls] = useState<
     Record<HeroAccentIconKey, HeroAccentLayoutControl>
   >(() => ({ ...HERO_ACCENT_LAYOUT }));
-  const [metrics, setMetrics] = useState<HeroNameRevealMetrics>({
-    centerLineTop: 0,
-    topLineTop: 0,
-    bottomLineTop: 0,
-  });
   /** Mobile — font-size so tagline glyph width matches ROBBIE + accent lockup. */
   const [mobileTaglineFontPx, setMobileTaglineFontPx] = useState<number | null>(null);
   const heroDebugEnabled = useHeroDebugEnabled();
-
-  const easeInOutExpo: [number, number, number, number] = [0.87, 0, 0.13, 1];
-  const easeOutExpo: [number, number, number, number] = [0.16, 1, 0.3, 1];
-
-  const measureMetrics = useCallback(() => {
-    const container = containerRef.current;
-    const robbie = robbieRef.current;
-    const mclaughlin = mclaughlinRef.current;
-    const tagline = taglineRef.current;
-    if (!container || !robbie || !mclaughlin || !tagline) return null;
-
-    const fontSize = Number.parseFloat(getComputedStyle(robbie).fontSize) || 28;
-    const framePad = fontSize * HERO_NAME_FRAME_PAD_RATIO;
-    const containerRect = container.getBoundingClientRect();
-    const containerTop = containerRect.top;
-    const robbieRect = robbie.getBoundingClientRect();
-    const taglineRect = tagline.getBoundingClientRect();
-
-    return {
-      centerLineTop:
-        (robbieRect.top + taglineRect.bottom) / 2 - containerTop - HERO_NAME_LINE_HALF,
-      topLineTop: robbieRect.top - containerTop - HERO_NAME_LINE_HALF - framePad,
-      bottomLineTop: taglineRect.bottom - containerTop - HERO_NAME_LINE_HALF + framePad,
-    } satisfies HeroNameRevealMetrics;
-  }, []);
 
   useLayoutEffect(() => {
     if (!heroReady) {
       setStep("hidden");
       return;
     }
-
-    const nextMetrics = measureMetrics();
-    if (!nextMetrics) return;
-    setMetrics(nextMetrics);
 
     if (reduceMotion) {
       setStep("done");
@@ -1799,32 +1669,18 @@ const HeroNameReveal = ({
 
     setStep("sweep");
     const revealTimer = window.setTimeout(() => {
-      const refreshed = measureMetrics();
-      if (refreshed) setMetrics(refreshed);
       setStep("reveal");
     }, HERO_NAME_SWEEP_MS);
-    const fadeLinesTimer = window.setTimeout(
+    const doneTimer = window.setTimeout(
       () => setStep("done"),
-      HERO_NAME_SWEEP_MS + HERO_NAME_SPLIT_MS,
+      HERO_NAME_PHASE1_COMPLETE_MS,
     );
 
     return () => {
       window.clearTimeout(revealTimer);
-      window.clearTimeout(fadeLinesTimer);
+      window.clearTimeout(doneTimer);
     };
-  }, [heroReady, reduceMotion, measureMetrics]);
-
-  useEffect(() => {
-    if (!heroReady) return;
-
-    const handleResize = () => {
-      const nextMetrics = measureMetrics();
-      if (nextMetrics) setMetrics(nextMetrics);
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [heroReady, measureMetrics]);
+  }, [heroReady, reduceMotion]);
 
   /** Mobile — scale tagline type so its one-line width matches the name lockup. */
   useLayoutEffect(() => {
@@ -1894,11 +1750,7 @@ const HeroNameReveal = ({
     };
   }, [heroReady, step]);
 
-  const linesVisible = step === "sweep" || step === "reveal";
-  const linesSplit = step === "reveal" || step === "done";
   const auxVisible = step === "reveal" || step === "done";
-  const auxRainbowLayerDurS = HERO_NAME_TEXT_RAINBOW_LAYER_MS / 1000;
-  const auxWhiteLayerDurS = HERO_NAME_TEXT_WHITE_LAYER_MS / 1000;
   const activeAccentLayout = heroDebugEnabled ? accentDebugControls : HERO_ACCENT_LAYOUT;
 
   const handleAccentDebugChange = useCallback(
@@ -1963,33 +1815,6 @@ const HeroNameReveal = ({
         ref={containerRef}
         className="relative block w-full overflow-visible"
       >
-        <HeroNameRevealLinePair
-          color="#ffffff"
-          centerLineTop={metrics.centerLineTop}
-          topLineTop={metrics.topLineTop}
-          bottomLineTop={metrics.bottomLineTop}
-          linesVisible={linesVisible}
-          linesSplit={linesSplit}
-          step={step}
-          easeInOutExpo={easeInOutExpo}
-          easeOutExpo={easeOutExpo}
-        />
-        {HERO_NAME_RAINBOW_LAYERS.map((layer) => (
-          <HeroNameRevealLinePair
-            key={layer.id}
-            color={layer.color}
-            centerLineTop={metrics.centerLineTop}
-            topLineTop={metrics.topLineTop}
-            bottomLineTop={metrics.bottomLineTop}
-            linesVisible={linesVisible}
-            linesSplit={linesSplit}
-            step={step}
-            delayMs={layer.delayMs}
-            offsetPx={layer.offsetPx}
-            easeInOutExpo={easeInOutExpo}
-            easeOutExpo={easeOutExpo}
-          />
-        ))}
         <div className={`max-md:flex max-md:flex-col ${HERO_NAME_MOBILE_SHELL_CLASS}`}>
         {/* Grid: col-1 = name box + tagline, col-2 = button pinned far-right at MCLAUGHLIN baseline */}
         <div className="relative z-[1] grid w-full grid-cols-[auto_1fr] items-end max-md:flex max-md:w-full max-md:max-w-full max-md:flex-col max-md:items-center">
@@ -2003,7 +1828,6 @@ const HeroNameReveal = ({
               {/* ROBBIE row — name left, accent strip fills remaining horizontal space (desktop parity). */}
               <div className="flex w-full min-w-0 items-end gap-2 sm:gap-3 max-md:gap-1.5">
                 <span
-                  ref={robbieRef}
                   className={`relative shrink-0 text-[clamp(2.28rem,8.85vw,5.95rem)] max-[400px]:text-[clamp(2rem,8.1vw,5.95rem)] font-black uppercase leading-[0.8] tracking-[-0.036em] text-mono-0 sm:leading-[0.78] ${HERO_NAME_MOBILE_DISPLAY_FONT_CLASS}`}
                 >
                   <HeroNameRainbowFade
@@ -2015,54 +1839,42 @@ const HeroNameReveal = ({
                 </span>
                 <motion.div
                   aria-hidden
-                  className={`relative h-full min-w-0 flex-1 self-end mr-[0.18rem] overflow-hidden rounded-[7px] border-2 border-white text-[clamp(2.28rem,8.85vw,5.95rem)] sm:rounded-[9px] max-md:mr-0 ${HERO_NAME_MOBILE_DISPLAY_FONT_CLASS}`}
-                  initial={{ opacity: 0 }}
+                  className={`relative h-full min-w-0 flex-1 self-end mr-[0.18rem] text-[clamp(2.28rem,8.85vw,5.95rem)] max-md:mr-0 ${HERO_NAME_MOBILE_DISPLAY_FONT_CLASS}`}
+                  initial={false}
                   animate={{ opacity: reduceMotion ? 1 : auxVisible ? 1 : 0 }}
-                  transition={{
-                    duration: reduceMotion ? 0 : HERO_NAME_TEXT_MASTER_FADE_MS / 1000,
-                    delay: 0,
-                    ease: HERO_NAME_TEXT_BLEND_EASE,
-                  }}
+                  transition={heroNameMasterFadeTransition(!reduceMotion && auxVisible)}
                   style={{
                     height: "calc(1.04cap - 0.02em + 1px)",
                     marginBottom: "0.02em",
                   }}
                 >
                   <div
-                    className="absolute inset-0 overflow-hidden"
+                    className="absolute inset-0 overflow-hidden rounded-[7px] sm:rounded-[9px]"
                     style={{ clipPath: "inset(0 1px 0 1px)" }}
                   >
                   {reduceMotion ? (
-                    <div className="absolute inset-0 bg-black text-white">{renderAccentIconStrip()}</div>
+                    <div className="absolute inset-0 overflow-hidden rounded-[7px] border-2 border-white bg-black text-white sm:rounded-[9px]">
+                      {renderAccentIconStrip()}
+                    </div>
                   ) : (
                     <>
                       {HERO_NAME_RAINBOW_MENU_IDS.map((id, index) => (
                         <motion.div
                           key={`aux-rainbow-${id}`}
-                          className="absolute inset-0 text-white"
+                          className="absolute inset-0 overflow-hidden rounded-[7px] border-2 border-white text-white sm:rounded-[9px]"
                           style={{ backgroundColor: SECTION_ACCENT_COLOR[id] }}
                           initial={false}
                           animate={{ opacity: !auxVisible ? 0 : [...HERO_NAME_TEXT_RAINBOW_BLEND_OPACITY] }}
-                          transition={{
-                            duration: auxRainbowLayerDurS,
-                            delay: auxVisible ? (HERO_NAME_RAINBOW_STAGGER_MS * (index + 1)) / 1000 : 0,
-                            times: [...HERO_NAME_TEXT_RAINBOW_BLEND_TIMES],
-                            ease: HERO_NAME_TEXT_BLEND_EASE,
-                          }}
+                          transition={heroNameRainbowLayerTransition(auxVisible, index)}
                         >
                           {renderAccentIconStrip()}
                         </motion.div>
                       ))}
                       <motion.div
-                        className="absolute inset-0 bg-black text-white"
+                        className="absolute inset-0 overflow-hidden rounded-[7px] border-2 border-white bg-black text-white sm:rounded-[9px]"
                         initial={false}
                         animate={{ opacity: !auxVisible ? 0 : [...HERO_NAME_TEXT_WHITE_BLEND_OPACITY] }}
-                        transition={{
-                          duration: auxWhiteLayerDurS,
-                          delay: auxVisible ? HERO_NAME_TEXT_WHITE_DELAY_MS / 1000 : 0,
-                          times: [...HERO_NAME_TEXT_WHITE_BLEND_TIMES],
-                          ease: HERO_NAME_TEXT_BLEND_EASE,
-                        }}
+                        transition={heroNameWhiteLayerTransition(auxVisible)}
                       >
                         {renderAccentIconStrip()}
                       </motion.div>
@@ -2072,7 +1884,6 @@ const HeroNameReveal = ({
                 </motion.div>
               </div>
               <span
-                ref={mclaughlinRef}
                 className={`block text-[clamp(2.28rem,8.85vw,5.95rem)] max-[400px]:text-[clamp(2rem,8.1vw,5.95rem)] font-black uppercase leading-[0.8] tracking-[-0.036em] text-mono-0 mt-[0.04em] sm:leading-[0.78] ${HERO_NAME_MOBILE_DISPLAY_FONT_CLASS}`}
               >
                 <HeroNameRainbowFade text="MCLAUGHLIN" step={step} reduceMotion={reduceMotion} />
@@ -2495,13 +2306,14 @@ const Hero = ({
       setSliderAnimDone(true);
       return;
     }
-    // Phase 1 name reveal: ~1.6s (ml5 line sweep + split + text). Hold briefly → slider phase.
+    // Same ready gate as HeroNameReveal — color fades resolve, then a short beat → settle / video.
+    if (!heroPhase1LayoutReady) return;
     const t = window.setTimeout(() => {
       sliderPhaseActiveRef.current = true;
       setSliderPhaseActive(true);
-    }, 1700);
+    }, HERO_NAME_PHASE1_COMPLETE_MS);
     return () => window.clearTimeout(t);
-  }, [fontsReady, heroMediaReady, heroRevealDelayDone, reduceMotion]);
+  }, [fontsReady, heroMediaReady, heroRevealDelayDone, heroPhase1LayoutReady, reduceMotion]);
 
   // Mount video card when horizontal reveal should begin (synced with name settle).
   useEffect(() => {
@@ -4499,7 +4311,6 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     id: "project-slaywire",
     title: "SLAYWIRE",
     tagline: "Self-produced original narrative IP.",
-    tabletPortraitTaglineSuffix: "Coming soon!",
     thumbnail: "/slaywire-thumbnail.png",
     focalPoint: "50% 40%",
     detailOverview:
@@ -4851,12 +4662,12 @@ const SHOWCASE_CAROUSEL_CARD_H =
   "h-[min(264px,36svh)] sm:h-[min(288px,40svh)] md:h-[min(304px,42svh)] lg:h-[min(380px,49svh)] xl:h-[min(400px,51svh)] 2xl:h-[min(420px,53svh)]";
 /** DESCRIPTION SECTION — black panel + title/tagline (bottom third of each showcase card). */
 const PROJECT_CARD_DESCRIPTION_SECTION =
-  "absolute inset-x-0 bottom-0 z-[1] flex h-1/3 min-h-0 flex-col overflow-hidden bg-black";
+  "project-card-description-section absolute inset-x-0 bottom-0 z-[1] flex h-1/3 min-h-0 flex-col overflow-hidden bg-black";
 /** Thumbnail media — top two-thirds only; DESCRIPTION SECTION owns the bottom third. */
 const PROJECT_CARD_THUMBNAIL_SECTION =
-  "absolute inset-x-0 top-0 z-0 h-2/3 min-h-0 overflow-hidden";
+  "project-card-thumbnail-section absolute inset-x-0 top-0 z-0 h-2/3 min-h-0 overflow-hidden";
 const PROJECT_CARD_THUMBNAIL_IMAGE_BLEED =
-  "absolute top-0 z-0 h-2/3 min-h-0 -left-4 -right-4 overflow-hidden sm:-left-5 sm:-right-5";
+  "project-card-thumbnail-section absolute top-0 z-0 h-2/3 min-h-0 -left-4 -right-4 overflow-hidden sm:-left-5 sm:-right-5";
 /** Same shape as hero media vignette; edge opacity reduced 25% (0.4 → 0.3). */
 const PROJECT_CARD_THUMBNAIL_VIGNETTE =
   "radial-gradient(ellipse 74% 70% at 50% 48%, transparent 26%, rgba(0,0,0,0.3) 100%)";
@@ -4864,9 +4675,9 @@ const PROJECT_CARD_THUMBNAIL_VIGNETTE =
 const PROJECT_CARD_TAGLINE_DIVIDER =
   "-mx-px shrink-0 border-t border-white/15";
 const PROJECT_CARD_TAGLINE_PANEL =
-  "flex min-h-0 flex-1 flex-col justify-start gap-1.5 px-2.5 pb-3 pt-0 sm:gap-2 sm:px-3 sm:pb-3.5";
+  "project-card-tagline-panel flex min-h-0 flex-1 flex-col justify-start gap-1.5 px-2.5 pb-3 pt-0 sm:gap-2 sm:px-3 sm:pb-3.5";
 const PROJECT_CARD_TITLE_INSET =
-  "shrink-0 -translate-x-0.5 px-2.5 pb-1.5 pt-2.5 sm:px-3 sm:pb-2 sm:pt-3";
+  "project-card-title-inset shrink-0 -translate-x-0.5 px-2.5 pb-1.5 pt-2.5 sm:px-3 sm:pb-2 sm:pt-3";
 const PROJECT_CARD_TAGLINE_CLASS =
   "project-card-tagline font-body block w-full text-left text-xs leading-snug sm:text-[0.8125rem] md:text-sm lg:text-[0.9375rem] text-mono-2/70 transition-colors group-hover:text-white/90";
 
@@ -4895,6 +4706,11 @@ const PROJECTS_SHOWCASE_TABLET_PAD = "projects-showcase-tablet-pad";
 const PROJECTS_TABLET_LANDSCAPE_MQ = `(min-width: ${PROFILE_TABLET_MIN_PX}px) and (max-width: ${PROFILE_TABLET_MAX_PX}px) and (orientation: landscape) and (any-pointer: coarse)`;
 const matchesProjectsTabletLandscapeViewport = () =>
   typeof window !== "undefined" && window.matchMedia(PROJECTS_TABLET_LANDSCAPE_MQ).matches;
+const PROJECTS_TABLET_PORTRAIT_MQ =
+  "(min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait)";
+const matchesProjectsTabletPortraitViewport = () =>
+  typeof window !== "undefined" &&
+  window.matchMedia(PROJECTS_TABLET_PORTRAIT_MQ).matches;
 const PROJECTS_TABLET_LANDSCAPE_WIDTH_SCALE = 1.05;
 /** Same inset as PROFILE; `!` overrides `.career-overview-shell` base padding in CSS. */
 const EXPERIENCE_SHELL_TOP_INSET_MAX_LG =
@@ -4934,6 +4750,7 @@ const ProjectsStack = ({
   contentReady = true,
   onContentReadyChange,
   carouselAutoAdvanceEnabled: _carouselAutoAdvanceEnabled = false,
+  tabletThumbnailValues,
 }: {
   onSelect: (id: string, el: HTMLElement) => void;
   focusProjectId?: string | null;
@@ -4941,6 +4758,7 @@ const ProjectsStack = ({
   onContentReadyChange?: (ready: boolean) => void;
   /** When true, advance one slide every PROJECT_CAROUSEL_AUTO_ADVANCE_MS (after entrance). */
   carouselAutoAdvanceEnabled?: boolean;
+  tabletThumbnailValues?: ProjectsTabletThumbnailDebugValues;
 }) => {
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const readyMediaRef = useRef<Set<number>>(new Set());
@@ -5036,23 +4854,78 @@ const ProjectsStack = ({
                               playsInline
                               preload="metadata"
                               aria-label={`${showcaseProjectDisplayTitle(card)} preview`}
-                              className="block h-full w-full object-cover"
-                              style={{ objectPosition: card.focalPoint ?? "50% 50%" }}
+                              className={`block h-full w-full ${
+                                (tabletThumbnailValues?.[
+                                  card.id as ProjectsTabletThumbnailId
+                                ]?.zoom ??
+                                  card.zoom ??
+                                  1) < 1
+                                  ? "object-contain"
+                                  : "object-cover"
+                              }`}
+                              style={
+                                tabletThumbnailValues?.[
+                                  card.id as ProjectsTabletThumbnailId
+                                ]
+                                  ? buildProjectsTabletThumbnailStyle(
+                                      tabletThumbnailValues[
+                                        card.id as ProjectsTabletThumbnailId
+                                      ],
+                                    )
+                                  : {
+                                      objectPosition: card.focalPoint ?? "50% 50%",
+                                      ...(card.zoom != null && card.zoom !== 1
+                                        ? {
+                                            transform: `scale(${card.zoom})`,
+                                            transformOrigin:
+                                              card.focalPoint ?? "50% 50%",
+                                          }
+                                        : {}),
+                                    }
+                              }
                               onLoadedMetadata={() => markCardMediaReady(index)}
                               onLoadedData={() => markCardMediaReady(index)}
                               onCanPlay={() => markCardMediaReady(index)}
                               onError={() => markCardMediaReady(index)}
                             />
                           ) : (
-                            <div className="h-full w-full will-change-transform">
+                            <div className="h-full w-full">
                               <img
                                 src={card.thumbnail}
                                 alt={`${showcaseProjectDisplayTitle(card)} thumbnail`}
                                 loading="eager"
                                 decoding="async"
                                 fetchPriority="high"
-                                className="h-full w-full object-cover"
-                                style={{ objectPosition: card.focalPoint ?? "50% 50%" }}
+                                className={`h-full w-full ${
+                                  (tabletThumbnailValues?.[
+                                    card.id as ProjectsTabletThumbnailId
+                                  ]?.zoom ??
+                                    card.zoom ??
+                                    1) < 1
+                                    ? "object-contain"
+                                    : "object-cover"
+                                }`}
+                                style={
+                                  tabletThumbnailValues?.[
+                                    card.id as ProjectsTabletThumbnailId
+                                  ]
+                                    ? buildProjectsTabletThumbnailStyle(
+                                        tabletThumbnailValues[
+                                          card.id as ProjectsTabletThumbnailId
+                                        ],
+                                      )
+                                    : {
+                                        objectPosition:
+                                          card.focalPoint ?? "50% 50%",
+                                        ...(card.zoom != null && card.zoom !== 1
+                                          ? {
+                                              transform: `scale(${card.zoom})`,
+                                              transformOrigin:
+                                                card.focalPoint ?? "50% 50%",
+                                            }
+                                          : {}),
+                                      }
+                                }
                                 onLoad={() => markCardMediaReady(index)}
                                 onError={() => markCardMediaReady(index)}
                               />
@@ -6388,6 +6261,26 @@ const PalaceProjects = ({
   const [projectsTabletLandscapeViewport, setProjectsTabletLandscapeViewport] = useState(
     matchesProjectsTabletLandscapeViewport,
   );
+  const [projectsTabletPortraitViewport, setProjectsTabletPortraitViewport] = useState(
+    matchesProjectsTabletPortraitViewport,
+  );
+  const [projectsTabletThumbnailDebugEnabled, setProjectsTabletThumbnailDebugEnabled] =
+    useState(false);
+  const projectsTabletThumbnailSeed = useMemo(
+    () => seedProjectsTabletThumbnailDefaultsFromCards(PROJECT_CARDS),
+    [],
+  );
+  const [lockedProjectsTabletThumbnailValues, setLockedProjectsTabletThumbnailValues] =
+    useState<ProjectsTabletThumbnailDebugValues>(() =>
+      readProjectsTabletThumbnailDebugValues(projectsTabletThumbnailSeed),
+    );
+  const [projectsTabletThumbnailDraft, setProjectsTabletThumbnailDraft] =
+    useState<ProjectsTabletThumbnailDebugValues>(() =>
+      readProjectsTabletThumbnailDebugValues(projectsTabletThumbnailSeed),
+    );
+  const [selectedProjectsTabletThumbnailId, setSelectedProjectsTabletThumbnailId] =
+    useState<ProjectsTabletThumbnailId>("project-visual-design");
+  const projectsTabletGridTapRef = useRef({ time: 0, x: 0, y: 0 });
   const [projectsDesktopLayoutDebugValues, setProjectsDesktopLayoutDebugValues] =
     useState<ProfileDesktopLayoutDebugValues>(() => readSectionDesktopLayoutDebugValues("projects"));
   const [projectDetailLayoutDebugValuesByProject, setProjectDetailLayoutDebugValuesByProject] =
@@ -6431,6 +6324,23 @@ const PalaceProjects = ({
     onChange();
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  useEffect(() => {
+    const mq = window.matchMedia(PROJECTS_TABLET_PORTRAIT_MQ);
+    const onChange = () => {
+      setProjectsTabletPortraitViewport(mq.matches);
+      if (!mq.matches) setProjectsTabletThumbnailDebugEnabled(false);
+    };
+    onChange();
+    mq.addEventListener("change", onChange);
+    window.addEventListener("resize", onChange);
+    window.addEventListener("orientationchange", onChange);
+    return () => {
+      mq.removeEventListener("change", onChange);
+      window.removeEventListener("resize", onChange);
+      window.removeEventListener("orientationchange", onChange);
+    };
   }, []);
 
   const projectsShowcaseClusterStyleActive =
@@ -6624,6 +6534,114 @@ const PalaceProjects = ({
     projectDetailInFlow && activeCard?.id === "project-visual-design";
   const projectDetailAllowsOverflowX =
     videoEditingDetailNoMainCard || slaywireDetailInFlow;
+
+  const activeProjectsTabletThumbnailValues =
+    projectsTabletPortraitViewport
+      ? projectsTabletThumbnailDebugEnabled
+        ? projectsTabletThumbnailDraft
+        : lockedProjectsTabletThumbnailValues
+      : undefined;
+
+  const handleProjectsTabletThumbnailDebugChange = useCallback(
+    (patch: Partial<ProjectsTabletThumbnailControl>) => {
+      setProjectsTabletThumbnailDraft((prev) => ({
+        ...prev,
+        [selectedProjectsTabletThumbnailId]: {
+          ...prev[selectedProjectsTabletThumbnailId],
+          ...patch,
+        },
+      }));
+    },
+    [selectedProjectsTabletThumbnailId],
+  );
+
+  const handleProjectsTabletThumbnailDebugReset = useCallback(() => {
+    setProjectsTabletThumbnailDraft(
+      Object.fromEntries(
+        Object.entries(projectsTabletThumbnailSeed).map(([id, value]) => [
+          id,
+          { ...value },
+        ]),
+      ) as ProjectsTabletThumbnailDebugValues,
+    );
+  }, [projectsTabletThumbnailSeed]);
+
+  const handleProjectsTabletThumbnailLockIn = useCallback(() => {
+    const locked = Object.fromEntries(
+      Object.entries(projectsTabletThumbnailDraft).map(([id, value]) => [
+        id,
+        { ...value },
+      ]),
+    ) as ProjectsTabletThumbnailDebugValues;
+    saveProjectsTabletThumbnailDebugValues(locked);
+    setLockedProjectsTabletThumbnailValues(locked);
+    const snippet = buildProjectsTabletThumbnailLockInSnippet(locked);
+    console.info("[Projects Tablet Thumbnail Lock In]\n" + snippet);
+    navigator.clipboard?.writeText(snippet).catch(() => {
+      // Local persistence succeeds even when clipboard access is unavailable.
+    });
+  }, [projectsTabletThumbnailDraft]);
+
+  const handleProjectsTabletGridPointerUp = useCallback(
+    (event: React.PointerEvent<HTMLElement>) => {
+      if (
+        !import.meta.env.DEV ||
+        !projectsTabletPortraitViewport ||
+        projectDetailInFlow
+      ) {
+        return;
+      }
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      if (
+        target.closest(
+          "button, a, input, select, textarea, [role='button'], [data-carousel-card], .showcase-header, .featured-writing-folder",
+        )
+      ) {
+        return;
+      }
+
+      const previous = projectsTabletGridTapRef.current;
+      const now = event.timeStamp;
+      const distance = Math.hypot(
+        event.clientX - previous.x,
+        event.clientY - previous.y,
+      );
+      const isDoubleTap =
+        previous.time > 0 && now - previous.time <= 380 && distance <= 40;
+
+      if (!isDoubleTap) {
+        projectsTabletGridTapRef.current = {
+          time: now,
+          x: event.clientX,
+          y: event.clientY,
+        };
+        return;
+      }
+
+      event.preventDefault();
+      projectsTabletGridTapRef.current = { time: 0, x: 0, y: 0 };
+      setProjectsTabletThumbnailDebugEnabled((enabled) => {
+        if (!enabled) {
+          setProjectsTabletThumbnailDraft(
+            Object.fromEntries(
+              Object.entries(lockedProjectsTabletThumbnailValues).map(
+                ([id, value]) => [id, { ...value }],
+              ),
+            ) as ProjectsTabletThumbnailDebugValues,
+          );
+        }
+        return !enabled;
+      });
+    },
+    [
+      lockedProjectsTabletThumbnailValues,
+      projectDetailInFlow,
+      projectsTabletPortraitViewport,
+    ],
+  );
 
   const projectsProjectDetailLayoutActive =
     projectsDesktopViewport && !projectsTabletLandscapeViewport;
@@ -6866,6 +6884,12 @@ const PalaceProjects = ({
     <section
       id="projects"
       ref={projectsSectionRef}
+      onPointerUp={handleProjectsTabletGridPointerUp}
+      style={
+        projectsTabletPortraitViewport
+          ? { touchAction: "manipulation" }
+          : undefined
+      }
       className={`relative flex w-full min-w-0 max-w-full flex-col justify-start lg:pb-[max(1.25rem,calc(var(--slide-gap)*1.5),env(safe-area-inset-bottom,0px))] text-white scroll-mt-6 [--slide-gap:0.875rem] sm:[--slide-gap:1.25rem] lg:[--slide-gap:1rem] xl:[--slide-gap:1.125rem] ${
         projectDetailInFlow
           ? `min-h-screen shrink-0 ${SECTION_MAIN_HEADER_INSET} ${
@@ -6883,6 +6907,21 @@ const PalaceProjects = ({
       }`}
     >
       <SectionGridOverlay />
+      {projectsTabletThumbnailDebugEnabled &&
+        projectsTabletPortraitViewport &&
+        !projectDetailInFlow &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <ProjectsTabletThumbnailDebugPanel
+            values={projectsTabletThumbnailDraft}
+            selectedId={selectedProjectsTabletThumbnailId}
+            onSelectedIdChange={setSelectedProjectsTabletThumbnailId}
+            onChange={handleProjectsTabletThumbnailDebugChange}
+            onReset={handleProjectsTabletThumbnailDebugReset}
+            onLockIn={handleProjectsTabletThumbnailLockIn}
+          />,
+          document.body,
+        )}
       {projectsDesktopDebugActive &&
         typeof document !== "undefined" &&
         createPortal(
@@ -7018,6 +7057,7 @@ const PalaceProjects = ({
                 onSelect={(id, el) => handleCardClick(id, el)}
                 focusProjectId={activeCard?.id ?? null}
                 carouselAutoAdvanceEnabled={!!carouselAutoAdvanceReady && !showcaseObscured}
+                tabletThumbnailValues={activeProjectsTabletThumbnailValues}
               />
             </motion.div>
           </motion.div>
