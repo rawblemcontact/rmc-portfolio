@@ -59,6 +59,7 @@ import {
   HeroAccentLayoutDebugPanel,
   HERO_MAIN_GLOBAL_LAYOUT_DEFAULTS,
   HERO_PORTFOLIO_BUTTON_GLOBAL_LAYOUT_DEFAULTS,
+  HERO_SVG_LOCKUP_LAYOUT_DEFAULTS,
   HERO_VIDEO_GLOBAL_LAYOUT_DEFAULTS,
   buildHeroGlobalLayoutStyle,
   type HeroAccentIconKey,
@@ -115,6 +116,7 @@ import { ShowcaseAttachedTabStrip, type ShowcaseTabId } from "../components/Show
 import { ShowcaseVideoEditingDetail, type ShowcaseDetailVideo } from "../components/ShowcaseVideoEditingDetail";
 import { FeaturedWritingPdfThumbnail } from "../components/FeaturedWritingPdfThumbnail";
 import { SupportingPdfPreviewDialog } from "../components/SupportingPdfPreviewDialog";
+import robHeroSvgRaw from "../assets/rob-hero.svg?raw";
 import {
   SiArc,
   SiBytedance,
@@ -672,7 +674,7 @@ function sectionPanelEdgeAccent(sectionId: string): string {
     sectionId === "projects-supporting" ||
     sectionId.startsWith("project-")
   ) {
-    return "color-mix(in srgb, var(--palette-yellow-projects) 48%, rgb(186 186 186))";
+    return "var(--palette-yellow-projects)";
   }
   return SECTION_ACCENT_COLOR[sectionId] ?? "var(--palette-blue)";
 }
@@ -810,16 +812,16 @@ const scrollToId = (id: string, behavior: ScrollBehavior = "smooth") => {
   el?.scrollIntoView({ behavior, block: "nearest", inline: "start" });
 };
 
-const PROFILE_ACCENT_SOFT = "color-mix(in srgb, var(--palette-red) 56%, rgb(170 170 170))";
+const PROFILE_ACCENT_SOFT = "var(--palette-red)";
 const NAV_SUBHEAD_GRAY = "color-mix(in srgb, var(--color-mono-2) 70%, transparent)";
-const PROJECTS_ACCENT_SOFT = "color-mix(in srgb, var(--palette-yellow-projects) 48%, rgb(186 186 186))";
+const PROJECTS_ACCENT_SOFT = "var(--palette-yellow-projects)";
 
 const NAV_ITEMS: { id: string; label: string; icon: LucideIcon; color: string; sub: string; microLabel: string }[] = [
-  { id: "profile", label: "PROFILE", sub: "Summary", icon: User, color: "[background-color:color-mix(in_srgb,var(--palette-red)_56%,rgb(170_170_170))]", microLabel: "OPEN" },
-  { id: "projects", label: "PROJECTS", sub: "Projects", icon: Zap, color: "[background-color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]", microLabel: "VIEW" },
-  { id: "experience", label: "EXPERIENCE", sub: "Career History", icon: Star, color: "bg-portfolio-blue", microLabel: "ENTER" },
-  { id: "skills", label: "SKILLS", sub: "Skills", icon: Briefcase, color: "bg-portfolio-green", microLabel: "OPEN" },
-  { id: "social", label: "CONTACT", sub: "Contact", icon: Heart, color: "bg-portfolio-orange", microLabel: "VIEW" },
+  { id: "profile", label: "PROFILE", sub: "Summary", icon: User, color: "[background-color:var(--palette-red)]", microLabel: "OPEN" },
+  { id: "projects", label: "PROJECTS", sub: "Projects", icon: Zap, color: "[background-color:var(--palette-yellow-projects)]", microLabel: "VIEW" },
+  { id: "experience", label: "EXPERIENCE", sub: "Career History", icon: Star, color: "[background-color:var(--palette-blue)]", microLabel: "ENTER" },
+  { id: "skills", label: "SKILLS", sub: "Skills", icon: Briefcase, color: "[background-color:var(--palette-green)]", microLabel: "OPEN" },
+  { id: "social", label: "CONTACT", sub: "Contact", icon: Heart, color: "[background-color:var(--palette-orange)]", microLabel: "VIEW" },
 ];
 
 // Section id ? panel edge accent (CSS vars from src/styles/portfolio-palette.css)
@@ -1216,6 +1218,17 @@ function readSafeAreaInsetTopPx(): number {
   return px;
 }
 
+/** Safe-area bottom inset in px (matches `env(safe-area-inset-bottom, 0px)`). */
+function readSafeAreaInsetBottomPx(): number {
+  const probe = document.createElement("div");
+  probe.style.cssText =
+    "position:absolute;visibility:hidden;pointer-events:none;height:env(safe-area-inset-bottom,0px)";
+  document.body.appendChild(probe);
+  const px = probe.offsetHeight;
+  document.body.removeChild(probe);
+  return px;
+}
+
 /**
  * Top edge of `ViewportRuleOfThirdsOverlay` — mobile band only (<768).
  * Mirrors the styled overlay: nav chrome below TOP_NAV_FIXED_TOP.
@@ -1280,23 +1293,40 @@ function heroMobileSettleOffsetPx(): number {
   );
 }
 
-/** Keep in sync with hero video card mobile height clamp (`min(37.54vh,…)`). */
+/** Keep in sync with hero video card mobile height clamp (`min(40vh,…)`). */
 function measureHeroMobileVideoHeightPx(): number {
   if (typeof window === "undefined") return 0;
   const rootFontSize = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
   const safeTop = readSafeAreaInsetTopPx();
-  const vhBand = window.innerHeight * 0.3754;
+  const vhBand = window.innerHeight * 0.4;
   const remCap = window.innerHeight - 11 * rootFontSize - Math.max(rootFontSize, safeTop);
-  return Math.min(448, Math.max(145, Math.min(vhBand, remCap)));
+  return Math.min(430, Math.max(150, Math.min(vhBand, remCap)));
+}
+
+/** Reads the current rendered `translateY` (px) of an element's CSS transform matrix. */
+function readTranslateYPx(el: Element | null): number {
+  if (!el) return 0;
+  const transform = window.getComputedStyle(el).transform;
+  if (!transform || transform === "none") return 0;
+  try {
+    return new DOMMatrixReadOnly(transform).m42;
+  } catch {
+    return 0;
+  }
 }
 
 /**
  * How far to shift the settled mobile stack so its midpoint matches the ROT ruler center.
- * Lockup + PORTFOLIO live under the name Y transform — pass assumed vs actual name Y
- * so we can measure without snapping the DOM (avoids a flash before the settle tween).
+ * `assumedNameY` (the pending "settle" offset) is the coordinate space lockup/button rects
+ * are normalized into; video is normalized to its natural (untransformed) grid position.
+ * Reads each element's *currently rendered* transform directly (rather than trusting a
+ * Framer Motion value's `.get()`, which can be a frame ahead of what's actually painted)
+ * so the stack is measured from its true on-screen position and never mis-centers.
  */
-function measureMobileHeroRotCenterNudgePx(assumedNameY: number, actualNameY: number): number {
+function measureMobileHeroRotCenterNudgePx(assumedNameY: number): number {
   const lockup = document.querySelector<HTMLElement>('[data-hero-name-lockup="true"]');
+  const nameStackEl = document.querySelector<HTMLElement>('[data-hero-mobile-name-stack="true"]');
+  const videoStackEl = document.querySelector<HTMLElement>('[data-hero-mobile-video-stack="true"]');
   const videoEl =
     document.querySelector<HTMLElement>("#hero [data-hero-mobile-video-slot='true']") ??
     document.querySelector<HTMLElement>("#hero article");
@@ -1306,7 +1336,12 @@ function measureMobileHeroRotCenterNudgePx(assumedNameY: number, actualNameY: nu
   });
   if (!lockup || btns.length === 0) return 0;
 
-  const nameDy = assumedNameY - actualNameY;
+  /* Normalize the name/button rects into the "assumedNameY" coordinate space, and the
+     video rect back to its natural (untransformed) grid position — matching how the
+     caller applies the result (`name = settle + nudge`, `video = nudge`). */
+  const nameDy = assumedNameY - readTranslateYPx(nameStackEl);
+  const videoDy = -readTranslateYPx(videoStackEl);
+
   const lockupRect = lockup.getBoundingClientRect();
   const lockupTop = lockupRect.top + nameDy;
   const lockupBottom = lockupRect.bottom + nameDy;
@@ -1317,8 +1352,10 @@ function measureMobileHeroRotCenterNudgePx(assumedNameY: number, actualNameY: nu
 
   if (videoEl) {
     const videoRect = videoEl.getBoundingClientRect();
-    stackTop = Math.min(videoRect.top, lockupTop);
-    stackBottom = Math.max(videoRect.bottom, lockupBottom, btnBottom);
+    const videoTop = videoRect.top + videoDy;
+    const videoBottom = videoRect.bottom + videoDy;
+    stackTop = Math.min(videoTop, lockupTop);
+    stackBottom = Math.max(videoBottom, lockupBottom, btnBottom);
   } else {
     /* Video not mounted — estimate from row bottom + known card height. */
     const row = document.querySelector<HTMLElement>("#hero [data-hero-mobile-video-row='true']");
@@ -1330,7 +1367,15 @@ function measureMobileHeroRotCenterNudgePx(assumedNameY: number, actualNameY: nu
   }
 
   const stackMid = (stackTop + stackBottom) / 2;
-  return measureViewportRuleOfThirdsCenterYPx() - stackMid;
+  const idealNudge = measureViewportRuleOfThirdsCenterYPx() - stackMid;
+
+  /* Safety clamp — on short viewports, prefer keeping the full stack on-screen
+     (CTA never clipped) over perfect ROT-center alignment. */
+  const bottomMargin = 12 + readSafeAreaInsetBottomPx();
+  const maxNudge = window.innerHeight - bottomMargin - stackBottom;
+  const topMargin = measureViewportRuleOfThirdsTopPx();
+  const minNudge = topMargin - stackTop;
+  return Math.max(minNudge, Math.min(idealNudge, maxNudge));
 }
 
 function heroDesktopSettleOffsetPx(): number {
@@ -1338,18 +1383,27 @@ function heroDesktopSettleOffsetPx(): number {
   const rootFontSize = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
   const width = window.innerWidth;
   if (width < 768) return 0;
-  if (width < 1024) return 0.75 * rootFontSize;
+  if (width < 1024) {
+    /* Tablet portrait — keep name + PORTFOLIO tucked under the video (no downward settle). */
+    if (window.matchMedia("(orientation: portrait)").matches) return 0;
+    return 0.75 * rootFontSize;
+  }
   if (width <= 1366) return -1.5 * rootFontSize;
   return -0.75 * rootFontSize;
 }
+/** Tablet md–lg: portrait packs under video; landscape restores prior centered / video nudge. */
+const HERO_TABLET_LANDSCAPE_NAME_CENTER =
+  "[@media(min-width:768px)_and_(max-width:1023.98px)_and_(orientation:landscape)]:justify-center [@media(min-width:768px)_and_(max-width:1023.98px)_and_(orientation:landscape)]:pt-0";
+const HERO_TABLET_LANDSCAPE_VIDEO_NUDGE =
+  "[@media(min-width:768px)_and_(max-width:1023.98px)_and_(orientation:landscape)]:translate-y-8";
 const HERO_NAME_SETTLE_DELAY_S = 0.2;
 const HERO_NAME_SETTLE_DUR_S = 0.95;
-/** Gap from name move-down start → video reveal start. */
+/** @deprecated — video now opens first; kept for any residual timing refs. */
 const HERO_VIDEO_REVEAL_START_GAP_S = 0.14;
-const HERO_VIDEO_REVEAL_DELAY_S = HERO_NAME_SETTLE_DELAY_S + 0.18;
-const HERO_VIDEO_REVEAL_DELAY_MS = HERO_VIDEO_REVEAL_DELAY_S * 1000;
-/** Mobile-only — extra hold before hero video card scaleX reveal. */
-const HERO_VIDEO_REVEAL_DELAY_MOBILE_EXTRA_S = 0.1;
+const HERO_VIDEO_REVEAL_DELAY_S = 0;
+const HERO_VIDEO_REVEAL_DELAY_MS = 0;
+/** Mobile-only — no longer delaying video; open with desktop. */
+const HERO_VIDEO_REVEAL_DELAY_MOBILE_EXTRA_S = 0;
 const HERO_SETTLE_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 /** scaleX reveal — no overshoot (y2 ≤ 1) so the card does not pop past full width at the end. */
 const HERO_VIDEO_SCALE_EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
@@ -1359,6 +1413,18 @@ const HERO_VIDEO_CONTENT_FADE_DUR_S = 0.43;
 const HERO_VIDEO_GLOW_DELAY_S = 0.28;
 const HERO_VIDEO_GLOW_DUR_S = 0.72;
 const HERO_VIDEO_GLOW_PEAK = 0.55;
+/** Brief beat after video opens before SVG fade-in. */
+const HERO_LOCKUP_FADE_AFTER_VIDEO_MS = 120;
+/** PORTFOLIO fades after SVG reveal starts (SVG first in sequence). */
+const HERO_PORTFOLIO_FADE_AFTER_SVG_MS = 680;
+/** Idle float — starts after entrance (video scale + PORTFOLIO fade) finishes. */
+const HERO_IDLE_FLOAT_START_MS = 700;
+const HERO_IDLE_FLOAT_Y_PX = 2.85;
+/** Full up↔down cycle. */
+const HERO_IDLE_FLOAT_DUR_S = 5.6;
+/** Sine samples (× amplitude) for an even, continuous loop with linear tweening. */
+const HERO_IDLE_FLOAT_SINE = [0, -0.7071, -1, -0.7071, 0, 0.7071, 1, 0.7071, 0] as const;
+const HERO_IDLE_FLOAT_TIMES = [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1] as const;
 /** Subtle edge darkening on hero video card media. */
 const HERO_VIDEO_CARD_VIGNETTE =
   "radial-gradient(ellipse 74% 70% at 50% 48%, transparent 26%, rgba(0,0,0,0.4) 100%)";
@@ -1374,7 +1440,7 @@ const HERO_NAME_MOBILE_TAGLINE_CLASS =
 const HERO_NAME_MOBILE_DISPLAY_FONT_CLASS =
   "max-md:text-[clamp(3.407rem,14.55vw,5.082rem)] max-md:max-[400px]:text-[clamp(3.176rem,13.4vw,5.082rem)]";
 const HERO_NAME_MOBILE_PORTFOLIO_BUTTON_CLASS =
-  "max-md:h-[calc(clamp(3.245rem,13.86vw,4.84rem)*0.9)] max-md:max-h-[4.84rem] max-md:px-4 max-md:[&_.texts]:gap-1.5 max-md:[&_.texts]:text-[clamp(0.88rem,3.41vw,1.012rem)]";
+  "max-md:h-[calc(clamp(2.85rem,12.2vw,4.2rem)*0.9)] max-md:max-h-[4.2rem] max-md:px-3.5 max-md:[&_.texts]:gap-1 max-md:[&_.texts]:text-[clamp(0.78rem,3vw,0.9rem)]";
 const HERO_NAME_SWEEP_MS = 700;
 const HERO_NAME_SPLIT_MS = 600;
 /** Rainbow accents — main-menu section colors (NAV order) for name/tagline/accent fades. */
@@ -1435,6 +1501,14 @@ const heroNameWhiteLayerTransition = (isVisible: boolean) => ({
 const HERO_TAGLINE_OPTICAL_OFFSET_Y = -2;
 /** Optical crop — trims right edge of final "E" in ROBBIE (px). */
 const HERO_ROBBIE_E_RIGHT_CROP_PX = 5;
+/** Inline hero lockup SVG — vectors render at display size (no img rasterization). */
+const HERO_ROB_LOCKUP_SVG = robHeroSvgRaw
+  .replace(/\swidth="283"/, ' width="100%"')
+  .replace(/\sheight="94"/, ' height="100%"')
+  .replace(
+    "<svg ",
+    '<svg class="block h-full w-full overflow-visible" preserveAspectRatio="none" aria-hidden="true" ',
+  );
 
 const HeroNameRainbowGlyphs = ({
   text,
@@ -1619,6 +1693,7 @@ const matchesHeroTabletViewport = () =>
 
 const HeroNameReveal = ({
   heroReady,
+  revealActive,
   reduceMotion,
   button,
   heroMainGlobalDebugStyle,
@@ -1633,6 +1708,8 @@ const HeroNameReveal = ({
   onGlobalDebugReset,
 }: {
   heroReady: boolean;
+  /** After video opens — starts SVG rainbow / fade at final position. */
+  revealActive: boolean;
   reduceMotion: boolean | null;
   button: React.ReactNode;
   heroMainGlobalDebugStyle?: React.CSSProperties;
@@ -1648,16 +1725,21 @@ const HeroNameReveal = ({
 }) => {
   const containerRef = useRef<HTMLSpanElement>(null);
   const taglineRef = useRef<HTMLParagraphElement>(null);
+  const heroSvgAlignRef = useRef<HTMLDivElement>(null);
+  const [heroSvgAlignX, setHeroSvgAlignX] = useState(0);
   const [step, setStep] = useState<HeroNameRevealStep>("hidden");
   const [accentDebugControls, setAccentDebugControls] = useState<
     Record<HeroAccentIconKey, HeroAccentLayoutControl>
   >(() => ({ ...HERO_ACCENT_LAYOUT }));
+  const [svgLockupDebugControls, setSvgLockupDebugControls] = useState<HeroGlobalLayoutControl>(
+    () => ({ ...HERO_SVG_LOCKUP_LAYOUT_DEFAULTS }),
+  );
   /** Mobile — font-size so tagline glyph width matches ROBBIE + accent lockup. */
   const [mobileTaglineFontPx, setMobileTaglineFontPx] = useState<number | null>(null);
   const heroDebugEnabled = useHeroDebugEnabled();
 
   useLayoutEffect(() => {
-    if (!heroReady) {
+    if (!heroReady || !revealActive) {
       setStep("hidden");
       return;
     }
@@ -1680,7 +1762,74 @@ const HeroNameReveal = ({
       window.clearTimeout(revealTimer);
       window.clearTimeout(doneTimer);
     };
-  }, [heroReady, reduceMotion]);
+  }, [heroReady, revealActive, reduceMotion]);
+
+  /** Desktop + tablet landscape — align SVG left edge to video card; freeze until resize. */
+  useLayoutEffect(() => {
+    if (!heroReady) {
+      setHeroSvgAlignX(0);
+      return;
+    }
+
+    const matchesDesktopOrTabletLandscape = () => {
+      const desktop = window.matchMedia(`(min-width: ${HERO_DESKTOP_DEBUG_MIN_PX}px)`).matches;
+      const tablet = window.matchMedia(
+        `(min-width: ${HERO_TABLET_MIN_PX}px) and (max-width: ${HERO_TABLET_MAX_PX}px)`,
+      ).matches;
+      const landscape = window.matchMedia("(orientation: landscape)").matches;
+      return (desktop && !tablet) || (tablet && landscape);
+    };
+
+    let frozen = false;
+
+    const measure = (force = false) => {
+      if (!matchesDesktopOrTabletLandscape()) {
+        frozen = false;
+        setHeroSvgAlignX(0);
+        return;
+      }
+      if (frozen && !force) return;
+
+      const lockup = containerRef.current?.querySelector<HTMLElement>(
+        '[data-hero-name-lockup="true"]',
+      );
+      /* Prefer unscaled probe — never affected by video scaleX / settle / PORTFOLIO fade. */
+      const probe = document.querySelector<HTMLElement>('[data-hero-video-align-probe="true"]');
+      if (!lockup || !probe) return;
+      if (probe.offsetWidth < 8) return;
+
+      const next =
+        Math.round((probe.getBoundingClientRect().left - lockup.getBoundingClientRect().left) * 100) /
+        100;
+
+      frozen = true;
+      setHeroSvgAlignX((prev) => (Math.abs(next - prev) < 0.25 ? prev : next));
+    };
+
+    measure(true);
+    const raf = window.requestAnimationFrame(() => measure(true));
+
+    const onResize = () => {
+      frozen = false;
+      measure(true);
+    };
+    window.addEventListener("resize", onResize);
+    const mqDesktop = window.matchMedia(`(min-width: ${HERO_DESKTOP_DEBUG_MIN_PX}px)`);
+    const mqTablet = window.matchMedia(
+      `(min-width: ${HERO_TABLET_MIN_PX}px) and (max-width: ${HERO_TABLET_MAX_PX}px)`,
+    );
+    const mqLandscape = window.matchMedia("(orientation: landscape)");
+    mqDesktop.addEventListener("change", onResize);
+    mqTablet.addEventListener("change", onResize);
+    mqLandscape.addEventListener("change", onResize);
+    return () => {
+      window.cancelAnimationFrame(raf);
+      window.removeEventListener("resize", onResize);
+      mqDesktop.removeEventListener("change", onResize);
+      mqTablet.removeEventListener("change", onResize);
+      mqLandscape.removeEventListener("change", onResize);
+    };
+  }, [heroReady]);
 
   /** Mobile — scale tagline type so its one-line width matches the name lockup. */
   useLayoutEffect(() => {
@@ -1763,10 +1912,32 @@ const HeroNameReveal = ({
     [],
   );
 
+  const handleSvgLockupDebugChange = useCallback((patch: Partial<HeroGlobalLayoutControl>) => {
+    setSvgLockupDebugControls((prev) => ({ ...prev, ...patch }));
+  }, []);
+
   const handleAccentDebugReset = useCallback(() => {
     setAccentDebugControls({ ...HERO_ACCENT_LAYOUT });
+    setSvgLockupDebugControls({ ...HERO_SVG_LOCKUP_LAYOUT_DEFAULTS });
     onGlobalDebugReset();
   }, [onGlobalDebugReset]);
+
+  /** Locked SVG layout — desktop only (`heroDesktopViewport`); mobile/tablet keep auto-align only. */
+  const activeSvgLockupLayout = heroDebugEnabled
+    ? svgLockupDebugControls
+    : HERO_SVG_LOCKUP_LAYOUT_DEFAULTS;
+  const heroSvgLockupStyle: React.CSSProperties | undefined = (() => {
+    if (!heroDesktopViewport) {
+      return heroSvgAlignX ? { transform: `translateX(${heroSvgAlignX}px)` } : undefined;
+    }
+    return buildHeroGlobalLayoutStyle(
+      {
+        ...activeSvgLockupLayout,
+        offsetX: heroSvgAlignX + activeSvgLockupLayout.offsetX,
+      },
+      "left top",
+    );
+  })();
 
   const renderAccentIconCell = useCallback(
     (iconKey: HeroAccentIconKey) => {
@@ -1818,17 +1989,46 @@ const HeroNameReveal = ({
         <div className={`max-md:flex max-md:flex-col ${HERO_NAME_MOBILE_SHELL_CLASS}`}>
         {/* Grid: col-1 = name box + tagline, col-2 = button pinned far-right at MCLAUGHLIN baseline */}
         <div className="relative z-[1] grid w-full grid-cols-[auto_1fr] items-end max-md:flex max-md:w-full max-md:max-w-full max-md:flex-col max-md:items-center">
+          <div
+            ref={heroSvgAlignRef}
+            className="pointer-events-none z-[2] col-start-1 row-start-1 row-span-2 h-full min-h-0 w-full min-w-0 self-stretch max-md:absolute max-md:inset-0"
+            style={heroSvgLockupStyle}
+          >
+            <motion.div
+              className="h-full w-full"
+              initial={false}
+              animate={{ opacity: reduceMotion ? 1 : auxVisible ? 1 : 0 }}
+              transition={heroNameMasterFadeTransition(!reduceMotion && auxVisible)}
+            >
+            <motion.div
+              role="img"
+              aria-label="Robbie McLaughlin — Writer, content production, and social media"
+              className="block h-full w-full select-none [&_svg]:block [&_svg]:h-full [&_svg]:w-full max-md:flex max-md:items-center max-md:[&_svg]:!h-[95%]"
+              dangerouslySetInnerHTML={{ __html: HERO_ROB_LOCKUP_SVG }}
+              initial={false}
+              animate={{
+                opacity: reduceMotion
+                  ? 1
+                  : !auxVisible
+                    ? 0
+                    : [...HERO_NAME_TEXT_WHITE_BLEND_OPACITY],
+              }}
+              transition={heroNameWhiteLayerTransition(auxVisible)}
+            />
+            </motion.div>
+          </div>
           {/* Name rectangle — col 1, row 1 */}
           <div
             data-hero-center-part="true"
             data-hero-name-lockup="true"
-            className={`col-start-1 row-start-1 w-fit min-w-0 rounded-[11px] border border-transparent bg-transparent px-3 pt-3 pb-[0.234375rem] sm:rounded-xl sm:px-4 sm:pt-3.5 sm:pb-[0.28125rem] max-md:px-0 max-md:pt-0 ${HERO_NAME_MOBILE_NAME_BOX_CLASS}`}
+            className={`invisible col-start-1 row-start-1 w-fit min-w-0 rounded-[11px] border border-transparent bg-transparent px-3 pt-3 pb-[0.234375rem] sm:rounded-xl sm:px-4 sm:pt-3.5 sm:pb-[0.28125rem] max-md:px-0 max-md:pt-0 ${HERO_NAME_MOBILE_NAME_BOX_CLASS}`}
+            aria-hidden
           >
             <h1 className="relative m-0 w-full max-w-full min-w-0 font-display [font-kerning:none]">
               {/* ROBBIE row — name left, accent strip fills remaining horizontal space (desktop parity). */}
               <div className="flex w-full min-w-0 items-end gap-2 sm:gap-3 max-md:gap-1.5">
                 <span
-                  className={`relative shrink-0 text-[clamp(2.28rem,8.85vw,5.95rem)] max-[400px]:text-[clamp(2rem,8.1vw,5.95rem)] font-black uppercase leading-[0.8] tracking-[-0.036em] text-mono-0 sm:leading-[0.78] ${HERO_NAME_MOBILE_DISPLAY_FONT_CLASS}`}
+                  className={`relative shrink-0 text-[clamp(2.28rem,8.85vw,5.95rem)] max-[400px]:text-[clamp(2rem,8.1vw,5.95rem)] font-bold uppercase leading-[0.8] tracking-[-0.036em] text-mono-0 sm:leading-[0.78] ${HERO_NAME_MOBILE_DISPLAY_FONT_CLASS}`}
                 >
                   <HeroNameRainbowFade
                     text="ROBBIE"
@@ -1884,7 +2084,7 @@ const HeroNameReveal = ({
                 </motion.div>
               </div>
               <span
-                className={`block text-[clamp(2.28rem,8.85vw,5.95rem)] max-[400px]:text-[clamp(2rem,8.1vw,5.95rem)] font-black uppercase leading-[0.8] tracking-[-0.036em] text-mono-0 mt-[0.04em] sm:leading-[0.78] ${HERO_NAME_MOBILE_DISPLAY_FONT_CLASS}`}
+                className={`block text-[clamp(2.28rem,8.85vw,5.95rem)] max-[400px]:text-[clamp(2rem,8.1vw,5.95rem)] font-bold uppercase leading-[0.8] tracking-[-0.036em] text-mono-0 mt-[0.04em] sm:leading-[0.78] ${HERO_NAME_MOBILE_DISPLAY_FONT_CLASS}`}
               >
                 <HeroNameRainbowFade text="MCLAUGHLIN" step={step} reduceMotion={reduceMotion} />
               </span>
@@ -1904,7 +2104,8 @@ const HeroNameReveal = ({
           <p
             ref={taglineRef}
             data-hero-center-part="true"
-            className={`col-start-1 row-start-2 m-0 mt-0 w-full translate-x-px rounded-[11px] border border-transparent bg-transparent pl-[1.16rem] pr-3 py-[0.4rem] max-[639px]:box-border max-[400px]:text-[0.74rem] font-display text-[clamp(0.8rem,2.25vw,0.92rem)] font-medium uppercase leading-snug tracking-[0.085em] text-white sm:mt-0 sm:rounded-xl sm:pl-[1.42rem] sm:pr-4 sm:py-[0.45rem] sm:text-[clamp(0.8rem,2.25vw,0.92rem)] ${HERO_NAME_MOBILE_TAGLINE_CLASS}`}
+            className={`invisible col-start-1 row-start-2 m-0 mt-0 w-full translate-x-px rounded-[11px] border border-transparent bg-transparent pl-[1.16rem] pr-3 py-[0.4rem] max-[639px]:box-border max-[400px]:text-[0.74rem] font-display text-[clamp(0.8rem,2.25vw,0.92rem)] font-medium uppercase leading-snug tracking-[0.085em] text-white sm:mt-0 sm:rounded-xl sm:pl-[1.42rem] sm:pr-4 sm:py-[0.45rem] sm:text-[clamp(0.8rem,2.25vw,0.92rem)] ${HERO_NAME_MOBILE_TAGLINE_CLASS}`}
+            aria-hidden
             style={mobileTaglineFontPx != null ? { fontSize: mobileTaglineFontPx } : undefined}
           >
             <motion.span
@@ -1940,6 +2141,9 @@ const HeroNameReveal = ({
           <HeroAccentLayoutDebugPanel
             controls={accentDebugControls}
             defaults={HERO_ACCENT_LAYOUT}
+            svgLockupControls={svgLockupDebugControls}
+            svgLockupDefaults={HERO_SVG_LOCKUP_LAYOUT_DEFAULTS}
+            svgAutoAlignX={heroSvgAlignX}
             videoGlobalControls={videoGlobalDebugControls}
             mainGlobalControls={mainGlobalDebugControls}
             portfolioButtonGlobalControls={portfolioButtonGlobalDebugControls}
@@ -1947,6 +2151,7 @@ const HeroNameReveal = ({
             mainGlobalDefaults={HERO_MAIN_GLOBAL_LAYOUT_DEFAULTS}
             portfolioButtonGlobalDefaults={HERO_PORTFOLIO_BUTTON_GLOBAL_LAYOUT_DEFAULTS}
             onChange={handleAccentDebugChange}
+            onSvgLockupChange={handleSvgLockupDebugChange}
             onVideoGlobalChange={onVideoGlobalDebugChange}
             onMainGlobalChange={onMainGlobalDebugChange}
             onPortfolioButtonGlobalChange={onPortfolioButtonGlobalDebugChange}
@@ -2007,6 +2212,9 @@ const Hero = ({
   const [sliderPhaseActive, setSliderPhaseActive] = useState(false);
   const [videoRevealActive, setVideoRevealActive] = useState(false);
   const [sliderAnimDone, setSliderAnimDone] = useState(false);
+  const [heroIdleFloat, setHeroIdleFloat] = useState(false);
+  const [lockupFadeReady, setLockupFadeReady] = useState(false);
+  const [portfolioFadeReady, setPortfolioFadeReady] = useState(false);
   const [heroSlideIndex, setHeroSlideIndex] = useState(initialHeroSlideIndex);
   const [heroSlideDirection, setHeroSlideDirection] = useState<1 | -1>(1);
   const [heroSlidePaused, setHeroSlidePaused] = useState(false);
@@ -2028,7 +2236,6 @@ const Hero = ({
   const mobileVideoY = useMotionValue(0);
   const desktopNameY = useMotionValue(0);
   const heroNameMotionRef = useRef<HTMLDivElement>(null);
-  const [heroPhase1RevealY, setHeroPhase1RevealY] = useState(0);
   const [heroPhase1LayoutReady, setHeroPhase1LayoutReady] = useState(false);
   const sliderPhaseActiveRef = useRef(false);
   const heroTouchStartYRef = useRef<number | null>(null);
@@ -2297,6 +2504,8 @@ const Hero = ({
       setSliderPhaseActive(false);
       setVideoRevealActive(false);
       setSliderAnimDone(false);
+      setLockupFadeReady(false);
+      setPortfolioFadeReady(false);
       return;
     }
     if (reduceMotion) {
@@ -2306,84 +2515,50 @@ const Hero = ({
       setSliderAnimDone(true);
       return;
     }
-    // Same ready gate as HeroNameReveal — color fades resolve, then a short beat → settle / video.
-    if (!heroPhase1LayoutReady) return;
-    const t = window.setTimeout(() => {
-      sliderPhaseActiveRef.current = true;
-      setSliderPhaseActive(true);
-    }, HERO_NAME_PHASE1_COMPLETE_MS);
-    return () => window.clearTimeout(t);
-  }, [fontsReady, heroMediaReady, heroRevealDelayDone, heroPhase1LayoutReady, reduceMotion]);
+    /* Video card opens first — mount + scaleX immediately; SVG/PORTFOLIO wait for sliderAnimDone. */
+    sliderPhaseActiveRef.current = true;
+    setSliderPhaseActive(true);
+    setVideoRevealActive(true);
+  }, [fontsReady, heroMediaReady, heroRevealDelayDone, reduceMotion]);
 
-  // Mount video card when horizontal reveal should begin (synced with name settle).
+  /** Very gentle idle float — only after SVG + PORTFOLIO entrance complete. */
   useEffect(() => {
-    if (!sliderPhaseActive) {
-      setVideoRevealActive(false);
+    if (!portfolioFadeReady || reduceMotion) {
+      setHeroIdleFloat(false);
       return;
     }
-    if (reduceMotion || isMobileHeroLayout) {
-      /* Mobile: mount immediately so ROT-center measure has real video geometry;
-       * scaleX still delayed via the card transition. */
-      setVideoRevealActive(true);
-      return;
-    }
-    const t = window.setTimeout(() => setVideoRevealActive(true), HERO_VIDEO_REVEAL_DELAY_MS);
-    return () => window.clearTimeout(t);
-  }, [isMobileHeroLayout, sliderPhaseActive, reduceMotion]);
+    const t = window.setTimeout(() => setHeroIdleFloat(true), HERO_IDLE_FLOAT_START_MS);
+    return () => {
+      window.clearTimeout(t);
+      setHeroIdleFloat(false);
+    };
+  }, [portfolioFadeReady, reduceMotion]);
 
-  /** Mobile — name + video settle together to ROT-centered finals (no post-animation nudge). */
+  /** Mobile — jump to final ROT-centered Y (no settle tween). Needs video mounted to measure. */
   useEffect(() => {
     if (!isMobileHeroLayout || !heroPhase1LayoutReady) return;
 
     if (!sliderPhaseActive) {
       sliderPhaseActiveRef.current = false;
-      mobileNameY.set(heroPhase1RevealY);
+      mobileNameY.set(0);
       mobileVideoY.set(0);
       return;
     }
 
     sliderPhaseActiveRef.current = true;
 
-    /* Wait for video mount so ROT measure uses real card height (avoids restart hitch). */
     if (!videoRevealActive && !reduceMotion) {
-      mobileNameY.set(heroPhase1RevealY);
+      mobileNameY.set(heroMobileSettleOffsetPx());
       mobileVideoY.set(0);
       return;
     }
 
     const settle = heroMobileSettleOffsetPx();
-    mobileVideoY.set(0);
-    const rotNudge = measureMobileHeroRotCenterNudgePx(settle, mobileNameY.get());
-
-    const nameTarget = settle + rotNudge;
-    const videoTarget = rotNudge;
-
-    if (reduceMotion) {
-      mobileNameY.set(nameTarget);
-      mobileVideoY.set(videoTarget);
-      return;
-    }
-
-    mobileNameY.set(heroPhase1RevealY);
-    mobileVideoY.set(0);
-    const nameControls = animate(mobileNameY, nameTarget, {
-      duration: HERO_NAME_SETTLE_DUR_S,
-      ease: HERO_SETTLE_EASE,
-      delay: HERO_NAME_SETTLE_DELAY_S,
-    });
-    const videoControls = animate(mobileVideoY, videoTarget, {
-      duration: HERO_NAME_SETTLE_DUR_S,
-      ease: HERO_SETTLE_EASE,
-      delay: HERO_NAME_SETTLE_DELAY_S,
-    });
-
-    return () => {
-      nameControls.stop();
-      videoControls.stop();
-    };
+    const rotNudge = measureMobileHeroRotCenterNudgePx(settle);
+    mobileNameY.set(settle + rotNudge);
+    mobileVideoY.set(rotNudge);
   }, [
     heroPhase1LayoutReady,
-    heroPhase1RevealY,
     isMobileHeroLayout,
     mobileNameY,
     mobileVideoY,
@@ -2392,36 +2567,11 @@ const Hero = ({
     videoRevealActive,
   ]);
 
-  /** Desktop/tablet — same imperative settle tween; starts centered, then settles to legacy breakpoint offsets. */
+  /** Desktop/tablet — stay at final settle Y (no phase-1 lift / settle tween). */
   useEffect(() => {
     if (isMobileHeroLayout || !heroPhase1LayoutReady) return;
-
-    if (!sliderPhaseActive) {
-      desktopNameY.set(heroPhase1RevealY);
-      return;
-    }
-
-    if (reduceMotion) {
-      desktopNameY.set(heroDesktopSettleOffsetPx());
-      return;
-    }
-
-    desktopNameY.set(heroPhase1RevealY);
-    const controls = animate(desktopNameY, heroDesktopSettleOffsetPx(), {
-      duration: HERO_NAME_SETTLE_DUR_S,
-      ease: HERO_SETTLE_EASE,
-      delay: HERO_NAME_SETTLE_DELAY_S,
-    });
-
-    return () => controls.stop();
-  }, [
-    desktopNameY,
-    heroPhase1LayoutReady,
-    heroPhase1RevealY,
-    isMobileHeroLayout,
-    reduceMotion,
-    sliderPhaseActive,
-  ]);
+    desktopNameY.set(heroDesktopSettleOffsetPx());
+  }, [desktopNameY, heroPhase1LayoutReady, isMobileHeroLayout, heroDesktopViewport]);
 
   const onStartClick = () => {
     onStart();
@@ -2436,46 +2586,72 @@ const Hero = ({
       return;
     }
 
-    const updatePhase1RevealY = () => {
+    const applyFinalLockupY = () => {
       const motionEl = heroNameMotionRef.current;
       const lockupEl = heroInViewRef.current;
       if (!motionEl || !lockupEl) return;
 
-      /* After settle starts, do not yank Y back to phase-1 on resize / VV ticks. */
-      if (sliderPhaseActiveRef.current) {
-        if (isMobileHeroLayout) return;
+      if (isMobileHeroLayout) {
+        /* Mobile final Y (incl. ROT) applied once video is mounted — see effect above. */
+        if (!sliderPhaseActiveRef.current || !videoRevealActive) {
+          mobileNameY.set(heroMobileSettleOffsetPx());
+          mobileVideoY.set(0);
+        }
+      } else {
         desktopNameY.set(heroDesktopSettleOffsetPx());
-        return;
       }
 
-      if (isMobileHeroLayout) {
-        mobileNameY.set(0);
-      } else {
-        desktopNameY.set(0);
-      }
-
-      const phase1 = measureHeroPhase1RevealOffsetPx(motionEl, lockupEl);
-
-      if (isMobileHeroLayout) {
-        mobileNameY.set(phase1);
-      } else {
-        desktopNameY.set(phase1);
-      }
-
-      setHeroPhase1RevealY(phase1);
       setHeroPhase1LayoutReady(true);
     };
 
-    updatePhase1RevealY();
-    window.addEventListener("resize", updatePhase1RevealY);
-    return () => window.removeEventListener("resize", updatePhase1RevealY);
-  }, [desktopNameY, heroReady, isMobileHeroLayout, mobileNameY, heroDesktopViewport]);
+    applyFinalLockupY();
+    window.addEventListener("resize", applyFinalLockupY);
+    return () => window.removeEventListener("resize", applyFinalLockupY);
+  }, [
+    desktopNameY,
+    heroReady,
+    isMobileHeroLayout,
+    mobileNameY,
+    mobileVideoY,
+    heroDesktopViewport,
+    videoRevealActive,
+  ]);
 
-  const heroNameRevealReady = heroReady && heroPhase1LayoutReady;
+  const heroLayoutReady = heroReady && heroPhase1LayoutReady;
+
+  /** SVG fade — after video opens, plus a short beat. */
+  useEffect(() => {
+    if (!sliderAnimDone) {
+      setLockupFadeReady(false);
+      return;
+    }
+    if (reduceMotion) {
+      setLockupFadeReady(true);
+      return;
+    }
+    const t = window.setTimeout(() => setLockupFadeReady(true), HERO_LOCKUP_FADE_AFTER_VIDEO_MS);
+    return () => window.clearTimeout(t);
+  }, [sliderAnimDone, reduceMotion]);
+
+  /** PORTFOLIO fade — after SVG has started, so SVG leads the lockup entrance. */
+  useEffect(() => {
+    if (!lockupFadeReady) {
+      setPortfolioFadeReady(false);
+      return;
+    }
+    if (reduceMotion) {
+      setPortfolioFadeReady(true);
+      return;
+    }
+    const t = window.setTimeout(() => setPortfolioFadeReady(true), HERO_PORTFOLIO_FADE_AFTER_SVG_MS);
+    return () => window.clearTimeout(t);
+  }, [lockupFadeReady, reduceMotion]);
+
+  // reveal gated via lockupFadeReady → HeroNameReveal.revealActive
 
   /** Mobile — match video card width to ROBBIE + accent rectangle (name lockup). */
   useLayoutEffect(() => {
-    if (!isMobileHeroLayout || !heroNameRevealReady) {
+    if (!isMobileHeroLayout || !heroLayoutReady) {
       setMobileLockupWidthPx(null);
       return;
     }
@@ -2503,7 +2679,7 @@ const Hero = ({
       ro?.disconnect();
       window.removeEventListener("resize", measure);
     };
-  }, [heroNameRevealReady, isMobileHeroLayout, sliderAnimDone]);
+  }, [heroLayoutReady, isMobileHeroLayout, sliderAnimDone]);
 
   const currentHeroSlide = heroSlides[heroSlideIndex];
   const currentFocal = heroFocalOverrides[currentHeroSlide.id] ?? heroFocalLocked[currentHeroSlide.id] ?? parseFocalPoint(currentHeroSlide.focalPoint);
@@ -2554,12 +2730,34 @@ const Hero = ({
     window.setTimeout(() => setDefaultsApplied(false), 1400);
   };
 
-  const heroVideoScaleDelayS = isMobileHeroLayout
-    ? HERO_VIDEO_REVEAL_DELAY_S + HERO_VIDEO_REVEAL_DELAY_MOBILE_EXTRA_S
-    : 0;
+  const heroVideoScaleDelayS = 0;
+
+  const heroIdleFloatAnimate = heroIdleFloat
+    ? { y: HERO_IDLE_FLOAT_SINE.map((sample) => sample * HERO_IDLE_FLOAT_Y_PX) }
+    : { y: 0 };
+  const heroIdleFloatTransition = heroIdleFloat
+    ? {
+        duration: HERO_IDLE_FLOAT_DUR_S,
+        repeat: Infinity,
+        ease: "linear" as const,
+        times: [...HERO_IDLE_FLOAT_TIMES],
+      }
+    : { duration: 0.5, ease: EASE.out };
+
+  const wrapHeroIdleFloat = (node: React.ReactNode) => (
+    <motion.div
+      className="flex w-full max-w-full justify-center transform-gpu will-change-transform"
+      initial={false}
+      animate={heroIdleFloatAnimate}
+      transition={heroIdleFloatTransition}
+    >
+      {node}
+    </motion.div>
+  );
 
   const heroVideoCard = (
     <motion.div
+      data-hero-video-card="true"
       data-hero-mobile-video-slot={isMobileHeroLayout ? "true" : undefined}
       className={`relative mx-auto max-[639px]:overflow-hidden sm:overflow-visible rounded-[11px] sm:rounded-xl ${HERO_VIDEO_CARD_WIDTH_CLASS} max-md:max-w-full`}
       initial={{ scaleX: 0 }}
@@ -2597,7 +2795,7 @@ const Hero = ({
         }}
       />
       <motion.div
-        className="relative z-[1] mx-auto w-full h-[clamp(145px,min(37.54vh,calc(100svh-11rem-max(1rem,env(safe-area-inset-top,0px)))),448px)] md:max-lg:h-[clamp(200px,min(44vh,calc(100svh-14rem-max(1rem,env(safe-area-inset-top,0px)))),500px)] lg:h-[clamp(240px,min(54vh,calc(100svh-11.5rem-max(1.5rem,env(safe-area-inset-top,0px)))),680px)] xl:h-[clamp(260px,min(56vh,calc(100svh-12rem-max(2rem,env(safe-area-inset-top,0px)))),760px)] overflow-hidden rounded-[11px] sm:rounded-xl border border-white bg-black"
+        className="relative z-[1] mx-auto w-full h-[clamp(150px,min(40vh,calc(100svh-11rem-max(1rem,env(safe-area-inset-top,0px)))),430px)] md:max-lg:h-[clamp(200px,min(44vh,calc(100svh-14rem-max(1rem,env(safe-area-inset-top,0px)))),500px)] lg:h-[clamp(240px,min(54vh,calc(100svh-11.5rem-max(1.5rem,env(safe-area-inset-top,0px)))),680px)] xl:h-[clamp(260px,min(56vh,calc(100svh-12rem-max(2rem,env(safe-area-inset-top,0px)))),760px)] overflow-hidden rounded-[11px] sm:rounded-xl bg-black"
         style={{
           boxShadow:
             "0 36px 88px rgba(0,0,0,0.6), inset 0 -40px 70px rgba(0,0,0,0.52), 0 0 28px 4px rgba(255,255,255,0.04)",
@@ -2714,7 +2912,13 @@ const Hero = ({
           data-hero-mobile-video-row={isMobileHeroLayout ? "true" : undefined}
           className="relative flex min-h-0 items-center justify-center max-lg:items-end max-lg:pb-2 md:max-lg:pb-3"
         >
-          <div className="absolute inset-0 flex w-full items-center justify-center max-lg:items-end max-lg:pb-2 md:max-lg:translate-y-8 md:max-lg:pb-1 max-[400px]:px-3 sm:px-0">
+          <div className={`absolute inset-0 flex w-full items-center justify-center max-lg:items-end max-lg:pb-2 md:max-lg:translate-y-3 md:max-lg:pb-1 ${HERO_TABLET_LANDSCAPE_VIDEO_NUDGE} max-[400px]:px-3 sm:px-0`}>
+          {/* Stable width probe — same card width as video; never scaled so SVG align can freeze early. */}
+          <div
+            aria-hidden
+            data-hero-video-align-probe="true"
+            className={`pointer-events-none invisible absolute left-1/2 top-0 h-0 -translate-x-1/2 overflow-hidden max-md:hidden ${HERO_VIDEO_CARD_WIDTH_CLASS}`}
+          />
           {videoRevealActive &&
             (heroDesktopLayoutActive ? (
               <div className="mx-auto w-fit min-w-0 max-w-full" style={heroVideoGlobalDebugStyle}>
@@ -2722,6 +2926,7 @@ const Hero = ({
               </div>
             ) : isMobileHeroLayout ? (
               <motion.div
+                data-hero-mobile-video-stack="true"
                 className="mx-auto w-full max-w-full"
                 style={{ y: mobileVideoY }}
                 initial={false}
@@ -2734,7 +2939,7 @@ const Hero = ({
           </div>
         </div>
         <div
-          className={`relative z-40 flex min-h-0 flex-col items-center overflow-visible pt-0 max-lg:justify-start max-lg:pt-2 md:max-lg:justify-center md:max-lg:pt-0${
+          className={`relative z-40 flex min-h-0 flex-col items-center overflow-visible pt-0 max-lg:justify-start max-lg:pt-2 md:max-lg:justify-start md:max-lg:pt-2 ${HERO_TABLET_LANDSCAPE_NAME_CENTER}${
             isMobileHeroLayout
               ? " max-md:col-span-full max-md:col-start-1 max-md:row-span-full max-md:row-start-1 max-md:absolute max-md:inset-0 max-md:z-[45] max-md:justify-center max-md:pt-0"
               : ""
@@ -2743,17 +2948,20 @@ const Hero = ({
           {/* Y-transform wrapper: mobile centers in viewport then tweens down; desktop uses phase-1 lift → settle. */}
           <motion.div
             ref={heroNameMotionRef}
-            className="mx-auto flex h-full w-full max-w-[1220px] flex-col items-center justify-center gap-0 px-1 py-2 max-lg:justify-start max-lg:py-1 max-md:justify-center max-md:py-0 sm:px-2 sm:py-2 md:max-lg:justify-center md:max-lg:py-2 lg:py-3"
+            data-hero-mobile-name-stack={isMobileHeroLayout ? "true" : undefined}
+            className={`mx-auto flex h-full w-full max-w-[1220px] flex-col items-center justify-center gap-0 px-1 py-2 max-lg:justify-start max-lg:py-1 max-md:justify-center max-md:py-0 sm:px-2 sm:py-2 md:max-lg:justify-start md:max-lg:py-1 ${HERO_TABLET_LANDSCAPE_NAME_CENTER} lg:py-3`}
             style={{ y: isMobileHeroLayout ? mobileNameY : desktopNameY }}
             initial={false}
           >
+            {wrapHeroIdleFloat(
               <div
-              ref={heroInViewRef}
-              className="mx-auto flex w-full min-w-0 max-w-[min(100%,58rem)] flex-col px-1 max-[639px]:px-0 max-[400px]:px-3 max-md:pt-2 sm:px-2"
-            >
+                ref={heroInViewRef}
+                className="mx-auto flex w-full min-w-0 max-w-[min(100%,58rem)] flex-col px-1 max-[639px]:px-0 max-[400px]:px-3 max-md:pt-2 sm:px-2"
+              >
               <div className="w-full min-w-0 text-left max-md:flex max-md:justify-center">
                 <HeroNameReveal
-                  heroReady={heroNameRevealReady}
+                  heroReady={heroLayoutReady}
+                  revealActive={lockupFadeReady}
                   reduceMotion={reduceMotion}
                   heroMainGlobalDebugStyle={heroMainGlobalDebugStyle}
                   heroPortfolioButtonGlobalDebugStyle={heroPortfolioButtonGlobalDebugStyle}
@@ -2768,15 +2976,36 @@ const Hero = ({
                   button={
                     <motion.div
                       initial={{ opacity: 0 }}
-                      animate={sliderAnimDone ? { opacity: 1 } : { opacity: 0 }}
-                      transition={{ duration: 0.42, delay: sliderAnimDone ? 0.15 : 0, ease: EASE.out }}
-                      className={`shrink-0 self-end${sliderAnimDone ? "" : " pointer-events-none"}`}
-                      aria-hidden={!sliderAnimDone}
+                      animate={
+                        portfolioFadeReady
+                          ? heroIdleFloat
+                            ? {
+                                opacity: 1,
+                                y: HERO_IDLE_FLOAT_SINE.map((sample) => -sample * HERO_IDLE_FLOAT_Y_PX),
+                              }
+                            : { opacity: 1, y: 0 }
+                          : { opacity: 0, y: 0 }
+                      }
+                      transition={
+                        portfolioFadeReady && heroIdleFloat
+                          ? {
+                              opacity: { duration: 0.42, delay: 0.08, ease: EASE.out },
+                              y: {
+                                duration: HERO_IDLE_FLOAT_DUR_S,
+                                repeat: Infinity,
+                                ease: "linear" as const,
+                                times: [...HERO_IDLE_FLOAT_TIMES],
+                              },
+                            }
+                          : { duration: 0.42, delay: portfolioFadeReady ? 0.08 : 0, ease: EASE.out }
+                      }
+                      className={`shrink-0 self-end transform-gpu will-change-transform${portfolioFadeReady ? "" : " pointer-events-none"}`}
+                      aria-hidden={!portfolioFadeReady}
                     >
                       <motion.button
                         type="button"
                         onClick={onStartClick}
-                        className={`playstore-button playstore-button--primary box-border !border-2 !min-h-0 h-[calc(clamp(2.28rem,8.85vw,5.95rem)*0.78)] max-h-[4.85rem] items-center px-3 !py-0 max-[639px]:max-w-none max-[639px]:px-2.5 sm:px-5 md:px-8 [&_.texts]:text-[clamp(0.82rem,1.58vw,0.97rem)] [&_.texts]:tracking-[0.085em] max-[639px]:[&_.texts]:gap-1 max-[639px]:[&_.texts]:text-[0.74rem] sm:[&_.texts]:text-[clamp(0.9rem,1.82vw,1.05rem)] md:[&_.texts]:text-[clamp(0.96rem,1.68vw,1.12rem)] ${HERO_NAME_MOBILE_PORTFOLIO_BUTTON_CLASS}`}
+                        className={`playstore-button playstore-button--primary box-border !border-[1.8px] !min-h-0 h-[calc(clamp(2.28rem,8.85vw,5.95rem)*0.78)] max-h-[4.85rem] items-center px-3 !py-0 max-[639px]:max-w-none max-[639px]:px-2.5 sm:px-5 md:px-8 [&_.texts]:text-[clamp(0.82rem,1.58vw,0.97rem)] [&_.texts]:tracking-[0.085em] max-[639px]:[&_.texts]:gap-1 max-[639px]:[&_.texts]:text-[0.74rem] sm:[&_.texts]:text-[clamp(0.9rem,1.82vw,1.05rem)] md:[&_.texts]:text-[clamp(0.96rem,1.68vw,1.12rem)] ${HERO_NAME_MOBILE_PORTFOLIO_BUTTON_CLASS}`}
                         whileHover={{ y: -1 }}
                         whileTap={TAP}
                         transition={SPRING.ui}
@@ -2790,7 +3019,8 @@ const Hero = ({
                   }
                 />
               </div>
-            </div>
+            </div>,
+            )}
           </motion.div>
         </div>
         {SHOW_HERO_TUNER && (
@@ -3124,7 +3354,7 @@ const RainbowMenuSlide = ({
               />
               <motion.span
                 aria-hidden
-                className={`absolute bottom-0 left-0 right-0 h-[2px] origin-left ${item.color}`}
+                className={`absolute bottom-0 left-0 right-0 origin-left ${item.id === "profile" ? "h-[2.5px]" : "h-[2px]"} ${item.color}`}
                 initial={false}
                 animate={{ scaleX: hoveredId === item.id ? 1 : 0 }}
                 transition={CMD_HOVER}
@@ -3329,7 +3559,7 @@ const SideNavOverlay = ({
                   </div>
                   <motion.span
                     aria-hidden
-                    className={`absolute bottom-0 left-0 right-0 h-[2px] origin-left ${item.color}`}
+                    className={`absolute bottom-0 left-0 right-0 origin-left ${item.id === "profile" ? "h-[2.5px]" : "h-[2px]"} ${item.color}`}
                     initial={false}
                     animate={{ scaleX: hoveredId === item.id || pendingNavId === item.id ? 1 : 0 }}
                     transition={CMD_HOVER}
@@ -4596,7 +4826,7 @@ const PROJECTS_CAROUSEL_ENTRANCE_FADE_S = 0.34;
 const ENABLE_PROJECT_CARD_VIDEO_AUTOPLAY = false;
 /** Project row — single-line card titles (no wrap); optional `titlePrefix` stacks above without shifting tagline. */
 const PROJECT_CARD_TITLE_CLASS =
-  "project-card-title font-display tracking-tight text-white opacity-100 motion-safe:transition-[opacity,color] motion-safe:duration-300 motion-safe:ease-out group-hover:text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]";
+  "project-card-title font-display tracking-tight text-white opacity-100 motion-safe:transition-[opacity,color] motion-safe:duration-300 motion-safe:ease-out group-hover:text-[color:var(--palette-yellow-projects)]";
 
 const showcaseProjectDisplayTitle = (card: Pick<ShowcaseProjectCard, "title" | "titlePrefix">) =>
   card.titlePrefix ? `${card.titlePrefix} ${card.title}` : card.title;
@@ -4671,13 +4901,13 @@ const PROJECT_CARD_THUMBNAIL_IMAGE_BLEED =
 /** Same shape as hero media vignette; edge opacity reduced 25% (0.4 → 0.3). */
 const PROJECT_CARD_THUMBNAIL_VIGNETTE =
   "radial-gradient(ellipse 74% 70% at 50% 48%, transparent 26%, rgba(0,0,0,0.3) 100%)";
-/** Tagline row — description below inset grey divider. */
+/** Tagline row — description below inset grey divider (same inset as title; no side bleed). */
 const PROJECT_CARD_TAGLINE_DIVIDER =
-  "-mx-px shrink-0 border-t border-white/15";
+  "shrink-0 border-t border-white/15";
 const PROJECT_CARD_TAGLINE_PANEL =
   "project-card-tagline-panel flex min-h-0 flex-1 flex-col justify-start gap-1.5 px-2.5 pb-3 pt-0 sm:gap-2 sm:px-3 sm:pb-3.5";
 const PROJECT_CARD_TITLE_INSET =
-  "project-card-title-inset shrink-0 -translate-x-0.5 px-2.5 pb-1.5 pt-2.5 sm:px-3 sm:pb-2 sm:pt-3";
+  "project-card-title-inset shrink-0 px-2.5 pb-1.5 pt-2.5 sm:px-3 sm:pb-2 sm:pt-3";
 const PROJECT_CARD_TAGLINE_CLASS =
   "project-card-tagline font-body block w-full text-left text-xs leading-snug sm:text-[0.8125rem] md:text-sm lg:text-[0.9375rem] text-mono-2/70 transition-colors group-hover:text-white/90";
 
@@ -4821,9 +5051,9 @@ const ProjectsStack = ({
                   transition={{ duration: 0.28 / SHOWCASE_TIME_DIV, ease: cardEase }}
                   className={`group project-card-surface relative w-full [container-type:inline-size] ${SHOWCASE_CAROUSEL_CARD_H} rounded-[11px] sm:rounded-xl border border-[var(--portfolio-glass-stroke)] shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)] text-center overflow-hidden transition-[opacity,background-color,border-color] duration-300 ease-out ${
                     contentReady
-                      ? "hover:border-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] hover:bg-black [background:#000]"
+                      ? "hover:border-[color:var(--palette-yellow-projects)] hover:bg-black [background:#000]"
                       : "[background:transparent!important] hover:[background:transparent!important]"
-                  } hover:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
+                  } hover:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--palette-yellow-projects)] focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
                     focusProjectId && focusProjectId !== card.id ? "opacity-0 pointer-events-none" : "opacity-100"
                   }`}
                   style={contentReady ? undefined : { background: "transparent", backgroundImage: "none" }}
@@ -5530,7 +5760,7 @@ const SupportingProjectsSection = ({
               <div key={section.heading}>
                 <h3
                   ref={sectionIndex === 0 ? archiveFirstYellowRuleRef : undefined}
-                  className="font-heading text-[0.6875rem] sm:text-xs tracking-eyebrow leading-snug uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] mb-3 pb-2 border-b border-[color:color-mix(in_srgb,var(--palette-yellow-projects)_26%,rgb(186_186_186))]"
+                  className="font-heading text-[0.6875rem] sm:text-xs tracking-eyebrow leading-snug uppercase text-[color:var(--palette-yellow-projects)] mb-3 pb-2 border-b border-[color:var(--palette-yellow-projects)]"
                 >
                   {section.heading}
                 </h3>
@@ -5555,11 +5785,11 @@ const SupportingProjectsSection = ({
                             {item.subtitle}
                           </span>
                         </div>
-                        <span className="font-mono text-[0.6875rem] sm:text-xs tracking-[0.14em] uppercase text-mono-2/70 group-hover:text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] shrink-0 pt-1 transition-colors duration-200">
+                        <span className="font-mono text-[0.6875rem] sm:text-xs tracking-[0.14em] uppercase text-mono-2/70 group-hover:text-[color:var(--palette-yellow-projects)] shrink-0 pt-1 transition-colors duration-200">
                           VIEW
                         </span>
                         <FileText
-                          className="w-4 h-4 shrink-0 text-mono-2/70 group-hover:text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] mt-0.5 transition-colors duration-200"
+                          className="w-4 h-4 shrink-0 text-mono-2/70 group-hover:text-[color:var(--palette-yellow-projects)] mt-0.5 transition-colors duration-200"
                           aria-hidden
                         />
                       </button>
@@ -5703,7 +5933,7 @@ const ShowcaseVisualDesignDetail = ({
               }
         }
       >
-        <p className="m-0 w-full font-heading text-sm sm:text-base leading-snug tracking-eyebrow-tight uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]">
+        <p className="m-0 w-full font-heading text-sm sm:text-base leading-snug tracking-eyebrow-tight uppercase text-[color:var(--palette-yellow-projects)]">
           Project details
         </p>
         <h3 className="m-0 w-full font-display text-2xl md:text-3xl leading-[1.1] tracking-[-0.015em] text-white">
@@ -6109,7 +6339,7 @@ const ShowcaseDetailIllustrationsGrid = ({
               whileHover={reduceMotion ? undefined : { scale: 1.015 }}
               whileTap={reduceMotion ? undefined : { scale: 1.02 }}
               transition={reduceMotion ? undefined : { duration: 0.2, ease: EASE.out }}
-              className={`${tileClassName} group mb-[var(--slide-gap,0.875rem)] inline-block w-full break-inside-avoid cursor-pointer border-0 p-0 text-left align-top transition-opacity duration-200 ease-out hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black`}
+              className={`${tileClassName} group mb-[var(--slide-gap,0.875rem)] inline-block w-full break-inside-avoid cursor-pointer border-0 p-0 text-left align-top transition-opacity duration-200 ease-out hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--palette-yellow-projects)] focus-visible:ring-offset-2 focus-visible:ring-offset-black`}
               aria-label={`View ${label}`}
               onClick={() => setActiveIndex(index)}
             >
@@ -6149,13 +6379,13 @@ const ShowcaseDetailIllustrationsGrid = ({
 const ShowcaseDetailOverviewRole = ({ card }: { card: ShowcaseProjectCard }) => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-3">
     <section className={`${showcaseDetailCard} min-w-0 md:col-span-2`}>
-      <p className="font-heading text-xs tracking-eyebrow-tight leading-snug uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] mb-1.5">OVERVIEW</p>
+      <p className="font-heading text-xs tracking-eyebrow-tight leading-snug uppercase text-[color:var(--palette-yellow-projects)] mb-1.5">OVERVIEW</p>
       <p className="font-body text-sm sm:text-base text-mono-2 leading-snug whitespace-pre-line">
         {card.detailOverview?.trim() || "?"}
       </p>
     </section>
     <section className={`${showcaseDetailCard} min-w-0`}>
-      <p className="font-heading text-xs tracking-eyebrow-tight leading-snug uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] mb-1.5">ROLE</p>
+      <p className="font-heading text-xs tracking-eyebrow-tight leading-snug uppercase text-[color:var(--palette-yellow-projects)] mb-1.5">ROLE</p>
       <p className="font-body text-sm sm:text-base text-mono-2 leading-snug whitespace-pre-line">
         {card.detailRole?.trim() || "?"}
       </p>
@@ -6166,13 +6396,13 @@ const ShowcaseDetailOverviewRole = ({ card }: { card: ShowcaseProjectCard }) => 
 const ShowcaseDetailImpactTools = ({ card }: { card: ShowcaseProjectCard }) => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-3">
     <section className={`${showcaseDetailCard} min-w-0 md:col-span-2`}>
-      <p className="font-heading text-xs tracking-eyebrow-tight leading-snug uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] mb-1.5">IMPACT</p>
+      <p className="font-heading text-xs tracking-eyebrow-tight leading-snug uppercase text-[color:var(--palette-yellow-projects)] mb-1.5">IMPACT</p>
       <p className="font-body text-sm sm:text-base text-mono-2 leading-snug whitespace-pre-line">
         {card.detailImpact?.trim() || "?"}
       </p>
     </section>
     <section className={`${showcaseDetailCard} min-w-0`}>
-      <p className="font-heading text-xs tracking-eyebrow-tight leading-snug uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] mb-1.5">TOOLS</p>
+      <p className="font-heading text-xs tracking-eyebrow-tight leading-snug uppercase text-[color:var(--palette-yellow-projects)] mb-1.5">TOOLS</p>
       {card.detailTools?.length ? (
         <ul className="ml-1 list-disc list-outside space-y-1 pl-6 sm:pl-7 marker:text-mono-2/70">
           {card.detailTools.map((tool, i) => (
@@ -6215,7 +6445,7 @@ function ShowcaseWritingFeaturedPanel({
           </p>
           <button
             type="button"
-            className="featured-writing-view-cta col-start-2 row-start-1 inline-flex w-fit shrink-0 items-center gap-2 self-start justify-self-end rounded-[11px] sm:rounded-xl px-2.5 py-1.5 font-heading text-[10px] sm:text-xs font-semibold tracking-eyebrow-tight uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_56%,rgb(186_186_186))] transition-[background-color,color,border-color,box-shadow] duration-300 ease-out hover:text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_62%,rgb(186_186_186))] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black mr-[6px] sm:px-3 sm:py-2"
+            className="featured-writing-view-cta col-start-2 row-start-1 inline-flex w-fit shrink-0 items-center gap-2 self-start justify-self-end rounded-[11px] sm:rounded-xl px-2.5 py-1.5 font-heading text-[10px] sm:text-xs font-semibold tracking-eyebrow-tight uppercase text-[color:var(--palette-yellow-projects)] transition-[background-color,color,border-color,box-shadow] duration-300 ease-out hover:text-[color:var(--palette-yellow-projects)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--palette-yellow-projects)] focus-visible:ring-offset-2 focus-visible:ring-offset-black mr-[6px] sm:px-3 sm:py-2"
             onClick={() => onOpenPdfInSupporting(item)}
           >
             <span className="featured-writing-view-cta-label">VIEW</span>
@@ -7203,7 +7433,7 @@ const PalaceProjects = ({
                         }
                   }
                 >
-                  <p className="m-0 w-full font-heading text-sm sm:text-base leading-snug tracking-eyebrow-tight uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]">
+                  <p className="m-0 w-full font-heading text-sm sm:text-base leading-snug tracking-eyebrow-tight uppercase text-[color:var(--palette-yellow-projects)]">
                     Project details
                   </p>
                   <h3 className="m-0 w-full font-display text-2xl md:text-3xl leading-[1.1] tracking-[-0.015em] text-white">
@@ -7340,7 +7570,7 @@ const PalaceProjects = ({
 
 const ProjectPoint = ({ text }: { text: string }) => (
   <div className="flex items-start">
-    <Star className="w-5 h-5 text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] mr-3 mt-1 flex-shrink-0 fill-current" />
+    <Star className="w-5 h-5 text-[color:var(--palette-yellow-projects)] mr-3 mt-1 flex-shrink-0 fill-current" />
     <span className="font-body text-base md:text-lg text-mono-2 leading-relaxed">{text}</span>
   </div>
 );

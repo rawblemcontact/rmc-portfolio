@@ -19,7 +19,7 @@ const TAB_LABEL: Record<ShowcaseTabId, string> = {
 const TAB_PANEL_SURFACE = "featured-writing-panel";
 
 /** Active tab: same `color-mix` for border + label (applied via `style` so values stay in sync). */
-const featuredTabSoftYellow = "color-mix(in srgb, var(--palette-yellow-projects) 48%, rgb(186, 186, 186))";
+const featuredTabSoftYellow = "var(--palette-yellow-projects)";
 
 /**
  * Panel inset + preview width always follow this tab so switching tabs does not shift

@@ -39,10 +39,19 @@ export const HERO_MAIN_GLOBAL_LAYOUT_DEFAULTS: HeroGlobalLayoutControl = {
 };
 
 export const HERO_PORTFOLIO_BUTTON_GLOBAL_LAYOUT_DEFAULTS: HeroGlobalLayoutControl = {
-  offsetX: 40,
+  offsetX: 85,
+  offsetY: 15,
+  scale: 0.94,
+  widthScale: 1,
+  heightScale: 0.91,
+};
+
+/** Desktop rob-hero SVG lockup — additive to auto video-edge align X. */
+export const HERO_SVG_LOCKUP_LAYOUT_DEFAULTS: HeroGlobalLayoutControl = {
+  offsetX: 57,
   offsetY: 0,
   scale: 1,
-  widthScale: 1,
+  widthScale: 0.95,
   heightScale: 1,
 };
 
@@ -179,6 +188,10 @@ function defaultHeroDebugPanelPosition() {
 type HeroAccentLayoutDebugPanelProps = {
   controls: Record<HeroAccentIconKey, HeroAccentLayoutControl>;
   defaults: Record<HeroAccentIconKey, HeroAccentLayoutControl>;
+  svgLockupControls: HeroGlobalLayoutControl;
+  svgLockupDefaults: HeroGlobalLayoutControl;
+  /** Frozen auto-align X (video left edge); debug X is additive. */
+  svgAutoAlignX: number;
   videoGlobalControls: HeroGlobalLayoutControl;
   mainGlobalControls: HeroGlobalLayoutControl;
   portfolioButtonGlobalControls: HeroGlobalLayoutControl;
@@ -186,6 +199,7 @@ type HeroAccentLayoutDebugPanelProps = {
   mainGlobalDefaults: HeroGlobalLayoutControl;
   portfolioButtonGlobalDefaults: HeroGlobalLayoutControl;
   onChange: (iconKey: HeroAccentIconKey, patch: Partial<HeroAccentLayoutControl>) => void;
+  onSvgLockupChange: (patch: Partial<HeroGlobalLayoutControl>) => void;
   onVideoGlobalChange: (patch: Partial<HeroGlobalLayoutControl>) => void;
   onMainGlobalChange: (patch: Partial<HeroGlobalLayoutControl>) => void;
   onPortfolioButtonGlobalChange: (patch: Partial<HeroGlobalLayoutControl>) => void;
@@ -195,6 +209,9 @@ type HeroAccentLayoutDebugPanelProps = {
 export function HeroAccentLayoutDebugPanel({
   controls,
   defaults,
+  svgLockupControls,
+  svgLockupDefaults,
+  svgAutoAlignX,
   videoGlobalControls,
   mainGlobalControls,
   portfolioButtonGlobalControls,
@@ -202,6 +219,7 @@ export function HeroAccentLayoutDebugPanel({
   mainGlobalDefaults,
   portfolioButtonGlobalDefaults,
   onChange,
+  onSvgLockupChange,
   onVideoGlobalChange,
   onMainGlobalChange,
   onPortfolioButtonGlobalChange,
@@ -272,6 +290,15 @@ export function HeroAccentLayoutDebugPanel({
   }));
 
   const lockInCode = [
+    "const HERO_SVG_LOCKUP_LAYOUT = {",
+    `  offsetX: ${svgLockupControls.offsetX},`,
+    `  offsetY: ${svgLockupControls.offsetY},`,
+    `  scale: ${svgLockupControls.scale.toFixed(2)},`,
+    `  widthScale: ${svgLockupControls.widthScale.toFixed(2)},`,
+    `  heightScale: ${svgLockupControls.heightScale.toFixed(2)},`,
+    "};",
+    `// autoAlignX (frozen): ${svgAutoAlignX.toFixed(2)}px — debug offsetX is additive`,
+    "",
     "const HERO_VIDEO_GLOBAL_LAYOUT = {",
     `  offsetX: ${videoGlobalControls.offsetX},`,
     `  offsetY: ${videoGlobalControls.offsetY},`,
@@ -344,6 +371,17 @@ export function HeroAccentLayoutDebugPanel({
       {open && (
         <div className="mt-2 max-h-[min(72vh,calc(100svh-5rem))] overflow-y-auto pr-1 [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/25">
           <div className="space-y-3">
+            <div className="hidden space-y-1 lg:block">
+              <HeroGlobalLayoutControlsSection
+                title="Rob hero SVG (desktop)"
+                controls={svgLockupControls}
+                onChange={onSvgLockupChange}
+              />
+              <p className="font-mono text-[9px] uppercase tracking-[0.1em] text-mono-2/60">
+                Auto-align X: {svgAutoAlignX.toFixed(2)}px · total X:{" "}
+                {(svgAutoAlignX + svgLockupControls.offsetX).toFixed(2)}px
+              </p>
+            </div>
             <HeroGlobalLayoutControlsSection
               title="Video card (desktop)"
               controls={videoGlobalControls}
@@ -441,6 +479,9 @@ export function HeroAccentLayoutDebugPanel({
             </button>
           </div>
 
+          <p className="font-mono text-[9px] uppercase tracking-[0.1em] text-mono-2/60">
+            SVG lockup defaults (desktop): {formatGlobalDefaults(svgLockupDefaults)}
+          </p>
           <p className="font-mono text-[9px] uppercase tracking-[0.1em] text-mono-2/60">
             Video defaults (desktop): {formatGlobalDefaults(videoGlobalDefaults)}
           </p>

@@ -583,7 +583,7 @@ export function ShowcaseVideoEditingDetail({
   };
 
   const worksArrowBtnClass =
-    "video-editing-works-arrow absolute top-[2.45rem] z-10 flex h-[1.65rem] w-[1.65rem] items-center justify-center border-0 bg-transparent p-0 text-white/85 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:h-[1.925rem] sm:w-[1.925rem]";
+    "video-editing-works-arrow absolute top-[2.45rem] z-10 flex h-[1.65rem] w-[1.65rem] items-center justify-center border-0 bg-transparent p-0 text-white/85 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--palette-yellow-projects)] focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:h-[1.925rem] sm:w-[1.925rem]";
   const worksStripThumbBasisClass = isInteractiveMedia
     ? "basis-[calc((100%-0.5rem)/2)] sm:basis-[calc((100%-0.625rem)/2)] md:basis-[calc((100%-1.25rem)/3)] lg:basis-[calc((100%-1.25rem)/3)]"
     : "basis-[calc((100%-0.5rem)/2)] sm:basis-[calc((100%-0.625rem)/2)] md:basis-[calc((100%-1.25rem)/3)] lg:basis-[calc((100%-1.875rem)/4)]";
@@ -618,7 +618,7 @@ export function ShowcaseVideoEditingDetail({
               }
         }
       >
-        <p className="m-0 w-full font-heading text-sm sm:text-base leading-snug tracking-eyebrow-tight uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]">
+        <p className="m-0 w-full font-heading text-sm sm:text-base leading-snug tracking-eyebrow-tight uppercase text-[color:var(--palette-yellow-projects)]">
           Project details
         </p>
         <h3 className="m-0 w-full font-display text-2xl md:text-3xl leading-[1.1] tracking-[-0.015em] text-white">
@@ -722,7 +722,7 @@ export function ShowcaseVideoEditingDetail({
                           <span
                             className={`video-editing-works-strip-thumb-art relative block h-[4.9rem] w-full overflow-hidden rounded-[10px] border transition-colors ${
                               active
-                                ? "border-[color:color-mix(in_srgb,var(--palette-yellow-projects)_70%,white)]"
+                                ? "border-[color:var(--palette-yellow-projects)]"
                                 : "border-white/[0.14]"
                             }`}
                           >
@@ -855,7 +855,7 @@ export function ShowcaseVideoEditingDetail({
                     }
                   >
                     <section className={`${showcaseDetailCardClass} min-w-0`}>
-                      <p className="mb-1.5 font-heading text-xs leading-snug tracking-eyebrow-tight uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]">
+                      <p className="mb-1.5 font-heading text-xs leading-snug tracking-eyebrow-tight uppercase text-[color:var(--palette-yellow-projects)]">
                         OVERVIEW
                       </p>
                       <p className="whitespace-pre-line font-body text-sm leading-snug text-mono-2 sm:text-base">
@@ -863,7 +863,7 @@ export function ShowcaseVideoEditingDetail({
                       </p>
                     </section>
                     <section className={`${showcaseDetailCardClass} min-w-0`}>
-                      <p className="mb-1.5 font-heading text-xs leading-snug tracking-eyebrow-tight uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]">
+                      <p className="mb-1.5 font-heading text-xs leading-snug tracking-eyebrow-tight uppercase text-[color:var(--palette-yellow-projects)]">
                         ROLE
                       </p>
                       <p className="whitespace-pre-line font-body text-sm leading-snug text-mono-2 sm:text-base">
@@ -871,7 +871,7 @@ export function ShowcaseVideoEditingDetail({
                       </p>
                     </section>
                     <section className={`${showcaseDetailCardClass} min-w-0`}>
-                      <p className="mb-1.5 font-heading text-xs leading-snug tracking-eyebrow-tight uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]">
+                      <p className="mb-1.5 font-heading text-xs leading-snug tracking-eyebrow-tight uppercase text-[color:var(--palette-yellow-projects)]">
                         IMPACT
                       </p>
                       <p className="whitespace-pre-line font-body text-sm leading-snug text-mono-2 sm:text-base">
@@ -879,7 +879,7 @@ export function ShowcaseVideoEditingDetail({
                       </p>
                     </section>
                     <section className={`${showcaseDetailCardClass} min-w-0`}>
-                      <p className="mb-1.5 font-heading text-xs leading-snug tracking-eyebrow-tight uppercase text-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))]">
+                      <p className="mb-1.5 font-heading text-xs leading-snug tracking-eyebrow-tight uppercase text-[color:var(--palette-yellow-projects)]">
                         TOOLS
                       </p>
                       {activeDetails.detailTools?.length ? (

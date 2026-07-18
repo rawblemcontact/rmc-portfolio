@@ -3,6 +3,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "./components/ui/toaster";
 import { TooltipProvider } from "./components/ui/tooltip";
 import { DebugRulerTool } from "./components/DebugRulerTool";
+import { MobileLandscapeGate } from "./components/MobileLandscapeGate";
 import {
   PortfolioDebugProvider,
 } from "./lib/portfolioDebugMode";
@@ -20,6 +21,7 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <Home />
+          <MobileLandscapeGate />
           <PortfolioDebugTools />
         </TooltipProvider>
       </PortfolioDebugProvider>

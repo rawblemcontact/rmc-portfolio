@@ -9,14 +9,14 @@
  * `:root` block below as `html[data-palette="alt"] { ... }` with new values.
  */
 :root {
-  /* User neon set → 7 tokens. `orange` = CONTACT (indigo). Extras: #ff8700 Princeton orange, #deff0a lime yellow, #be0aff hyper magenta. */
-  --palette-red: #ff0000;
-  --palette-orange: #580aff;
-  --palette-yellow: #ffd300;
-  /** Showcase / menu “soft gold” motif — a touch more chroma than `--palette-yellow` */
-  --palette-yellow-projects: #ffdc28;
-  --palette-green: #00854d;
-  --palette-green-bright: #00b47a;
-  --palette-blue: #147df5;
-  --palette-blue-bright: #0aefff;
+  /* Main menu / section accents (exact). `orange` = CONTACT (indigo). */
+  --palette-red: #ef3a2c;
+  --palette-orange: #583eb7;
+  --palette-yellow: #efc53a;
+  /** Showcase / projects motif — matches main-menu yellow */
+  --palette-yellow-projects: #efc53a;
+  --palette-green: #0fb93c;
+  --palette-green-bright: #0fb93c;
+  --palette-blue: #0a88f7;
+  --palette-blue-bright: #0a88f7;
 }

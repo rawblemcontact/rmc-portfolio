@@ -1,3 +1,4 @@
+@import "./styles/fonts.css";
 @import "./styles/portfolio-palette.css";
 @import "tailwindcss";
 /* Menu SKILLS row underline — force utility emit (NAV_ITEMS only interpolates class names). */
@@ -994,7 +995,7 @@
   }
 
   .featured-writing-tab-active {
-    --fw-tab-active-accent: color-mix(in srgb, var(--palette-yellow-projects) 48%, rgb(186, 186, 186));
+    --fw-tab-active-accent: var(--palette-yellow-projects);
     --fw-tab-bg-current: var(--fw-tab-active-bg);
     height: calc(2.75rem * 1.05);
     min-height: calc(2.75rem * 1.05);
@@ -1074,25 +1075,33 @@
 
   .featured-writing-view-cta:hover {
     background: color-mix(in srgb, var(--portfolio-section-card) 14%, transparent);
-    border-color: color-mix(in srgb, var(--palette-yellow-projects) 48%, rgb(186, 186, 186));
+    border-color: var(--palette-yellow-projects);
   }
 
   @keyframes hero-cta-primary-pulse {
     0%,
     100% {
-      border-color: color-mix(in srgb, var(--palette-red) 52%, rgba(255, 255, 255, 0.14));
+      border-color: var(--palette-red);
       box-shadow: none;
     }
-    25% {
-      border-color: color-mix(in srgb, var(--palette-yellow-projects) 52%, rgba(255, 255, 255, 0.14));
+    16.666% {
+      border-color: var(--palette-yellow-projects);
+      box-shadow: none;
+    }
+    33.333% {
+      border-color: var(--palette-blue);
       box-shadow: none;
     }
     50% {
-      border-color: color-mix(in srgb, var(--palette-blue) 52%, rgba(255, 255, 255, 0.14));
+      border-color: var(--palette-green);
       box-shadow: none;
     }
-    75% {
-      border-color: color-mix(in srgb, var(--palette-green) 52%, rgba(255, 255, 255, 0.14));
+    66.666% {
+      border-color: var(--palette-orange);
+      box-shadow: none;
+    }
+    83.333% {
+      border-color: #ffffff;
       box-shadow: none;
     }
   }
@@ -1124,7 +1133,7 @@
     border-color: rgba(255, 255, 255, 0.14);
     color: rgba(255, 255, 255, 0.88);
     background-color: rgba(0, 0, 0, 0.42);
-    animation: hero-cta-primary-pulse 3.2s ease-in-out infinite;
+    animation: hero-cta-primary-pulse 6.4s ease-in-out infinite;
   }
 
   .playstore-button--primary:hover,
@@ -4732,7 +4741,7 @@
     }
     .video-editing-works-strip .video-editing-works-strip-thumb:focus-visible {
       outline: none;
-      box-shadow: 0 0 0 1px color-mix(in srgb, var(--palette-yellow-projects) 48%, rgb(186 186 186));
+      box-shadow: 0 0 0 1px var(--palette-yellow-projects);
     }
   }
   @media (prefers-reduced-motion: reduce) {

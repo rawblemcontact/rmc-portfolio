@@ -278,7 +278,7 @@ export const VisualDesignProfileGallery = ({ slides }: VisualDesignProfileGaller
               whileHover={reduceMotion ? undefined : { scale: 1.015 }}
               whileTap={reduceMotion ? undefined : { scale: 1.02 }}
               transition={reduceMotion ? undefined : { duration: 0.2, ease: EASE.out }}
-              className={`${TILE_SHELL} group mb-px inline-block w-full break-inside-avoid cursor-pointer border-0 p-0 text-left align-top transition-opacity duration-200 ease-out hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:color-mix(in_srgb,var(--palette-yellow-projects)_48%,rgb(186_186_186))] focus-visible:ring-offset-2 focus-visible:ring-offset-black`}
+              className={`${TILE_SHELL} group mb-px inline-block w-full break-inside-avoid cursor-pointer border-0 p-0 text-left align-top transition-opacity duration-200 ease-out hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--palette-yellow-projects)] focus-visible:ring-offset-2 focus-visible:ring-offset-black`}
               aria-label={`View ${label}`}
               onClick={() => setActiveIndex(index)}
             >
