@@ -1708,6 +1708,7 @@ const HeroNameReveal = ({
   heroPortfolioButtonGlobalDebugStyle,
   heroDesktopViewport,
   isMobileHeroLayout,
+  mobileSvgNudgeXPx,
   videoGlobalDebugControls,
   mainGlobalDebugControls,
   portfolioButtonGlobalDebugControls,
@@ -1725,6 +1726,7 @@ const HeroNameReveal = ({
   heroPortfolioButtonGlobalDebugStyle?: React.CSSProperties;
   heroDesktopViewport: boolean;
   isMobileHeroLayout: boolean;
+  mobileSvgNudgeXPx: number;
   videoGlobalDebugControls: HeroGlobalLayoutControl;
   mainGlobalDebugControls: HeroGlobalLayoutControl;
   portfolioButtonGlobalDebugControls: HeroGlobalLayoutControl;
@@ -1939,7 +1941,9 @@ const HeroNameReveal = ({
     : HERO_SVG_LOCKUP_LAYOUT_DEFAULTS;
   const heroSvgLockupStyle: React.CSSProperties | undefined = (() => {
     if (!heroDesktopViewport) {
-      return heroSvgAlignX ? { transform: `translateX(${heroSvgAlignX}px)` } : undefined;
+      const mobileNudgeX = isMobileHeroLayout ? mobileSvgNudgeXPx : 0;
+      const nextX = heroSvgAlignX + mobileNudgeX;
+      return nextX ? { transform: `translateX(${nextX}px)` } : undefined;
     }
     return buildHeroGlobalLayoutStyle(
       {
@@ -2243,7 +2247,7 @@ const Hero = ({
   const [isMobileHeroLayout, setIsMobileHeroLayout] = useState(false);
   /** Mobile: video card width synced to ROBBIE+rectangle / MCLAUGHLIN lockup. */
   const [mobileLockupWidthPx, setMobileLockupWidthPx] = useState<number | null>(null);
-  const [mobileVideoAlignXPx, setMobileVideoAlignXPx] = useState(0);
+  const [mobileSvgNudgeXPx, setMobileSvgNudgeXPx] = useState(0);
   const mobileNameY = useMotionValue(0);
   /** Mobile video Y — settles in parallel with name so the stack centers in the ROT ruler. */
   const mobileVideoY = useMotionValue(0);
@@ -2666,7 +2670,7 @@ const Hero = ({
   useLayoutEffect(() => {
     if (!isMobileHeroLayout || !heroLayoutReady) {
       setMobileLockupWidthPx(null);
-      setMobileVideoAlignXPx(0);
+      setMobileSvgNudgeXPx(0);
       return;
     }
 
@@ -2685,11 +2689,10 @@ const Hero = ({
       }
       if (svgRect && frameRect) {
         const leftInset = frameRect.left - svgRect.left;
-        const centerComp = -(svgRect.width - frameRect.width) / 2;
-        const nextX = Math.round((centerComp + leftInset) * 10) / 10;
-        setMobileVideoAlignXPx((prev) => (prev === nextX ? prev : nextX));
+        const nextX = Math.round((((svgRect.width - frameRect.width) / 2) - leftInset) * 10) / 10;
+        setMobileSvgNudgeXPx((prev) => (prev === nextX ? prev : nextX));
       } else {
-        setMobileVideoAlignXPx(0);
+        setMobileSvgNudgeXPx(0);
       }
     };
 
@@ -2822,7 +2825,7 @@ const Hero = ({
         }}
       />
       <motion.div
-        className="relative z-[1] mx-auto w-full h-[clamp(150px,min(40vh,calc(100svh-11rem-max(1rem,env(safe-area-inset-top,0px)))),430px)] md:max-lg:h-[clamp(200px,min(44vh,calc(100svh-14rem-max(1rem,env(safe-area-inset-top,0px)))),500px)] lg:h-[clamp(240px,min(54vh,calc(100svh-11.5rem-max(1.5rem,env(safe-area-inset-top,0px)))),680px)] xl:h-[clamp(260px,min(56vh,calc(100svh-12rem-max(2rem,env(safe-area-inset-top,0px)))),760px)] overflow-hidden rounded-[11px] sm:rounded-xl bg-black"
+        className="relative z-[1] mx-auto w-full h-[clamp(150px,min(40vh,calc(100svh-11rem-max(1rem,env(safe-area-inset-top,0px)))),430px)] max-md:h-[clamp(180px,min(48vh,calc(100svh-9.2rem-max(1rem,env(safe-area-inset-top,0px)))),520px)] md:max-lg:h-[clamp(200px,min(44vh,calc(100svh-14rem-max(1rem,env(safe-area-inset-top,0px)))),500px)] lg:h-[clamp(240px,min(54vh,calc(100svh-11.5rem-max(1.5rem,env(safe-area-inset-top,0px)))),680px)] xl:h-[clamp(260px,min(56vh,calc(100svh-12rem-max(2rem,env(safe-area-inset-top,0px)))),760px)] overflow-hidden rounded-[11px] sm:rounded-xl bg-black"
         style={{
           boxShadow:
             "0 36px 88px rgba(0,0,0,0.6), inset 0 -40px 70px rgba(0,0,0,0.52), 0 0 28px 4px rgba(255,255,255,0.04)",
@@ -2955,7 +2958,7 @@ const Hero = ({
               <motion.div
                 data-hero-mobile-video-stack="true"
                 className="mx-auto w-full max-w-full"
-                style={{ y: mobileVideoY, x: mobileVideoAlignXPx }}
+                style={{ y: mobileVideoY }}
                 initial={false}
               >
                 {heroVideoCard}
@@ -2991,6 +2994,7 @@ const Hero = ({
                   revealActive={lockupFadeReady}
                   reduceMotion={reduceMotion}
                   isMobileHeroLayout={isMobileHeroLayout}
+                  mobileSvgNudgeXPx={mobileSvgNudgeXPx}
                   heroMainGlobalDebugStyle={heroMainGlobalDebugStyle}
                   heroPortfolioButtonGlobalDebugStyle={heroPortfolioButtonGlobalDebugStyle}
                   heroDesktopViewport={heroDesktopLayoutActive}
