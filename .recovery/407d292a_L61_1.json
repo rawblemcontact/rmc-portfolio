@@ -1,0 +1,5 @@
+{
+  "new_string": "  const auxVisible = step === \"reveal\" || step === \"done\";\n\n  useEffect(() => {\n    if (auxVisible && !reduceMotion) {\n      setNameStaggerActive(true);\n      return;\n    }\n    setNameStaggerActive(false);\n  }, [auxVisible, reduceMotion]);\n\n  const activeAccentLayout = heroDebugEnabled ? accentDebugControls : HERO_ACCENT_LAYOUT;\n",
+  "old_string": "  const auxVisible = step === \"reveal\" || step === \"done\";\n  const activeAccentLayout = heroDebugEnabled ? accentDebugControls : HERO_ACCENT_LAYOUT;\n",
+  "path": "c:\\Users\\robbi\\Desktop\\PORTFOLIOV2TRUE\\PortfolioTRUEV2\\src\\pages\\Home.tsx"
+}

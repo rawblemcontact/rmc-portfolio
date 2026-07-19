@@ -1,0 +1,5 @@
+{
+  "new_string": "import gsap from \"gsap\";\nimport { SplitText } from \"gsap/SplitText\";\nimport useEmblaCarousel from \"embla-carousel-react\";",
+  "old_string": "import gsap from \"gsap\";\nimport useEmblaCarousel from \"embla-carousel-react\";",
+  "path": "c:\\Users\\robbi\\Desktop\\PORTFOLIOV2TRUE\\PortfolioTRUEV2\\src\\pages\\Home.tsx"
+}

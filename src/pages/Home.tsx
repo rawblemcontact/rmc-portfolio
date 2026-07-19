@@ -117,6 +117,7 @@ import { ShowcaseVideoEditingDetail, type ShowcaseDetailVideo } from "../compone
 import { FeaturedWritingPdfThumbnail } from "../components/FeaturedWritingPdfThumbnail";
 import { SupportingPdfPreviewDialog } from "../components/SupportingPdfPreviewDialog";
 import robHeroSvgRaw from "../assets/rob-hero.svg?raw";
+import robHeroMobileSvgRaw from "../assets/rob-hero-mobile.svg?raw";
 import {
   SiArc,
   SiBytedance,
@@ -1509,6 +1510,13 @@ const HERO_ROB_LOCKUP_SVG = robHeroSvgRaw
     "<svg ",
     '<svg class="block h-full w-full overflow-visible" preserveAspectRatio="none" aria-hidden="true" ',
   );
+const HERO_ROB_LOCKUP_SVG_MOBILE = robHeroMobileSvgRaw
+  .replace(/\swidth="283"/, ' width="100%"')
+  .replace(/\sheight="94"/, ' height="100%"')
+  .replace(
+    "<svg ",
+    '<svg class="block h-full w-full overflow-visible" preserveAspectRatio="none" aria-hidden="true" ',
+  );
 
 const HeroNameRainbowGlyphs = ({
   text,
@@ -1699,6 +1707,7 @@ const HeroNameReveal = ({
   heroMainGlobalDebugStyle,
   heroPortfolioButtonGlobalDebugStyle,
   heroDesktopViewport,
+  isMobileHeroLayout,
   videoGlobalDebugControls,
   mainGlobalDebugControls,
   portfolioButtonGlobalDebugControls,
@@ -1715,6 +1724,7 @@ const HeroNameReveal = ({
   heroMainGlobalDebugStyle?: React.CSSProperties;
   heroPortfolioButtonGlobalDebugStyle?: React.CSSProperties;
   heroDesktopViewport: boolean;
+  isMobileHeroLayout: boolean;
   videoGlobalDebugControls: HeroGlobalLayoutControl;
   mainGlobalDebugControls: HeroGlobalLayoutControl;
   portfolioButtonGlobalDebugControls: HeroGlobalLayoutControl;
@@ -1737,6 +1747,7 @@ const HeroNameReveal = ({
   /** Mobile — font-size so tagline glyph width matches ROBBIE + accent lockup. */
   const [mobileTaglineFontPx, setMobileTaglineFontPx] = useState<number | null>(null);
   const heroDebugEnabled = useHeroDebugEnabled();
+  const heroLockupSvg = isMobileHeroLayout ? HERO_ROB_LOCKUP_SVG_MOBILE : HERO_ROB_LOCKUP_SVG;
 
   useLayoutEffect(() => {
     if (!heroReady || !revealActive) {
@@ -2002,9 +2013,10 @@ const HeroNameReveal = ({
             >
             <motion.div
               role="img"
+              data-hero-svg-root="true"
               aria-label="Robbie McLaughlin — Writer, content production, and social media"
               className="block h-full w-full select-none [&_svg]:block [&_svg]:h-full [&_svg]:w-full max-md:flex max-md:items-center max-md:[&_svg]:!h-[95%]"
-              dangerouslySetInnerHTML={{ __html: HERO_ROB_LOCKUP_SVG }}
+              dangerouslySetInnerHTML={{ __html: heroLockupSvg }}
               initial={false}
               animate={{
                 opacity: reduceMotion
@@ -2231,6 +2243,7 @@ const Hero = ({
   const [isMobileHeroLayout, setIsMobileHeroLayout] = useState(false);
   /** Mobile: video card width synced to ROBBIE+rectangle / MCLAUGHLIN lockup. */
   const [mobileLockupWidthPx, setMobileLockupWidthPx] = useState<number | null>(null);
+  const [mobileVideoAlignXPx, setMobileVideoAlignXPx] = useState(0);
   const mobileNameY = useMotionValue(0);
   /** Mobile video Y — settles in parallel with name so the stack centers in the ROT ruler. */
   const mobileVideoY = useMotionValue(0);
@@ -2649,29 +2662,43 @@ const Hero = ({
 
   // reveal gated via lockupFadeReady → HeroNameReveal.revealActive
 
-  /** Mobile — match video card width to ROBBIE + accent rectangle (name lockup). */
+  /** Mobile — match video card width to rendered hero SVG lockup. */
   useLayoutEffect(() => {
     if (!isMobileHeroLayout || !heroLayoutReady) {
       setMobileLockupWidthPx(null);
+      setMobileVideoAlignXPx(0);
       return;
     }
 
     const measure = () => {
+      const svgLockup = document.querySelector<SVGSVGElement>('#hero [data-hero-svg-root="true"] svg');
       const lockup = document.querySelector<HTMLElement>('[data-hero-name-lockup="true"]');
-      if (!lockup) return;
-      const width = lockup.getBoundingClientRect().width;
+      const framePath = svgLockup?.querySelector<SVGPathElement>('path[stroke="white"]');
+      const width = svgLockup?.getBoundingClientRect().width ?? lockup?.getBoundingClientRect().width ?? 0;
+      const svgRect = svgLockup?.getBoundingClientRect();
+      const frameRect = framePath?.getBoundingClientRect();
       if (width > 0) {
         setMobileLockupWidthPx((prev) => {
-          const next = Math.round(width);
+          const next = frameRect ? Math.round(frameRect.width) : Math.round(width);
           return prev === next ? prev : next;
         });
+      }
+      if (svgRect && frameRect) {
+        const leftInset = frameRect.left - svgRect.left;
+        const centerComp = -(svgRect.width - frameRect.width) / 2;
+        const nextX = Math.round((centerComp + leftInset) * 10) / 10;
+        setMobileVideoAlignXPx((prev) => (prev === nextX ? prev : nextX));
+      } else {
+        setMobileVideoAlignXPx(0);
       }
     };
 
     measure();
     const raf = window.requestAnimationFrame(measure);
+    const svgLockup = document.querySelector<SVGSVGElement>('#hero [data-hero-svg-root="true"] svg');
     const lockup = document.querySelector<HTMLElement>('[data-hero-name-lockup="true"]');
-    const ro = lockup ? new ResizeObserver(measure) : null;
+    const ro = svgLockup || lockup ? new ResizeObserver(measure) : null;
+    if (svgLockup && ro) ro.observe(svgLockup);
     if (lockup && ro) ro.observe(lockup);
     window.addEventListener("resize", measure);
     return () => {
@@ -2928,7 +2955,7 @@ const Hero = ({
               <motion.div
                 data-hero-mobile-video-stack="true"
                 className="mx-auto w-full max-w-full"
-                style={{ y: mobileVideoY }}
+                style={{ y: mobileVideoY, x: mobileVideoAlignXPx }}
                 initial={false}
               >
                 {heroVideoCard}
@@ -2963,6 +2990,7 @@ const Hero = ({
                   heroReady={heroLayoutReady}
                   revealActive={lockupFadeReady}
                   reduceMotion={reduceMotion}
+                  isMobileHeroLayout={isMobileHeroLayout}
                   heroMainGlobalDebugStyle={heroMainGlobalDebugStyle}
                   heroPortfolioButtonGlobalDebugStyle={heroPortfolioButtonGlobalDebugStyle}
                   heroDesktopViewport={heroDesktopLayoutActive}
