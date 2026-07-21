@@ -1442,6 +1442,9 @@ const HERO_NAME_MOBILE_DISPLAY_FONT_CLASS =
   "max-md:text-[clamp(3.407rem,14.55vw,5.082rem)] max-md:max-[400px]:text-[clamp(3.176rem,13.4vw,5.082rem)]";
 const HERO_NAME_MOBILE_PORTFOLIO_BUTTON_CLASS =
   "max-md:h-[calc(clamp(2.85rem,12.2vw,4.2rem)*0.9)] max-md:max-h-[4.2rem] max-md:px-3.5 max-md:[&_.texts]:gap-1 max-md:[&_.texts]:text-[clamp(0.78rem,3vw,0.9rem)]";
+const HERO_LIVE_TEXT_OPTICAL_SCALE = 1.02;
+const HERO_LIVE_TEXT_OPTICAL_OFFSET_X = -7.0;
+const HERO_LIVE_TEXT_OPTICAL_OFFSET_Y = -1.0;
 const HERO_NAME_SWEEP_MS = 700;
 const HERO_NAME_SPLIT_MS = 600;
 /** Rainbow accents — main-menu section colors (NAV order) for name/tagline/accent fades. */
@@ -1738,8 +1741,11 @@ const HeroNameReveal = ({
   const containerRef = useRef<HTMLSpanElement>(null);
   const taglineRef = useRef<HTMLParagraphElement>(null);
   const heroSvgAlignRef = useRef<HTMLDivElement>(null);
+  const heroLiveTextOverlayRef = useRef<HTMLDivElement>(null);
+  const heroLiveTextMeasureRef = useRef<HTMLDivElement>(null);
   const [heroSvgAlignX, setHeroSvgAlignX] = useState(0);
   const [step, setStep] = useState<HeroNameRevealStep>("hidden");
+  const auxVisible = step === "reveal" || step === "done";
   const [accentDebugControls, setAccentDebugControls] = useState<
     Record<HeroAccentIconKey, HeroAccentLayoutControl>
   >(() => ({ ...HERO_ACCENT_LAYOUT }));
@@ -1748,6 +1754,31 @@ const HeroNameReveal = ({
   );
   /** Mobile — font-size so tagline glyph width matches ROBBIE + accent lockup. */
   const [mobileTaglineFontPx, setMobileTaglineFontPx] = useState<number | null>(null);
+  const [heroLiveTextReady, setHeroLiveTextReady] = useState(false);
+  const [heroLiveTextFontsReady, setHeroLiveTextFontsReady] = useState(false);
+  const [heroLiveTextAnimate, setHeroLiveTextAnimate] = useState(false);
+  const [heroLiveTextBase, setHeroLiveTextBase] = useState({
+    left: 0,
+    top: 0,
+    scaleX: 1,
+    scaleY: 1,
+  });
+  const [liveTextDebug, setLiveTextDebug] = useState({
+    offsetX: HERO_LIVE_TEXT_OPTICAL_OFFSET_X,
+    offsetY: HERO_LIVE_TEXT_OPTICAL_OFFSET_Y,
+    scale: HERO_LIVE_TEXT_OPTICAL_SCALE,
+  });
+  const heroLiveTextBoxStyle = useMemo<React.CSSProperties>(
+    () => ({
+      left: heroLiveTextBase.left + liveTextDebug.offsetX,
+      top: heroLiveTextBase.top + liveTextDebug.offsetY,
+      transform: `scale(${heroLiveTextBase.scaleX * liveTextDebug.scale}, ${heroLiveTextBase.scaleY * liveTextDebug.scale})`,
+    }),
+    [heroLiveTextBase, liveTextDebug],
+  );
+  // Keep the on-screen GSAP-style y:50 entrance consistent even after SVG calibration scaling.
+  const heroLiveTextScreenScaleY = Math.max(0.2, heroLiveTextBase.scaleY * liveTextDebug.scale);
+  const heroLiveTextStartYPx = 50 / heroLiveTextScreenScaleY;
   const heroDebugEnabled = useHeroDebugEnabled();
   const heroLockupSvg = isMobileHeroLayout ? HERO_ROB_LOCKUP_SVG_MOBILE : HERO_ROB_LOCKUP_SVG;
 
@@ -1912,7 +1943,128 @@ const HeroNameReveal = ({
     };
   }, [heroReady, step]);
 
-  const auxVisible = step === "reveal" || step === "done";
+  useLayoutEffect(() => {
+    if (!heroReady) {
+      setHeroLiveTextReady(false);
+      setHeroLiveTextFontsReady(false);
+      return;
+    }
+
+    const calibrate = () => {
+      const svgRoot = heroSvgAlignRef.current;
+      const overlay = heroLiveTextOverlayRef.current;
+      const measureNode = heroLiveTextMeasureRef.current;
+      if (!svgRoot || !overlay || !measureNode) return;
+
+      const svg = svgRoot.querySelector<SVGSVGElement>("svg");
+      if (!svg) return;
+
+      const targetPath = svg.querySelector<SVGPathElement>('path[d^="M12.8446 37.1773"]');
+      if (!targetPath) {
+        setHeroLiveTextReady(false);
+        return;
+      }
+
+      const overlayRect = overlay.getBoundingClientRect();
+      const targetRect = targetPath.getBoundingClientRect();
+      if (targetRect.width < 1 || targetRect.height < 1) {
+        setHeroLiveTextReady(false);
+        return;
+      }
+
+      // Measure natural live-text bounds first, then solve transform to target path bounds.
+      measureNode.style.left = "0px";
+      measureNode.style.top = "0px";
+      measureNode.style.transform = "none";
+      const textRect = measureNode.getBoundingClientRect();
+      if (textRect.width < 1 || textRect.height < 1) {
+        setHeroLiveTextReady(false);
+        return;
+      }
+
+      const left = targetRect.left - overlayRect.left;
+      const top = targetRect.top - overlayRect.top;
+      const scaleX = targetRect.width / textRect.width;
+      const scaleY = targetRect.height / textRect.height;
+      const tunedScaleX = Math.max(0.2, scaleX);
+      const tunedScaleY = Math.max(0.2, scaleY);
+      let solvedLeft = left;
+      let solvedTop = top;
+
+      measureNode.style.left = `${solvedLeft}px`;
+      measureNode.style.top = `${solvedTop}px`;
+      measureNode.style.transform = `scale(${tunedScaleX}, ${tunedScaleY})`;
+
+      for (let i = 0; i < 2; i += 1) {
+        const actual = measureNode.getBoundingClientRect();
+        solvedLeft += targetRect.left - actual.left;
+        solvedTop += targetRect.top - actual.top;
+        measureNode.style.left = `${solvedLeft}px`;
+        measureNode.style.top = `${solvedTop}px`;
+      }
+
+      // Store the perfectly-aligned base; optical offset/scale are applied live in render.
+      setHeroLiveTextBase({
+        left: solvedLeft,
+        top: solvedTop,
+        scaleX: tunedScaleX,
+        scaleY: tunedScaleY,
+      });
+      setHeroLiveTextReady(true);
+    };
+
+    const fonts = (document as Document & { fonts?: FontFaceSet }).fonts;
+    let cancelled = false;
+    let fontsSettled = !fonts?.ready || fonts.status === "loaded";
+
+    const calibrateWhenStable = () => {
+      if (!fontsSettled) return;
+      calibrate();
+    };
+
+    if (fontsSettled) {
+      setHeroLiveTextFontsReady(true);
+      calibrate();
+    } else {
+      setHeroLiveTextFontsReady(false);
+      setHeroLiveTextReady(false);
+    }
+
+    const ro = new ResizeObserver(() => calibrateWhenStable());
+    const svg = heroSvgAlignRef.current?.querySelector<SVGSVGElement>("svg");
+    if (svg) ro.observe(svg);
+    window.addEventListener("resize", calibrateWhenStable);
+
+    if (fonts?.ready) {
+      fonts.ready.then(() => {
+        if (cancelled) return;
+        fontsSettled = true;
+        setHeroLiveTextFontsReady(true);
+        calibrate();
+      });
+    }
+
+    return () => {
+      cancelled = true;
+      ro.disconnect();
+      window.removeEventListener("resize", calibrateWhenStable);
+    };
+  }, [heroReady, isMobileHeroLayout]);
+
+  useEffect(() => {
+    if (!heroLiveTextReady || !heroLiveTextFontsReady || !auxVisible) {
+      setHeroLiveTextAnimate(false);
+      return;
+    }
+    if (reduceMotion) {
+      setHeroLiveTextAnimate(true);
+      return;
+    }
+    setHeroLiveTextAnimate(false);
+    const raf = window.requestAnimationFrame(() => setHeroLiveTextAnimate(true));
+    return () => window.cancelAnimationFrame(raf);
+  }, [heroLiveTextReady, heroLiveTextFontsReady, auxVisible, reduceMotion]);
+
   const activeAccentLayout = heroDebugEnabled ? accentDebugControls : HERO_ACCENT_LAYOUT;
 
   const handleAccentDebugChange = useCallback(
@@ -2018,6 +2170,7 @@ const HeroNameReveal = ({
             <motion.div
               role="img"
               data-hero-svg-root="true"
+              data-hero-hide-name-paths={heroLiveTextReady && !heroDebugEnabled ? "true" : "false"}
               aria-label="Robbie McLaughlin — Writer, content production, and social media"
               className="block h-full w-full select-none [&_svg]:block [&_svg]:h-full [&_svg]:w-full max-md:flex max-md:items-center max-md:[&_svg]:!h-[95%]"
               dangerouslySetInnerHTML={{ __html: heroLockupSvg }}
@@ -2031,6 +2184,68 @@ const HeroNameReveal = ({
               }}
               transition={heroNameWhiteLayerTransition(auxVisible)}
             />
+            <div
+              ref={heroLiveTextOverlayRef}
+              aria-hidden
+              className="pointer-events-none absolute inset-0"
+              style={{ opacity: heroDebugEnabled || heroLiveTextReady ? 1 : 0 }}
+            >
+              <div
+                ref={heroLiveTextMeasureRef}
+                className="absolute m-0 whitespace-nowrap font-display font-bold uppercase tracking-[-0.036em] text-[#FFFAEE]"
+                style={{
+                  lineHeight: 0.8,
+                  transformOrigin: "top left",
+                  ...heroLiveTextBoxStyle,
+                  ...(heroDebugEnabled ? { color: "#ff2d2d" } : null),
+                }}
+              >
+                <div className="flex flex-col">
+                  <span aria-hidden>
+                    {"ROBBIE".split("").map((ch, idx) => (
+                      <span
+                        key={`hero-live-r-${idx}`}
+                        className="inline-block"
+                        style={{
+                          transform:
+                            heroLiveTextAnimate || heroDebugEnabled
+                              ? "translateY(0)"
+                              : `translateY(${heroLiveTextStartYPx}px)`,
+                          opacity: heroLiveTextAnimate || heroDebugEnabled ? 1 : 0,
+                          transition: reduceMotion
+                            ? "none"
+                            : "transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.6s ease-out",
+                          transitionDelay: reduceMotion ? undefined : `${idx * 30}ms`,
+                        }}
+                      >
+                        {ch}
+                      </span>
+                    ))}
+                  </span>
+                  <span aria-hidden className="mt-[0.04em]">
+                    {"MCLAUGHLIN".split("").map((ch, idx) => (
+                      <span
+                        key={`hero-live-m-${idx}`}
+                        className="inline-block"
+                        style={{
+                          transform:
+                            heroLiveTextAnimate || heroDebugEnabled
+                              ? "translateY(0)"
+                              : `translateY(${heroLiveTextStartYPx}px)`,
+                          opacity: heroLiveTextAnimate || heroDebugEnabled ? 1 : 0,
+                          transition: reduceMotion
+                            ? "none"
+                            : "transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.6s ease-out",
+                          transitionDelay: reduceMotion ? undefined : `${(6 + idx) * 30}ms`,
+                        }}
+                      >
+                        {ch}
+                      </span>
+                    ))}
+                  </span>
+                </div>
+              </div>
+            </div>
             </motion.div>
           </div>
           {/* Name rectangle — col 1, row 1 */}
@@ -2173,6 +2388,76 @@ const HeroNameReveal = ({
             onPortfolioButtonGlobalChange={onPortfolioButtonGlobalDebugChange}
             onReset={handleAccentDebugReset}
           />,
+          document.body,
+        )}
+      {heroDebugEnabled &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className="fixed bottom-3 left-3 z-[100000] w-[240px] select-none rounded-lg border border-[#ff2d2d]/60 bg-black/90 p-3 font-mono text-[11px] text-[#FFFAEE] shadow-xl backdrop-blur"
+          >
+            <div className="mb-2 flex items-center justify-between">
+              <span className="font-bold uppercase tracking-[0.12em] text-[#ff2d2d]">
+                Live Text
+              </span>
+              <button
+                type="button"
+                className="rounded border border-white/25 px-1.5 py-0.5 text-[10px] uppercase hover:border-white/60"
+                onClick={() =>
+                  setLiveTextDebug({
+                    offsetX: HERO_LIVE_TEXT_OPTICAL_OFFSET_X,
+                    offsetY: HERO_LIVE_TEXT_OPTICAL_OFFSET_Y,
+                    scale: HERO_LIVE_TEXT_OPTICAL_SCALE,
+                  })
+                }
+              >
+                Reset
+              </button>
+            </div>
+            {(
+              [
+                { key: "offsetX", label: "X", min: -30, max: 30, step: 0.5 },
+                { key: "offsetY", label: "Y", min: -30, max: 30, step: 0.5 },
+                { key: "scale", label: "Scale", min: 0.8, max: 1.3, step: 0.005 },
+              ] as const
+            ).map(({ key, label, min, max, step: stepPx }) => (
+              <label key={key} className="mb-2 flex items-center gap-2">
+                <span className="w-10 shrink-0 uppercase text-white/70">{label}</span>
+                <input
+                  type="range"
+                  min={min}
+                  max={max}
+                  step={stepPx}
+                  value={liveTextDebug[key]}
+                  onChange={(event) =>
+                    setLiveTextDebug((prev) => ({
+                      ...prev,
+                      [key]: Number.parseFloat(event.target.value),
+                    }))
+                  }
+                  className="h-1 flex-1 accent-[#ff2d2d]"
+                />
+                <span className="w-10 shrink-0 text-right tabular-nums">
+                  {liveTextDebug[key].toFixed(key === "scale" ? 3 : 1)}
+                </span>
+              </label>
+            ))}
+            <button
+              type="button"
+              className="mt-1 w-full rounded border border-white/25 px-2 py-1 text-[10px] uppercase hover:border-white/60"
+              onClick={() => {
+                const code = [
+                  `const HERO_LIVE_TEXT_OPTICAL_SCALE = ${liveTextDebug.scale};`,
+                  `const HERO_LIVE_TEXT_OPTICAL_OFFSET_X = ${liveTextDebug.offsetX};`,
+                  `const HERO_LIVE_TEXT_OPTICAL_OFFSET_Y = ${liveTextDebug.offsetY};`,
+                ].join("\n");
+                console.info("[Hero Live Text Debug]\n" + code);
+                void navigator.clipboard?.writeText(code);
+              }}
+            >
+              Copy constants
+            </button>
+          </div>,
           document.body,
         )}
       {heroDesktopViewport ? (
