@@ -1415,6 +1415,7 @@ const HERO_VIDEO_GLOW_DELAY_S = 0.28;
 const HERO_VIDEO_GLOW_DUR_S = 0.72;
 const HERO_VIDEO_GLOW_PEAK = 0.55;
 /** Brief beat after video opens before SVG fade-in. */
+/** Brief beat after video starts opening before SVG fade-in (overlaps video scale). */
 const HERO_LOCKUP_FADE_AFTER_VIDEO_MS = 120;
 /** PORTFOLIO fades after SVG reveal starts (SVG first in sequence). */
 const HERO_PORTFOLIO_FADE_AFTER_SVG_MS = 680;
@@ -1444,7 +1445,8 @@ const HERO_NAME_MOBILE_PORTFOLIO_BUTTON_CLASS =
   "max-md:h-[calc(clamp(2.85rem,12.2vw,4.2rem)*0.9)] max-md:max-h-[4.2rem] max-md:px-3.5 max-md:[&_.texts]:gap-1 max-md:[&_.texts]:text-[clamp(0.78rem,3vw,0.9rem)]";
 const HERO_LIVE_TEXT_OPTICAL_SCALE = 1.02;
 const HERO_LIVE_TEXT_OPTICAL_OFFSET_X = -7.0;
-const HERO_LIVE_TEXT_OPTICAL_OFFSET_Y = -1.0;
+// Raise only the ROBBIE/MCLAUGHLIN lockup for more even top/bottom breathing room.
+const HERO_LIVE_TEXT_OPTICAL_OFFSET_Y = -4.1;
 const HERO_NAME_SWEEP_MS = 700;
 const HERO_NAME_SPLIT_MS = 600;
 /** Rainbow accents — main-menu section colors (NAV order) for name/tagline/accent fades. */
@@ -1501,25 +1503,26 @@ const heroNameWhiteLayerTransition = (isVisible: boolean) => ({
   ease: HERO_NAME_TEXT_BLEND_EASE,
 });
 
-/** Settled optical nudge — tagline up without shifting hero layout metrics. */
-const HERO_TAGLINE_OPTICAL_OFFSET_Y = -2;
+/** Layout-metrics copy for the invisible tagline row (SVG tagline is the visible source). */
+const HERO_TAGLINE_TEXT = "Writer · content production · social media";
 /** Optical crop — trims right edge of final "E" in ROBBIE (px). */
 const HERO_ROBBIE_E_RIGHT_CROP_PX = 5;
 /** Inline hero lockup SVG — vectors render at display size (no img rasterization). */
-const HERO_ROB_LOCKUP_SVG = robHeroSvgRaw
-  .replace(/\swidth="283"/, ' width="100%"')
-  .replace(/\sheight="94"/, ' height="100%"')
-  .replace(
-    "<svg ",
-    '<svg class="block h-full w-full overflow-visible" preserveAspectRatio="none" aria-hidden="true" ',
+const markHeroNamePath = (raw: string) =>
+  raw.replace(
+    /<path d="(M1[23]\.8446 37\.1773)/,
+    '<path data-hero-name-path="true" d="$1',
   );
-const HERO_ROB_LOCKUP_SVG_MOBILE = robHeroMobileSvgRaw
-  .replace(/\swidth="283"/, ' width="100%"')
-  .replace(/\sheight="94"/, ' height="100%"')
-  .replace(
-    "<svg ",
-    '<svg class="block h-full w-full overflow-visible" preserveAspectRatio="none" aria-hidden="true" ',
-  );
+const prepareHeroLockupSvg = (raw: string) =>
+  markHeroNamePath(raw)
+    .replace(/\swidth="283"/, ' width="100%"')
+    .replace(/\sheight="94"/, ' height="100%"')
+    .replace(
+      "<svg ",
+      '<svg class="block h-full w-full overflow-visible" preserveAspectRatio="none" aria-hidden="true" ',
+    );
+const HERO_ROB_LOCKUP_SVG = prepareHeroLockupSvg(robHeroSvgRaw);
+const HERO_ROB_LOCKUP_SVG_MOBILE = prepareHeroLockupSvg(robHeroMobileSvgRaw);
 
 const HeroNameRainbowGlyphs = ({
   text,
@@ -1719,6 +1722,7 @@ const HeroNameReveal = ({
   onMainGlobalDebugChange,
   onPortfolioButtonGlobalDebugChange,
   onGlobalDebugReset,
+  onLiveTextReadyChange,
 }: {
   heroReady: boolean;
   /** After video opens — starts SVG rainbow / fade at final position. */
@@ -1737,6 +1741,8 @@ const HeroNameReveal = ({
   onMainGlobalDebugChange: (patch: Partial<HeroGlobalLayoutControl>) => void;
   onPortfolioButtonGlobalDebugChange: (patch: Partial<HeroGlobalLayoutControl>) => void;
   onGlobalDebugReset: () => void;
+  /** Fires when live-name calibration succeeds/fails — used to gate hero entrance. */
+  onLiveTextReadyChange?: (ready: boolean) => void;
 }) => {
   const containerRef = useRef<HTMLSpanElement>(null);
   const taglineRef = useRef<HTMLParagraphElement>(null);
@@ -1944,50 +1950,39 @@ const HeroNameReveal = ({
   }, [heroReady, step]);
 
   useLayoutEffect(() => {
-    if (!heroReady) {
-      setHeroLiveTextReady(false);
-      setHeroLiveTextFontsReady(false);
-      return;
-    }
+    // Preload calibration — runs as soon as the lockup is mounted (before entrance animations).
+    setHeroLiveTextReady(false);
+    onLiveTextReadyChange?.(false);
 
-    const calibrate = () => {
-      const svgRoot = heroSvgAlignRef.current;
-      const overlay = heroLiveTextOverlayRef.current;
-      const measureNode = heroLiveTextMeasureRef.current;
-      if (!svgRoot || !overlay || !measureNode) return;
+    let cancelled = false;
+    let fontsSettled =
+      !(document as Document & { fonts?: FontFaceSet }).fonts?.ready ||
+      (document as Document & { fonts?: FontFaceSet }).fonts?.status === "loaded";
+    let rafRetries = 0;
+    const pendingRafs: number[] = [];
+    const pendingTimeouts: number[] = [];
 
-      const svg = svgRoot.querySelector<SVGSVGElement>("svg");
-      if (!svg) return;
+    const findNamePath = (svg: SVGSVGElement) =>
+      svg.querySelector<SVGPathElement>('path[data-hero-name-path="true"]') ??
+      svg.querySelector<SVGPathElement>(
+        'path[d^="M13.8446 37.1773"], path[d^="M12.8446 37.1773"]',
+      );
 
-      const targetPath = svg.querySelector<SVGPathElement>('path[d^="M12.8446 37.1773"]');
-      if (!targetPath) {
-        setHeroLiveTextReady(false);
-        return;
-      }
-
-      const overlayRect = overlay.getBoundingClientRect();
-      const targetRect = targetPath.getBoundingClientRect();
-      if (targetRect.width < 1 || targetRect.height < 1) {
-        setHeroLiveTextReady(false);
-        return;
-      }
-
-      // Measure natural live-text bounds first, then solve transform to target path bounds.
+    const solveOverlayToPath = (
+      measureNode: HTMLElement,
+      overlayRect: DOMRect,
+      targetRect: DOMRect,
+    ) => {
       measureNode.style.left = "0px";
       measureNode.style.top = "0px";
       measureNode.style.transform = "none";
       const textRect = measureNode.getBoundingClientRect();
-      if (textRect.width < 1 || textRect.height < 1) {
-        setHeroLiveTextReady(false);
-        return;
-      }
+      if (textRect.width < 1 || textRect.height < 1) return null;
 
       const left = targetRect.left - overlayRect.left;
       const top = targetRect.top - overlayRect.top;
-      const scaleX = targetRect.width / textRect.width;
-      const scaleY = targetRect.height / textRect.height;
-      const tunedScaleX = Math.max(0.2, scaleX);
-      const tunedScaleY = Math.max(0.2, scaleY);
+      const tunedScaleX = Math.max(0.2, targetRect.width / textRect.width);
+      const tunedScaleY = Math.max(0.2, targetRect.height / textRect.height);
       let solvedLeft = left;
       let solvedTop = top;
 
@@ -2003,53 +1998,90 @@ const HeroNameReveal = ({
         measureNode.style.top = `${solvedTop}px`;
       }
 
-      // Store the perfectly-aligned base; optical offset/scale are applied live in render.
-      setHeroLiveTextBase({
+      return {
         left: solvedLeft,
         top: solvedTop,
         scaleX: tunedScaleX,
         scaleY: tunedScaleY,
-      });
+      };
+    };
+
+    const calibrate = (): boolean => {
+      const svgRoot = heroSvgAlignRef.current;
+      const overlay = heroLiveTextOverlayRef.current;
+      const nameMeasure = heroLiveTextMeasureRef.current;
+      if (!svgRoot || !overlay || !nameMeasure) return false;
+
+      const svg = svgRoot.querySelector<SVGSVGElement>("svg");
+      if (!svg) return false;
+
+      const namePath = findNamePath(svg);
+      if (!namePath) return false;
+
+      const overlayRect = overlay.getBoundingClientRect();
+      const nameRect = namePath.getBoundingClientRect();
+      if (nameRect.width < 1 || nameRect.height < 1) return false;
+
+      const nameBase = solveOverlayToPath(nameMeasure, overlayRect, nameRect);
+      if (!nameBase) return false;
+
+      setHeroLiveTextBase(nameBase);
       setHeroLiveTextReady(true);
+      onLiveTextReadyChange?.(true);
+      return true;
+    };
+
+    const scheduleCalibrate = () => {
+      if (cancelled || !fontsSettled) return;
+      if (calibrate()) {
+        rafRetries = 0;
+        return;
+      }
+      // Keep retrying — entrance animations are gated on success, so don't give up.
+      rafRetries += 1;
+      if (rafRetries <= 45) {
+        pendingRafs.push(window.requestAnimationFrame(scheduleCalibrate));
+      } else {
+        pendingTimeouts.push(window.setTimeout(scheduleCalibrate, 50));
+      }
     };
 
     const fonts = (document as Document & { fonts?: FontFaceSet }).fonts;
-    let cancelled = false;
-    let fontsSettled = !fonts?.ready || fonts.status === "loaded";
-
-    const calibrateWhenStable = () => {
-      if (!fontsSettled) return;
-      calibrate();
-    };
 
     if (fontsSettled) {
       setHeroLiveTextFontsReady(true);
-      calibrate();
+      scheduleCalibrate();
     } else {
       setHeroLiveTextFontsReady(false);
-      setHeroLiveTextReady(false);
     }
 
-    const ro = new ResizeObserver(() => calibrateWhenStable());
-    const svg = heroSvgAlignRef.current?.querySelector<SVGSVGElement>("svg");
-    if (svg) ro.observe(svg);
-    window.addEventListener("resize", calibrateWhenStable);
+    const ro = new ResizeObserver(() => {
+      if (!fontsSettled || cancelled) return;
+      if (!calibrate()) scheduleCalibrate();
+    });
+    const svgRoot = heroSvgAlignRef.current;
+    if (svgRoot) ro.observe(svgRoot);
+    window.addEventListener("resize", scheduleCalibrate);
 
     if (fonts?.ready) {
       fonts.ready.then(() => {
         if (cancelled) return;
         fontsSettled = true;
         setHeroLiveTextFontsReady(true);
-        calibrate();
+        rafRetries = 0;
+        scheduleCalibrate();
       });
     }
 
     return () => {
       cancelled = true;
       ro.disconnect();
-      window.removeEventListener("resize", calibrateWhenStable);
+      window.removeEventListener("resize", scheduleCalibrate);
+      pendingRafs.forEach((id) => window.cancelAnimationFrame(id));
+      pendingTimeouts.forEach((id) => window.clearTimeout(id));
+      onLiveTextReadyChange?.(false);
     };
-  }, [heroReady, isMobileHeroLayout]);
+  }, [isMobileHeroLayout, onLiveTextReadyChange]);
 
   useEffect(() => {
     if (!heroLiveTextReady || !heroLiveTextFontsReady || !auxVisible) {
@@ -2170,7 +2202,9 @@ const HeroNameReveal = ({
             <motion.div
               role="img"
               data-hero-svg-root="true"
-              data-hero-hide-name-paths={heroLiveTextReady && !heroDebugEnabled ? "true" : "false"}
+              data-hero-hide-name-paths={
+                heroLiveTextReady && auxVisible && !heroDebugEnabled ? "true" : "false"
+              }
               aria-label="Robbie McLaughlin — Writer, content production, and social media"
               className="block h-full w-full select-none [&_svg]:block [&_svg]:h-full [&_svg]:w-full max-md:flex max-md:items-center max-md:[&_svg]:!h-[95%]"
               dangerouslySetInnerHTML={{ __html: heroLockupSvg }}
@@ -2187,7 +2221,7 @@ const HeroNameReveal = ({
             <div
               ref={heroLiveTextOverlayRef}
               aria-hidden
-              className="pointer-events-none absolute inset-0"
+              className="pointer-events-none absolute inset-0 overflow-visible"
               style={{ opacity: heroDebugEnabled || heroLiveTextReady ? 1 : 0 }}
             >
               <div
@@ -2331,7 +2365,7 @@ const HeroNameReveal = ({
               button
             )}
           </div>
-          {/* Tagline rectangle — col 1, row 2, same width as name box */}
+          {/* Tagline rectangle — layout metrics only; visible tagline is baked into the SVG lockup. */}
           <p
             ref={taglineRef}
             data-hero-center-part="true"
@@ -2339,18 +2373,7 @@ const HeroNameReveal = ({
             aria-hidden
             style={mobileTaglineFontPx != null ? { fontSize: mobileTaglineFontPx } : undefined}
           >
-            <motion.span
-              className="block max-md:whitespace-nowrap"
-              initial={false}
-              animate={{ y: HERO_TAGLINE_OPTICAL_OFFSET_Y }}
-            >
-              <HeroNameRainbowFade
-                text="Writer · content production · social media"
-                step={step}
-                reduceMotion={reduceMotion}
-                block
-              />
-            </motion.span>
+            <span className="invisible block max-md:whitespace-nowrap">{HERO_TAGLINE_TEXT}</span>
           </p>
         </div>
         {isValidElement(button) && (
@@ -2510,6 +2533,7 @@ const Hero = ({
   const [fontsReady, setFontsReady] = useState(false);
   const [heroMediaReady, setHeroMediaReady] = useState(false);
   const [heroRevealDelayDone, setHeroRevealDelayDone] = useState(false);
+  const [heroLiveTextPreloaded, setHeroLiveTextPreloaded] = useState(false);
   const [sliderPhaseActive, setSliderPhaseActive] = useState(false);
   const [videoRevealActive, setVideoRevealActive] = useState(false);
   const [sliderAnimDone, setSliderAnimDone] = useState(false);
@@ -2790,6 +2814,7 @@ const Hero = ({
   }, [active]);
 
   useEffect(() => {
+    // Startup beat runs in parallel with live-name preload (gate uses both).
     const assetsReady = fontsReady && heroMediaReady;
     if (!assetsReady) {
       setHeroRevealDelayDone(false);
@@ -2801,7 +2826,7 @@ const Hero = ({
 
   // Reset all animation phases when assets aren't ready.
   useEffect(() => {
-    if (!(fontsReady && heroMediaReady && heroRevealDelayDone)) {
+    if (!(fontsReady && heroMediaReady && heroLiveTextPreloaded && heroRevealDelayDone)) {
       sliderPhaseActiveRef.current = false;
       setSliderPhaseActive(false);
       setVideoRevealActive(false);
@@ -2817,11 +2842,11 @@ const Hero = ({
       setSliderAnimDone(true);
       return;
     }
-    /* Video card opens first — mount + scaleX immediately; SVG/PORTFOLIO wait for sliderAnimDone. */
+    /* Video opens immediately; SVG follows after HERO_LOCKUP_FADE_AFTER_VIDEO_MS (overlaps scale). */
     sliderPhaseActiveRef.current = true;
     setSliderPhaseActive(true);
     setVideoRevealActive(true);
-  }, [fontsReady, heroMediaReady, heroRevealDelayDone, reduceMotion]);
+  }, [fontsReady, heroMediaReady, heroLiveTextPreloaded, heroRevealDelayDone, reduceMotion]);
 
   /** Very gentle idle float — only after SVG + PORTFOLIO entrance complete. */
   useEffect(() => {
@@ -2880,7 +2905,14 @@ const Hero = ({
   };
 
   const heroGridDriftDelay = useGridDriftAnimationDelay();
-  const heroReady = fontsReady && heroMediaReady && heroRevealDelayDone;
+  /** Mount lockup early so live-name can calibrate before entrance. */
+  const heroDomReady = fontsReady && heroMediaReady;
+  /** Entrance animations wait until live-name preload succeeds. */
+  const heroReady = heroDomReady && heroLiveTextPreloaded && heroRevealDelayDone;
+
+  const handleLiveTextReadyChange = useCallback((ready: boolean) => {
+    setHeroLiveTextPreloaded(ready);
+  }, []);
 
   useLayoutEffect(() => {
     if (!heroReady) {
@@ -2921,9 +2953,9 @@ const Hero = ({
 
   const heroLayoutReady = heroReady && heroPhase1LayoutReady;
 
-  /** SVG fade — after video opens, plus a short beat. */
+  /** SVG fade — brief beat after video starts opening (overlap the scale; don't wait for it to finish). */
   useEffect(() => {
-    if (!sliderAnimDone) {
+    if (!videoRevealActive) {
       setLockupFadeReady(false);
       return;
     }
@@ -2933,7 +2965,7 @@ const Hero = ({
     }
     const t = window.setTimeout(() => setLockupFadeReady(true), HERO_LOCKUP_FADE_AFTER_VIDEO_MS);
     return () => window.clearTimeout(t);
-  }, [sliderAnimDone, reduceMotion]);
+  }, [videoRevealActive, reduceMotion]);
 
   /** PORTFOLIO fade — after SVG has started, so SVG leads the lockup entrance. */
   useEffect(() => {
@@ -3214,11 +3246,11 @@ const Hero = ({
         className="pointer-events-none absolute inset-0 z-0 grid-drift-bg portfolio-grid-overlay"
         style={{ ...gridOverlayStyle, animationDelay: heroGridDriftDelay }}
       />
-      {heroReady && (
+      {heroDomReady && (
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.12, ease: [0.22, 1, 0.36, 1] }}
+        initial={false}
+        animate={{ opacity: heroReady ? 1 : 0 }}
+        transition={{ duration: heroReady ? 0.12 : 0, ease: [0.22, 1, 0.36, 1] }}
         className={`relative z-[5] mx-auto grid h-full w-full max-w-[1680px] grid-rows-[minmax(0,1.55fr)_minmax(0,1fr)] px-4 pt-[max(1rem,env(safe-area-inset-top,0px))] pb-4 max-md:pt-[max(1rem,env(safe-area-inset-top,0px))] max-md:pb-[max(1rem,env(safe-area-inset-bottom,0px))] max-lg:grid-rows-[minmax(0,1.5fr)_minmax(0,1fr)] md:max-lg:grid-rows-[minmax(0,1.38fr)_minmax(0,1fr)] md:px-6 md:pt-[max(1.5rem,env(safe-area-inset-top,0px))] md:pb-5 md:max-lg:px-5 md:max-lg:pt-3 md:max-lg:pb-[max(1.25rem,env(safe-area-inset-bottom,0px))] lg:grid-rows-[minmax(0,2fr)_minmax(0,1fr)] lg:px-8 lg:pt-[max(2rem,env(safe-area-inset-top,0px))] lg:pb-6 [@media(min-width:744px)_and_(max-width:1366px)_and_(orientation:landscape)_and_(any-pointer:coarse)]:pt-[max(1.25rem,env(safe-area-inset-top,0px))] [@media(min-width:744px)_and_(max-width:1366px)_and_(orientation:landscape)_and_(any-pointer:coarse)]:pb-[max(1.25rem,env(safe-area-inset-bottom,0px))]${
           isMobileHeroLayout && !sliderPhaseActive ? " max-md:grid-rows-1" : ""
         }`}
@@ -3290,6 +3322,7 @@ const Hero = ({
                   onMainGlobalDebugChange={handleMainGlobalDebugChange}
                   onPortfolioButtonGlobalDebugChange={handlePortfolioButtonGlobalDebugChange}
                   onGlobalDebugReset={handleGlobalDebugReset}
+                  onLiveTextReadyChange={handleLiveTextReadyChange}
                   button={
                     <motion.div
                       initial={{ opacity: 0 }}

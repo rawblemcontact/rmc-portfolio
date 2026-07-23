@@ -32,7 +32,9 @@ export const HERO_VIDEO_GLOBAL_LAYOUT_DEFAULTS: HeroGlobalLayoutControl = {
 
 export const HERO_MAIN_GLOBAL_LAYOUT_DEFAULTS: HeroGlobalLayoutControl = {
   offsetX: 55,
-  offsetY: -24,
+  // Keep container-level Y neutral; name-lockup nudges should be handled in
+  // the hero text/SVG optical offsets so the whole hero stack doesn't drift.
+  offsetY: 0,
   scale: 0.95,
   widthScale: 1,
   heightScale: 1,

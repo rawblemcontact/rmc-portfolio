@@ -8,7 +8,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /* Hide the baked SVG name path when the live-text overlay is active (survives SVG re-injection). */
-[data-hero-svg-root][data-hero-hide-name-paths="true"] path[d^="M12.8446 37.1773"] {
+[data-hero-svg-root][data-hero-hide-name-paths="true"] path[data-hero-name-path="true"] {
   opacity: 0;
 }
 
