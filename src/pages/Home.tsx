@@ -116,8 +116,7 @@ import { ShowcaseAttachedTabStrip, type ShowcaseTabId } from "../components/Show
 import { ShowcaseVideoEditingDetail, type ShowcaseDetailVideo } from "../components/ShowcaseVideoEditingDetail";
 import { FeaturedWritingPdfThumbnail } from "../components/FeaturedWritingPdfThumbnail";
 import { SupportingPdfPreviewDialog } from "../components/SupportingPdfPreviewDialog";
-import robHeroSvgRaw from "../assets/rob-hero.svg?raw";
-import robHeroMobileSvgRaw from "../assets/rob-hero-mobile.svg?raw";
+import robHeroSplitSvgRaw from "../assets/rob-hero-split.svg?raw";
 import {
   SiArc,
   SiBytedance,
@@ -1443,10 +1442,6 @@ const HERO_NAME_MOBILE_DISPLAY_FONT_CLASS =
   "max-md:text-[clamp(3.407rem,14.55vw,5.082rem)] max-md:max-[400px]:text-[clamp(3.176rem,13.4vw,5.082rem)]";
 const HERO_NAME_MOBILE_PORTFOLIO_BUTTON_CLASS =
   "max-md:h-[calc(clamp(2.85rem,12.2vw,4.2rem)*0.9)] max-md:max-h-[4.2rem] max-md:px-3.5 max-md:[&_.texts]:gap-1 max-md:[&_.texts]:text-[clamp(0.78rem,3vw,0.9rem)]";
-const HERO_LIVE_TEXT_OPTICAL_SCALE = 1.02;
-const HERO_LIVE_TEXT_OPTICAL_OFFSET_X = -7.0;
-// Raise only the ROBBIE/MCLAUGHLIN lockup for more even top/bottom breathing room.
-const HERO_LIVE_TEXT_OPTICAL_OFFSET_Y = -4.1;
 const HERO_NAME_SWEEP_MS = 700;
 const HERO_NAME_SPLIT_MS = 600;
 /** Rainbow accents — main-menu section colors (NAV order) for name/tagline/accent fades. */
@@ -1505,115 +1500,40 @@ const heroNameWhiteLayerTransition = (isVisible: boolean) => ({
 
 /** Layout-metrics copy for the invisible tagline row (SVG tagline is the visible source). */
 const HERO_TAGLINE_TEXT = "Writer · content production · social media";
-/** Optical crop — trims right edge of final "E" in ROBBIE (px). */
-const HERO_ROBBIE_E_RIGHT_CROP_PX = 5;
-/** Inline hero lockup SVG — vectors render at display size (no img rasterization). */
-const markHeroNamePath = (raw: string) =>
-  raw.replace(
-    /<path d="(M1[23]\.8446 37\.1773)/,
-    '<path data-hero-name-path="true" d="$1',
-  );
-const prepareHeroLockupSvg = (raw: string) =>
-  markHeroNamePath(raw)
+/** Split lockup — first N `#FFFAEE` paths are ROBBIE (6) + MCLAUGHLIN (10). */
+const HERO_NAME_LETTER_COUNT = 16;
+/** Cascade spacing — readable left→right pop across ROBBIE + MCLAUGHLIN. */
+const HERO_NAME_LETTER_STAGGER_MS = 70;
+
+/** Inline hero lockup SVG — per-letter name paths tagged for stagger animation. */
+const prepareHeroLockupSvg = (raw: string) => {
+  // Drop Figma-hidden red phrase blobs if they still export.
+  let out = raw.replace(/<path d="[^"]*" fill="#FF4A4A"\/>/g, "");
+  let letterIdx = 0;
+  out = out.replace(/<path d="([^"]*)" fill="#FFFAEE"\/>/g, (_match, d: string) => {
+    if (letterIdx >= HERO_NAME_LETTER_COUNT) {
+      letterIdx += 1;
+      return `<path d="${d}" fill="#FFFAEE"/>`;
+    }
+    const i = letterIdx;
+    const row = i < 6 ? "robbie" : "mclaughlin";
+    const rowIndex = i < 6 ? i : i - 6;
+    letterIdx += 1;
+    // animation-delay survives SVG re-inject; keyframes run when root animate flag flips.
+    return (
+      `<path data-hero-name-letter="${i}" data-hero-name-row="${row}" data-hero-name-index="${rowIndex}" ` +
+      `d="${d}" fill="#FFFAEE" style="animation-delay:${i * HERO_NAME_LETTER_STAGGER_MS}ms"/>`
+    );
+  });
+  return out
     .replace(/\swidth="283"/, ' width="100%"')
     .replace(/\sheight="94"/, ' height="100%"')
     .replace(
       "<svg ",
       '<svg class="block h-full w-full overflow-visible" preserveAspectRatio="none" aria-hidden="true" ',
     );
-const HERO_ROB_LOCKUP_SVG = prepareHeroLockupSvg(robHeroSvgRaw);
-const HERO_ROB_LOCKUP_SVG_MOBILE = prepareHeroLockupSvg(robHeroMobileSvgRaw);
-
-const HeroNameRainbowGlyphs = ({
-  text,
-  eRightCropPx,
-}: {
-  text: string;
-  eRightCropPx?: number;
-}) => {
-  if (!eRightCropPx || text.length === 0) {
-    return <>{text}</>;
-  }
-
-  const lastChar = text[text.length - 1];
-  if (lastChar !== "E") {
-    return <>{text}</>;
-  }
-
-  return (
-    <>
-      {text.slice(0, -1)}
-      <span
-        style={{
-          clipPath: `inset(0 ${eRightCropPx}px 0 0)`,
-          marginRight: `-${eRightCropPx}px`,
-        }}
-      >
-        {lastChar}
-      </span>
-    </>
-  );
 };
-
-const HeroNameRainbowFade = ({
-  text,
-  step,
-  reduceMotion,
-  block = false,
-  eRightCropPx,
-}: {
-  text: string;
-  step: HeroNameRevealStep;
-  reduceMotion: boolean | null;
-  block?: boolean;
-  eRightCropPx?: number;
-}) => {
-  if (reduceMotion) {
-    return <HeroNameRainbowGlyphs text={text} eRightCropPx={eRightCropPx} />;
-  }
-
-  const isVisible = step === "reveal" || step === "done";
-  const layerClass = block
-    ? "pointer-events-none absolute inset-0 block whitespace-nowrap"
-    : "pointer-events-none absolute inset-0 inline-block whitespace-nowrap";
-  const spacerClass = block
-    ? "invisible block whitespace-nowrap"
-    : "invisible inline-block whitespace-nowrap";
-
-  return (
-    <motion.span
-      className={block ? "relative block" : "relative inline-block"}
-      initial={false}
-      animate={{ opacity: isVisible ? 1 : 0 }}
-      transition={heroNameMasterFadeTransition(isVisible)}
-    >
-      <span className={spacerClass} aria-hidden>
-        <HeroNameRainbowGlyphs text={text} eRightCropPx={eRightCropPx} />
-      </span>
-      {HERO_NAME_RAINBOW_MENU_IDS.map((id, index) => (
-        <motion.span
-          key={id}
-          aria-hidden
-          className={layerClass}
-          style={{ color: SECTION_ACCENT_COLOR[id] }}
-          initial={false}
-          animate={{ opacity: !isVisible ? 0 : [...HERO_NAME_TEXT_RAINBOW_BLEND_OPACITY] }}
-          transition={heroNameRainbowLayerTransition(isVisible, index)}
-        >
-          <HeroNameRainbowGlyphs text={text} eRightCropPx={eRightCropPx} />
-        </motion.span>
-      ))}
-      <motion.span
-        className={layerClass}
-        initial={false}
-        animate={{ opacity: !isVisible ? 0 : [...HERO_NAME_TEXT_WHITE_BLEND_OPACITY] }}
-        transition={heroNameWhiteLayerTransition(isVisible)}
-      >
-        <HeroNameRainbowGlyphs text={text} eRightCropPx={eRightCropPx} />
-      </motion.span>
-    </motion.span>
-  );
-};
+const HERO_ROB_LOCKUP_SVG = prepareHeroLockupSvg(robHeroSplitSvgRaw);
 
 /** Hero name accent strip — first column icon (replaces Tabler pencil mark in hero only). */
 function HeroAccentFirstIcon({ className }: { className?: string }) {
@@ -1741,14 +1661,12 @@ const HeroNameReveal = ({
   onMainGlobalDebugChange: (patch: Partial<HeroGlobalLayoutControl>) => void;
   onPortfolioButtonGlobalDebugChange: (patch: Partial<HeroGlobalLayoutControl>) => void;
   onGlobalDebugReset: () => void;
-  /** Fires when live-name calibration succeeds/fails — used to gate hero entrance. */
+  /** Fires when split-SVG name letters are mounted — used to gate hero entrance. */
   onLiveTextReadyChange?: (ready: boolean) => void;
 }) => {
   const containerRef = useRef<HTMLSpanElement>(null);
   const taglineRef = useRef<HTMLParagraphElement>(null);
   const heroSvgAlignRef = useRef<HTMLDivElement>(null);
-  const heroLiveTextOverlayRef = useRef<HTMLDivElement>(null);
-  const heroLiveTextMeasureRef = useRef<HTMLDivElement>(null);
   const [heroSvgAlignX, setHeroSvgAlignX] = useState(0);
   const [step, setStep] = useState<HeroNameRevealStep>("hidden");
   const auxVisible = step === "reveal" || step === "done";
@@ -1760,47 +1678,48 @@ const HeroNameReveal = ({
   );
   /** Mobile — font-size so tagline glyph width matches ROBBIE + accent lockup. */
   const [mobileTaglineFontPx, setMobileTaglineFontPx] = useState<number | null>(null);
-  const [heroLiveTextReady, setHeroLiveTextReady] = useState(false);
-  const [heroLiveTextFontsReady, setHeroLiveTextFontsReady] = useState(false);
-  const [heroLiveTextAnimate, setHeroLiveTextAnimate] = useState(false);
-  const [heroLiveTextBase, setHeroLiveTextBase] = useState({
-    left: 0,
-    top: 0,
-    scaleX: 1,
-    scaleY: 1,
-  });
-  const [liveTextDebug, setLiveTextDebug] = useState({
-    offsetX: HERO_LIVE_TEXT_OPTICAL_OFFSET_X,
-    offsetY: HERO_LIVE_TEXT_OPTICAL_OFFSET_Y,
-    scale: HERO_LIVE_TEXT_OPTICAL_SCALE,
-  });
-  const heroLiveTextBoxStyle = useMemo<React.CSSProperties>(
-    () => ({
-      left: heroLiveTextBase.left + liveTextDebug.offsetX,
-      top: heroLiveTextBase.top + liveTextDebug.offsetY,
-      transform: `scale(${heroLiveTextBase.scaleX * liveTextDebug.scale}, ${heroLiveTextBase.scaleY * liveTextDebug.scale})`,
-    }),
-    [heroLiveTextBase, liveTextDebug],
-  );
-  // Keep the on-screen GSAP-style y:50 entrance consistent even after SVG calibration scaling.
-  const heroLiveTextScreenScaleY = Math.max(0.2, heroLiveTextBase.scaleY * liveTextDebug.scale);
-  const heroLiveTextStartYPx = 50 / heroLiveTextScreenScaleY;
+  const [heroNameLettersReady, setHeroNameLettersReady] = useState(false);
+  /** Latch — once the name cascade starts, never restart (avoids loop on parent re-renders). */
+  const [nameCascadeLatched, setNameCascadeLatched] = useState(false);
+  const nameCascadeLatchedRef = useRef(false);
+  const heroSvgMountRef = useRef<HTMLDivElement>(null);
+  const heroSvgMountedRef = useRef(false);
   const heroDebugEnabled = useHeroDebugEnabled();
-  const heroLockupSvg = isMobileHeroLayout ? HERO_ROB_LOCKUP_SVG_MOBILE : HERO_ROB_LOCKUP_SVG;
+  const heroLockupSvg = HERO_ROB_LOCKUP_SVG;
+
+  /**
+   * Mount split SVG once via DOM — do NOT use dangerouslySetInnerHTML on a
+   * re-rendering host. React re-sets innerHTML on updates and remounts letter
+   * paths, which restarts CSS cascade animations in a loop.
+   */
+  useLayoutEffect(() => {
+    const host = heroSvgMountRef.current;
+    if (!host || heroSvgMountedRef.current) return;
+    host.innerHTML = heroLockupSvg;
+    heroSvgMountedRef.current = true;
+  }, [heroLockupSvg]);
 
   useLayoutEffect(() => {
     if (!heroReady || !revealActive) {
-      setStep("hidden");
+      // Keep latched reveal — don't yank chrome/letters back to hidden mid/post cascade.
+      if (!nameCascadeLatchedRef.current) setStep("hidden");
       return;
     }
 
     if (reduceMotion) {
+      nameCascadeLatchedRef.current = true;
+      setNameCascadeLatched(true);
       setStep("done");
       return;
     }
 
+    // Already started — do not recreate sweep/reveal timers (would loop cascade).
+    if (nameCascadeLatchedRef.current) return;
+
     setStep("sweep");
     const revealTimer = window.setTimeout(() => {
+      nameCascadeLatchedRef.current = true;
+      setNameCascadeLatched(true);
       setStep("reveal");
     }, HERO_NAME_SWEEP_MS);
     const doneTimer = window.setTimeout(
@@ -1950,152 +1869,50 @@ const HeroNameReveal = ({
   }, [heroReady, step]);
 
   useLayoutEffect(() => {
-    // Preload calibration — runs as soon as the lockup is mounted (before entrance animations).
-    setHeroLiveTextReady(false);
-    onLiveTextReadyChange?.(false);
-
     let cancelled = false;
-    let fontsSettled =
-      !(document as Document & { fonts?: FontFaceSet }).fonts?.ready ||
-      (document as Document & { fonts?: FontFaceSet }).fonts?.status === "loaded";
     let rafRetries = 0;
     const pendingRafs: number[] = [];
     const pendingTimeouts: number[] = [];
 
-    const findNamePath = (svg: SVGSVGElement) =>
-      svg.querySelector<SVGPathElement>('path[data-hero-name-path="true"]') ??
-      svg.querySelector<SVGPathElement>(
-        'path[d^="M13.8446 37.1773"], path[d^="M12.8446 37.1773"]',
-      );
-
-    const solveOverlayToPath = (
-      measureNode: HTMLElement,
-      overlayRect: DOMRect,
-      targetRect: DOMRect,
-    ) => {
-      measureNode.style.left = "0px";
-      measureNode.style.top = "0px";
-      measureNode.style.transform = "none";
-      const textRect = measureNode.getBoundingClientRect();
-      if (textRect.width < 1 || textRect.height < 1) return null;
-
-      const left = targetRect.left - overlayRect.left;
-      const top = targetRect.top - overlayRect.top;
-      const tunedScaleX = Math.max(0.2, targetRect.width / textRect.width);
-      const tunedScaleY = Math.max(0.2, targetRect.height / textRect.height);
-      let solvedLeft = left;
-      let solvedTop = top;
-
-      measureNode.style.left = `${solvedLeft}px`;
-      measureNode.style.top = `${solvedTop}px`;
-      measureNode.style.transform = `scale(${tunedScaleX}, ${tunedScaleY})`;
-
-      for (let i = 0; i < 2; i += 1) {
-        const actual = measureNode.getBoundingClientRect();
-        solvedLeft += targetRect.left - actual.left;
-        solvedTop += targetRect.top - actual.top;
-        measureNode.style.left = `${solvedLeft}px`;
-        measureNode.style.top = `${solvedTop}px`;
-      }
-
-      return {
-        left: solvedLeft,
-        top: solvedTop,
-        scaleX: tunedScaleX,
-        scaleY: tunedScaleY,
-      };
-    };
-
-    const calibrate = (): boolean => {
-      const svgRoot = heroSvgAlignRef.current;
-      const overlay = heroLiveTextOverlayRef.current;
-      const nameMeasure = heroLiveTextMeasureRef.current;
-      if (!svgRoot || !overlay || !nameMeasure) return false;
-
-      const svg = svgRoot.querySelector<SVGSVGElement>("svg");
-      if (!svg) return false;
-
-      const namePath = findNamePath(svg);
-      if (!namePath) return false;
-
-      const overlayRect = overlay.getBoundingClientRect();
-      const nameRect = namePath.getBoundingClientRect();
-      if (nameRect.width < 1 || nameRect.height < 1) return false;
-
-      const nameBase = solveOverlayToPath(nameMeasure, overlayRect, nameRect);
-      if (!nameBase) return false;
-
-      setHeroLiveTextBase(nameBase);
-      setHeroLiveTextReady(true);
+    const checkReady = () => {
+      const root = heroSvgAlignRef.current;
+      const count = root?.querySelectorAll("[data-hero-name-letter]").length ?? 0;
+      if (count < HERO_NAME_LETTER_COUNT) return false;
+      setHeroNameLettersReady(true);
       onLiveTextReadyChange?.(true);
       return true;
     };
 
-    const scheduleCalibrate = () => {
-      if (cancelled || !fontsSettled) return;
-      if (calibrate()) {
+    const schedule = () => {
+      if (cancelled) return;
+      if (checkReady()) {
         rafRetries = 0;
         return;
       }
-      // Keep retrying — entrance animations are gated on success, so don't give up.
       rafRetries += 1;
       if (rafRetries <= 45) {
-        pendingRafs.push(window.requestAnimationFrame(scheduleCalibrate));
+        pendingRafs.push(window.requestAnimationFrame(schedule));
       } else {
-        pendingTimeouts.push(window.setTimeout(scheduleCalibrate, 50));
+        pendingTimeouts.push(window.setTimeout(schedule, 50));
       }
     };
 
-    const fonts = (document as Document & { fonts?: FontFaceSet }).fonts;
-
-    if (fontsSettled) {
-      setHeroLiveTextFontsReady(true);
-      scheduleCalibrate();
-    } else {
-      setHeroLiveTextFontsReady(false);
-    }
-
+    schedule();
     const ro = new ResizeObserver(() => {
-      if (!fontsSettled || cancelled) return;
-      if (!calibrate()) scheduleCalibrate();
+      if (!cancelled) schedule();
     });
     const svgRoot = heroSvgAlignRef.current;
     if (svgRoot) ro.observe(svgRoot);
-    window.addEventListener("resize", scheduleCalibrate);
-
-    if (fonts?.ready) {
-      fonts.ready.then(() => {
-        if (cancelled) return;
-        fontsSettled = true;
-        setHeroLiveTextFontsReady(true);
-        rafRetries = 0;
-        scheduleCalibrate();
-      });
-    }
+    window.addEventListener("resize", schedule);
 
     return () => {
       cancelled = true;
       ro.disconnect();
-      window.removeEventListener("resize", scheduleCalibrate);
+      window.removeEventListener("resize", schedule);
       pendingRafs.forEach((id) => window.cancelAnimationFrame(id));
       pendingTimeouts.forEach((id) => window.clearTimeout(id));
-      onLiveTextReadyChange?.(false);
     };
-  }, [isMobileHeroLayout, onLiveTextReadyChange]);
-
-  useEffect(() => {
-    if (!heroLiveTextReady || !heroLiveTextFontsReady || !auxVisible) {
-      setHeroLiveTextAnimate(false);
-      return;
-    }
-    if (reduceMotion) {
-      setHeroLiveTextAnimate(true);
-      return;
-    }
-    setHeroLiveTextAnimate(false);
-    const raf = window.requestAnimationFrame(() => setHeroLiveTextAnimate(true));
-    return () => window.cancelAnimationFrame(raf);
-  }, [heroLiveTextReady, heroLiveTextFontsReady, auxVisible, reduceMotion]);
+  }, [isMobileHeroLayout, onLiveTextReadyChange, heroLockupSvg]);
 
   const activeAccentLayout = heroDebugEnabled ? accentDebugControls : HERO_ACCENT_LAYOUT;
 
@@ -2196,89 +2013,32 @@ const HeroNameReveal = ({
             <motion.div
               className="h-full w-full"
               initial={false}
-              animate={{ opacity: reduceMotion ? 1 : auxVisible ? 1 : 0 }}
-              transition={heroNameMasterFadeTransition(!reduceMotion && auxVisible)}
+              animate={{
+                opacity:
+                  reduceMotion || nameCascadeLatched || auxVisible ? 1 : 0,
+              }}
+              /* Instant show — letter cascade must not fight a shared opacity fade. */
+              transition={{
+                duration:
+                  reduceMotion || nameCascadeLatched || !auxVisible ? 0 : 0.01,
+              }}
             >
-            <motion.div
+            {/*
+              Name letters cascade via CSS keyframes when chrome flag flips once.
+              SVG markup is mounted once into the inner host (see heroSvgMountRef).
+            */}
+            <div
               role="img"
               data-hero-svg-root="true"
-              data-hero-hide-name-paths={
-                heroLiveTextReady && auxVisible && !heroDebugEnabled ? "true" : "false"
+              data-hero-chrome-animate={
+                reduceMotion || nameCascadeLatched || auxVisible
+                  ? "true"
+                  : "false"
               }
               aria-label="Robbie McLaughlin — Writer, content production, and social media"
               className="block h-full w-full select-none [&_svg]:block [&_svg]:h-full [&_svg]:w-full max-md:flex max-md:items-center max-md:[&_svg]:!h-[95%]"
-              dangerouslySetInnerHTML={{ __html: heroLockupSvg }}
-              initial={false}
-              animate={{
-                opacity: reduceMotion
-                  ? 1
-                  : !auxVisible
-                    ? 0
-                    : [...HERO_NAME_TEXT_WHITE_BLEND_OPACITY],
-              }}
-              transition={heroNameWhiteLayerTransition(auxVisible)}
-            />
-            <div
-              ref={heroLiveTextOverlayRef}
-              aria-hidden
-              className="pointer-events-none absolute inset-0 overflow-visible"
-              style={{ opacity: heroDebugEnabled || heroLiveTextReady ? 1 : 0 }}
             >
-              <div
-                ref={heroLiveTextMeasureRef}
-                className="absolute m-0 whitespace-nowrap font-display font-bold uppercase tracking-[-0.036em] text-[#FFFAEE]"
-                style={{
-                  lineHeight: 0.8,
-                  transformOrigin: "top left",
-                  ...heroLiveTextBoxStyle,
-                  ...(heroDebugEnabled ? { color: "#ff2d2d" } : null),
-                }}
-              >
-                <div className="flex flex-col">
-                  <span aria-hidden>
-                    {"ROBBIE".split("").map((ch, idx) => (
-                      <span
-                        key={`hero-live-r-${idx}`}
-                        className="inline-block"
-                        style={{
-                          transform:
-                            heroLiveTextAnimate || heroDebugEnabled
-                              ? "translateY(0)"
-                              : `translateY(${heroLiveTextStartYPx}px)`,
-                          opacity: heroLiveTextAnimate || heroDebugEnabled ? 1 : 0,
-                          transition: reduceMotion
-                            ? "none"
-                            : "transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.6s ease-out",
-                          transitionDelay: reduceMotion ? undefined : `${idx * 30}ms`,
-                        }}
-                      >
-                        {ch}
-                      </span>
-                    ))}
-                  </span>
-                  <span aria-hidden className="mt-[0.04em]">
-                    {"MCLAUGHLIN".split("").map((ch, idx) => (
-                      <span
-                        key={`hero-live-m-${idx}`}
-                        className="inline-block"
-                        style={{
-                          transform:
-                            heroLiveTextAnimate || heroDebugEnabled
-                              ? "translateY(0)"
-                              : `translateY(${heroLiveTextStartYPx}px)`,
-                          opacity: heroLiveTextAnimate || heroDebugEnabled ? 1 : 0,
-                          transition: reduceMotion
-                            ? "none"
-                            : "transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.6s ease-out",
-                          transitionDelay: reduceMotion ? undefined : `${(6 + idx) * 30}ms`,
-                        }}
-                      >
-                        {ch}
-                      </span>
-                    ))}
-                  </span>
-                </div>
-              </div>
+              <div ref={heroSvgMountRef} className="h-full w-full" />
             </div>
             </motion.div>
           </div>
@@ -2295,12 +2055,7 @@ const HeroNameReveal = ({
                 <span
                   className={`relative shrink-0 text-[clamp(2.28rem,8.85vw,5.95rem)] max-[400px]:text-[clamp(2rem,8.1vw,5.95rem)] font-bold uppercase leading-[0.8] tracking-[-0.036em] text-mono-0 sm:leading-[0.78] ${HERO_NAME_MOBILE_DISPLAY_FONT_CLASS}`}
                 >
-                  <HeroNameRainbowFade
-                    text="ROBBIE"
-                    step={step}
-                    reduceMotion={reduceMotion}
-                    eRightCropPx={HERO_ROBBIE_E_RIGHT_CROP_PX}
-                  />
+                  ROBBIE
                 </span>
                 <motion.div
                   aria-hidden
@@ -2348,10 +2103,10 @@ const HeroNameReveal = ({
                   </div>
                 </motion.div>
               </div>
-              <span
+                <span
                 className={`block text-[clamp(2.28rem,8.85vw,5.95rem)] max-[400px]:text-[clamp(2rem,8.1vw,5.95rem)] font-bold uppercase leading-[0.8] tracking-[-0.036em] text-mono-0 mt-[0.04em] sm:leading-[0.78] ${HERO_NAME_MOBILE_DISPLAY_FONT_CLASS}`}
               >
-                <HeroNameRainbowFade text="MCLAUGHLIN" step={step} reduceMotion={reduceMotion} />
+                MCLAUGHLIN
               </span>
             </h1>
           </div>
@@ -2411,76 +2166,6 @@ const HeroNameReveal = ({
             onPortfolioButtonGlobalChange={onPortfolioButtonGlobalDebugChange}
             onReset={handleAccentDebugReset}
           />,
-          document.body,
-        )}
-      {heroDebugEnabled &&
-        typeof document !== "undefined" &&
-        createPortal(
-          <div
-            className="fixed bottom-3 left-3 z-[100000] w-[240px] select-none rounded-lg border border-[#ff2d2d]/60 bg-black/90 p-3 font-mono text-[11px] text-[#FFFAEE] shadow-xl backdrop-blur"
-          >
-            <div className="mb-2 flex items-center justify-between">
-              <span className="font-bold uppercase tracking-[0.12em] text-[#ff2d2d]">
-                Live Text
-              </span>
-              <button
-                type="button"
-                className="rounded border border-white/25 px-1.5 py-0.5 text-[10px] uppercase hover:border-white/60"
-                onClick={() =>
-                  setLiveTextDebug({
-                    offsetX: HERO_LIVE_TEXT_OPTICAL_OFFSET_X,
-                    offsetY: HERO_LIVE_TEXT_OPTICAL_OFFSET_Y,
-                    scale: HERO_LIVE_TEXT_OPTICAL_SCALE,
-                  })
-                }
-              >
-                Reset
-              </button>
-            </div>
-            {(
-              [
-                { key: "offsetX", label: "X", min: -30, max: 30, step: 0.5 },
-                { key: "offsetY", label: "Y", min: -30, max: 30, step: 0.5 },
-                { key: "scale", label: "Scale", min: 0.8, max: 1.3, step: 0.005 },
-              ] as const
-            ).map(({ key, label, min, max, step: stepPx }) => (
-              <label key={key} className="mb-2 flex items-center gap-2">
-                <span className="w-10 shrink-0 uppercase text-white/70">{label}</span>
-                <input
-                  type="range"
-                  min={min}
-                  max={max}
-                  step={stepPx}
-                  value={liveTextDebug[key]}
-                  onChange={(event) =>
-                    setLiveTextDebug((prev) => ({
-                      ...prev,
-                      [key]: Number.parseFloat(event.target.value),
-                    }))
-                  }
-                  className="h-1 flex-1 accent-[#ff2d2d]"
-                />
-                <span className="w-10 shrink-0 text-right tabular-nums">
-                  {liveTextDebug[key].toFixed(key === "scale" ? 3 : 1)}
-                </span>
-              </label>
-            ))}
-            <button
-              type="button"
-              className="mt-1 w-full rounded border border-white/25 px-2 py-1 text-[10px] uppercase hover:border-white/60"
-              onClick={() => {
-                const code = [
-                  `const HERO_LIVE_TEXT_OPTICAL_SCALE = ${liveTextDebug.scale};`,
-                  `const HERO_LIVE_TEXT_OPTICAL_OFFSET_X = ${liveTextDebug.offsetX};`,
-                  `const HERO_LIVE_TEXT_OPTICAL_OFFSET_Y = ${liveTextDebug.offsetY};`,
-                ].join("\n");
-                console.info("[Hero Live Text Debug]\n" + code);
-                void navigator.clipboard?.writeText(code);
-              }}
-            >
-              Copy constants
-            </button>
-          </div>,
           document.body,
         )}
       {heroDesktopViewport ? (
