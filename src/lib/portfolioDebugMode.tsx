@@ -29,17 +29,17 @@ export type ProfileDesktopLayoutDebugValues = {
   rightHeightScale: number;
 };
 
-/** Locked desktop PROFILE layout — tuned via debug panel (Jun 2026). */
+/** Locked desktop PROFILE layout — tuned via debug panel (Jul 2026). */
 export const PROFILE_DESKTOP_LAYOUT_DEBUG_DEFAULTS: ProfileDesktopLayoutDebugValues = {
-  leftOffsetX: 58,
-  leftOffsetY: 50,
-  rightOffsetX: -117,
-  rightOffsetY: 57,
-  leftScale: 0.9,
-  leftWidthScale: 0.8,
+  leftOffsetX: 0,
+  leftOffsetY: 16,
+  rightOffsetX: 0,
+  rightOffsetY: 29,
+  leftScale: 0.96,
+  leftWidthScale: 0.77,
   leftHeightScale: 1,
-  rightScale: 1.03,
-  rightWidthScale: 1,
+  rightScale: 0.96,
+  rightWidthScale: 0.77,
   rightHeightScale: 1,
 };
 

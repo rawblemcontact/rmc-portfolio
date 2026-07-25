@@ -1407,9 +1407,6 @@ const HERO_VIDEO_REVEAL_DELAY_MOBILE_EXTRA_S = 0;
 const HERO_SETTLE_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 /** scaleX reveal — no overshoot (y2 ≤ 1) so the card does not pop past full width at the end. */
 const HERO_VIDEO_SCALE_EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
-/** Content + glow overlap the last ~45% of the horizontal reveal instead of waiting on sliderAnimDone. */
-const HERO_VIDEO_CONTENT_FADE_DELAY_S = 0.52;
-const HERO_VIDEO_CONTENT_FADE_DUR_S = 0.43;
 const HERO_VIDEO_GLOW_DELAY_S = 0.28;
 const HERO_VIDEO_GLOW_DUR_S = 0.72;
 const HERO_VIDEO_GLOW_PEAK = 0.55;
@@ -1503,26 +1500,90 @@ const HERO_TAGLINE_TEXT = "Writer · content production · social media";
 /** Split lockup — first N `#FFFAEE` paths are ROBBIE (6) + MCLAUGHLIN (10). */
 const HERO_NAME_LETTER_COUNT = 16;
 /** Cascade spacing — readable left→right pop across ROBBIE + MCLAUGHLIN. */
-const HERO_NAME_LETTER_STAGGER_MS = 70;
+const HERO_NAME_LETTER_STAGGER_MS = 32;
+/** Keep in sync with `animation-duration` on `[data-hero-name-letter]` in index.css. */
+const HERO_NAME_LETTER_DURATION_MS = 324;
+/** Name cascade end (from chrome/latch start) — gates tagline cascade reveal. */
+const HERO_NAME_CASCADE_MS =
+  (HERO_NAME_LETTER_COUNT - 1) * HERO_NAME_LETTER_STAGGER_MS + HERO_NAME_LETTER_DURATION_MS;
+/**
+ * Tagline letter cascade — gated after name.
+ * Stream order: WRITER → X1 → CONTENT PRODUCTION → X2 → SOCIAL MEDIA.
+ * Stagger is scaled so the full stream finishes in the same wall-clock window
+ * as ROBBIE+MCLAUGHLIN (same letter duration / ease; denser stagger for more glyphs).
+ */
+/** Glyph counts in cream-path order (spaces are not paths). */
+const HERO_TAGLINE_WRITER_LEN = 6;
+const HERO_TAGLINE_CONTENT_LEN = 17;
+const HERO_TAGLINE_SOCIAL_LEN = 11;
+/** Stagger slots for · separators in the left→right stream. */
+const HERO_TAGLINE_X1_DELAY_INDEX = HERO_TAGLINE_WRITER_LEN;
+const HERO_TAGLINE_X2_DELAY_INDEX =
+  HERO_TAGLINE_WRITER_LEN + 1 + HERO_TAGLINE_CONTENT_LEN;
+/** Total cascade slots including X1 / X2. */
+const HERO_TAGLINE_STREAM_LEN =
+  HERO_TAGLINE_WRITER_LEN + 1 + HERO_TAGLINE_CONTENT_LEN + 1 + HERO_TAGLINE_SOCIAL_LEN;
+const HERO_TAGLINE_STAGGER_MS = Math.max(
+  1,
+  Math.round(
+    ((HERO_NAME_LETTER_COUNT - 1) * HERO_NAME_LETTER_STAGGER_MS) /
+      (HERO_TAGLINE_STREAM_LEN - 1),
+  ),
+);
 
-/** Inline hero lockup SVG — per-letter name paths tagged for stagger animation. */
+/** Cream glyph index → stagger slot (inserts X1 / X2 beats between phrases). */
+const heroTaglineGlyphDelayIndex = (glyphIndex: number) => {
+  if (glyphIndex < HERO_TAGLINE_WRITER_LEN) return glyphIndex;
+  if (glyphIndex < HERO_TAGLINE_WRITER_LEN + HERO_TAGLINE_CONTENT_LEN) {
+    return glyphIndex + 1; // after X1
+  }
+  return glyphIndex + 2; // after X1 + X2
+};
+
+/** Inline hero lockup SVG — tag paths for stagger only; do not alter Frame 5 artwork. */
 const prepareHeroLockupSvg = (raw: string) => {
   // Drop Figma-hidden red phrase blobs if they still export.
   let out = raw.replace(/<path d="[^"]*" fill="#FF4A4A"\/>/g, "");
+  // Tagline · separators — assign by x-position (SVG DOM order is X2 then X1).
+  out = out.replace(
+    /<path d="(M(?:53\.5486|174\.052)[^"]*)" fill="white"\/>/g,
+    (_match, d: string) => {
+      const isX1 = d.startsWith("M53.5486");
+      const i = isX1 ? HERO_TAGLINE_X1_DELAY_INDEX : HERO_TAGLINE_X2_DELAY_INDEX;
+      const part = isX1 ? "x1" : "x2";
+      return (
+        `<path data-hero-tagline-sep="true" data-hero-tagline-part="${part}" d="${d}" fill="white" ` +
+        `style="animation-delay:${i * HERO_TAGLINE_STAGGER_MS}ms"/>`
+      );
+    },
+  );
   let letterIdx = 0;
+  let taglineIdx = 0;
   out = out.replace(/<path d="([^"]*)" fill="#FFFAEE"\/>/g, (_match, d: string) => {
-    if (letterIdx >= HERO_NAME_LETTER_COUNT) {
+    if (letterIdx < HERO_NAME_LETTER_COUNT) {
+      const i = letterIdx;
+      const row = i < 6 ? "robbie" : "mclaughlin";
+      const rowIndex = i < 6 ? i : i - 6;
       letterIdx += 1;
-      return `<path d="${d}" fill="#FFFAEE"/>`;
+      // animation-delay survives SVG re-inject; keyframes run when root animate flag flips.
+      return (
+        `<path data-hero-name-letter="${i}" data-hero-name-row="${row}" data-hero-name-index="${rowIndex}" ` +
+        `d="${d}" fill="#FFFAEE" style="animation-delay:${i * HERO_NAME_LETTER_STAGGER_MS}ms"/>`
+      );
     }
-    const i = letterIdx;
-    const row = i < 6 ? "robbie" : "mclaughlin";
-    const rowIndex = i < 6 ? i : i - 6;
+    const glyphIndex = taglineIdx;
+    const i = heroTaglineGlyphDelayIndex(glyphIndex);
+    const part =
+      glyphIndex < HERO_TAGLINE_WRITER_LEN
+        ? "writer"
+        : glyphIndex < HERO_TAGLINE_WRITER_LEN + HERO_TAGLINE_CONTENT_LEN
+          ? "content"
+          : "social";
+    taglineIdx += 1;
     letterIdx += 1;
-    // animation-delay survives SVG re-inject; keyframes run when root animate flag flips.
     return (
-      `<path data-hero-name-letter="${i}" data-hero-name-row="${row}" data-hero-name-index="${rowIndex}" ` +
-      `d="${d}" fill="#FFFAEE" style="animation-delay:${i * HERO_NAME_LETTER_STAGGER_MS}ms"/>`
+      `<path data-hero-tagline-letter="${glyphIndex}" data-hero-tagline-part="${part}" ` +
+      `d="${d}" fill="#FFFAEE" style="animation-delay:${i * HERO_TAGLINE_STAGGER_MS}ms"/>`
     );
   });
   return out
@@ -1682,20 +1743,28 @@ const HeroNameReveal = ({
   /** Latch — once the name cascade starts, never restart (avoids loop on parent re-renders). */
   const [nameCascadeLatched, setNameCascadeLatched] = useState(false);
   const nameCascadeLatchedRef = useRef(false);
+  /** Tagline cascade — latched once after name cascade completes (never restarts). */
+  const [taglineTypeLatched, setTaglineTypeLatched] = useState(false);
+  const taglineTypeLatchedRef = useRef(false);
   const heroSvgMountRef = useRef<HTMLDivElement>(null);
   const heroSvgMountedRef = useRef(false);
   const heroDebugEnabled = useHeroDebugEnabled();
   const heroLockupSvg = HERO_ROB_LOCKUP_SVG;
 
   /**
-   * Mount split SVG once via DOM — do NOT use dangerouslySetInnerHTML on a
-   * re-rendering host. React re-sets innerHTML on updates and remounts letter
-   * paths, which restarts CSS cascade animations in a loop.
+   * Mount split SVG via DOM — do NOT use dangerouslySetInnerHTML on a
+   * re-rendering host (React re-sets innerHTML and restarts letter cascades).
+   * Remount only when markup changes and the cascade has not latched yet.
    */
+  const heroSvgMountedHtmlRef = useRef<string | null>(null);
   useLayoutEffect(() => {
     const host = heroSvgMountRef.current;
-    if (!host || heroSvgMountedRef.current) return;
+    if (!host) return;
+    if (heroSvgMountedHtmlRef.current === heroLockupSvg) return;
+    // Mid/post cascade — keep current SVG so name/tagline animations don't restart.
+    if (nameCascadeLatchedRef.current && heroSvgMountedHtmlRef.current != null) return;
     host.innerHTML = heroLockupSvg;
+    heroSvgMountedHtmlRef.current = heroLockupSvg;
     heroSvgMountedRef.current = true;
   }, [heroLockupSvg]);
 
@@ -1709,6 +1778,8 @@ const HeroNameReveal = ({
     if (reduceMotion) {
       nameCascadeLatchedRef.current = true;
       setNameCascadeLatched(true);
+      taglineTypeLatchedRef.current = true;
+      setTaglineTypeLatched(true);
       setStep("done");
       return;
     }
@@ -1732,6 +1803,25 @@ const HeroNameReveal = ({
       window.clearTimeout(doneTimer);
     };
   }, [heroReady, revealActive, reduceMotion]);
+
+  /** Tagline letter cascade — starts only after ROBBIE / MCLAUGHLIN cascade finishes. */
+  useLayoutEffect(() => {
+    if (reduceMotion) {
+      taglineTypeLatchedRef.current = true;
+      setTaglineTypeLatched(true);
+      return;
+    }
+    if (!nameCascadeLatched || taglineTypeLatchedRef.current) return;
+
+    const taglineTimer = window.setTimeout(() => {
+      taglineTypeLatchedRef.current = true;
+      setTaglineTypeLatched(true);
+    }, HERO_NAME_CASCADE_MS);
+
+    return () => {
+      window.clearTimeout(taglineTimer);
+    };
+  }, [nameCascadeLatched, reduceMotion]);
 
   /** Desktop + tablet landscape — align SVG left edge to video card; freeze until resize. */
   useLayoutEffect(() => {
@@ -1943,13 +2033,15 @@ const HeroNameReveal = ({
   const heroSvgLockupStyle: React.CSSProperties | undefined = (() => {
     if (!heroDesktopViewport) {
       const mobileNudgeX = isMobileHeroLayout ? mobileSvgNudgeXPx : 0;
-      const nextX = heroSvgAlignX + mobileNudgeX;
+      const nextX = Math.round(heroSvgAlignX + mobileNudgeX);
       return nextX ? { transform: `translateX(${nextX}px)` } : undefined;
     }
+    /* Integer px — subpixel translate rasterizes the scaled SVG soft. */
     return buildHeroGlobalLayoutStyle(
       {
         ...activeSvgLockupLayout,
-        offsetX: heroSvgAlignX + activeSvgLockupLayout.offsetX,
+        offsetX: Math.round(heroSvgAlignX + activeSvgLockupLayout.offsetX),
+        offsetY: Math.round(activeSvgLockupLayout.offsetY),
       },
       "left top",
     );
@@ -2034,6 +2126,9 @@ const HeroNameReveal = ({
                 reduceMotion || nameCascadeLatched || auxVisible
                   ? "true"
                   : "false"
+              }
+              data-hero-tagline-animate={
+                reduceMotion || taglineTypeLatched ? "true" : "false"
               }
               aria-label="Robbie McLaughlin — Writer, content production, and social media"
               className="block h-full w-full select-none [&_svg]:block [&_svg]:h-full [&_svg]:w-full max-md:flex max-md:items-center max-md:[&_svg]:!h-[95%]"
@@ -2182,11 +2277,11 @@ const HeroNameReveal = ({
 // --- HERO SECTION ---
 const Hero = ({
   onStart,
-  onQuickProjects,
-  isResumeMode,
-  toggleResumeMode,
+  onQuickProjects: _onQuickProjects,
+  isResumeMode: _isResumeMode,
+  toggleResumeMode: _toggleResumeMode,
   heroInViewRef,
-  active,
+  active: _active,
 }: {
   onStart: () => void;
   onQuickProjects: () => void;
@@ -2195,26 +2290,7 @@ const Hero = ({
   heroInViewRef: React.RefObject<HTMLDivElement | null>;
   active: boolean;
 }) => {
-  type FocalPoint = { x: number; y: number };
-  const HERO_TUNER_STORAGE_KEY = "hero-slider-tuner-v1";
-  const SHOW_HERO_TUNER = false;
-  const parseFocalPoint = (value?: string): FocalPoint => {
-    if (!value) return { x: 50, y: 50 };
-    const [xRaw, yRaw] = value.split(" ");
-    const x = Number.parseFloat((xRaw ?? "50").replace("%", ""));
-    const y = Number.parseFloat((yRaw ?? "50").replace("%", ""));
-    return {
-      x: Number.isFinite(x) ? x : 50,
-      y: Number.isFinite(y) ? y : 50,
-    };
-  };
-
   const reduceMotion = useReducedMotion();
-  const heroSlides = PROJECT_CARDS.slice(0, 5);
-  const initialHeroSlideIndex = Math.max(
-    0,
-    heroSlides.findIndex((slide) => slide.id === "project-slaywire"),
-  );
   const [fontsReady, setFontsReady] = useState(false);
   const [heroMediaReady, setHeroMediaReady] = useState(false);
   const [heroRevealDelayDone, setHeroRevealDelayDone] = useState(false);
@@ -2225,19 +2301,6 @@ const Hero = ({
   const [heroIdleFloat, setHeroIdleFloat] = useState(false);
   const [lockupFadeReady, setLockupFadeReady] = useState(false);
   const [portfolioFadeReady, setPortfolioFadeReady] = useState(false);
-  const [heroSlideIndex, setHeroSlideIndex] = useState(initialHeroSlideIndex);
-  const [heroSlideDirection, setHeroSlideDirection] = useState<1 | -1>(1);
-  const [heroSlidePaused, setHeroSlidePaused] = useState(false);
-  const [heroFocalLocked, setHeroFocalLocked] = useState<Record<string, FocalPoint>>(() =>
-    Object.fromEntries(heroSlides.map((slide) => [slide.id, parseFocalPoint(slide.focalPoint)])),
-  );
-  const [heroZoomLocked, setHeroZoomLocked] = useState<Record<string, number>>(() =>
-    Object.fromEntries(heroSlides.map((slide) => [slide.id, slide.zoom ?? 1])),
-  );
-  const [heroFocalOverrides, setHeroFocalOverrides] = useState<Record<string, FocalPoint>>({});
-  const [heroZoomOverrides, setHeroZoomOverrides] = useState<Record<string, number>>({});
-  const [bakeCopied, setBakeCopied] = useState(false);
-  const [defaultsApplied, setDefaultsApplied] = useState(false);
   const [isMobileHeroLayout, setIsMobileHeroLayout] = useState(false);
   /** Mobile: video card width synced to ROBBIE+rectangle / MCLAUGHLIN lockup. */
   const [mobileLockupWidthPx, setMobileLockupWidthPx] = useState<number | null>(null);
@@ -2249,7 +2312,6 @@ const Hero = ({
   const heroNameMotionRef = useRef<HTMLDivElement>(null);
   const [heroPhase1LayoutReady, setHeroPhase1LayoutReady] = useState(false);
   const sliderPhaseActiveRef = useRef(false);
-  const heroTouchStartYRef = useRef<number | null>(null);
   const heroDebugEnabled = useHeroDebugEnabled();
   const [videoGlobalDebugControls, setVideoGlobalDebugControls] = useState<HeroGlobalLayoutControl>(
     () => ({ ...HERO_VIDEO_GLOBAL_LAYOUT_DEFAULTS }),
@@ -2325,41 +2387,6 @@ const Hero = ({
   }, []);
 
   useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(HERO_TUNER_STORAGE_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as {
-        lockedFocal?: Record<string, FocalPoint>;
-        lockedZoom?: Record<string, number>;
-        focal?: Record<string, FocalPoint>;
-        zoom?: Record<string, number>;
-      };
-      if (parsed.lockedFocal) setHeroFocalLocked(parsed.lockedFocal);
-      if (parsed.lockedZoom) setHeroZoomLocked(parsed.lockedZoom);
-      if (parsed.focal) setHeroFocalOverrides(parsed.focal);
-      if (parsed.zoom) setHeroZoomOverrides(parsed.zoom);
-    } catch {
-      // Ignore malformed localStorage and keep defaults.
-    }
-  }, []);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(
-        HERO_TUNER_STORAGE_KEY,
-        JSON.stringify({
-          lockedFocal: heroFocalLocked,
-          lockedZoom: heroZoomLocked,
-          focal: heroFocalOverrides,
-          zoom: heroZoomOverrides,
-        }),
-      );
-    } catch {
-      // Ignore write errors (private mode/quota).
-    }
-  }, [heroFocalLocked, heroZoomLocked, heroFocalOverrides, heroZoomOverrides]);
-
-  useEffect(() => {
     const ready = () => setFontsReady(true);
     if (document.fonts?.ready) {
       document.fonts.ready.then(ready);
@@ -2372,131 +2399,10 @@ const Hero = ({
     };
   }, []);
 
+  // Card shell only — no hero media to preload.
   useEffect(() => {
-    let cancelled = false;
-    const timers: number[] = [];
-
-    const waitForImage = (src?: string) =>
-      new Promise<void>((resolve) => {
-        if (!src) {
-          resolve();
-          return;
-        }
-        const img = new Image();
-        const done = () => resolve();
-        img.onload = done;
-        img.onerror = done;
-        img.src = src;
-      });
-
-    const waitForVideo = (
-      src?: string,
-      opts?: { preload?: "none" | "metadata" | "auto"; timeoutMs?: number; useLoadedData?: boolean },
-    ) =>
-      new Promise<void>((resolve) => {
-        if (!src) {
-          resolve();
-          return;
-        }
-        const video = document.createElement("video");
-        let settled = false;
-        const finish = () => {
-          if (settled) return;
-          settled = true;
-          video.onloadedmetadata = null;
-          video.onloadeddata = null;
-          video.onerror = null;
-          resolve();
-        };
-        video.preload = opts?.preload ?? "metadata";
-        video.muted = true;
-        video.playsInline = true;
-        video.onloadedmetadata = finish;
-        if (opts?.useLoadedData) video.onloadeddata = finish;
-        video.onerror = finish;
-        video.src = src;
-        video.load();
-        timers.push(window.setTimeout(finish, opts?.timeoutMs ?? 2500));
-      });
-
-    const preloadCriticalHeroMedia = async () => {
-      // Gate only on the first visible slide to avoid heavy startup frame drops.
-      const firstSlide = heroSlides[0];
-      await Promise.allSettled([
-        waitForImage(firstSlide?.poster),
-        waitForImage(firstSlide?.thumbnail),
-        waitForVideo(firstSlide?.thumbnailVideo, {
-          preload: "auto",
-          timeoutMs: 3200,
-          useLoadedData: true,
-        }),
-      ]);
-      if (!cancelled) setHeroMediaReady(true);
-    };
-
-    const warmRemainingHeroMedia = () => {
-      const rest = heroSlides.slice(1);
-      rest.forEach((slide, idx) => {
-        timers.push(
-          window.setTimeout(() => {
-            if (cancelled) return;
-            void waitForImage(slide.poster);
-            void waitForImage(slide.thumbnail);
-            void waitForVideo(slide.thumbnailVideo, { preload: "metadata", timeoutMs: 2200 });
-          }, 600 + idx * 220),
-        );
-      });
-    };
-
-    preloadCriticalHeroMedia();
-    timers.push(window.setTimeout(warmRemainingHeroMedia, 900));
-    timers.push(
-      window.setTimeout(() => {
-        if (!cancelled) setHeroMediaReady(true);
-      }, 4200),
-    );
-
-    return () => {
-      cancelled = true;
-      timers.forEach((id) => window.clearTimeout(id));
-    };
+    setHeroMediaReady(true);
   }, []);
-
-  const goToHeroSlide = useCallback(
-    (nextIndex: number, direction: 1 | -1) => {
-      if (heroSlides.length < 2) return;
-      const wrapped = (nextIndex + heroSlides.length) % heroSlides.length;
-      setHeroSlideDirection(direction);
-      setHeroSlideIndex(wrapped);
-    },
-    [heroSlides.length],
-  );
-
-  const goToNextHeroSlide = useCallback(
-    () => goToHeroSlide(heroSlideIndex + 1, 1),
-    [goToHeroSlide, heroSlideIndex],
-  );
-
-  const goToPrevHeroSlide = useCallback(
-    () => goToHeroSlide(heroSlideIndex - 1, -1),
-    [goToHeroSlide, heroSlideIndex],
-  );
-
-  useEffect(() => {
-    if (!active) return;
-    if (reduceMotion || heroSlidePaused || heroSlides.length < 2) return;
-    const t = window.setInterval(() => {
-      setHeroSlideDirection(1);
-      setHeroSlideIndex((prev) => (prev + 1) % heroSlides.length);
-    }, 2200);
-    return () => window.clearInterval(t);
-  }, [active, reduceMotion, heroSlidePaused, heroSlides.length]);
-
-  useEffect(() => {
-    if (!active) {
-      setHeroSlidePaused(false);
-    }
-  }, [active]);
 
   useEffect(() => {
     // Startup beat runs in parallel with live-name preload (gate uses both).
@@ -2713,55 +2619,6 @@ const Hero = ({
     };
   }, [heroLayoutReady, isMobileHeroLayout, sliderAnimDone]);
 
-  const currentHeroSlide = heroSlides[heroSlideIndex];
-  const currentFocal = heroFocalOverrides[currentHeroSlide.id] ?? heroFocalLocked[currentHeroSlide.id] ?? parseFocalPoint(currentHeroSlide.focalPoint);
-  const currentZoom = heroZoomOverrides[currentHeroSlide.id] ?? heroZoomLocked[currentHeroSlide.id] ?? currentHeroSlide.zoom ?? 1;
-  const currentFocalString = `${currentFocal.x}% ${currentFocal.y}%`;
-  const currentFitClass = currentZoom < 1 ? "object-contain" : "object-cover";
-  const bakedHeroCode = heroSlides
-    .map((slide) => {
-      const focal = heroFocalOverrides[slide.id] ?? heroFocalLocked[slide.id] ?? parseFocalPoint(slide.focalPoint);
-      const zoom = heroZoomOverrides[slide.id] ?? heroZoomLocked[slide.id] ?? slide.zoom ?? 1;
-      return `  "${slide.id}": { focalPoint: "${Math.round(focal.x)}% ${Math.round(focal.y)}%", zoom: ${zoom.toFixed(2)} },`;
-    })
-    .join("\n");
-
-  const copyBakeValues = async () => {
-    const payload = [
-      "// Paste these into matching PROJECT_CARDS entries:",
-      "const HERO_BAKED_VALUES = {",
-      bakedHeroCode,
-      "};",
-    ].join("\n");
-
-    try {
-      await navigator.clipboard.writeText(payload);
-      setBakeCopied(true);
-      window.setTimeout(() => setBakeCopied(false), 1400);
-    } catch {
-      setBakeCopied(false);
-    }
-  };
-
-  const applyCurrentAsDefaults = () => {
-    const nextLockedFocal: Record<string, FocalPoint> = {};
-    const nextLockedZoom: Record<string, number> = {};
-
-    heroSlides.forEach((slide) => {
-      const focal = heroFocalOverrides[slide.id] ?? heroFocalLocked[slide.id] ?? parseFocalPoint(slide.focalPoint);
-      const zoom = heroZoomOverrides[slide.id] ?? heroZoomLocked[slide.id] ?? slide.zoom ?? 1;
-      nextLockedFocal[slide.id] = focal;
-      nextLockedZoom[slide.id] = zoom;
-    });
-
-    setHeroFocalLocked(nextLockedFocal);
-    setHeroZoomLocked(nextLockedZoom);
-    setHeroFocalOverrides({});
-    setHeroZoomOverrides({});
-    setDefaultsApplied(true);
-    window.setTimeout(() => setDefaultsApplied(false), 1400);
-  };
-
   const heroVideoScaleDelayS = 0;
 
   const heroIdleFloatAnimate = heroIdleFloat
@@ -2826,99 +2683,19 @@ const Hero = ({
             "radial-gradient(ellipse 90% 74% at 50% 44%, rgba(255,255,255,0.11) 0%, rgba(255,255,255,0.035) 46%, transparent 72%)",
         }}
       />
-      <motion.div
-        className="relative z-[1] mx-auto w-full h-[clamp(150px,min(40vh,calc(100svh-11rem-max(1rem,env(safe-area-inset-top,0px)))),430px)] max-md:h-[clamp(180px,min(48vh,calc(100svh-9.2rem-max(1rem,env(safe-area-inset-top,0px)))),520px)] md:max-lg:h-[clamp(200px,min(44vh,calc(100svh-14rem-max(1rem,env(safe-area-inset-top,0px)))),500px)] lg:h-[clamp(240px,min(54vh,calc(100svh-11.5rem-max(1.5rem,env(safe-area-inset-top,0px)))),680px)] xl:h-[clamp(260px,min(56vh,calc(100svh-12rem-max(2rem,env(safe-area-inset-top,0px)))),760px)] overflow-hidden rounded-[11px] sm:rounded-xl bg-black"
+      <div
+        className="relative z-[1] mx-auto w-full h-[clamp(150px,min(40vh,calc(100svh-11rem-max(1rem,env(safe-area-inset-top,0px)))),430px)] max-md:h-[clamp(180px,min(48vh,calc(100svh-9.2rem-max(1rem,env(safe-area-inset-top,0px)))),520px)] md:max-lg:h-[clamp(200px,min(44vh,calc(100svh-14rem-max(1rem,env(safe-area-inset-top,0px)))),500px)] lg:h-[clamp(240px,min(54vh,calc(100svh-11.5rem-max(1.5rem,env(safe-area-inset-top,0px)))),680px)] xl:h-[clamp(260px,min(56vh,calc(100svh-12rem-max(2rem,env(safe-area-inset-top,0px)))),760px)] overflow-hidden rounded-[11px] sm:rounded-xl border-[0.5px] border-white bg-black"
         style={{
           boxShadow:
             "0 36px 88px rgba(0,0,0,0.6), inset 0 -40px 70px rgba(0,0,0,0.52), 0 0 28px 4px rgba(255,255,255,0.04)",
         }}
-        onMouseEnter={() => setHeroSlidePaused(true)}
-        onMouseLeave={() => setHeroSlidePaused(false)}
-        onTouchStart={(e) => {
-          heroTouchStartYRef.current = e.touches[0]?.clientY ?? null;
-        }}
-        onTouchEnd={(e) => {
-          const startY = heroTouchStartYRef.current;
-          const endY = e.changedTouches[0]?.clientY;
-          heroTouchStartYRef.current = null;
-          if (startY == null || endY == null) return;
-          const delta = startY - endY;
-          if (Math.abs(delta) < 34) return;
-          if (delta > 0) goToNextHeroSlide();
-          else goToPrevHeroSlide();
-        }}
       >
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={
-            reduceMotion
-              ? { duration: 0 }
-              : {
-                  delay: HERO_VIDEO_CONTENT_FADE_DELAY_S,
-                  duration: HERO_VIDEO_CONTENT_FADE_DUR_S,
-                  ease: HERO_VIDEO_SCALE_EASE,
-                }
-          }
-          className="absolute inset-0"
-        >
-          <AnimatePresence initial={false} custom={heroSlideDirection}>
-            <motion.article
-              key={currentHeroSlide.id}
-              custom={heroSlideDirection}
-              initial={{ y: heroSlideDirection > 0 ? "100%" : "-100%" }}
-              animate={{ y: "0%" }}
-              exit={{ y: heroSlideDirection > 0 ? "-100%" : "100%" }}
-              transition={{ duration: reduceMotion ? 0.12 : 0.64, ease: [0.2, 0.9, 0.25, 1] }}
-              className="absolute inset-0 transform-gpu"
-              style={{ willChange: "transform" }}
-            >
-              <motion.div
-                initial={{ y: heroSlideDirection > 0 ? "6%" : "-6%" }}
-                animate={{ y: 0 }}
-                exit={{ y: heroSlideDirection > 0 ? "-6%" : "6%" }}
-                transition={{ duration: reduceMotion ? 0.12 : 0.64, ease: [0.2, 0.9, 0.25, 1] }}
-                className="absolute inset-0 transform-gpu"
-                style={{ willChange: "transform" }}
-              >
-                {currentHeroSlide.thumbnailVideo ? (
-                  <video
-                    src={currentHeroSlide.thumbnailVideo}
-                    poster={currentHeroSlide.poster}
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    className={`h-full w-full ${currentFitClass}`}
-                    style={{
-                      objectPosition: currentFocalString,
-                      transform: `scale(${currentZoom})`,
-                      transformOrigin: currentFocalString,
-                    }}
-                  />
-                ) : (
-                  <img
-                    src={currentHeroSlide.thumbnail}
-                    alt={currentHeroSlide.title}
-                    className={`h-full w-full ${currentFitClass}`}
-                    style={{
-                      objectPosition: currentFocalString,
-                      transform: `scale(${currentZoom})`,
-                      transformOrigin: currentFocalString,
-                    }}
-                    loading="eager"
-                  />
-                )}
-              </motion.div>
-            </motion.article>
-          </AnimatePresence>
-        </motion.div>
         <span
           aria-hidden
           className="pointer-events-none absolute inset-0 z-[2]"
           style={{ background: HERO_VIDEO_CARD_VIGNETTE }}
         />
-      </motion.div>
+      </div>
     </motion.div>
   );
 
@@ -3058,95 +2835,6 @@ const Hero = ({
             )}
           </motion.div>
         </div>
-        {SHOW_HERO_TUNER && (
-          <div
-            className="absolute right-3 top-3 z-50 w-[min(90vw,18rem)] rounded border border-white/15 bg-black/85 px-3 py-2.5 backdrop-blur-sm"
-            onMouseEnter={() => setHeroSlidePaused(true)}
-            onMouseLeave={() => setHeroSlidePaused(false)}
-          >
-            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-mono-2/90">Hero crop/zoom tuner</p>
-            <p className="mt-1 truncate font-display text-xs uppercase text-white/95">{currentHeroSlide.title}</p>
-            <div className="mt-2 space-y-2">
-              <label className="block">
-                <span className="mb-1 block font-mono text-[10px] uppercase tracking-[0.14em] text-mono-2/70">
-                  X ({Math.round(currentFocal.x)}%)
-                </span>
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  value={currentFocal.x}
-                  onChange={(e) => {
-                    const nextX = Number(e.target.value);
-                    setHeroFocalOverrides((prev) => ({
-                      ...prev,
-                      [currentHeroSlide.id]: { x: nextX, y: currentFocal.y },
-                    }));
-                  }}
-                  className="h-1.5 w-full accent-zinc-200"
-                />
-              </label>
-              <label className="block">
-                <span className="mb-1 block font-mono text-[10px] uppercase tracking-[0.14em] text-mono-2/70">
-                  Y ({Math.round(currentFocal.y)}%)
-                </span>
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  value={currentFocal.y}
-                  onChange={(e) => {
-                    const nextY = Number(e.target.value);
-                    setHeroFocalOverrides((prev) => ({
-                      ...prev,
-                      [currentHeroSlide.id]: { x: currentFocal.x, y: nextY },
-                    }));
-                  }}
-                  className="h-1.5 w-full accent-zinc-200"
-                />
-              </label>
-              <label className="block">
-                <span className="mb-1 block font-mono text-[10px] uppercase tracking-[0.14em] text-mono-2/70">
-                  Zoom ({currentZoom.toFixed(2)}x)
-                </span>
-                <input
-                  type="range"
-                  min={0.7}
-                  max={1.8}
-                  step={0.01}
-                  value={currentZoom}
-                  onChange={(e) => {
-                    const nextZoom = Number(e.target.value);
-                    setHeroZoomOverrides((prev) => ({
-                      ...prev,
-                      [currentHeroSlide.id]: nextZoom,
-                    }));
-                  }}
-                  className="h-1.5 w-full accent-zinc-200"
-                />
-              </label>
-            </div>
-            <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-mono-2/70">
-              object-position: {currentFocalString} | zoom: {currentZoom.toFixed(2)}x
-            </p>
-            <div className="mt-2 flex items-center gap-2">
-              <button
-                type="button"
-                onClick={copyBakeValues}
-                className="inline-flex items-center justify-center border border-white/20 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-mono-2 hover:border-white/45 hover:text-white"
-              >
-                {bakeCopied ? "Copied" : "Copy baked values"}
-              </button>
-              <button
-                type="button"
-                onClick={applyCurrentAsDefaults}
-                className="inline-flex items-center justify-center border border-white/20 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-mono-2 hover:border-white/45 hover:text-white"
-              >
-                {defaultsApplied ? "Applied" : "Auto-apply"}
-              </button>
-            </div>
-          </div>
-        )}
       </motion.div>
       )}
     </section>
