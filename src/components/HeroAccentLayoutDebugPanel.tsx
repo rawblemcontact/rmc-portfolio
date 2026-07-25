@@ -14,6 +14,8 @@ export type HeroGlobalLayoutControl = {
   heightScale: number;
 };
 
+export type HeroControlledViewport = "desktop" | "ipad" | "desktop+ipad";
+
 export const HERO_GLOBAL_LAYOUT_DEFAULTS: HeroGlobalLayoutControl = {
   offsetX: 0,
   offsetY: 0,
@@ -41,8 +43,8 @@ export const HERO_MAIN_GLOBAL_LAYOUT_DEFAULTS: HeroGlobalLayoutControl = {
 };
 
 export const HERO_PORTFOLIO_BUTTON_GLOBAL_LAYOUT_DEFAULTS: HeroGlobalLayoutControl = {
-  offsetX: 86,
-  offsetY: 15,
+  offsetX: 39,
+  offsetY: 3,
   scale: 0.94,
   widthScale: 1,
   heightScale: 0.91,
@@ -51,7 +53,7 @@ export const HERO_PORTFOLIO_BUTTON_GLOBAL_LAYOUT_DEFAULTS: HeroGlobalLayoutContr
 /** Desktop rob-hero SVG lockup — additive to auto video-edge align X. */
 export const HERO_SVG_LOCKUP_LAYOUT_DEFAULTS: HeroGlobalLayoutControl = {
   offsetX: 35,
-  offsetY: 0,
+  offsetY: -44,
   scale: 1,
   widthScale: 0.95,
   heightScale: 1,
@@ -200,6 +202,8 @@ type HeroAccentLayoutDebugPanelProps = {
   videoGlobalDefaults: HeroGlobalLayoutControl;
   mainGlobalDefaults: HeroGlobalLayoutControl;
   portfolioButtonGlobalDefaults: HeroGlobalLayoutControl;
+  controlledViewport: HeroControlledViewport;
+  onControlledViewportChange: (next: HeroControlledViewport) => void;
   onChange: (iconKey: HeroAccentIconKey, patch: Partial<HeroAccentLayoutControl>) => void;
   onSvgLockupChange: (patch: Partial<HeroGlobalLayoutControl>) => void;
   onVideoGlobalChange: (patch: Partial<HeroGlobalLayoutControl>) => void;
@@ -220,6 +224,8 @@ export function HeroAccentLayoutDebugPanel({
   videoGlobalDefaults,
   mainGlobalDefaults,
   portfolioButtonGlobalDefaults,
+  controlledViewport,
+  onControlledViewportChange,
   onChange,
   onSvgLockupChange,
   onVideoGlobalChange,
@@ -292,6 +298,8 @@ export function HeroAccentLayoutDebugPanel({
   }));
 
   const lockInCode = [
+    `const HERO_CONTROLLED_VIEWPORT = "${controlledViewport}";`,
+    "",
     "const HERO_SVG_LOCKUP_LAYOUT = {",
     `  offsetX: ${svgLockupControls.offsetX},`,
     `  offsetY: ${svgLockupControls.offsetY},`,
@@ -373,9 +381,34 @@ export function HeroAccentLayoutDebugPanel({
       {open && (
         <div className="mt-2 max-h-[min(72vh,calc(100svh-5rem))] overflow-y-auto pr-1 [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/25">
           <div className="space-y-3">
-            <div className="hidden space-y-1 lg:block">
+            <div className="rounded-sm border border-white/10 bg-black/50 p-2">
+              <p className="mb-2 font-mono text-[0.62rem] uppercase tracking-[0.14em] text-mono-2/90">
+                Controlled viewport
+              </p>
+              <div className="grid grid-cols-3 gap-1.5">
+                {([
+                  ["desktop", "Desktop"],
+                  ["ipad", "iPad"],
+                  ["desktop+ipad", "Both"],
+                ] as const).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => onControlledViewportChange(value)}
+                    className={`inline-flex items-center justify-center border px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] transition-colors ${
+                      controlledViewport === value
+                        ? "border-white/55 bg-white/12 text-white"
+                        : "border-white/20 bg-black/60 text-mono-2 hover:border-white/35 hover:text-white"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="hidden space-y-1 md:block">
               <HeroGlobalLayoutControlsSection
-                title="Rob hero SVG (desktop)"
+                title="Rob hero SVG (controlled viewport)"
                 controls={svgLockupControls}
                 onChange={onSvgLockupChange}
               />
@@ -385,17 +418,17 @@ export function HeroAccentLayoutDebugPanel({
               </p>
             </div>
             <HeroGlobalLayoutControlsSection
-              title="Video card (desktop)"
+              title="Video card (controlled viewport)"
               controls={videoGlobalControls}
               onChange={onVideoGlobalChange}
             />
             <HeroGlobalLayoutControlsSection
-              title="Other content (desktop)"
+              title="Other content (controlled viewport)"
               controls={mainGlobalControls}
               onChange={onMainGlobalChange}
             />
             <HeroGlobalLayoutControlsSection
-              title="Portfolio button (desktop)"
+              title="Portfolio button (controlled viewport)"
               controls={portfolioButtonGlobalControls}
               onChange={onPortfolioButtonGlobalChange}
             />

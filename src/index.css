@@ -75,6 +75,7 @@
   }
 }
 
+
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -1199,14 +1200,127 @@
   /* Primary — slightly stronger frame (still 1px, nav-like); readable pulse for first CTA */
   .playstore-button--primary {
     border-color: rgba(255, 255, 255, 0.14);
-    color: rgba(255, 255, 255, 0.88);
+    /* Match hero name SVG ink (#FFFAEE) — text + arrow via currentColor. */
+    color: #fffaee;
+    /* Satoshi Medium — override inherited display Bold (700). */
+    font-family: "Satoshi", sans-serif;
+    font-weight: 500;
     background-color: rgba(0, 0, 0, 0.42);
     animation: hero-cta-primary-pulse 6.4s ease-in-out infinite;
   }
 
   .playstore-button--primary:hover,
   .playstore-button--primary:focus-visible {
+    color: #fffaee;
     box-shadow: none;
+  }
+
+  .playstore-button--primary .texts {
+    font-family: inherit;
+    font-weight: 500;
+  }
+
+  /*
+   * Mobile hero PORTFOLIO — content-sized width (no band).
+   * Presence from type, padding, border; keep clearly secondary to the SVG lockup.
+   */
+  @media (max-width: 767.98px) {
+    #hero .playstore-button--primary {
+      font-size: 0.875rem !important;
+      min-height: 2.85rem !important;
+      height: auto !important;
+      max-height: none !important;
+      padding: 0.7rem 1.4rem !important;
+      border-width: 1.5px;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    #hero .playstore-button--primary .texts {
+      font-size: 0.875rem !important;
+      letter-spacing: 0.085em;
+    }
+
+    /*
+     * Arrow/label — hover is a horizontal mirror of rest (mobile only).
+     * Rest:  [text][gap][→]   Hover:  [→][gap][text]
+     * Same edge inset on both arrows; text padding + translateX flip sign.
+     */
+    #hero .hero-portfolio-animated .hero-portfolio-arrow {
+      width: 1.05em;
+      height: 1.05em;
+    }
+
+    #hero .hero-portfolio-animated .hero-portfolio-arrow--1 {
+      right: 0.9rem;
+    }
+
+    #hero .hero-portfolio-animated .hero-portfolio-arrow--2 {
+      left: 0.9rem; /* mirror of arrow--1 right */
+    }
+
+    #hero .hero-portfolio-animated .hero-portfolio-text {
+      padding-left: 0;
+      padding-right: 1.25rem;
+      transform: translateX(-0.28rem);
+    }
+
+    #hero .hero-portfolio-animated:hover .hero-portfolio-text,
+    #hero .hero-portfolio-animated:focus-visible .hero-portfolio-text {
+      padding-left: 1.25rem;
+      padding-right: 0;
+      transform: translateX(0.28rem); /* exact mirror of rest translate */
+    }
+  }
+
+  /*
+   * iPad / tablet PORTFOLIO arrows — equalize rest/hover gaps.
+   * Desktop shared rules leave left inset (0.54rem) tighter than right (0.86rem);
+   * mirror padding + matched arrow insets; slight per-orientation nudge (zoom/scale).
+   */
+  @media (min-width: 768px) and (max-width: 1366px) and (orientation: portrait) {
+    #hero .hero-portfolio-animated .hero-portfolio-arrow--1 {
+      right: 0.7rem;
+    }
+
+    #hero .hero-portfolio-animated .hero-portfolio-arrow--2 {
+      left: 0.7rem;
+    }
+
+    #hero .hero-portfolio-animated .hero-portfolio-text {
+      padding-left: 0;
+      padding-right: 1.05rem;
+      transform: translateX(-0.32rem);
+    }
+
+    #hero .hero-portfolio-animated:hover .hero-portfolio-text,
+    #hero .hero-portfolio-animated:focus-visible .hero-portfolio-text {
+      padding-left: 1.05rem;
+      padding-right: 0;
+      transform: translateX(0.32rem);
+    }
+  }
+
+  @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) {
+    #hero .hero-portfolio-animated .hero-portfolio-arrow--1 {
+      right: 1.05rem;
+    }
+
+    #hero .hero-portfolio-animated .hero-portfolio-arrow--2 {
+      left: 1.05rem;
+    }
+
+    #hero .hero-portfolio-animated .hero-portfolio-text {
+      padding-left: 0;
+      padding-right: 1.1rem;
+      transform: translateX(-0.18rem);
+    }
+
+    #hero .hero-portfolio-animated:hover .hero-portfolio-text,
+    #hero .hero-portfolio-animated:focus-visible .hero-portfolio-text {
+      padding-left: 1.1rem;
+      padding-right: 0;
+      transform: translateX(0.18rem);
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -1243,6 +1357,154 @@
     text-transform: uppercase;
     letter-spacing: 0.085em;
     white-space: nowrap;
+  }
+
+  /* Hero PORTFOLIO CTA animation shell (desktop + mobile) */
+  .hero-portfolio-animated {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .hero-portfolio-animated::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: #ffffff;
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+    pointer-events: none;
+  }
+
+  .hero-portfolio-animated .hero-portfolio-arrow {
+    position: absolute;
+    top: 50%;
+    width: 1.05em;
+    height: 1.05em;
+    fill: currentColor;
+    z-index: 3;
+    transform: translateY(-50%);
+    transition: fill 0.28s ease, right 0.8s cubic-bezier(0.23, 1, 0.32, 1), left 0.8s cubic-bezier(0.23, 1, 0.32, 1), transform 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+    will-change: transform;
+  }
+
+  .hero-portfolio-animated .hero-portfolio-arrow--1 {
+    right: 0.86rem;
+    transform: translate(0, -50%);
+    transition: fill 0.28s ease, transform 0.74s cubic-bezier(0.2, 0.95, 0.25, 1);
+  }
+
+  .hero-portfolio-animated .hero-portfolio-arrow--2 {
+    left: 0.54rem;
+    transform: translate(-255%, -50%);
+    transition: fill 0.28s ease, transform 0.74s cubic-bezier(0.2, 0.95, 0.25, 1);
+  }
+
+  .hero-portfolio-animated .hero-portfolio-text {
+    position: relative;
+    z-index: 2;
+    padding-right: 0.9rem;
+    transform: translateX(-0.42rem);
+    transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .hero-portfolio-animated .hero-portfolio-circle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 1;
+    width: 0.95rem;
+    height: 0.95rem;
+    border-radius: 999px;
+    background-color: color-mix(in srgb, currentColor 24%, transparent);
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: none;
+    display: none;
+  }
+
+  .hero-portfolio-animated:hover,
+  .hero-portfolio-animated:focus-visible {
+    background-color: transparent;
+  }
+
+  .hero-portfolio-animated:hover::before,
+  .hero-portfolio-animated:focus-visible::before {
+    transform: scaleX(1);
+  }
+
+  .hero-portfolio-animated:hover .hero-portfolio-arrow--1,
+  .hero-portfolio-animated:focus-visible .hero-portfolio-arrow--1 {
+    transform: translate(255%, -50%);
+  }
+
+  .hero-portfolio-animated:hover .hero-portfolio-arrow--2,
+  .hero-portfolio-animated:focus-visible .hero-portfolio-arrow--2 {
+    transform: translate(0, -50%);
+  }
+
+  .hero-portfolio-animated:hover .hero-portfolio-text,
+  .hero-portfolio-animated:focus-visible .hero-portfolio-text {
+    color: #000000;
+    transform: translateX(0.98rem);
+  }
+
+  .hero-portfolio-animated:hover .hero-portfolio-arrow,
+  .hero-portfolio-animated:focus-visible .hero-portfolio-arrow {
+    fill: #000000;
+  }
+
+  .hero-portfolio-animated:hover .hero-portfolio-circle,
+  .hero-portfolio-animated:focus-visible .hero-portfolio-circle {
+    width: 0;
+    height: 0;
+    opacity: 0;
+  }
+
+  .hero-portfolio-animated:active {
+    scale: 0.97;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-portfolio-animated,
+    .hero-portfolio-animated .hero-portfolio-arrow,
+    .hero-portfolio-animated .hero-portfolio-text,
+    .hero-portfolio-animated .hero-portfolio-circle {
+      transition: none;
+    }
+
+    .hero-portfolio-animated .hero-portfolio-arrow--1 {
+      right: 0.86rem;
+    }
+
+    .hero-portfolio-animated .hero-portfolio-arrow--2 {
+      left: auto;
+      right: 2rem;
+      opacity: 0;
+    }
+
+    .hero-portfolio-animated .hero-portfolio-text {
+      transform: none;
+    }
+
+    .hero-portfolio-animated .hero-portfolio-circle {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .hero-portfolio-animated::before {
+      transition: none;
+      transform: scaleX(0);
+    }
+
+    .hero-portfolio-animated:hover::before,
+    .hero-portfolio-animated:focus-visible::before {
+      transform: scaleX(1);
+    }
   }
 
   /* From Uiverse.io by Sashank02 — scoped to SHOWCASE sample cards */
@@ -5350,6 +5612,61 @@
 @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
   #social > .container {
     transform: translateY(clamp(-3rem, -8svh, -5rem));
+  }
+}
+
+/*
+ * Hero — iPad / tablet portrait only (768–1023.98 × portrait).
+ * Enlarge video height + modest type; lift stack to full-viewport thirds
+ * (vh/3 · 2vh/3) — not the nav-aware ruler overlay band.
+ * Do NOT override video width — probe + SVG + PORTFOLIO share HERO_VIDEO_CARD_WIDTH_CLASS.
+ * Does not alter mobile, tablet landscape, or desktop shared rules.
+ */
+@media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
+  /* Keep prior band ratio — vertical placement is owned by the shared translate. */
+  #hero [data-hero-stage="true"] {
+    grid-template-rows: minmax(0, 1.92fr) minmax(0, 1fr);
+    padding-top: max(1.5rem, env(safe-area-inset-top, 0px));
+    padding-bottom: max(1.35rem, env(safe-area-inset-bottom, 0px));
+  }
+
+  /*
+   * Uniform Y lift (video + SVG/name + PORTFOLIO) to full-viewport thirds:
+   * video mid → vh/3, lockup mid → 2vh/3. Cleared below fixed nav (~80px).
+   */
+  #hero [data-hero-stage="true"] > div:first-child > div,
+  #hero [data-hero-stage="true"] > div:last-child {
+    transform: translateY(-3.15rem);
+  }
+
+  /* Video face — taller only (width stays on shared card class / align probe). */
+  #hero [data-hero-video-card="true"] > div.relative {
+    height: clamp(
+      240px,
+      min(54vh, calc(100svh - 11.5rem - max(1rem, env(safe-area-inset-top, 0px)))),
+      580px
+    ) !important;
+  }
+
+  /*
+   * Name sizing — modest bump so lockup + PORTFOLIO still span the video card.
+   * Aggressive vw growth widened the auto column and broke right-edge CTA align.
+   */
+  #hero [data-hero-name-lockup="true"] .font-bold.uppercase,
+  #hero [data-hero-name-lockup="true"] [class*="8.85vw"] {
+    font-size: clamp(2.45rem, 9.35vw, 5.95rem) !important;
+  }
+
+  /* PORTFOLIO CTA — type/padding only (no transform scale; preserves video-edge pin). */
+  #hero .playstore-button--primary {
+    font-size: 0.8rem;
+    min-height: 2.95rem;
+    padding-inline: 1rem;
+  }
+
+  #hero .playstore-button--primary .texts {
+    font-size: 0.8rem;
+    letter-spacing: 0.07em;
   }
 }
 
