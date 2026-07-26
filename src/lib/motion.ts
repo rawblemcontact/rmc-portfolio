@@ -22,8 +22,8 @@ export const SPRING = {
   ui: { type: "spring", stiffness: 520, damping: 38 } as const,
   // Panels/drawers: slightly softer, still controlled
   panel: { type: "spring", stiffness: 320, damping: 34 } as const,
-  // Tap release: light bounce settle back to rest
-  tap: { type: "spring", stiffness: 780, damping: 24, mass: 0.35 } as const,
+  // Tap release: light bounce settle back to rest (slightly snappy + eased)
+  tap: { type: "spring", stiffness: 980, damping: 30, mass: 0.3 } as const,
 };
 
 /** Shrink on pointer-down — nested transition fires only for press-in (release uses SPRING.tap). */

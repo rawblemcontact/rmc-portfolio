@@ -1494,6 +1494,20 @@ const HERO_PORTFOLIO_ENTRANCE_DUR_S = 0.42;
  * Matches snappy `--pressed` morph timings in index.css (wipe + arrows).
  */
 const HERO_PORTFOLIO_HOVER_COMPLETE_MS = 420;
+/** Min delay before MENU so a quick tap still shows shrink + spring bounce. */
+const HERO_PORTFOLIO_TAP_FEEDBACK_MS = 340;
+/** PORTFOLIO press-in — slightly slower than global TAP; release uses HERO_PORTFOLIO_TAP_SPRING. */
+const HERO_PORTFOLIO_TAP = {
+  scale: 0.94,
+  transition: { type: "tween", duration: 0.22, ease: EASE.out },
+} as const;
+/** Softer / slower regrow than SPRING.tap. */
+const HERO_PORTFOLIO_TAP_SPRING = {
+  type: "spring",
+  stiffness: 420,
+  damping: 28,
+  mass: 0.52,
+} as const;
 /** Idle float — starts after entrance (video scale + PORTFOLIO fade) finishes. */
 const HERO_IDLE_FLOAT_START_MS = 700;
 const HERO_IDLE_FLOAT_Y_PX = 2.85;
@@ -2486,7 +2500,7 @@ const HeroNameReveal = ({
           <div
             data-hero-center-part="true"
             data-hero-name-lockup="true"
-            className={`invisible col-start-1 row-start-1 w-fit min-w-0 rounded-[11px] border border-transparent bg-transparent px-3 pt-3 pb-[0.234375rem] sm:rounded-xl sm:px-4 sm:pt-3.5 sm:pb-[0.28125rem] max-md:px-0 max-md:pt-0 max-md:w-full ${HERO_NAME_MOBILE_NAME_BOX_CLASS}`}
+            className={`invisible col-start-1 row-start-1 w-fit min-w-0 select-none rounded-[11px] border border-transparent bg-transparent px-3 pt-3 pb-[0.234375rem] sm:rounded-xl sm:px-4 sm:pt-3.5 sm:pb-[0.28125rem] max-md:px-0 max-md:pt-0 max-md:w-full ${HERO_NAME_MOBILE_NAME_BOX_CLASS}`}
             aria-hidden
           >
             <h1 className="relative m-0 w-full max-w-full min-w-0 font-display [font-kerning:none]">
@@ -2564,7 +2578,7 @@ const HeroNameReveal = ({
           <p
             ref={taglineRef}
             data-hero-center-part="true"
-            className={`invisible col-start-1 row-start-2 m-0 mt-0 w-full translate-x-px rounded-[11px] border border-transparent bg-transparent pl-[1.16rem] pr-3 py-[0.4rem] max-[639px]:box-border max-[400px]:text-[0.74rem] font-display text-[clamp(0.8rem,2.25vw,0.92rem)] font-medium uppercase leading-snug tracking-[0.085em] text-white sm:mt-0 sm:rounded-xl sm:pl-[1.42rem] sm:pr-4 sm:py-[0.45rem] sm:text-[clamp(0.8rem,2.25vw,0.92rem)] ${HERO_NAME_MOBILE_TAGLINE_CLASS}`}
+            className={`invisible col-start-1 row-start-2 m-0 mt-0 w-full translate-x-px select-none rounded-[11px] border border-transparent bg-transparent pl-[1.16rem] pr-3 py-[0.4rem] max-[639px]:box-border max-[400px]:text-[0.74rem] font-display text-[clamp(0.8rem,2.25vw,0.92rem)] font-medium uppercase leading-snug tracking-[0.085em] text-white sm:mt-0 sm:rounded-xl sm:pl-[1.42rem] sm:pr-4 sm:py-[0.45rem] sm:text-[clamp(0.8rem,2.25vw,0.92rem)] ${HERO_NAME_MOBILE_TAGLINE_CLASS}`}
             aria-hidden
             style={mobileTaglineFontPx != null ? { fontSize: mobileTaglineFontPx } : undefined}
           >
@@ -2593,7 +2607,11 @@ const HeroNameReveal = ({
   );
 
   return (
-    <div className="relative m-0 w-full max-w-full overflow-visible font-display [font-kerning:none]">
+    <div className="relative m-0 w-full max-w-full overflow-visible font-display [font-kerning:none] select-none">
+      {/* Plain-text scan target for ATS/crawlers — clipped, zero layout, no pointer hit. */}
+      <p className="sr-only pointer-events-none" aria-hidden="true" data-hero-ats-scan="true">
+        Robbie McLaughlin. {HERO_TAGLINE_TEXT}. PORTFOLIO
+      </p>
       {heroDebugEnabled &&
         typeof document !== "undefined" &&
         createPortal(
@@ -3019,29 +3037,31 @@ const Hero = ({
 
   const onStartClick = useCallback(
     (event: React.MouseEvent<HTMLButtonElement>) => {
-      if (!shouldDeferPortfolioNavForHover) {
-        onStart();
-        return;
-      }
       if (portfolioNavPendingRef.current) return;
 
-      const btn = event.currentTarget;
-      btn.classList.add("hero-portfolio-animated--pressed");
+      const tapFeedbackMs = reduceMotion ? 0 : HERO_PORTFOLIO_TAP_FEEDBACK_MS;
+      let delayMs = tapFeedbackMs;
 
-      const startedAt = portfolioPressStartedAtRef.current ?? performance.now();
-      const elapsed = performance.now() - startedAt;
-      /** Wipe scaleX ≈ 1 — morph already finished (e.g. settled trackpad hover). */
-      const wipeMatrix = getComputedStyle(btn, "::before").transform;
-      const wipeScaleX =
-        wipeMatrix.startsWith("matrix(")
-          ? Number.parseFloat(wipeMatrix.slice(7))
-          : wipeMatrix === "none"
-            ? 0
-            : 0;
-      const alreadyComplete = Number.isFinite(wipeScaleX) && wipeScaleX >= 0.99;
-      const remaining = alreadyComplete
-        ? 0
-        : Math.max(0, HERO_PORTFOLIO_HOVER_COMPLETE_MS - elapsed);
+      if (shouldDeferPortfolioNavForHover) {
+        const btn = event.currentTarget;
+        btn.classList.add("hero-portfolio-animated--pressed");
+
+        const startedAt = portfolioPressStartedAtRef.current ?? performance.now();
+        const elapsed = performance.now() - startedAt;
+        /** Wipe scaleX ≈ 1 — morph already finished (e.g. settled trackpad hover). */
+        const wipeMatrix = getComputedStyle(btn, "::before").transform;
+        const wipeScaleX =
+          wipeMatrix.startsWith("matrix(")
+            ? Number.parseFloat(wipeMatrix.slice(7))
+            : wipeMatrix === "none"
+              ? 0
+              : 0;
+        const alreadyComplete = Number.isFinite(wipeScaleX) && wipeScaleX >= 0.99;
+        const morphRemaining = alreadyComplete
+          ? 0
+          : Math.max(0, HERO_PORTFOLIO_HOVER_COMPLETE_MS - elapsed);
+        delayMs = Math.max(tapFeedbackMs, morphRemaining);
+      }
 
       portfolioNavPendingRef.current = true;
       clearPortfolioNavTimer();
@@ -3050,9 +3070,9 @@ const Hero = ({
         portfolioNavPendingRef.current = false;
         portfolioPressStartedAtRef.current = null;
         onStart();
-      }, remaining);
+      }, delayMs);
     },
-    [clearPortfolioNavTimer, onStart, shouldDeferPortfolioNavForHover],
+    [clearPortfolioNavTimer, onStart, reduceMotion, shouldDeferPortfolioNavForHover],
   );
 
   /** Mount lockup early so live-name can calibrate before entrance. */
@@ -3489,13 +3509,13 @@ const Hero = ({
                         onClick={onStartClick}
                         className={`playstore-button playstore-button--primary hero-portfolio-animated box-border !border-[1.8px] !min-h-0 h-[calc(clamp(2.28rem,8.85vw,5.95rem)*0.78)] max-h-[4.85rem] items-center px-3 !py-0 max-[639px]:max-w-none max-[639px]:px-2.5 sm:px-5 md:px-8 [&_.texts]:text-[clamp(0.82rem,1.58vw,0.97rem)] [&_.texts]:tracking-[0.085em] max-[639px]:[&_.texts]:gap-1 sm:[&_.texts]:text-[clamp(0.9rem,1.82vw,1.05rem)] md:[&_.texts]:text-[clamp(0.96rem,1.68vw,1.12rem)] ${HERO_NAME_MOBILE_PORTFOLIO_BUTTON_CLASS}`}
                         whileHover={heroCanFineHover ? { y: -1 } : undefined}
-                        whileTap={{ scale: 0.985 }}
-                        transition={SPRING.ui}
+                        whileTap={reduceMotion ? undefined : HERO_PORTFOLIO_TAP}
+                        transition={HERO_PORTFOLIO_TAP_SPRING}
                       >
                         <svg viewBox="0 0 24 24" className="hero-portfolio-arrow hero-portfolio-arrow--2" aria-hidden>
                           <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z" />
                         </svg>
-                        <span className="texts hero-portfolio-text">PORTFOLIO</span>
+                        <span className="texts hero-portfolio-text select-none">PORTFOLIO</span>
                         <span className="hero-portfolio-circle" aria-hidden />
                         <svg viewBox="0 0 24 24" className="hero-portfolio-arrow hero-portfolio-arrow--1" aria-hidden>
                           <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z" />
@@ -3528,8 +3548,11 @@ const RainbowMenuSlide = ({
   lockedFillId: string | null;
 }) => {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [pendingNavId, setPendingNavId] = useState<string | null>(null);
   const [pressedNavId, setPressedNavId] = useState<string | null>(null);
   const pressedNavClearTimerRef = useRef<number | null>(null);
+  const lineHoverSinceRef = useRef<Partial<Record<string, number>>>({});
+  const navTimerRef = useRef<number | null>(null);
   const mainMenuDebugEnabled = useMainMenuDebugEnabled();
   const [mainMenuGlobalDebugControls, setMainMenuGlobalDebugControls] =
     useState<MainMenuGlobalLayoutControl>(() => ({ ...MAIN_MENU_GLOBAL_LAYOUT_DEFAULTS }));
@@ -3545,6 +3568,51 @@ const RainbowMenuSlide = ({
   const mainMenuIndexDelayBaseS = mainMenuItemsStartDelayS + SKILLS_STAGGER * 2;
   const mainMenuLabelDelayBaseS = mainMenuIndexDelayBaseS + NAV_ITEMS.length * SKILLS_STAGGER;
   const menuTimelineActive = active && introReady;
+
+  const clearNavTimer = useCallback(() => {
+    if (navTimerRef.current !== null) {
+      window.clearTimeout(navTimerRef.current);
+      navTimerRef.current = null;
+    }
+  }, []);
+
+  const markHoverStart = useCallback((id: string) => {
+    lineHoverSinceRef.current[id] = performance.now();
+    setHoveredId(id);
+  }, []);
+
+  const handleNavClick = useCallback(
+    (id: string) => {
+      if (pendingNavId !== null) return;
+
+      const lineFullyOut = isCmdNavLineFullyOut(id, hoveredId, lineHoverSinceRef);
+      const remaining = cmdNavLineRemainingMs(id, hoveredId, lineHoverSinceRef);
+
+      const finishNav = () => {
+        navTimerRef.current = null;
+        setPendingNavId(null);
+        setPressedNavId(id);
+        onNavigate(id);
+      };
+
+      if (lineFullyOut) {
+        clearNavTimer();
+        setPressedNavId(id);
+        onNavigate(id);
+        return;
+      }
+
+      setHoveredId(id);
+      setPendingNavId(id);
+      clearNavTimer();
+      if (remaining === 0) {
+        finishNav();
+        return;
+      }
+      navTimerRef.current = window.setTimeout(finishNav, remaining);
+    },
+    [clearNavTimer, hoveredId, onNavigate, pendingNavId],
+  );
 
   const handleMainMenuGlobalDebugChange = useCallback((patch: Partial<MainMenuGlobalLayoutControl>) => {
     setMainMenuGlobalDebugControls((prev) => ({ ...prev, ...patch }));
@@ -3576,7 +3644,11 @@ const RainbowMenuSlide = ({
 
   useEffect(() => {
     if (!active) {
+      clearNavTimer();
+      setPendingNavId(null);
       setPressedNavId(null);
+      setHoveredId(null);
+      lineHoverSinceRef.current = {};
       return;
     }
     if (sectionPanelClosed) {
@@ -3595,12 +3667,15 @@ const RainbowMenuSlide = ({
         pressedNavClearTimerRef.current = null;
       }
     };
-  }, [active, sectionPanelClosed]);
+  }, [active, clearNavTimer, sectionPanelClosed]);
 
   useEffect(
     () => () => {
       if (pressedNavClearTimerRef.current !== null) {
         window.clearTimeout(pressedNavClearTimerRef.current);
+      }
+      if (navTimerRef.current !== null) {
+        window.clearTimeout(navTimerRef.current);
       }
     },
     [],
@@ -3664,14 +3739,17 @@ const RainbowMenuSlide = ({
             <motion.button
               key={item.id}
               type="button"
-              onClick={() => {
-                setPressedNavId(item.id);
-                onNavigate(item.id);
+              onClick={() => handleNavClick(item.id)}
+              onHoverStart={() => markHoverStart(item.id)}
+              onHoverEnd={() => {
+                if (pendingNavId === item.id) return;
+                setHoveredId(null);
               }}
-              onHoverStart={() => setHoveredId(item.id)}
-              onHoverEnd={() => setHoveredId(null)}
-              onFocus={() => setHoveredId(item.id)}
-              onBlur={() => setHoveredId(null)}
+              onFocus={() => markHoverStart(item.id)}
+              onBlur={() => {
+                if (pendingNavId === item.id) return;
+                setHoveredId(null);
+              }}
               className="group relative w-full text-left py-4 md:py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black focus-visible:ring-inset"
               whileTap={{ opacity: 0.92 }}
               transition={SPRING.ui}
@@ -3708,7 +3786,11 @@ const RainbowMenuSlide = ({
                     <FillIcon
                       icon={item.icon}
                       filledIcon={item.id === "profile" ? UserFilledIcon : undefined}
-                      forceFilled={lockedFillId === item.id || hoveredId === item.id}
+                      forceFilled={
+                        lockedFillId === item.id ||
+                        hoveredId === item.id ||
+                        pendingNavId === item.id
+                      }
                       className="w-5 h-5 md:w-6 md:h-6 text-white"
                       strokeWidth={1.5}
                     />
@@ -3728,7 +3810,14 @@ const RainbowMenuSlide = ({
                   >
                     <motion.span
                       className="block"
-                      animate={{ x: hoveredId === item.id || pressedNavId === item.id ? 6 : 0 }}
+                      animate={{
+                        x:
+                          hoveredId === item.id ||
+                          pendingNavId === item.id ||
+                          pressedNavId === item.id
+                            ? 6
+                            : 0,
+                      }}
                       transition={CMD_HOVER}
                     >
                       {item.label}
@@ -3751,7 +3840,9 @@ const RainbowMenuSlide = ({
                 aria-hidden
                 className={`absolute bottom-0 left-0 right-0 origin-left ${item.id === "profile" ? "h-[2.5px]" : "h-[2px]"} ${item.color}`}
                 initial={false}
-                animate={{ scaleX: hoveredId === item.id ? 1 : 0 }}
+                animate={{
+                  scaleX: hoveredId === item.id || pendingNavId === item.id ? 1 : 0,
+                }}
                 transition={CMD_HOVER}
               />
             </motion.button>

@@ -18,6 +18,13 @@
     transform: translateY(0%);
   }
 }
+/* Hero name + tagline ink / layout metrics — never user-selectable */
+[data-hero-svg-root],
+[data-hero-name-lockup="true"],
+#hero [data-hero-center-part="true"] {
+  user-select: none;
+  -webkit-user-select: none;
+}
 [data-hero-svg-root] [data-hero-name-letter],
 [data-hero-svg-root] [data-hero-tagline-letter],
 [data-hero-svg-root] [data-hero-tagline-sep] {
@@ -658,6 +665,30 @@
         --skills-rail-rule-gap: 0.3125rem;
         --skills-rail-block-gap: clamp(0.125rem, 0.55svh, 0.3125rem);
         padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px)) !important;
+      }
+
+      /*
+       * Match PROFILE L/R page gaps: SkillArsenal's `max-w-full` defeats Tailwind
+       * container caps, so the shell sat wider than #profile's container column.
+       * Restore container max-widths (lg/xl) and keep the shell centered for
+       * equal gutters / rule-of-thirds. Do not touch main header type or green line.
+       */
+      #skills > .container {
+        max-width: 1024px !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+      }
+
+      #skills .skills-profile-shell {
+        max-width: 100% !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+      }
+
+      @media (min-width: 1280px) {
+        #skills > .container {
+          max-width: 1280px !important;
+        }
       }
 
       #skills .skills-page-layout {
@@ -1438,6 +1469,8 @@
     position: relative;
     overflow: hidden;
     isolation: isolate;
+    user-select: none;
+    -webkit-user-select: none;
     /* Never `transition: all` — mobile/tablet hover also flips padding; that would layout-thrash. */
     transition: background-color 0.42s cubic-bezier(0.23, 1, 0.32, 1), color 0.28s ease;
   }
@@ -1618,9 +1651,7 @@
     fill: #000000;
   }
 
-  .hero-portfolio-animated:active {
-    scale: 0.97;
-  }
+  /* Press scale is Framer whileTap + SPRING.tap (CSS :active scale fought the bounce). */
 
   @media (prefers-reduced-motion: reduce) {
     .hero-portfolio-animated,
@@ -4440,6 +4471,14 @@
     text-wrap: balance;
   }
 
+  /* iPad horizontal — card headers between bullet text and CORE COMPETENCIES rail */
+  @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse) {
+    #skills .skills-card-surface--page .skills-subcategory-column-title {
+      font-size: 15.5px; /* > bullets (~15.4px), < CORE (~22px) */
+      line-height: 1.2375rem;
+    }
+  }
+
   #skills .skills-card-surface--page .skills-page-card-list {
     display: flex;
     flex-direction: column;
@@ -4482,6 +4521,44 @@
     max-width: calc(1.125rem * var(--skills-page-scale, 1.0625));
     max-height: calc(0.875rem * var(--skills-page-scale, 1.0625));
     overflow: visible;
+  }
+
+  /*
+   * Mobile — must follow base icon/title rules above (same specificity; later wins).
+   * Bullet SVGs up to align with text; six card headers −1px font only.
+   */
+  @media (max-width: 767.98px) {
+    #skills .skills-card-surface--page .skills-page-card-icon {
+      margin-top: 0;
+    }
+
+    #skills .skills-card-surface--page .skills-page-card-icon svg {
+      transform: translateY(-0.5px);
+    }
+
+    #skills .skills-card-surface--page .skills-subcategory-column-title {
+      font-size: calc(
+        clamp(
+          calc(0.8125rem * var(--skills-page-scale, 1.0625)),
+          calc(1.25vw * var(--skills-page-scale, 1.0625)),
+          calc(0.9375rem * var(--skills-page-scale, 1.0625))
+        ) - 1px
+      );
+    }
+  }
+
+  /* iPad portrait + landscape — optically align bullet SVGs with bullet text;
+   * then nudge the whole bullet list (svg + text) up 1px without shifting headers.
+   * Use relative offset (not transform) so Framer Motion row entrances stay intact. */
+  @media (min-width: 768px) and (max-width: 1366px) and (any-pointer: coarse) {
+    #skills .skills-card-surface--page .skills-page-card-list {
+      position: relative;
+      top: -2px;
+    }
+
+    #skills .skills-card-surface--page .skills-page-card-icon svg {
+      transform: translateY(1px);
+    }
   }
 
   /* All six subcolumn headings (core + toolkit); pins zinc-100 vs parent `text-white` wrappers */
