@@ -4408,6 +4408,9 @@ const PhantomProfile = ({
   const [overlayRevealed, setOverlayRevealed] = useState(false);
   const [rawblemFloatReady, setRawblemFloatReady] = useState(false);
   const [profileHeaderSlide, setProfileHeaderSlide] = useState(false);
+  /** Latch: keep header/red line settled after first play — scroll-off must not replay. */
+  const [profileHeaderLocked, setProfileHeaderLocked] = useState(false);
+  const [profileRedLineLocked, setProfileRedLineLocked] = useState(false);
   const prevProfileInView = useRef(false);
   const profileMascotInstant = profileTabletViewport || !!reduceMotion;
   /** Entrance gate: panel must be settled (same cadence as SkillArsenal / ConfidantExperience). */
@@ -4500,39 +4503,49 @@ const PhantomProfile = ({
 
   useLayoutEffect(() => {
     if (!profileEntranceArmed) {
+      // Section leave / panel unsettled — allow a fresh entrance next open.
       setProfileHeaderSlide(false);
+      setProfileHeaderLocked(false);
+      setProfileRedLineLocked(false);
       return;
     }
-    const armId = requestAnimationFrame(() => setProfileHeaderSlide(true));
+    if (profileHeaderLocked) {
+      setProfileHeaderSlide(true);
+      return;
+    }
+    const armId = requestAnimationFrame(() => {
+      setProfileHeaderSlide(true);
+      setProfileHeaderLocked(true);
+    });
     return () => {
       cancelAnimationFrame(armId);
     };
-  }, [profileEntranceArmed]);
+  }, [profileEntranceArmed, profileHeaderLocked]);
+
+  // Red line: latch on first in-view while armed; stay drawn when scrolled off-screen.
+  useEffect(() => {
+    if (!profileEntranceArmed || profileRedLineLocked) return;
+    if (dividerInView) setProfileRedLineLocked(true);
+  }, [profileEntranceArmed, profileRedLineLocked, dividerInView]);
 
   useEffect(() => {
     if (profileMascotInstant) return;
     if (!rawblemInView) setRawblemFloatReady(false);
   }, [rawblemInView, profileMascotInstant]);
 
-  // Overlay + buttons: reset when section leaves / panel unsettled; start after red line completes
+  // Overlay + buttons: once per section open after red line; scroll-off must not replay.
   useEffect(() => {
     if (!profileEntranceArmed) {
       prevProfileInView.current = false;
       setOverlayRevealed(false);
       return;
     }
-    if (profileLeftInView) {
-      if (!prevProfileInView.current) {
-        setOverlayRevealed(false);
-        prevProfileInView.current = true;
-      }
-      const revealId = window.setTimeout(() => setOverlayRevealed(true), Math.max(0, RED_LINE_COMPLETE_MS - 90));
-      return () => window.clearTimeout(revealId);
-    } else {
-      prevProfileInView.current = false;
-      setOverlayRevealed(false);
-    }
-  }, [profileEntranceArmed, profileLeftInView]);
+    if (overlayRevealed) return;
+    if (!profileLeftInView) return;
+    prevProfileInView.current = true;
+    const revealId = window.setTimeout(() => setOverlayRevealed(true), Math.max(0, RED_LINE_COMPLETE_MS - 90));
+    return () => window.clearTimeout(revealId);
+  }, [profileEntranceArmed, profileLeftInView, overlayRevealed]);
 
   return (
     <section id="profile" className="relative w-full min-w-0 overflow-x-hidden overflow-y-visible bg-black text-white scroll-mt-6 max-lg:min-h-min lg:min-h-screen">
@@ -4686,7 +4699,7 @@ const PhantomProfile = ({
                     : { backgroundColor: PROFILE_ACCENT_SOFT }
                 }
                  initial={false}
-                 animate={{ scaleX: profileEntranceArmed && dividerInView ? 1 : 0 }}
+                 animate={{ scaleX: profileRedLineLocked ? 1 : 0 }}
                  transition={{ duration: RED_LINE_DURATION_MS / 1000, delay: RED_LINE_DELAY_MS / 1000, ease: [0.16, 1, 0.3, 1] }}
                />
             </div>
@@ -9549,7 +9562,7 @@ const SKILLS_DATA = {
     ],
   },
   tools: {
-    title: "Tools & Software",
+    title: "TOOLS & SOFTWARE",
     subtitle: "",
     categories: [
       {
@@ -10695,8 +10708,6 @@ const SkillsBranchRailHeader = ({
   revealDelay,
   panelSettled = false,
   reduceMotion = false,
-  titleStackRef,
-  sharedAccentLineWidthPx,
 }: {
   sectionSubtitle: string;
   sectionTitle: string;
@@ -10704,9 +10715,6 @@ const SkillsBranchRailHeader = ({
   revealDelay: number;
   panelSettled?: boolean;
   reduceMotion?: boolean;
-  /** Measure target for CORE rail — sets shared accent line width for both rails. */
-  titleStackRef?: React.RefObject<HTMLDivElement | null>;
-  sharedAccentLineWidthPx?: number | null;
 }) => {
   const rm = reduceMotion;
   const labelDuration = SKILLS_SECTION_HEADER_SLIDE_DUR_S;
@@ -10735,10 +10743,6 @@ const SkillsBranchRailHeader = ({
 
   const alignClass =
     align === "right" ? "skills-branch-header--right" : "skills-branch-header--left";
-  const titleStackStyle =
-    sharedAccentLineWidthPx != null && sharedAccentLineWidthPx > 0
-      ? { width: sharedAccentLineWidthPx }
-      : undefined;
 
   return (
     <motion.div
@@ -10747,12 +10751,11 @@ const SkillsBranchRailHeader = ({
       initial="hidden"
       animate={panelSettled ? "visible" : "hidden"}
     >
+      {/* Title stack is w-fit so the green accent line matches each rail’s own text width. */}
       <div
-        ref={titleStackRef}
         className={`skills-branch-header-title-stack w-fit max-w-full ${
           align === "right" ? "ml-auto" : ""
         }`}
-        style={titleStackStyle}
       >
         <motion.div
           className={`career-nav-section-labels ${
@@ -11012,39 +11015,6 @@ const SkillArsenal = ({
     cardsRowEnd + cardHeaderEnd * SKILLS_CARD_BULLETS_HEADER_OVERLAP;
 
   const skillsSectionRef = useRef<HTMLElement>(null);
-  const coreRailTitleStackRef = useRef<HTMLDivElement>(null);
-  const [sharedRailAccentWidthPx, setSharedRailAccentWidthPx] = useState<number | null>(null);
-
-  const syncSharedRailAccentWidth = useCallback(() => {
-    const stack = coreRailTitleStackRef.current;
-    if (!stack) return;
-    const w = stack.getBoundingClientRect().width;
-    if (w > 0) setSharedRailAccentWidthPx(Math.ceil(w));
-  }, []);
-
-  useLayoutEffect(() => {
-    if (rm) {
-      setSharedRailAccentWidthPx(null);
-      return;
-    }
-    syncSharedRailAccentWidth();
-    const el = coreRailTitleStackRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver(() => syncSharedRailAccentWidth());
-    ro.observe(el);
-    window.addEventListener("resize", syncSharedRailAccentWidth);
-    return () => {
-      ro.disconnect();
-      window.removeEventListener("resize", syncSharedRailAccentWidth);
-    };
-  }, [rm, syncSharedRailAccentWidth]);
-
-  useLayoutEffect(() => {
-    if (!panelSettled || rm) return;
-    syncSharedRailAccentWidth();
-    const raf = requestAnimationFrame(syncSharedRailAccentWidth);
-    return () => cancelAnimationFrame(raf);
-  }, [panelSettled, rm, syncSharedRailAccentWidth]);
 
   /** WebKit mobile/tablet: grid overlay must track section + panel scroller (iPad landscape >1024px included). */
   useLayoutEffect(() => {
@@ -11121,8 +11091,6 @@ const SkillArsenal = ({
                   align="left"
                   sectionSubtitle={SKILLS_DATA.core.title}
                   sectionTitle={SKILLS_DATA.core.subtitle}
-                  titleStackRef={coreRailTitleStackRef}
-                  sharedAccentLineWidthPx={sharedRailAccentWidthPx}
                   revealDelay={skillsBulletsRevealDelay}
                   panelSettled={panelSettled}
                   reduceMotion={rm}

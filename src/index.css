@@ -498,7 +498,8 @@
 
   /*
    * iPad portrait: hide RAWBLEM mascot, fill viewport height, vertically
-   * center the content block, and constrain the text column width.
+   * center the content block. Content width matches EXPERIENCE side gaps
+   * (container px-5 + EXPERIENCE_GUTTER shells) — no extra 560px cap.
    */
   @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
     #profile {
@@ -524,15 +525,33 @@
     #profile .profile-tablet-layout-row {
       align-items: flex-start;
       width: 100%;
-      max-width: min(100%, 560px);
-      margin-left: auto;
-      margin-right: auto;
+      max-width: none;
+      margin-left: 0;
+      margin-right: 0;
+      /* Slight extra L/R inset beyond EXPERIENCE gutters */
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
     }
 
     #profile .profile-tablet-text-column {
       width: 100%;
       max-width: 100%;
       order: 1;
+    }
+
+    /*
+     * Inner stack is `w-fit` + card column `max-w-xl` — without these overrides the
+     * block only left-shifts when the 560px shell is removed. Force full EXPERIENCE
+     * gutter width so cards actually widen.
+     */
+    #profile .profile-tablet-text-column > div {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+
+    #profile .profile-tablet-text-column > div > div {
+      width: 100% !important;
+      max-width: 100% !important;
     }
   }
 
@@ -2196,6 +2215,19 @@
     text-transform: uppercase;
     text-wrap: balance;
     max-width: 100%;
+  }
+
+  /*
+   * Page rails (CORE / TOOLKIT): keep single-line titles. A prior `width:100%` +
+   * `text-wrap:balance` rule above would wrap "CORE COMPETENCIES" when a stale
+   * stack width locked in after iPad orientation change.
+   */
+  #skills .skills-branch-header--page.nav-header .career-nav-section-subtitle,
+  #skills .skills-branch-header--page.nav-header .career-nav-section-title {
+    width: auto;
+    max-width: none;
+    white-space: nowrap;
+    text-wrap: nowrap;
   }
 
   #skills .skills-subpanel-header--compact.nav-header .career-nav-section-subtitle {
@@ -4306,12 +4338,17 @@
     margin-left: auto;
   }
 
+  /*
+   * Page rails: beat `.nav-header .career-nav-section-subtitle { margin: … -0.08em }`
+   * so the green accent line width matches the title glyphs (no left overhang).
+   */
+  #skills .skills-branch-header--page.nav-header .career-nav-section-subtitle,
+  #skills .skills-branch-header--page.nav-header .career-nav-section-title,
   #skills .skills-branch-header--left .career-nav-section-subtitle,
   #skills .skills-branch-header--left .career-nav-section-title,
   #skills .skills-branch-header--right .career-nav-section-subtitle,
   #skills .skills-branch-header--right .career-nav-section-title {
-    margin-left: 0;
-    margin-right: 0;
+    margin: 0;
     width: auto;
     max-width: none;
     text-align: inherit;
@@ -4412,6 +4449,15 @@
       min-height: auto;
       --skills-card-inset-y: calc(0.6875rem * var(--skills-page-scale, 1.0625));
       --skills-card-inset-y-bottom: calc(0.625rem * var(--skills-page-scale, 1.0625));
+    }
+
+    /*
+     * Slight extra L/R inset under SKILLS title + green line only — widens page
+     * gaps so stacked cards read less wide. Header/line stay at container px-5.
+     */
+    #skills .skills-page-layout {
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
     }
 
     #skills > .section-tablet-bottom-spacer {
@@ -4547,17 +4593,43 @@
     }
   }
 
-  /* iPad portrait + landscape — optically align bullet SVGs with bullet text;
-   * then nudge the whole bullet list (svg + text) up 1px without shifting headers.
+  /* iPad portrait + landscape — nudge the whole bullet list up without shifting headers.
    * Use relative offset (not transform) so Framer Motion row entrances stay intact. */
   @media (min-width: 768px) and (max-width: 1366px) and (any-pointer: coarse) {
     #skills .skills-card-surface--page .skills-page-card-list {
       position: relative;
       top: -2px;
     }
+  }
 
+  /* iPad landscape — optically align bullet SVGs with bullet text */
+  @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse) {
     #skills .skills-card-surface--page .skills-page-card-icon svg {
       transform: translateY(1px);
+    }
+  }
+
+  /*
+   * iPad portrait — bullet SVGs up to align with text; six card headers −1px font only.
+   * Must follow base + shared iPad rules above (same specificity; later wins).
+   */
+  @media (min-width: 768px) and (max-width: 1366px) and (orientation: portrait) and (any-pointer: coarse) {
+    #skills .skills-card-surface--page .skills-page-card-icon {
+      margin-top: 0;
+    }
+
+    #skills .skills-card-surface--page .skills-page-card-icon svg {
+      transform: translateY(-0.5px);
+    }
+
+    #skills .skills-card-surface--page .skills-subcategory-column-title {
+      font-size: calc(
+        clamp(
+          calc(0.8125rem * var(--skills-page-scale, 1.0625)),
+          calc(1.25vw * var(--skills-page-scale, 1.0625)),
+          calc(0.9375rem * var(--skills-page-scale, 1.0625))
+        ) - 1.5px
+      );
     }
   }
 
@@ -5885,6 +5957,23 @@
 }
 
 /*
+ * Main MENU — iPad portrait: center in real full-viewport thirds (100svh),
+ * not the nav-aware ruler band / oversized 100vh slide. Lift content so the
+ * block mid sits on the true viewport center (vh/2), matching hero ROT.
+ */
+@media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
+  #menu {
+    height: 100svh !important;
+    min-height: 100svh !important;
+    max-height: 100svh !important;
+  }
+
+  #menu > .relative.z-10 {
+    transform: translateY(-3.15rem);
+  }
+}
+
+/*
  * Hero — iPad / tablet portrait only (768–1023.98 × portrait).
  * Enlarge video height + modest type; lift stack to full-viewport thirds
  * (vh/3 · 2vh/3) — not the nav-aware ruler overlay band.
@@ -6001,10 +6090,39 @@
     --projects-cards-cluster-nudge: clamp(0.5rem, 1.5svh, 1rem);
     /* header bottom → card top AND card bottom → FEATURED WRITING tab row */
     --projects-four-cards-gap: clamp(0.625rem, 1.5svh, 0.875rem);
+    /* Trim FEATURED WRITING from the bottom; stage shifts down by the same amount. */
+    --projects-fw-height-trim: 0.5rem;
   }
 
+  /*
+   * Content (carousel + FEATURED WRITING) uses full EXPERIENCE gutter width
+   * (container px-5 + EXPERIENCE_GUTTER shells). Header + yellow line stay at
+   * the narrower centered PROFILE tablet column (560px) — do not expand them.
+   */
+  #projects.projects-showcase-tablet-pad .projects-showcase-viewport {
+    width: 100%;
+    max-width: none;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  /* Keep header + yellow line at PROFILE tablet width, flush-left with content. */
+  #projects.projects-showcase-tablet-pad .projects-showcase-header-block {
+    width: 100%;
+    max-width: min(100%, 560px);
+    margin-left: 0;
+    margin-right: auto;
+    align-self: flex-start;
+  }
+
+  /* Compensate FW height trim — keep panel bottom edge; open air above. */
   #projects .projects-showcase-stage {
-    transform: translateY(-2%);
+    transform: translateY(calc(-2% + var(--projects-fw-height-trim)));
+  }
+
+  /* FIXED_H thumbnail is 216px — pull bottom in slightly (does not change header/line). */
+  #projects.projects-showcase-tablet-pad .featured-writing-raised {
+    height: calc(216px - var(--projects-fw-height-trim)) !important;
   }
 
   /* Inline-block baseline strut was inflating grid rows (~5px) and clipping card borders. */
