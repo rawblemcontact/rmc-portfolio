@@ -25,7 +25,7 @@ import React, {
   type ReactElement,
   type ReactNode,
 } from "react";
-import { createPortal } from "react-dom";
+import { createPortal, flushSync } from "react-dom";
 import { Button } from "../components/ui/button";
 import { FillIcon } from "../components/FillIcon";
 import { ProfileDesktopLayoutDebugPanel } from "../components/ProfileDesktopLayoutDebugPanel";
@@ -50,7 +50,6 @@ import {
 import {
   ProjectDetailLayoutDebugPanel,
   PROJECT_DETAIL_LAYOUT_DEBUG_DEFAULTS,
-  buildProjectDetailLayoutStyle,
   projectDetailLayoutDefaultsForProject,
   projectDetailLayoutHasLockedDefaults,
   type ProjectDetailLayoutDebugValues,
@@ -626,19 +625,16 @@ const CONTENT_SETTLE_DELAY = 0.06; // 60ms after panel settles
 const GRID_DRIFT_DURATION = 12;
 const GRID_CELL_SIZE = 48;
 
-/** One-shot wall-clock sync per overlay mount ? avoids 10Hz React `gridPhase` + full-tree re-renders (flicker). */
-function useGridDriftAnimationDelay(): string {
-  const [delay] = useState(() => `-${(performance.now() / 1000) % GRID_DRIFT_DURATION}s`);
-  return delay;
+function gridDriftOffsetPx(nowMs: number): number {
+  return ((nowMs % (GRID_DRIFT_DURATION * 1000)) / (GRID_DRIFT_DURATION * 1000)) * GRID_CELL_SIZE;
 }
 
-/** Mount only when side-nav opens so drift delay matches wall clock at open (parent stays mounted). */
+/** Mount-only backdrop; drift position is globally driven through CSS var. */
 function SideNavGridBackdrop() {
-  const delay = useGridDriftAnimationDelay();
   return (
     <div
       className="pointer-events-none absolute inset-0 z-0 grid-drift-bg portfolio-grid-overlay"
-      style={{ ...gridOverlayStyle, animationDelay: delay }}
+      style={gridOverlayStyle}
       aria-hidden
     />
   );
@@ -650,6 +646,7 @@ const gridOverlayStyle: React.CSSProperties = {
   backgroundImage: `repeating-linear-gradient(90deg, rgba(255,255,255,0.38) 0, rgba(255,255,255,0.38) 1px, rgba(255,255,255,0) 1px, rgba(255,255,255,0) ${GRID_CELL_SIZE}px), repeating-linear-gradient(0deg, rgba(255,255,255,0.38) 0, rgba(255,255,255,0.38) 1px, rgba(255,255,255,0) 1px, rgba(255,255,255,0) ${GRID_CELL_SIZE}px)`,
   backgroundSize: `${GRID_CELL_SIZE}px ${GRID_CELL_SIZE}px`,
   WebkitBackgroundSize: `${GRID_CELL_SIZE}px ${GRID_CELL_SIZE}px`,
+  backgroundPosition: "var(--portfolio-grid-drift-position, 0px 0px)",
 };
 
 // Motion-only glow on leading accent edge: faint light-bleed, 10?15% opacity, 8?16px blur
@@ -2940,7 +2937,6 @@ const Hero = ({
     onStart();
   };
 
-  const heroGridDriftDelay = useGridDriftAnimationDelay();
   /** Mount lockup early so live-name can calibrate before entrance. */
   const heroDomReady = fontsReady && heroMediaReady;
   /** Entrance animations wait until live-name preload succeeds. */
@@ -3248,7 +3244,7 @@ const Hero = ({
     >
       <div
         className="pointer-events-none absolute inset-0 z-0 grid-drift-bg portfolio-grid-overlay"
-        style={{ ...gridOverlayStyle, animationDelay: heroGridDriftDelay }}
+        style={gridOverlayStyle}
       />
       {heroDomReady && (
       <motion.div
@@ -3418,7 +3414,6 @@ const RainbowMenuSlide = ({
   const [mainMenuGlobalDebugControls, setMainMenuGlobalDebugControls] =
     useState<MainMenuGlobalLayoutControl>(() => ({ ...MAIN_MENU_GLOBAL_LAYOUT_DEFAULTS }));
   const [mainMenuDesktopViewport, setMainMenuDesktopViewport] = useState(matchesHeroDesktopDebugViewport);
-  const menuGridDriftDelay = useGridDriftAnimationDelay();
   const mainMenuDividerDelayS = PROFILE_TITLE_DELAY_S;
   const mainMenuDividerDurS = SKILLS_SECTION_HEADER_SLIDE_DUR_S * 1.15;
   const mainMenuDividerHoldS = SKILLS_STAGGER * 2;
@@ -3499,7 +3494,7 @@ const RainbowMenuSlide = ({
     >
       <div
         className="pointer-events-none absolute inset-0 z-0 grid-drift-bg portfolio-grid-overlay"
-        style={{ ...gridOverlayStyle, animationDelay: menuGridDriftDelay }}
+        style={gridOverlayStyle}
       />
       {mainMenuDebugEnabled &&
         typeof document !== "undefined" &&
@@ -4111,11 +4106,10 @@ function NavIconButtonDebugPanel({
 
 // --- PROFILE (About) ---
 const SectionGridOverlay = () => {
-  const sectionGridDriftDelay = useGridDriftAnimationDelay();
   return (
     <div
       className="pointer-events-none absolute inset-0 z-0 grid-drift-bg portfolio-grid-overlay"
-      style={{ ...gridOverlayStyle, animationDelay: sectionGridDriftDelay }}
+      style={gridOverlayStyle}
       aria-hidden
     />
   );
@@ -4155,7 +4149,18 @@ const matchesProfileTabletViewport = () =>
 const matchesProfileDesktopDebugViewport = () =>
   typeof window !== "undefined" && window.matchMedia(`(min-width: ${PROFILE_DESKTOP_DEBUG_MIN_PX}px)`).matches;
 
-const PhantomProfile = () => {
+const PhantomProfile = ({
+  panelSettled = true,
+  mascotFadeOnPanelSettle = false,
+}: {
+  /** Mirror SKILLS/EXPERIENCE: hold header/content entrance until panel settle (side-nav swaps included). */
+  panelSettled?: boolean;
+  /**
+   * Side-nav section→PROFILE only: fade RAWBLEM in with panel settle.
+   * Does not change tablet-instant or desktop whileInView mascot paths.
+   */
+  mascotFadeOnPanelSettle?: boolean;
+} = {}) => {
   const reduceMotion = useReducedMotion();
   const portfolioDebugEnabled = usePortfolioDebugEnabled();
   const profileLeftRef = useRef<HTMLDivElement>(null);
@@ -4177,6 +4182,8 @@ const PhantomProfile = () => {
   const [profileHeaderSlide, setProfileHeaderSlide] = useState(false);
   const prevProfileInView = useRef(false);
   const profileMascotInstant = profileTabletViewport || !!reduceMotion;
+  /** Entrance gate: panel must be settled (same cadence as SkillArsenal / ConfidantExperience). */
+  const profileEntranceArmed = !!reduceMotion || panelSettled;
 
   useEffect(() => {
     const mq = window.matchMedia(
@@ -4264,20 +4271,28 @@ const PhantomProfile = () => {
   }, [profileMascotInstant]);
 
   useLayoutEffect(() => {
+    if (!profileEntranceArmed) {
+      setProfileHeaderSlide(false);
+      return;
+    }
     const armId = requestAnimationFrame(() => setProfileHeaderSlide(true));
     return () => {
       cancelAnimationFrame(armId);
-      setProfileHeaderSlide(false);
     };
-  }, []);
+  }, [profileEntranceArmed]);
 
   useEffect(() => {
     if (profileMascotInstant) return;
     if (!rawblemInView) setRawblemFloatReady(false);
   }, [rawblemInView, profileMascotInstant]);
 
-  // Overlay + buttons: reset when section leaves; start only after red line anim completes
+  // Overlay + buttons: reset when section leaves / panel unsettled; start after red line completes
   useEffect(() => {
+    if (!profileEntranceArmed) {
+      prevProfileInView.current = false;
+      setOverlayRevealed(false);
+      return;
+    }
     if (profileLeftInView) {
       if (!prevProfileInView.current) {
         setOverlayRevealed(false);
@@ -4289,7 +4304,7 @@ const PhantomProfile = () => {
       prevProfileInView.current = false;
       setOverlayRevealed(false);
     }
-  }, [profileLeftInView]);
+  }, [profileEntranceArmed, profileLeftInView]);
 
   return (
     <section id="profile" className="relative w-full min-w-0 overflow-x-hidden overflow-y-visible bg-black text-white scroll-mt-6 max-lg:min-h-min lg:min-h-screen">
@@ -4326,7 +4341,39 @@ const PhantomProfile = () => {
         <motion.div className={`${PROFILE_LAYOUT_ROW} profile-tablet-layout-row`}>
 
           {profileMascotInstant ? (
-            <div ref={rawblemRef} className={`${PROFILE_MASCOT_COLUMN} profile-tablet-mascot-column max-sm:hidden`}>
+            // Side-nav handoff: CSS-hide while unsettled (no Framer 1→0 frame), then mount-fade in.
+            mascotFadeOnPanelSettle && !panelSettled ? (
+              <div
+                ref={rawblemRef}
+                className={`${PROFILE_MASCOT_COLUMN} profile-tablet-mascot-column max-sm:hidden opacity-0 pointer-events-none`}
+                aria-hidden
+              >
+                <div className={PROFILE_MASCOT_FRAME} style={profileRightDebugStyle}>
+                  <img
+                    src="/rawblem3.svg"
+                    alt=""
+                    width={300}
+                    height={300}
+                    loading="eager"
+                    fetchPriority="high"
+                    decoding="sync"
+                    className="h-full w-full object-contain"
+                  />
+                </div>
+              </div>
+            ) : (
+            <motion.div
+              ref={rawblemRef}
+              key={mascotFadeOnPanelSettle ? "profile-mascot-settle-fade" : "profile-mascot-instant"}
+              className={`${PROFILE_MASCOT_COLUMN} profile-tablet-mascot-column max-sm:hidden`}
+              initial={mascotFadeOnPanelSettle ? { opacity: 0 } : false}
+              animate={{ opacity: 1 }}
+              transition={
+                mascotFadeOnPanelSettle
+                  ? { duration: 0.52, ease: [0.16, 1, 0.3, 1] }
+                  : { duration: 0 }
+              }
+            >
               <div className={PROFILE_MASCOT_FRAME} style={profileRightDebugStyle}>
                 <motion.img
                   src="/rawblem3.svg"
@@ -4345,7 +4392,8 @@ const PhantomProfile = () => {
                   }
                 />
               </div>
-            </div>
+            </motion.div>
+            )
           ) : (
           <motion.div
             ref={rawblemRef}
@@ -4410,7 +4458,7 @@ const PhantomProfile = () => {
                     : { backgroundColor: PROFILE_ACCENT_SOFT }
                 }
                  initial={false}
-                 animate={{ scaleX: dividerInView ? 1 : 0 }}
+                 animate={{ scaleX: profileEntranceArmed && dividerInView ? 1 : 0 }}
                  transition={{ duration: RED_LINE_DURATION_MS / 1000, delay: RED_LINE_DELAY_MS / 1000, ease: [0.16, 1, 0.3, 1] }}
                />
             </div>
@@ -5222,6 +5270,8 @@ const matchesProjectsTabletPortraitViewport = () =>
   typeof window !== "undefined" &&
   window.matchMedia(PROJECTS_TABLET_PORTRAIT_MQ).matches;
 const PROJECTS_TABLET_LANDSCAPE_WIDTH_SCALE = 1.05;
+/** Desktop main showcase lift vs pre-lift offsets; restored on iPad horizontal. */
+const PROJECTS_DESKTOP_MAIN_LIFT_Y = -2;
 /** Same inset as PROFILE; `!` overrides `.career-overview-shell` base padding in CSS. */
 const EXPERIENCE_SHELL_TOP_INSET_MAX_LG =
   "max-lg:!pt-[calc(24vh+0.625rem)] max-lg:max-sm:!pt-[max(calc(5.5rem+0.625rem),calc(env(safe-area-inset-top,0px)+0.625rem))]";
@@ -5327,8 +5377,6 @@ const ProjectsStack = ({
                   type="button"
                   data-carousel-card
                   onClick={(e) => onSelect(card.id, e.currentTarget)}
-                  whileTap={{ scale: 0.985 }}
-                  transition={{ duration: 0.28 / SHOWCASE_TIME_DIV, ease: cardEase }}
                   className={`group project-card-surface relative w-full [container-type:inline-size] ${SHOWCASE_CAROUSEL_CARD_H} rounded-[11px] sm:rounded-xl border border-[var(--portfolio-glass-stroke)] shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)] text-center overflow-hidden transition-[opacity,background-color,border-color] duration-300 ease-out ${
                     contentReady
                       ? "hover:border-[color:var(--palette-yellow-projects)] hover:bg-black [background:#000]"
@@ -5338,10 +5386,13 @@ const ProjectsStack = ({
                   }`}
                   style={contentReady ? undefined : { background: "transparent", backgroundImage: "none" }}
                 >
-                  <div
-                    className={`h-full will-change-transform transition-opacity duration-300 ease-out ${
+                  {/* Tap scale on inner layer only — transform on the bordered button bleeds black over the stroke. */}
+                  <motion.div
+                    className={`h-full transition-opacity duration-300 ease-out ${
                       contentReady ? "opacity-100" : "opacity-0"
                     } relative z-0`}
+                    whileTap={{ scale: 0.985 }}
+                    transition={{ duration: 0.28 / SHOWCASE_TIME_DIV, ease: cardEase }}
                   >
                     {card.thumbnail || card.thumbnailVideo ? (
                       <>
@@ -5505,7 +5556,7 @@ const ProjectsStack = ({
                         </div>
                       </div>
                     ) : null}
-                  </div>
+                  </motion.div>
                 </motion.button>
               </div>
             ))}
@@ -6205,11 +6256,9 @@ const ShowcaseVisualDesignDetail = ({
           reduceMotion
             ? { opacity: detailHdrReveal ? 1 : 0 }
             : {
+                /* Opacity only — no upward slide (layout must already park header at final Y). */
                 opacity: detailHdrReveal ? 1 : 0,
-                transform: detailHdrReveal
-                  ? "translate3d(0,0,0)"
-                  : `translate3d(0,${DETAIL_HDR_SLIDE_PX}px,0)`,
-                transition: `opacity ${DETAIL_HDR_OPACITY_MS}ms ${DETAIL_FADE_CUBIC}, transform ${DETAIL_HDR_SLIDE_MS}ms ${DETAIL_SLIDE_CUBIC}`,
+                transition: `opacity ${DETAIL_HDR_OPACITY_MS}ms ${DETAIL_FADE_CUBIC}`,
               }
         }
       >
@@ -6230,10 +6279,7 @@ const ShowcaseVisualDesignDetail = ({
             ? { opacity: detailGalleryReveal ? 1 : 0 }
             : {
                 opacity: detailGalleryReveal ? 1 : 0,
-                transform: detailGalleryReveal
-                  ? "translate3d(0,0,0)"
-                  : `translate3d(0,${DETAIL_GRID_SLIDE_PX}px,0)`,
-                transition: `opacity ${DETAIL_GRID_OPACITY_MS}ms ${DETAIL_FADE_CUBIC}, transform ${DETAIL_GRID_SLIDE_MS}ms ${DETAIL_SLIDE_CUBIC}`,
+                transition: `opacity ${DETAIL_GRID_OPACITY_MS}ms ${DETAIL_FADE_CUBIC}`,
               }
         }
       >
@@ -6627,8 +6673,9 @@ const ShowcaseDetailIllustrationsGrid = ({
                 src={slide.src}
                 alt={slide.alt?.trim() || `Illustration ${index + 1}`}
                 className="block h-auto w-full origin-center transition-transform duration-200 ease-out group-hover:scale-[1.02] group-active:scale-[1.02]"
-                loading="lazy"
+                loading={index < 6 ? "eager" : "lazy"}
                 decoding="async"
+                fetchPriority={index < 3 ? "high" : "auto"}
               />
             </motion.button>
           );
@@ -6751,6 +6798,7 @@ const PalaceProjects = ({
   onOpenFeaturedPdfInSupporting,
   activeProjectId,
   entranceArmed = false,
+  forceContentHidden = false,
   featuredPdfViewerActive = false,
 }: {
   onSelectProject: (id: string) => void;
@@ -6758,6 +6806,8 @@ const PalaceProjects = ({
   onOpenFeaturedPdfInSupporting: (item: SupportingArchivePdfItem) => void;
   activeProjectId: string | null;
   entranceArmed?: boolean;
+  /** Side-nav leave only: hide showcase content (grid overlay stays). */
+  forceContentHidden?: boolean;
   /** FEATURED WRITING VIEW ? fade carousel/tabs/header while grid PDF loader is up. */
   featuredPdfViewerActive?: boolean;
 }) => {
@@ -6904,6 +6954,10 @@ const PalaceProjects = ({
       ...base,
       leftWidthScale: widthScale,
       rightWidthScale: widthScale,
+      leftOffsetY: base.leftOffsetY + 5 + PROJECTS_DESKTOP_MAIN_LIFT_Y,
+      rightOffsetY: base.rightOffsetY + PROJECTS_DESKTOP_MAIN_LIFT_Y,
+      leftHeightScale: 1,
+      rightHeightScale: 1,
     };
   }, [activeProjectsDesktopLayout, projectsTabletLandscapeViewport, projectsDesktopViewport]);
 
@@ -6984,8 +7038,13 @@ const PalaceProjects = ({
       setProjectsHeaderYLocked(true);
       return;
     }
-    setProjectsEntered(entranceArmed);
-    if (entranceArmed) setProjectsHeaderYLocked(true);
+    // Arm only — never collapse entered/overlay visuals when entrance disarms on leave.
+    // Disarm used to zero carousel/FEATURED WRITING while the side-nav overlay was still
+    // fading (mobile/iPad), which read as a PROJECTS flicker before the panel wipe.
+    if (entranceArmed) {
+      setProjectsEntered(true);
+      setProjectsHeaderYLocked(true);
+    }
   }, [entranceArmed, reduceMotion]);
 
   useEffect(() => {
@@ -7037,9 +7096,6 @@ const PalaceProjects = ({
     projectDetailInFlow && activeCard?.id === "project-interactive-media";
   const videoEditingProjectDetailInFlow =
     projectDetailInFlow && activeCard?.id === "project-video-editing";
-  const videoStyleDetailTabletLandscapeFit =
-    projectsTabletLandscapeViewport &&
-    (videoEditingProjectDetailInFlow || slaywireDetailInFlow);
   const visualDesignDetailInFlow =
     projectDetailInFlow && activeCard?.id === "project-visual-design";
   const projectDetailAllowsOverflowX =
@@ -7156,13 +7212,34 @@ const PalaceProjects = ({
   const projectsProjectDetailLayoutActive =
     projectsDesktopViewport && !projectsTabletLandscapeViewport;
 
-  const projectDetailLayoutStyle =
-    projectsProjectDetailLayoutActive &&
-    projectDetailInFlow &&
-    activeCard &&
-    (projectsDesktopDebugActive || projectDetailLayoutHasLockedDefaults(activeCard.id))
-      ? buildProjectDetailLayoutStyle(activeProjectDetailLayout)
-      : undefined;
+  /** Desktop only: match main PROJECTS column L/R edges; keep detail zoom/Y/centering. */
+  const projectDetailLayoutStyle = (() => {
+    if (
+      !projectsProjectDetailLayoutActive ||
+      !projectDetailInFlow ||
+      !activeCard ||
+      !(projectsDesktopDebugActive || projectDetailLayoutHasLockedDefaults(activeCard.id))
+    ) {
+      return undefined;
+    }
+    const detail = activeProjectDetailLayout;
+    const showcase = activeProjectsDesktopLayout;
+    const detailZoom = detail.scale * detail.heightScale;
+    // Same width% as showcase cluster. Chromium zoom already keeps % widths visually stable —
+    // do not divide by detailZoom (that over-widens). Keep detail zoom for type/media size.
+    const widthPercent =
+      (showcase.leftWidthScale / Math.max(showcase.leftHeightScale, 1e-6)) * 100;
+    return {
+      transform: `translate(${detail.offsetX}px, ${detail.offsetY}px)`,
+      transformOrigin: "top center" as const,
+      zoom: detailZoom,
+      width: `${widthPercent}%`,
+      maxWidth: `${widthPercent}%`,
+      alignSelf: "center",
+      marginLeft: "auto",
+      marginRight: "auto",
+    };
+  })();
 
   /** Tablet: grid overlay tracks section + panel scroller (iPad landscape >1024px included). */
   useLayoutEffect(() => {
@@ -7369,8 +7446,8 @@ const PalaceProjects = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetRect, morphRect, morphDur, reduceMotion]);
 
-  // Reset / reduced-motion reveal when not morphing or when user prefers reduced motion.
-  useEffect(() => {
+  // Reset / instant reveal for no-morph details (before paint so header is not slid up after first frame).
+  useLayoutEffect(() => {
     if (!morphDone) {
       setDetailHdrReveal(false);
       setDetailRuleReveal(false);
@@ -7465,7 +7542,8 @@ const PalaceProjects = ({
       <div
         className={`${PROFILE_SECTION_CONTAINER} relative z-10 flex min-w-0 w-full flex-col ${
           projectDetailInFlow ? "min-h-min shrink-0" : "max-2xl:min-h-min max-2xl:flex-none 2xl:min-h-0 2xl:flex-1"
-        }`}
+        }${forceContentHidden ? " opacity-0 pointer-events-none select-none" : ""}`}
+        aria-hidden={forceContentHidden || undefined}
       >
         <div className={EXPERIENCE_GUTTER_SHELL_OUTER}>
           <div className={EXPERIENCE_GUTTER_SHELL_INNER}>
@@ -7611,12 +7689,14 @@ const PalaceProjects = ({
 
         {projectDetailInFlow && activeCard ? (
           <div
-            className={`relative flex w-full min-w-0 max-w-full flex-col items-stretch${
-              interactiveMediaDetailInFlow || videoStyleDetailTabletLandscapeFit
+            className={`relative flex min-w-0 max-w-full flex-col items-stretch${
+              projectDetailLayoutStyle ? "" : " w-full"
+            }${
+              videoEditingDetailNoMainCard
                 ? " projects-interactive-media-detail-stage"
                 : ""
             }${
-              visualDesignDetailInFlow && projectsTabletLandscapeViewport
+              visualDesignDetailInFlow
                 ? " projects-visual-design-detail-stage"
                 : ""
             }${
@@ -7629,7 +7709,9 @@ const PalaceProjects = ({
           >
               {!illustrationsDetailNoHero && !videoEditingDetailNoMainCard ? (
                 <div
-                  className={`project-card-surface relative z-[1] mx-auto w-full max-w-full ${PROFILE_VIEWPORT_CONTENT_MAX} ${DETAIL_CARD_H} overflow-hidden rounded-[11px] sm:rounded-xl border border-white/[0.09]`}
+                  className={`project-card-surface relative z-[1] mx-auto w-full max-w-full ${
+                    projectDetailLayoutStyle ? "" : PROFILE_VIEWPORT_CONTENT_MAX
+                  } ${DETAIL_CARD_H} overflow-hidden rounded-[11px] sm:rounded-xl border border-white/[0.09]`}
                   style={{
                     boxShadow: `${SHOWCASE_SLIDER_MEDIA_BOX_SHADOW}, 0 18px 48px -28px rgba(0,0,0,0.9)`,
                     borderRadius: `${detailCardRadiusPx}px`,
@@ -7658,14 +7740,16 @@ const PalaceProjects = ({
                 </div>
               ) : null}
               <div
-                className={`relative z-[1] mx-auto w-full max-w-full min-w-0 ${PROFILE_VIEWPORT_CONTENT_MAX} pb-8 ${
+                className={`relative z-[1] mx-auto w-full max-w-full min-w-0 pb-8 ${
+                  projectDetailLayoutStyle ? "" : PROFILE_VIEWPORT_CONTENT_MAX
+                } ${
                   illustrationsDetailNoHero || videoEditingDetailNoMainCard ? "mt-0 flex flex-col" : "mt-5"
                 }${
-                  interactiveMediaDetailInFlow || videoStyleDetailTabletLandscapeFit
+                  videoEditingDetailNoMainCard
                     ? " projects-interactive-media-detail-inner"
                     : ""
                 }${
-                  visualDesignDetailInFlow && projectsTabletLandscapeViewport
+                  visualDesignDetailInFlow
                     ? " projects-visual-design-detail-inner"
                     : ""
                 }`}
@@ -11054,6 +11138,28 @@ export default function Home() {
   const heroInViewRef = useRef<HTMLDivElement | null>(null);
   const isHeroInView = useInView(heroInViewRef, { margin: "-100px 0px 0px 0px" });
   const slidesRef = useRef<HTMLDivElement | null>(null);
+
+  /**
+   * Global grid drift clock.
+   * All grid overlays read `--portfolio-grid-drift-position`, so phase stays in lockstep
+   * across side-nav and section transitions without remount timing tricks.
+   */
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const root = document.documentElement;
+    let rafId = 0;
+    const tick = () => {
+      const drift = gridDriftOffsetPx(performance.now());
+      const value = `${drift}px ${drift}px`;
+      root.style.setProperty("--portfolio-grid-drift-position", value);
+      rafId = window.requestAnimationFrame(tick);
+    };
+    tick();
+    return () => {
+      if (rafId) window.cancelAnimationFrame(rafId);
+      root.style.removeProperty("--portfolio-grid-drift-position");
+    };
+  }, []);
   /** Section overlay scroller — shared across pages; must reset on section change. */
   const sectionPanelRef = useRef<HTMLDivElement | null>(null);
   const slideOrder = ["hero", "menu"];
@@ -11068,6 +11174,16 @@ export default function Home() {
     ? "overflow-x-visible"
     : "overflow-x-hidden";
   const [projectsEntranceArmed, setProjectsEntranceArmed] = useState(false);
+  /**
+   * AnimatePresence opacity exit is only for projects ↔ projects-supporting.
+   * Leaving SHOWCASE for another section must not fade (that fade under a closing
+   * side-nav is the PROJECTS-only flicker).
+   */
+  const [showcaseSubrouteExitFade, setShowcaseSubrouteExitFade] = useState(true);
+  /** Side-nav leave from PROJECTS only: CSS-hide showcase content before nav fade. */
+  const [projectsSideNavLeaveHidden, setProjectsSideNavLeaveHidden] = useState(false);
+  /** Section→PROFILE (side-nav / in-panel swap): fade RAWBLEM with settle; not menu→PROFILE. */
+  const [profileMascotSettleFade, setProfileMascotSettleFade] = useState(false);
   /** FEATURED WRITING ? PDF overlay on PROJECTS (same dismiss feel as closing side nav). */
   const [showcasePdfOverlay, setShowcasePdfOverlay] = useState<SupportingArchivePdfItem | null>(null);
   const [showcasePdfObscuring, setShowcasePdfObscuring] = useState(false);
@@ -11201,6 +11317,31 @@ export default function Home() {
   };
 
   const navigateTo = (id: string) => {
+    const fromShowcase =
+      currentSection === "projects" || currentSection === "projects-supporting";
+    const toShowcase = id === "projects" || id === "projects-supporting";
+    // Exit fade must commit while PROJECTS is still mounted; otherwise AnimatePresence
+    // keeps the previous exit={{ opacity: 0 }} and flickers under the closing side-nav.
+    if (fromShowcase && !toShowcase) {
+      flushSync(() => setShowcaseSubrouteExitFade(false));
+    } else if (toShowcase) {
+      setShowcaseSubrouteExitFade(true);
+    }
+    // Side-nav leave PROJECTS: hide content before the nav overlay starts fading.
+    if (
+      isSideNavOpen &&
+      currentSection === "projects" &&
+      id !== "projects" &&
+      id !== "projects-supporting"
+    ) {
+      flushSync(() => setProjectsSideNavLeaveHidden(true));
+    } else if (id === "projects") {
+      setProjectsSideNavLeaveHidden(false);
+    }
+    // Only section→PROFILE handoffs fade the mascot; menu→PROFILE keeps existing path.
+    setProfileMascotSettleFade(
+      id === "profile" && currentSection !== null && currentSection !== "profile",
+    );
     setIsSideNavOpen(false);
     if (id !== "projects" && (showcasePdfOverlay || showcasePdfClosing || showcasePdfObscuring)) {
       if (showcasePdfObscureTimerRef.current !== null) {
@@ -11835,10 +11976,18 @@ export default function Home() {
               >
                 {profileSectionMounted && (
                   <div className={currentSection !== "profile" ? "hidden" : undefined} aria-hidden={currentSection !== "profile"}>
-                    <PhantomProfile />
+                    <PhantomProfile
+                      panelSettled={panelSettled && currentSection === "profile"}
+                      mascotFadeOnPanelSettle={profileMascotSettleFade}
+                    />
                   </div>
                 )}
-                {!profileSectionMounted && currentSection === "profile" && <PhantomProfile />}
+                {!profileSectionMounted && currentSection === "profile" && (
+                  <PhantomProfile
+                    panelSettled={panelSettled}
+                    mascotFadeOnPanelSettle={profileMascotSettleFade}
+                  />
+                )}
                 {reduceMotion ? (
                   <>
                     {currentSection === "projects" && (
@@ -11853,6 +12002,7 @@ export default function Home() {
                           onOpenFeaturedPdfInSupporting={openFeaturedPdfInSupporting}
                           activeProjectId={activeShowcaseProjectId}
                           entranceArmed={projectsEntranceArmed}
+                          forceContentHidden={projectsSideNavLeaveHidden}
                           featuredPdfViewerActive={showcasePdfViewerActive}
                         />
                       </div>
@@ -11871,8 +12021,11 @@ export default function Home() {
                         key="projects"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: SHOWCASE_SUBROUTE_FADE_S, ease: EASE.out }}
+                        exit={showcaseSubrouteExitFade ? { opacity: 0 } : undefined}
+                        transition={{
+                          duration: showcaseSubrouteExitFade ? SHOWCASE_SUBROUTE_FADE_S : 0,
+                          ease: EASE.out,
+                        }}
                         className={`flex w-full min-w-0 shrink-0 flex-col ${projectsPanelOverflowX} overflow-y-visible max-lg:min-h-min max-lg:flex-none ${
                           activeShowcaseProjectId ? "min-h-min" : "max-2xl:min-h-min max-2xl:flex-none 2xl:min-h-0 2xl:flex-1"
                         }`}
@@ -11883,6 +12036,7 @@ export default function Home() {
                           onOpenFeaturedPdfInSupporting={openFeaturedPdfInSupporting}
                           activeProjectId={activeShowcaseProjectId}
                           entranceArmed={projectsEntranceArmed}
+                          forceContentHidden={projectsSideNavLeaveHidden}
                           featuredPdfViewerActive={showcasePdfViewerActive}
                         />
                       </motion.div>
@@ -11892,8 +12046,11 @@ export default function Home() {
                         key="projects-supporting"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: SHOWCASE_SUBROUTE_FADE_S, ease: EASE.out }}
+                        exit={showcaseSubrouteExitFade ? { opacity: 0 } : undefined}
+                        transition={{
+                          duration: showcaseSubrouteExitFade ? SHOWCASE_SUBROUTE_FADE_S : 0,
+                          ease: EASE.out,
+                        }}
                         className="w-full"
                       >
                         <SupportingProjectsSection

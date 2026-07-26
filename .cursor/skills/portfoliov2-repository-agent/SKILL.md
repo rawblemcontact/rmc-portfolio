@@ -34,6 +34,7 @@ disable-model-invocation: false
 | npm / shell / dev & build | [portfoliov2-terminal](../portfoliov2-terminal/SKILL.md) |
 | Live UI checks, responsive, a11y | [portfoliov2-browser](../portfoliov2-browser/SKILL.md) |
 | Responsive layout QA (breakpoints, overflow, type, flex/grid) | [portfoliov2-responsive-qa](../portfoliov2-responsive-qa/SKILL.md) |
+| Multi-viewport screenshot pass + breakage report | [responsive-testing](../responsive-testing/SKILL.md) |
 | Manual full responsive audit + fix loop (`/responsive-audit` only; supports viewport args) | [responsive-audit](../responsive-audit/SKILL.md) |
 | Manual above-the-fold viewport optimize (`/viewport-optimize` only; Playwright fold + type hierarchy + 4-tier regression) | [viewport-optimize](../viewport-optimize/SKILL.md) |
 | Match PROFILE left/right viewport gutters (SKILLS, overlays) | [portfoliov2-profile-viewport-gutters](../portfoliov2-profile-viewport-gutters/SKILL.md) |

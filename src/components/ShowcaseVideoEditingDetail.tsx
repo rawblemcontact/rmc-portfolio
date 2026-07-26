@@ -567,6 +567,8 @@ export function ShowcaseVideoEditingDetail({
   );
 
   const isInteractiveMedia = card.id === "project-interactive-media";
+  const matchInteractiveMediaChrome =
+    isInteractiveMedia || card.id === "project-video-editing";
   const isSlaywire = card.id === "project-slaywire";
 
   if (!videos.length) return null;
@@ -584,23 +586,23 @@ export function ShowcaseVideoEditingDetail({
 
   const worksArrowBtnClass =
     "video-editing-works-arrow absolute top-[2.45rem] z-10 flex h-[1.65rem] w-[1.65rem] items-center justify-center border-0 bg-transparent p-0 text-white/85 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--palette-yellow-projects)] focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:h-[1.925rem] sm:w-[1.925rem]";
-  const worksStripThumbBasisClass = isInteractiveMedia
+  const worksStripThumbBasisClass = matchInteractiveMediaChrome
     ? "basis-[calc((100%-0.5rem)/2)] sm:basis-[calc((100%-0.625rem)/2)] md:basis-[calc((100%-1.25rem)/3)] lg:basis-[calc((100%-1.25rem)/3)]"
     : "basis-[calc((100%-0.5rem)/2)] sm:basis-[calc((100%-0.625rem)/2)] md:basis-[calc((100%-1.25rem)/3)] lg:basis-[calc((100%-1.875rem)/4)]";
   const worksStripOuterClass =
     videos.length > 1
-      ? isInteractiveMedia
+      ? matchInteractiveMediaChrome
         ? "relative -mx-5 w-[calc(100%+2.5rem)] overflow-visible sm:-mx-7 sm:w-[calc(100%+3.5rem)]"
         : "relative -mx-4 w-[calc(100%+2rem)] overflow-visible sm:-mx-6 sm:w-[calc(100%+3rem)]"
       : "relative w-full min-w-0";
   const worksStripClass =
     videos.length > 1
-      ? isInteractiveMedia
+      ? matchInteractiveMediaChrome
         ? "mx-5 w-[calc(100%-2.5rem)] sm:mx-7 sm:w-[calc(100%-3.5rem)]"
         : "mx-4 w-[calc(100%-2rem)] sm:mx-6 sm:w-[calc(100%-3rem)]"
       : "w-full";
-  const worksArrowPrevOffsetClass = isInteractiveMedia ? "left-0" : "-left-2.5 sm:-left-2";
-  const worksArrowNextOffsetClass = isInteractiveMedia ? "right-0" : "-right-2.5 sm:-right-2";
+  const worksArrowPrevOffsetClass = matchInteractiveMediaChrome ? "left-0" : "-left-2.5 sm:-left-2";
+  const worksArrowNextOffsetClass = matchInteractiveMediaChrome ? "right-0" : "-right-2.5 sm:-right-2";
 
   return (
     <>
@@ -653,10 +655,10 @@ export function ShowcaseVideoEditingDetail({
             <div className="video-editing-detail-media-col min-w-0">
               <div
                 className={`video-editing-player video-editing-player--plyr group relative overflow-hidden rounded-[11px] sm:rounded-xl${
-                  isInteractiveMedia
+                  matchInteractiveMediaChrome
                     ? " border border-solid border-[color:var(--portfolio-glass-stroke)] shadow-[var(--portfolio-glass-shadow)]"
                     : " ring-1 ring-white/[0.09]"
-                }${isInteractiveMedia ? " video-editing-player--interactive-media" : ""}${
+                }${matchInteractiveMediaChrome ? " video-editing-player--interactive-media" : ""}${
                   isImageMedia(activeVideo) ? " video-editing-player--image" : ""
                 }`}
               >

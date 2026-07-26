@@ -321,7 +321,8 @@
   }
 
   .grid-drift-bg {
-    animation: gridDriftSmooth 12s linear infinite;
+    animation: none;
+    background-position: var(--portfolio-grid-drift-position, 0px 0px);
     isolation: isolate;
   }
 
@@ -4629,6 +4630,26 @@
       grid-row: 1;
       min-width: 0;
       overflow: visible;
+      container-type: inline-size;
+    }
+
+    /* Main player card: +30px taller (desktop only; not VISUAL DESIGN). */
+    #projects.projects-interactive-media-detail-open .video-editing-player,
+    #projects.projects-video-editing-detail-open .video-editing-player,
+    #projects.projects-slaywire-detail-open .video-editing-player {
+      aspect-ratio: auto;
+      width: 100%;
+      height: calc(100cqw * 9 / 16 + 30px);
+    }
+
+    #projects.projects-interactive-media-detail-open .video-editing-player > .aspect-video,
+    #projects.projects-video-editing-detail-open .video-editing-player > .aspect-video,
+    #projects.projects-slaywire-detail-open .video-editing-player > .aspect-video,
+    #projects.projects-interactive-media-detail-open .video-editing-player .plyr,
+    #projects.projects-video-editing-detail-open .video-editing-player .plyr,
+    #projects.projects-slaywire-detail-open .video-editing-player .plyr {
+      aspect-ratio: auto !important;
+      height: 100% !important;
     }
 
     #projects.projects-interactive-media-detail-open
@@ -4868,6 +4889,10 @@
 
     #projects.projects-interactive-media-detail-open
       .video-editing-detail--interactive-media
+      .video-editing-works-strip
+      .video-editing-works-strip-thumb,
+    #projects.projects-video-editing-detail-open
+      .video-editing-detail:not(.video-editing-detail--interactive-media)
       .video-editing-works-strip
       .video-editing-works-strip-thumb {
       flex-basis: calc((100% - 1.25rem) / 3) !important;
@@ -5858,6 +5883,14 @@
  * so the full stack clears the panel bottom. Horizontal layout unchanged.
  */
 @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse) {
+  /*
+   * Match PROJECTS main showcase edges on iPad horizontal:
+   * leftWidthScale (0.8) × TABLET_LANDSCAPE_WIDTH_SCALE (1.05) × leftScale (0.96).
+   */
+  #projects {
+    --projects-ipad-landscape-detail-col: min(100%, 80.64%);
+  }
+
   #projects.projects-showcase-tablet-pad .projects-showcase-stage {
     transform: translateY(-3.5svh);
   }
@@ -5936,14 +5969,14 @@
   }
 
   /*
-   * Video-style project details — horizontally center the 43rem column in the panel.
+   * Video-style project details — match PROJECTS main showcase column width.
    */
   #projects.projects-interactive-media-detail-open .projects-interactive-media-detail-stage,
   #projects.projects-video-editing-detail-open .projects-interactive-media-detail-stage,
   #projects.projects-slaywire-detail-open .projects-interactive-media-detail-stage {
     align-items: center !important;
-    width: min(100%, 43rem) !important;
-    max-width: min(100%, 43rem) !important;
+    width: var(--projects-ipad-landscape-detail-col) !important;
+    max-width: var(--projects-ipad-landscape-detail-col) !important;
     margin-left: auto !important;
     margin-right: auto !important;
   }
@@ -5957,7 +5990,7 @@
 
   /*
    * SLAYWIRE + VIDEO EDITING detail — landscape fit parity with INTERACTIVE MEDIA
-   * (43rem column via .projects-interactive-media-detail-inner in Home.tsx + compact meta).
+   * (shared --projects-ipad-landscape-detail-col + compact meta).
    */
   #projects.projects-video-editing-detail-open
     .video-editing-detail:not(.video-editing-detail--interactive-media)
@@ -6124,43 +6157,16 @@
     right: 0 !important;
   }
 
-  /*
-   * VISUAL DESIGN detail — shrink-wrap + panel scroll (no nested scroller / desktop offset).
-   * Top inset inherits SECTION_MAIN_HEADER_INSET (pt-22 at lg+) like other project details.
-   */
-  #projects.projects-visual-design-detail-open {
-    min-height: 0 !important;
-    height: auto !important;
-    align-self: flex-start !important;
-    padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px)) !important;
-    overflow-x: visible !important;
-  }
-
-  #projects.projects-visual-design-detail-open > .container,
-  #projects.projects-visual-design-detail-open > .container > div,
-  #projects.projects-visual-design-detail-open > .container > div > div,
-  #projects.projects-visual-design-detail-open .projects-showcase-viewport,
-  #projects.projects-visual-design-detail-open .projects-showcase-stage {
-    flex: 0 0 auto !important;
-    min-height: 0 !important;
-    justify-content: flex-start !important;
-  }
-
+  /* iPad landscape: match main showcase column width; kill desktop zoom/offset on stage. */
   #projects.projects-visual-design-detail-open .projects-visual-design-detail-stage {
     overflow: visible !important;
     transform: none !important;
     zoom: 1 !important;
-    width: min(100%, 43rem) !important;
-    max-width: min(100%, 43rem) !important;
+    width: var(--projects-ipad-landscape-detail-col) !important;
+    max-width: var(--projects-ipad-landscape-detail-col) !important;
     margin-left: auto !important;
     margin-right: auto !important;
     align-items: center !important;
-  }
-
-  #projects.projects-visual-design-detail-open .projects-visual-design-detail-inner {
-    width: 100% !important;
-    max-width: 100% !important;
-    padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px)) !important;
   }
 
   #projects.projects-visual-design-detail-open .showcase-illustrations-grid {
@@ -6170,6 +6176,35 @@
   #projects.projects-visual-design-detail-open .showcase-illustrations-grid > * {
     margin-bottom: 0.625rem !important;
   }
+}
+
+/*
+ * VISUAL DESIGN detail — all breakpoints.
+ * Top-anchor the stack so the header is not vertically centered while the gallery
+ * is still short (unloaded images), then shoved upward as tiles expand.
+ */
+#projects.projects-visual-design-detail-open {
+  min-height: 0 !important;
+  height: auto !important;
+  align-self: flex-start !important;
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px)) !important;
+  overflow-x: visible !important;
+}
+
+#projects.projects-visual-design-detail-open > .container,
+#projects.projects-visual-design-detail-open > .container > div,
+#projects.projects-visual-design-detail-open > .container > div > div,
+#projects.projects-visual-design-detail-open .projects-showcase-viewport,
+#projects.projects-visual-design-detail-open .projects-showcase-stage {
+  flex: 0 0 auto !important;
+  min-height: 0 !important;
+  justify-content: flex-start !important;
+}
+
+#projects.projects-visual-design-detail-open .projects-visual-design-detail-inner {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px)) !important;
 }
 
 /* PROJECTS — desktop fit: proportional type + spacing + card scale (fine pointer lg+ / >1366). */
@@ -6223,6 +6258,49 @@
       calc(46svh * var(--projects-fit)),
       calc(400px * var(--projects-fit))
     ) !important;
+  }
+
+  /*
+   * Desktop card stroke — keep grey/yellow border above media + black header panel.
+   * Absolute fill was painting over the inner stroke just above the title on hover.
+   */
+  #projects [data-carousel-card].project-card-surface {
+    border-color: transparent !important;
+    isolation: isolate;
+  }
+
+  #projects [data-carousel-card].project-card-surface::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    border-radius: inherit;
+    pointer-events: none;
+    box-shadow: inset 0 0 0 1px var(--portfolio-glass-stroke);
+    transition: box-shadow 0.3s ease-out;
+  }
+
+  #projects [data-carousel-card].project-card-surface:hover::after,
+  #projects [data-carousel-card].project-card-surface:focus-visible::after {
+    box-shadow: inset 0 0 0 1px var(--palette-yellow-projects);
+  }
+
+  /*
+   * Keep black header + media inside the stroke. Do not inset `bottom` on the
+   * description panel — that overlaps the media and covers the grey inner edge
+   * in the band right above the title on hover.
+   */
+  #projects [data-carousel-card] .project-card-description-section {
+    left: 1px !important;
+    right: 1px !important;
+    bottom: 0 !important;
+    width: auto !important;
+  }
+
+  #projects [data-carousel-card] .project-card-thumbnail-section {
+    left: 1px !important;
+    right: 1px !important;
+    width: auto !important;
   }
 
   #projects .project-card-title {
@@ -6354,6 +6432,16 @@
   #projects .projects-showcase-stage {
     justify-content: center !important;
     padding-bottom: 0 !important;
+  }
+
+  /* Keep VISUAL DESIGN top-anchored (do not inherit showcase vertical center). */
+  #projects.projects-visual-design-detail-open > .container,
+  #projects.projects-visual-design-detail-open > .container > div,
+  #projects.projects-visual-design-detail-open > .container > div > div,
+  #projects.projects-visual-design-detail-open .projects-showcase-viewport,
+  #projects.projects-visual-design-detail-open .projects-showcase-stage {
+    flex: 0 0 auto !important;
+    justify-content: flex-start !important;
   }
 }
 

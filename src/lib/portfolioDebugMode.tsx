@@ -60,15 +60,15 @@ export const EXPERIENCE_DESKTOP_LAYOUT_DEBUG_DEFAULTS: ProfileDesktopLayoutDebug
 /** Locked desktop PROJECTS layout — tuned via debug panel (Jun 2026). */
 export const PROJECTS_DESKTOP_LAYOUT_DEBUG_DEFAULTS: ProfileDesktopLayoutDebugValues = {
   leftOffsetX: 0,
-  leftOffsetY: 16,
+  leftOffsetY: 18,
   rightOffsetX: 0,
-  rightOffsetY: 29,
+  rightOffsetY: 31,
   leftScale: 0.96,
-  leftWidthScale: 0.84,
-  leftHeightScale: 1,
+  leftWidthScale: 0.8,
+  leftHeightScale: 1.04,
   rightScale: 0.96,
-  rightWidthScale: 0.84,
-  rightHeightScale: 1,
+  rightWidthScale: 0.8,
+  rightHeightScale: 1.04,
 };
 
 const SECTION_DESKTOP_LAYOUT_DEBUG_DEFAULTS: Record<

@@ -162,6 +162,7 @@ Reference: **`SkillArsenal`** in `Home.tsx`. Skill: `.cursor/skills/portfoliov2-
 | `portfoliov2-repository-agent` | General repo, SHOWCASE |
 | `portfoliov2-profile-viewport-gutters` | PROFILE/SKILLS margin parity |
 | `portfoliov2-responsive-qa` | Breakpoints, overflow |
+| `responsive-testing` | Multi-viewport screenshots + layout breakage report |
 | `responsive-audit` | Manual `/responsive-audit` only — scoped or full breakpoint audit + fix loop |
 | `typography-audit` | Manual `/typography-audit` only — single-pass typography hierarchy audit + subtle refinements |
 | `viewport-optimize` | Manual `/viewport-optimize` only — Playwright fold fit + typography hierarchy (in-section + portfolio parity) + minimal desktop optimize, 4-tier regression |

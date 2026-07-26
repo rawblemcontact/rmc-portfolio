@@ -25,19 +25,28 @@ export const PROJECT_DETAIL_LAYOUT_DEBUG_DEFAULTS: ProjectDetailLayoutDebugValue
 
 /** Locked desktop layout shared by video-style project details (Jun 2026). */
 export const PROJECT_VIDEO_STYLE_DETAIL_LAYOUT_DEFAULTS: ProjectDetailLayoutDebugValues = {
-  offsetX: -36,
+  offsetX: 0,
   offsetY: 11,
   scale: 0.94,
-  widthScale: 1,
+  widthScale: 0.82,
   heightScale: 0.94,
+};
+
+/**
+ * VIDEO EDITING / SLAYWIRE — same as video-style, but offsetY 0 so the header
+ * lines up with INTERACTIVE MEDIA (shorter block; flex-center otherwise parks it ~11px lower).
+ */
+export const PROJECT_VIDEO_EDITING_DETAIL_LAYOUT_DEFAULTS: ProjectDetailLayoutDebugValues = {
+  ...PROJECT_VIDEO_STYLE_DETAIL_LAYOUT_DEFAULTS,
+  offsetY: 0,
 };
 
 /** Locked desktop VISUAL DESIGN layout (Jun 2026). */
 export const PROJECT_VISUAL_DESIGN_DETAIL_LAYOUT_DEFAULTS: ProjectDetailLayoutDebugValues = {
   offsetX: 0,
-  offsetY: 126,
+  offsetY: 113,
   scale: 0.86,
-  widthScale: 1,
+  widthScale: 0.89,
   heightScale: 0.98,
 };
 
@@ -45,9 +54,9 @@ const PROJECT_DETAIL_LAYOUT_LOCKED_DEFAULTS_BY_PROJECT: Partial<
   Record<string, ProjectDetailLayoutDebugValues>
 > = {
   "project-visual-design": PROJECT_VISUAL_DESIGN_DETAIL_LAYOUT_DEFAULTS,
-  "project-video-editing": PROJECT_VIDEO_STYLE_DETAIL_LAYOUT_DEFAULTS,
+  "project-video-editing": PROJECT_VIDEO_EDITING_DETAIL_LAYOUT_DEFAULTS,
   "project-interactive-media": PROJECT_VIDEO_STYLE_DETAIL_LAYOUT_DEFAULTS,
-  "project-slaywire": PROJECT_VIDEO_STYLE_DETAIL_LAYOUT_DEFAULTS,
+  "project-slaywire": PROJECT_VIDEO_EDITING_DETAIL_LAYOUT_DEFAULTS,
 };
 
 export function projectDetailLayoutDefaultsForProject(
@@ -76,6 +85,9 @@ export function buildProjectDetailLayoutStyle(
     zoom,
     width: `${widthPercent}%`,
     maxWidth: "none",
+    alignSelf: "center",
+    marginLeft: "auto",
+    marginRight: "auto",
   };
 }
 

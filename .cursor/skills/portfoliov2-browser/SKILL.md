@@ -42,6 +42,7 @@ disable-model-invocation: true
 
 There is **no** bundled Playwright/Cypress in this repo. Prefer **manual** verification plus targeted code inspection unless the user adds a test stack.
 
-## Related skill
+## Related skills
 
 - Structured responsive passes (overflow, type scale, flex/grid, hierarchy, motion): [portfoliov2-responsive-qa](../portfoliov2-responsive-qa/SKILL.md)
+- Multi-viewport screenshots + breakage report: [responsive-testing](../responsive-testing/SKILL.md)
