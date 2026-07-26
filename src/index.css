@@ -1211,9 +1211,30 @@
   }
 
   .playstore-button--primary:hover,
-  .playstore-button--primary:focus-visible {
+  .playstore-button--primary:focus-visible,
+  .playstore-button--primary:active {
     color: #fffaee;
     box-shadow: none;
+  }
+
+  /* Pause pulse only when wipe is actually engaged (fine hover / press) — not sticky touch :hover. */
+  @media (any-hover: hover) and (any-pointer: fine) {
+    .playstore-button--primary:hover,
+    .playstore-button--primary:focus-visible {
+      animation-play-state: paused;
+    }
+  }
+
+  @media not ((any-hover: hover) and (any-pointer: fine)) {
+    .playstore-button--primary:active,
+    .playstore-button--primary:focus-visible {
+      animation-play-state: paused;
+    }
+  }
+
+  /* JS-held click morph (mobile/tablet) — keep pulse paused while waiting to scroll to MENU. */
+  .playstore-button--primary.hero-portfolio-animated--pressed {
+    animation-play-state: paused;
   }
 
   .playstore-button--primary .texts {
@@ -1265,11 +1286,29 @@
       transform: translateX(-0.28rem);
     }
 
-    #hero .hero-portfolio-animated:hover .hero-portfolio-text,
-    #hero .hero-portfolio-animated:focus-visible .hero-portfolio-text {
+    /* Padding snaps (not transitioned); transform still eases. Fine hover vs touch :active. */
+    @media (any-hover: hover) and (any-pointer: fine) {
+      #hero .hero-portfolio-animated:hover .hero-portfolio-text,
+      #hero .hero-portfolio-animated:focus-visible .hero-portfolio-text {
+        padding-left: 1.25rem;
+        padding-right: 0;
+        transform: translateX(0.28rem); /* exact mirror of rest translate */
+      }
+    }
+
+    @media not ((any-hover: hover) and (any-pointer: fine)) {
+      #hero .hero-portfolio-animated:active .hero-portfolio-text,
+      #hero .hero-portfolio-animated:focus-visible .hero-portfolio-text {
+        padding-left: 1.25rem;
+        padding-right: 0;
+        transform: translateX(0.28rem);
+      }
+    }
+
+    #hero .hero-portfolio-animated.hero-portfolio-animated--pressed .hero-portfolio-text {
       padding-left: 1.25rem;
       padding-right: 0;
-      transform: translateX(0.28rem); /* exact mirror of rest translate */
+      transform: translateX(0.28rem);
     }
   }
 
@@ -1293,8 +1332,25 @@
       transform: translateX(-0.32rem);
     }
 
-    #hero .hero-portfolio-animated:hover .hero-portfolio-text,
-    #hero .hero-portfolio-animated:focus-visible .hero-portfolio-text {
+    @media (any-hover: hover) and (any-pointer: fine) {
+      #hero .hero-portfolio-animated:hover .hero-portfolio-text,
+      #hero .hero-portfolio-animated:focus-visible .hero-portfolio-text {
+        padding-left: 1.05rem;
+        padding-right: 0;
+        transform: translateX(0.32rem);
+      }
+    }
+
+    @media not ((any-hover: hover) and (any-pointer: fine)) {
+      #hero .hero-portfolio-animated:active .hero-portfolio-text,
+      #hero .hero-portfolio-animated:focus-visible .hero-portfolio-text {
+        padding-left: 1.05rem;
+        padding-right: 0;
+        transform: translateX(0.32rem);
+      }
+    }
+
+    #hero .hero-portfolio-animated.hero-portfolio-animated--pressed .hero-portfolio-text {
       padding-left: 1.05rem;
       padding-right: 0;
       transform: translateX(0.32rem);
@@ -1316,8 +1372,25 @@
       transform: translateX(-0.18rem);
     }
 
-    #hero .hero-portfolio-animated:hover .hero-portfolio-text,
-    #hero .hero-portfolio-animated:focus-visible .hero-portfolio-text {
+    @media (any-hover: hover) and (any-pointer: fine) {
+      #hero .hero-portfolio-animated:hover .hero-portfolio-text,
+      #hero .hero-portfolio-animated:focus-visible .hero-portfolio-text {
+        padding-left: 1.1rem;
+        padding-right: 0;
+        transform: translateX(0.18rem);
+      }
+    }
+
+    @media not ((any-hover: hover) and (any-pointer: fine)) {
+      #hero .hero-portfolio-animated:active .hero-portfolio-text,
+      #hero .hero-portfolio-animated:focus-visible .hero-portfolio-text {
+        padding-left: 1.1rem;
+        padding-right: 0;
+        transform: translateX(0.18rem);
+      }
+    }
+
+    #hero .hero-portfolio-animated.hero-portfolio-animated--pressed .hero-portfolio-text {
       padding-left: 1.1rem;
       padding-right: 0;
       transform: translateX(0.18rem);
@@ -1365,7 +1438,8 @@
     position: relative;
     overflow: hidden;
     isolation: isolate;
-    transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+    /* Never `transition: all` — mobile/tablet hover also flips padding; that would layout-thrash. */
+    transition: background-color 0.42s cubic-bezier(0.23, 1, 0.32, 1), color 0.28s ease;
   }
 
   .hero-portfolio-animated::before {
@@ -1388,20 +1462,22 @@
     fill: currentColor;
     z-index: 3;
     transform: translateY(-50%);
-    transition: fill 0.28s ease, right 0.8s cubic-bezier(0.23, 1, 0.32, 1), left 0.8s cubic-bezier(0.23, 1, 0.32, 1), transform 0.8s cubic-bezier(0.23, 1, 0.32, 1);
-    will-change: transform;
+    transition: fill 0.28s ease, transform 0.74s cubic-bezier(0.2, 0.95, 0.25, 1);
   }
 
   .hero-portfolio-animated .hero-portfolio-arrow--1 {
     right: 0.86rem;
     transform: translate(0, -50%);
-    transition: fill 0.28s ease, transform 0.74s cubic-bezier(0.2, 0.95, 0.25, 1);
   }
 
   .hero-portfolio-animated .hero-portfolio-arrow--2 {
     left: 0.54rem;
     transform: translate(-255%, -50%);
-    transition: fill 0.28s ease, transform 0.74s cubic-bezier(0.2, 0.95, 0.25, 1);
+    /*
+     * Same ease as right arrow; shorter duration — enter stays visible (overflow),
+     * so 0.74s reads as a long drift while the exit is clipped.
+     */
+    transition: fill 0.28s ease, transform 0.5s cubic-bezier(0.2, 0.95, 0.25, 1);
   }
 
   .hero-portfolio-animated .hero-portfolio-text {
@@ -1409,7 +1485,8 @@
     z-index: 2;
     padding-right: 0.9rem;
     transform: translateX(-0.42rem);
-    transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+    /* Transform + color only — padding mirror (mobile/tablet) must snap, not interpolate. */
+    transition: transform 0.74s cubic-bezier(0.23, 1, 0.32, 1), color 0.28s ease;
   }
 
   .hero-portfolio-animated .hero-portfolio-circle {
@@ -1427,42 +1504,118 @@
     display: none;
   }
 
-  .hero-portfolio-animated:hover,
-  .hero-portfolio-animated:focus-visible {
+  /*
+   * Full wipe/arrow morph — real hover devices only.
+   * Touch sticky :hover used to keep the wipe + pulse conflict active and jank the hero.
+   * Coarse / no-hover: :active (+ :focus-visible) for a brief press; see block below.
+   */
+  @media (any-hover: hover) and (any-pointer: fine) {
+    .hero-portfolio-animated:hover,
+    .hero-portfolio-animated:focus-visible {
+      background-color: transparent;
+    }
+
+    .hero-portfolio-animated:hover::before,
+    .hero-portfolio-animated:focus-visible::before {
+      transform: scaleX(1);
+    }
+
+    .hero-portfolio-animated:hover .hero-portfolio-arrow--1,
+    .hero-portfolio-animated:focus-visible .hero-portfolio-arrow--1 {
+      transform: translate(255%, -50%);
+    }
+
+    .hero-portfolio-animated:hover .hero-portfolio-arrow--2,
+    .hero-portfolio-animated:focus-visible .hero-portfolio-arrow--2 {
+      /* Slightly more left than 0 — optical parity with right-arrow edge gap. */
+      transform: translate(-0.16rem, -50%);
+    }
+
+    .hero-portfolio-animated:hover .hero-portfolio-text,
+    .hero-portfolio-animated:focus-visible .hero-portfolio-text {
+      color: #000000;
+      transform: translateX(0.98rem);
+    }
+
+    .hero-portfolio-animated:hover .hero-portfolio-arrow,
+    .hero-portfolio-animated:focus-visible .hero-portfolio-arrow {
+      fill: #000000;
+    }
+
+    .hero-portfolio-animated:hover .hero-portfolio-circle,
+    .hero-portfolio-animated:focus-visible .hero-portfolio-circle {
+      width: 0;
+      height: 0;
+      opacity: 0;
+    }
+  }
+
+  /* Phone / touch tablet — press feedback without sticky :hover cost. */
+  @media not ((any-hover: hover) and (any-pointer: fine)) {
+    .hero-portfolio-animated:active,
+    .hero-portfolio-animated:focus-visible {
+      background-color: transparent;
+    }
+
+    .hero-portfolio-animated:active::before,
+    .hero-portfolio-animated:focus-visible::before {
+      transform: scaleX(1);
+    }
+
+    .hero-portfolio-animated:active .hero-portfolio-arrow--1,
+    .hero-portfolio-animated:focus-visible .hero-portfolio-arrow--1 {
+      transform: translate(255%, -50%);
+    }
+
+    .hero-portfolio-animated:active .hero-portfolio-arrow--2,
+    .hero-portfolio-animated:focus-visible .hero-portfolio-arrow--2 {
+      transform: translate(-0.16rem, -50%);
+    }
+
+    .hero-portfolio-animated:active .hero-portfolio-text,
+    .hero-portfolio-animated:focus-visible .hero-portfolio-text {
+      color: #000000;
+      transform: translateX(0.98rem);
+    }
+
+    .hero-portfolio-animated:active .hero-portfolio-arrow,
+    .hero-portfolio-animated:focus-visible .hero-portfolio-arrow {
+      fill: #000000;
+    }
+  }
+
+  /*
+   * JS-held morph through click→MENU (mobile/tablet).
+   * Snappier than idle hover so the wipe finishes before MENU without a long hold.
+   */
+  .hero-portfolio-animated.hero-portfolio-animated--pressed {
     background-color: transparent;
+    transition: background-color 0.28s cubic-bezier(0.23, 1, 0.32, 1), color 0.2s ease;
   }
 
-  .hero-portfolio-animated:hover::before,
-  .hero-portfolio-animated:focus-visible::before {
+  .hero-portfolio-animated.hero-portfolio-animated--pressed::before {
     transform: scaleX(1);
+    transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  .hero-portfolio-animated:hover .hero-portfolio-arrow--1,
-  .hero-portfolio-animated:focus-visible .hero-portfolio-arrow--1 {
+  .hero-portfolio-animated.hero-portfolio-animated--pressed .hero-portfolio-arrow--1 {
     transform: translate(255%, -50%);
+    transition: fill 0.18s ease, transform 0.36s cubic-bezier(0.2, 0.95, 0.25, 1);
   }
 
-  .hero-portfolio-animated:hover .hero-portfolio-arrow--2,
-  .hero-portfolio-animated:focus-visible .hero-portfolio-arrow--2 {
-    transform: translate(0, -50%);
+  .hero-portfolio-animated.hero-portfolio-animated--pressed .hero-portfolio-arrow--2 {
+    transform: translate(-0.16rem, -50%);
+    transition: fill 0.18s ease, transform 0.36s cubic-bezier(0.2, 0.95, 0.25, 1);
   }
 
-  .hero-portfolio-animated:hover .hero-portfolio-text,
-  .hero-portfolio-animated:focus-visible .hero-portfolio-text {
+  .hero-portfolio-animated.hero-portfolio-animated--pressed .hero-portfolio-text {
     color: #000000;
     transform: translateX(0.98rem);
+    transition: transform 0.36s cubic-bezier(0.23, 1, 0.32, 1), color 0.2s ease;
   }
 
-  .hero-portfolio-animated:hover .hero-portfolio-arrow,
-  .hero-portfolio-animated:focus-visible .hero-portfolio-arrow {
+  .hero-portfolio-animated.hero-portfolio-animated--pressed .hero-portfolio-arrow {
     fill: #000000;
-  }
-
-  .hero-portfolio-animated:hover .hero-portfolio-circle,
-  .hero-portfolio-animated:focus-visible .hero-portfolio-circle {
-    width: 0;
-    height: 0;
-    opacity: 0;
   }
 
   .hero-portfolio-animated:active {
@@ -1502,8 +1655,21 @@
       transform: scaleX(0);
     }
 
-    .hero-portfolio-animated:hover::before,
-    .hero-portfolio-animated:focus-visible::before {
+    @media (any-hover: hover) and (any-pointer: fine) {
+      .hero-portfolio-animated:hover::before,
+      .hero-portfolio-animated:focus-visible::before {
+        transform: scaleX(1);
+      }
+    }
+
+    @media not ((any-hover: hover) and (any-pointer: fine)) {
+      .hero-portfolio-animated:active::before,
+      .hero-portfolio-animated:focus-visible::before {
+        transform: scaleX(1);
+      }
+    }
+
+    .hero-portfolio-animated.hero-portfolio-animated--pressed::before {
       transform: scaleX(1);
     }
   }
@@ -5520,7 +5686,8 @@
 
 .illustration-lightbox-nav-btn {
   top: 50%;
-  transform: translateY(-50%);
+  /* CSS translate (not transform) so Framer whileTap scale can compose cleanly */
+  translate: 0 -50%;
 }
 
 @media (max-width: 767.98px) {
@@ -5904,12 +6071,37 @@
     padding-top: 0.5rem !important;
   }
 
+  /*
+   * Four cards — expand bottom only (description panel) so VISUAL DESIGN
+   * tagline can show "branding". Thumbnail stays put; FEATURED WRITING gap
+   * absorbs the same amount so nothing else moves.
+   */
+  #projects.projects-showcase-tablet-pad {
+    --projects-ipad-l-card-h: min(348px, 45.5svh);
+    --projects-ipad-l-card-bottom-extra: 0.75rem;
+  }
+
   #projects.projects-showcase-tablet-pad [data-carousel-card] {
-    height: min(348px, 45.5svh) !important;
+    height: calc(
+      var(--projects-ipad-l-card-h) + var(--projects-ipad-l-card-bottom-extra)
+    ) !important;
+  }
+
+  #projects.projects-showcase-tablet-pad [data-carousel-card] .project-card-thumbnail-section {
+    height: calc(var(--projects-ipad-l-card-h) * 2 / 3) !important;
+  }
+
+  #projects.projects-showcase-tablet-pad [data-carousel-card] .project-card-description-section {
+    height: calc(
+      var(--projects-ipad-l-card-h) / 3 + var(--projects-ipad-l-card-bottom-extra)
+    ) !important;
   }
 
   #projects.projects-showcase-tablet-pad .projects-showcase-featured-block {
-    margin-top: 0.75rem !important;
+    margin-top: max(
+      0px,
+      calc(0.75rem - var(--projects-ipad-l-card-bottom-extra))
+    ) !important;
   }
 
   #projects.projects-showcase-tablet-pad .featured-writing-folder > div:first-child {
@@ -5959,8 +6151,8 @@
       margin-bottom: 1.125rem !important;
     }
 
-    #projects.projects-showcase-tablet-pad [data-carousel-card] {
-      height: min(332px, 43.25svh) !important;
+    #projects.projects-showcase-tablet-pad {
+      --projects-ipad-l-card-h: min(332px, 43.25svh);
     }
 
     #projects.projects-showcase-tablet-pad .featured-writing-raised {

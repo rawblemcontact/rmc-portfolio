@@ -6,7 +6,7 @@ import { PdfJsDocumentView } from "./PdfJsDocumentView";
 import { PDF_FOLD_LOADER_CYCLE_MS } from "./PdfFoldLoader";
 import { PdfLoadingIndicator, PDF_LOADING_FADE_IN_S } from "./PdfLoadingIndicator";
 import { PdfViewerGridBackdrop } from "./PdfViewerGridBackdrop";
-import { EASE } from "@/lib/motion";
+import { EASE, SPRING, TAP } from "@/lib/motion";
 
 export type SupportingPdfPreviewItem = {
   id: string;
@@ -156,14 +156,16 @@ export function SupportingPdfPreviewDialog({
           onAnimationComplete={handleCardAnimationComplete}
         >
             <header className="relative flex shrink-0 items-center justify-between gap-3 border-b border-white/[0.1] bg-black px-4 py-3.5 sm:px-5">
-              <button
+              <motion.button
                 type="button"
                 aria-label="Close PDF preview"
                 onClick={onClose}
                 className="pdf-viewer-chrome-btn pdf-viewer-control-btn"
+                whileTap={reduceMotion ? undefined : TAP}
+                transition={SPRING.tap}
               >
                 <X aria-hidden />
-              </button>
+              </motion.button>
               <div className="pointer-events-none absolute left-1/2 top-1/2 w-[min(62%,26rem)] -translate-x-1/2 -translate-y-1/2 px-2 text-center">
                 <h2
                   id="supporting-pdf-preview-title"
@@ -178,15 +180,17 @@ export function SupportingPdfPreviewDialog({
               <div className="flex shrink-0 items-center gap-2">
                 {pdfSrc ? (
                   <>
-                    <a
+                    <motion.a
                       href={pdfSrc}
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label="Open PDF in new tab"
                       className="pdf-viewer-chrome-btn pdf-viewer-control-btn"
+                      whileTap={reduceMotion ? undefined : TAP}
+                      transition={SPRING.tap}
                     >
                       <ExternalLink aria-hidden />
-                    </a>
+                    </motion.a>
                   </>
                 ) : (
                   <span className="inline-block h-10 w-[5.5rem] shrink-0" aria-hidden />
@@ -203,14 +207,16 @@ export function SupportingPdfPreviewDialog({
               />
             </div>
             {pdfSrc ? (
-              <a
+              <motion.a
                 href={pdfSrc}
                 download
                 aria-label="Download PDF"
                 className="pdf-viewer-chrome-btn pdf-viewer-control-btn pdf-viewer-download-btn absolute bottom-5 right-5 z-20"
+                whileTap={reduceMotion ? undefined : TAP}
+                transition={SPRING.tap}
               >
                 <Download aria-hidden />
-              </a>
+              </motion.a>
             ) : null}
         </motion.div>
       </motion.div>

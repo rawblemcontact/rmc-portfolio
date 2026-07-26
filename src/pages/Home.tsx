@@ -1026,7 +1026,7 @@ const BackToMenuButton = ({
         transition={{ duration: DUR.fast, ease: EASE.out }}
         className={`fixed ${TOP_NAV_FIXED_TOP} left-1 z-50 max-sm:-translate-x-0.5 sm:left-4 sm:translate-x-0`}
       >
-        <motion.div whileTap={TAP} transition={SPRING.ui}>
+        <motion.div whileTap={TAP} transition={SPRING.tap}>
           <Button
             type="button"
             variant="ghost"
@@ -1489,6 +1489,11 @@ const HERO_LOCKUP_FADE_AFTER_VIDEO_MS = 120;
 const HERO_PORTFOLIO_ENTRANCE_X_PX = -28;
 /** Shared duration for PORTFOLIO entrance opacity + x (play together). */
 const HERO_PORTFOLIO_ENTRANCE_DUR_S = 0.42;
+/**
+ * PORTFOLIO click→MENU wait (mobile/tablet).
+ * Matches snappy `--pressed` morph timings in index.css (wipe + arrows).
+ */
+const HERO_PORTFOLIO_HOVER_COMPLETE_MS = 420;
 /** Idle float — starts after entrance (video scale + PORTFOLIO fade) finishes. */
 const HERO_IDLE_FLOAT_START_MS = 700;
 const HERO_IDLE_FLOAT_Y_PX = 2.85;
@@ -1690,10 +1695,21 @@ const prepareHeroLockupSvg = (raw: string) => {
       `d="${d}" fill="#FFFFFF" style="animation-delay:${i * HERO_TAGLINE_STAGGER_MS}ms"/>`
     );
   });
-  /* Divider rule under MCLAUGHLIN — pure white stroke. */
+  /*
+   * Divider rule under MCLAUGHLIN.
+   * Source wraps it in a drop-shadow <g filter>; CSS opacity on that filtered group
+   * plus meet-scaling turns the 0.5uu hairline into a sub-pixel stroke that vanishes
+   * on mobile / iPad (desktop preserveAspectRatio="none" scales it past ~1px).
+   * Unwrap the filter and keep a device-pixel stroke so the rule stays visible.
+   */
   out = out.replace(
-    /(<path d="M9\.0625 77\.25L243\.281 77\.25" stroke=")white(")/,
-    "$1#FFFFFF$2",
+    /<g filter="url\(#filter0_d_65_191\)">\s*<path d="M9\.0625 77\.25L243\.281 77\.25"[^/]*\/>\s*<\/g>/,
+    '<path data-hero-name-rule="true" d="M9.0625 77.25L243.281 77.25" stroke="#FFFFFF" stroke-width="1.25" stroke-linejoin="bevel" vector-effect="non-scaling-stroke"/>',
+  );
+  /* Fallback if the filter wrapper is already gone in a future export. */
+  out = out.replace(
+    /<path d="M9\.0625 77\.25L243\.281 77\.25" stroke="(?:white|#FFFFFF|#ffffff)"[^/]*\/>/,
+    '<path data-hero-name-rule="true" d="M9.0625 77.25L243.281 77.25" stroke="#FFFFFF" stroke-width="1.25" stroke-linejoin="bevel" vector-effect="non-scaling-stroke"/>',
   );
   return out
     .replace(/\swidth="283"/, ' width="100%"')
@@ -2622,7 +2638,7 @@ const Hero = ({
   isResumeMode: _isResumeMode,
   toggleResumeMode: _toggleResumeMode,
   heroInViewRef,
-  active: _active,
+  active,
 }: {
   onStart: () => void;
   onQuickProjects: () => void;
@@ -2686,6 +2702,15 @@ const Hero = ({
   const [heroTabletLandscapeViewport, setHeroTabletLandscapeViewport] = useState(
     matchesHeroTabletLandscapeViewport,
   );
+  /** Skip Framer whileHover on touch-only devices (sticky hover + spring fights CSS wipe). */
+  const [heroCanFineHover, setHeroCanFineHover] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(any-hover: hover) and (any-pointer: fine)").matches,
+  );
+  const portfolioNavPendingRef = useRef(false);
+  const portfolioPressStartedAtRef = useRef<number | null>(null);
+  const portfolioNavTimerRef = useRef<number | null>(null);
   const viewportSvgLockupDefaults = heroTabletLandscapeViewport
     ? HERO_IPAD_HORIZONTAL_SVG_LOCKUP_LAYOUT_DEFAULTS
     : HERO_SVG_LOCKUP_LAYOUT_DEFAULTS;
@@ -2722,6 +2747,14 @@ const Hero = ({
       `(min-width: ${HERO_TABLET_MIN_PX}px) and (max-width: ${HERO_TABLET_MAX_PX}px) and (orientation: landscape)`,
     );
     const onChange = () => setHeroTabletLandscapeViewport(mq.matches);
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(any-hover: hover) and (any-pointer: fine)");
+    const onChange = () => setHeroCanFineHover(mq.matches);
     onChange();
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
@@ -2933,9 +2966,94 @@ const Hero = ({
     desktopNameY.set(heroDesktopSettleOffsetPx());
   }, [desktopNameY, heroPhase1LayoutReady, isMobileHeroLayout, heroDesktopViewport]);
 
-  const onStartClick = () => {
-    onStart();
-  };
+  /** Mobile + tablet (portrait/landscape): finish hover morph before MENU scroll. */
+  const shouldDeferPortfolioNavForHover =
+    (isMobileHeroLayout || heroTabletViewport) && !reduceMotion;
+
+  const clearPortfolioNavTimer = useCallback(() => {
+    if (portfolioNavTimerRef.current !== null) {
+      window.clearTimeout(portfolioNavTimerRef.current);
+      portfolioNavTimerRef.current = null;
+    }
+  }, []);
+
+  const resetPortfolioButtonHoverState = useCallback(() => {
+    clearPortfolioNavTimer();
+    portfolioNavPendingRef.current = false;
+    portfolioPressStartedAtRef.current = null;
+    document
+      .querySelectorAll<HTMLElement>("#hero button.hero-portfolio-animated--pressed")
+      .forEach((el) => el.classList.remove("hero-portfolio-animated--pressed"));
+  }, [clearPortfolioNavTimer]);
+
+  /** Leave hero → clear pressed morph so PORTFOLIO is at rest on return. */
+  useEffect(() => {
+    if (active) return;
+    resetPortfolioButtonHoverState();
+  }, [active, resetPortfolioButtonHoverState]);
+
+  useEffect(() => {
+    return () => {
+      resetPortfolioButtonHoverState();
+    };
+  }, [resetPortfolioButtonHoverState]);
+
+  const handlePortfolioPointerDown = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement>) => {
+      if (!shouldDeferPortfolioNavForHover) return;
+      if (portfolioNavPendingRef.current) return;
+      portfolioPressStartedAtRef.current = performance.now();
+      event.currentTarget.classList.add("hero-portfolio-animated--pressed");
+    },
+    [shouldDeferPortfolioNavForHover],
+  );
+
+  const handlePortfolioPointerCancel = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement>) => {
+      if (portfolioNavPendingRef.current) return;
+      event.currentTarget.classList.remove("hero-portfolio-animated--pressed");
+      portfolioPressStartedAtRef.current = null;
+    },
+    [],
+  );
+
+  const onStartClick = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      if (!shouldDeferPortfolioNavForHover) {
+        onStart();
+        return;
+      }
+      if (portfolioNavPendingRef.current) return;
+
+      const btn = event.currentTarget;
+      btn.classList.add("hero-portfolio-animated--pressed");
+
+      const startedAt = portfolioPressStartedAtRef.current ?? performance.now();
+      const elapsed = performance.now() - startedAt;
+      /** Wipe scaleX ≈ 1 — morph already finished (e.g. settled trackpad hover). */
+      const wipeMatrix = getComputedStyle(btn, "::before").transform;
+      const wipeScaleX =
+        wipeMatrix.startsWith("matrix(")
+          ? Number.parseFloat(wipeMatrix.slice(7))
+          : wipeMatrix === "none"
+            ? 0
+            : 0;
+      const alreadyComplete = Number.isFinite(wipeScaleX) && wipeScaleX >= 0.99;
+      const remaining = alreadyComplete
+        ? 0
+        : Math.max(0, HERO_PORTFOLIO_HOVER_COMPLETE_MS - elapsed);
+
+      portfolioNavPendingRef.current = true;
+      clearPortfolioNavTimer();
+      portfolioNavTimerRef.current = window.setTimeout(() => {
+        portfolioNavTimerRef.current = null;
+        portfolioNavPendingRef.current = false;
+        portfolioPressStartedAtRef.current = null;
+        onStart();
+      }, remaining);
+    },
+    [clearPortfolioNavTimer, onStart, shouldDeferPortfolioNavForHover],
+  );
 
   /** Mount lockup early so live-name can calibrate before entrance. */
   const heroDomReady = fontsReady && heroMediaReady;
@@ -3366,10 +3484,12 @@ const Hero = ({
                     >
                       <motion.button
                         type="button"
+                        onPointerDown={handlePortfolioPointerDown}
+                        onPointerCancel={handlePortfolioPointerCancel}
                         onClick={onStartClick}
                         className={`playstore-button playstore-button--primary hero-portfolio-animated box-border !border-[1.8px] !min-h-0 h-[calc(clamp(2.28rem,8.85vw,5.95rem)*0.78)] max-h-[4.85rem] items-center px-3 !py-0 max-[639px]:max-w-none max-[639px]:px-2.5 sm:px-5 md:px-8 [&_.texts]:text-[clamp(0.82rem,1.58vw,0.97rem)] [&_.texts]:tracking-[0.085em] max-[639px]:[&_.texts]:gap-1 sm:[&_.texts]:text-[clamp(0.9rem,1.82vw,1.05rem)] md:[&_.texts]:text-[clamp(0.96rem,1.68vw,1.12rem)] ${HERO_NAME_MOBILE_PORTFOLIO_BUTTON_CLASS}`}
-                        whileHover={{ y: -1 }}
-                        whileTap={TAP}
+                        whileHover={heroCanFineHover ? { y: -1 } : undefined}
+                        whileTap={{ scale: 0.985 }}
                         transition={SPRING.ui}
                       >
                         <svg viewBox="0 0 24 24" className="hero-portfolio-arrow hero-portfolio-arrow--2" aria-hidden>
@@ -3767,28 +3887,35 @@ const SideNavOverlay = ({
                   MENU
                 </p>
               </div>
-              <motion.div
-                whileTap={TAP}
-                transition={SPRING.ui}
+              {/* Offset on outer shell; scale on inner — keeps press shrink centered (no orbit). */}
+              <div
                 className="absolute right-0 top-0"
+                style={{
+                  transform: `translate(${exitButtonDebug.offsetX}px, ${exitButtonDebug.offsetY + 21}px)`,
+                }}
               >
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={onClose}
-                  aria-label="Close menu"
-                  className={`${TOP_NAV_ICON_BUTTON_CLASS} relative before:absolute before:-inset-1 before:content-[''] [&_svg]:!size-[18px] sm:[&_svg]:!size-5`}
-                  style={{
-                    width: `${exitButtonDebug.size}px`,
-                    height: `${exitButtonDebug.size}px`,
-                    minWidth: `${exitButtonDebug.size}px`,
-                    minHeight: `${exitButtonDebug.size}px`,
-                    transform: `translate(${exitButtonDebug.offsetX}px, ${exitButtonDebug.offsetY + 21}px)`,
-                  }}
+                <motion.div
+                  whileTap={TAP}
+                  transition={SPRING.tap}
+                  className="inline-flex origin-center"
                 >
-                  <X size={22} strokeWidth={1} aria-hidden />
-                </Button>
-              </motion.div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={onClose}
+                    aria-label="Close menu"
+                    className={`${TOP_NAV_ICON_BUTTON_CLASS} relative before:absolute before:-inset-1 before:content-[''] [&_svg]:!size-[18px] sm:[&_svg]:!size-5`}
+                    style={{
+                      width: `${exitButtonDebug.size}px`,
+                      height: `${exitButtonDebug.size}px`,
+                      minWidth: `${exitButtonDebug.size}px`,
+                      minHeight: `${exitButtonDebug.size}px`,
+                    }}
+                  >
+                    <X size={22} strokeWidth={1} aria-hidden />
+                  </Button>
+                </motion.div>
+              </div>
             </div>
 
             <div className="flex flex-col">
@@ -3808,7 +3935,7 @@ const SideNavOverlay = ({
                     setHoveredId(null);
                   }}
                   className="group relative w-full text-left py-3 sm:py-3.5 border-b border-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black focus-visible:ring-inset"
-                  whileTap={TAP}
+                  whileTap={{ scale: 0.985 }}
                   transition={SPRING.ui}
                 >
                   <div className="flex items-center justify-between w-full">
@@ -3855,6 +3982,8 @@ const SideNavOverlay = ({
                   href="#"
                   aria-label="YouTube"
                   whileHover={{ y: -3 }}
+                  whileTap={TAP}
+                  transition={SPRING.tap}
                   className="bg-black p-2 sm:p-2.5 rounded-full text-red-500 transition-colors border border-red-500/20 hover:border-red-500/50 hover:text-red-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                 >
                   <SiYoutube size={16} aria-hidden className="fill-current" />
@@ -3865,6 +3994,8 @@ const SideNavOverlay = ({
                   rel="noopener noreferrer"
                   aria-label="LinkedIn"
                   whileHover={{ y: -3 }}
+                  whileTap={TAP}
+                  transition={SPRING.tap}
                   className="bg-black p-2 sm:p-2.5 rounded-full text-blue-500 transition-colors border border-blue-500/20 hover:border-blue-500/50 hover:text-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                 >
                   <Linkedin size={16} aria-hidden />
@@ -3873,6 +4004,8 @@ const SideNavOverlay = ({
                   href="#"
                   aria-label="TikTok"
                   whileHover={{ y: -3 }}
+                  whileTap={TAP}
+                  transition={SPRING.tap}
                   className="bg-black p-2 sm:p-2.5 rounded-full text-cyan-500 transition-colors border border-cyan-500/20 hover:border-cyan-500/50 hover:text-cyan-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                 >
                   <SiTiktok size={16} aria-hidden className="fill-current" />
@@ -3883,6 +4016,8 @@ const SideNavOverlay = ({
                   rel="noopener noreferrer"
                   aria-label="Instagram"
                   whileHover={{ y: -3 }}
+                  whileTap={TAP}
+                  transition={SPRING.tap}
                   className="bg-black p-2 sm:p-2.5 rounded-full text-pink-500 transition-colors border border-pink-500/20 hover:border-pink-500/50 hover:text-pink-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                 >
                   <SiInstagram size={16} aria-hidden className="fill-current" />
@@ -3891,6 +4026,8 @@ const SideNavOverlay = ({
                   href="mailto:robbie@example.com"
                   aria-label="Email"
                   whileHover={{ y: -3 }}
+                  whileTap={TAP}
+                  transition={SPRING.tap}
                   className="bg-black p-2 sm:p-2.5 rounded-full text-mono-2 transition-colors border border-white/10 hover:border-white/30 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                 >
                   <Mail size={16} aria-hidden />
@@ -6454,25 +6591,29 @@ const ShowcaseIllustrationLightbox = ({
           onClick={(event) => event.stopPropagation()}
         >
           {hasPrev ? (
-            <button
+            <motion.button
               type="button"
               aria-label="Previous illustration"
               onClick={handleShowPrev}
               className="pdf-viewer-chrome-btn illustration-lightbox-chrome-btn illustration-lightbox-nav-btn absolute left-3 z-30 hidden md:inline-flex"
+              whileTap={reduceMotion ? undefined : TAP}
+              transition={SPRING.tap}
             >
               <ArrowLeft aria-hidden />
-            </button>
+            </motion.button>
           ) : null}
 
           {hasNext ? (
-            <button
+            <motion.button
               type="button"
               aria-label="Next illustration"
               onClick={handleShowNext}
               className="pdf-viewer-chrome-btn illustration-lightbox-chrome-btn illustration-lightbox-nav-btn absolute right-3 z-30 hidden md:inline-flex"
+              whileTap={reduceMotion ? undefined : TAP}
+              transition={SPRING.tap}
             >
               <ArrowRight aria-hidden />
-            </button>
+            </motion.button>
           ) : null}
 
           <button
@@ -8886,7 +9027,8 @@ const SocialLink = () => {
               visible: { opacity: 1, x: 0 },
             }}
             transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-            whileHover={{ y: -3 }}
+            whileHover={{ y: -3, transition: SPRING.ui }}
+            whileTap={TAP}
             className={`${CONTACT_BUTTON_BASE} p-5 border border-red-500/20 text-red-500 hover:border-red-500/50 hover:text-red-400`}
             aria-label="YouTube"
           >
@@ -8904,7 +9046,8 @@ const SocialLink = () => {
               visible: { opacity: 1, x: 0 },
             }}
             transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-            whileHover={{ y: -3 }}
+            whileHover={{ y: -3, transition: SPRING.ui }}
+            whileTap={TAP}
             className={`${CONTACT_BUTTON_BASE} p-5 border border-blue-500/20 text-blue-500 hover:border-blue-500/50 hover:text-blue-400`}
             aria-label="LinkedIn"
           >
@@ -8922,7 +9065,8 @@ const SocialLink = () => {
               visible: { opacity: 1, x: 0 },
             }}
             transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-            whileHover={{ y: -3 }}
+            whileHover={{ y: -3, transition: SPRING.ui }}
+            whileTap={TAP}
             className={`${CONTACT_BUTTON_BASE} p-5 border border-cyan-500/20 text-cyan-500 hover:border-cyan-500/50 hover:text-cyan-400`}
             aria-label="TikTok"
           >
@@ -8940,7 +9084,8 @@ const SocialLink = () => {
               visible: { opacity: 1, x: 0 },
             }}
             transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-            whileHover={{ y: -3 }}
+            whileHover={{ y: -3, transition: SPRING.ui }}
+            whileTap={TAP}
             className={`${CONTACT_BUTTON_BASE} p-5 border border-pink-500/20 text-pink-500 hover:border-pink-500/50 hover:text-pink-400`}
             aria-label="Instagram"
           >
@@ -8956,7 +9101,8 @@ const SocialLink = () => {
               visible: { opacity: 1, x: 0 },
             }}
             transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-            whileHover={{ y: -3 }}
+            whileHover={{ y: -3, transition: SPRING.ui }}
+            whileTap={TAP}
             className={`${CONTACT_BUTTON_BASE} p-5 border border-white/10 text-mono-2 hover:border-white/30 hover:text-white`}
             aria-label="Email"
           >
@@ -11662,7 +11808,7 @@ export default function Home() {
           <motion.div
             layoutId="resume-button"
             whileTap={TAP}
-            transition={SPRING.ui}
+            transition={SPRING.tap}
           >
             <Button
               variant="ghost"
@@ -11677,7 +11823,7 @@ export default function Home() {
         )}
 
         {!isResumeMode && !(currentSlideId === "hero" && currentSection === null) && (currentSlideId !== "menu" || currentSection !== null) && (
-          <motion.div whileTap={TAP} transition={SPRING.ui}>
+          <motion.div whileTap={TAP} transition={SPRING.tap}>
             <Button
               type="button"
               variant="ghost"

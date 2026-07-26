@@ -3,7 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import useEmblaCarousel from "embla-carousel-react";
 import { ArrowLeft, ArrowRight, X } from "lucide-react";
 import { createPortal } from "react-dom";
-import { EASE } from "@/lib/motion";
+import { EASE, SPRING, TAP } from "@/lib/motion";
 
 /** VISUAL DESIGN detail gallery slide (matches `detailGallery` on project-visual-design). */
 export type VisualDesignGallerySlide = {
@@ -164,14 +164,17 @@ const VisualDesignProfileLightbox = ({
           onClick={(event) => event.stopPropagation()}
         >
           {hasPrev ? (
-            <button
+            <motion.button
               type="button"
               aria-label="Previous"
               onClick={handleShowPrev}
-              className="pdf-viewer-chrome-btn absolute left-3 top-1/2 z-20 -translate-y-1/2 sm:left-5"
+              className="pdf-viewer-chrome-btn absolute left-3 top-1/2 z-20 sm:left-5"
+              style={{ y: "-50%" }}
+              whileTap={reduceMotion ? undefined : TAP}
+              transition={SPRING.tap}
             >
               <ArrowLeft aria-hidden />
-            </button>
+            </motion.button>
           ) : null}
 
           <div
@@ -204,14 +207,17 @@ const VisualDesignProfileLightbox = ({
           </div>
 
           {hasNext ? (
-            <button
+            <motion.button
               type="button"
               aria-label="Next"
               onClick={handleShowNext}
-              className="pdf-viewer-chrome-btn absolute right-3 top-1/2 z-20 -translate-y-1/2 sm:right-5"
+              className="pdf-viewer-chrome-btn absolute right-3 top-1/2 z-20 sm:right-5"
+              style={{ y: "-50%" }}
+              whileTap={reduceMotion ? undefined : TAP}
+              transition={SPRING.tap}
             >
               <ArrowRight aria-hidden />
-            </button>
+            </motion.button>
           ) : null}
         </div>
       </div>
