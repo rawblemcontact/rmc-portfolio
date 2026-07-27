@@ -621,33 +621,64 @@ const PANEL_TRANSITION = {
 };
 const CONTENT_SETTLE_DELAY = 0.06; // 60ms after panel settles
 
-/** Drift duration (seconds) ? must match `gridDriftSmooth` in `index.css`. */
+/** Drift duration (seconds) — must match `gridDriftSmooth` in `index.css`. */
 const GRID_DRIFT_DURATION = 12;
 const GRID_CELL_SIZE = 48;
 
-function gridDriftOffsetPx(nowMs: number): number {
-  return ((nowMs % (GRID_DRIFT_DURATION * 1000)) / (GRID_DRIFT_DURATION * 1000)) * GRID_CELL_SIZE;
+/**
+ * Negative animation-delay so newly mounted overlays join the same wall-clock
+ * phase without a perpetual root `setProperty` rAF (that starved hero letter CSS).
+ */
+function gridDriftPhaseDelaySec(): number {
+  return -((performance.now() % (GRID_DRIFT_DURATION * 1000)) / 1000);
 }
 
-/** Mount-only backdrop; drift position is globally driven through CSS var. */
+/** WebKit/iOS: thin 1px dual-gradient grids can composite away at ~4% opacity; repeating + webkit size is more reliable. */
+const GRID_OVERLAY_STYLE_BASE: React.CSSProperties = {
+  backgroundColor: "#121212",
+  backgroundImage: `repeating-linear-gradient(90deg, rgba(255,255,255,0.38) 0, rgba(255,255,255,0.38) 1px, rgba(255,255,255,0) 1px, rgba(255,255,255,0) ${GRID_CELL_SIZE}px), repeating-linear-gradient(0deg, rgba(255,255,255,0.38) 0, rgba(255,255,255,0.38) 1px, rgba(255,255,255,0) 1px, rgba(255,255,255,0) ${GRID_CELL_SIZE}px)`,
+  backgroundSize: `${GRID_CELL_SIZE}px ${GRID_CELL_SIZE}px`,
+  WebkitBackgroundSize: `${GRID_CELL_SIZE}px ${GRID_CELL_SIZE}px`,
+};
+
+/** Stable per-mount style — delay frozen so React re-renders do not restart drift. */
+function useSyncedGridOverlayStyle(): React.CSSProperties {
+  const styleRef = useRef<React.CSSProperties | null>(null);
+  if (styleRef.current == null) {
+    const delay = `${gridDriftPhaseDelaySec()}s`;
+    styleRef.current = {
+      ...GRID_OVERLAY_STYLE_BASE,
+      // CSS var + inline delay keep phase sync without a root rAF style write.
+      ["--portfolio-grid-drift-delay" as string]: delay,
+      animationDelay: delay,
+    };
+  }
+  return styleRef.current;
+}
+
+/** Mount-only backdrop; drift phase synced via negative animation-delay. */
 function SideNavGridBackdrop() {
+  const style = useSyncedGridOverlayStyle();
   return (
     <div
       className="pointer-events-none absolute inset-0 z-0 grid-drift-bg portfolio-grid-overlay"
-      style={gridOverlayStyle}
+      style={style}
       aria-hidden
     />
   );
 }
 
-/** WebKit/iOS: thin 1px dual-gradient grids can composite away at ~4% opacity; repeating + webkit size is more reliable. */
-const gridOverlayStyle: React.CSSProperties = {
-  backgroundColor: "#121212",
-  backgroundImage: `repeating-linear-gradient(90deg, rgba(255,255,255,0.38) 0, rgba(255,255,255,0.38) 1px, rgba(255,255,255,0) 1px, rgba(255,255,255,0) ${GRID_CELL_SIZE}px), repeating-linear-gradient(0deg, rgba(255,255,255,0.38) 0, rgba(255,255,255,0.38) 1px, rgba(255,255,255,0) 1px, rgba(255,255,255,0) ${GRID_CELL_SIZE}px)`,
-  backgroundSize: `${GRID_CELL_SIZE}px ${GRID_CELL_SIZE}px`,
-  WebkitBackgroundSize: `${GRID_CELL_SIZE}px ${GRID_CELL_SIZE}px`,
-  backgroundPosition: "var(--portfolio-grid-drift-position, 0px 0px)",
-};
+/** Hero / menu slide grid — same sync pattern as section overlays. */
+function SlideGridOverlay() {
+  const style = useSyncedGridOverlayStyle();
+  return (
+    <div
+      className="pointer-events-none absolute inset-0 z-0 grid-drift-bg portfolio-grid-overlay"
+      style={style}
+      aria-hidden
+    />
+  );
+}
 
 // Motion-only glow on leading accent edge: faint light-bleed, 10?15% opacity, 8?16px blur
 const ACCENT_GLOW = {
@@ -1282,6 +1313,7 @@ function measureHeroPhase1RevealOffsetPx(motionEl: HTMLElement, lockupEl: HTMLEl
 /**
  * Mobile video card height band — keep in sync with `max-md:h-[…min(Nv h…)]` on the card.
  * When this drops, `heroMobileSettleOffsetPx` lifts the SVG by a matching share of Δvh.
+ * Vertical placement targets full-viewport thirds — not the nav ruler band.
  */
 const HERO_MOBILE_VIDEO_VH = 0.34;
 /** Prior mobile video vh — SVG lift uses a fraction of (this − current) so gaps stay even. */
@@ -1294,7 +1326,7 @@ const HERO_MOBILE_SVG_LIFT_FACTOR = 0.36;
 /** Mobile settle — mirrors legacy `calc(20vh - 1.25rem)` + extra down nudge (px for Framer tween). */
 const HERO_MOBILE_SETTLE_DOWN_NUDGE_REM = 2.15;
 /** Minimum visible air between video card bottom and ROBBIE ink (mobile / Safari). */
-const HERO_MOBILE_STACK_GAP_PX = 32;
+const HERO_MOBILE_STACK_GAP_PX = 40;
 function heroMobileSettleOffsetPx(): number {
   if (typeof window === "undefined") return 0;
   const rootFontSize = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
@@ -1510,7 +1542,7 @@ const HERO_PORTFOLIO_TAP_SPRING = {
 } as const;
 /** Idle float — starts after entrance (video scale + PORTFOLIO fade) finishes. */
 const HERO_IDLE_FLOAT_START_MS = 700;
-const HERO_IDLE_FLOAT_Y_PX = 2.85;
+const HERO_IDLE_FLOAT_Y_PX = 1;
 /** Full up↔down cycle. */
 const HERO_IDLE_FLOAT_DUR_S = 5.6;
 /** Sine samples (× amplitude) for an even, continuous loop with linear tweening. */
@@ -1551,7 +1583,7 @@ const HERO_NAME_MOBILE_DISPLAY_FONT_CLASS =
  * Mobile PORTFOLIO CTA — content-sized (no band); presence via type/padding/hit target only.
  */
 const HERO_NAME_MOBILE_PORTFOLIO_BUTTON_CLASS =
-  "max-md:!h-auto max-md:!min-h-[2.85rem] max-md:!max-h-none max-md:!px-[1.4rem] max-md:!py-2.5 max-md:text-[0.875rem] max-md:[&_.texts]:gap-1 max-md:[&_.texts]:text-[0.875rem] max-md:[&_.texts]:tracking-[0.085em]";
+  "max-md:!h-auto max-md:!min-h-[2.55rem] max-md:!max-h-none max-md:!px-[1.25rem] max-md:!py-2 max-md:text-[0.72rem] max-md:[&_.texts]:gap-1 max-md:[&_.texts]:text-[0.72rem] max-md:[&_.texts]:!tracking-normal";
 const HERO_NAME_SWEEP_MS = 700;
 const HERO_NAME_SPLIT_MS = 600;
 /** Rainbow accents — main-menu section colors (NAV order) for name/tagline/accent fades. */
@@ -1940,6 +1972,8 @@ const HeroNameReveal = ({
   /** Tagline cascade — latched once after name cascade completes (never restarts). */
   const [taglineTypeLatched, setTaglineTypeLatched] = useState(false);
   const taglineTypeLatchedRef = useRef(false);
+  /** True after name + tagline letter cascades have finished (gates layout churn). */
+  const heroLetterEntranceSettledRef = useRef(false);
   const heroSvgMountRef = useRef<HTMLDivElement>(null);
   const heroSvgMountedRef = useRef(false);
   const heroDebugEnabled = useHeroDebugEnabled();
@@ -2029,6 +2063,12 @@ const HeroNameReveal = ({
     if (!host) return;
 
     const onViewportRelayout = () => {
+      const hostNode = heroSvgMountRef.current;
+      const hasSvg = Boolean(hostNode?.querySelector("svg"));
+      /* Mid letter entrance — only heal a missing host; skip fit/re-inject thrash. */
+      if (nameCascadeLatchedRef.current && !heroLetterEntranceSettledRef.current && hasSvg) {
+        return;
+      }
       ensureMounted();
     };
     window.addEventListener("resize", onViewportRelayout);
@@ -2068,6 +2108,7 @@ const HeroNameReveal = ({
       setNameCascadeLatched(true);
       taglineTypeLatchedRef.current = true;
       setTaglineTypeLatched(true);
+      heroLetterEntranceSettledRef.current = true;
       setStep("done");
       return;
     }
@@ -2091,6 +2132,21 @@ const HeroNameReveal = ({
       window.clearTimeout(doneTimer);
     };
   }, [heroReady, revealActive, reduceMotion]);
+
+  /** Mark letter entrance settled after name + tagline cascades (gates layout thrash). */
+  useEffect(() => {
+    if (reduceMotion) {
+      heroLetterEntranceSettledRef.current = true;
+      return;
+    }
+    if (!nameCascadeLatched || heroLetterEntranceSettledRef.current) return;
+    const settledTimer = window.setTimeout(() => {
+      heroLetterEntranceSettledRef.current = true;
+    }, HERO_NAME_CASCADE_MS + HERO_TAGLINE_CASCADE_MS);
+    return () => {
+      window.clearTimeout(settledTimer);
+    };
+  }, [nameCascadeLatched, reduceMotion]);
 
   /** Tagline letter cascade — starts only after ROBBIE / MCLAUGHLIN cascade finishes. */
   useLayoutEffect(() => {
@@ -2686,7 +2742,7 @@ const Hero = ({
    * Gap clamp is idempotent against this so Safari late layout can re-run safely.
    */
   const mobileHeroBaseNameYRef = useRef(0);
-  /** Mobile video Y — settles in parallel with name so the stack centers in the ROT ruler. */
+  /** Mobile video Y — settles in parallel with name so the stack centers on the viewport. */
   const mobileVideoY = useMotionValue(0);
   const desktopNameY = useMotionValue(0);
   const heroNameMotionRef = useRef<HTMLDivElement>(null);
@@ -2719,12 +2775,6 @@ const Hero = ({
   const [heroTabletViewport, setHeroTabletViewport] = useState(matchesHeroTabletViewport);
   const [heroTabletLandscapeViewport, setHeroTabletLandscapeViewport] = useState(
     matchesHeroTabletLandscapeViewport,
-  );
-  /** Skip Framer whileHover on touch-only devices (sticky hover + spring fights CSS wipe). */
-  const [heroCanFineHover, setHeroCanFineHover] = useState(
-    () =>
-      typeof window !== "undefined" &&
-      window.matchMedia("(any-hover: hover) and (any-pointer: fine)").matches,
   );
   const portfolioNavPendingRef = useRef(false);
   const portfolioPressStartedAtRef = useRef<number | null>(null);
@@ -2765,14 +2815,6 @@ const Hero = ({
       `(min-width: ${HERO_TABLET_MIN_PX}px) and (max-width: ${HERO_TABLET_MAX_PX}px) and (orientation: landscape)`,
     );
     const onChange = () => setHeroTabletLandscapeViewport(mq.matches);
-    onChange();
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(any-hover: hover) and (any-pointer: fine)");
-    const onChange = () => setHeroCanFineHover(mq.matches);
     onChange();
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
@@ -2902,9 +2944,11 @@ const Hero = ({
   }, [portfolioFadeReady, reduceMotion]);
 
   /**
-   * Mobile — apply final ROT-centered Y once (no settle tween).
+   * Mobile — apply final viewport-centered Y once (no settle tween).
    * Wait for mobileLockupWidthPx so viewBox/aspect sizing is already applied.
    * Gap is predicted into the same .set() so nothing retargets during letter cascade.
+   * visualViewport / resize listeners wait until PORTFOLIO entrance — iOS chrome
+   * show/hide was retargeting Y mid-cascade and stalling SVG letter CSS.
    */
   useEffect(() => {
     if (!isMobileHeroLayout || !heroPhase1LayoutReady) return;
@@ -2930,13 +2974,9 @@ const Hero = ({
       }
 
       const settle = heroMobileSettleOffsetPx();
-      const rotNudge = measureMobileHeroRotCenterNudgePx(settle);
-      const base = settle + rotNudge;
-      mobileHeroBaseNameYRef.current = base;
-
       /*
-       * Predict video→ink gap at the Y we're about to commit (don't read DOM after
-       * .set() — Framer hasn't painted yet, and a later clamp was the visible jump).
+       * Two-pass: gap-clamp pushes name only. Fold predicted gap into assumedNameY
+       * so the viewport-center nudge still matches the final stack.
        */
       const videoFace =
         document.querySelector<HTMLElement>("#hero [data-hero-mobile-video-face='true']") ??
@@ -2944,22 +2984,39 @@ const Hero = ({
       const nameStackEl = document.querySelector<HTMLElement>('[data-hero-mobile-name-stack="true"]');
       const videoStackEl = document.querySelector<HTMLElement>('[data-hero-mobile-video-stack="true"]');
       const inkTop = measureHeroNameInkTopSettledPx();
-      let nameY = base;
-      if (videoFace && inkTop != null) {
-        const curNameY = readTranslateYPx(nameStackEl);
-        const curVideoY = readTranslateYPx(videoStackEl);
-        const predictedInk = inkTop + (base - curNameY);
+      const curNameY = readTranslateYPx(nameStackEl);
+      const curVideoY = readTranslateYPx(videoStackEl);
+
+      const predictGapPush = (rotNudge: number, assumedNameFinalY: number) => {
+        if (!videoFace || inkTop == null) return 0;
+        const predictedInk = inkTop + (assumedNameFinalY - curNameY);
         const predictedVideoBottom =
           videoFace.getBoundingClientRect().bottom + (rotNudge - curVideoY);
         const predictedGap = predictedInk - predictedVideoBottom;
-        nameY = base + Math.max(0, HERO_MOBILE_STACK_GAP_PX - predictedGap);
+        return Math.max(0, HERO_MOBILE_STACK_GAP_PX - predictedGap);
+      };
+
+      let gapPush = 0;
+      let rotNudge = 0;
+      for (let pass = 0; pass < 3; pass++) {
+        rotNudge = measureMobileHeroRotCenterNudgePx(settle + gapPush);
+        const nextGap = predictGapPush(rotNudge, settle + rotNudge + gapPush);
+        if (Math.abs(nextGap - gapPush) < 0.5) {
+          gapPush = nextGap;
+          break;
+        }
+        gapPush = nextGap;
       }
 
+      const base = settle + rotNudge;
+      mobileHeroBaseNameYRef.current = base;
       mobileVideoY.set(rotNudge);
-      mobileNameY.set(nameY);
+      mobileNameY.set(base + gapPush);
     };
 
     applyMobileHeroY();
+    if (!portfolioFadeReady) return;
+
     window.addEventListener("resize", applyMobileHeroY);
     const vv = window.visualViewport;
     vv?.addEventListener("resize", applyMobileHeroY);
@@ -2973,6 +3030,7 @@ const Hero = ({
     mobileLockupWidthPx,
     mobileNameY,
     mobileVideoY,
+    portfolioFadeReady,
     reduceMotion,
     sliderPhaseActive,
     videoRevealActive,
@@ -3380,10 +3438,7 @@ const Hero = ({
       id="hero"
       className={`relative h-[100svh] w-full overflow-hidden bg-black text-white ${SLIDE_NO_Y_SCROLL}`}
     >
-      <div
-        className="pointer-events-none absolute inset-0 z-0 grid-drift-bg portfolio-grid-overlay"
-        style={gridOverlayStyle}
-      />
+      <SlideGridOverlay />
       {heroDomReady && (
       <motion.div
         initial={false}
@@ -3508,7 +3563,6 @@ const Hero = ({
                         onPointerCancel={handlePortfolioPointerCancel}
                         onClick={onStartClick}
                         className={`playstore-button playstore-button--primary hero-portfolio-animated box-border !border-[1.8px] !min-h-0 h-[calc(clamp(2.28rem,8.85vw,5.95rem)*0.78)] max-h-[4.85rem] items-center px-3 !py-0 max-[639px]:max-w-none max-[639px]:px-2.5 sm:px-5 md:px-8 [&_.texts]:text-[clamp(0.82rem,1.58vw,0.97rem)] [&_.texts]:tracking-[0.085em] max-[639px]:[&_.texts]:gap-1 sm:[&_.texts]:text-[clamp(0.9rem,1.82vw,1.05rem)] md:[&_.texts]:text-[clamp(0.96rem,1.68vw,1.12rem)] ${HERO_NAME_MOBILE_PORTFOLIO_BUTTON_CLASS}`}
-                        whileHover={heroCanFineHover ? { y: -1 } : undefined}
                         whileTap={reduceMotion ? undefined : HERO_PORTFOLIO_TAP}
                         transition={HERO_PORTFOLIO_TAP_SPRING}
                       >
@@ -3687,10 +3741,7 @@ const RainbowMenuSlide = ({
       className={`relative h-screen bg-black text-white flex items-center justify-center p-6 md:p-10 overflow-hidden ${SLIDE}`}
       aria-label="Menu"
     >
-      <div
-        className="pointer-events-none absolute inset-0 z-0 grid-drift-bg portfolio-grid-overlay"
-        style={gridOverlayStyle}
-      />
+      <SlideGridOverlay />
       {mainMenuDebugEnabled &&
         typeof document !== "undefined" &&
         createPortal(
@@ -4334,10 +4385,11 @@ function NavIconButtonDebugPanel({
 
 // --- PROFILE (About) ---
 const SectionGridOverlay = () => {
+  const style = useSyncedGridOverlayStyle();
   return (
     <div
       className="pointer-events-none absolute inset-0 z-0 grid-drift-bg portfolio-grid-overlay"
-      style={gridOverlayStyle}
+      style={style}
       aria-hidden
     />
   );
@@ -11344,27 +11396,6 @@ export default function Home() {
   const isHeroInView = useInView(heroInViewRef, { margin: "-100px 0px 0px 0px" });
   const slidesRef = useRef<HTMLDivElement | null>(null);
 
-  /**
-   * Global grid drift clock.
-   * All grid overlays read `--portfolio-grid-drift-position`, so phase stays in lockstep
-   * across side-nav and section transitions without remount timing tricks.
-   */
-  useEffect(() => {
-    if (typeof document === "undefined") return;
-    const root = document.documentElement;
-    let rafId = 0;
-    const tick = () => {
-      const drift = gridDriftOffsetPx(performance.now());
-      const value = `${drift}px ${drift}px`;
-      root.style.setProperty("--portfolio-grid-drift-position", value);
-      rafId = window.requestAnimationFrame(tick);
-    };
-    tick();
-    return () => {
-      if (rafId) window.cancelAnimationFrame(rafId);
-      root.style.removeProperty("--portfolio-grid-drift-position");
-    };
-  }, []);
   /** Section overlay scroller — shared across pages; must reset on section change. */
   const sectionPanelRef = useRef<HTMLDivElement | null>(null);
   const slideOrder = ["hero", "menu"];

@@ -1,13 +1,13 @@
 @import "./styles/fonts.css";
 @import "./styles/portfolio-palette.css";
 @import "tailwindcss";
-/* Menu SKILLS row underline — force utility emit (NAV_ITEMS only interpolates class names). */
+/* Menu SKILLS row underline â€” force utility emit (NAV_ITEMS only interpolates class names). */
 @source inline("bg-portfolio-green");
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
-/* Split-SVG name letters — cascade when chrome becomes visible (stable flag, no JS cancel). */
+/* Split-SVG name letters â€” cascade when chrome becomes visible (stable flag, no JS cancel). */
 @keyframes hero-name-letter-in {
   from {
     opacity: 0;
@@ -18,7 +18,7 @@
     transform: translateY(0%);
   }
 }
-/* Hero name + tagline ink / layout metrics — never user-selectable */
+/* Hero name + tagline ink / layout metrics â€” never user-selectable */
 [data-hero-svg-root],
 [data-hero-name-lockup="true"],
 #hero [data-hero-center-part="true"] {
@@ -43,7 +43,7 @@
   animation-iteration-count: 1;
   /* animation-delay from each path's inline style */
 }
-/* Tagline — same letter cascade as ROBBIE/MCLAUGHLIN; latched after name finishes. */
+/* Tagline â€” same letter cascade as ROBBIE/MCLAUGHLIN; latched after name finishes. */
 [data-hero-svg-root]:not([data-hero-tagline-animate="true"]) [data-hero-tagline-letter],
 [data-hero-svg-root]:not([data-hero-tagline-animate="true"]) [data-hero-tagline-sep] {
   opacity: 0;
@@ -58,7 +58,7 @@
   animation-iteration-count: 1;
   /* animation-delay from each path's inline style */
 }
-/* Chrome — soft fade; exclude name + tagline glyphs (they have their own reveals). */
+/* Chrome â€” soft fade; exclude name + tagline glyphs (they have their own reveals). */
 [data-hero-svg-root]:not([data-hero-chrome-animate="true"])
   svg
   > *:not([data-hero-name-letter]):not([data-hero-tagline-letter]):not([data-hero-tagline-sep]) {
@@ -89,7 +89,7 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   
-  /* Portfolio accents — values live in src/styles/portfolio-palette.css */
+  /* Portfolio accents â€” values live in src/styles/portfolio-palette.css */
   --color-portfolio-red: var(--palette-red);
   --color-portfolio-orange: var(--palette-orange);
   --color-portfolio-yellow: var(--palette-yellow);
@@ -97,7 +97,7 @@
   --color-portfolio-blue: var(--palette-blue);
   --color-portfolio-blue-bright: var(--palette-blue-bright);
 
-  /* Shadcn / legacy tokens — signature accent = palette blue */
+  /* Shadcn / legacy tokens â€” signature accent = palette blue */
   --color-p3-cyan: var(--palette-blue);
   --color-p3-cyan-bright: var(--palette-blue-bright);
   --color-p3-black: hsl(0 0% 5%);
@@ -133,7 +133,7 @@
   --color-input: var(--color-p3-gray);
   --color-ring: var(--color-p3-cyan);
 
-  /* Typography — Satoshi; hero subheading uses Inter via `.font-hero-subheading` only */
+  /* Typography â€” Satoshi; hero subheading uses Inter via `.font-hero-subheading` only */
   --font-display: 'Satoshi', sans-serif;
   --font-heading: 'Satoshi', sans-serif;
   --font-body: 'Satoshi', sans-serif;
@@ -169,7 +169,7 @@
     --portfolio-section-card-raised: #0c0d16;
     --portfolio-stroke-outer: rgba(255, 255, 255, 0.09);
     --portfolio-stroke-inner: rgba(255, 255, 255, 0.06);
-    /* PROFILE + FEATURED WRITING glass — one frost stack (8% wash + 2px blur) */
+    /* PROFILE + FEATURED WRITING glass â€” one frost stack (8% wash + 2px blur) */
     --portfolio-glass-fill: color-mix(in srgb, var(--portfolio-section-card) 8%, transparent);
     --portfolio-glass-fill-raised: color-mix(
       in srgb,
@@ -182,12 +182,12 @@
       0 18px 48px -28px rgba(0, 0, 0, 0.9),
       inset 1px 0 0 rgba(255, 255, 255, 0.025),
       inset -1px 0 0 rgba(255, 255, 255, 0.025);
-    /* Section type scale — main → subhead → rail/panel → eyebrow (experience rail is canonical) */
+    /* Section type scale â€” main â†’ subhead â†’ rail/panel â†’ eyebrow (experience rail is canonical) */
     --section-main-font-display: clamp(2rem, calc(1.1vw + 1.5625rem), 2.25rem);
     --section-main-lh-display: 0.95;
     /* MENU h2 parity: `tracking-[-0.02em]` */
     --section-main-letter-spacing: -0.02em;
-    /* Subhead under section main titles (base ×0.825: −25% then +10%) */
+    /* Subhead under section main titles (base Ã—0.825: âˆ’25% then +10%) */
     --section-subhead-scale: 0.825;
     --section-subhead-font: clamp(
       calc(1.0625rem * var(--section-subhead-scale)),
@@ -225,8 +225,8 @@
     display: none;
   }
   /* Desktop fit pass: scale root font-size at xl/2xl so rem-based text, spacing,
-   * gaps and max-widths grow proportionally — gives 1440/1920 the same content-
-   * to-viewport balance that iPad landscape already has at 1024–1180. Hard-coded
+   * gaps and max-widths grow proportionally â€” gives 1440/1920 the same content-
+   * to-viewport balance that iPad landscape already has at 1024â€“1180. Hard-coded
    * px values (experience rail, mascot frame, etc.) stay anchored intentionally. */
   @media (min-width: 1280px) {
     html { font-size: 17.5px; }
@@ -290,18 +290,18 @@
 }
 
 @layer utilities {
-  /** Inter — hero subheading only; everything else uses Satoshi via `font-body` */
+  /** Inter â€” hero subheading only; everything else uses Satoshi via `font-body` */
   .font-hero-subheading {
     font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
     font-weight: 400;
     letter-spacing: 0.14em;
   }
 
-  /** Portfolio header rhythm — uppercase labels / eyebrows */
+  /** Portfolio header rhythm â€” uppercase labels / eyebrows */
   .tracking-eyebrow {
     letter-spacing: 0.2em;
   }
-  /** Tighter caps than `tracking-eyebrow` — showcase PROJECTS / FEATURED WRITING */
+  /** Tighter caps than `tracking-eyebrow` â€” showcase PROJECTS / FEATURED WRITING */
   .tracking-eyebrow-tight {
     letter-spacing: 0.1em;
   }
@@ -312,7 +312,7 @@
   .tracking-nav-caps {
     letter-spacing: 0.14em;
   }
-  /** Uppercase button labels — same rhythm as eyebrow-sm, explicit line box for CTAs */
+  /** Uppercase button labels â€” same rhythm as eyebrow-sm, explicit line box for CTAs */
   .tracking-btn-caps {
     letter-spacing: 0.18em;
     line-height: 1.25;
@@ -327,9 +327,16 @@
     }
   }
 
+  /*
+   * Grid drift â€” pure CSS keyframes (compositor-friendly).
+   * Do NOT drive via a root rAF `--portfolio-grid-drift-position` write: that
+   * invalidates document styles every frame and stalls SVG letter cascades on
+   * mobile / tablet. Phase lock across overlays uses negative animation-delay
+   * (see `gridDriftPhaseDelaySec` in Home.tsx).
+   */
   .grid-drift-bg {
-    animation: none;
-    background-position: var(--portfolio-grid-drift-position, 0px 0px);
+    animation: gridDriftSmooth 12s linear infinite;
+    animation-delay: var(--portfolio-grid-drift-delay, 0s);
     isolation: isolate;
   }
 
@@ -370,7 +377,7 @@
     }
   }
 
-  /* SKILLS: overlay height from JS (sectionGridOverlayHeightPx) — panel + scroll, all breakpoints. */
+  /* SKILLS: overlay height from JS (sectionGridOverlayHeightPx) â€” panel + scroll, all breakpoints. */
   #skills > .portfolio-grid-overlay {
     bottom: auto;
     left: 0;
@@ -394,7 +401,7 @@
   }
 
   /*
-   * PROJECTS tablet (768px–1366px): grid bg fills panel + scroll (iPad landscape >1024px included).
+   * PROJECTS tablet (768pxâ€“1366px): grid bg fills panel + scroll (iPad landscape >1024px included).
    * Pairs with bindSectionGridOverlayHeightSync in PalaceProjects.
    */
   @media (min-width: 768px) and (max-width: 1366px) {
@@ -413,8 +420,8 @@
   }
 
   /*
-   * PROJECTS tablet landscape — shrink-wrap showcase (no viewport stretch / black gap below).
-   * lg–xl (1024–1366) Tailwind used min-h-full + flex-1 + justify-center for desktop centering;
+   * PROJECTS tablet landscape â€” shrink-wrap showcase (no viewport stretch / black gap below).
+   * lgâ€“xl (1024â€“1366) Tailwind used min-h-full + flex-1 + justify-center for desktop centering;
    * in landscape the stack is shorter than the panel so flex growth leaves empty black space.
    */
   @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse) {
@@ -466,7 +473,7 @@
     }
   }
 
-  /* Tablet only (768px–1366px): SKILLS scroll-end breathing room — not phone or large desktop. */
+  /* Tablet only (768pxâ€“1366px): SKILLS scroll-end breathing room â€” not phone or large desktop. */
   .section-tablet-bottom-spacer {
     display: none;
     flex-shrink: 0;
@@ -474,7 +481,7 @@
     pointer-events: none;
   }
 
-  /* Tablet portrait: PROFILE header aligns with PROJECTS (768–1023). */
+  /* Tablet portrait: PROFILE header aligns with PROJECTS (768â€“1023). */
   @media (min-width: 768px) and (max-width: 1023.98px) {
     #profile .profile-section-tablet-shell {
       align-items: flex-start !important;
@@ -499,7 +506,7 @@
   /*
    * iPad portrait: hide RAWBLEM mascot, fill viewport height, vertically
    * center the content block. Content width matches EXPERIENCE side gaps
-   * (container px-5 + EXPERIENCE_GUTTER shells) — no extra 560px cap.
+   * (container px-5 + EXPERIENCE_GUTTER shells) â€” no extra 560px cap.
    */
   @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
     #profile {
@@ -540,7 +547,7 @@
     }
 
     /*
-     * Inner stack is `w-fit` + card column `max-w-xl` — without these overrides the
+     * Inner stack is `w-fit` + card column `max-w-xl` â€” without these overrides the
      * block only left-shifts when the 560px shell is removed. Force full EXPERIENCE
      * gutter width so cards actually widen.
      */
@@ -563,7 +570,7 @@
     }
   }
 
-  /* Desktop — fine pointer lg+ or any viewport >1366: keep original centered shell. */
+  /* Desktop â€” fine pointer lg+ or any viewport >1366: keep original centered shell. */
   @media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
     #profile .profile-section-tablet-shell {
       align-items: center !important;
@@ -572,7 +579,7 @@
   }
 
   @media (min-width: 768px) and (max-width: 1366px) and (any-pointer: coarse) {
-    /* PROJECTS showcase list — scroll-end breathing room (touch tablet only). */
+    /* PROJECTS showcase list â€” scroll-end breathing room (touch tablet only). */
     #projects.projects-showcase-tablet-pad {
       padding-bottom: calc(2.5rem / 3);
     }
@@ -590,7 +597,7 @@
     }
 
     /*
-     * SKILLS — fit header + both card rows in one viewport (tablet only).
+     * SKILLS â€” fit header + both card rows in one viewport (tablet only).
      * Tightens scale, gaps, and card min-heights; removes scroll-end spacer above.
      */
     #skills {
@@ -645,7 +652,7 @@
     }
 
     /*
-     * iPad portrait — 3 columns at ~768px means each column is ~216px wide.
+     * iPad portrait â€” 3 columns at ~768px means each column is ~216px wide.
      * Tighten scale, reduce gaps, and trim card min-heights so everything
      * fits comfortably without squishing text or forcing unnecessary scroll.
      */
@@ -673,7 +680,7 @@
     }
 
     /*
-     * iPad landscape — tighter fit when vertical space is limited (Safari chrome + short height).
+     * iPad landscape â€” tighter fit when vertical space is limited (Safari chrome + short height).
      * Scroll container stays active; content should not require scroll to reveal the toolkit row.
      */
     @media (orientation: landscape) {
@@ -830,7 +837,7 @@
     }
   }
 
-  /** Canonical glass frost — PROFILE cards, FEATURED WRITING shell/body/panel, SKILLS tiles */
+  /** Canonical glass frost â€” PROFILE cards, FEATURED WRITING shell/body/panel, SKILLS tiles */
   .portfolio-glass-frost,
   .profile-card-surface {
     background: var(--portfolio-glass-fill);
@@ -849,7 +856,7 @@
     box-shadow: var(--portfolio-glass-shadow);
   }
 
-  /* PROFILE card — metadata pill + in-card labels (SUMMARY, etc.) */
+  /* PROFILE card â€” metadata pill + in-card labels (SUMMARY, etc.) */
   #profile .profile-card-surface > p.profile-card-inline-label {
     font-size: var(--section-eyebrow-font);
     line-height: var(--section-eyebrow-lh);
@@ -887,9 +894,9 @@
   }
 
   /**
-   * Right-docked NAVIGATE drawer — same glass stack; flush on viewport right edge.
+   * Right-docked NAVIGATE drawer â€” same glass stack; flush on viewport right edge.
    * `.profile-card-surface` sets `position: relative` and full box border; without these overrides
-   * they beat Tailwind `fixed` / `z-[60]` and the right stroke reads as a gap (“pulled out”).
+   * they beat Tailwind `fixed` / `z-[60]` and the right stroke reads as a gap (â€œpulled outâ€).
    */
   .side-nav-panel.profile-card-surface {
     position: fixed;
@@ -908,7 +915,7 @@
   }
 
   /**
-   * Shared card fill — PROJECT shells, SKILLS inner faces / subcolumns (EXPERIENCE career tiles use `.skills-card-surface` too).
+   * Shared card fill â€” PROJECT shells, SKILLS inner faces / subcolumns (EXPERIENCE career tiles use `.skills-card-surface` too).
    * Profile uses `.profile-card-surface`; these keep their own border / radius / shadow.
    */
   .project-card-surface,
@@ -918,7 +925,7 @@
     filter: none;
   }
 
-  /* PROJECTS carousel cards — solid fill, no glass blur */
+  /* PROJECTS carousel cards â€” solid fill, no glass blur */
   #projects .project-card-surface {
     background: #000;
     background-image: none;
@@ -977,9 +984,9 @@
   }
 
   /**
-   * FEATURED WRITING — same stack as profile/project (panel = card surface). shell < panel < raised.
+   * FEATURED WRITING â€” same stack as profile/project (panel = card surface). shell < panel < raised.
    */
-  /** Stack wrapper — tab/body chrome only; body frost on inner `.profile-card-surface`. */
+  /** Stack wrapper â€” tab/body chrome only; body frost on inner `.profile-card-surface`. */
   .featured-writing-shell {
     position: relative;
     z-index: 0;
@@ -1004,7 +1011,7 @@
     }
   }
 
-  /** Content panel shell — frost on inner `.profile-card-surface` (same layer stack as project detail cards). */
+  /** Content panel shell â€” frost on inner `.profile-card-surface` (same layer stack as project detail cards). */
   .featured-writing-body-card {
     background: transparent;
     background-image: none;
@@ -1012,7 +1019,7 @@
     box-shadow: none;
   }
 
-  /** FEATURED WRITING body — same glass stack as project detail cards (live grid blur). */
+  /** FEATURED WRITING body â€” same glass stack as project detail cards (live grid blur). */
   .featured-writing-inner-rule-body-top > .profile-card-surface {
     position: relative;
     z-index: 1;
@@ -1063,7 +1070,7 @@
     display: none;
   }
 
-  /** Active folder tab — panel fill inside tab; connects into body seam gap. */
+  /** Active folder tab â€” panel fill inside tab; connects into body seam gap. */
   .featured-writing-tab-active,
   .featured-writing-tab-idle-edge {
     --fw-tab-stroke-current: var(--fw-card-stroke);
@@ -1142,7 +1149,7 @@
     }
   }
 
-  /** Inactive folder tabs — panel fill + stroke; no bottom edge (seam runs below). */
+  /** Inactive folder tabs â€” panel fill + stroke; no bottom edge (seam runs below). */
   .featured-writing-tab-idle-edge {
     --fw-tab-bg-current: var(--fw-tab-idle-bg);
     background: var(--fw-tab-idle-bg);
@@ -1175,12 +1182,12 @@
     }
   }
 
-  /** PDF thumb loading — no fill (PdfFoldLoader / image provides the chrome) */
+  /** PDF thumb loading â€” no fill (PdfFoldLoader / image provides the chrome) */
   .featured-writing-thumb-loading {
     background: transparent;
   }
 
-  /** VIEW CTA — same fill as `.featured-writing-shell`; rest = faint frame; hover = yellow border */
+  /** VIEW CTA â€” same fill as `.featured-writing-shell`; rest = faint frame; hover = yellow border */
   .featured-writing-view-cta {
     background: color-mix(in srgb, var(--portfolio-section-card) 14%, transparent);
     background-image: none;
@@ -1196,34 +1203,6 @@
   .featured-writing-view-cta:hover {
     background: color-mix(in srgb, var(--portfolio-section-card) 14%, transparent);
     border-color: var(--palette-yellow-projects);
-  }
-
-  @keyframes hero-cta-primary-pulse {
-    0%,
-    100% {
-      border-color: var(--palette-red);
-      box-shadow: none;
-    }
-    16.666% {
-      border-color: var(--palette-yellow-projects);
-      box-shadow: none;
-    }
-    33.333% {
-      border-color: var(--palette-blue);
-      box-shadow: none;
-    }
-    50% {
-      border-color: var(--palette-green);
-      box-shadow: none;
-    }
-    66.666% {
-      border-color: var(--palette-orange);
-      box-shadow: none;
-    }
-    83.333% {
-      border-color: #ffffff;
-      box-shadow: none;
-    }
   }
 
   /* Hero CTAs — nav-like thin frame, sharp radius; hover = text + wash only (no border / accent color shift) */
@@ -1248,7 +1227,7 @@
     font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
   }
 
-  /* Primary — slightly stronger frame (still 1px, nav-like); readable pulse for first CTA */
+  /* Primary — static glass border (no rainbow pulse); hover = wipe / text only */
   .playstore-button--primary {
     border-color: rgba(255, 255, 255, 0.14);
     /* Match hero name SVG ink (#FFFAEE) — text + arrow via currentColor. */
@@ -1257,34 +1236,22 @@
     font-family: "Satoshi", sans-serif;
     font-weight: 500;
     background-color: rgba(0, 0, 0, 0.42);
-    animation: hero-cta-primary-pulse 6.4s ease-in-out infinite;
   }
 
   .playstore-button--primary:hover,
   .playstore-button--primary:focus-visible,
   .playstore-button--primary:active {
     color: #fffaee;
+    background-color: rgba(0, 0, 0, 0.42);
     box-shadow: none;
   }
 
-  /* Pause pulse only when wipe is actually engaged (fine hover / press) — not sticky touch :hover. */
+  /* Wipe owns the fill on fine pointers — kill the generic .playstore-button:hover wash. */
   @media (any-hover: hover) and (any-pointer: fine) {
-    .playstore-button--primary:hover,
-    .playstore-button--primary:focus-visible {
-      animation-play-state: paused;
+    .playstore-button--primary.hero-portfolio-animated:hover,
+    .playstore-button--primary.hero-portfolio-animated:focus-visible {
+      background-color: transparent;
     }
-  }
-
-  @media not ((any-hover: hover) and (any-pointer: fine)) {
-    .playstore-button--primary:active,
-    .playstore-button--primary:focus-visible {
-      animation-play-state: paused;
-    }
-  }
-
-  /* JS-held click morph (mobile/tablet) — keep pulse paused while waiting to scroll to MENU. */
-  .playstore-button--primary.hero-portfolio-animated--pressed {
-    animation-play-state: paused;
   }
 
   .playstore-button--primary .texts {
@@ -1294,28 +1261,28 @@
 
   /*
    * Mobile hero PORTFOLIO — content-sized width (no band).
-   * Presence from type, padding, border; keep clearly secondary to the SVG lockup.
+   * Type stays clearly secondary to the SVG tagline lockup.
    */
   @media (max-width: 767.98px) {
     #hero .playstore-button--primary {
-      font-size: 0.875rem !important;
-      min-height: 2.85rem !important;
+      font-size: 0.72rem !important;
+      min-height: 2.55rem !important;
       height: auto !important;
       max-height: none !important;
-      padding: 0.7rem 1.4rem !important;
+      padding: 0.55rem 1.25rem !important;
       border-width: 1.5px;
       background-color: rgba(0, 0, 0, 0.5);
     }
 
     #hero .playstore-button--primary .texts {
-      font-size: 0.875rem !important;
-      letter-spacing: 0.085em;
+      font-size: 0.72rem !important;
+      letter-spacing: normal;
     }
 
     /*
      * Arrow/label — hover is a horizontal mirror of rest (mobile only).
      * Rest:  [text][gap][→]   Hover:  [→][gap][text]
-     * Same edge inset on both arrows; text padding + translateX flip sign.
+     * Transform-only text slide (no padding snap) so the ease is feelable on touch.
      */
     #hero .hero-portfolio-animated .hero-portfolio-arrow {
       width: 1.05em;
@@ -1323,133 +1290,117 @@
     }
 
     #hero .hero-portfolio-animated .hero-portfolio-arrow--1 {
-      right: 0.9rem;
+      /* 1px left nudge */
+      right: calc(0.9rem + 1px);
     }
 
     #hero .hero-portfolio-animated .hero-portfolio-arrow--2 {
-      left: 0.9rem; /* mirror of arrow--1 right */
+      left: 0.9rem;
     }
 
     #hero .hero-portfolio-animated .hero-portfolio-text {
       padding-left: 0;
       padding-right: 1.25rem;
-      transform: translateX(-0.28rem);
+      transform: translate3d(-0.28rem, 0, 0);
+      transition: transform 0.72s cubic-bezier(0.22, 1, 0.36, 1), color 0.28s ease;
     }
 
-    /* Padding snaps (not transitioned); transform still eases. Fine hover vs touch :active. */
     @media (any-hover: hover) and (any-pointer: fine) {
       #hero .hero-portfolio-animated:hover .hero-portfolio-text,
       #hero .hero-portfolio-animated:focus-visible .hero-portfolio-text {
-        padding-left: 1.25rem;
-        padding-right: 0;
-        transform: translateX(0.28rem); /* exact mirror of rest translate */
+        transform: translate3d(0.92rem, 0, 0);
       }
     }
 
     @media not ((any-hover: hover) and (any-pointer: fine)) {
       #hero .hero-portfolio-animated:active .hero-portfolio-text,
       #hero .hero-portfolio-animated:focus-visible .hero-portfolio-text {
-        padding-left: 1.25rem;
-        padding-right: 0;
-        transform: translateX(0.28rem);
+        transform: translate3d(0.92rem, 0, 0);
       }
     }
 
     #hero .hero-portfolio-animated.hero-portfolio-animated--pressed .hero-portfolio-text {
-      padding-left: 1.25rem;
-      padding-right: 0;
-      transform: translateX(0.28rem);
+      transform: translate3d(0.92rem, 0, 0);
+      transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1), color 0.2s ease;
     }
   }
 
   /*
-   * iPad / tablet PORTFOLIO arrows — equalize rest/hover gaps.
-   * Desktop shared rules leave left inset (0.54rem) tighter than right (0.86rem);
-   * mirror padding + matched arrow insets; slight per-orientation nudge (zoom/scale).
+   * iPad / tablet PORTFOLIO — 1px edge nudges; transform-only text slide.
    */
   @media (min-width: 768px) and (max-width: 1366px) and (orientation: portrait) {
     #hero .hero-portfolio-animated .hero-portfolio-arrow--1 {
-      right: 0.7rem;
+      /* Tablet V: 1px left nudge */
+      right: calc(0.7rem + 1px);
     }
 
     #hero .hero-portfolio-animated .hero-portfolio-arrow--2 {
-      left: 0.7rem;
+      /* Tablet V: 1px right nudge */
+      left: calc(0.7rem + 1px);
     }
 
     #hero .hero-portfolio-animated .hero-portfolio-text {
       padding-left: 0;
       padding-right: 1.05rem;
-      transform: translateX(-0.32rem);
+      transform: translate3d(-0.32rem, 0, 0);
+      transition: transform 0.72s cubic-bezier(0.22, 1, 0.36, 1), color 0.28s ease;
     }
 
     @media (any-hover: hover) and (any-pointer: fine) {
       #hero .hero-portfolio-animated:hover .hero-portfolio-text,
       #hero .hero-portfolio-animated:focus-visible .hero-portfolio-text {
-        padding-left: 1.05rem;
-        padding-right: 0;
-        transform: translateX(0.32rem);
+        transform: translate3d(0.88rem, 0, 0);
       }
     }
 
     @media not ((any-hover: hover) and (any-pointer: fine)) {
       #hero .hero-portfolio-animated:active .hero-portfolio-text,
       #hero .hero-portfolio-animated:focus-visible .hero-portfolio-text {
-        padding-left: 1.05rem;
-        padding-right: 0;
-        transform: translateX(0.32rem);
+        transform: translate3d(0.88rem, 0, 0);
       }
     }
 
     #hero .hero-portfolio-animated.hero-portfolio-animated--pressed .hero-portfolio-text {
-      padding-left: 1.05rem;
-      padding-right: 0;
-      transform: translateX(0.32rem);
+      transform: translate3d(0.88rem, 0, 0);
+      transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1), color 0.2s ease;
     }
   }
 
   @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) {
     #hero .hero-portfolio-animated .hero-portfolio-arrow--1 {
-      right: 1.05rem;
+      /* Tablet H: 1px right nudge */
+      right: calc(1.05rem - 1px);
     }
 
     #hero .hero-portfolio-animated .hero-portfolio-arrow--2 {
-      left: 1.05rem;
+      /* Tablet H: 1px left nudge */
+      left: calc(1.05rem - 1px);
     }
 
     #hero .hero-portfolio-animated .hero-portfolio-text {
       padding-left: 0;
       padding-right: 1.1rem;
-      transform: translateX(-0.18rem);
+      transform: translate3d(-0.18rem, 0, 0);
+      transition: transform 0.72s cubic-bezier(0.22, 1, 0.36, 1), color 0.28s ease;
     }
 
     @media (any-hover: hover) and (any-pointer: fine) {
       #hero .hero-portfolio-animated:hover .hero-portfolio-text,
       #hero .hero-portfolio-animated:focus-visible .hero-portfolio-text {
-        padding-left: 1.1rem;
-        padding-right: 0;
-        transform: translateX(0.18rem);
+        transform: translate3d(0.95rem, 0, 0);
       }
     }
 
     @media not ((any-hover: hover) and (any-pointer: fine)) {
       #hero .hero-portfolio-animated:active .hero-portfolio-text,
       #hero .hero-portfolio-animated:focus-visible .hero-portfolio-text {
-        padding-left: 1.1rem;
-        padding-right: 0;
-        transform: translateX(0.18rem);
+        transform: translate3d(0.95rem, 0, 0);
       }
     }
 
     #hero .hero-portfolio-animated.hero-portfolio-animated--pressed .hero-portfolio-text {
-      padding-left: 1.1rem;
-      padding-right: 0;
-      transform: translateX(0.18rem);
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .playstore-button--primary {
-      animation: none;
+      transform: translate3d(0.95rem, 0, 0);
+      transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1), color 0.2s ease;
     }
   }
 
@@ -1490,8 +1441,8 @@
     isolation: isolate;
     user-select: none;
     -webkit-user-select: none;
-    /* Never `transition: all` — mobile/tablet hover also flips padding; that would layout-thrash. */
-    transition: background-color 0.42s cubic-bezier(0.23, 1, 0.32, 1), color 0.28s ease;
+    /* Color only — animating background-color with the wipe reads as a hover hitch. */
+    transition: color 0.28s ease;
   }
 
   .hero-portfolio-animated::before {
@@ -1500,10 +1451,12 @@
     inset: 0;
     z-index: 0;
     background: #ffffff;
-    transform: scaleX(0);
+    transform: scaleX(0) translateZ(0);
     transform-origin: left center;
+    /* Match arrow/text morph — desynced 0.42 vs 0.74 felt stuttery on desktop hover. */
     transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
     pointer-events: none;
+    will-change: transform;
   }
 
   .hero-portfolio-animated .hero-portfolio-arrow {
@@ -1513,32 +1466,30 @@
     height: 1.05em;
     fill: currentColor;
     z-index: 3;
-    transform: translateY(-50%);
-    transition: fill 0.28s ease, transform 0.74s cubic-bezier(0.2, 0.95, 0.25, 1);
+    transform: translate3d(0, -50%, 0);
+    transition: fill 0.28s ease, transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .hero-portfolio-animated .hero-portfolio-arrow--1 {
-    right: 0.86rem;
-    transform: translate(0, -50%);
+    /* Desktop: 1px right nudge */
+    right: calc(0.86rem - 1px);
+    transform: translate3d(0, -50%, 0);
   }
 
   .hero-portfolio-animated .hero-portfolio-arrow--2 {
-    left: 0.54rem;
-    transform: translate(-255%, -50%);
-    /*
-     * Same ease as right arrow; shorter duration — enter stays visible (overflow),
-     * so 0.74s reads as a long drift while the exit is clipped.
-     */
-    transition: fill 0.28s ease, transform 0.5s cubic-bezier(0.2, 0.95, 0.25, 1);
+    /* Desktop: 1px left nudge */
+    left: calc(0.54rem - 1px);
+    transform: translate3d(-255%, -50%, 0);
+    transition: fill 0.28s ease, transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .hero-portfolio-animated .hero-portfolio-text {
     position: relative;
     z-index: 2;
     padding-right: 0.9rem;
-    transform: translateX(-0.42rem);
-    /* Transform + color only — padding mirror (mobile/tablet) must snap, not interpolate. */
-    transition: transform 0.74s cubic-bezier(0.23, 1, 0.32, 1), color 0.28s ease;
+    transform: translate3d(-0.42rem, 0, 0);
+    /* Text slide slightly slower than wipe/arrows so the label eases into place. */
+    transition: transform 0.68s cubic-bezier(0.22, 1, 0.36, 1), color 0.28s ease;
   }
 
   .hero-portfolio-animated .hero-portfolio-circle {
@@ -1562,6 +1513,16 @@
    * Coarse / no-hover: :active (+ :focus-visible) for a brief press; see block below.
    */
   @media (any-hover: hover) and (any-pointer: fine) {
+    /* Desktop: keep wipe / arrows / label on one clock — split timings felt like a stutter. */
+    .hero-portfolio-animated .hero-portfolio-arrow,
+    .hero-portfolio-animated .hero-portfolio-arrow--2 {
+      transition: fill 0.22s ease, transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .hero-portfolio-animated .hero-portfolio-text {
+      transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1), color 0.22s ease;
+    }
+
     .hero-portfolio-animated:hover,
     .hero-portfolio-animated:focus-visible {
       background-color: transparent;
@@ -1569,24 +1530,23 @@
 
     .hero-portfolio-animated:hover::before,
     .hero-portfolio-animated:focus-visible::before {
-      transform: scaleX(1);
+      transform: scaleX(1) translateZ(0);
     }
 
     .hero-portfolio-animated:hover .hero-portfolio-arrow--1,
     .hero-portfolio-animated:focus-visible .hero-portfolio-arrow--1 {
-      transform: translate(255%, -50%);
+      transform: translate3d(255%, -50%, 0);
     }
 
     .hero-portfolio-animated:hover .hero-portfolio-arrow--2,
     .hero-portfolio-animated:focus-visible .hero-portfolio-arrow--2 {
-      /* Slightly more left than 0 — optical parity with right-arrow edge gap. */
-      transform: translate(-0.16rem, -50%);
+      transform: translate3d(0, -50%, 0);
     }
 
     .hero-portfolio-animated:hover .hero-portfolio-text,
     .hero-portfolio-animated:focus-visible .hero-portfolio-text {
       color: #000000;
-      transform: translateX(0.98rem);
+      transform: translate3d(0.98rem, 0, 0);
     }
 
     .hero-portfolio-animated:hover .hero-portfolio-arrow,
@@ -1616,18 +1576,18 @@
 
     .hero-portfolio-animated:active .hero-portfolio-arrow--1,
     .hero-portfolio-animated:focus-visible .hero-portfolio-arrow--1 {
-      transform: translate(255%, -50%);
+      transform: translate3d(255%, -50%, 0);
     }
 
     .hero-portfolio-animated:active .hero-portfolio-arrow--2,
     .hero-portfolio-animated:focus-visible .hero-portfolio-arrow--2 {
-      transform: translate(-0.16rem, -50%);
+      transform: translate3d(0, -50%, 0);
     }
 
     .hero-portfolio-animated:active .hero-portfolio-text,
     .hero-portfolio-animated:focus-visible .hero-portfolio-text {
       color: #000000;
-      transform: translateX(0.98rem);
+      transform: translate3d(0.98rem, 0, 0);
     }
 
     .hero-portfolio-animated:active .hero-portfolio-arrow,
@@ -1651,19 +1611,19 @@
   }
 
   .hero-portfolio-animated.hero-portfolio-animated--pressed .hero-portfolio-arrow--1 {
-    transform: translate(255%, -50%);
-    transition: fill 0.18s ease, transform 0.36s cubic-bezier(0.2, 0.95, 0.25, 1);
+    transform: translate3d(255%, -50%, 0);
+    transition: fill 0.18s ease, transform 0.36s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .hero-portfolio-animated.hero-portfolio-animated--pressed .hero-portfolio-arrow--2 {
-    transform: translate(-0.16rem, -50%);
-    transition: fill 0.18s ease, transform 0.36s cubic-bezier(0.2, 0.95, 0.25, 1);
+    transform: translate3d(0, -50%, 0);
+    transition: fill 0.18s ease, transform 0.36s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .hero-portfolio-animated.hero-portfolio-animated--pressed .hero-portfolio-text {
     color: #000000;
-    transform: translateX(0.98rem);
-    transition: transform 0.36s cubic-bezier(0.23, 1, 0.32, 1), color 0.2s ease;
+    transform: translate3d(0.98rem, 0, 0);
+    transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1), color 0.2s ease;
   }
 
   .hero-portfolio-animated.hero-portfolio-animated--pressed .hero-portfolio-arrow {
@@ -1681,7 +1641,7 @@
     }
 
     .hero-portfolio-animated .hero-portfolio-arrow--1 {
-      right: 0.86rem;
+      right: calc(0.86rem - 1px);
     }
 
     .hero-portfolio-animated .hero-portfolio-arrow--2 {
@@ -1718,13 +1678,9 @@
         transform: scaleX(1);
       }
     }
-
-    .hero-portfolio-animated.hero-portfolio-animated--pressed::before {
-      transform: scaleX(1);
-    }
   }
 
-  /* From Uiverse.io by Sashank02 — scoped to SHOWCASE sample cards */
+  /* From Uiverse.io by Sashank02 â€” scoped to SHOWCASE sample cards */
   .showcase-samples-grid .card {
     width: 100%;
     min-height: 228px;
@@ -1803,8 +1759,8 @@
     background-color: #ffcaa6;
   }
 
-  /* Section overlay main title — matches #experience Career Overview rail display line */
-  /* Section overlay mains — PROFILE, PROJECTS, EXPERIENCE, SKILLS, CONTACT, WRITING SAMPLES */
+  /* Section overlay main title â€” matches #experience Career Overview rail display line */
+  /* Section overlay mains â€” PROFILE, PROJECTS, EXPERIENCE, SKILLS, CONTACT, WRITING SAMPLES */
   .section-main-header-title,
   #profile .section-main-header-title,
   #projects .showcase-header-title-stack > .section-main-header-title,
@@ -1936,7 +1892,7 @@
     padding-bottom: max(20px, env(safe-area-inset-bottom, 0px));
     padding-left: 0;
     padding-right: 0;
-    /* Career section type scale — rail display + subhead dominant → panel → tabs → body */
+    /* Career section type scale â€” rail display + subhead dominant â†’ panel â†’ tabs â†’ body */
     --career-font-display: var(--section-main-font-display);
     --career-lh-display: var(--section-main-lh-display);
     --career-font-eyebrow: var(--section-subhead-font);
@@ -1959,9 +1915,9 @@
     --career-card-ease: cubic-bezier(0.16, 1, 0.3, 1);
     --career-card-fade-ms: 306ms;
     --career-card-height-ms: 486ms;
-    /* Left edge of right-hand content (inner seam → outer card border at lg) */
+    /* Left edge of right-hand content (inner seam â†’ outer card border at lg) */
     --career-overview-content-edge: var(--portfolio-stroke-inner);
-    /* Rail section divider — slightly brighter than card edge for visibility on dark rail */
+    /* Rail section divider â€” slightly brighter than card edge for visibility on dark rail */
     --career-nav-divider-stroke: rgba(255, 255, 255, 0.11);
   }
 
@@ -2106,7 +2062,7 @@
     max-width: 100%;
   }
 
-  /* Dual inline Core / Toolkit cards — in-flow header + rule (absolute divider breaks short panels). */
+  /* Dual inline Core / Toolkit cards â€” in-flow header + rule (absolute divider breaks short panels). */
   #skills .skills-subpanel-header--compact.nav-header {
     padding: 0.125rem 0 0;
     gap: 0.3125rem;
@@ -2187,7 +2143,7 @@
     min-width: 0;
   }
 
-  /* Section main title — Experience rail */
+  /* Section main title â€” Experience rail */
   #experience .nav-header .section-main-header-title {
     margin: 0 0 0 -0.08em;
     padding: 0;
@@ -2200,7 +2156,7 @@
     transform: translateY(-0.125rem);
   }
 
-  /* In-section SKILLS rails (CORE / TOOLKIT, subpanels) — not section mains */
+  /* In-section SKILLS rails (CORE / TOOLKIT, subpanels) â€” not section mains */
   #skills .skills-subpanel-header.nav-header .career-nav-section-subtitle,
   #skills .skills-branch-header.nav-header .career-nav-section-subtitle {
     margin: 0 0 0 -0.08em;
@@ -2323,7 +2279,7 @@
   #projects .showcase-header {
     --career-font-display: var(--section-main-font-display);
     --career-lh-display: var(--section-main-lh-display);
-    /* Subhead under SHOWCASE — paired with experience rail subhead */
+    /* Subhead under SHOWCASE â€” paired with experience rail subhead */
     --showcase-font-subhead: var(--section-subhead-font);
     --showcase-lh-subhead: var(--section-subhead-lh);
   }
@@ -2388,14 +2344,14 @@
   }
 
   @media (max-width: 1023.98px) {
-    /* Match #profile red rule — full content-column width on mobile/tablet. */
+    /* Match #profile red rule â€” full content-column width on mobile/tablet. */
     #projects .showcase-header-subhead-rule {
       width: 100%;
       max-width: 100%;
     }
   }
 
-  /* Subhead under section main title — uppercase */
+  /* Subhead under section main title â€” uppercase */
   #experience .nav-header .career-nav-section-title {
     margin: 0 0 0 -0.05em;
     padding: 0;
@@ -2412,7 +2368,7 @@
     max-width: 100%;
   }
 
-  /* In-section rail subheads (SKILLS overlays, CORE/TOOLKIT) — sentence case */
+  /* In-section rail subheads (SKILLS overlays, CORE/TOOLKIT) â€” sentence case */
   #skills .skills-subpanel-header.nav-header .career-nav-section-title,
   #skills .skills-branch-header.nav-header .career-nav-section-title {
     margin: 0 0 0 -0.05em;
@@ -2541,7 +2497,7 @@
     color: var(--career-tab-sub-active);
   }
 
-  /* Content Area — outer shell + inner layer; inner opacity fades on tab change (see .career-tabs-content-inner) */
+  /* Content Area â€” outer shell + inner layer; inner opacity fades on tab change (see .career-tabs-content-inner) */
   #experience .tabs-content {
     --career-overview-content-max: 680px;
     flex: 1;
@@ -2582,7 +2538,7 @@
     padding: 0 !important;
     pointer-events: none !important;
     isolation: isolate;
-    /* Explicit surface — do not rely on nested `.tabs-content` cascade */
+    /* Explicit surface â€” do not rely on nested `.tabs-content` cascade */
     background: color-mix(in srgb, var(--portfolio-section-card) 6%, transparent) !important;
     background-image: none !important;
     filter: none !important;
@@ -2720,7 +2676,7 @@
     align-items: first baseline;
     gap: clamp(11px, 1.75vw, 21px);
     margin-bottom: 0;
-    /* Floor for wrapped titles — slightly open vs ultra-tight */
+    /* Floor for wrapped titles â€” slightly open vs ultra-tight */
     min-height: calc(1.42 * var(--career-font-panel-headline));
   }
 
@@ -2746,7 +2702,7 @@
     text-wrap: balance;
   }
 
-  /* Dates — tertiary to role title; keeps rail headers visually dominant */
+  /* Dates â€” tertiary to role title; keeps rail headers visually dominant */
   #experience .panel-period {
     flex-shrink: 0;
     margin: 0;
@@ -3028,7 +2984,7 @@
     content: "";
     display: block;
     box-sizing: border-box;
-    /* Fixed square — prevents oval/subpixel stretch across breakpoints */
+    /* Fixed square â€” prevents oval/subpixel stretch across breakpoints */
     width: var(--experience-bullet-size);
     height: var(--experience-bullet-size);
     min-width: var(--experience-bullet-size);
@@ -3206,7 +3162,7 @@
       --career-nav-divider-stroke: rgba(255, 255, 255, 0.14);
     }
 
-    /* Slightly less outer left gutter — rail + card move together */
+    /* Slightly less outer left gutter â€” rail + card move together */
     #experience .career-overview-shell > .container {
       padding-left: 1rem;
     }
@@ -3315,7 +3271,7 @@
       border-radius: 14px;
     }
 
-    /* Drop inner bullet card chrome — body copy sits in the outer resume card. */
+    /* Drop inner bullet card chrome â€” body copy sits in the outer resume card. */
     #experience .content-card {
       background: transparent !important;
       background-image: none !important;
@@ -3387,7 +3343,7 @@
   }
 
   /*
-   * iPad portrait — stack layout with equal-width tabs, vertically centered,
+   * iPad portrait â€” stack layout with equal-width tabs, vertically centered,
    * grid background fills full viewport.
    */
   @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
@@ -3403,7 +3359,7 @@
       flex: 1 1 auto !important;
       display: flex !important;
       flex-direction: column !important;
-      /* flex-start keeps header position fixed regardless of card height — no shift on tab change */
+      /* flex-start keeps header position fixed regardless of card height â€” no shift on tab change */
       justify-content: flex-start !important;
       padding-top: clamp(7.5rem, 26svh, 13rem) !important;
       padding-bottom: max(2.5rem, env(safe-area-inset-bottom, 0px)) !important;
@@ -3955,7 +3911,7 @@
       margin-left: 0;
       text-align: left;
       white-space: nowrap;
-      /* Smaller than role title — date is secondary context, not a headline */
+      /* Smaller than role title â€” date is secondary context, not a headline */
       font-size: clamp(0.875rem, 3.3vw, 0.96rem);
       line-height: 1.2;
     }
@@ -4087,7 +4043,7 @@
     animation: swhing 0.35s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
   }
 
-  /* Grid drift — up and left (ambient) */
+  /* Grid drift â€” up and left (ambient) */
   @keyframes grid-drift {
     0% { background-position: 0 0; }
     100% { background-position: 48px 48px; }
@@ -4096,7 +4052,7 @@
     animation: grid-drift 12s linear infinite;
   }
 
-  /* ─── SKILLS: premium system nodes (60fps, transform/opacity only) ────────── */
+  /* â”€â”€â”€ SKILLS: premium system nodes (60fps, transform/opacity only) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   .skills-section-bg {
     pointer-events: none;
     position: absolute;
@@ -4154,7 +4110,7 @@
   }
 
   /*
-   * iPad portrait — optically center the full SKILLS block in the viewport grid.
+   * iPad portrait â€” optically center the full SKILLS block in the viewport grid.
    * Replace the 24vh mobile hero inset with nav-only clearance, then center
    * the shrink-wrapped content block in 100svh (wins over Tailwind justify-start).
    */
@@ -4176,7 +4132,7 @@
       transform: translateY(clamp(-2rem, -5svh, -3.25rem));
     }
 
-    /* Main title + green line only — visual nudge up; cards keep their layout position */
+    /* Main title + green line only â€” visual nudge up; cards keep their layout position */
     #skills .skills-header {
       transform: translateY(clamp(-2.75rem, -7svh, -4.5rem));
     }
@@ -4339,7 +4295,7 @@
   }
 
   /*
-   * Page rails: beat `.nav-header .career-nav-section-subtitle { margin: … -0.08em }`
+   * Page rails: beat `.nav-header .career-nav-section-subtitle { margin: â€¦ -0.08em }`
    * so the green accent line width matches the title glyphs (no left overhang).
    */
   #skills .skills-branch-header--page.nav-header .career-nav-section-subtitle,
@@ -4383,7 +4339,7 @@
     }
   }
 
-  /* Page band cards — slightly larger than headers to preserve hierarchy */
+  /* Page band cards â€” slightly larger than headers to preserve hierarchy */
   #skills .skills-card-surface--page {
     --skills-page-scale: 1.1;
     min-height: clamp(
@@ -4401,7 +4357,7 @@
     }
   }
 
-  /* Tablet portrait — wins over sm padding; top/bottom inset matches title→divider gap. */
+  /* Tablet portrait â€” wins over sm padding; top/bottom inset matches titleâ†’divider gap. */
   @media (min-width: 768px) and (max-width: 1366px) and (orientation: portrait) {
     #skills {
       --skills-card-inset-y: calc(0.6875rem * var(--skills-page-scale));
@@ -4442,9 +4398,9 @@
     padding-top: calc(0.125rem * var(--skills-page-scale, 1.0625));
   }
 
-  /* Mobile — card top inset matches title→divider gap; cards hug content so padding-bottom is the inner bottom gap. */
+  /* Mobile â€” card top inset matches titleâ†’divider gap; cards hug content so padding-bottom is the inner bottom gap. */
   @media (max-width: 767.98px) {
-    /* Content-sized section — synced min-height was capping scroll extent on phone. */
+    /* Content-sized section â€” synced min-height was capping scroll extent on phone. */
     #skills {
       min-height: auto;
       --skills-card-inset-y: calc(0.6875rem * var(--skills-page-scale, 1.0625));
@@ -4452,7 +4408,7 @@
     }
 
     /*
-     * Slight extra L/R inset under SKILLS title + green line only — widens page
+     * Slight extra L/R inset under SKILLS title + green line only â€” widens page
      * gaps so stacked cards read less wide. Header/line stay at container px-5.
      */
     #skills .skills-page-layout {
@@ -4494,7 +4450,7 @@
       padding-top: 0;
     }
 
-    /* Main title + green line — slight nudge up; cards keep layout position */
+    /* Main title + green line â€” slight nudge up; cards keep layout position */
     #skills .skills-header {
       transform: translateY(-0.4375rem);
     }
@@ -4517,7 +4473,7 @@
     text-wrap: balance;
   }
 
-  /* iPad horizontal — card headers between bullet text and CORE COMPETENCIES rail */
+  /* iPad horizontal â€” card headers between bullet text and CORE COMPETENCIES rail */
   @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse) {
     #skills .skills-card-surface--page .skills-subcategory-column-title {
       font-size: 15.5px; /* > bullets (~15.4px), < CORE (~22px) */
@@ -4570,8 +4526,8 @@
   }
 
   /*
-   * Mobile — must follow base icon/title rules above (same specificity; later wins).
-   * Bullet SVGs up to align with text; six card headers −1px font only.
+   * Mobile â€” must follow base icon/title rules above (same specificity; later wins).
+   * Bullet SVGs up to align with text; six card headers âˆ’1px font only.
    */
   @media (max-width: 767.98px) {
     #skills .skills-card-surface--page .skills-page-card-icon {
@@ -4593,7 +4549,7 @@
     }
   }
 
-  /* iPad portrait + landscape — nudge the whole bullet list up without shifting headers.
+  /* iPad portrait + landscape â€” nudge the whole bullet list up without shifting headers.
    * Use relative offset (not transform) so Framer Motion row entrances stay intact. */
   @media (min-width: 768px) and (max-width: 1366px) and (any-pointer: coarse) {
     #skills .skills-card-surface--page .skills-page-card-list {
@@ -4602,7 +4558,7 @@
     }
   }
 
-  /* iPad landscape — optically align bullet SVGs with bullet text */
+  /* iPad landscape â€” optically align bullet SVGs with bullet text */
   @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse) {
     #skills .skills-card-surface--page .skills-page-card-icon svg {
       transform: translateY(1px);
@@ -4610,7 +4566,7 @@
   }
 
   /*
-   * iPad portrait — bullet SVGs up to align with text; six card headers −1px font only.
+   * iPad portrait â€” bullet SVGs up to align with text; six card headers âˆ’1px font only.
    * Must follow base + shared iPad rules above (same specificity; later wins).
    */
   @media (min-width: 768px) and (max-width: 1366px) and (orientation: portrait) and (any-pointer: coarse) {
@@ -4645,7 +4601,7 @@
     backdrop-filter: blur(2px);
   }
 
-  /* Inline Core / Toolkit rows: no outer shell — headers + six cards only */
+  /* Inline Core / Toolkit rows: no outer shell â€” headers + six cards only */
   #skills .skills-main-card.skills-subcard.skills-subcard-dual {
     background: transparent;
     border: none;
@@ -4716,9 +4672,9 @@
   }
   #skills {
     --skills-marquee-gap-x: 1.05rem;
-    /* Main SKILLS title → green line (single line; mb-2 / 2.5 / 3 parity) */
+    /* Main SKILLS title â†’ green line (single line; mb-2 / 2.5 / 3 parity) */
     --skills-header-line-gap: 0.5rem;
-    /* CORE / TOOLKIT — label pair | rule | card row (main SKILLS line gap unchanged) */
+    /* CORE / TOOLKIT â€” label pair | rule | card row (main SKILLS line gap unchanged) */
     --skills-rail-label-gap: 0.25rem;
     --skills-rail-rule-gap: 0.4375rem;
     --skills-rail-block-gap: 0.3125rem;
@@ -4902,7 +4858,7 @@
   }
 
   /*
-   * INTERACTIVE MEDIA — stacked detail width on mobile / tablet (portrait tablet parity).
+   * INTERACTIVE MEDIA â€” stacked detail width on mobile / tablet (portrait tablet parity).
    */
   @media (max-width: 1023px), ((min-width: 1024px) and (pointer: coarse)) {
     #projects.projects-interactive-media-detail-open .projects-interactive-media-detail-inner,
@@ -4913,8 +4869,8 @@
   }
 
   /*
-   * VIDEO EDITING + INTERACTIVE MEDIA — desktop fine pointer: two-column detail
-   * (player + selector left; divider → now playing → cards right).
+   * VIDEO EDITING + INTERACTIVE MEDIA â€” desktop fine pointer: two-column detail
+   * (player + selector left; divider â†’ now playing â†’ cards right).
    */
   @media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
     #projects.projects-interactive-media-detail-open
@@ -5076,7 +5032,7 @@
     }
 
     /*
-     * Slightly compact description cards on desktop — bottom aligns with thumbnail strip
+     * Slightly compact description cards on desktop â€” bottom aligns with thumbnail strip
      * (video player stays natural 16:9; right column compresses instead).
      */
     #projects.projects-interactive-media-detail-open
@@ -5155,7 +5111,7 @@
     }
 
     /*
-     * Selector thumbnail captions — sit below now-playing title (1.25rem),
+     * Selector thumbnail captions â€” sit below now-playing title (1.25rem),
      * above now-playing subtitle (0.76875rem) and card body (0.875rem).
      */
     #projects.projects-interactive-media-detail-open
@@ -5215,21 +5171,21 @@
     }
   }
 
-  /* VIDEO EDITING — Plyr player frame (ring border — no layout shift) */
+  /* VIDEO EDITING â€” Plyr player frame (ring border â€” no layout shift) */
   .video-editing-player--plyr .plyr,
   .video-editing-player--plyr .plyr__video-wrapper,
   .video-editing-player--plyr .plyr__poster {
     border-radius: inherit;
   }
 
-  /* SLAYWIRE — image hero matches Plyr 16:9 frame */
+  /* SLAYWIRE â€” image hero matches Plyr 16:9 frame */
   .video-editing-player--image {
     aspect-ratio: 16 / 9;
     height: auto;
   }
 
   /*
-   * SLAYWIRE — media selector strip is desktop-only; mobile/tablet keep single hero.
+   * SLAYWIRE â€” media selector strip is desktop-only; mobile/tablet keep single hero.
    */
   @media (max-width: 1023px), ((min-width: 1024px) and (pointer: coarse)) {
     #projects.projects-slaywire-detail-open .video-editing-detail-works {
@@ -5260,7 +5216,7 @@
   }
 
   /*
-   * INTERACTIVE MEDIA — meta column hierarchy: Now playing below project title;
+   * INTERACTIVE MEDIA â€” meta column hierarchy: Now playing below project title;
    * description cards + copy scaled down 10%.
    */
   .video-editing-detail--interactive-media .video-editing-detail-now-playing > div > .font-heading {
@@ -5344,7 +5300,7 @@
     }
   }
 
-  /* VIDEO EDITING — Selected works strip: side arrows (opacity pulse only; no layout shift) */
+  /* VIDEO EDITING â€” Selected works strip: side arrows (opacity pulse only; no layout shift) */
   @keyframes video-editing-works-arrow-pulse {
     0%,
     100% {
@@ -5366,7 +5322,7 @@
       filter var(--works-arrow-motion-dur) var(--works-arrow-motion-ease),
       opacity var(--works-arrow-motion-dur) var(--works-arrow-motion-ease);
   }
-  /* Hover accent + nudge — fine pointer only (avoids sticky :hover on touch). */
+  /* Hover accent + nudge â€” fine pointer only (avoids sticky :hover on touch). */
   @media (hover: hover) and (pointer: fine) {
     .video-editing-works-arrow:hover,
     .video-editing-works-arrow:active {
@@ -5384,7 +5340,7 @@
       transform: translateX(4px);
     }
   }
-  /* Touch/tablet tap — JS toggled class; releases after pointerup (no sticky hover). */
+  /* Touch/tablet tap â€” JS toggled class; releases after pointerup (no sticky hover). */
   .video-editing-works-arrow.video-editing-works-arrow--pressed {
     animation: none;
     opacity: 1;
@@ -5463,7 +5419,7 @@
     }
   }
 
-  /* Back to menu — animated button (dark theme: white text/border, cyan circle) */
+  /* Back to menu â€” animated button (dark theme: white text/border, cyan circle) */
   .animated-button {
     position: relative;
     display: flex;
@@ -5527,7 +5483,7 @@
   .animated-button:hover .text {
     transform: translateX(10px);
   }
-  /* ICON_HOVER_DISABLED: animated-button icon fill on hover — restore next rule
+  /* ICON_HOVER_DISABLED: animated-button icon fill on hover â€” restore next rule
   .animated-button:hover svg {
     fill: #000;
   }
@@ -5543,7 +5499,7 @@
     background-color: #ffffff;
   }
 
-  /* Main skill cards — hover (lift, glow, icon, star, title). Exclude subskills panel: avoids extra layer + blurry text. */
+  /* Main skill cards â€” hover (lift, glow, icon, star, title). Exclude subskills panel: avoids extra layer + blurry text. */
   #skills .skills-main-card:not(.skills-subcard) {
     will-change: transform;
     transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
@@ -5561,7 +5517,7 @@
   #skills .skills-main-card.skills-subcard:hover {
     transform: none;
   }
-  /* ICON_HOVER_DISABLED: skills card SVG (idea/gear + star) — restore block below
+  /* ICON_HOVER_DISABLED: skills card SVG (idea/gear + star) â€” restore block below
   #skills .skills-main-card:hover .paperplane {
     transform: scale(1.07) translateY(-10%) rotate(18deg);
   }
@@ -5573,7 +5529,7 @@
     transform: scale(1.08);
   }
 
-  /* ICON_HOVER_DISABLED: subskills header idea icon — restore block below
+  /* ICON_HOVER_DISABLED: subskills header idea icon â€” restore block below
   #skills .skills-subskills-header-icon:hover .paperplane {
     transform: scale(1.07) translateY(-10%) rotate(18deg);
   }
@@ -5582,7 +5538,7 @@
   }
   */
 
-  /* REMOVED with SkillsSourceToggle (see `SkillsSubskillsPanel` JSDoc in Home.tsx) — restore if toolbar returns:
+  /* REMOVED with SkillsSourceToggle (see `SkillsSubskillsPanel` JSDoc in Home.tsx) â€” restore if toolbar returns:
   #skills .skills-slide-toggle-btn:hover .paperplane {
     transform: scale(1.07) translateY(-10%) rotate(18deg);
   }
@@ -5591,7 +5547,7 @@
   }
   */
 
-  /* One-shot flourish after SKILLS entrance stagger, then settle (hover-leave) — see SkillArsenal in Home.tsx */
+  /* One-shot flourish after SKILLS entrance stagger, then settle (hover-leave) â€” see SkillArsenal in Home.tsx */
   /* Total 0.95s: 0.55s in (match prior flourish) + 0.4s out (match AiIdeaSvg/GearSvg transition 0.4s) */
   @keyframes skills-icon-flourish-paperplane-in-out {
     0% {
@@ -5639,14 +5595,14 @@
 
   /* (border animation for skills cards intentionally removed) */
 
-  /* Tool pills: favicon logos → white to match Simple Icons */
+  /* Tool pills: favicon logos â†’ white to match Simple Icons */
   .tool-logo-favicon {
     height: 22px;
     filter: brightness(0) invert(1);
     object-fit: contain;
   }
 
-  /* Custom URL logos (e.g. Procreate black SVG) — no filter, show as-is */
+  /* Custom URL logos (e.g. Procreate black SVG) â€” no filter, show as-is */
   .tool-logo-custom {
     max-width: unset;
     max-height: unset;
@@ -5655,7 +5611,7 @@
     object-fit: contain;
   }
 
-  /* Subskills tools list (+ menu if tool rows use same class): monochrome imgs → match --palette-green */
+  /* Subskills tools list (+ menu if tool rows use same class): monochrome imgs â†’ match --palette-green */
   #skills .skills-tool-icon-subskills,
   #menu .skills-tool-icon-subskills {
     max-height: 22px;
@@ -5672,7 +5628,7 @@
     fill: rgb(161 161 170);
   }
 
-  /* Subskills — React Aria TagGroup */
+  /* Subskills â€” React Aria TagGroup */
   .subskills-group {
     display: flex;
     flex-direction: column;
@@ -5715,7 +5671,7 @@
   }
 }
 
-/* PDF fold loader — Uiverse.io by vk-uiux (orange-horse-73) */
+/* PDF fold loader â€” Uiverse.io by vk-uiux (orange-horse-73) */
 .pdf-fold-loader {
   position: relative;
   width: 33px;
@@ -5770,7 +5726,7 @@
   transform: rotateY(0deg);
 }
 
-/* PDF viewer header chrome — TOP NAV parity: yellow border on hover/active; white fill + black icon */
+/* PDF viewer header chrome â€” TOP NAV parity: yellow border on hover/active; white fill + black icon */
 .pdf-viewer-chrome-btn {
   display: inline-flex;
   flex-shrink: 0;
@@ -5863,7 +5819,7 @@
   box-shadow: none;
 }
 
-/* PDF viewer — loader stack (Satoshi label under fold animation) */
+/* PDF viewer â€” loader stack (Satoshi label under fold animation) */
 .pdf-loading-indicator {
   display: flex;
   flex-direction: column;
@@ -5932,7 +5888,7 @@
   }
 }
 
-/* ARCHIVE — PDF list row dividers → yellow on row hover */
+/* ARCHIVE â€” PDF list row dividers â†’ yellow on row hover */
 .supporting-archive-pdf-list {
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   transition: border-color 0.2s ease-out;
@@ -5957,7 +5913,7 @@
 }
 
 /*
- * Main MENU — iPad portrait: center in real full-viewport thirds (100svh),
+ * Main MENU â€” iPad portrait: center in real full-viewport thirds (100svh),
  * not the nav-aware ruler band / oversized 100vh slide. Lift content so the
  * block mid sits on the true viewport center (vh/2), matching hero ROT.
  */
@@ -5974,14 +5930,14 @@
 }
 
 /*
- * Hero — iPad / tablet portrait only (768–1023.98 × portrait).
+ * Hero â€” iPad / tablet portrait only (768â€“1023.98 Ã— portrait).
  * Enlarge video height + modest type; lift stack to full-viewport thirds
- * (vh/3 · 2vh/3) — not the nav-aware ruler overlay band.
- * Do NOT override video width — probe + SVG + PORTFOLIO share HERO_VIDEO_CARD_WIDTH_CLASS.
+ * (vh/3 Â· 2vh/3) â€” not the nav-aware ruler overlay band.
+ * Do NOT override video width â€” probe + SVG + PORTFOLIO share HERO_VIDEO_CARD_WIDTH_CLASS.
  * Does not alter mobile, tablet landscape, or desktop shared rules.
  */
 @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
-  /* Keep prior band ratio — vertical placement is owned by the shared translate. */
+  /* Keep prior band ratio â€” vertical placement is owned by the shared translate. */
   #hero [data-hero-stage="true"] {
     grid-template-rows: minmax(0, 1.92fr) minmax(0, 1fr);
     padding-top: max(1.5rem, env(safe-area-inset-top, 0px));
@@ -5990,14 +5946,14 @@
 
   /*
    * Uniform Y lift (video + SVG/name + PORTFOLIO) to full-viewport thirds:
-   * video mid → vh/3, lockup mid → 2vh/3. Cleared below fixed nav (~80px).
+   * video mid â†’ vh/3, lockup mid â†’ 2vh/3. Cleared below fixed nav (~80px).
    */
   #hero [data-hero-stage="true"] > div:first-child > div,
   #hero [data-hero-stage="true"] > div:last-child {
     transform: translateY(-3.15rem);
   }
 
-  /* Video face — taller only (width stays on shared card class / align probe). */
+  /* Video face â€” taller only (width stays on shared card class / align probe). */
   #hero [data-hero-video-card="true"] > div.relative {
     height: clamp(
       240px,
@@ -6007,7 +5963,7 @@
   }
 
   /*
-   * Name sizing — modest bump so lockup + PORTFOLIO still span the video card.
+   * Name sizing â€” modest bump so lockup + PORTFOLIO still span the video card.
    * Aggressive vw growth widened the auto column and broke right-edge CTA align.
    */
   #hero [data-hero-name-lockup="true"] .font-bold.uppercase,
@@ -6015,7 +5971,7 @@
     font-size: clamp(2.45rem, 9.35vw, 5.95rem) !important;
   }
 
-  /* PORTFOLIO CTA — type/padding only (no transform scale; preserves video-edge pin). */
+  /* PORTFOLIO CTA â€” type/padding only (no transform scale; preserves video-edge pin). */
   #hero .playstore-button--primary {
     font-size: 0.8rem;
     min-height: 2.95rem;
@@ -6028,8 +5984,8 @@
   }
 }
 
-/* SLAYWIRE tagline suffix — hidden unless tablet portrait block below shows it */
-/* Carousel card tagline — descender room; font sizes from Home.tsx utilities. */
+/* SLAYWIRE tagline suffix â€” hidden unless tablet portrait block below shows it */
+/* Carousel card tagline â€” descender room; font sizes from Home.tsx utilities. */
 #projects .project-card-tagline {
   overflow: visible;
   padding-bottom: 0.125rem;
@@ -6049,21 +6005,21 @@
     line-clamp: 3 !important;
   }
 
-  /* Four cards — 2×2 within the same total height as the portrait four-card row. */
+  /* Four cards â€” 2Ã—2 within the same total height as the portrait four-card row. */
   #projects .projects-carousel-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  /* Cards → FEATURED WRITING (global bump subtract was collapsing this to ~0). */
+  /* Cards â†’ FEATURED WRITING (global bump subtract was collapsing this to ~0). */
   #projects .projects-showcase-featured-block {
     margin-top: clamp(1rem, 2.25svh, 1.375rem) !important;
   }
 }
 
-/* Carousel card height bump — FEATURED WRITING margin shrinks by the same amount (nothing else moves). */
+/* Carousel card height bump â€” FEATURED WRITING margin shrinks by the same amount (nothing else moves). */
 #projects {
   --showcase-carousel-height-bump: 1.25rem;
-  /* Subhead + rule gap reclaimed by taller carousel cards (header shrinks, cards grow — FEATURED WRITING fixed). */
+  /* Subhead + rule gap reclaimed by taller carousel cards (header shrinks, cards grow â€” FEATURED WRITING fixed). */
   --showcase-subhead-reclaim: 1.5rem;
   --projects-section-nudge-y: -4px;
 }
@@ -6076,19 +6032,29 @@
   margin-top: max(0px, calc(var(--slide-gap, 0.875rem) - var(--showcase-carousel-height-bump))) !important;
 }
 
-/* PROJECTS mobile — small scroll-end gap below FEATURED WRITING */
+/* PROJECTS mobile â€” small scroll-end gap below FEATURED WRITING */
 @media (max-width: 767.98px) {
   #projects .projects-showcase-flow > .section-tablet-bottom-spacer {
     display: block;
     min-height: max(0.75rem, calc(0.875rem + env(safe-area-inset-bottom, 0px) * 0.25));
   }
+
+  /* Phone only: lift main showcase content 1px (header + cards + FEATURED WRITING). */
+  #projects .projects-showcase-stage {
+    margin-top: -1px;
+  }
+
+  /* Phone only: nudge four cards down 1px (transform — does not shift header / FEATURED WRITING). */
+  #projects .projects-showcase-carousel-block {
+    transform: translateY(1px);
+  }
 }
 
-/* ─── PROJECTS — iPad portrait: taller cards + equal vertical gap around four-up row ─── */
+/* â”€â”€â”€ PROJECTS â€” iPad portrait: taller cards + equal vertical gap around four-up row â”€â”€â”€ */
 @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
   #projects {
     --projects-cards-cluster-nudge: clamp(0.5rem, 1.5svh, 1rem);
-    /* header bottom → card top AND card bottom → FEATURED WRITING tab row */
+    /* header bottom â†’ card top AND card bottom â†’ FEATURED WRITING tab row */
     --projects-four-cards-gap: clamp(0.625rem, 1.5svh, 0.875rem);
     /* Trim FEATURED WRITING from the bottom; stage shifts down by the same amount. */
     --projects-fw-height-trim: 0.5rem;
@@ -6097,7 +6063,7 @@
   /*
    * Content (carousel + FEATURED WRITING) uses full EXPERIENCE gutter width
    * (container px-5 + EXPERIENCE_GUTTER shells). Header + yellow line stay at
-   * the narrower centered PROFILE tablet column (560px) — do not expand them.
+   * the narrower centered PROFILE tablet column (560px) â€” do not expand them.
    */
   #projects.projects-showcase-tablet-pad .projects-showcase-viewport {
     width: 100%;
@@ -6115,12 +6081,12 @@
     align-self: flex-start;
   }
 
-  /* Compensate FW height trim — keep panel bottom edge; open air above. */
+  /* Compensate FW height trim â€” keep panel bottom edge; open air above. */
   #projects .projects-showcase-stage {
     transform: translateY(calc(-2% + var(--projects-fw-height-trim)));
   }
 
-  /* FIXED_H thumbnail is 216px — pull bottom in slightly (does not change header/line). */
+  /* FIXED_H thumbnail is 216px â€” pull bottom in slightly (does not change header/line). */
   #projects.projects-showcase-tablet-pad .featured-writing-raised {
     height: calc(216px - var(--projects-fw-height-trim)) !important;
   }
@@ -6164,12 +6130,12 @@
     margin-right: 0 !important;
   }
 
-  /* Equal space above title and between title → divider (matches title inset pt). */
+  /* Equal space above title and between title â†’ divider (matches title inset pt). */
   #projects [data-carousel-card] .project-card-title-inset {
     padding-bottom: 0.75rem !important;
   }
 
-  /* Body → card bottom matches divider → body (sm:gap-2). */
+  /* Body â†’ card bottom matches divider â†’ body (sm:gap-2). */
   #projects [data-carousel-card] .project-card-tagline-panel {
     padding-bottom: 0.5rem !important;
   }
@@ -6192,7 +6158,7 @@
     transform: translate(1px, -0.125rem) !important;
   }
 
-  /* Yellow rule — spans PROJECTS title width (title-rule w-fit) */
+  /* Yellow rule â€” spans PROJECTS title width (title-rule w-fit) */
   #projects .showcase-header-title-rule .showcase-main-accent-line > span {
     left: 0 !important;
     right: 0 !important;
@@ -6208,12 +6174,12 @@
     padding-bottom: 0 !important;
   }
 
-  /* Gap below four cards → FEATURED WRITING tab row */
+  /* Gap below four cards â†’ FEATURED WRITING tab row */
   #projects .projects-showcase-featured-block {
     margin-top: clamp(1rem, 2.25svh, 1.375rem) !important;
   }
 
-  /* SLAYWIRE project detail — portrait: vertically center block (keep md grid + 16:9 hero) */
+  /* SLAYWIRE project detail â€” portrait: vertically center block (keep md grid + 16:9 hero) */
   #projects.projects-slaywire-detail-open {
     min-height: 100svh !important;
     display: flex !important;
@@ -6241,13 +6207,13 @@
 }
 
 /*
- * PROJECTS — tablet landscape (iPad): fold-fit — trim carousel + FEATURED WRITING
+ * PROJECTS â€” tablet landscape (iPad): fold-fit â€” trim carousel + FEATURED WRITING
  * so the full stack clears the panel bottom. Horizontal layout unchanged.
  */
 @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse) {
   /*
    * Match PROJECTS main showcase edges on iPad horizontal:
-   * leftWidthScale (0.8) × TABLET_LANDSCAPE_WIDTH_SCALE (1.05) × leftScale (0.96).
+   * leftWidthScale (0.8) Ã— TABLET_LANDSCAPE_WIDTH_SCALE (1.05) Ã— leftScale (0.96).
    */
   #projects {
     --projects-ipad-landscape-detail-col: min(100%, 80.64%);
@@ -6267,7 +6233,7 @@
   }
 
   /*
-   * Four cards — expand bottom only (description panel) so VISUAL DESIGN
+   * Four cards â€” expand bottom only (description panel) so VISUAL DESIGN
    * tagline can show "branding". Thumbnail stays put; FEATURED WRITING gap
    * absorbs the same amount so nothing else moves.
    */
@@ -6317,7 +6283,7 @@
     gap: 0.6875rem !important;
   }
 
-  /* Body panel copy only (not tabs) — match PROJECTS headline/body hierarchy. */
+  /* Body panel copy only (not tabs) â€” match PROJECTS headline/body hierarchy. */
   #projects.projects-showcase-tablet-pad .featured-writing-body-card .featured-writing-item-title {
     font-size: clamp(1.1875rem, calc(0.22vw + 1.02rem), 1.3125rem) !important;
     line-height: 1.15 !important;
@@ -6356,7 +6322,7 @@
   }
 
   /*
-   * Video-style project details — match PROJECTS main showcase column width.
+   * Video-style project details â€” match PROJECTS main showcase column width.
    */
   #projects.projects-interactive-media-detail-open .projects-interactive-media-detail-stage,
   #projects.projects-video-editing-detail-open .projects-interactive-media-detail-stage,
@@ -6376,7 +6342,7 @@
   }
 
   /*
-   * SLAYWIRE + VIDEO EDITING detail — landscape fit parity with INTERACTIVE MEDIA
+   * SLAYWIRE + VIDEO EDITING detail â€” landscape fit parity with INTERACTIVE MEDIA
    * (shared --projects-ipad-landscape-detail-col + compact meta).
    */
   #projects.projects-video-editing-detail-open
@@ -6515,7 +6481,7 @@
     font-size: 0.9rem;
   }
 
-  /* VIDEO EDITING — works strip: 3-up + bleed matches INTERACTIVE MEDIA */
+  /* VIDEO EDITING â€” works strip: 3-up + bleed matches INTERACTIVE MEDIA */
   #projects.projects-video-editing-detail-open .video-editing-detail-works > .relative {
     margin-left: -1.75rem;
     margin-right: -1.75rem;
@@ -6566,7 +6532,7 @@
 }
 
 /*
- * VISUAL DESIGN detail — all breakpoints.
+ * VISUAL DESIGN detail â€” all breakpoints.
  * Top-anchor the stack so the header is not vertically centered while the gallery
  * is still short (unloaded images), then shoved upward as tiles expand.
  */
@@ -6594,11 +6560,11 @@
   padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px)) !important;
 }
 
-/* PROJECTS — desktop fit: proportional type + spacing + card scale (fine pointer lg+ / >1366). */
+/* PROJECTS â€” desktop fit: proportional type + spacing + card scale (fine pointer lg+ / >1366). */
 @media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
   #projects {
     --projects-fit: 0.92;
-    /* Desktop type scale — display → headline → card → ui → body → eyebrow */
+    /* Desktop type scale â€” display â†’ headline â†’ card â†’ ui â†’ body â†’ eyebrow */
     --projects-type-display: clamp(1.875rem, calc(0.6vw + 1.3rem), 2.125rem);
     --projects-type-headline: clamp(1.1875rem, calc(0.22vw + 1.02rem), 1.3125rem);
     --projects-type-card: clamp(0.75rem, 7cqi, 0.9375rem);
@@ -6648,7 +6614,7 @@
   }
 
   /*
-   * Desktop card stroke — keep grey/yellow border above media + black header panel.
+   * Desktop card stroke â€” keep grey/yellow border above media + black header panel.
    * Absolute fill was painting over the inner stroke just above the title on hover.
    */
   #projects [data-carousel-card].project-card-surface {
@@ -6674,7 +6640,7 @@
 
   /*
    * Keep black header + media inside the stroke. Do not inset `bottom` on the
-   * description panel — that overlaps the media and covers the grey inner edge
+   * description panel â€” that overlaps the media and covers the grey inner edge
    * in the band right above the title on hover.
    */
   #projects [data-carousel-card] .project-card-description-section {
@@ -6883,7 +6849,7 @@
   }
 }
 
-/* Beat Tailwind max-2xl:flex-none on the showcase shell — fill panel height on desktop. */
+/* Beat Tailwind max-2xl:flex-none on the showcase shell â€” fill panel height on desktop. */
 @media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
   section#projects.projects-showcase-tablet-pad > .container {
     flex: 1 1 auto !important;
@@ -6892,7 +6858,7 @@
   }
 }
 
-/* SKILLS — desktop fit: uniform scale of original layout (fine pointer lg+ / >1366). */
+/* SKILLS â€” desktop fit: uniform scale of original layout (fine pointer lg+ / >1366). */
 @media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
   section#skills.no-scrollbar {
     --skills-fit: 0.9;
@@ -7024,7 +6990,7 @@
   }
 }
 
-/* EXPERIENCE — desktop (1280+): iPad landscape layout + proportional scale. */
+/* EXPERIENCE â€” desktop (1280+): iPad landscape layout + proportional scale. */
 @media (min-width: 1280px) {
   #experience {
     /* 1 = iPad landscape reference; stepped scale on wider desktops (plain number for calc(px * fit)). */
@@ -7039,7 +7005,7 @@
     --experience-card-w: clamp(28.35rem, 36.7875vw, 39.4875rem);
   }
 
-  /* Shell — top pad anchors block; flex-start keeps rail fixed when tab card height changes */
+  /* Shell â€” top pad anchors block; flex-start keeps rail fixed when tab card height changes */
   #experience .career-overview-shell {
     display: flex !important;
     flex-direction: column !important;
@@ -7058,7 +7024,7 @@
     --career-rail-card-offset: 5%;
     --career-overview-content-edge: var(--portfolio-stroke-outer);
     --career-nav-divider-stroke: rgba(255, 255, 255, 0.14);
-    /* Semantic type roles — portfolio tokens at fit 1, scale with --experience-scale */
+    /* Semantic type roles â€” portfolio tokens at fit 1, scale with --experience-scale */
     --experience-type-display: clamp(
       calc(1.875rem * var(--experience-scale) + var(--experience-type-bump)),
       calc((0.6vw + 1.3rem) * var(--experience-scale) + var(--experience-type-bump)),
@@ -7081,7 +7047,7 @@
       calc(0.95625rem * var(--experience-scale) + var(--experience-type-bump))
     );
     --experience-type-eyebrow: calc(0.71875rem * var(--experience-scale) + var(--experience-type-bump));
-    /* Hierarchy roles — distinct steps; sizes stay near current visual weight */
+    /* Hierarchy roles â€” distinct steps; sizes stay near current visual weight */
     --experience-type-rail-eyebrow: calc(var(--experience-type-subhead) * 0.9);
     --experience-type-meta: calc(var(--experience-type-body) * 0.94);
     --experience-type-stat: calc(var(--experience-type-headline) * 0.92);
@@ -7129,7 +7095,7 @@
     padding-right: 0;
   }
 
-  /* Grid shell — rail + card, content-driven height */
+  /* Grid shell â€” rail + card, content-driven height */
   #experience .main-container {
     display: grid !important;
     grid-template-columns: var(--experience-rail-w) var(--experience-card-w) !important;
@@ -7387,7 +7353,7 @@
   }
 }
 
-/* iPad horizontal — EXPERIENCE rail header parity with PROFILE section main + subhead. */
+/* iPad horizontal â€” EXPERIENCE rail header parity with PROFILE section main + subhead. */
 @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse) {
   #experience .nav-header .section-main-header-title,
   #experience .nav-header .career-nav-section-subtitle {
@@ -7403,8 +7369,8 @@
   }
 
   /*
-   * Resume card (right panel) — type steps tuned to left rail:
-   * section main → section subhead → tab lead → tab sub → eyebrow.
+   * Resume card (right panel) â€” type steps tuned to left rail:
+   * section main â†’ section subhead â†’ tab lead â†’ tab sub â†’ eyebrow.
    * Card headline sits between subhead and tab lead; meta/tags align to tab tiers.
    */
   #experience .tabs-content {
@@ -7478,7 +7444,7 @@
 }
 
 /*
- * Desktop fine pointer — EXPERIENCE resume card hierarchy (parity with iPad card logic).
+ * Desktop fine pointer â€” EXPERIENCE resume card hierarchy (parity with iPad card logic).
  * Sizes derive from --experience-type-* so they scale with the left rail on desktop.
  */
 @media (min-width: 1280px) and (pointer: fine) {
@@ -7599,7 +7565,7 @@
   }
 }
 
-/* Desktop fine pointer — +2px type bump + recentered anchor */
+/* Desktop fine pointer â€” +2px type bump + recentered anchor */
 @media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
   #experience {
     --experience-type-bump: 1px;
@@ -7614,7 +7580,7 @@
 }
 
 /*
- * FEATURED WRITING mobile tab selector — crisp card-border seam (mobile + iPad portrait).
+ * FEATURED WRITING mobile tab selector â€” crisp card-border seam (mobile + iPad portrait).
  * Replaces the blurry backdrop-filter edge under the selected tab with project-card stroke.
  */
 @media (max-width: 639.98px), (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
@@ -7637,11 +7603,11 @@
   }
 }
 
-/* ─── FEATURED WRITING — iPad portrait: use mobile single-tab nav layout ─── */
+/* â”€â”€â”€ FEATURED WRITING â€” iPad portrait: use mobile single-tab nav layout â”€â”€â”€ */
 @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
   /*
    * Mobile tab row is shown on portrait, but Tailwind sm:h-16 / sm:pt-4 still apply
-   * and blow out the gap below the four carousel cards — collapse to mobile height.
+   * and blow out the gap below the four carousel cards â€” collapse to mobile height.
    */
   #projects .featured-writing-folder > div:first-child {
     height: auto !important;
@@ -7659,7 +7625,7 @@
     display: none !important;
   }
 
-  /* Panel body: column layout (thumbnail above text) — revert sm:flex-row */
+  /* Panel body: column layout (thumbnail above text) â€” revert sm:flex-row */
   #projects .featured-writing-panel-body {
     flex-direction: column !important;
     align-items: stretch !important;
