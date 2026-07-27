@@ -4730,7 +4730,7 @@ const PhantomProfile = ({
                color="text-white"
                showBar={false}
                compact
-               className="!mb-3 max-lg:mt-0 lg:mt-0 -ml-[3px]"
+               className="!mb-3 max-lg:mt-0 lg:mt-0 -ml-[3px] max-sm:translate-y-[2px]"
                slideFade
                slideFadeDuration={0.5}
                slideFadeDelay={0.3}
@@ -4755,62 +4755,64 @@ const PhantomProfile = ({
                  transition={{ duration: RED_LINE_DURATION_MS / 1000, delay: RED_LINE_DELAY_MS / 1000, ease: [0.16, 1, 0.3, 1] }}
                />
             </div>
-            <motion.div
-              className={`profile-card-surface relative ${PROFILE_METADATA_PILL_GAP} w-full rounded-[0_1rem] px-4 py-4 sm:px-5 sm:py-5`}
-              style={profileRedLinePillDebugStyle}
-              initial={{ x: -24, opacity: 0 }}
-              animate={{ x: overlayRevealed ? 0 : -24, opacity: overlayRevealed ? 1 : 0 }}
-              transition={{ duration: BUTTON_FADE_DURATION_MS / 1000, delay: overlayRevealed ? BUTTONS_DELAY_AFTER_SUMMARY_MS / 1000 : 0, ease: [0.16, 1, 0.3, 1] }}
-            >
-              <div className="flex w-full min-w-0 items-center gap-3 sm:gap-4">
-                <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full border border-white/[0.16] bg-black/70 sm:h-16 sm:w-16">
-                  <img src="/rawblem3.svg" alt="Profile picture" className="h-full w-full object-cover object-center" />
-                </div>
-                <div className="h-12 w-px shrink-0 bg-white/[0.1] sm:h-14" aria-hidden />
-                <div className="min-w-0 flex-1 space-y-1 text-left">
-                  <div className="flex min-w-0 items-start justify-between gap-3">
-                    <p className="min-w-0 flex-1 font-display text-base leading-tight tracking-[-0.01em] text-white sm:text-lg">
-                      ROBBIE MCLAUGHLIN
+            <div className="max-sm:translate-y-px">
+              <motion.div
+                className={`profile-card-surface relative ${PROFILE_METADATA_PILL_GAP} w-full rounded-[0_1rem] px-4 py-4 sm:px-5 sm:py-5`}
+                style={profileRedLinePillDebugStyle}
+                initial={{ x: -24, opacity: 0 }}
+                animate={{ x: overlayRevealed ? 0 : -24, opacity: overlayRevealed ? 1 : 0 }}
+                transition={{ duration: BUTTON_FADE_DURATION_MS / 1000, delay: overlayRevealed ? BUTTONS_DELAY_AFTER_SUMMARY_MS / 1000 : 0, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <div className="flex w-full min-w-0 items-center gap-3 sm:gap-4">
+                  <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full border border-white/[0.16] bg-black/70 sm:h-16 sm:w-16">
+                    <img src="/rawblem3.svg" alt="Profile picture" className="h-full w-full object-cover object-center" />
+                  </div>
+                  <div className="h-12 w-px shrink-0 bg-white/[0.1] sm:h-14" aria-hidden />
+                  <div className="min-w-0 flex-1 space-y-1 text-left">
+                    <div className="flex min-w-0 items-start justify-between gap-3">
+                      <p className="min-w-0 flex-1 font-display text-base leading-tight tracking-[-0.01em] text-white sm:text-lg">
+                        ROBBIE MCLAUGHLIN
+                      </p>
+                      <p
+                        className="profile-card-inline-label shrink-0 pt-0.5 text-right text-[0.68rem] leading-snug tracking-[0.06em] whitespace-nowrap uppercase sm:text-xs"
+                        style={{ color: NAV_SUBHEAD_GRAY }}
+                      >
+                        VICTORIA, BC
+                      </p>
+                    </div>
+                    <p className={`${PROFILE_CARD_INLINE_LABEL_CLASS} text-[0.68rem] sm:text-xs tracking-[0.06em]`} style={{ color: NAV_SUBHEAD_GRAY }}>
+                      WRITING, CONTENT PRODUCTION, &amp; SOCIAL MEDIA
                     </p>
-                    <p
-                      className="profile-card-inline-label shrink-0 pt-0.5 text-right text-[0.68rem] leading-snug tracking-[0.06em] whitespace-nowrap uppercase sm:text-xs"
-                      style={{ color: NAV_SUBHEAD_GRAY }}
-                    >
-                      VICTORIA, BC
+                    <p className={`${PROFILE_CARD_INLINE_LABEL_CLASS} text-[0.68rem] sm:text-xs tracking-[0.06em]`} style={{ color: NAV_SUBHEAD_GRAY }}>
+                      B.A. WRITING
                     </p>
                   </div>
-                  <p className={`${PROFILE_CARD_INLINE_LABEL_CLASS} text-[0.68rem] sm:text-xs tracking-[0.06em]`} style={{ color: NAV_SUBHEAD_GRAY }}>
-                    WRITING, CONTENT PRODUCTION, &amp; SOCIAL MEDIA
-                  </p>
-                  <p className={`${PROFILE_CARD_INLINE_LABEL_CLASS} text-[0.68rem] sm:text-xs tracking-[0.06em]`} style={{ color: NAV_SUBHEAD_GRAY }}>
-                    B.A. WRITING
-                  </p>
                 </div>
-              </div>
-            </motion.div>
-            <motion.div
-              className={`profile-card-surface relative ${PROFILE_METADATA_PILL_GAP} w-full rounded-[0_1rem] px-4 py-4 sm:px-5 sm:py-5`}
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: overlayRevealed ? 1 : 0, y: overlayRevealed ? 0 : 14 }}
-              transition={{ duration: SUMMARY_DURATION_S, delay: overlayRevealed ? SUMMARY_DELAY_S : 0, ease: [0.16, 1, 0.3, 1] }}
-            >
-              <p className={`${PROFILE_CARD_SECTION_LABEL_CLASS} mb-1.5`} style={{ color: PROFILE_ACCENT_SOFT }}>SUMMARY</p>
-              <p className="font-body text-mono-2 leading-relaxed mb-4">
-              Communications-focused writer, editor and digital media coordinator with proven experience producing narrative-driven web content and managing social
-              media workflows across multiple platforms. Bachelor of Arts in Writing (Distinction), University of Victoria.
-              </p>
-              <p className={`${PROFILE_CARD_SECTION_LABEL_CLASS} mb-1.5`} style={{ color: PROFILE_ACCENT_SOFT }}>CURRENT WORK</p>
-              <ul className="font-body text-mono-2 leading-relaxed mb-4 ml-3 list-disc list-outside space-y-2 pl-6 sm:pl-7 marker:text-mono-2/50">
-                <li>RAWBLEM - Independent creative brand producing story-driven written, video, and interactive content across TikTok, Instagram Reels, YouTube Shorts, and more.</li>
-                <li>
-                SLAYWIRE - Self-produced original narrative IP.
-                </li>
-              </ul>
-              <p className={`${PROFILE_CARD_SECTION_LABEL_CLASS} mb-1.5`} style={{ color: PROFILE_ACCENT_SOFT }}>AVAILABILITY</p>
-              <ul className="font-body text-mono-2 leading-relaxed ml-3 list-disc list-outside space-y-2 pl-6 sm:pl-7 marker:text-mono-2/50">
-                <li>Full-Time Content, Communications, or Social Media roles.</li>
-              </ul>
-            </motion.div>
+              </motion.div>
+              <motion.div
+                className={`profile-card-surface relative ${PROFILE_METADATA_PILL_GAP} w-full rounded-[0_1rem] px-4 py-4 sm:px-5 sm:py-5`}
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: overlayRevealed ? 1 : 0, y: overlayRevealed ? 0 : 14 }}
+                transition={{ duration: SUMMARY_DURATION_S, delay: overlayRevealed ? SUMMARY_DELAY_S : 0, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <p className={`${PROFILE_CARD_SECTION_LABEL_CLASS} mb-1.5`} style={{ color: PROFILE_ACCENT_SOFT }}>SUMMARY</p>
+                <p className="font-body text-mono-2 leading-relaxed mb-4">
+                Communications-focused writer, editor and digital media coordinator with proven experience producing narrative-driven web content and managing social
+                media workflows across multiple platforms. Bachelor of Arts in Writing (Distinction), University of Victoria.
+                </p>
+                <p className={`${PROFILE_CARD_SECTION_LABEL_CLASS} mb-1.5`} style={{ color: PROFILE_ACCENT_SOFT }}>CURRENT WORK</p>
+                <ul className="font-body text-mono-2 leading-relaxed mb-4 ml-3 list-disc list-outside space-y-2 pl-6 sm:pl-7 marker:text-mono-2/50">
+                  <li>RAWBLEM - Independent creative brand producing story-driven written, video, and interactive content across TikTok, Instagram Reels, YouTube Shorts, and more.</li>
+                  <li>
+                  SLAYWIRE - Self-produced original narrative IP.
+                  </li>
+                </ul>
+                <p className={`${PROFILE_CARD_SECTION_LABEL_CLASS} mb-1.5`} style={{ color: PROFILE_ACCENT_SOFT }}>AVAILABILITY</p>
+                <ul className="font-body text-mono-2 leading-relaxed ml-3 list-disc list-outside space-y-2 pl-6 sm:pl-7 marker:text-mono-2/50">
+                  <li>Full-Time Content, Communications, or Social Media roles.</li>
+                </ul>
+              </motion.div>
+            </div>
             </div>
             </div>
           </div>
@@ -6667,6 +6669,13 @@ const ShowcaseIllustrationLightbox = ({
     emblaApi?.scrollNext();
   }, [emblaApi]);
 
+  const renderToolsUnderlinedText = useCallback((text: string) => {
+    const parts = text.split(/(Tools)/gi);
+    return parts.map((part, index) =>
+      /^tools$/i.test(part) ? <span key={`${part}-${index}`} className="underline">{part}</span> : part,
+    );
+  }, []);
+
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -6822,7 +6831,7 @@ const ShowcaseIllustrationLightbox = ({
         </div>
 
         <section
-          className={`group relative shrink-0 border-t border-white/[0.1] bg-black/90 px-4 py-3 pr-20 sm:px-6 sm:py-4 sm:pr-24${descOverflows ? " cursor-pointer" : ""}`}
+          className={`group relative shrink-0 border-t border-white/[0.1] bg-black/90 px-4 py-3 pr-12 sm:px-6 sm:py-4 sm:pr-24${descOverflows ? " cursor-pointer" : ""}`}
           onClick={descOverflows ? () => setDescExpanded((v) => !v) : undefined}
         >
           {descOverflows ? (
@@ -6831,9 +6840,8 @@ const ShowcaseIllustrationLightbox = ({
               onClick={(e) => e.stopPropagation()}
               aria-label={descExpanded ? "Show less" : "Show more"}
               tabIndex={-1}
-              className="pointer-events-none absolute right-4 top-3 z-10 flex select-none items-center gap-1 border-0 bg-transparent p-0 font-heading text-[0.7rem] uppercase tracking-eyebrow-tight text-mono-2/80 transition-colors duration-150 group-hover:text-[color:var(--palette-yellow-projects)] group-active:text-[color:var(--palette-yellow-projects)] sm:right-6 sm:top-4 sm:text-[0.76rem]"
+              className="pointer-events-none absolute right-4 top-3 z-10 flex select-none items-center border-0 bg-transparent p-0 font-heading text-[0.7rem] uppercase tracking-eyebrow-tight text-mono-2/80 sm:right-6 sm:top-4 sm:text-[0.76rem]"
             >
-              <span>{descExpanded ? "less" : "more"}</span>
               <motion.span
                 animate={{ rotate: descExpanded ? 0 : 180 }}
                 transition={{ duration: reduceMotion ? 0 : 0.28, ease: EASE.out }}
@@ -6857,12 +6865,12 @@ const ShowcaseIllustrationLightbox = ({
                 transition={{ duration: reduceMotion ? 0 : 0.3, ease: EASE.out }}
                 className={`relative ${
                   descExpanded
-                    ? "no-scrollbar overflow-y-auto overscroll-y-contain"
+                    ? "no-scrollbar overflow-x-hidden overflow-y-auto overscroll-y-contain touch-pan-y"
                     : "overflow-hidden"
                 }`}
                 ref={descViewportRef}
               >
-                <div ref={descContentRef} className="space-y-2 font-body text-xs leading-relaxed text-mono-2/70 sm:text-sm">
+                <div ref={descContentRef} className="max-sm:-mr-1 space-y-2 font-body text-xs leading-relaxed text-mono-2/70 sm:text-sm">
                   {artistStatement.split(/\n\n+/).map((paragraph, paragraphIndex) => {
                     const text = paragraph.trim();
                     const toolsMatch = text.match(/^(Tools|Subtools):(.*)/is);
@@ -6870,10 +6878,10 @@ const ShowcaseIllustrationLightbox = ({
                     return (
                       <p key={paragraphIndex}>
                         {toolsMatch ? (
-                          <><span className="font-semibold underline">{toolsMatch[1]}:</span>{toolsMatch[2]}</>
+                          <><span className="font-semibold underline">{renderToolsUnderlinedText(toolsMatch[1])}:</span>{renderToolsUnderlinedText(toolsMatch[2])}</>
                         ) : isDisclaimer ? (
-                          <em>{text}</em>
-                        ) : text}
+                          <em>{renderToolsUnderlinedText(text)}</em>
+                        ) : renderToolsUnderlinedText(text)}
                       </p>
                     );
                   })}

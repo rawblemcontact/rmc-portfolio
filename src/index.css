@@ -3673,6 +3673,7 @@
       flex: 0 0 auto;
       width: 100% !important;
       min-width: 0 !important;
+      margin-top: 1px;
     }
 
     #experience .tabs-content {
@@ -4858,9 +4859,11 @@
   }
 
   /*
-   * INTERACTIVE MEDIA â€” stacked detail width on mobile / tablet (portrait tablet parity).
+   * INTERACTIVE MEDIA — stacked detail width on mobile / tablet portrait.
+   * Exclude landscape — iPad horizontal details share --projects-ipad-landscape-detail-col with VISUAL DESIGN.
    */
-  @media (max-width: 1023px), ((min-width: 1024px) and (pointer: coarse)) {
+  @media (max-width: 1023px) and (orientation: portrait),
+    ((min-width: 1024px) and (pointer: coarse) and (orientation: portrait)) {
     #projects.projects-interactive-media-detail-open .projects-interactive-media-detail-inner,
     #projects.projects-video-editing-detail-open .projects-interactive-media-detail-inner,
     #projects.projects-slaywire-detail-open .projects-interactive-media-detail-inner {
@@ -6179,12 +6182,12 @@
     margin-top: clamp(1rem, 2.25svh, 1.375rem) !important;
   }
 
-  /* SLAYWIRE project detail â€” portrait: vertically center block (keep md grid + 16:9 hero) */
+  /* SLAYWIRE project detail â€” portrait: align header start with VIDEO EDITING. */
   #projects.projects-slaywire-detail-open {
     min-height: 100svh !important;
     display: flex !important;
     flex-direction: column !important;
-    padding-top: max(3.75rem, calc(env(safe-area-inset-top, 0px) + 3.25rem)) !important;
+    padding-top: max(calc(4.5rem + 14px), calc(env(safe-area-inset-top, 0px) + 4rem + 14px)) !important;
     padding-bottom: max(3.75rem, env(safe-area-inset-bottom, 0px)) !important;
     overflow-x: visible !important;
   }
@@ -6203,6 +6206,11 @@
   #projects.projects-slaywire-detail-open .video-editing-detail {
     overflow-x: visible !important;
     width: 100%;
+  }
+
+  /* VISUAL DESIGN detail â€” portrait: align header start with VIDEO EDITING. */
+  #projects.projects-visual-design-detail-open .projects-visual-design-detail-inner {
+    margin-top: 23px !important;
   }
 }
 
@@ -6338,7 +6346,7 @@
   #projects.projects-video-editing-detail-open .projects-interactive-media-detail-inner,
   #projects.projects-slaywire-detail-open .projects-interactive-media-detail-inner {
     width: 100% !important;
-    max-width: 100% !important;
+    max-width: none !important;
   }
 
   /*
