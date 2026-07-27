@@ -7374,17 +7374,18 @@
    * Card headline sits between subhead and tab lead; meta/tags align to tab tiers.
    */
   #experience .tabs-content {
+    /* Resume role titles (e.g. DIGITAL CONTENT PRODUCTION) — slight bump vs prior 17px cap */
     --experience-ipad-card-headline: clamp(
-      0.9375rem,
-      calc(0.42vw + 0.82rem),
-      1.0625rem
+      1rem,
+      calc(0.48vw + 0.86rem),
+      1.1875rem
     );
     --experience-ipad-card-meta: clamp(0.75rem, calc(0.32vw + 0.7rem), 0.8125rem);
     --experience-ipad-card-body: clamp(0.8125rem, calc(0.3vw + 0.72rem), 0.875rem);
     --experience-ipad-card-eyebrow: clamp(0.6875rem, calc(0.22vw + 0.62rem), 0.75rem);
     --experience-ipad-card-tag: calc(var(--experience-ipad-card-eyebrow) * 0.9);
     --experience-ipad-card-stat: clamp(0.9375rem, calc(0.4vw + 0.8rem), 1.0625rem);
-    --experience-ipad-lh-headline: 1.08;
+    --experience-ipad-lh-headline: 1.1;
     --experience-ipad-lh-meta: 1.32;
     --experience-ipad-lh-body: 1.42;
     --experience-ipad-lh-eyebrow: 1.28;
