@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import Plyr from "plyr";
@@ -180,6 +180,45 @@ type ShowcaseVideoEditingDetailProps = {
 const showcaseDetailCardClass =
   "profile-card-surface relative rounded-[11px] sm:rounded-xl px-3 py-3 sm:px-4 sm:py-3.5";
 
+/** Desktop + iPad landscape use the same tabbed right-column detail treatment. */
+const PROJECTS_TABBED_DETAIL_MQ =
+  "((min-width: 1024px) and (pointer: fine)), (min-width: 1367px), ((min-width: 768px) and (max-width: 1366px) and (orientation: landscape))";
+
+const DETAIL_CARD_TAB_IDS = ["overview", "role", "impact", "tools"] as const;
+type DetailCardTabId = (typeof DETAIL_CARD_TAB_IDS)[number];
+
+const DETAIL_CARD_TABS: readonly { id: DetailCardTabId; label: string }[] = [
+  { id: "overview", label: "OVERVIEW" },
+  { id: "role", label: "ROLE" },
+  { id: "impact", label: "IMPACT" },
+  { id: "tools", label: "TOOLS" },
+];
+
+/** iPad landscape filler — sized to fill the tab card down to the video player bottom. */
+const IPAD_DETAIL_CARD_LOREM: Record<DetailCardTabId, string> = {
+  overview:
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.\n\nDuis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\n\nInteger vitae justo eget magna fermentum iaculis eu non diam. Pharetra diam sit amet nisl suscipit adipiscing bibendum est ultricies. Dictumst quisque sagittis purus sit amet volutpat consequat mauris nunc.\n\nMorbi tincidunt ornare massa eget egestas purus viverra accumsan. Nisl rhoncus mattis rhoncus urna neque viverra justo nec ultrices. Amet nisl suscipit adipiscing bibendum est ultricies integer quis.",
+  role:
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lectus magna fringilla urna porttitor rhoncus dolor purus non enim.\n\nPraesent elementum facilisis leo vel fringilla est ullamcorper eget nulla. Nunc scelerisque viverra mauris in aliquam sem fringilla ut. Eget nullam non nisi est sit amet facilisis magna etiam.\n\nViverra nam libero justo laoreet sit amet cursus sit. Mattis ullamcorper velit sed ullamcorper morbi tincidunt ornare massa eget.\n\nFeugiat in fermentum posuere urna nec tincidunt praesent semper feugiat. Tellus mauris a diam maecenas sed enim ut sem. Tristique et egestas quis ipsum suspendisse ultrices gravida dictum fusce.",
+  impact:
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Facilisis volutpat est velit egestas dui id ornare arcu odio. Semper auctor neque vitae tempus quam pellentesque nec nam.\n\nTurpis egestas maecenas pharetra convallis posuere morbi leo urna molestie. Amet venenatis urna cursus eget nunc scelerisque viverra mauris. Id ornare arcu odio ut sem nulla pharetra diam.\n\nSit amet nisl suscipit adipiscing bibendum est ultricies integer. Volutpat ac tincidunt vitae semper quis lectus nulla at volutpat.\n\nElit eget gravida cum sociis natoque penatibus et magnis dis. Faucibus ornare suspendisse sed nisi lacus sed viverra tellus. Netus et malesuada fames ac turpis egestas integer eget aliquet.",
+  tools:
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ultrices gravida dictum fusce ut placerat orci nulla pellentesque dignissim.\n\nEnim ut tellus elementum sagittis vitae et leo duis ut. Aenean et tortor at risus viverra adipiscing at in. Tempus imperdiet nulla malesuada pellentesque elit eget gravida cum sociis.",
+};
+
+const IPAD_DETAIL_TOOLS_LOREM = [
+  "Lorem ipsum dolor sit",
+  "Consectetur adipiscing elit",
+  "Sed do eiusmod tempor",
+  "Ut labore et dolore magna",
+  "Quis nostrud exercitation",
+  "Ullamco laboris nisi",
+] as const;
+
+function matchesProjectsTabbedDetailViewport() {
+  return typeof window !== "undefined" && window.matchMedia(PROJECTS_TABBED_DETAIL_MQ).matches;
+}
+
 export function ShowcaseVideoEditingDetail({
   card,
   reduceMotion,
@@ -201,6 +240,17 @@ export function ShowcaseVideoEditingDetail({
   const STRIP_SWIPE_TAP_CANCEL_PX = 10;
   const videos = useMemo(() => card.detailVideos ?? [], [card.detailVideos]);
   const [activeVideoIndex, setActiveVideoIndex] = useState(0);
+  const [isIpadLandscapeViewport, setIsIpadLandscapeViewport] = useState(
+    matchesProjectsTabbedDetailViewport,
+  );
+  const [activeDetailCardTab, setActiveDetailCardTab] = useState<DetailCardTabId>("overview");
+  const [detailCardMinHeightPx, setDetailCardMinHeightPx] = useState<number | null>(null);
+  const detailRootRef = useRef<HTMLDivElement | null>(null);
+  const detailCardSurfaceRef = useRef<HTMLElement | null>(null);
+  const pendingPortraitTabAnchorRef = useRef<{
+    scrollParent: HTMLElement;
+    offset: number;
+  } | null>(null);
   const [pressedWorksArrow, setPressedWorksArrow] = useState<"prev" | "next" | null>(null);
   const thumbRefs = useRef<Array<HTMLElement | null>>([]);
   const thumbStripRef = useRef<HTMLDivElement | null>(null);
@@ -226,6 +276,64 @@ export function ShowcaseVideoEditingDetail({
     return window.matchMedia("(hover: hover) and (pointer: fine)").matches;
   }, []);
 
+  useEffect(() => {
+    const mq = window.matchMedia(PROJECTS_TABBED_DETAIL_MQ);
+    const onChange = () => setIsIpadLandscapeViewport(mq.matches);
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  useEffect(() => {
+    setActiveDetailCardTab("overview");
+  }, [activeVideoIndex, card.id]);
+
+  useEffect(() => {
+    if (!isIpadLandscapeViewport) {
+      setDetailCardMinHeightPx(null);
+      return;
+    }
+
+    const root = detailRootRef.current;
+    if (!root) return;
+
+    const syncDetailCardHeightToPlayer = () => {
+      const player = root.querySelector(".video-editing-player");
+      const cardEl = detailCardSurfaceRef.current;
+      if (!player || !cardEl) return;
+      const playerBottom = player.getBoundingClientRect().bottom;
+      const cardTop = cardEl.getBoundingClientRect().top;
+      const next = Math.max(0, Math.round(playerBottom - cardTop));
+      setDetailCardMinHeightPx((prev) => (prev === next ? prev : next));
+    };
+
+    syncDetailCardHeightToPlayer();
+    const raf = window.requestAnimationFrame(syncDetailCardHeightToPlayer);
+    const player = root.querySelector(".video-editing-player");
+    const resizeObserver =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(() => syncDetailCardHeightToPlayer())
+        : null;
+    if (player && resizeObserver) resizeObserver.observe(player);
+    if (detailCardSurfaceRef.current && resizeObserver) {
+      resizeObserver.observe(detailCardSurfaceRef.current);
+    }
+    window.addEventListener("resize", syncDetailCardHeightToPlayer);
+    window.addEventListener("orientationchange", syncDetailCardHeightToPlayer);
+
+    return () => {
+      window.cancelAnimationFrame(raf);
+      resizeObserver?.disconnect();
+      window.removeEventListener("resize", syncDetailCardHeightToPlayer);
+      window.removeEventListener("orientationchange", syncDetailCardHeightToPlayer);
+    };
+  }, [
+    isIpadLandscapeViewport,
+    activeDetailCardTab,
+    activeVideoIndex,
+    detailPlayerReveal,
+    card.id,
+  ]);
 
   const clearWorksArrowReleaseTimer = useCallback(() => {
     if (worksArrowReleaseTimerRef.current !== null) {
@@ -601,8 +709,155 @@ export function ShowcaseVideoEditingDetail({
         ? "mx-5 w-[calc(100%-2.5rem)] sm:mx-7 sm:w-[calc(100%-3.5rem)]"
         : "mx-4 w-[calc(100%-2rem)] sm:mx-6 sm:w-[calc(100%-3rem)]"
       : "w-full";
-  const worksArrowPrevOffsetClass = matchInteractiveMediaChrome ? "left-0" : "-left-2.5 sm:-left-2";
-  const worksArrowNextOffsetClass = matchInteractiveMediaChrome ? "right-0" : "-right-2.5 sm:-right-2";
+  const worksArrowPrevOffsetClass = matchInteractiveMediaChrome
+    ? "left-[-6px] sm:left-0"
+    : "-left-[14px] sm:-left-2";
+  const worksArrowNextOffsetClass = matchInteractiveMediaChrome
+    ? "right-[-6px] sm:right-0"
+    : "-right-[14px] sm:-right-2";
+
+  const renderPortraitDetailTabBody = (tabId: DetailCardTabId) => {
+    if (tabId === "overview") {
+      return (
+        <p className="m-0 whitespace-pre-line font-body text-sm leading-snug text-mono-2 sm:text-base">
+          {activeDetails.detailOverview}
+        </p>
+      );
+    }
+
+    if (tabId === "role") {
+      return (
+        <p className="m-0 whitespace-pre-line font-body text-sm leading-snug text-mono-2 sm:text-base">
+          {activeDetails.detailRole}
+        </p>
+      );
+    }
+
+    if (tabId === "impact") {
+      return (
+        <p className="m-0 whitespace-pre-line font-body text-sm leading-snug text-mono-2 sm:text-base">
+          {activeDetails.detailImpact}
+        </p>
+      );
+    }
+
+    if (activeDetails.detailTools?.length) {
+      return (
+        <ul className="ml-1 mb-0 list-disc list-outside space-y-1 pl-6 marker:text-mono-2/70 sm:pl-7">
+          {activeDetails.detailTools.map((tool, index) => (
+            <li
+              key={`${tool}-${index}`}
+              className="font-body text-sm leading-snug text-mono-2 sm:text-base"
+            >
+              {tool}
+            </li>
+          ))}
+        </ul>
+      );
+    }
+
+    return <p className="m-0 font-body text-sm text-mono-2/55 sm:text-base">?</p>;
+  };
+
+  const capturePortraitTabScrollAnchor = useCallback(() => {
+    if (isIpadLandscapeViewport) {
+      pendingPortraitTabAnchorRef.current = null;
+      return;
+    }
+
+    const anchorEl = detailCardSurfaceRef.current ?? detailRootRef.current;
+    if (!anchorEl) {
+      pendingPortraitTabAnchorRef.current = null;
+      return;
+    }
+
+    const scrollParent =
+      anchorEl.closest<HTMLElement>('[aria-label^="Section:"]') ??
+      (() => {
+        let current = anchorEl.parentElement;
+        while (current) {
+          const style = window.getComputedStyle(current);
+          if (/(auto|scroll|overlay)/.test(style.overflowY)) {
+            return current;
+          }
+          current = current.parentElement;
+        }
+        return document.scrollingElement instanceof HTMLElement
+          ? document.scrollingElement
+          : null;
+      })();
+
+    if (!scrollParent) {
+      pendingPortraitTabAnchorRef.current = null;
+      return;
+    }
+
+    pendingPortraitTabAnchorRef.current = {
+      scrollParent,
+      offset:
+        anchorEl.getBoundingClientRect().top - scrollParent.getBoundingClientRect().top,
+    };
+  }, [isIpadLandscapeViewport]);
+
+  const handleDetailCardTabChange = useCallback(
+    (nextTabId: DetailCardTabId) => {
+      if (nextTabId === activeDetailCardTab) return;
+
+      if (isIpadLandscapeViewport) {
+        setActiveDetailCardTab(nextTabId);
+        return;
+      }
+
+      capturePortraitTabScrollAnchor();
+      setActiveDetailCardTab(nextTabId);
+    },
+    [activeDetailCardTab, capturePortraitTabScrollAnchor, isIpadLandscapeViewport],
+  );
+
+  const focusDetailCardTab = useCallback((tabId: DetailCardTabId) => {
+    requestAnimationFrame(() => {
+      document.getElementById(`video-detail-tab-${tabId}`)?.focus({ preventScroll: true });
+    });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (isIpadLandscapeViewport) {
+      pendingPortraitTabAnchorRef.current = null;
+      return;
+    }
+
+    const pending = pendingPortraitTabAnchorRef.current;
+    if (!pending) return;
+
+    const applyAnchorCorrection = () => {
+      const anchorEl = detailCardSurfaceRef.current;
+      if (!anchorEl) return;
+      const newOffset =
+        anchorEl.getBoundingClientRect().top - pending.scrollParent.getBoundingClientRect().top;
+      const delta = newOffset - pending.offset;
+      if (Math.abs(delta) > 0.5) {
+        pending.scrollParent.scrollTop += delta;
+      }
+      pending.offset =
+        anchorEl.getBoundingClientRect().top - pending.scrollParent.getBoundingClientRect().top;
+    };
+
+    applyAnchorCorrection();
+
+    let raf2 = 0;
+    const raf1 = window.requestAnimationFrame(() => {
+      applyAnchorCorrection();
+      raf2 = window.requestAnimationFrame(() => {
+        applyAnchorCorrection();
+        pendingPortraitTabAnchorRef.current = null;
+      });
+    });
+
+    return () => {
+      window.cancelAnimationFrame(raf1);
+      window.cancelAnimationFrame(raf2);
+    };
+  }, [activeDetailCardTab, isIpadLandscapeViewport]);
 
   return (
     <>
@@ -620,17 +875,18 @@ export function ShowcaseVideoEditingDetail({
               }
         }
       >
-        <p className="m-0 w-full font-heading text-sm sm:text-base leading-snug tracking-eyebrow-tight uppercase text-[color:var(--palette-yellow-projects)]">
+        <p className="project-detail-main-eyebrow m-0 w-full font-heading text-sm sm:text-base leading-snug tracking-eyebrow-tight uppercase text-[color:var(--palette-yellow-projects)]">
           Project details
         </p>
         <h3 className="m-0 w-full font-display text-2xl md:text-3xl leading-[1.1] tracking-[-0.015em] text-white">
           {card.title}
         </h3>
-        <p className="m-0 w-full pl-[2px] font-body text-sm sm:text-base leading-snug text-mono-2">
+        <p className="project-detail-main-subtitle m-0 w-full font-body text-sm sm:text-base leading-snug text-mono-2">
           {card.tagline}
         </p>
       </motion.div>
       <motion.div
+        ref={detailRootRef}
         className={`video-editing-detail order-3 mt-[calc(0.75rem+1px)] w-full min-w-0 max-w-full overflow-x-visible sm:mt-[calc(1rem+1px)] md:mt-[calc(1.25rem+1px)]${
           isInteractiveMedia ? " video-editing-detail--interactive-media" : ""
         }${isSlaywire ? " video-editing-detail--slaywire" : ""}`}
@@ -805,6 +1061,170 @@ export function ShowcaseVideoEditingDetail({
                   }}
                 />
               </motion.div>
+              {isIpadLandscapeViewport ? (
+                <>
+                  <div className="video-editing-detail-now-playing w-full min-w-0">
+                    <div className="flex w-full min-w-0 flex-col items-stretch gap-y-1.5 text-left">
+                      <AnimatePresence mode="wait" initial={false}>
+                        <motion.div
+                          key={activeVideo.id}
+                          initial={reduceMotion ? false : { opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={reduceMotion ? undefined : { opacity: 0 }}
+                          transition={
+                            reduceMotion
+                              ? undefined
+                              : {
+                                  duration: 0.22,
+                                  ease: [0.22, 1, 0.36, 1],
+                                }
+                          }
+                          className="flex w-full min-w-0 flex-col items-stretch gap-y-1.5 text-left"
+                        >
+                          <h3 className="m-0 w-full font-display text-2xl md:text-3xl leading-[1.1] tracking-[-0.015em] text-white">
+                            {activeSelectorTitle}
+                          </h3>
+                          {activeSelectorSubtitle ? (
+                            <p className="m-0 w-full pl-[2px] font-body text-sm sm:text-base leading-snug text-mono-2">
+                              {activeSelectorSubtitle}
+                            </p>
+                          ) : null}
+                        </motion.div>
+                      </AnimatePresence>
+                    </div>
+                  </div>
+                <section
+                  ref={detailCardSurfaceRef}
+                  className={`${showcaseDetailCardClass} video-editing-detail-meta-card mt-3.5 flex min-h-0 w-full min-w-0 flex-col overflow-hidden px-0 py-0 sm:mt-4 sm:px-0 sm:py-0`}
+                  style={
+                    detailCardMinHeightPx != null
+                      ? {
+                          height: `${detailCardMinHeightPx}px`,
+                          minHeight: `${detailCardMinHeightPx}px`,
+                          maxHeight: `${detailCardMinHeightPx}px`,
+                        }
+                      : undefined
+                  }
+                >
+                  <div className="video-editing-detail-overview w-full min-w-0">
+                    <AnimatePresence mode="wait" initial={false}>
+                      <motion.div
+                        key={activeVideo.id}
+                        initial={reduceMotion ? false : { opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={reduceMotion ? undefined : { opacity: 0 }}
+                        transition={
+                          reduceMotion
+                            ? undefined
+                            : {
+                                duration: 0.22,
+                                ease: [0.22, 1, 0.36, 1],
+                              }
+                        }
+                        className="video-editing-detail-cards-tabs flex min-h-0 w-full min-w-0 flex-1 flex-col gap-2.5"
+                      >
+                        <div
+                          className="video-editing-detail-card-tablist flex w-full min-w-0 shrink-0 items-stretch justify-between gap-0 border-b border-transparent"
+                          role="tablist"
+                          aria-label="Project detail sections"
+                          onKeyDown={(event) => {
+                            const idx = DETAIL_CARD_TABS.findIndex((t) => t.id === activeDetailCardTab);
+                            if (idx < 0) return;
+                            let next = idx;
+                            if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+                              next = (idx + 1) % DETAIL_CARD_TABS.length;
+                            } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+                              next = (idx - 1 + DETAIL_CARD_TABS.length) % DETAIL_CARD_TABS.length;
+                            } else if (event.key === "Home") {
+                              next = 0;
+                            } else if (event.key === "End") {
+                              next = DETAIL_CARD_TABS.length - 1;
+                            } else {
+                              return;
+                            }
+                            event.preventDefault();
+                            const nextId = DETAIL_CARD_TABS[next]?.id;
+                            if (!nextId) return;
+                            handleDetailCardTabChange(nextId);
+                            focusDetailCardTab(nextId);
+                          }}
+                        >
+                          {DETAIL_CARD_TABS.map((tab) => {
+                            const selected = activeDetailCardTab === tab.id;
+                            return (
+                              <button
+                                key={tab.id}
+                                type="button"
+                                role="tab"
+                                id={`video-detail-tab-${tab.id}`}
+                                aria-selected={selected}
+                                aria-controls={`video-detail-panel-${tab.id}`}
+                                tabIndex={selected ? 0 : -1}
+                                className={`video-editing-detail-card-tab relative flex min-w-0 flex-none items-end justify-center px-0.5 pb-0 pt-0.5 text-center font-heading text-[0.625rem] leading-none tracking-eyebrow-tight uppercase transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--palette-yellow-projects)] focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:text-[0.6875rem] ${
+                                  selected
+                                    ? "text-[color:var(--palette-yellow-projects)]"
+                                    : "text-mono-2/70 hover:text-[color:var(--palette-yellow-projects)]"
+                                }`}
+                                onMouseDown={(event) => {
+                                  if (event.button !== 0) return;
+                                  capturePortraitTabScrollAnchor();
+                                  event.preventDefault();
+                                }}
+                                onClick={() => {
+                                  handleDetailCardTabChange(tab.id);
+                                  focusDetailCardTab(tab.id);
+                                }}
+                              >
+                                <span className="relative inline-block w-max pb-2">
+                                  {tab.label}
+                                  <span
+                                    className={`video-editing-detail-card-tab-underline pointer-events-none absolute inset-x-0 bottom-0 h-px origin-center bg-[color:var(--palette-yellow-projects)] transition-transform duration-200 ${
+                                      selected ? "scale-x-100" : "scale-x-0"
+                                    }`}
+                                    aria-hidden
+                                  />
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <div
+                          role="tabpanel"
+                          id={`video-detail-panel-${activeDetailCardTab}`}
+                          aria-labelledby={`video-detail-tab-${activeDetailCardTab}`}
+                          className="video-editing-detail-card-tabpanel min-h-0 min-w-0 flex-1 overflow-y-auto no-scrollbar"
+                        >
+                          <div className="video-editing-detail-card-tab-surface min-w-0">
+                            {activeDetailCardTab === "tools" ? (
+                              <>
+                                <p className="mb-2 whitespace-pre-line font-body text-sm leading-snug text-mono-2 sm:text-base">
+                                  {IPAD_DETAIL_CARD_LOREM.tools}
+                                </p>
+                                <ul className="ml-1 mb-0 list-disc list-outside space-y-1 pl-6 marker:text-mono-2/70 sm:pl-7">
+                                  {IPAD_DETAIL_TOOLS_LOREM.map((tool, index) => (
+                                    <li
+                                      key={`${tool}-${index}`}
+                                      className="font-body text-sm leading-snug text-mono-2 sm:text-base"
+                                    >
+                                      {tool}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </>
+                            ) : (
+                              <p className="m-0 whitespace-pre-line font-body text-sm leading-snug text-mono-2 sm:text-base">
+                                {IPAD_DETAIL_CARD_LOREM[activeDetailCardTab]}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </motion.div>
+                    </AnimatePresence>
+                  </div>
+                </section>
+                </>
+              ) : (
+                <>
               <div className="video-editing-detail-now-playing mt-3.5 w-full min-w-0 sm:mt-4">
                 <div className="flex w-full min-w-0 flex-col items-stretch gap-y-1.5 text-left">
                   <AnimatePresence mode="wait" initial={false}>
@@ -835,70 +1255,108 @@ export function ShowcaseVideoEditingDetail({
                   </AnimatePresence>
                 </div>
               </div>
-              <div className="video-editing-detail-overview mt-3.5 w-full min-w-0 sm:mt-4">
-                <AnimatePresence mode="wait" initial={false}>
-                  <motion.div
-                    key={activeVideo.id}
-                    initial={reduceMotion ? false : { opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={reduceMotion ? undefined : { opacity: 0 }}
-                    transition={
-                      reduceMotion
-                        ? undefined
-                        : {
-                            duration: 0.22,
-                            ease: [0.22, 1, 0.36, 1],
+              <section
+                ref={detailCardSurfaceRef}
+                className={`${showcaseDetailCardClass} video-editing-detail-meta-card mt-3.5 flex w-full min-w-0 flex-col overflow-hidden [overflow-anchor:none] sm:mt-4`}
+              >
+                <div className="video-editing-detail-overview w-full min-w-0">
+                  <AnimatePresence mode="wait" initial={false}>
+                    <motion.div
+                      key={activeVideo.id}
+                      initial={reduceMotion ? false : { opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={reduceMotion ? undefined : { opacity: 0 }}
+                      transition={
+                        reduceMotion
+                          ? undefined
+                          : {
+                              duration: 0.22,
+                              ease: [0.22, 1, 0.36, 1],
+                            }
+                      }
+                      className="video-editing-detail-cards-tabs flex w-full min-w-0 flex-col gap-2.5"
+                    >
+                      <div
+                        className="video-editing-detail-card-tablist flex w-full min-w-0 shrink-0 items-stretch justify-between gap-0 border-b border-transparent"
+                        role="tablist"
+                        aria-label="Project detail sections"
+                        onKeyDown={(event) => {
+                          const idx = DETAIL_CARD_TABS.findIndex((t) => t.id === activeDetailCardTab);
+                          if (idx < 0) return;
+                          let next = idx;
+                          if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+                            next = (idx + 1) % DETAIL_CARD_TABS.length;
+                          } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+                            next = (idx - 1 + DETAIL_CARD_TABS.length) % DETAIL_CARD_TABS.length;
+                          } else if (event.key === "Home") {
+                            next = 0;
+                          } else if (event.key === "End") {
+                            next = DETAIL_CARD_TABS.length - 1;
+                          } else {
+                            return;
                           }
-                    }
-                    className={
-                      isInteractiveMedia
-                        ? "video-editing-detail-cards-im flex flex-col gap-2 sm:gap-3"
-                        : "flex flex-col gap-2 sm:gap-3"
-                    }
-                  >
-                    <section className={`${showcaseDetailCardClass} min-w-0`}>
-                      <p className="mb-1.5 font-heading text-xs leading-snug tracking-eyebrow-tight uppercase text-[color:var(--palette-yellow-projects)]">
-                        OVERVIEW
-                      </p>
-                      <p className="whitespace-pre-line font-body text-sm leading-snug text-mono-2 sm:text-base">
-                        {activeDetails.detailOverview}
-                      </p>
-                    </section>
-                    <section className={`${showcaseDetailCardClass} min-w-0`}>
-                      <p className="mb-1.5 font-heading text-xs leading-snug tracking-eyebrow-tight uppercase text-[color:var(--palette-yellow-projects)]">
-                        ROLE
-                      </p>
-                      <p className="whitespace-pre-line font-body text-sm leading-snug text-mono-2 sm:text-base">
-                        {activeDetails.detailRole}
-                      </p>
-                    </section>
-                    <section className={`${showcaseDetailCardClass} min-w-0`}>
-                      <p className="mb-1.5 font-heading text-xs leading-snug tracking-eyebrow-tight uppercase text-[color:var(--palette-yellow-projects)]">
-                        IMPACT
-                      </p>
-                      <p className="whitespace-pre-line font-body text-sm leading-snug text-mono-2 sm:text-base">
-                        {activeDetails.detailImpact}
-                      </p>
-                    </section>
-                    <section className={`${showcaseDetailCardClass} min-w-0`}>
-                      <p className="mb-1.5 font-heading text-xs leading-snug tracking-eyebrow-tight uppercase text-[color:var(--palette-yellow-projects)]">
-                        TOOLS
-                      </p>
-                      {activeDetails.detailTools?.length ? (
-                        <ul className="ml-1 list-disc list-outside space-y-1 pl-6 marker:text-mono-2/70 sm:pl-7">
-                          {activeDetails.detailTools.map((tool, index) => (
-                            <li key={`${tool}-${index}`} className="font-body text-sm leading-snug text-mono-2 sm:text-base">
-                              {tool}
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p className="font-body text-sm text-mono-2/55 sm:text-base">?</p>
-                      )}
-                    </section>
-                  </motion.div>
-                </AnimatePresence>
-              </div>
+                          event.preventDefault();
+                          const nextId = DETAIL_CARD_TABS[next]?.id;
+                          if (!nextId) return;
+                          handleDetailCardTabChange(nextId);
+                          focusDetailCardTab(nextId);
+                        }}
+                      >
+                        {DETAIL_CARD_TABS.map((tab) => {
+                          const selected = activeDetailCardTab === tab.id;
+                          return (
+                            <button
+                              key={tab.id}
+                              type="button"
+                              role="tab"
+                              id={`video-detail-tab-${tab.id}`}
+                              aria-selected={selected}
+                              aria-controls={`video-detail-panel-${tab.id}`}
+                              tabIndex={selected ? 0 : -1}
+                              className={`video-editing-detail-card-tab relative flex min-w-0 flex-none items-end justify-center px-0.5 pb-0 pt-0.5 text-center font-heading text-[0.625rem] leading-none tracking-eyebrow-tight uppercase transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--palette-yellow-projects)] focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:text-[0.6875rem] ${
+                                selected
+                                  ? "text-[color:var(--palette-yellow-projects)]"
+                                  : "text-mono-2/70 hover:text-[color:var(--palette-yellow-projects)]"
+                              }`}
+                              onMouseDown={(event) => {
+                                if (event.button !== 0) return;
+                                capturePortraitTabScrollAnchor();
+                                event.preventDefault();
+                              }}
+                              onClick={() => {
+                                handleDetailCardTabChange(tab.id);
+                                focusDetailCardTab(tab.id);
+                              }}
+                            >
+                              <span className="relative inline-block w-max pb-2">
+                                {tab.label}
+                                <span
+                                  className={`video-editing-detail-card-tab-underline pointer-events-none absolute inset-x-0 bottom-0 h-px origin-center bg-[color:var(--palette-yellow-projects)] transition-transform duration-200 ${
+                                    selected ? "scale-x-100" : "scale-x-0"
+                                  }`}
+                                  aria-hidden
+                                />
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div
+                        role="tabpanel"
+                        id={`video-detail-panel-${activeDetailCardTab}`}
+                        aria-labelledby={`video-detail-tab-${activeDetailCardTab}`}
+                        className="video-editing-detail-card-tabpanel min-w-0"
+                      >
+                        <div className="video-editing-detail-card-tab-surface min-w-0 pt-1">
+                          {renderPortraitDetailTabBody(activeDetailCardTab)}
+                        </div>
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+              </section>
+                </>
+              )}
             </div>
           </div>
         </div>

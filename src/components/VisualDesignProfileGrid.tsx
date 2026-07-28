@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import useEmblaCarousel from "embla-carousel-react";
-import { ArrowLeft, ArrowRight, X } from "lucide-react";
+import { X } from "lucide-react";
 import { createPortal } from "react-dom";
 import { EASE, SPRING, TAP } from "@/lib/motion";
 
@@ -138,14 +138,16 @@ const VisualDesignProfileLightbox = ({
 
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
         <header className="relative flex shrink-0 items-center justify-between gap-3 border-b border-white/[0.1] bg-black px-4 py-3.5 sm:px-5">
-          <button
-            type="button"
-            aria-label="Close preview"
-            onClick={onClose}
-            className="pdf-viewer-chrome-btn"
-          >
-            <X aria-hidden />
-          </button>
+          <motion.div whileTap={TAP} transition={SPRING.tap} className="inline-flex origin-center">
+            <button
+              type="button"
+              aria-label="Close preview"
+              onClick={onClose}
+              className="pdf-viewer-chrome-btn"
+            >
+              <X aria-hidden />
+            </button>
+          </motion.div>
           <div className="pointer-events-none absolute left-1/2 top-1/2 w-[min(72%,34rem)] -translate-x-1/2 -translate-y-1/2 px-2 text-center">
             <p className="font-display text-[0.95rem] leading-snug tracking-tight text-white sm:text-base">
               {lightboxLabel}
@@ -163,20 +165,6 @@ const VisualDesignProfileLightbox = ({
           className="relative flex min-h-0 flex-1 flex-col"
           onClick={(event) => event.stopPropagation()}
         >
-          {hasPrev ? (
-            <motion.button
-              type="button"
-              aria-label="Previous"
-              onClick={handleShowPrev}
-              className="pdf-viewer-chrome-btn absolute left-3 top-1/2 z-20 sm:left-5"
-              style={{ y: "-50%" }}
-              whileTap={reduceMotion ? undefined : TAP}
-              transition={SPRING.tap}
-            >
-              <ArrowLeft aria-hidden />
-            </motion.button>
-          ) : null}
-
           <div
             ref={emblaRef}
             className="min-h-0 flex-1 overflow-hidden touch-pan-y [-webkit-touch-callout:none]"
@@ -190,13 +178,13 @@ const VisualDesignProfileLightbox = ({
                 return (
                   <div
                     key={slide.id}
-                    className="flex h-full min-w-0 flex-[0_0_100%] items-center justify-center px-4 py-4 sm:px-6 sm:py-6"
+                    className="flex h-full min-w-0 flex-[0_0_100%] items-center justify-center px-4 py-4 sm:px-6 sm:py-6 md:px-14 lg:px-18"
                     aria-label={label}
                   >
                     <img
                       src={slide.src}
                       alt={label}
-                      className="max-h-[min(78dvh,920px)] w-auto max-w-[min(96vw,72rem)] object-contain object-center select-none"
+                      className="max-h-[min(78dvh,920px)] w-auto max-w-[min(calc(100vw-3rem),72rem)] md:max-w-[min(calc(100vw-9rem),72rem)] lg:max-w-[min(calc(100vw-11rem),72rem)] object-contain object-center select-none"
                       draggable={false}
                       decoding="async"
                     />
@@ -206,19 +194,6 @@ const VisualDesignProfileLightbox = ({
             </div>
           </div>
 
-          {hasNext ? (
-            <motion.button
-              type="button"
-              aria-label="Next"
-              onClick={handleShowNext}
-              className="pdf-viewer-chrome-btn absolute right-3 top-1/2 z-20 sm:right-5"
-              style={{ y: "-50%" }}
-              whileTap={reduceMotion ? undefined : TAP}
-              transition={SPRING.tap}
-            >
-              <ArrowRight aria-hidden />
-            </motion.button>
-          ) : null}
         </div>
       </div>
     </motion.div>

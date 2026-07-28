@@ -3918,6 +3918,9 @@ const SideNavOverlay = ({
 }) => {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [pendingNavId, setPendingNavId] = useState<string | null>(null);
+  const [exitMenuAlignY, setExitMenuAlignY] = useState(0);
+  const menuTitleRef = useRef<HTMLParagraphElement | null>(null);
+  const exitShellRef = useRef<HTMLDivElement | null>(null);
   const lineHoverSinceRef = useRef<Partial<Record<string, number>>>({});
   const navTimerRef = useRef<number | null>(null);
 
@@ -3990,6 +3993,66 @@ const SideNavOverlay = ({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open, onClose]);
 
+  useLayoutEffect(() => {
+    if (!open) {
+      setExitMenuAlignY(0);
+      return;
+    }
+
+    const measureMenuInkTop = (el: HTMLElement) => {
+      const rect = el.getBoundingClientRect();
+      const style = window.getComputedStyle(el);
+      const fontSize = parseFloat(style.fontSize) || 16;
+      const lineHeight = parseFloat(style.lineHeight) || fontSize * 0.95;
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return rect.top;
+
+      ctx.font = style.font;
+      const text = (el.textContent || "MENU").trim();
+      const metrics = ctx.measureText(text);
+      const ascent = metrics.actualBoundingBoxAscent || fontSize * 0.8;
+      const fontAscent = metrics.fontBoundingBoxAscent ?? ascent;
+      const fontDescent =
+        metrics.fontBoundingBoxDescent ?? metrics.actualBoundingBoxDescent ?? fontSize * 0.2;
+      const halfLeading = (lineHeight - (fontAscent + fontDescent)) / 2;
+      // Content-box top → alphabetic baseline → actual glyph ink top.
+      return rect.top + halfLeading + fontAscent - ascent;
+    };
+
+    const measureSvgPathTop = (svg: SVGSVGElement) => {
+      const paths = svg.querySelectorAll("path");
+      if (paths.length) {
+        let top = Number.POSITIVE_INFINITY;
+        paths.forEach((path) => {
+          top = Math.min(top, path.getBoundingClientRect().top);
+        });
+        if (Number.isFinite(top)) return top;
+      }
+      const rect = svg.getBoundingClientRect();
+      return rect.top + (6 / 24) * rect.height;
+    };
+
+    const syncExitXTopToMenuTop = () => {
+      const menu = menuTitleRef.current;
+      const shell = exitShellRef.current;
+      const svg = shell?.querySelector("svg");
+      if (!menu || !shell || !svg) return;
+
+      const menuInkTop = measureMenuInkTop(menu);
+      const pathTop = measureSvgPathTop(svg);
+      // Path bbox sits ~1 viewBox unit above the stroked tip’s solid pixels.
+      const pathBboxToSolidPx = svg.getBoundingClientRect().height / 24;
+      const delta = menuInkTop - pathTop - pathBboxToSolidPx;
+      if (Math.abs(delta) < 0.25) return;
+      setExitMenuAlignY((prev) => prev + delta);
+    };
+
+    syncExitXTopToMenuTop();
+    const raf = window.requestAnimationFrame(syncExitXTopToMenuTop);
+    return () => window.cancelAnimationFrame(raf);
+  }, [open, exitButtonDebug.offsetX, exitButtonDebug.offsetY, exitButtonDebug.size]);
+
   return (
     <AnimatePresence>
       {open && (
@@ -4020,43 +4083,47 @@ const SideNavOverlay = ({
             exit={{ x: "100%" }}
             transition={SPRING.panel}
           >
-            <div className="relative mb-6 flex items-center justify-between pr-16 sm:pr-[4.5rem]">
-              <div className="flex flex-col gap-y-1.5">
-                <p className="font-heading text-[9px] sm:text-[10px] tracking-eyebrow-tight leading-snug uppercase -ml-[0.12em]" style={{ color: NAV_SUBHEAD_GRAY }}>
-                  NAVIGATION
-                </p>
-                <p className="font-display text-3xl sm:text-4xl leading-[0.95] tracking-[-0.02em] uppercase -ml-[0.06em]">
+            <div className="mb-6 flex flex-col gap-y-1.5">
+              <p className="font-heading text-[9px] sm:text-[10px] tracking-eyebrow-tight leading-snug uppercase -ml-[0.12em]" style={{ color: NAV_SUBHEAD_GRAY }}>
+                NAVIGATION
+              </p>
+              <div className="relative pr-16 sm:pr-[4.5rem]">
+                <p
+                  ref={menuTitleRef}
+                  className="font-display text-3xl sm:text-4xl leading-[0.95] tracking-[-0.02em] uppercase -ml-[0.06em]"
+                >
                   MENU
                 </p>
-              </div>
-              {/* Offset on outer shell; scale on inner — keeps press shrink centered (no orbit). */}
-              <div
-                className="absolute right-0 top-0"
-                style={{
-                  transform: `translate(${exitButtonDebug.offsetX}px, ${exitButtonDebug.offsetY + 21}px)`,
-                }}
-              >
-                <motion.div
-                  whileTap={TAP}
-                  transition={SPRING.tap}
-                  className="inline-flex origin-center"
+                {/* Offset on outer shell; scale on inner — keeps press shrink centered (no orbit). */}
+                <div
+                  ref={exitShellRef}
+                  className="absolute right-0 top-0"
+                  style={{
+                    transform: `translate(${exitButtonDebug.offsetX}px, ${exitButtonDebug.offsetY + exitMenuAlignY}px)`,
+                  }}
                 >
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={onClose}
-                    aria-label="Close menu"
-                    className={`${TOP_NAV_ICON_BUTTON_CLASS} relative before:absolute before:-inset-1 before:content-[''] [&_svg]:!size-[18px] sm:[&_svg]:!size-5`}
-                    style={{
-                      width: `${exitButtonDebug.size}px`,
-                      height: `${exitButtonDebug.size}px`,
-                      minWidth: `${exitButtonDebug.size}px`,
-                      minHeight: `${exitButtonDebug.size}px`,
-                    }}
+                  <motion.div
+                    whileTap={TAP}
+                    transition={SPRING.tap}
+                    className="inline-flex origin-center"
                   >
-                    <X size={22} strokeWidth={1} aria-hidden />
-                  </Button>
-                </motion.div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={onClose}
+                      aria-label="Close menu"
+                      className={`${TOP_NAV_ICON_BUTTON_CLASS} relative before:absolute before:-inset-1 before:content-[''] [&_svg]:!size-[18px] sm:[&_svg]:!size-5`}
+                      style={{
+                        width: `${exitButtonDebug.size}px`,
+                        height: `${exitButtonDebug.size}px`,
+                        minWidth: `${exitButtonDebug.size}px`,
+                        minHeight: `${exitButtonDebug.size}px`,
+                      }}
+                    >
+                      <X size={22} strokeWidth={1} aria-hidden />
+                    </Button>
+                  </motion.div>
+                </div>
               </div>
             </div>
 
@@ -6557,13 +6624,13 @@ const ShowcaseVisualDesignDetail = ({
               }
         }
       >
-        <p className="m-0 w-full font-heading text-sm sm:text-base leading-snug tracking-eyebrow-tight uppercase text-[color:var(--palette-yellow-projects)]">
+        <p className="project-detail-main-eyebrow m-0 w-full font-heading text-sm sm:text-base leading-snug tracking-eyebrow-tight uppercase text-[color:var(--palette-yellow-projects)]">
           Project details
         </p>
-        <h3 className="m-0 w-full font-display text-2xl md:text-3xl leading-[1.1] tracking-[-0.015em] text-white">
+        <h3 className="project-detail-main-title m-0 w-full font-display text-2xl md:text-3xl leading-[1.1] tracking-[-0.015em] text-white">
           <ShowcaseStackedTitle title={card.title} titlePrefix={card.titlePrefix} />
         </h3>
-        <p className="m-0 w-full pl-[2px] font-body text-sm sm:text-base leading-snug text-mono-2">
+        <p className="project-detail-main-subtitle m-0 w-full font-body text-sm sm:text-base leading-snug text-mono-2">
           {showcaseTaglineCopy(card)}
         </p>
       </motion.div>
@@ -6755,40 +6822,18 @@ const ShowcaseIllustrationLightbox = ({
           className="relative flex min-h-0 flex-1 flex-col py-6 sm:py-8"
           onClick={(event) => event.stopPropagation()}
         >
-          {hasPrev ? (
-            <motion.button
-              type="button"
-              aria-label="Previous illustration"
-              onClick={handleShowPrev}
-              className="pdf-viewer-chrome-btn illustration-lightbox-chrome-btn illustration-lightbox-nav-btn absolute left-3 z-30 hidden md:inline-flex"
-              whileTap={reduceMotion ? undefined : TAP}
-              transition={SPRING.tap}
-            >
-              <ArrowLeft aria-hidden />
-            </motion.button>
-          ) : null}
-
-          {hasNext ? (
-            <motion.button
-              type="button"
-              aria-label="Next illustration"
-              onClick={handleShowNext}
-              className="pdf-viewer-chrome-btn illustration-lightbox-chrome-btn illustration-lightbox-nav-btn absolute right-3 z-30 hidden md:inline-flex"
-              whileTap={reduceMotion ? undefined : TAP}
-              transition={SPRING.tap}
-            >
-              <ArrowRight aria-hidden />
-            </motion.button>
-          ) : null}
-
-          <button
-            type="button"
-            aria-label="Close illustration preview"
-            onClick={onClose}
-            className="pdf-viewer-chrome-btn illustration-lightbox-chrome-btn illustration-lightbox-close-btn absolute right-3 top-3 z-30 translate-x-[10px] sm:right-5 sm:top-5"
-          >
-            <X aria-hidden />
-          </button>
+          <div className="absolute right-[0.375rem] top-3 z-30 sm:right-[0.875rem] sm:top-4">
+            <motion.div whileTap={TAP} transition={SPRING.tap} className="inline-flex origin-center">
+              <button
+                type="button"
+                aria-label="Close illustration preview"
+                onClick={onClose}
+                className="pdf-viewer-chrome-btn illustration-lightbox-chrome-btn illustration-lightbox-close-btn"
+              >
+                <X aria-hidden />
+              </button>
+            </motion.div>
+          </div>
 
           <div
             ref={emblaRef}
@@ -6809,13 +6854,13 @@ const ShowcaseIllustrationLightbox = ({
                 return (
                   <div
                     key={slide.id}
-                    className="flex h-full min-w-0 flex-[0_0_100%] items-center justify-center px-4 py-0 sm:px-6 sm:py-0 lg:py-6"
+                    className="flex h-full min-w-0 flex-[0_0_100%] items-center justify-center px-4 py-0 sm:px-6 sm:py-0 md:px-14 lg:px-18 lg:py-6"
                     aria-label={label}
                   >
                     <img
                       src={slide.src}
                       alt={label}
-                      className={`h-full w-auto max-w-[min(96vw,72rem)] object-contain object-center select-none ${
+                      className={`h-full w-auto max-w-[min(calc(100vw-3rem),72rem)] md:max-w-[min(calc(100vw-9rem),72rem)] lg:max-w-[min(calc(100vw-11rem),72rem)] object-contain object-center select-none ${
                         shrinkForCloseButton
                           ? "max-h-[calc(100%-2.8rem)] sm:max-h-[calc(100%-3.3rem)] lg:max-h-[min(66dvh,800px)]"
                           : "max-h-full lg:max-h-[min(78dvh,920px)]"
@@ -6831,7 +6876,7 @@ const ShowcaseIllustrationLightbox = ({
         </div>
 
         <section
-          className={`group relative shrink-0 border-t border-white/[0.1] bg-black/90 px-4 py-3 pr-12 sm:px-6 sm:py-4 sm:pr-24${descOverflows ? " cursor-pointer" : ""}`}
+          className={`group relative shrink-0 border-t border-white/[0.1] bg-black/90 px-4 py-3 pr-16 pb-8 sm:px-6 sm:py-4 sm:pr-28 sm:pb-9${descOverflows ? " cursor-pointer" : ""}`}
           onClick={descOverflows ? () => setDescExpanded((v) => !v) : undefined}
         >
           {descOverflows ? (
@@ -6859,7 +6904,7 @@ const ShowcaseIllustrationLightbox = ({
             <div className="h-[1.15rem] sm:hidden" aria-hidden />
           )}
           {artistStatement ? (
-            <div className="mt-1 sm:mt-1.5">
+            <div className="mt-1 pr-2 sm:mt-1.5 sm:pr-4">
               <motion.div
                 animate={{ height: descExpanded ? descContentH || "auto" : COLLAPSED_DESC_H }}
                 transition={{ duration: reduceMotion ? 0 : 0.3, ease: EASE.out }}
@@ -8102,13 +8147,13 @@ const PalaceProjects = ({
                         }
                   }
                 >
-                  <p className="m-0 w-full font-heading text-sm sm:text-base leading-snug tracking-eyebrow-tight uppercase text-[color:var(--palette-yellow-projects)]">
+                  <p className="project-detail-main-eyebrow m-0 w-full font-heading text-sm sm:text-base leading-snug tracking-eyebrow-tight uppercase text-[color:var(--palette-yellow-projects)]">
                     Project details
                   </p>
-                  <h3 className="m-0 w-full font-display text-2xl md:text-3xl leading-[1.1] tracking-[-0.015em] text-white">
+                  <h3 className="project-detail-main-title m-0 w-full font-display text-2xl md:text-3xl leading-[1.1] tracking-[-0.015em] text-white">
                     <ShowcaseStackedTitle title={activeCard.title} titlePrefix={activeCard.titlePrefix} />
                   </h3>
-                  <p className="m-0 w-full pl-[2px] font-body text-sm sm:text-base leading-snug text-mono-2">
+                  <p className="project-detail-main-subtitle m-0 w-full font-body text-sm sm:text-base leading-snug text-mono-2">
                     {showcaseTaglineCopy(activeCard)}
                   </p>
                 </div>

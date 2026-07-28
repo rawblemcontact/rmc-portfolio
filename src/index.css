@@ -1040,6 +1040,23 @@
     }
   }
 
+  @media (min-width: 1024px) and (pointer: fine),
+    (min-width: 1367px),
+    ((min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse)) {
+    .featured-writing-shell {
+      --fw-tab-radius: 4px;
+    }
+
+    .featured-writing-inner-rule-body-top > .profile-card-surface {
+      border-radius: 0 0 4px 4px !important;
+    }
+
+    .featured-writing-raised {
+      border-radius: 4px !important;
+      transform: translateX(-2px);
+    }
+  }
+
   .featured-writing-panel {
     background: var(--portfolio-glass-fill);
     background-image: none;
@@ -4872,10 +4889,13 @@
   }
 
   /*
-   * VIDEO EDITING + INTERACTIVE MEDIA â€” desktop fine pointer: two-column detail
-   * (player + selector left; divider â†’ now playing â†’ cards right).
+   * VIDEO EDITING + INTERACTIVE MEDIA — desktop fine pointer + iPad landscape:
+   * two-column detail (player + selector left; now playing + cards right).
+   * Visual Design gallery stays on its own stacked path.
    */
-  @media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
+  @media (min-width: 1024px) and (pointer: fine),
+    (min-width: 1367px),
+    ((min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse)) {
     #projects.projects-interactive-media-detail-open
       .video-editing-detail--interactive-media
       .video-editing-detail-body,
@@ -4995,8 +5015,9 @@
     #projects.projects-slaywire-detail-open
       .video-editing-detail:not(.video-editing-detail--interactive-media)
       .video-editing-detail-now-playing h3.font-display {
-      font-size: 1.25rem;
-      transform: translateY(1.5px);
+      font-size: 1.375rem;
+      line-height: 1.08;
+      transform: translate(-1px, 1px);
     }
 
     #projects.projects-interactive-media-detail-open
@@ -5017,9 +5038,9 @@
     #projects.projects-slaywire-detail-open
       .video-editing-detail:not(.video-editing-detail--interactive-media)
       .video-editing-detail-now-playing .font-body.sm\:text-base {
-      font-size: 0.76875rem;
-      line-height: 1.33;
-      transform: translateY(1.5px);
+      font-size: 0.8125rem;
+      line-height: 1.35;
+      transform: translateY(1px);
     }
 
     #projects.projects-interactive-media-detail-open
@@ -5032,6 +5053,46 @@
       .video-editing-detail:not(.video-editing-detail--interactive-media)
       .video-editing-detail-overview {
       margin-top: 0.75rem !important;
+    }
+
+    /* iPad landscape: tighter header → tabs → body-card rhythm (same @layer). */
+    @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse) {
+      #projects.projects-interactive-media-detail-open
+        .video-editing-detail--interactive-media
+        .video-editing-detail-overview,
+      #projects.projects-video-editing-detail-open
+        .video-editing-detail:not(.video-editing-detail--interactive-media)
+        .video-editing-detail-overview,
+      #projects.projects-slaywire-detail-open
+        .video-editing-detail:not(.video-editing-detail--interactive-media)
+        .video-editing-detail-overview {
+        /* Small air between now-playing subhead and the tab card. */
+        margin-top: 0.5rem !important;
+      }
+
+      #projects.projects-interactive-media-detail-open
+        .video-editing-detail--interactive-media
+        .video-editing-detail-now-playing
+        .flex.w-full,
+      #projects.projects-video-editing-detail-open
+        .video-editing-detail:not(.video-editing-detail--interactive-media)
+        .video-editing-detail-now-playing
+        .flex.w-full,
+      #projects.projects-slaywire-detail-open
+        .video-editing-detail:not(.video-editing-detail--interactive-media)
+        .video-editing-detail-now-playing
+        .flex.w-full {
+        gap: 0.25rem !important;
+      }
+
+      #projects.projects-interactive-media-detail-open
+        .video-editing-detail-cards-tabs,
+      #projects.projects-video-editing-detail-open
+        .video-editing-detail-cards-tabs,
+      #projects.projects-slaywire-detail-open
+        .video-editing-detail-cards-tabs {
+        gap: 0.5rem !important;
+      }
     }
 
     /*
@@ -5131,6 +5192,7 @@
       .font-heading {
       font-size: 0.9375rem;
       line-height: 1.25;
+      transform: none;
     }
 
     #projects.projects-interactive-media-detail-open
@@ -5147,6 +5209,7 @@
       .font-body {
       font-size: 0.8125rem;
       line-height: 1.3;
+      padding-left: 1px;
     }
 
     #projects.projects-interactive-media-detail-open
@@ -5188,9 +5251,11 @@
   }
 
   /*
-   * SLAYWIRE â€” media selector strip is desktop-only; mobile/tablet keep single hero.
+   * SLAYWIRE — media selector strip: desktop + iPad landscape (two-column).
+   * Hide on phone / tablet portrait only.
    */
-  @media (max-width: 1023px), ((min-width: 1024px) and (pointer: coarse)) {
+  @media (max-width: 1023px) and (orientation: portrait),
+    ((min-width: 1024px) and (pointer: coarse) and (orientation: portrait)) {
     #projects.projects-slaywire-detail-open .video-editing-detail-works {
       display: none !important;
     }
@@ -5198,6 +5263,48 @@
 
   .video-editing-player--plyr .plyr {
     overflow: hidden;
+  }
+
+  #projects.projects-video-editing-detail-open
+    .video-editing-player
+    > .w-full.min-w-0,
+  #projects.projects-interactive-media-detail-open
+    .video-editing-player
+    > .w-full.min-w-0,
+  #projects.projects-video-editing-detail-open
+    .video-editing-player--plyr
+    .plyr,
+  #projects.projects-interactive-media-detail-open
+    .video-editing-player--plyr
+    .plyr {
+    height: 100% !important;
+  }
+
+  #projects.projects-video-editing-detail-open
+    .video-editing-player--plyr
+    .plyr__video-wrapper,
+  #projects.projects-interactive-media-detail-open
+    .video-editing-player--plyr
+    .plyr__video-wrapper {
+    height: 100% !important;
+    padding-bottom: 0 !important;
+  }
+
+  #projects.projects-video-editing-detail-open
+    .video-editing-player--plyr
+    .plyr video,
+  #projects.projects-video-editing-detail-open
+    .video-editing-player--plyr
+    .plyr__video-wrapper video,
+  #projects.projects-interactive-media-detail-open
+    .video-editing-player--plyr
+    .plyr video,
+  #projects.projects-interactive-media-detail-open
+    .video-editing-player--plyr
+    .plyr__video-wrapper video {
+    width: 100%;
+    height: 100% !important;
+    object-fit: cover !important;
   }
 
   /* INTERACTIVE MEDIA in shared video-detail layout:
@@ -5796,6 +5903,17 @@
   top: 50%;
   /* CSS translate (not transform) so Framer whileTap scale can compose cleanly */
   translate: 0 -50%;
+  background-color: transparent !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+.illustration-lightbox-nav-btn:hover,
+.illustration-lightbox-nav-btn:active,
+.illustration-lightbox-nav-btn:focus-visible {
+  background-color: transparent !important;
+  color: #fff !important;
+  box-shadow: none !important;
 }
 
 @media (max-width: 767.98px) {
@@ -5912,6 +6030,179 @@
 @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
   #social > .container {
     transform: translateY(clamp(-3rem, -8svh, -5rem));
+  }
+}
+
+@media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
+  #projects.projects-interactive-media-detail-open
+    .video-editing-detail-now-playing,
+  #projects.projects-video-editing-detail-open
+    .video-editing-detail-now-playing,
+  #projects.projects-slaywire-detail-open
+    .video-editing-detail-now-playing {
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  #projects.projects-interactive-media-detail-open
+    .video-editing-detail-now-playing
+    .font-body.pl-\[2px\],
+  #projects.projects-video-editing-detail-open
+    .video-editing-detail-now-playing
+    .font-body.pl-\[2px\],
+  #projects.projects-slaywire-detail-open
+    .video-editing-detail-now-playing
+    .font-body.pl-\[2px\] {
+    padding-left: 0 !important;
+  }
+
+  #projects.projects-interactive-media-detail-open .project-detail-main-title,
+  #projects.projects-video-editing-detail-open .project-detail-main-title,
+  #projects.projects-slaywire-detail-open .project-detail-main-title,
+  #projects.projects-visual-design-detail-open .project-detail-main-title {
+    transform: none;
+  }
+
+  #projects.projects-interactive-media-detail-open .project-detail-main-eyebrow,
+  #projects.projects-video-editing-detail-open .project-detail-main-eyebrow,
+  #projects.projects-slaywire-detail-open .project-detail-main-eyebrow,
+  #projects.projects-visual-design-detail-open .project-detail-main-eyebrow {
+    transform: translateX(-1px);
+  }
+
+  #projects.projects-interactive-media-detail-open .project-detail-main-subtitle,
+  #projects.projects-video-editing-detail-open .project-detail-main-subtitle,
+  #projects.projects-slaywire-detail-open .project-detail-main-subtitle,
+  #projects.projects-visual-design-detail-open .project-detail-main-subtitle {
+    padding-left: 2px;
+  }
+
+  #projects.projects-interactive-media-detail-open
+    .video-editing-detail-meta-card,
+  #projects.projects-video-editing-detail-open
+    .video-editing-detail-meta-card,
+  #projects.projects-slaywire-detail-open
+    .video-editing-detail-meta-card {
+    border-radius: 4px !important;
+    padding: 0.75rem !important;
+    min-width: 0 !important;
+  }
+
+  #projects.projects-interactive-media-detail-open
+    .video-editing-detail-meta-card
+    > .video-editing-detail-overview,
+  #projects.projects-video-editing-detail-open
+    .video-editing-detail-meta-card
+    > .video-editing-detail-overview,
+  #projects.projects-slaywire-detail-open
+    .video-editing-detail-meta-card
+    > .video-editing-detail-overview {
+    display: flex !important;
+    flex: 1 1 auto !important;
+    flex-direction: column !important;
+    margin-top: 0 !important;
+    min-height: 0 !important;
+  }
+
+  #projects.projects-interactive-media-detail-open
+    .video-editing-detail-meta-card
+    .video-editing-detail-cards-tabs,
+  #projects.projects-video-editing-detail-open
+    .video-editing-detail-meta-card
+    .video-editing-detail-cards-tabs,
+  #projects.projects-slaywire-detail-open
+    .video-editing-detail-meta-card
+    .video-editing-detail-cards-tabs {
+    flex: 1 1 auto !important;
+    margin-top: -0.5rem !important;
+    min-height: 0 !important;
+  }
+
+  #projects.projects-interactive-media-detail-open
+    .video-editing-detail-meta-card
+    .video-editing-detail-card-tab-surface,
+  #projects.projects-video-editing-detail-open
+    .video-editing-detail-meta-card
+    .video-editing-detail-card-tab-surface,
+  #projects.projects-slaywire-detail-open
+    .video-editing-detail-meta-card
+    .video-editing-detail-card-tab-surface {
+    padding: 0.25rem 0 0.75rem 0.125rem !important;
+    min-width: 0 !important;
+  }
+
+  #projects.projects-interactive-media-detail-open
+    .video-editing-detail-meta-card
+    .video-editing-detail-card-tabpanel,
+  #projects.projects-video-editing-detail-open
+    .video-editing-detail-meta-card
+    .video-editing-detail-card-tabpanel,
+  #projects.projects-slaywire-detail-open
+    .video-editing-detail-meta-card
+    .video-editing-detail-card-tabpanel {
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 81%,
+      rgba(0, 0, 0, 0.5) 90%,
+      rgba(0, 0, 0, 0) 97%,
+      rgba(0, 0, 0, 0) 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 81%,
+      rgba(0, 0, 0, 0.5) 90%,
+      rgba(0, 0, 0, 0) 97%,
+      rgba(0, 0, 0, 0) 100%
+    );
+    position: relative;
+  }
+
+  #projects.projects-interactive-media-detail-open
+    .video-editing-detail-meta-card
+    .video-editing-detail-card-tab,
+  #projects.projects-video-editing-detail-open
+    .video-editing-detail-meta-card
+    .video-editing-detail-card-tab,
+  #projects.projects-slaywire-detail-open
+    .video-editing-detail-meta-card
+    .video-editing-detail-card-tab {
+    font-size: 0.65625rem !important;
+    line-height: 1 !important;
+  }
+
+  #projects.projects-interactive-media-detail-open
+    .video-editing-detail-meta-card
+    .video-editing-detail-card-tab-surface
+    .font-body,
+  #projects.projects-video-editing-detail-open
+    .video-editing-detail-meta-card
+    .video-editing-detail-card-tab-surface
+    .font-body,
+  #projects.projects-slaywire-detail-open
+    .video-editing-detail-meta-card
+    .video-editing-detail-card-tab-surface
+    .font-body {
+    font-size: 0.9375rem !important;
+    line-height: 1.4 !important;
+  }
+
+  #projects.projects-interactive-media-detail-open
+    .video-editing-works-strip-thumb-art,
+  #projects.projects-video-editing-detail-open
+    .video-editing-works-strip-thumb-art,
+  #projects.projects-slaywire-detail-open
+    .video-editing-works-strip-thumb-art {
+    border-radius: 4px !important;
+    height: 5rem !important;
+  }
+
+  #projects.projects-interactive-media-detail-open .video-editing-works-arrow,
+  #projects.projects-video-editing-detail-open .video-editing-works-arrow,
+  #projects.projects-slaywire-detail-open .video-editing-works-arrow {
+    top: 2.5rem !important;
   }
 }
 
@@ -6199,7 +6490,7 @@
     flex: 1 1 auto !important;
     display: flex !important;
     flex-direction: column !important;
-    justify-content: center !important;
+    justify-content: flex-start !important;
     min-height: 0 !important;
   }
 
@@ -6350,173 +6641,196 @@
   }
 
   /*
-   * SLAYWIRE + VIDEO EDITING detail â€” landscape fit parity with INTERACTIVE MEDIA
-   * (shared --projects-ipad-landscape-detail-col + compact meta).
+   * Video-style details use the shared desktop two-column layout on iPad landscape
+   * (see media query above). Keep only column-edge parity here — no stacked compact
+   * overrides that would fight the desktop meta column.
    */
+
+  /*
+   * iPad landscape — tabbed detail cards (OVERVIEW / ROLE / IMPACT / TOOLS).
+   * One card visible at a time; preserve card surface style. Stay in-viewport.
+   */
+  #projects.projects-interactive-media-detail-open .video-editing-player,
+  #projects.projects-video-editing-detail-open .video-editing-player,
+  #projects.projects-slaywire-detail-open .video-editing-player {
+    height: calc(100cqw * 9 / 16 + 36px) !important;
+  }
+
+  /*
+   * Now-playing title + subhead share the same left edge as the tab row
+   * (flush with the O in OVERVIEW) — not the inset card body.
+   */
+  #projects.projects-interactive-media-detail-open
+    .video-editing-detail-now-playing,
   #projects.projects-video-editing-detail-open
-    .video-editing-detail:not(.video-editing-detail--interactive-media)
+    .video-editing-detail-now-playing,
+  #projects.projects-slaywire-detail-open
+    .video-editing-detail-now-playing {
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  #projects.projects-interactive-media-detail-open .project-detail-main-title,
+  #projects.projects-video-editing-detail-open .project-detail-main-title,
+  #projects.projects-slaywire-detail-open .project-detail-main-title,
+  #projects.projects-visual-design-detail-open .project-detail-main-title {
+    transform: none;
+  }
+
+  #projects.projects-interactive-media-detail-open .project-detail-main-eyebrow,
+  #projects.projects-video-editing-detail-open .project-detail-main-eyebrow,
+  #projects.projects-slaywire-detail-open .project-detail-main-eyebrow,
+  #projects.projects-visual-design-detail-open .project-detail-main-eyebrow {
+    transform: translateX(-1px);
+  }
+
+  #projects.projects-interactive-media-detail-open .project-detail-main-subtitle,
+  #projects.projects-video-editing-detail-open .project-detail-main-subtitle,
+  #projects.projects-slaywire-detail-open .project-detail-main-subtitle,
+  #projects.projects-visual-design-detail-open .project-detail-main-subtitle {
+    padding-left: 2px;
+  }
+
+  #projects.projects-interactive-media-detail-open
     .video-editing-detail-now-playing
-    > div
-    > .font-heading,
-  #projects.projects-slaywire-detail-open
-    .video-editing-detail:not(.video-editing-detail--interactive-media)
+    .font-body.pl-\[2px\],
+  #projects.projects-video-editing-detail-open
     .video-editing-detail-now-playing
-    > div
-    > .font-heading {
-    font-size: 0.75rem;
-  }
-
-  #projects.projects-video-editing-detail-open
-    .video-editing-detail:not(.video-editing-detail--interactive-media)
+    .font-body.pl-\[2px\],
+  #projects.projects-slaywire-detail-open
     .video-editing-detail-now-playing
-    h3.font-display,
-  #projects.projects-slaywire-detail-open
-    .video-editing-detail:not(.video-editing-detail--interactive-media)
-    .video-editing-detail-now-playing
-    h3.font-display {
-    font-size: 1.25rem;
-    line-height: 1.1;
-    transform: translateY(1.5px);
+    .font-body.pl-\[2px\] {
+    padding-left: 0 !important;
   }
 
+  #projects.projects-interactive-media-detail-open
+    .video-editing-detail-meta-card,
   #projects.projects-video-editing-detail-open
-    .video-editing-detail:not(.video-editing-detail--interactive-media)
-    .video-editing-detail-now-playing
-    .font-body.text-sm,
+    .video-editing-detail-meta-card,
   #projects.projects-slaywire-detail-open
-    .video-editing-detail:not(.video-editing-detail--interactive-media)
-    .video-editing-detail-now-playing
-    .font-body.text-sm {
-    font-size: 0.7875rem;
-    transform: translateY(1.5px);
+    .video-editing-detail-meta-card {
+    border-radius: 4px !important;
+    padding: 0.75rem !important;
+    min-width: 0 !important;
   }
 
+  #projects.projects-interactive-media-detail-open
+    .video-editing-detail-meta-card
+    > .video-editing-detail-overview,
   #projects.projects-video-editing-detail-open
-    .video-editing-detail:not(.video-editing-detail--interactive-media)
-    .video-editing-detail-now-playing
-    .font-body.sm\:text-base,
+    .video-editing-detail-meta-card
+    > .video-editing-detail-overview,
   #projects.projects-slaywire-detail-open
-    .video-editing-detail:not(.video-editing-detail--interactive-media)
-    .video-editing-detail-now-playing
-    .font-body.sm\:text-base {
-    font-size: 0.875rem;
-    transform: translateY(1.5px);
+    .video-editing-detail-meta-card
+    > .video-editing-detail-overview {
+    display: flex !important;
+    flex: 1 1 auto !important;
+    flex-direction: column !important;
+    margin-top: 0 !important;
+    min-height: 0 !important;
   }
 
+  #projects.projects-interactive-media-detail-open
+    .video-editing-detail-meta-card
+    .video-editing-detail-cards-tabs,
   #projects.projects-video-editing-detail-open
-    .video-editing-detail:not(.video-editing-detail--interactive-media)
-    .video-editing-detail-overview
-    > div,
+    .video-editing-detail-meta-card
+    .video-editing-detail-cards-tabs,
   #projects.projects-slaywire-detail-open
-    .video-editing-detail:not(.video-editing-detail--interactive-media)
-    .video-editing-detail-overview
-    > div {
-    gap: 0.675rem;
+    .video-editing-detail-meta-card
+    .video-editing-detail-cards-tabs {
+    flex: 1 1 auto !important;
+    margin-top: -0.5rem !important;
+    min-height: 0 !important;
   }
 
+  #projects.projects-interactive-media-detail-open
+    .video-editing-detail-meta-card
+    .video-editing-detail-card-tab-surface,
   #projects.projects-video-editing-detail-open
-    .video-editing-detail:not(.video-editing-detail--interactive-media)
-    .video-editing-detail-overview
-    > div
-    > section.profile-card-surface,
+    .video-editing-detail-meta-card
+    .video-editing-detail-card-tab-surface,
   #projects.projects-slaywire-detail-open
-    .video-editing-detail:not(.video-editing-detail--interactive-media)
-    .video-editing-detail-overview
-    > div
-    > section.profile-card-surface {
-    padding: 0.7875rem 0.9rem;
-    border-radius: 12px;
+    .video-editing-detail-meta-card
+    .video-editing-detail-card-tab-surface {
+    padding: 0.25rem 0 0.75rem 0.125rem !important;
+    min-width: 0 !important;
   }
 
+  #projects.projects-interactive-media-detail-open
+    .video-editing-detail-meta-card
+    .video-editing-detail-card-tabpanel,
   #projects.projects-video-editing-detail-open
-    .video-editing-detail:not(.video-editing-detail--interactive-media)
-    .video-editing-detail-overview
-    > div
-    > section
-    .font-heading.text-xs,
+    .video-editing-detail-meta-card
+    .video-editing-detail-card-tabpanel,
   #projects.projects-slaywire-detail-open
-    .video-editing-detail:not(.video-editing-detail--interactive-media)
-    .video-editing-detail-overview
-    > div
-    > section
-    .font-heading.text-xs {
-    font-size: 0.6875rem;
-    margin-bottom: calc(0.375rem * 0.9);
+    .video-editing-detail-meta-card
+    .video-editing-detail-card-tabpanel {
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 81%,
+      rgba(0, 0, 0, 0.5) 90%,
+      rgba(0, 0, 0, 0) 97%,
+      rgba(0, 0, 0, 0) 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 81%,
+      rgba(0, 0, 0, 0.5) 90%,
+      rgba(0, 0, 0, 0) 97%,
+      rgba(0, 0, 0, 0) 100%
+    );
+    position: relative;
   }
 
+  #projects.projects-interactive-media-detail-open
+    .video-editing-detail-meta-card
+    .video-editing-detail-card-tab,
   #projects.projects-video-editing-detail-open
-    .video-editing-detail:not(.video-editing-detail--interactive-media)
-    .video-editing-detail-overview
-    > div
-    > section
-    .font-body.text-sm,
+    .video-editing-detail-meta-card
+    .video-editing-detail-card-tab,
   #projects.projects-slaywire-detail-open
-    .video-editing-detail:not(.video-editing-detail--interactive-media)
-    .video-editing-detail-overview
-    > div
-    > section
-    .font-body.text-sm {
-    font-size: 0.7875rem;
+    .video-editing-detail-meta-card
+    .video-editing-detail-card-tab {
+    font-size: 0.65625rem !important;
+    line-height: 1 !important;
   }
 
+  #projects.projects-interactive-media-detail-open
+    .video-editing-detail-meta-card
+    .video-editing-detail-card-tab-surface
+    .font-body,
   #projects.projects-video-editing-detail-open
-    .video-editing-detail:not(.video-editing-detail--interactive-media)
-    .video-editing-detail-overview
-    > div
-    > section
-    .font-body.sm\:text-base,
+    .video-editing-detail-meta-card
+    .video-editing-detail-card-tab-surface
+    .font-body,
   #projects.projects-slaywire-detail-open
-    .video-editing-detail:not(.video-editing-detail--interactive-media)
-    .video-editing-detail-overview
-    > div
-    > section
-    .font-body.sm\:text-base {
-    font-size: 0.9rem;
+    .video-editing-detail-meta-card
+    .video-editing-detail-card-tab-surface
+    .font-body {
+    font-size: 0.9375rem !important;
+    line-height: 1.4 !important;
   }
 
+  #projects.projects-interactive-media-detail-open
+    .video-editing-works-strip-thumb-art,
   #projects.projects-video-editing-detail-open
-    .video-editing-detail:not(.video-editing-detail--interactive-media)
-    .video-editing-detail-overview
-    > div
-    > section
-    ul,
+    .video-editing-works-strip-thumb-art,
   #projects.projects-slaywire-detail-open
-    .video-editing-detail:not(.video-editing-detail--interactive-media)
-    .video-editing-detail-overview
-    > div
-    > section
-    ul {
-    font-size: 0.9rem;
+    .video-editing-works-strip-thumb-art {
+    border-radius: 4px !important;
+    height: 5rem !important;
   }
 
-  /* VIDEO EDITING â€” works strip: 3-up + bleed matches INTERACTIVE MEDIA */
-  #projects.projects-video-editing-detail-open .video-editing-detail-works > .relative {
-    margin-left: -1.75rem;
-    margin-right: -1.75rem;
-    width: calc(100% + 3.5rem);
+  #projects.projects-interactive-media-detail-open .video-editing-works-arrow,
+  #projects.projects-video-editing-detail-open .video-editing-works-arrow,
+  #projects.projects-slaywire-detail-open .video-editing-works-arrow {
+    top: 2.5rem !important;
   }
 
-  #projects.projects-video-editing-detail-open .video-editing-detail-works .video-editing-works-strip {
-    margin-left: 1.75rem;
-    margin-right: 1.75rem;
-    width: calc(100% - 3.5rem);
-  }
-
-  #projects.projects-video-editing-detail-open
-    .video-editing-detail-works
-    .video-editing-works-strip
-    .video-editing-works-strip-thumb {
-    flex-basis: calc((100% - 1.25rem) / 3) !important;
-    max-width: calc((100% - 1.25rem) / 3);
-  }
-
-  #projects.projects-video-editing-detail-open .video-editing-works-arrow--prev {
-    left: 0 !important;
-  }
-
-  #projects.projects-video-editing-detail-open .video-editing-works-arrow--next {
-    right: 0 !important;
-  }
 
   /* iPad landscape: match main showcase column width; kill desktop zoom/offset on stage. */
   #projects.projects-visual-design-detail-open .projects-visual-design-detail-stage {
