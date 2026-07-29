@@ -4824,7 +4824,7 @@ const PhantomProfile = ({
             </div>
             <div className="max-sm:translate-y-px">
               <motion.div
-                className={`profile-card-surface relative ${PROFILE_METADATA_PILL_GAP} w-full rounded-[0_1rem] px-4 py-4 sm:px-5 sm:py-5`}
+                className={`profile-card-surface relative ${PROFILE_METADATA_PILL_GAP} w-full rounded-[4px] px-4 py-4 sm:px-5 sm:py-5`}
                 style={profileRedLinePillDebugStyle}
                 initial={{ x: -24, opacity: 0 }}
                 animate={{ x: overlayRevealed ? 0 : -24, opacity: overlayRevealed ? 1 : 0 }}
@@ -4857,7 +4857,7 @@ const PhantomProfile = ({
                 </div>
               </motion.div>
               <motion.div
-                className={`profile-card-surface relative ${PROFILE_METADATA_PILL_GAP} w-full rounded-[0_1rem] px-4 py-4 sm:px-5 sm:py-5`}
+                className={`profile-card-surface relative ${PROFILE_METADATA_PILL_GAP} w-full rounded-[4px] px-4 py-4 sm:px-5 sm:py-5`}
                 initial={{ opacity: 0, y: 14 }}
                 animate={{ opacity: overlayRevealed ? 1 : 0, y: overlayRevealed ? 0 : 14 }}
                 transition={{ duration: SUMMARY_DURATION_S, delay: overlayRevealed ? SUMMARY_DELAY_S : 0, ease: [0.16, 1, 0.3, 1] }}
@@ -6586,7 +6586,7 @@ const SKILLS_SUBCATEGORY_CARD_FACE =
 
 /** Row zone behind the 3 subskill cards — solid fill, no border/shadow; radii match `SKILLS_SUBCATEGORY_CARD_FACE`. */
 const SKILLS_ROW_STRIP_BG =
-  "skills-row-strip-bg pointer-events-none absolute inset-0 z-0 rounded-[0.95rem] border border-white/[0.09] sm:rounded-[1.05rem]";
+  "skills-row-strip-bg pointer-events-none absolute inset-0 z-0 rounded-[4px] border border-white/[0.09]";
 
 /** Inset for cards inside the row zone (strip fills padded box via `absolute inset-0`). */
 const SKILLS_ROW_ZONE_PADDING = "p-2.5 sm:p-3.5 md:p-4 lg:p-5";

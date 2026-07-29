@@ -856,6 +856,11 @@
     box-shadow: var(--portfolio-glass-shadow);
   }
 
+  /* PROFILE content cards — match Video Editing detail meta card radius (4px) */
+  #profile .profile-card-surface {
+    border-radius: 4px;
+  }
+
   /* PROFILE card â€” metadata pill + in-card labels (SUMMARY, etc.) */
   #profile .profile-card-surface > p.profile-card-inline-label {
     font-size: var(--section-eyebrow-font);
@@ -910,7 +915,7 @@
     border-left: 1px solid var(--portfolio-glass-stroke);
     border-top: 1px solid var(--portfolio-glass-stroke);
     border-bottom: 1px solid var(--portfolio-glass-stroke);
-    border-radius: 1.05rem 0 0 1.05rem;
+    border-radius: 4px 0 0 4px;
     box-shadow: none;
   }
 
@@ -935,24 +940,19 @@
   }
 
   /* PROFILE parity: same glass tokens as `.profile-card-surface` */
+  /* Corner radius matches Video Editing detail meta cards (4px) */
   #skills .skills-card-surface {
     position: relative;
     z-index: 0;
     overflow: hidden;
     border: 1px solid var(--portfolio-glass-stroke);
-    border-radius: 0.95rem;
+    border-radius: 4px;
     box-shadow: var(--portfolio-glass-shadow);
     background: var(--portfolio-glass-fill);
     background-image: none;
     filter: none;
     -webkit-backdrop-filter: var(--portfolio-glass-blur);
     backdrop-filter: var(--portfolio-glass-blur);
-  }
-
-  @media (min-width: 640px) {
-    #skills .skills-card-surface {
-      border-radius: 1.05rem;
-    }
   }
 
   #skills .skills-card-surface:hover {
@@ -2562,7 +2562,7 @@
     -webkit-backdrop-filter: blur(2px) !important;
     backdrop-filter: blur(2px) !important;
     border: 1px solid var(--career-overview-content-edge, var(--portfolio-stroke-outer)) !important;
-    border-radius: 16px !important;
+    border-radius: 4px !important;
     box-shadow: none !important;
   }
 
@@ -2821,7 +2821,7 @@
     -webkit-backdrop-filter: blur(2px);
     backdrop-filter: blur(2px);
     border: 1px solid var(--portfolio-stroke-outer);
-    border-radius: 11px;
+    border-radius: 4px;
     padding: clamp(20px, 2.25vw, 30px);
     transition: all 0.4s ease;
     box-shadow: none;
@@ -3268,7 +3268,7 @@
       -webkit-backdrop-filter: blur(2px);
       backdrop-filter: blur(2px);
       border: 1px solid var(--career-overview-content-edge);
-      border-radius: 16px;
+      border-radius: 4px;
     }
 
     #experience .tabs-content::before {
@@ -3285,7 +3285,7 @@
       backdrop-filter: none;
       background: transparent;
       background-image: none;
-      border-radius: 14px;
+      border-radius: 4px;
     }
 
     /* Drop inner bullet card chrome â€” body copy sits in the outer resume card. */
@@ -3502,7 +3502,7 @@
       /* Padding keeps content away from rounded edges so nothing clips */
       padding: 20px 20px 24px !important;
       border: 1px solid var(--career-overview-content-edge) !important;
-      border-radius: 16px !important;
+      border-radius: 4px !important;
       background: color-mix(in srgb, var(--portfolio-section-card) 6%, transparent) !important;
       -webkit-backdrop-filter: blur(2px) !important;
       backdrop-filter: blur(2px) !important;
@@ -3966,7 +3966,7 @@
       width: 100%;
       /* Slightly more horizontal padding on narrow screens for readability */
       padding: 14px 16px;
-      border-radius: 11px;
+      border-radius: 4px;
     }
 
     #experience .feature-list {
@@ -4358,6 +4358,7 @@
   }
 
   /* Page band cards â€” slightly larger than headers to preserve hierarchy */
+  /* Corner radius matches Video Editing detail meta cards (4px) */
   #skills .skills-card-surface--page {
     --skills-page-scale: 1.1;
     min-height: clamp(
@@ -4365,7 +4366,7 @@
       calc(18.5svh * var(--skills-page-scale)),
       calc(12.75rem * var(--skills-page-scale))
     );
-    border-radius: calc(0.9rem * var(--skills-page-scale));
+    border-radius: 4px;
     padding: calc(1.125rem * var(--skills-page-scale)) calc(0.625rem * var(--skills-page-scale));
   }
 
@@ -7269,7 +7270,7 @@
       calc(18.5svh * var(--skills-page-scale)),
       calc(12.75rem * var(--skills-page-scale))
     ) !important;
-    border-radius: calc(0.9rem * var(--skills-page-scale)) !important;
+    border-radius: 4px !important;
     padding: calc(1.125rem * var(--skills-page-scale)) calc(0.625rem * var(--skills-page-scale)) !important;
   }
 
@@ -7526,7 +7527,7 @@
     -webkit-backdrop-filter: blur(2px) !important;
     backdrop-filter: blur(2px) !important;
     border: 1px solid var(--career-overview-content-edge) !important;
-    border-radius: calc(16px * var(--experience-scale)) !important;
+    border-radius: 4px !important;
   }
 
   #experience .tabs-content::before {
@@ -7534,11 +7535,11 @@
   }
 
   #experience .experience-card-entrance-shell {
-    border-radius: calc(16px * var(--experience-scale)) !important;
+    border-radius: 4px !important;
   }
 
   #experience .career-tabs-content-inner {
-    border-radius: calc(14px * var(--experience-scale)) !important;
+    border-radius: 4px !important;
     background: transparent !important;
     background-image: none !important;
     -webkit-backdrop-filter: none !important;
