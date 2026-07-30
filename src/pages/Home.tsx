@@ -88,6 +88,7 @@ import {
 } from "../lib/portfolioDebugMode";
 import { UserFilledIcon } from "../components/icons/UserFilledIcon";
 import { DUR, EASE, HOVER, PORTFOLIO_SPEED, SHOWCASE_PDF_PROJECTS_FADE_OUT_S, SIDE_NAV_OVERLAY_FADE_S, SPRING, TAP } from "../lib/motion";
+import { useMasonryImageRatios } from "../lib/useMasonryImageRatios";
 import { 
   Instagram, 
   Linkedin, 
@@ -5843,9 +5844,11 @@ const ProjectsStack = ({
             {PROJECT_CARDS.map((card, index) => {
               const isPressing = pressLockId === card.id;
               const isHovered = hoverCardId === card.id;
-              /** Click release settles at hover size; drop to 1 only after press if pointer left. */
+              /** Click settle always returns to rest; plain hover still uses the hover scale. */
               const restScale =
-                reduceMotion || !(isPressing || isHovered) ? 1 : PROJECT_CARD_HOVER.scale;
+                reduceMotion || isPressing || !isHovered
+                  ? 1
+                  : PROJECT_CARD_HOVER.scale;
               return (
               <div key={card.id} className="min-w-0 overflow-visible">
                 {/* PORTFOLIO SPEED: tap → hover size; hover off only after settle if pointer left. */}
@@ -7104,6 +7107,7 @@ const ShowcaseDetailIllustrationsGrid = ({
 }) => {
   const reduceMotion = useReducedMotion();
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const { ratiosBySrc, layoutReady } = useMasonryImageRatios(slides);
 
   const openableIndices = useMemo(
     () =>
@@ -7131,7 +7135,12 @@ const ShowcaseDetailIllustrationsGrid = ({
       <div
         role="list"
         aria-label="Illustrations"
+        aria-busy={!layoutReady}
         className="showcase-illustrations-grid w-full min-w-0 columns-2 gap-[var(--slide-gap,0.875rem)] lg:columns-3"
+        style={{
+          opacity: layoutReady ? 1 : 0,
+          transition: reduceMotion ? undefined : "opacity 180ms cubic-bezier(0.16, 1, 0.3, 1)",
+        }}
       >
         {slides.map((slide, index) => {
           const label =
@@ -7150,6 +7159,8 @@ const ShowcaseDetailIllustrationsGrid = ({
             );
           }
 
+          const aspectRatio = ratiosBySrc[slide.src];
+
           return (
             <motion.button
               key={slide.id}
@@ -7161,6 +7172,7 @@ const ShowcaseDetailIllustrationsGrid = ({
               className={`${tileClassName} group mb-[var(--slide-gap,0.875rem)] inline-block w-full break-inside-avoid cursor-pointer border-0 p-0 text-left align-top transition-opacity duration-200 ease-out hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--palette-yellow-projects)] focus-visible:ring-offset-2 focus-visible:ring-offset-black`}
               aria-label={`View ${label}`}
               onClick={() => setActiveIndex(index)}
+              style={aspectRatio ? { aspectRatio: `${aspectRatio}` } : undefined}
             >
               <img
                 src={slide.src}

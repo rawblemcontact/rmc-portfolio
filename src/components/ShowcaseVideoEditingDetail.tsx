@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import Plyr from "plyr";
 import type { Options as PlyrOptions } from "plyr";
 import "plyr/dist/plyr.css";
@@ -187,12 +187,33 @@ const PROJECTS_TABBED_DETAIL_MQ =
 const DETAIL_CARD_TAB_IDS = ["overview", "role", "impact", "tools"] as const;
 type DetailCardTabId = (typeof DETAIL_CARD_TAB_IDS)[number];
 
-const DETAIL_CARD_TABS: readonly { id: DetailCardTabId; label: string }[] = [
-  { id: "overview", label: "OVERVIEW" },
-  { id: "role", label: "ROLE" },
-  { id: "impact", label: "IMPACT" },
-  { id: "tools", label: "TOOLS" },
-];
+const DETAIL_CARD_TAB_LABEL: Record<DetailCardTabId, string> = {
+  overview: "OVERVIEW",
+  role: "ROLE",
+  impact: "IMPACT",
+  tools: "TOOLS",
+};
+
+/** Move `nextTabId` to index 0; the previous first tab takes its vacated slot. */
+function swapDetailTabToFront(
+  order: readonly DetailCardTabId[],
+  nextTabId: DetailCardTabId,
+): DetailCardTabId[] {
+  const fromIdx = order.indexOf(nextTabId);
+  if (fromIdx <= 0) return [...order];
+  const next = [...order];
+  const displaced = next[0]!;
+  next[0] = nextTabId;
+  next[fromIdx] = displaced;
+  return next;
+}
+
+/** Tab header FLIP travel — slightly longer / softer than DUR.fast. */
+const DETAIL_TAB_SWAP_DUR_S = 0.42;
+const DETAIL_TAB_SWAP_EASE = [0.22, 1, 0.36, 1] as const;
+/** Body copy fades out while the header starts travelling, then fades in. */
+const DETAIL_TAB_BODY_OUT_S = 0.16;
+const DETAIL_TAB_BODY_IN_S = 0.24;
 
 /** iPad landscape filler — sized to fill the tab card down to the video player bottom. */
 const IPAD_DETAIL_CARD_LOREM: Record<DetailCardTabId, string> = {
@@ -244,6 +265,9 @@ export function ShowcaseVideoEditingDetail({
     matchesProjectsTabbedDetailViewport,
   );
   const [activeDetailCardTab, setActiveDetailCardTab] = useState<DetailCardTabId>("overview");
+  const [detailCardTabOrder, setDetailCardTabOrder] = useState<DetailCardTabId[]>(() => [
+    ...DETAIL_CARD_TAB_IDS,
+  ]);
   const [detailCardMinHeightPx, setDetailCardMinHeightPx] = useState<number | null>(null);
   const detailRootRef = useRef<HTMLDivElement | null>(null);
   const detailCardSurfaceRef = useRef<HTMLElement | null>(null);
@@ -287,6 +311,7 @@ export function ShowcaseVideoEditingDetail({
 
   useEffect(() => {
     setActiveDetailCardTab("overview");
+    setDetailCardTabOrder([...DETAIL_CARD_TAB_IDS]);
   }, [activeVideoIndex, card.id]);
 
   useEffect(() => {
@@ -781,6 +806,66 @@ export function ShowcaseVideoEditingDetail({
     return <p className="m-0 font-body text-sm text-mono-2/55 sm:text-base">?</p>;
   };
 
+  const renderIpadDetailTabBody = (tabId: DetailCardTabId) => {
+    if (tabId === "tools") {
+      return (
+        <>
+          <p className="mb-2 whitespace-pre-line font-body text-sm leading-snug text-mono-2 sm:text-base">
+            {IPAD_DETAIL_CARD_LOREM.tools}
+          </p>
+          <ul className="ml-1 mb-0 list-disc list-outside space-y-1 pl-6 marker:text-mono-2/70 sm:pl-7">
+            {IPAD_DETAIL_TOOLS_LOREM.map((tool, index) => (
+              <li
+                key={`${tool}-${index}`}
+                className="font-body text-sm leading-snug text-mono-2 sm:text-base"
+              >
+                {tool}
+              </li>
+            ))}
+          </ul>
+        </>
+      );
+    }
+
+    return (
+      <p className="m-0 whitespace-pre-line font-body text-sm leading-snug text-mono-2 sm:text-base">
+        {IPAD_DETAIL_CARD_LOREM[tabId]}
+      </p>
+    );
+  };
+
+  const renderDetailCardTabBody = (tabId: DetailCardTabId, variant: "portrait" | "ipad") => (
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={tabId}
+        initial={reduceMotion ? false : { opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={
+          reduceMotion
+            ? undefined
+            : {
+                opacity: 0,
+                transition: {
+                  duration: DETAIL_TAB_BODY_OUT_S,
+                  ease: DETAIL_TAB_SWAP_EASE,
+                },
+              }
+        }
+        transition={
+          reduceMotion
+            ? { duration: 0 }
+            : {
+                duration: DETAIL_TAB_BODY_IN_S,
+                ease: DETAIL_TAB_SWAP_EASE,
+              }
+        }
+        className="video-editing-detail-card-tab-body min-w-0"
+      >
+        {variant === "ipad" ? renderIpadDetailTabBody(tabId) : renderPortraitDetailTabBody(tabId)}
+      </motion.div>
+    </AnimatePresence>
+  );
+
   const capturePortraitTabScrollAnchor = useCallback(() => {
     if (isIpadLandscapeViewport) {
       pendingPortraitTabAnchorRef.current = null;
@@ -825,6 +910,8 @@ export function ShowcaseVideoEditingDetail({
     (nextTabId: DetailCardTabId) => {
       if (nextTabId === activeDetailCardTab) return;
 
+      setDetailCardTabOrder((prev) => swapDetailTabToFront(prev, nextTabId));
+
       if (isIpadLandscapeViewport) {
         setActiveDetailCardTab(nextTabId);
         return;
@@ -841,6 +928,88 @@ export function ShowcaseVideoEditingDetail({
       document.getElementById(`video-detail-tab-${tabId}`)?.focus({ preventScroll: true });
     });
   }, []);
+
+  const renderDetailCardTabList = () => (
+    <LayoutGroup id="video-detail-card-tabs">
+      <div
+        className="video-editing-detail-card-tablist flex w-full min-w-0 shrink-0 items-stretch justify-between gap-0 border-b border-transparent"
+        role="tablist"
+        aria-label="Project detail sections"
+        onKeyDown={(event) => {
+          const idx = detailCardTabOrder.findIndex((id) => id === activeDetailCardTab);
+          if (idx < 0) return;
+          let next = idx;
+          if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+            next = (idx + 1) % detailCardTabOrder.length;
+          } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+            next = (idx - 1 + detailCardTabOrder.length) % detailCardTabOrder.length;
+          } else if (event.key === "Home") {
+            next = 0;
+          } else if (event.key === "End") {
+            next = detailCardTabOrder.length - 1;
+          } else {
+            return;
+          }
+          event.preventDefault();
+          const nextId = detailCardTabOrder[next];
+          if (!nextId) return;
+          handleDetailCardTabChange(nextId);
+          focusDetailCardTab(nextId);
+        }}
+      >
+        {detailCardTabOrder.map((tabId) => {
+          const selected = activeDetailCardTab === tabId;
+          return (
+            <motion.button
+              key={tabId}
+              type="button"
+              role="tab"
+              id={`video-detail-tab-${tabId}`}
+              aria-selected={selected}
+              aria-controls={`video-detail-panel-${tabId}`}
+              tabIndex={selected ? 0 : -1}
+              layout={reduceMotion ? false : "position"}
+              transition={
+                reduceMotion
+                  ? { duration: 0 }
+                  : {
+                      layout: {
+                        type: "tween",
+                        duration: DETAIL_TAB_SWAP_DUR_S,
+                        ease: DETAIL_TAB_SWAP_EASE,
+                      },
+                    }
+              }
+              className={`video-editing-detail-card-tab relative flex min-w-0 flex-none items-end justify-center px-0.5 pb-0 pt-0.5 text-center font-heading text-[0.625rem] leading-none tracking-eyebrow-tight uppercase transition-colors duration-[420ms] ease-out focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--palette-yellow-projects)] focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:text-[0.6875rem] ${
+                selected
+                  ? "text-[color:var(--palette-yellow-projects)]"
+                  : "text-mono-2/70 hover:text-[color:var(--palette-yellow-projects)]"
+              }`}
+              onMouseDown={(event) => {
+                if (event.button !== 0) return;
+                capturePortraitTabScrollAnchor();
+                event.preventDefault();
+              }}
+              onClick={() => {
+                handleDetailCardTabChange(tabId);
+                focusDetailCardTab(tabId);
+              }}
+            >
+              <span className="relative inline-block w-max pb-2">
+                {DETAIL_CARD_TAB_LABEL[tabId]}
+                <span
+                  className={`video-editing-detail-card-tab-underline pointer-events-none absolute inset-x-0 bottom-0 h-px origin-center bg-[color:var(--palette-yellow-projects)] transition-transform duration-[420ms] ease-out ${
+                    selected ? "scale-x-100" : "scale-x-0"
+                  }`}
+                  aria-hidden
+                />
+              </span>
+            </motion.button>
+          );
+        })}
+      </div>
+    </LayoutGroup>
+  );
 
   useLayoutEffect(() => {
     if (isIpadLandscapeViewport) {
@@ -1145,71 +1314,7 @@ export function ShowcaseVideoEditingDetail({
                         }
                         className="video-editing-detail-cards-tabs flex min-h-0 w-full min-w-0 flex-1 flex-col gap-2.5"
                       >
-                        <div
-                          className="video-editing-detail-card-tablist flex w-full min-w-0 shrink-0 items-stretch justify-between gap-0 border-b border-transparent"
-                          role="tablist"
-                          aria-label="Project detail sections"
-                          onKeyDown={(event) => {
-                            const idx = DETAIL_CARD_TABS.findIndex((t) => t.id === activeDetailCardTab);
-                            if (idx < 0) return;
-                            let next = idx;
-                            if (event.key === "ArrowRight" || event.key === "ArrowDown") {
-                              next = (idx + 1) % DETAIL_CARD_TABS.length;
-                            } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
-                              next = (idx - 1 + DETAIL_CARD_TABS.length) % DETAIL_CARD_TABS.length;
-                            } else if (event.key === "Home") {
-                              next = 0;
-                            } else if (event.key === "End") {
-                              next = DETAIL_CARD_TABS.length - 1;
-                            } else {
-                              return;
-                            }
-                            event.preventDefault();
-                            const nextId = DETAIL_CARD_TABS[next]?.id;
-                            if (!nextId) return;
-                            handleDetailCardTabChange(nextId);
-                            focusDetailCardTab(nextId);
-                          }}
-                        >
-                          {DETAIL_CARD_TABS.map((tab) => {
-                            const selected = activeDetailCardTab === tab.id;
-                            return (
-                              <button
-                                key={tab.id}
-                                type="button"
-                                role="tab"
-                                id={`video-detail-tab-${tab.id}`}
-                                aria-selected={selected}
-                                aria-controls={`video-detail-panel-${tab.id}`}
-                                tabIndex={selected ? 0 : -1}
-                                className={`video-editing-detail-card-tab relative flex min-w-0 flex-none items-end justify-center px-0.5 pb-0 pt-0.5 text-center font-heading text-[0.625rem] leading-none tracking-eyebrow-tight uppercase transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--palette-yellow-projects)] focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:text-[0.6875rem] ${
-                                  selected
-                                    ? "text-[color:var(--palette-yellow-projects)]"
-                                    : "text-mono-2/70 hover:text-[color:var(--palette-yellow-projects)]"
-                                }`}
-                                onMouseDown={(event) => {
-                                  if (event.button !== 0) return;
-                                  capturePortraitTabScrollAnchor();
-                                  event.preventDefault();
-                                }}
-                                onClick={() => {
-                                  handleDetailCardTabChange(tab.id);
-                                  focusDetailCardTab(tab.id);
-                                }}
-                              >
-                                <span className="relative inline-block w-max pb-2">
-                                  {tab.label}
-                                  <span
-                                    className={`video-editing-detail-card-tab-underline pointer-events-none absolute inset-x-0 bottom-0 h-px origin-center bg-[color:var(--palette-yellow-projects)] transition-transform duration-200 ${
-                                      selected ? "scale-x-100" : "scale-x-0"
-                                    }`}
-                                    aria-hidden
-                                  />
-                                </span>
-                              </button>
-                            );
-                          })}
-                        </div>
+                        {renderDetailCardTabList()}
                         <div
                           role="tabpanel"
                           id={`video-detail-panel-${activeDetailCardTab}`}
@@ -1217,27 +1322,7 @@ export function ShowcaseVideoEditingDetail({
                           className="video-editing-detail-card-tabpanel min-h-0 min-w-0 flex-1 overflow-y-auto no-scrollbar"
                         >
                           <div className="video-editing-detail-card-tab-surface min-w-0">
-                            {activeDetailCardTab === "tools" ? (
-                              <>
-                                <p className="mb-2 whitespace-pre-line font-body text-sm leading-snug text-mono-2 sm:text-base">
-                                  {IPAD_DETAIL_CARD_LOREM.tools}
-                                </p>
-                                <ul className="ml-1 mb-0 list-disc list-outside space-y-1 pl-6 marker:text-mono-2/70 sm:pl-7">
-                                  {IPAD_DETAIL_TOOLS_LOREM.map((tool, index) => (
-                                    <li
-                                      key={`${tool}-${index}`}
-                                      className="font-body text-sm leading-snug text-mono-2 sm:text-base"
-                                    >
-                                      {tool}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </>
-                            ) : (
-                              <p className="m-0 whitespace-pre-line font-body text-sm leading-snug text-mono-2 sm:text-base">
-                                {IPAD_DETAIL_CARD_LOREM[activeDetailCardTab]}
-                              </p>
-                            )}
+                            {renderDetailCardTabBody(activeDetailCardTab, "ipad")}
                           </div>
                         </div>
                       </motion.div>
@@ -1298,71 +1383,7 @@ export function ShowcaseVideoEditingDetail({
                       }
                       className="video-editing-detail-cards-tabs flex w-full min-w-0 flex-col gap-2.5"
                     >
-                      <div
-                        className="video-editing-detail-card-tablist flex w-full min-w-0 shrink-0 items-stretch justify-between gap-0 border-b border-transparent"
-                        role="tablist"
-                        aria-label="Project detail sections"
-                        onKeyDown={(event) => {
-                          const idx = DETAIL_CARD_TABS.findIndex((t) => t.id === activeDetailCardTab);
-                          if (idx < 0) return;
-                          let next = idx;
-                          if (event.key === "ArrowRight" || event.key === "ArrowDown") {
-                            next = (idx + 1) % DETAIL_CARD_TABS.length;
-                          } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
-                            next = (idx - 1 + DETAIL_CARD_TABS.length) % DETAIL_CARD_TABS.length;
-                          } else if (event.key === "Home") {
-                            next = 0;
-                          } else if (event.key === "End") {
-                            next = DETAIL_CARD_TABS.length - 1;
-                          } else {
-                            return;
-                          }
-                          event.preventDefault();
-                          const nextId = DETAIL_CARD_TABS[next]?.id;
-                          if (!nextId) return;
-                          handleDetailCardTabChange(nextId);
-                          focusDetailCardTab(nextId);
-                        }}
-                      >
-                        {DETAIL_CARD_TABS.map((tab) => {
-                          const selected = activeDetailCardTab === tab.id;
-                          return (
-                            <button
-                              key={tab.id}
-                              type="button"
-                              role="tab"
-                              id={`video-detail-tab-${tab.id}`}
-                              aria-selected={selected}
-                              aria-controls={`video-detail-panel-${tab.id}`}
-                              tabIndex={selected ? 0 : -1}
-                              className={`video-editing-detail-card-tab relative flex min-w-0 flex-none items-end justify-center px-0.5 pb-0 pt-0.5 text-center font-heading text-[0.625rem] leading-none tracking-eyebrow-tight uppercase transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--palette-yellow-projects)] focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:text-[0.6875rem] ${
-                                selected
-                                  ? "text-[color:var(--palette-yellow-projects)]"
-                                  : "text-mono-2/70 hover:text-[color:var(--palette-yellow-projects)]"
-                              }`}
-                              onMouseDown={(event) => {
-                                if (event.button !== 0) return;
-                                capturePortraitTabScrollAnchor();
-                                event.preventDefault();
-                              }}
-                              onClick={() => {
-                                handleDetailCardTabChange(tab.id);
-                                focusDetailCardTab(tab.id);
-                              }}
-                            >
-                              <span className="relative inline-block w-max pb-2">
-                                {tab.label}
-                                <span
-                                  className={`video-editing-detail-card-tab-underline pointer-events-none absolute inset-x-0 bottom-0 h-px origin-center bg-[color:var(--palette-yellow-projects)] transition-transform duration-200 ${
-                                    selected ? "scale-x-100" : "scale-x-0"
-                                  }`}
-                                  aria-hidden
-                                />
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
+                      {renderDetailCardTabList()}
                       <div
                         role="tabpanel"
                         id={`video-detail-panel-${activeDetailCardTab}`}
@@ -1370,7 +1391,7 @@ export function ShowcaseVideoEditingDetail({
                         className="video-editing-detail-card-tabpanel min-w-0"
                       >
                         <div className="video-editing-detail-card-tab-surface min-w-0 pt-1">
-                          {renderPortraitDetailTabBody(activeDetailCardTab)}
+                          {renderDetailCardTabBody(activeDetailCardTab, "portrait")}
                         </div>
                       </div>
                     </motion.div>

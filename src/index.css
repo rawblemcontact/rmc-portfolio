@@ -7938,7 +7938,8 @@
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
     filter: none !important;
-    background: var(--portfolio-section-card) !important;
+    /* Same base as desktop glass fill, denser without backdrop blur. */
+    background: color-mix(in srgb, var(--portfolio-section-card) 62%, transparent) !important;
     background-image: none !important;
     border-color: var(--portfolio-stroke-outer) !important;
     border-bottom: 1px solid var(--portfolio-stroke-outer) !important;

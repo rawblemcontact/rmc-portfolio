@@ -4,6 +4,7 @@ import useEmblaCarousel from "embla-carousel-react";
 import { X } from "lucide-react";
 import { createPortal } from "react-dom";
 import { EASE, SPRING, TAP } from "@/lib/motion";
+import { useMasonryImageRatios } from "@/lib/useMasonryImageRatios";
 
 /** VISUAL DESIGN detail gallery slide (matches `detailGallery` on project-visual-design). */
 export type VisualDesignGallerySlide = {
@@ -207,6 +208,7 @@ const VisualDesignProfileLightbox = ({
 export const VisualDesignProfileGallery = ({ slides }: VisualDesignProfileGalleryProps) => {
   const reduceMotion = useReducedMotion();
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const { ratiosBySrc, layoutReady } = useMasonryImageRatios(slides);
 
   const openableIndices = useMemo(
     () =>
@@ -232,7 +234,12 @@ export const VisualDesignProfileGallery = ({ slides }: VisualDesignProfileGaller
       <div
         role="list"
         aria-label="Illustrations"
+        aria-busy={!layoutReady}
         className="w-full min-w-0 columns-2 gap-px lg:columns-3"
+        style={{
+          opacity: layoutReady ? 1 : 0,
+          transition: reduceMotion ? undefined : "opacity 180ms cubic-bezier(0.16, 1, 0.3, 1)",
+        }}
       >
         {slides.map((slide, index) => {
           const label =
@@ -251,6 +258,8 @@ export const VisualDesignProfileGallery = ({ slides }: VisualDesignProfileGaller
             );
           }
 
+          const aspectRatio = ratiosBySrc[slide.src];
+
           return (
             <motion.button
               key={slide.id}
@@ -262,6 +271,7 @@ export const VisualDesignProfileGallery = ({ slides }: VisualDesignProfileGaller
               className={`${TILE_SHELL} group mb-px inline-block w-full break-inside-avoid cursor-pointer border-0 p-0 text-left align-top transition-opacity duration-200 ease-out hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--palette-yellow-projects)] focus-visible:ring-offset-2 focus-visible:ring-offset-black`}
               aria-label={`View ${label}`}
               onClick={() => setActiveIndex(index)}
+              style={aspectRatio ? { aspectRatio: `${aspectRatio}` } : undefined}
             >
               <img
                 src={slide.src}
