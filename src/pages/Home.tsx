@@ -87,7 +87,7 @@ import {
   useRuleOfThirdsEnabled,
 } from "../lib/portfolioDebugMode";
 import { UserFilledIcon } from "../components/icons/UserFilledIcon";
-import { DUR, EASE, HOVER, SHOWCASE_PDF_PROJECTS_FADE_OUT_S, SIDE_NAV_OVERLAY_FADE_S, SPRING, TAP } from "../lib/motion";
+import { DUR, EASE, HOVER, PORTFOLIO_SPEED, SHOWCASE_PDF_PROJECTS_FADE_OUT_S, SIDE_NAV_OVERLAY_FADE_S, SPRING, TAP } from "../lib/motion";
 import { 
   Instagram, 
   Linkedin, 
@@ -5090,7 +5090,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     id: "project-video-editing",
     title: "VIDEO EDITING",
     tagline: "Assembly, color, motion, and audio.",
-    thumbnailVideo: "/edits-meme1-online.mp4",
+    thumbnail: "/edits-meme1-online-poster.jpg",
     poster: "/edits-meme1-online-poster.jpg",
     focalPoint: "50% 36%",
     detailOverview:
@@ -5101,7 +5101,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     detailVideos: [
       {
         id: "video-edit-1",
-        url: "/edits-meme1-online.mp4",
+        url: "/edits-meme1-online-poster.jpg",
         label: "1",
         thumbnailSrc: "/edits-meme1-online-poster.jpg",
         selectorTitle: "RAWBLEM",
@@ -5115,7 +5115,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
       },
       {
         id: "video-edit-2",
-        url: "/edits-meme1-online.mp4",
+        url: "/rawblem-thumbnail-poster.jpg",
         label: "2",
         thumbnailSrc: "/rawblem-thumbnail-poster.jpg",
         selectorTitle: "RAWBLEM",
@@ -5129,7 +5129,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
       },
       {
         id: "video-edit-3",
-        url: "/edits-meme1-online.mp4",
+        url: "/portfolio-website-thumbnail-v2-poster.jpg",
         label: "3",
         thumbnailSrc: "/portfolio-website-thumbnail-v2-poster.jpg",
         selectorTitle: "GUILT TRIP",
@@ -5143,7 +5143,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
       },
       {
         id: "video-edit-4",
-        url: "/edits-meme1-online.mp4",
+        url: "/8bit-festival-thumbnail.jpg",
         label: "4",
         thumbnailSrc: "/8bit-festival-thumbnail.jpg",
         selectorTitle: "M.P.M.R",
@@ -5157,7 +5157,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
       },
       {
         id: "video-edit-5",
-        url: "/edits-meme1-online.mp4",
+        url: "/undertale-fhe-thumbnail.png",
         label: "5",
         thumbnailSrc: "/undertale-fhe-thumbnail.png",
         selectorTitle: "EDIT 05",
@@ -5171,7 +5171,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
       },
       {
         id: "video-edit-6",
-        url: "/edits-meme1-online.mp4",
+        url: "/slaywire-thumbnail.png",
         label: "6",
         thumbnailSrc: "/slaywire-thumbnail.png",
         selectorTitle: "EDIT 06",
@@ -5189,7 +5189,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     id: "project-interactive-media",
     title: "INTERACTIVE MEDIA",
     tagline: "Web design, game dev, and animation.",
-    thumbnailVideo: "/portfolio-website-thumbnail-v2.mp4",
+    thumbnail: "/portfolio-website-thumbnail-v2-poster.jpg",
     poster: "/portfolio-website-thumbnail-v2-poster.jpg",
     focalPoint: "50% 38%",
     detailOverview:
@@ -5200,7 +5200,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     detailVideos: [
       {
         id: "interactive-media-1",
-        url: "/portfolio-website-thumbnail-v2.mp4",
+        url: "/portfolio-website-thumbnail-v2-poster.jpg",
         label: "UNDERTALE FHE",
         thumbnailSrc: "/portfolio-website-thumbnail-v2-poster.jpg",
         selectorTitle: "UNDERTALE FHE",
@@ -5213,7 +5213,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
       },
       {
         id: "interactive-media-2",
-        url: "/portfolio-website-thumbnail-v2.mp4",
+        url: "/portfolio-website-thumbnail-v2-poster.jpg",
         label: "INTERACTIVE MEDIA",
         thumbnailSrc: "/portfolio-website-thumbnail-v2-poster.jpg",
         selectorTitle: "INTERACTIVE MEDIA",
@@ -5226,7 +5226,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
       },
       {
         id: "interactive-media-3",
-        url: "/portfolio-website-thumbnail-v2.mp4",
+        url: "/portfolio-website-thumbnail-v2-poster.jpg",
         label: "INTERACTIVE MEDIA",
         thumbnailSrc: "/portfolio-website-thumbnail-v2-poster.jpg",
         selectorTitle: "INTERACTIVE MEDIA",
@@ -5239,7 +5239,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
       },
       {
         id: "interactive-media-4",
-        url: "/portfolio-website-thumbnail-v2.mp4",
+        url: "/portfolio-website-thumbnail-v2-poster.jpg",
         label: "INTERACTIVE MEDIA",
         thumbnailSrc: "/portfolio-website-thumbnail-v2-poster.jpg",
         selectorTitle: "INTERACTIVE MEDIA",
@@ -5388,7 +5388,6 @@ function saveProjectDetailLayoutDebugValuesByProject(
   console.info("[Project Detail Layout Saved]", valuesByProject);
 }
 
-const cardEase = [0.25, 0.46, 0.45, 0.94] as const;
 
 type SupportingArchivePdfItem = {
   id: string;
@@ -5527,13 +5526,22 @@ const SHOWCASE_WRITING_TAB_FEATURED: Record<ShowcaseTabId, SupportingArchivePdfI
 
 const archiveRowIndexLabel = (rowIndex: number) => String(rowIndex + 1).padStart(2, "0");
 
-const PROJECT_MEDIA_WARMUP_DELAY_MS = 20;
+/** Still-image warmup only — keep short. Video files must not buffer on load (see Home media warmup). */
+const PROJECT_MEDIA_WARMUP_DELAY_MS = 400;
 
 /** Showcase carousel parallax tween (same idea as Embla ?Predefined ? Parallax?). */
 const PROJECT_CAROUSEL_TWEEN_FACTOR_BASE = 0.52;
 
 /** Divide showcase + card?detail durations by this for a uniform speed-up (1.2 ? 20% faster). */
 const SHOWCASE_TIME_DIV = 1.2;
+/** PROJECTS main cards — PORTFOLIO SPEED (see `PORTFOLIO_SPEED` in `src/lib/motion.ts`). */
+const PROJECT_CARD_HOVER = PORTFOLIO_SPEED.hover;
+const PROJECT_CARD_TAP = PORTFOLIO_SPEED.tap;
+const PROJECT_CARD_TAP_SPRING = PORTFOLIO_SPEED.tapSpring;
+/** Wait so press-in + spring settle are mostly visible before opening. */
+const PROJECT_CARD_TAP_FEEDBACK_MS = PORTFOLIO_SPEED.tapFeedbackMs;
+/** Open detail this many ms before click anim ends (overlap the last of the settle). */
+const PROJECT_CARD_DETAIL_OPEN_LEAD_MS = 130;
 const PROJECT_CARD_AUTOPLAY_DELAY_MS = Math.round(360 / SHOWCASE_TIME_DIV);
 /** Showcase carousel: advance one snap after entrance; interval between advances. */
 const PROJECT_CAROUSEL_AUTO_ADVANCE_MS = 2500;
@@ -5707,9 +5715,17 @@ const ProjectsStack = ({
   carouselAutoAdvanceEnabled?: boolean;
   tabletThumbnailValues?: ProjectsTabletThumbnailDebugValues;
 }) => {
+  const reduceMotion = useReducedMotion();
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const readyMediaRef = useRef<Set<number>>(new Set());
+  const selectPendingRef = useRef(false);
+  const selectTimerRef = useRef<number | null>(null);
+  const pressLockTimerRef = useRef<number | null>(null);
   const [loadedMediaCount, setLoadedMediaCount] = useState(0);
+  /** Press / settle window (yellow accent + release target = hover size). */
+  const [pressLockId, setPressLockId] = useState<string | null>(null);
+  /** Pointer hover — independent of press so click can settle at hover size first. */
+  const [hoverCardId, setHoverCardId] = useState<string | null>(null);
 
   const requiredMediaCount = useMemo(
     () => PROJECT_CARDS.reduce((count, card) => count + (card.thumbnail || card.thumbnailVideo ? 1 : 0), 0),
@@ -5722,9 +5738,75 @@ const ProjectsStack = ({
     setLoadedMediaCount((prev) => prev + 1);
   }, []);
 
+  const clearSelectTimer = useCallback(() => {
+    if (selectTimerRef.current == null) return;
+    window.clearTimeout(selectTimerRef.current);
+    selectTimerRef.current = null;
+  }, []);
+
+  const clearPressLockTimer = useCallback(() => {
+    if (pressLockTimerRef.current == null) return;
+    window.clearTimeout(pressLockTimerRef.current);
+    pressLockTimerRef.current = null;
+  }, []);
+
+  const handleCardPointerDown = useCallback((cardId: string) => {
+    setPressLockId(cardId);
+  }, []);
+
+  const handleCardPointerUpOrCancel = useCallback((cardId: string) => {
+    // Click fires after pointerup — keep lock if activate is about to run / pending.
+    queueMicrotask(() => {
+      if (selectPendingRef.current) return;
+      setPressLockId((id) => (id === cardId ? null : id));
+    });
+  }, []);
+
+  /** Snappy press, then open detail slightly before settle ends; keep press lock through full settle. */
+  const handleCardActivate = useCallback(
+    (cardId: string, el: HTMLElement) => {
+      if (selectPendingRef.current) return;
+      setPressLockId(cardId);
+      const feedbackMs = reduceMotion ? 0 : PROJECT_CARD_TAP_FEEDBACK_MS;
+      const openDelayMs = reduceMotion
+        ? 0
+        : Math.max(0, PROJECT_CARD_TAP_FEEDBACK_MS - PROJECT_CARD_DETAIL_OPEN_LEAD_MS);
+
+      if (feedbackMs <= 0) {
+        setPressLockId(null);
+        onSelect(cardId, el);
+        return;
+      }
+
+      selectPendingRef.current = true;
+      clearSelectTimer();
+      clearPressLockTimer();
+
+      selectTimerRef.current = window.setTimeout(() => {
+        selectTimerRef.current = null;
+        onSelect(cardId, el);
+      }, openDelayMs);
+
+      pressLockTimerRef.current = window.setTimeout(() => {
+        pressLockTimerRef.current = null;
+        selectPendingRef.current = false;
+        setPressLockId(null);
+      }, feedbackMs);
+    },
+    [clearPressLockTimer, clearSelectTimer, onSelect, reduceMotion],
+  );
+
   useEffect(() => {
     onContentReadyChange?.(loadedMediaCount >= requiredMediaCount);
   }, [loadedMediaCount, onContentReadyChange, requiredMediaCount]);
+
+  useEffect(
+    () => () => {
+      clearSelectTimer();
+      clearPressLockTimer();
+    },
+    [clearPressLockTimer, clearSelectTimer],
+  );
 
   useEffect(() => {
     if (!ENABLE_PROJECT_CARD_VIDEO_AUTOPLAY) {
@@ -5756,95 +5838,77 @@ const ProjectsStack = ({
   return (
     <div className="projects-carousel-stack -mt-1 sm:-mt-1.5 flex w-full min-w-0 flex-col justify-center overflow-x-visible overflow-y-visible pt-2 pb-0 sm:pt-3">
       <div className="w-full min-w-0">
-        <div className="min-w-0 max-w-full w-full overflow-hidden [--slide-gap:0.875rem] sm:[--slide-gap:1.25rem] lg:[--slide-gap:1rem] xl:[--slide-gap:1.125rem] max-sm:[--slide-gap:0.625rem]">
-          <div className="projects-carousel-grid grid w-full min-w-0 grid-cols-2 sm:grid-cols-4 gap-[var(--slide-gap)]">
-            {PROJECT_CARDS.map((card, index) => (
-              <div key={card.id} className="min-w-0">
-                <motion.button
-                  type="button"
-                  data-carousel-card
-                  onClick={(e) => onSelect(card.id, e.currentTarget)}
-                  className={`group project-card-surface relative w-full [container-type:inline-size] ${SHOWCASE_CAROUSEL_CARD_H} rounded-[11px] sm:rounded-xl border border-[var(--portfolio-glass-stroke)] shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)] text-center overflow-hidden transition-[opacity,background-color,border-color] duration-300 ease-out ${
-                    contentReady
-                      ? "hover:border-[color:var(--palette-yellow-projects)] hover:bg-black [background:#000]"
-                      : "[background:transparent!important] hover:[background:transparent!important]"
-                  } hover:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--palette-yellow-projects)] focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
-                    focusProjectId && focusProjectId !== card.id ? "opacity-0 pointer-events-none" : "opacity-100"
-                  }`}
-                  style={contentReady ? undefined : { background: "transparent", backgroundImage: "none" }}
+        <div className="min-w-0 max-w-full w-full overflow-visible [--slide-gap:0.875rem] sm:[--slide-gap:1.25rem] lg:[--slide-gap:1rem] xl:[--slide-gap:1.125rem] max-sm:[--slide-gap:0.625rem]">
+          <div className="projects-carousel-grid grid w-full min-w-0 grid-cols-2 sm:grid-cols-4 gap-[var(--slide-gap)] overflow-visible">
+            {PROJECT_CARDS.map((card, index) => {
+              const isPressing = pressLockId === card.id;
+              const isHovered = hoverCardId === card.id;
+              /** Click release settles at hover size; drop to 1 only after press if pointer left. */
+              const restScale =
+                reduceMotion || !(isPressing || isHovered) ? 1 : PROJECT_CARD_HOVER.scale;
+              return (
+              <div key={card.id} className="min-w-0 overflow-visible">
+                {/* PORTFOLIO SPEED: tap → hover size; hover off only after settle if pointer left. */}
+                <motion.div
+                  className="project-card-tap-shell w-full origin-center"
+                  initial={false}
+                  animate={reduceMotion ? undefined : { scale: restScale }}
+                  whileTap={reduceMotion ? undefined : PROJECT_CARD_TAP}
+                  transition={
+                    isPressing ? PROJECT_CARD_TAP_SPRING : PROJECT_CARD_HOVER.transition
+                  }
+                  onHoverStart={() => setHoverCardId(card.id)}
+                  onHoverEnd={() =>
+                    setHoverCardId((id) => (id === card.id ? null : id))
+                  }
                 >
-                  {/* Tap scale on inner layer only — transform on the bordered button bleeds black over the stroke. */}
-                  <motion.div
+                  <button
+                    type="button"
+                    data-carousel-card
+                    onPointerDown={() => handleCardPointerDown(card.id)}
+                    onPointerUp={() => handleCardPointerUpOrCancel(card.id)}
+                    onPointerCancel={() => handleCardPointerUpOrCancel(card.id)}
+                    onClick={(e) => handleCardActivate(card.id, e.currentTarget)}
+                    className={`group project-card-surface relative w-full [container-type:inline-size] ${SHOWCASE_CAROUSEL_CARD_H} rounded-[11px] sm:rounded-xl border border-[var(--portfolio-glass-stroke)] shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)] text-center overflow-hidden transition-[opacity,background-color,border-color] duration-300 ease-out ${
+                      contentReady
+                        ? "hover:border-[color:var(--palette-yellow-projects)] hover:bg-black [background:#000]"
+                        : "[background:transparent!important] hover:[background:transparent!important]"
+                    } ${
+                      isPressing
+                        ? "is-press-accent border-[color:var(--palette-yellow-projects)] bg-black"
+                        : ""
+                    } hover:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--palette-yellow-projects)] focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
+                      focusProjectId && focusProjectId !== card.id ? "opacity-0 pointer-events-none" : "opacity-100"
+                    }`}
+                    style={contentReady ? undefined : { background: "transparent", backgroundImage: "none" }}
+                  >
+                  <div
                     className={`h-full transition-opacity duration-300 ease-out ${
                       contentReady ? "opacity-100" : "opacity-0"
                     } relative z-0`}
-                    whileTap={{ scale: 0.985 }}
-                    transition={{ duration: 0.28 / SHOWCASE_TIME_DIV, ease: cardEase }}
                   >
-                    {card.thumbnail || card.thumbnailVideo ? (
-                      <>
-                        <div
-                          className={
-                            card.thumbnailVideo
-                              ? PROJECT_CARD_THUMBNAIL_SECTION
-                              : PROJECT_CARD_THUMBNAIL_IMAGE_BLEED
-                          }
-                        >
-                          {card.thumbnailVideo ? (
-                            <video
-                              ref={(node) => {
-                                videoRefs.current[index] = node;
-                              }}
-                              src={card.thumbnailVideo}
-                              poster={card.poster}
-                              muted
-                              loop
-                              playsInline
-                              preload="metadata"
-                              aria-label={`${showcaseProjectDisplayTitle(card)} preview`}
-                              className={`block h-full w-full ${
-                                (tabletThumbnailValues?.[
-                                  card.id as ProjectsTabletThumbnailId
-                                ]?.zoom ??
-                                  card.zoom ??
-                                  1) < 1
-                                  ? "object-contain"
-                                  : "object-cover"
-                              }`}
-                              style={
-                                tabletThumbnailValues?.[
-                                  card.id as ProjectsTabletThumbnailId
-                                ]
-                                  ? buildProjectsTabletThumbnailStyle(
-                                      tabletThumbnailValues[
-                                        card.id as ProjectsTabletThumbnailId
-                                      ],
-                                    )
-                                  : {
-                                      objectPosition: card.focalPoint ?? "50% 50%",
-                                      ...(card.zoom != null && card.zoom !== 1
-                                        ? {
-                                            transform: `scale(${card.zoom})`,
-                                            transformOrigin:
-                                              card.focalPoint ?? "50% 50%",
-                                          }
-                                        : {}),
-                                    }
-                              }
-                              onLoadedMetadata={() => markCardMediaReady(index)}
-                              onLoadedData={() => markCardMediaReady(index)}
-                              onCanPlay={() => markCardMediaReady(index)}
-                              onError={() => markCardMediaReady(index)}
-                            />
-                          ) : (
-                            <div className="h-full w-full">
-                              <img
-                                src={card.thumbnail}
-                                alt={`${showcaseProjectDisplayTitle(card)} thumbnail`}
-                                loading="eager"
-                                decoding="async"
-                                fetchPriority="high"
-                                className={`h-full w-full ${
+                      {card.thumbnail || card.thumbnailVideo ? (
+                        <>
+                          <div
+                            className={
+                              card.thumbnailVideo
+                                ? PROJECT_CARD_THUMBNAIL_SECTION
+                                : PROJECT_CARD_THUMBNAIL_IMAGE_BLEED
+                            }
+                          >
+                            {card.thumbnailVideo ? (
+                              <video
+                                ref={(node) => {
+                                  videoRefs.current[index] = node;
+                                }}
+                                src={card.thumbnailVideo}
+                                poster={card.poster}
+                                muted
+                                loop
+                                playsInline
+                                preload="metadata"
+                                aria-label={`${showcaseProjectDisplayTitle(card)} preview`}
+                                className={`block h-full w-full ${
                                   (tabletThumbnailValues?.[
                                     card.id as ProjectsTabletThumbnailId
                                   ]?.zoom ??
@@ -5863,8 +5927,7 @@ const ProjectsStack = ({
                                         ],
                                       )
                                     : {
-                                        objectPosition:
-                                          card.focalPoint ?? "50% 50%",
+                                        objectPosition: card.focalPoint ?? "50% 50%",
                                         ...(card.zoom != null && card.zoom !== 1
                                           ? {
                                               transform: `scale(${card.zoom})`,
@@ -5874,17 +5937,90 @@ const ProjectsStack = ({
                                           : {}),
                                       }
                                 }
-                                onLoad={() => markCardMediaReady(index)}
+                                onLoadedMetadata={() => markCardMediaReady(index)}
+                                onLoadedData={() => markCardMediaReady(index)}
+                                onCanPlay={() => markCardMediaReady(index)}
                                 onError={() => markCardMediaReady(index)}
                               />
+                            ) : (
+                              <div className="h-full w-full">
+                                <img
+                                  src={card.thumbnail}
+                                  alt={`${showcaseProjectDisplayTitle(card)} thumbnail`}
+                                  loading="eager"
+                                  decoding="async"
+                                  fetchPriority="high"
+                                  className={`h-full w-full ${
+                                    (tabletThumbnailValues?.[
+                                      card.id as ProjectsTabletThumbnailId
+                                    ]?.zoom ??
+                                      card.zoom ??
+                                      1) < 1
+                                      ? "object-contain"
+                                      : "object-cover"
+                                  }`}
+                                  style={
+                                    tabletThumbnailValues?.[
+                                      card.id as ProjectsTabletThumbnailId
+                                    ]
+                                      ? buildProjectsTabletThumbnailStyle(
+                                          tabletThumbnailValues[
+                                            card.id as ProjectsTabletThumbnailId
+                                          ],
+                                        )
+                                      : {
+                                          objectPosition:
+                                            card.focalPoint ?? "50% 50%",
+                                          ...(card.zoom != null && card.zoom !== 1
+                                            ? {
+                                                transform: `scale(${card.zoom})`,
+                                                transformOrigin:
+                                                  card.focalPoint ?? "50% 50%",
+                                              }
+                                            : {}),
+                                        }
+                                  }
+                                  onLoad={() => markCardMediaReady(index)}
+                                  onError={() => markCardMediaReady(index)}
+                                />
+                              </div>
+                            )}
+                            <span
+                              aria-hidden
+                              className="pointer-events-none absolute inset-0 z-[1]"
+                              style={{ background: PROJECT_CARD_THUMBNAIL_VIGNETTE }}
+                            />
+                          </div>
+                          <div className={PROJECT_CARD_DESCRIPTION_SECTION}>
+                            <div className={PROJECT_CARD_TITLE_INSET}>
+                              <ShowcaseStackedTitle
+                                title={card.title}
+                                titlePrefix={card.titlePrefix}
+                                className={PROJECT_CARD_TITLE_CLASS}
+                              />
                             </div>
-                          )}
-                          <span
-                            aria-hidden
-                            className="pointer-events-none absolute inset-0 z-[1]"
-                            style={{ background: PROJECT_CARD_THUMBNAIL_VIGNETTE }}
-                          />
-                        </div>
+                            <div className={PROJECT_CARD_TAGLINE_PANEL}>
+                              <div className={PROJECT_CARD_TAGLINE_DIVIDER} aria-hidden />
+                              <span
+                                className={`${PROJECT_CARD_TAGLINE_CLASS}${
+                                  card.tabletPortraitTaglineSuffix
+                                    ? " project-card-tagline--has-tablet-portrait-suffix"
+                                    : ""
+                                }`}
+                              >
+                                {showcaseTaglineCopy(card)}
+                                {card.tabletPortraitTaglineSuffix ? (
+                                  <span className="project-card-tagline-tablet-portrait-suffix">
+                                    {" "}
+                                    {card.tabletPortraitTaglineSuffix}
+                                  </span>
+                                ) : null}
+                              </span>
+                            </div>
+                          </div>
+                        </>
+                      ) : null}
+                      {!card.thumbnail && !card.thumbnailVideo ? (
                         <div className={PROJECT_CARD_DESCRIPTION_SECTION}>
                           <div className={PROJECT_CARD_TITLE_INSET}>
                             <ShowcaseStackedTitle
@@ -5912,41 +6048,13 @@ const ProjectsStack = ({
                             </span>
                           </div>
                         </div>
-                      </>
-                    ) : null}
-                    {!card.thumbnail && !card.thumbnailVideo ? (
-                      <div className={PROJECT_CARD_DESCRIPTION_SECTION}>
-                        <div className={PROJECT_CARD_TITLE_INSET}>
-                          <ShowcaseStackedTitle
-                            title={card.title}
-                            titlePrefix={card.titlePrefix}
-                            className={PROJECT_CARD_TITLE_CLASS}
-                          />
-                        </div>
-                        <div className={PROJECT_CARD_TAGLINE_PANEL}>
-                          <div className={PROJECT_CARD_TAGLINE_DIVIDER} aria-hidden />
-                          <span
-                            className={`${PROJECT_CARD_TAGLINE_CLASS}${
-                              card.tabletPortraitTaglineSuffix
-                                ? " project-card-tagline--has-tablet-portrait-suffix"
-                                : ""
-                            }`}
-                          >
-                            {showcaseTaglineCopy(card)}
-                            {card.tabletPortraitTaglineSuffix ? (
-                              <span className="project-card-tagline-tablet-portrait-suffix">
-                                {" "}
-                                {card.tabletPortraitTaglineSuffix}
-                              </span>
-                            ) : null}
-                          </span>
-                        </div>
-                      </div>
-                    ) : null}
-                  </motion.div>
-                </motion.button>
+                      ) : null}
+                    </div>
+                  </button>
+                </motion.div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
@@ -6568,7 +6676,16 @@ type CardRect = { top: number; left: number; width: number; height: number };
 const SHOWCASE_SLIDER_MEDIA_BOX_SHADOW =
   "0 36px 88px rgba(0,0,0,0.6), inset 0 -40px 70px rgba(0,0,0,0.52), 0 0 0 1px rgba(255,255,255,0.07), 0 0 28px 4px rgba(255,255,255,0.04)";
 
-/** Settled project detail hero ? full-bleed media with per-project focal crop. */
+/**
+ * iPadOS / iPhone WebKit — used for compositor + media preload mitigations.
+ * Must stay above DetailCardMedia / section panel that read it.
+ */
+const IS_IOS_TOUCH =
+  typeof window !== "undefined" &&
+  typeof CSS !== "undefined" &&
+  CSS.supports("-webkit-touch-callout", "none");
+
+/** Settled project detail hero — full-bleed media with per-project focal crop. */
 const DetailCardMedia = ({ card }: { card: ShowcaseProjectCard }) => (
   <>
     {card.thumbnailVideo ? (
@@ -6579,7 +6696,8 @@ const DetailCardMedia = ({ card }: { card: ShowcaseProjectCard }) => (
         loop
         autoPlay
         playsInline
-        preload="auto"
+        /* iOS: avoid preload=auto — large MP4s (e.g. ~21MB edits) crash WebKit tabs. */
+        preload={IS_IOS_TOUCH ? "metadata" : "auto"}
         className="block h-full w-full object-cover"
         style={{
           objectPosition: card.focalPoint ?? "50% 50%",
@@ -7124,19 +7242,29 @@ function ShowcaseWritingFeaturedPanel({
   item,
   previewWidthPx,
   onOpenPdfInSupporting,
+  measureOnly = false,
 }: {
   item: SupportingArchivePdfItem;
   previewWidthPx: number;
   onOpenPdfInSupporting: (item: SupportingArchivePdfItem) => void;
+  measureOnly?: boolean;
 }) {
   return (
     <div className="featured-writing-panel-body flex w-full min-w-0 max-w-full flex-col gap-3 text-left sm:flex-row sm:items-start sm:gap-4">
-      <FeaturedWritingPdfThumbnail
-        pdfSrc={supportingPdfHref(item)}
-        widthPx={previewWidthPx}
-        className="shrink-0 self-start"
-        onActivate={() => onOpenPdfInSupporting(item)}
-      />
+      {measureOnly ? (
+        <div
+          aria-hidden
+          className="featured-writing-raised relative shrink-0 self-start overflow-hidden rounded-[10px] border-0 bg-white/[0.04]"
+          style={{ width: previewWidthPx, height: 216, maxWidth: "100%" }}
+        />
+      ) : (
+        <FeaturedWritingPdfThumbnail
+          pdfSrc={supportingPdfHref(item)}
+          widthPx={previewWidthPx}
+          className="shrink-0 self-start"
+          onActivate={() => onOpenPdfInSupporting(item)}
+        />
+      )}
       <div className="featured-writing-content-col flex min-h-0 min-w-0 w-full flex-1 flex-col gap-2.5 sm:min-w-0 sm:gap-3">
         <div className="featured-writing-title-row grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] grid-rows-[auto_auto] items-start gap-x-2.5 gap-y-1 sm:gap-x-3">
           <p className="featured-writing-item-title col-start-1 row-start-1 min-w-0 font-display text-lg leading-[1.15] tracking-tight text-white sm:text-xl md:text-2xl md:leading-tight">
@@ -7657,6 +7785,8 @@ const PalaceProjects = ({
   const detailRevealTimersRef = useRef<number[]>([]);
   const detailAnchorRef = useRef<HTMLDivElement>(null);
   const [showcaseTabId, setShowcaseTabId] = useState<ShowcaseTabId>("tab-1");
+  const projectDetailSafariLite = IS_IOS_TOUCH;
+  const projectDetailMotionReduced = reduceMotion || projectDetailSafariLite;
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -7672,7 +7802,7 @@ const PalaceProjects = ({
     return () => mq.removeListener(onChange);
   }, []);
 
-  const morphDur = reduceMotion ? 0.12 / SHOWCASE_TIME_DIV : SHOWCASE_CARD_MORPH_DUR_S;
+  const morphDur = projectDetailMotionReduced ? 0.12 / SHOWCASE_TIME_DIV : SHOWCASE_CARD_MORPH_DUR_S;
   const morphEase = SHOWCASE_EASE;
 
   // FLIP animation approach ? avoids animating CSS layout properties (width/height)
@@ -7686,6 +7816,22 @@ const PalaceProjects = ({
   const mScaleY = useMotionValue(1);
 
   const handleCardClick = useCallback((id: string, el: HTMLElement) => {
+    if (projectDetailSafariLite) {
+      setMorphRect(null);
+      setTargetRect(null);
+      setMorphDone(true);
+      onSelectProject(id);
+      return;
+    }
+
+    // Drop Framer tap scale for one frame so FLIP samples rest bounds.
+    const shell = el.closest(".project-card-tap-shell");
+    shell?.classList.add("is-flip-measure");
+    const src = el.getBoundingClientRect();
+    requestAnimationFrame(() => {
+      shell?.classList.remove("is-flip-measure");
+    });
+
     if (id === "project-video-editing" || noMorphProjectIds.has(id)) {
       // These projects open without FLIP hero morph; detail card fades in.
       setMorphRect(null);
@@ -7695,7 +7841,6 @@ const PalaceProjects = ({
       return;
     }
 
-    const src = el.getBoundingClientRect();
     setMorphRect({ top: src.top, left: src.left, width: src.width, height: src.height });
 
     if (PROJECT_CARDS.find((card) => card.id === id)?.detailGallery?.length) {
@@ -7718,7 +7863,7 @@ const PalaceProjects = ({
     setTargetRect({ top: dst.top, left: dst.left, width: dst.width, height: dst.height });
     setMorphDone(false);
     onSelectProject(id);
-  }, [onSelectProject, mX, mY, mScaleX, mScaleY]);
+  }, [onSelectProject, projectDetailSafariLite, mX, mY, mScaleX, mScaleY]);
 
   // Parent can clear the open project (e.g. global back) ? reset FLIP state so the next open is clean.
   useEffect(() => {
@@ -7734,7 +7879,7 @@ const PalaceProjects = ({
       setDetailHeroMediaFadeIn(false);
       return;
     }
-    if (reduceMotion) {
+    if (projectDetailMotionReduced) {
       setDetailHeroMediaFadeIn(true);
       return;
     }
@@ -7753,7 +7898,7 @@ const PalaceProjects = ({
       cancelAnimationFrame(raf1);
       cancelAnimationFrame(raf2);
     };
-  }, [morphDone, activeCard?.id, reduceMotion]);
+  }, [morphDone, activeCard?.id, projectDetailMotionReduced]);
 
   // FLIP morph + detail copy schedule (timers must survive morphDone ? do not key this effect on morphDone).
   useEffect(() => {
@@ -7762,7 +7907,7 @@ const PalaceProjects = ({
     const morphMs = Math.round(morphDur * 1000);
     const chainTimers: number[] = [];
 
-    if (!reduceMotion) {
+    if (!projectDetailMotionReduced) {
       const ruleAt = Math.max(0, morphMs - DETAIL_RULE_LINE_LEAD_MS);
       const afterRuleMs = ruleAt + DETAIL_RULE_EXPAND_MS;
       const atHalfHeroFadeMs =
@@ -7800,10 +7945,10 @@ const PalaceProjects = ({
       );
     }
 
-    animate(mX, targetRect.left, { duration: morphDur, ease: morphEase });
-    animate(mY, targetRect.top, { duration: morphDur, ease: morphEase });
-    animate(mScaleX, 1, { duration: morphDur, ease: morphEase });
-    animate(mScaleY, 1, {
+    const xControl = animate(mX, targetRect.left, { duration: morphDur, ease: morphEase });
+    const yControl = animate(mY, targetRect.top, { duration: morphDur, ease: morphEase });
+    const scaleXControl = animate(mScaleX, 1, { duration: morphDur, ease: morphEase });
+    const scaleYControl = animate(mScaleY, 1, {
       duration: morphDur,
       ease: morphEase,
       onComplete: () => {
@@ -7814,12 +7959,16 @@ const PalaceProjects = ({
 
     return () => {
       cancelled = true;
+      xControl.stop();
+      yControl.stop();
+      scaleXControl.stop();
+      scaleYControl.stop();
       chainTimers.forEach((id) => window.clearTimeout(id));
       detailRevealTimersRef.current.forEach((id) => window.clearTimeout(id));
       detailRevealTimersRef.current = [];
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [targetRect, morphRect, morphDur, reduceMotion]);
+  }, [targetRect, morphRect, morphDur, projectDetailMotionReduced]);
 
   // Reset / instant reveal for no-morph details (before paint so header is not slid up after first frame).
   useLayoutEffect(() => {
@@ -7833,14 +7982,25 @@ const PalaceProjects = ({
       detailRevealTimersRef.current = [];
       return;
     }
-    if (reduceMotion || activeCard?.detailGallery?.length || videoEditingDetailNoMainCard || activeCardNoMorph) {
+    if (
+      projectDetailMotionReduced ||
+      activeCard?.detailGallery?.length ||
+      videoEditingDetailNoMainCard ||
+      activeCardNoMorph
+    ) {
       setDetailHdrReveal(true);
       setDetailRuleReveal(true);
       setDetailGalleryReveal(true);
       setDetailRow1Reveal(true);
       setDetailRow2Reveal(true);
     }
-  }, [morphDone, activeCard?.id, reduceMotion, activeCardNoMorph, videoEditingDetailNoMainCard]);
+  }, [
+    morphDone,
+    activeCard?.id,
+    projectDetailMotionReduced,
+    activeCardNoMorph,
+    videoEditingDetailNoMainCard,
+  ]);
 
   return (
     <section
@@ -7942,7 +8102,7 @@ const PalaceProjects = ({
                 } ${
                   projectDetailAllowsOverflowX ? "overflow-x-visible" : "overflow-x-hidden"
                 }`
-              : `max-lg:min-h-min max-lg:flex-none max-lg:justify-start max-2xl:min-h-min max-2xl:flex-none max-2xl:justify-start 2xl:min-h-0 2xl:flex-1 2xl:justify-center overflow-x-hidden${
+              : `max-lg:min-h-min max-lg:flex-none max-lg:justify-start max-2xl:min-h-min max-2xl:flex-none max-2xl:justify-start 2xl:min-h-0 2xl:flex-1 2xl:justify-center overflow-x-visible${
                   projectsShowcaseClusterStyleActive ? " items-center" : ""
                 }`
           }`}
@@ -8049,11 +8209,12 @@ const PalaceProjects = ({
               activeId={showcaseTabId}
               onTabChange={setShowcaseTabId}
               className="w-full min-w-0"
-              panel={({ tabId, previewColumnWidthPx }) => (
+              panel={({ tabId, previewColumnWidthPx, measureOnly }) => (
                 <ShowcaseWritingFeaturedPanel
                   item={SHOWCASE_WRITING_TAB_FEATURED[tabId]}
                   previewWidthPx={previewColumnWidthPx}
                   onOpenPdfInSupporting={onOpenFeaturedPdfInSupporting}
+                  measureOnly={measureOnly}
                 />
               )}
             />
@@ -8451,12 +8612,6 @@ const EXPERIENCE_TABLET_LANDSCAPE_LOCKED_LAYOUT: ProfileDesktopLayoutDebugValues
   rightWidthScale: 0.75,
   rightHeightScale: 0.89,
 };
-
-/** iPadOS WebKit — keep section overlay compositor layer while EXPERIENCE is open. */
-const IS_IOS_TOUCH =
-  typeof window !== "undefined" &&
-  typeof CSS !== "undefined" &&
-  CSS.supports("-webkit-touch-callout", "none");
 
 const experienceTabBtnClass = (activeId: ExperienceTabId, id: ExperienceTabId) =>
   activeId === id ? "tab-btn active" : "tab-btn";
@@ -11484,9 +11639,12 @@ export default function Home() {
   const [activeShowcaseProjectId, setActiveShowcaseProjectId] = useState<string | null>(null);
   const slaywireShowcaseDetailOpen =
     currentSection === "projects" && activeShowcaseProjectId === "project-slaywire";
-  const projectsPanelOverflowX = slaywireShowcaseDetailOpen
-    ? "overflow-x-visible"
-    : "overflow-x-hidden";
+  /** Showcase 4-up hover scale needs X room; keep X clipped for most project details. */
+  const projectsPanelOverflowX =
+    currentSection === "projects" &&
+    (!activeShowcaseProjectId || slaywireShowcaseDetailOpen)
+      ? "overflow-x-visible"
+      : "overflow-x-hidden";
   const [projectsEntranceArmed, setProjectsEntranceArmed] = useState(false);
   /**
    * AnimatePresence opacity exit is only for projects ↔ projects-supporting.
@@ -11515,27 +11673,29 @@ export default function Home() {
   const prevSlideIdRef = useRef<string>("hero");
   const transitionTimeoutsRef = useRef<number[]>([]);
   const hasWarmedProjectMediaRef = useRef(false);
-  const projectMediaWarmupRef = useRef<(HTMLImageElement | HTMLVideoElement)[]>([]);
+  const projectMediaWarmupRef = useRef<HTMLImageElement[]>([]);
   const isProjectsPage =
     currentSection === "projects" ||
     currentSection === "projects-supporting" ||
     !!currentSection?.startsWith("project-");
 
-  // Preload SHOWCASE carousel assets + full detail-hero video buffer (DetailCardMedia uses preload="auto").
+  /**
+   * Warm SHOWCASE stills only (thumbnails + posters + mascot).
+   * Never create hidden `<video preload="auto">` elements on load on Mobile Safari.
+   */
   useEffect(() => {
     if (hasWarmedProjectMediaRef.current) return;
     hasWarmedProjectMediaRef.current = true;
 
     const timer = window.setTimeout(() => {
-      const handles: (HTMLImageElement | HTMLVideoElement)[] = [];
+      const handles: HTMLImageElement[] = [];
 
       const profileMascotImg = new Image();
-      profileMascotImg.decoding = "sync";
+      profileMascotImg.decoding = "async";
       profileMascotImg.src = "/rawblem3.svg";
       handles.push(profileMascotImg);
 
       PROJECT_CARDS.forEach((card) => {
-        // Static thumbnail image
         if (card.thumbnail) {
           const img = new Image();
           img.decoding = "async";
@@ -11543,23 +11703,12 @@ export default function Home() {
           handles.push(img);
         }
 
-        // Video poster ? must be preloaded so the flying card shows it instantly on click
+        // Poster for flying-card morph — still only, no video buffer.
         if (card.poster) {
           const img = new Image();
           img.decoding = "async";
           img.src = card.poster;
           handles.push(img);
-        }
-
-        // Video file ? auto so detail overlay hero can autoplay smoothly after morph (same URLs as carousel previews).
-        if (card.thumbnailVideo) {
-          const video = document.createElement("video");
-          video.preload = "auto";
-          video.muted = true;
-          video.playsInline = true;
-          video.src = card.thumbnailVideo;
-          video.load();
-          handles.push(video);
         }
       });
 
@@ -11567,7 +11716,6 @@ export default function Home() {
     }, PROJECT_MEDIA_WARMUP_DELAY_MS);
 
     return () => window.clearTimeout(timer);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

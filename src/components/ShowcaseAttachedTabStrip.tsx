@@ -72,6 +72,8 @@ export type ShowcaseAttachedTabStripProps = {
         previewWidthPx: number;
         tabInsetLeftPx: number;
         previewGutterPx: number;
+        /** Hidden phone-only measurement copy; avoid expensive media work. */
+        measureOnly?: boolean;
       }) => React.ReactNode);
 };
 
@@ -269,6 +271,7 @@ export function ShowcaseAttachedTabStrip({
           previewWidthPx,
           tabInsetLeftPx: tabInsetLeft,
           previewGutterPx,
+          measureOnly: false,
         })
       : panel;
 
@@ -509,6 +512,7 @@ export function ShowcaseAttachedTabStrip({
                             previewWidthPx,
                             tabInsetLeftPx: tabInsetLeft,
                             previewGutterPx,
+                            measureOnly: true,
                           })}
                         </div>
                       ))}

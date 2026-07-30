@@ -110,6 +110,7 @@ Desktop left/right gaps on `#profile` come from the **centered two-column row** 
 
 | Date | Note |
 |------|------|
+| 2026-07 | **PORTFOLIO SPEED** — named hover/press reaction preset in `src/lib/motion.ts` (`PORTFOLIO_SPEED`). Snappy like MAIN MENU / EXPERIENCE, slightly softer than `TAP` / `SPRING.tap`. Apply only when the user asks; currently used by PROJECTS main 4 cards. |
 | 2026-05 | Added always-on project rule `.cursor/rules/portfoliov2-senior-frontend-agent.mdc` (agent stack, architecture, SHOWCASE/SKILLS workflow). |
 | 2026-05 | Added PROFILE viewport gutters note + `portfoliov2-profile-viewport-gutters` skill; SKILLS uses `PROFILE_VIEWPORT_CONTENT_MAX`. |
 | 2026-04 | Added “Rules and guidelines — implementation”; corrected paths from legacy `client/src` to `src`. |

@@ -257,6 +257,7 @@ export function ShowcaseVideoEditingDetail({
   const activeVideoIndexRef = useRef(0);
   const worksArrowReleaseTimerRef = useRef<number | null>(null);
   const worksStripScrollSyncTimerRef = useRef<number | null>(null);
+  const worksStripProgrammaticUnlockTimerRef = useRef<number | null>(null);
   const worksStripNavLockUntilRef = useRef(0);
   const stripProgrammaticScrollRef = useRef(false);
   const worksStripSupportsScrollEndRef = useRef(false);
@@ -349,6 +350,13 @@ export function ShowcaseVideoEditingDetail({
     }
   }, []);
 
+  const clearWorksStripProgrammaticUnlockTimer = useCallback(() => {
+    if (worksStripProgrammaticUnlockTimerRef.current !== null) {
+      window.clearTimeout(worksStripProgrammaticUnlockTimerRef.current);
+      worksStripProgrammaticUnlockTimerRef.current = null;
+    }
+  }, []);
+
   const scheduleWorksArrowRelease = useCallback(() => {
     clearWorksArrowReleaseTimer();
     worksArrowReleaseTimerRef.current = window.setTimeout(() => {
@@ -376,10 +384,24 @@ export function ShowcaseVideoEditingDetail({
   const lockWorksStripScrollSync = useCallback(() => {
     worksStripNavLockUntilRef.current = Date.now() + WORKS_STRIP_PROGRAMMATIC_LOCK_MS;
     stripProgrammaticScrollRef.current = true;
-    window.setTimeout(() => {
+    clearWorksStripProgrammaticUnlockTimer();
+    worksStripProgrammaticUnlockTimerRef.current = window.setTimeout(() => {
       stripProgrammaticScrollRef.current = false;
+      worksStripProgrammaticUnlockTimerRef.current = null;
     }, WORKS_STRIP_PROGRAMMATIC_LOCK_MS);
-  }, []);
+  }, [clearWorksStripProgrammaticUnlockTimer]);
+
+  useEffect(() => {
+    return () => {
+      clearWorksArrowReleaseTimer();
+      clearWorksStripScrollSyncTimer();
+      clearWorksStripProgrammaticUnlockTimer();
+    };
+  }, [
+    clearWorksArrowReleaseTimer,
+    clearWorksStripProgrammaticUnlockTimer,
+    clearWorksStripScrollSyncTimer,
+  ]);
 
   const resetStripSwipeArrowGesture = useCallback((clientX: number, clientY: number) => {
     const ref = stripSwipeArrowRef.current;

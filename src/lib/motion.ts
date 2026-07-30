@@ -32,3 +32,37 @@ export const TAP = {
   transition: { type: "tween", duration: 0.15, ease: EASE.out },
 } as const;
 export const HOVER = { scale: 1.02 } as const;
+
+/**
+ * PORTFOLIO SPEED — named reaction feel (hover zoom + press).
+ * Snappy press-in + smooth ease-out settle (no spring mush / micro-bounce).
+ * Apply only when the user asks for “PORTFOLIO SPEED” on an element.
+ */
+export const PORTFOLIO_SPEED = {
+  hover: {
+    /** Zoom 25% gentler than 1.05 (5% → 3.75%). */
+    scale: 1.0375,
+    transition: {
+      type: "tween",
+      duration: 0.2,
+      ease: EASE.out,
+    },
+  },
+  tap: {
+    /** Push-in 15% gentler than 0.955 (4.5% → ~3.8% shrink). */
+    scale: 0.962,
+    transition: {
+      type: "tween",
+      duration: 0.11,
+      ease: EASE.out,
+    },
+  },
+  /** Release back to hover/rest — same ease family as menu, decisive settle. */
+  tapSpring: {
+    type: "tween",
+    duration: 0.2,
+    ease: EASE.out,
+  },
+  /** Min visible press+settle window before navigating away (ms). */
+  tapFeedbackMs: 260,
+} as const;

@@ -939,6 +939,22 @@
     backdrop-filter: none;
   }
 
+  /* Let PORTFOLIO-style tap scale paint outside the grid cell. */
+  #projects .projects-showcase-cards-cluster,
+  #projects .projects-showcase-carousel-block,
+  #projects .projects-showcase-carousel-inner,
+  #projects .projects-carousel-stack,
+  #projects .projects-carousel-stack > div,
+  #projects .projects-carousel-grid,
+  #projects .projects-carousel-grid > * {
+    overflow: visible !important;
+  }
+
+  /* FLIP measure: kill Framer tap transform for one frame. */
+  #projects .project-card-tap-shell.is-flip-measure {
+    transform: none !important;
+  }
+
   /* PROFILE parity: same glass tokens as `.profile-card-surface` */
   /* Corner radius matches Video Editing detail meta cards (4px) */
   #skills .skills-card-surface {
@@ -6957,8 +6973,18 @@
   }
 
   #projects [data-carousel-card].project-card-surface:hover::after,
-  #projects [data-carousel-card].project-card-surface:focus-visible::after {
+  #projects [data-carousel-card].project-card-surface:focus-visible::after,
+  #projects [data-carousel-card].project-card-surface.is-press-accent::after {
     box-shadow: inset 0 0 0 1px var(--palette-yellow-projects);
+  }
+
+  /* Keep yellow title / tagline while click feedback runs (even if pointer leaves). */
+  #projects [data-carousel-card].is-press-accent .project-card-title {
+    color: var(--palette-yellow-projects);
+  }
+
+  #projects [data-carousel-card].is-press-accent .project-card-tagline {
+    color: rgb(255 255 255 / 0.9);
   }
 
   /*
