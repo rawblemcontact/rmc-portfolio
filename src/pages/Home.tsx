@@ -3697,15 +3697,14 @@ const RainbowMenuSlide = ({
   }, []);
 
   useEffect(() => {
-    if (!active) {
+    if (!active || sectionPanelClosed) {
+      // Leaving a section (or leaving the menu slide) must reset fill/hover so
+      // icons are outline again when the main menu is revealed.
       clearNavTimer();
       setPendingNavId(null);
       setPressedNavId(null);
       setHoveredId(null);
       lineHoverSinceRef.current = {};
-      return;
-    }
-    if (sectionPanelClosed) {
       return;
     }
     if (pressedNavClearTimerRef.current !== null) {
@@ -3722,6 +3721,17 @@ const RainbowMenuSlide = ({
       }
     };
   }, [active, clearNavTimer, sectionPanelClosed]);
+
+  // lockedFillId clears at the start of leave-to-menu; drop hover fill immediately so
+  // icons are outline while the section panel is still sliding away.
+  useEffect(() => {
+    if (lockedFillId !== null) return;
+    clearNavTimer();
+    setPendingNavId(null);
+    setPressedNavId(null);
+    setHoveredId(null);
+    lineHoverSinceRef.current = {};
+  }, [lockedFillId, clearNavTimer]);
 
   useEffect(
     () => () => {
@@ -3905,19 +3915,30 @@ const RainbowMenuSlide = ({
   );
 };
 
+/** Map overlay section id → main/side nav item id (SHOWCASE sub-routes → projects). */
+function navItemIdForSection(section: string | null): string | null {
+  if (!section) return null;
+  if (section === "projects-supporting" || section.startsWith("project-")) return "projects";
+  return section;
+}
+
 const SideNavOverlay = ({
   open,
   onClose,
   onNavigate,
+  currentSection,
   exitButtonDebug,
 }: {
   open: boolean;
   onClose: () => void;
   onNavigate: (id: string) => void;
+  /** Keeps FillIcon filled for the section the user is still in (not reset on leave-to-menu). */
+  currentSection: string | null;
   exitButtonDebug: NavIconButtonDebugValues;
 }) => {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [pendingNavId, setPendingNavId] = useState<string | null>(null);
+  const activeNavId = navItemIdForSection(currentSection);
   const [exitMenuAlignY, setExitMenuAlignY] = useState(0);
   const menuTitleRef = useRef<HTMLParagraphElement | null>(null);
   const exitShellRef = useRef<HTMLDivElement | null>(null);
@@ -4155,7 +4176,11 @@ const SideNavOverlay = ({
                       <FillIcon
                         icon={item.icon}
                         filledIcon={item.id === "profile" ? UserFilledIcon : undefined}
-                        forceFilled={hoveredId === item.id || pendingNavId === item.id}
+                        forceFilled={
+                          activeNavId === item.id ||
+                          hoveredId === item.id ||
+                          pendingNavId === item.id
+                        }
                         className="w-4 h-4 md:w-[1.125rem] md:h-[1.125rem] text-white shrink-0 ml-2 md:ml-3"
                         strokeWidth={1.5}
                       />
@@ -11696,6 +11721,7 @@ export default function Home() {
     if (reduceMotion) {
       setProjectsEntranceArmed(id === "projects");
       setCurrentSection(id === "menu" ? null : id);
+      if (id === "menu") setMenuLockedFillId(null);
       startTransition(() => setPanelSettled(true));
       return;
     }
@@ -11705,6 +11731,8 @@ export default function Home() {
     setProjectsEntranceArmed(false);
 
     if (id === "menu") {
+      // Clear before the panel exits so main-menu icons are outline as the menu is revealed.
+      setMenuLockedFillId(null);
       setMenuPanelAtRight(true);
       const raf = requestAnimationFrame(() => {
         setTransitionTarget("menu");
@@ -11873,6 +11901,10 @@ export default function Home() {
   }, [currentSlideId]);
 
   useEffect(() => {
+    if (currentSection === null) setMenuLockedFillId(null);
+  }, [currentSection]);
+
+  useEffect(() => {
     if (currentSlideId !== "menu") {
       setMenuIntroReady(false);
       return;
@@ -11985,7 +12017,8 @@ export default function Home() {
         <SideNavOverlay
           open={isSideNavOpen}
           onClose={() => setIsSideNavOpen(false)}
-          onNavigate={navigateFromMenu}
+          onNavigate={navigateTo}
+          currentSection={currentSection}
           exitButtonDebug={sideNavExitButtonDebug}
         />
       )}
