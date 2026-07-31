@@ -2176,6 +2176,57 @@
     min-width: 0;
   }
 
+  /* EXPERIENCE rail — title sets chrome width; divider + tab stack share that edge. */
+  #experience .experience-rail-chrome {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: fit-content;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  #experience .experience-rail-chrome .career-nav-section-labels {
+    width: fit-content;
+    max-width: 100%;
+  }
+
+  #experience .experience-rail-title-block {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4375rem;
+    width: fit-content;
+    max-width: 100%;
+    min-width: 0;
+    padding-bottom: 14px;
+  }
+
+  #experience .experience-rail-title-block .section-main-header-title {
+    width: fit-content;
+    max-width: 100%;
+  }
+
+  #experience .experience-rail-title-block .career-nav-section-divider {
+    left: 0;
+    right: 0;
+    width: auto;
+  }
+
+  #experience .experience-rail-chrome .nav-header {
+    padding-left: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+  }
+
+  #experience .experience-rail-chrome .tabs-nav {
+    width: 100%;
+    min-width: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
   /* Section main title â€” Experience rail */
   #experience .nav-header .section-main-header-title {
     margin: 0 0 0 -0.08em;
@@ -2444,7 +2495,7 @@
     backdrop-filter: blur(2px);
     box-shadow: inset 0 0 0 1px var(--portfolio-stroke-outer);
     border: none;
-    border-radius: 11px;
+    border-radius: 4px;
     cursor: pointer;
     transition:
       background-color var(--career-tab-hover-duration) cubic-bezier(0.4, 0, 0.2, 1),
@@ -2452,6 +2503,11 @@
       transform var(--career-tab-hover-duration) cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
     text-align: left;
+  }
+
+  #experience .experience-tab-btn-shell {
+    width: 100%;
+    min-width: 0;
   }
 
   #experience .tab-btn::before {
@@ -3236,17 +3292,21 @@
     }
 
     #experience .nav-header {
-      padding: 22px 12px 14px 8px;
+      padding: 22px 0 0;
       margin: 0 0 16px;
     }
 
+    #experience .experience-rail-title-block {
+      padding-bottom: 14px;
+    }
+
     #experience .career-nav-section-divider {
-      left: 8px;
-      right: 12px;
+      left: 0;
+      right: 0;
     }
 
     #experience .tabs-nav {
-      padding: 0 12px 20px 8px;
+      padding: 0 0 20px;
       gap: 11px;
       border: 0;
       border-right: 0;
@@ -3439,12 +3499,23 @@
       grid-row: auto !important;
     }
 
-    /* Header: flush left, comfortable bottom spacing before blue line */
+    /* Header + tabs share title-anchored chrome width */
+    #experience .experience-rail-chrome {
+      display: flex;
+      flex-direction: column;
+      width: fit-content;
+      max-width: 100%;
+      min-width: 0;
+    }
+
     #experience .nav-header {
       display: flex;
-      order: 1;
-      padding: 0 0 16px;
+      padding: 0;
       margin: 0 0 14px;
+    }
+
+    #experience .experience-rail-title-block {
+      padding-bottom: 16px;
     }
 
     #experience .career-nav-section-divider {
@@ -3452,9 +3523,7 @@
       right: 0;
     }
 
-    /* Tab row: equal-width buttons spanning the full container width */
     #experience .tabs-nav {
-      order: 2;
       width: 100% !important;
       min-width: 0 !important;
       flex-direction: row !important;
@@ -3485,6 +3554,12 @@
       padding: 11px 10px;
       text-align: center;
       transform: none !important;
+    }
+
+    #experience .tabs-nav .experience-tab-btn-shell {
+      flex: 1 1 0 !important;
+      min-width: 0 !important;
+      width: auto;
     }
 
     #experience .tab-title,
@@ -3696,6 +3771,12 @@
       transform: none !important;
     }
 
+    #experience .tabs-nav .experience-tab-btn-shell {
+      flex: 0 0 auto;
+      min-width: max-content;
+      width: auto;
+    }
+
     #experience .tab-title,
     #experience .tab-subtitle {
       white-space: nowrap;
@@ -3870,6 +3951,12 @@
       text-align: left;
       scroll-snap-align: start;
       transform: none !important;
+    }
+
+    #experience .tabs-nav .experience-tab-btn-shell {
+      flex: 0 0 auto;
+      min-width: max-content;
+      width: auto;
     }
 
     #experience .tab-title,
@@ -7480,12 +7567,21 @@
   }
 
   #experience .nav-header {
-    width: var(--experience-rail-inner-w) !important;
-    max-width: var(--experience-rail-inner-w) !important;
+    width: auto !important;
+    max-width: 100% !important;
     box-sizing: border-box;
     padding: 0 calc(12px * var(--experience-scale))
-      calc(14px * var(--experience-scale)) calc(8px * var(--experience-scale)) !important;
+      calc(14px * var(--experience-scale)) 0 !important;
     margin: 0 0 calc(12px * var(--experience-scale)) !important;
+  }
+
+  #experience .experience-rail-chrome .nav-header {
+    padding: 0 !important;
+    margin: 0 0 calc(12px * var(--experience-scale)) !important;
+  }
+
+  #experience .experience-rail-title-block {
+    padding-bottom: calc(14px * var(--experience-scale));
   }
 
   #experience .nav-header .section-main-header-title {
@@ -7493,17 +7589,21 @@
   }
 
   #experience .career-nav-section-divider {
-    left: calc(8px * var(--experience-scale));
-    right: calc(12px * var(--experience-scale));
+    left: 0;
+    right: 0;
+  }
+
+  #experience .experience-rail-chrome {
+    width: fit-content;
+    max-width: 100%;
   }
 
   #experience .tabs-nav {
-    width: var(--experience-rail-inner-w) !important;
+    width: 100% !important;
     min-width: 0 !important;
-    max-width: var(--experience-rail-inner-w) !important;
+    max-width: none !important;
     box-sizing: border-box;
-    padding: 0 calc(12px * var(--experience-scale)) calc(20px * var(--experience-scale))
-      calc(8px * var(--experience-scale)) !important;
+    padding: 0 0 calc(20px * var(--experience-scale)) !important;
     gap: calc(11px * var(--experience-scale)) !important;
     border: 0 !important;
     border-right: 0 !important;
@@ -7526,7 +7626,7 @@
   #experience .tab-btn {
     padding: calc(14px * var(--experience-scale)) !important;
     gap: calc(12px * var(--experience-scale)) !important;
-    border-radius: calc(11px * var(--experience-scale)) !important;
+    border-radius: calc(4px * var(--experience-scale)) !important;
   }
 
   #experience .experience-desktop-right-shell {

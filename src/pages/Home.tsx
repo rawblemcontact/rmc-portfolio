@@ -9058,18 +9058,24 @@ const ConfidantExperience = ({
       </div>
     );
     return (
-      <motion.button
+      <motion.div
         key={tabId}
-        className={className}
-        data-tab={tabId}
-        type="button"
+        className="experience-tab-btn-shell origin-center w-full min-w-0"
         variants={motionVariants}
-        onClick={onClick}
-        onTouchStart={onClick}
-        onKeyDown={onKeyDown}
+        whileTap={rm ? undefined : PORTFOLIO_BOUNCE.tap}
+        transition={rm ? undefined : PORTFOLIO_BOUNCE.tapSpring}
       >
-        {label}
-      </motion.button>
+        <button
+          className={`${className} w-full`}
+          data-tab={tabId}
+          type="button"
+          onClick={onClick}
+          onTouchStart={onClick}
+          onKeyDown={onKeyDown}
+        >
+          {label}
+        </button>
+      </motion.div>
     );
   };
 
@@ -9355,6 +9361,7 @@ const ConfidantExperience = ({
             animate={panelSettled ? "visible" : "hidden"}
           >
           <motion.div className="career-overview-rail" style={experienceLeftDebugStyle}>
+          <div className="experience-rail-chrome">
           <motion.div
             className="nav-header"
             variants={experienceRailHeaderEntrance}
@@ -9362,17 +9369,16 @@ const ConfidantExperience = ({
             animate={panelSettled ? "visible" : "hidden"}
           >
             <motion.div className="career-nav-section-labels" variants={experienceRailLabelsEntrance}>
-              <p className="career-nav-section-subtitle section-main-header-title">Experience</p>
-              <p className="career-nav-section-title" style={{ color: NAV_SUBHEAD_GRAY }}>
-                Career Overview
-              </p>
+              <div className="experience-rail-title-block">
+                <p className="career-nav-section-subtitle section-main-header-title">Experience</p>
+                <motion.div
+                  className="career-nav-section-divider"
+                  variants={experienceRailDividerEntrance}
+                  style={{ transformOrigin: "center" }}
+                  aria-hidden
+                />
+              </div>
             </motion.div>
-            <motion.div
-              className="career-nav-section-divider"
-              variants={experienceRailDividerEntrance}
-              style={{ transformOrigin: "center" }}
-              aria-hidden
-            />
           </motion.div>
           {/* Vertical Tabs Navigation */}
           <motion.nav
@@ -9406,6 +9412,7 @@ const ConfidantExperience = ({
               experienceTabItemEntrance,
             )}
           </motion.nav>
+          </div>
           </motion.div>
           {/* Mobile: single tabs-content (unchanged). Tablet/desktop: sibling shell + content entrance. */}
           <div className="experience-desktop-right-shell">
