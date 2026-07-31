@@ -3,7 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import useEmblaCarousel from "embla-carousel-react";
 import { X } from "lucide-react";
 import { createPortal } from "react-dom";
-import { EASE, SPRING, TAP } from "@/lib/motion";
+import { EASE, PORTFOLIO_BOUNCE } from "@/lib/motion";
 import { useMasonryImageRatios } from "@/lib/useMasonryImageRatios";
 
 /** VISUAL DESIGN detail gallery slide (matches `detailGallery` on project-visual-design). */
@@ -139,7 +139,11 @@ const VisualDesignProfileLightbox = ({
 
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
         <header className="relative flex shrink-0 items-center justify-between gap-3 border-b border-white/[0.1] bg-black px-4 py-3.5 sm:px-5">
-          <motion.div whileTap={TAP} transition={SPRING.tap} className="inline-flex origin-center">
+          <motion.div
+            whileTap={reduceMotion ? undefined : PORTFOLIO_BOUNCE.tap}
+            transition={reduceMotion ? undefined : PORTFOLIO_BOUNCE.tapSpring}
+            className="inline-flex origin-center"
+          >
             <button
               type="button"
               aria-label="Close preview"

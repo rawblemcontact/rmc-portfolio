@@ -87,7 +87,7 @@ import {
   useRuleOfThirdsEnabled,
 } from "../lib/portfolioDebugMode";
 import { UserFilledIcon } from "../components/icons/UserFilledIcon";
-import { DUR, EASE, HOVER, PORTFOLIO_SPEED, SHOWCASE_PDF_PROJECTS_FADE_OUT_S, SIDE_NAV_OVERLAY_FADE_S, SPRING, TAP } from "../lib/motion";
+import { DUR, EASE, HOVER, PORTFOLIO_BOUNCE, PORTFOLIO_SPEED, SHOWCASE_PDF_PROJECTS_FADE_OUT_S, SIDE_NAV_OVERLAY_FADE_S, SPRING, TAP } from "../lib/motion";
 import { useMasonryImageRatios } from "../lib/useMasonryImageRatios";
 import { 
   Instagram, 
@@ -958,6 +958,62 @@ const TOP_NAV_TABLET_LANDSCAPE_MQ = `(min-width: ${TOP_NAV_TABLET_MIN_PX}px) and
 const TOP_NAV_BACK_BUTTON_OFFSET_Y_MOBILE = -0.2;
 const TOP_NAV_BACK_BUTTON_OFFSET_Y_TABLET = 3.8;
 const TOP_NAV_BACK_BUTTON_OFFSET_Y_DESKTOP = 7.1;
+/**
+ * Fully fade TOP NAV this many px before content optically hits a button’s box.
+ * Fade span = max(min span, clearance − lead).
+ */
+const TOP_NAV_CROSS_LEAD_PX = 12;
+const TOP_NAV_SCROLL_FADE_MIN_PX = 18;
+const TOP_NAV_SCROLL_FADE_FALLBACK_PX = 36;
+/** Content selectors that can optically cross fixed TOP NAV chrome while scrolling. */
+const TOP_NAV_CROSSING_CONTENT_SELECTOR = [
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "p",
+  "li",
+  "img",
+  "button",
+  "[data-carousel-card]",
+  ".section-main-header-title",
+  ".career-nav-section-subtitle",
+  ".career-nav-section-title",
+  ".skills-card-surface",
+  ".project-card-surface",
+].join(",");
+
+const measureTopNavScrollFadeRangePx = (scroller: HTMLElement): number => {
+  const chrome = Array.from(
+    document.querySelectorAll<HTMLElement>("[data-top-nav-chrome]"),
+  );
+  if (chrome.length === 0) return TOP_NAV_SCROLL_FADE_FALLBACK_PX;
+
+  const chromeRects = chrome.map((el) => el.getBoundingClientRect());
+  const navBottom = Math.max(...chromeRects.map((r) => r.bottom));
+  const scrollTop = scroller.scrollTop;
+
+  let nearestTopAtRest = Number.POSITIVE_INFINITY;
+  const nodes = scroller.querySelectorAll(TOP_NAV_CROSSING_CONTENT_SELECTOR);
+  for (let i = 0; i < nodes.length; i++) {
+    const el = nodes[i];
+    if (!(el instanceof HTMLElement)) continue;
+    const r = el.getBoundingClientRect();
+    if (r.height < 6 || r.width < 6) continue;
+    const overlapsButton = chromeRects.some(
+      (nr) => r.left < nr.right && r.right > nr.left,
+    );
+    if (!overlapsButton) continue;
+    // Reconstruct viewport top if scroller were at 0 (nav is fixed).
+    const topAtRest = r.top + scrollTop;
+    if (topAtRest < navBottom + 1) continue;
+    if (topAtRest < nearestTopAtRest) nearestTopAtRest = topAtRest;
+  }
+
+  if (!Number.isFinite(nearestTopAtRest)) return TOP_NAV_SCROLL_FADE_FALLBACK_PX;
+  const clearance = nearestTopAtRest - navBottom;
+  return Math.max(TOP_NAV_SCROLL_FADE_MIN_PX, clearance - TOP_NAV_CROSS_LEAD_PX);
+};
 
 const matchesTopNavTabletViewport = () => {
   if (typeof window === "undefined") return false;
@@ -971,14 +1027,15 @@ const BackToMenuButton = ({
   show,
   onBack,
   ariaLabel = "Back to menu",
-  fadeOut = false,
+  opacity = 1,
   buttonDebug,
   debugActive = false,
 }: {
   show: boolean;
   onBack: () => void;
   ariaLabel?: string;
-  fadeOut?: boolean;
+  /** 0–1 chrome visibility (scroll fade + PDF hide). */
+  opacity?: number;
   buttonDebug: NavIconButtonDebugValues;
   debugActive?: boolean;
 }) => {
@@ -1048,15 +1105,23 @@ const BackToMenuButton = ({
         transform: `translate(0px, ${offsetY}px)`,
       };
 
+  const chromeOpacity = Math.max(0, Math.min(1, opacity));
+
   return (
   <AnimatePresence>
     {show && (
       <motion.div
         initial={{ opacity: 0, x: -10 }}
-        animate={{ opacity: fadeOut ? 0 : 1, x: 0 }}
+        animate={{ opacity: chromeOpacity, x: 0 }}
         exit={{ opacity: 0, x: -10 }}
-        transition={{ duration: DUR.fast, ease: EASE.out }}
+        transition={{
+          opacity: { duration: DUR.micro, ease: EASE.out },
+          x: { duration: DUR.fast, ease: EASE.out },
+        }}
         className={`fixed ${TOP_NAV_FIXED_TOP} left-1 z-50 max-sm:-translate-x-0.5 sm:left-4 sm:translate-x-0`}
+        style={{ pointerEvents: chromeOpacity < 0.05 ? "none" : "auto" }}
+        aria-hidden={chromeOpacity < 0.05}
+        data-top-nav-chrome
       >
         <motion.div whileTap={TAP} transition={SPRING.tap}>
           <Button
@@ -1065,6 +1130,7 @@ const BackToMenuButton = ({
             onClick={onBack}
             size="icon"
             aria-label={ariaLabel}
+            tabIndex={chromeOpacity < 0.05 ? -1 : undefined}
             className={TOP_NAV_ICON_BUTTON_CLASS}
             style={buttonStyle}
           >
@@ -4206,12 +4272,6 @@ const SideNavOverlay = ({
             </div>
 
             <div className="mt-auto pt-6 border-t border-white/10">
-              <div className="mb-3">
-                <span className="text-mono-2/90 font-mono text-[0.6875rem] sm:text-xs uppercase tracking-widest">
-                  CONTACT
-                </span>
-              </div>
-
               <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
                 <motion.a
                   href="#"
@@ -5535,12 +5595,12 @@ const PROJECT_CAROUSEL_TWEEN_FACTOR_BASE = 0.52;
 
 /** Divide showcase + card?detail durations by this for a uniform speed-up (1.2 ? 20% faster). */
 const SHOWCASE_TIME_DIV = 1.2;
-/** PROJECTS main cards — PORTFOLIO SPEED (see `PORTFOLIO_SPEED` in `src/lib/motion.ts`). */
+/** PROJECTS main cards — PORTFOLIO SPEED (hover + PORTFOLIO BOUNCE press). */
 const PROJECT_CARD_HOVER = PORTFOLIO_SPEED.hover;
-const PROJECT_CARD_TAP = PORTFOLIO_SPEED.tap;
-const PROJECT_CARD_TAP_SPRING = PORTFOLIO_SPEED.tapSpring;
+const PROJECT_CARD_TAP = PORTFOLIO_BOUNCE.tap;
+const PROJECT_CARD_TAP_SPRING = PORTFOLIO_BOUNCE.tapSpring;
 /** Wait so press-in + spring settle are mostly visible before opening. */
-const PROJECT_CARD_TAP_FEEDBACK_MS = PORTFOLIO_SPEED.tapFeedbackMs;
+const PROJECT_CARD_TAP_FEEDBACK_MS = PORTFOLIO_BOUNCE.tapFeedbackMs;
 /** Open detail this many ms before click anim ends (overlap the last of the settle). */
 const PROJECT_CARD_DETAIL_OPEN_LEAD_MS = 130;
 const PROJECT_CARD_AUTOPLAY_DELAY_MS = Math.round(360 / SHOWCASE_TIME_DIV);
@@ -6969,7 +7029,11 @@ const ShowcaseIllustrationLightbox = ({
           onClick={(event) => event.stopPropagation()}
         >
           <div className="absolute right-[0.375rem] top-3 z-30 sm:right-[0.875rem] sm:top-4">
-            <motion.div whileTap={TAP} transition={SPRING.tap} className="inline-flex origin-center">
+            <motion.div
+              whileTap={reduceMotion ? undefined : PORTFOLIO_BOUNCE.tap}
+              transition={reduceMotion ? undefined : PORTFOLIO_BOUNCE.tapSpring}
+              className="inline-flex origin-center"
+            >
               <button
                 type="button"
                 aria-label="Close illustration preview"
@@ -7166,10 +7230,9 @@ const ShowcaseDetailIllustrationsGrid = ({
               key={slide.id}
               type="button"
               role="listitem"
-              whileHover={reduceMotion ? undefined : { scale: 1.015 }}
-              whileTap={reduceMotion ? undefined : { scale: 1.02 }}
-              transition={reduceMotion ? undefined : { duration: 0.2, ease: EASE.out }}
-              className={`${tileClassName} group mb-[var(--slide-gap,0.875rem)] inline-block w-full break-inside-avoid cursor-pointer border-0 p-0 text-left align-top transition-opacity duration-200 ease-out hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--palette-yellow-projects)] focus-visible:ring-offset-2 focus-visible:ring-offset-black`}
+              whileTap={reduceMotion ? undefined : PORTFOLIO_BOUNCE.tap}
+              transition={reduceMotion ? undefined : PORTFOLIO_BOUNCE.tapSpring}
+              className={`${tileClassName} mb-[var(--slide-gap,0.875rem)] inline-block w-full origin-center break-inside-avoid cursor-pointer border-0 p-0 text-left align-top focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--palette-yellow-projects)] focus-visible:ring-offset-2 focus-visible:ring-offset-black`}
               aria-label={`View ${label}`}
               onClick={() => setActiveIndex(index)}
               style={aspectRatio ? { aspectRatio: `${aspectRatio}` } : undefined}
@@ -7177,7 +7240,7 @@ const ShowcaseDetailIllustrationsGrid = ({
               <img
                 src={slide.src}
                 alt={slide.alt?.trim() || `Illustration ${index + 1}`}
-                className="block h-auto w-full origin-center transition-transform duration-200 ease-out group-hover:scale-[1.02] group-active:scale-[1.02]"
+                className="pointer-events-none block h-auto w-full"
                 loading={index < 6 ? "eager" : "lazy"}
                 decoding="async"
                 fetchPriority={index < 3 ? "high" : "auto"}
@@ -11678,8 +11741,12 @@ export default function Home() {
   const showcasePdfObscureTimerRef = useRef<number | null>(null);
   const supportingPdfPreviewControlRef = useRef<SupportingPdfPreviewControl | null>(null);
   const showcasePdfPreviewControlRef = useRef<SupportingPdfPreviewControl | null>(null);
+  const [topNavScrollOpacity, setTopNavScrollOpacity] = useState(1);
+  const topNavScrollOpacityRef = useRef(1);
+  const topNavScrollFadeRangeRef = useRef(TOP_NAV_SCROLL_FADE_FALLBACK_PX);
   const navButtonsFaded =
     archivePdfNavActive || Boolean(showcasePdfOverlay) || showcasePdfClosing || showcasePdfObscuring;
+  const topNavChromeOpacity = navButtonsFaded ? 0 : topNavScrollOpacity;
   const showcasePdfViewerActive =
     showcasePdfObscuring || Boolean(showcasePdfOverlay) || showcasePdfClosing;
   const prevSlideIdRef = useRef<string>("hero");
@@ -11741,6 +11808,88 @@ export default function Home() {
     if (!currentSection) return;
     const panel = sectionPanelRef.current;
     if (panel) panel.scrollTop = 0;
+    topNavScrollOpacityRef.current = 1;
+    setTopNavScrollOpacity(1);
+  }, [currentSection]);
+
+  /** TOP NAV: fade out before content optically crosses button path; fade back toward page top. */
+  useEffect(() => {
+    if (!currentSection) {
+      topNavScrollOpacityRef.current = 1;
+      setTopNavScrollOpacity(1);
+      return;
+    }
+    const panel = sectionPanelRef.current;
+    if (!panel) return;
+
+    const resolveScroller = (): HTMLElement => {
+      if (panel.scrollHeight > panel.clientHeight + 1) return panel;
+      const nested = panel.querySelector<HTMLElement>(
+        ".overflow-y-auto, .overflow-y-scroll, [class*='overflow-y-auto']",
+      );
+      return nested ?? panel;
+    };
+
+    const refreshFadeRange = () => {
+      const scroller = resolveScroller();
+      topNavScrollFadeRangeRef.current = measureTopNavScrollFadeRangePx(scroller);
+    };
+
+    const opacityFromScrollTop = (scrollTop: number) => {
+      if (scrollTop <= 0) return 1;
+      const range = topNavScrollFadeRangeRef.current;
+      return Math.max(0, Math.min(1, 1 - scrollTop / range));
+    };
+
+    const syncOpacity = (scrollTop: number) => {
+      const next = opacityFromScrollTop(scrollTop);
+      if (Math.abs(next - topNavScrollOpacityRef.current) < 0.008) return;
+      topNavScrollOpacityRef.current = next;
+      setTopNavScrollOpacity(next);
+    };
+
+    const lastNestedScrollTop = new WeakMap<HTMLElement, number>();
+
+    const onScroll = (event: Event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      if (target !== panel && !panel.contains(target)) return;
+
+      // Prefer the section panel when it is the page scroller (ignore carousels / nested).
+      if (panel.scrollHeight > panel.clientHeight + 1) {
+        if (target !== panel) return;
+        syncOpacity(panel.scrollTop);
+        return;
+      }
+
+      // Panel itself does not scroll (e.g. writing archive) — track nested vertical scroll.
+      if (target.scrollHeight <= target.clientHeight + 1) return;
+      const prevTop = lastNestedScrollTop.get(target);
+      lastNestedScrollTop.set(target, target.scrollTop);
+      if (prevTop !== undefined && prevTop === target.scrollTop) return;
+      syncOpacity(target.scrollTop);
+    };
+
+    const onResize = () => {
+      refreshFadeRange();
+      syncOpacity(resolveScroller().scrollTop);
+    };
+
+    // Layout may still be settling after section swap — measure twice.
+    refreshFadeRange();
+    syncOpacity(resolveScroller().scrollTop);
+    const measureAgain = window.setTimeout(() => {
+      refreshFadeRange();
+      syncOpacity(resolveScroller().scrollTop);
+    }, 120);
+
+    panel.addEventListener("scroll", onScroll, { capture: true, passive: true });
+    window.addEventListener("resize", onResize);
+    return () => {
+      window.clearTimeout(measureAgain);
+      panel.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("resize", onResize);
+    };
   }, [currentSection]);
 
   useEffect(() => {
@@ -12133,11 +12282,18 @@ export default function Home() {
         className={`fixed ${TOP_NAV_FIXED_TOP} right-2.5 sm:right-4 z-50 flex items-center gap-1.5 sm:gap-2.5`}
         initial={false}
         animate={{
-          opacity: navButtonsFaded ? 0 : 1,
+          opacity: topNavChromeOpacity,
           y: 0,
           scale: 1,
         }}
-        transition={SPRING.ui}
+        transition={
+          reduceMotion
+            ? { duration: 0 }
+            : { duration: DUR.micro, ease: EASE.out }
+        }
+        style={{ pointerEvents: topNavChromeOpacity < 0.05 ? "none" : "auto" }}
+        aria-hidden={topNavChromeOpacity < 0.05}
+        data-top-nav-chrome
       >
         {!(currentSlideId === "hero" && currentSection === null && !isResumeMode) && (
           <motion.div
@@ -12150,6 +12306,7 @@ export default function Home() {
               onClick={() => setIsResumeMode(!isResumeMode)}
               size="icon"
               aria-label={isResumeMode ? "Exit resume mode" : "Enter resume mode"}
+              tabIndex={topNavChromeOpacity < 0.05 ? -1 : undefined}
               className={`${TOP_NAV_ICON_BUTTON_CLASS} font-display flex items-center justify-center [&_svg]:!size-[17px] sm:[&_svg]:!size-5`}
             >
               {isResumeMode ? <Zap size={20} /> : <FileText size={20} />}
@@ -12165,6 +12322,7 @@ export default function Home() {
               onClick={() => setIsSideNavOpen(true)}
               size="icon"
               aria-label="Open navigation menu"
+              tabIndex={topNavChromeOpacity < 0.05 ? -1 : undefined}
               className={`${TOP_NAV_ICON_BUTTON_CLASS} font-display flex items-center justify-center [&_svg]:!size-[17px] sm:[&_svg]:!size-5`}
             >
               <Menu size={20} aria-hidden />
@@ -12208,7 +12366,7 @@ export default function Home() {
       {!isResumeMode && (
         <BackToMenuButton
           show={currentSection !== null && !isSideNavOpen}
-          fadeOut={navButtonsFaded}
+          opacity={topNavChromeOpacity}
           buttonDebug={topNavBackButtonDebug}
           debugActive={showTopNavBackDebugPanel}
           ariaLabel={

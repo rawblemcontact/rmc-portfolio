@@ -34,8 +34,32 @@ export const TAP = {
 export const HOVER = { scale: 1.02 } as const;
 
 /**
- * PORTFOLIO SPEED — named reaction feel (hover zoom + press).
- * Snappy press-in + smooth ease-out settle (no spring mush / micro-bounce).
+ * PORTFOLIO BOUNCE — on-click press-in + settle (no hover).
+ * Same click feel as hero PORTFOLIO / PROJECTS main 4 cards.
+ * Apply only when the user asks for “PORTFOLIO BOUNCE”.
+ */
+export const PORTFOLIO_BOUNCE = {
+  /** Push-in 15% gentler than 0.955 (4.5% → ~3.8% shrink). */
+  tap: {
+    scale: 0.962,
+    transition: {
+      type: "tween",
+      duration: 0.11,
+      ease: EASE.out,
+    },
+  },
+  /** Release back to rest — same ease family as menu, decisive settle. */
+  tapSpring: {
+    type: "tween",
+    duration: 0.2,
+    ease: EASE.out,
+  },
+  /** Min visible press+settle window before navigating away (ms). */
+  tapFeedbackMs: 260,
+} as const;
+
+/**
+ * PORTFOLIO SPEED — named reaction feel (hover zoom + PORTFOLIO BOUNCE press).
  * Apply only when the user asks for “PORTFOLIO SPEED” on an element.
  */
 export const PORTFOLIO_SPEED = {
@@ -48,21 +72,7 @@ export const PORTFOLIO_SPEED = {
       ease: EASE.out,
     },
   },
-  tap: {
-    /** Push-in 15% gentler than 0.955 (4.5% → ~3.8% shrink). */
-    scale: 0.962,
-    transition: {
-      type: "tween",
-      duration: 0.11,
-      ease: EASE.out,
-    },
-  },
-  /** Release back to hover/rest — same ease family as menu, decisive settle. */
-  tapSpring: {
-    type: "tween",
-    duration: 0.2,
-    ease: EASE.out,
-  },
-  /** Min visible press+settle window before navigating away (ms). */
-  tapFeedbackMs: 260,
+  tap: PORTFOLIO_BOUNCE.tap,
+  tapSpring: PORTFOLIO_BOUNCE.tapSpring,
+  tapFeedbackMs: PORTFOLIO_BOUNCE.tapFeedbackMs,
 } as const;

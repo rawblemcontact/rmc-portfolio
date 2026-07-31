@@ -5874,14 +5874,14 @@
 
 .pdf-viewer-chrome-btn:hover,
 .pdf-viewer-chrome-btn:active {
-  background-color: #fff;
-  color: #000;
+  background-color: #000;
+  color: #fff;
 }
 
 .pdf-viewer-chrome-btn:focus-visible {
   outline: none;
-  background-color: #fff;
-  color: #000;
+  background-color: #000;
+  color: #fff;
   box-shadow: none;
 }
 
@@ -5901,8 +5901,10 @@
 }
 
 .pdf-viewer-download-btn:hover,
-.pdf-viewer-download-btn:active {
-  background-color: #fff;
+.pdf-viewer-download-btn:active,
+.pdf-viewer-download-btn:focus-visible {
+  background-color: transparent;
+  color: #fff;
 }
 
 /* Visual design lightbox controls: slightly smaller so chrome clears artwork. */

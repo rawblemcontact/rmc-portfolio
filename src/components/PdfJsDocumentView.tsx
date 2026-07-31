@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import useMeasure from "react-use-measure";
 import type { PDFDocumentProxy } from "pdfjs-dist";
 
-import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+/** Legacy build polyfills Map.getOrInsertComputed for browsers before Chrome 145. */
+import workerUrl from "pdfjs-dist/legacy/build/pdf.worker.min.mjs?url";
 
 import { PdfLoadingIndicator } from "./PdfLoadingIndicator";
 
@@ -76,7 +77,7 @@ export function PdfJsDocumentView({
 
     void (async () => {
       try {
-        const pdfjs = await import("pdfjs-dist");
+        const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
         pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
         const loadingTask = pdfjs.getDocument({ url: pdfSrc });
         const doc = await loadingTask.promise;
@@ -200,7 +201,7 @@ export function PdfJsDocumentView({
       )}
 
       {showError && (
-        <div className="flex min-h-[11rem] flex-col items-center justify-center gap-2.5 rounded-xl bg-[#3c4043]/5 px-4 py-8 text-center">
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2.5 rounded-xl bg-[#3c4043]/5 px-4 py-8 text-center">
           <p className="font-body text-sm text-mono-2">Could not display this PDF in the browser.</p>
           <p className="font-mono text-[0.6875rem] leading-relaxed text-mono-2/70">{showError}</p>
         </div>

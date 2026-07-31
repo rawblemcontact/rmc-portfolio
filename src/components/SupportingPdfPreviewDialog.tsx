@@ -6,7 +6,7 @@ import { PdfJsDocumentView } from "./PdfJsDocumentView";
 import { PDF_FOLD_LOADER_CYCLE_MS } from "./PdfFoldLoader";
 import { PdfLoadingIndicator, PDF_LOADING_FADE_IN_S } from "./PdfLoadingIndicator";
 import { PdfViewerGridBackdrop } from "./PdfViewerGridBackdrop";
-import { EASE, SPRING, TAP } from "@/lib/motion";
+import { EASE, PORTFOLIO_BOUNCE } from "@/lib/motion";
 
 export type SupportingPdfPreviewItem = {
   id: string;
@@ -160,9 +160,9 @@ export function SupportingPdfPreviewDialog({
                 type="button"
                 aria-label="Close PDF preview"
                 onClick={onClose}
-                className="pdf-viewer-chrome-btn pdf-viewer-control-btn"
-                whileTap={reduceMotion ? undefined : TAP}
-                transition={SPRING.tap}
+                className="pdf-viewer-chrome-btn pdf-viewer-control-btn origin-center"
+                whileTap={reduceMotion ? undefined : PORTFOLIO_BOUNCE.tap}
+                transition={reduceMotion ? undefined : PORTFOLIO_BOUNCE.tapSpring}
               >
                 <X aria-hidden />
               </motion.button>
@@ -185,9 +185,9 @@ export function SupportingPdfPreviewDialog({
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label="Open PDF in new tab"
-                      className="pdf-viewer-chrome-btn pdf-viewer-control-btn"
-                      whileTap={reduceMotion ? undefined : TAP}
-                      transition={SPRING.tap}
+                      className="pdf-viewer-chrome-btn pdf-viewer-control-btn origin-center"
+                      whileTap={reduceMotion ? undefined : PORTFOLIO_BOUNCE.tap}
+                      transition={reduceMotion ? undefined : PORTFOLIO_BOUNCE.tapSpring}
                     >
                       <ExternalLink aria-hidden />
                     </motion.a>
@@ -197,7 +197,7 @@ export function SupportingPdfPreviewDialog({
                 )}
               </div>
             </header>
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-3 pb-3 pt-2 sm:px-4 sm:pb-4">
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-3 sm:p-4">
               <PdfJsDocumentView
                 src={pdfSrc}
                 className="rounded-lg border border-white/[0.08] bg-black/20"
@@ -211,9 +211,9 @@ export function SupportingPdfPreviewDialog({
                 href={pdfSrc}
                 download
                 aria-label="Download PDF"
-                className="pdf-viewer-chrome-btn pdf-viewer-control-btn pdf-viewer-download-btn absolute bottom-5 right-5 z-20"
-                whileTap={reduceMotion ? undefined : TAP}
-                transition={SPRING.tap}
+                className="pdf-viewer-chrome-btn pdf-viewer-control-btn pdf-viewer-download-btn absolute bottom-5 right-5 z-20 origin-center"
+                whileTap={reduceMotion ? undefined : PORTFOLIO_BOUNCE.tap}
+                transition={reduceMotion ? undefined : PORTFOLIO_BOUNCE.tapSpring}
               >
                 <Download aria-hidden />
               </motion.a>

@@ -211,9 +211,15 @@ function swapDetailTabToFront(
 /** Tab header FLIP travel — slightly longer / softer than DUR.fast. */
 const DETAIL_TAB_SWAP_DUR_S = 0.42;
 const DETAIL_TAB_SWAP_EASE = [0.22, 1, 0.36, 1] as const;
-/** Body copy fades out while the header starts travelling, then fades in. */
+/**
+ * Body copy fades out while headers start travelling.
+ * Fade-in is delayed (mode="wait" exit + this delay) so copy appears only after headers settle.
+ */
 const DETAIL_TAB_BODY_OUT_S = 0.16;
 const DETAIL_TAB_BODY_IN_S = 0.24;
+const DETAIL_TAB_BODY_IN_DELAY_S = Math.max(0, DETAIL_TAB_SWAP_DUR_S - DETAIL_TAB_BODY_OUT_S);
+/** Yellow underline draw / retract — same length as tab FLIP; starts only after position settles. */
+const DETAIL_TAB_UNDERLINE_DUR_MS = Math.round(DETAIL_TAB_SWAP_DUR_S * 1000);
 
 /** iPad landscape filler — sized to fill the tab card down to the video player bottom. */
 const IPAD_DETAIL_CARD_LOREM: Record<DetailCardTabId, string> = {
@@ -268,6 +274,12 @@ export function ShowcaseVideoEditingDetail({
   const [detailCardTabOrder, setDetailCardTabOrder] = useState<DetailCardTabId[]>(() => [
     ...DETAIL_CARD_TAB_IDS,
   ]);
+  /**
+   * Yellow underline: deselected tab retracts immediately; selected tab draws only after FLIP settles.
+   * `null` = no bar (mid-transition after deselection).
+   */
+  const [underlineTabId, setUnderlineTabId] = useState<DetailCardTabId | null>("overview");
+  const underlineActiveTabRef = useRef<DetailCardTabId>("overview");
   const [detailCardMinHeightPx, setDetailCardMinHeightPx] = useState<number | null>(null);
   const detailRootRef = useRef<HTMLDivElement | null>(null);
   const detailCardSurfaceRef = useRef<HTMLElement | null>(null);
@@ -312,7 +324,29 @@ export function ShowcaseVideoEditingDetail({
   useEffect(() => {
     setActiveDetailCardTab("overview");
     setDetailCardTabOrder([...DETAIL_CARD_TAB_IDS]);
+    setUnderlineTabId("overview");
+    underlineActiveTabRef.current = "overview";
   }, [activeVideoIndex, card.id]);
+
+  useEffect(() => {
+    if (reduceMotion) {
+      underlineActiveTabRef.current = activeDetailCardTab;
+      setUnderlineTabId(activeDetailCardTab);
+      return;
+    }
+
+    if (underlineActiveTabRef.current === activeDetailCardTab) return;
+    underlineActiveTabRef.current = activeDetailCardTab;
+
+    // Deselected tab: start closing the bar immediately while it travels.
+    setUnderlineTabId(null);
+
+    const timerId = window.setTimeout(() => {
+      setUnderlineTabId(activeDetailCardTab);
+    }, DETAIL_TAB_UNDERLINE_DUR_MS);
+
+    return () => window.clearTimeout(timerId);
+  }, [activeDetailCardTab, reduceMotion]);
 
   useEffect(() => {
     if (!isIpadLandscapeViewport) {
@@ -856,6 +890,7 @@ export function ShowcaseVideoEditingDetail({
             ? { duration: 0 }
             : {
                 duration: DETAIL_TAB_BODY_IN_S,
+                delay: DETAIL_TAB_BODY_IN_DELAY_S,
                 ease: DETAIL_TAB_SWAP_EASE,
               }
         }
@@ -959,6 +994,7 @@ export function ShowcaseVideoEditingDetail({
       >
         {detailCardTabOrder.map((tabId) => {
           const selected = activeDetailCardTab === tabId;
+          const underlineActive = underlineTabId === tabId;
           return (
             <motion.button
               key={tabId}
@@ -998,9 +1034,18 @@ export function ShowcaseVideoEditingDetail({
               <span className="relative inline-block w-max pb-2">
                 {DETAIL_CARD_TAB_LABEL[tabId]}
                 <span
-                  className={`video-editing-detail-card-tab-underline pointer-events-none absolute inset-x-0 bottom-0 h-px origin-center bg-[color:var(--palette-yellow-projects)] transition-transform duration-[420ms] ease-out ${
-                    selected ? "scale-x-100" : "scale-x-0"
+                  className={`video-editing-detail-card-tab-underline pointer-events-none absolute inset-x-0 bottom-0 h-px origin-center bg-[color:var(--palette-yellow-projects)] ease-out ${
+                    underlineActive ? "scale-x-100 opacity-100" : "scale-x-0 opacity-0"
                   }`}
+                  style={{
+                    // Always list both so close can fade; open uses 0ms opacity (scale only).
+                    transitionProperty: "transform, opacity",
+                    transitionDuration: reduceMotion
+                      ? "0ms, 0ms"
+                      : underlineActive
+                        ? `${DETAIL_TAB_UNDERLINE_DUR_MS}ms, 0ms`
+                        : `${DETAIL_TAB_UNDERLINE_DUR_MS}ms, ${DETAIL_TAB_UNDERLINE_DUR_MS}ms`,
+                  }}
                   aria-hidden
                 />
               </span>
