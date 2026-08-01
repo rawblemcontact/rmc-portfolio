@@ -1548,19 +1548,8 @@ const HERO_PORTFOLIO_TAP_SPRING = {
   damping: 28,
   mass: 0.52,
 } as const;
-/** Idle float — starts after entrance (video scale + PORTFOLIO fade) finishes. */
+/** Idle float — starts after entrance (video scale + PORTFOLIO fade) finishes. CSS keyframes in index.css. */
 const HERO_IDLE_FLOAT_START_MS = 700;
-const HERO_IDLE_FLOAT_Y_PX = 1;
-/** Full up↔down cycle. */
-const HERO_IDLE_FLOAT_DUR_S = 5.6;
-/** Sine samples (× amplitude) for an even, continuous loop with linear tweening. */
-const HERO_IDLE_FLOAT_SINE = [0, -0.7071, -1, -0.7071, 0, 0.7071, 1, 0.7071, 0] as const;
-/**
- * Mobile — same loop, phase-shifted to start at the most-down sample (+1).
- * Rest pose before float also sits at +amplitude so the SVG never drops into the cycle.
- */
-const HERO_IDLE_FLOAT_SINE_FROM_BOTTOM = [1, 0.7071, 0, -0.7071, -1, -0.7071, 0, 0.7071, 1] as const;
-const HERO_IDLE_FLOAT_TIMES = [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1] as const;
 /** Subtle edge darkening on hero video card media. */
 const HERO_VIDEO_CARD_VIGNETTE =
   "radial-gradient(ellipse 74% 70% at 50% 48%, transparent 26%, rgba(0,0,0,0.4) 100%)";
@@ -1891,6 +1880,12 @@ const HERO_CONTROLLED_VIEWPORT_DEFAULT: HeroControlledViewport = "desktop";
 
 const matchesHeroDesktopDebugViewport = () =>
   typeof window !== "undefined" && window.matchMedia(`(min-width: ${HERO_DESKTOP_DEBUG_MIN_PX}px)`).matches;
+/** Desktop PC / laptop — fine pointer ≥1024 (excludes phones + most tablets). */
+const matchesDesktopHeroPerfViewport = () =>
+  typeof window !== "undefined" &&
+  window.matchMedia(
+    `(min-width: ${HERO_DESKTOP_DEBUG_MIN_PX}px) and (hover: hover) and (pointer: fine)`,
+  ).matches;
 const matchesHeroTabletViewport = () =>
   typeof window !== "undefined" &&
   window.matchMedia(`(min-width: ${HERO_TABLET_MIN_PX}px) and (max-width: ${HERO_TABLET_MAX_PX}px)`).matches;
@@ -1914,6 +1909,7 @@ const HeroNameReveal = ({
   heroControlledViewport,
   onHeroControlledViewportChange,
   isMobileHeroLayout,
+  desktopAnimPerf,
   mobileSvgNudgeXPx,
   videoGlobalDebugControls,
   mainGlobalDebugControls,
@@ -1939,6 +1935,11 @@ const HeroNameReveal = ({
   svgLockupDefaultsForViewport: HeroGlobalLayoutControl;
   /** True desktop layout viewport (excludes tablet band). */
   heroDesktopViewport: boolean;
+  /**
+   * Desktop PC/laptop anim path (fine pointer ≥1024).
+   * Skips invisible rainbow Framer stack that hitch letter CSS (timing unchanged).
+   */
+  desktopAnimPerf?: boolean;
   /** Whether hero global debug transforms should apply on this viewport. */
   heroControlledViewportActive: boolean;
   heroControlledViewport: HeroControlledViewport;
@@ -2207,8 +2208,11 @@ const HeroNameReveal = ({
       if (!svg) return null;
       const alignLeft = alignEl.getBoundingClientRect().left;
       let glyphLeft = Infinity;
-      for (const path of svg.querySelectorAll("path")) {
-        const box = path.getBoundingClientRect();
+      /* Name letters only — full path scan was a desktop layout hitch during entrance. */
+      const letterNodes = svg.querySelectorAll("[data-hero-name-letter]");
+      const paths = letterNodes.length > 0 ? letterNodes : svg.querySelectorAll("path");
+      for (const path of paths) {
+        const box = (path as SVGGraphicsElement).getBoundingClientRect();
         if (box.width > 2 && box.height > 8) {
           glyphLeft = Math.min(glyphLeft, box.left);
         }
@@ -2579,8 +2583,15 @@ const HeroNameReveal = ({
                   aria-hidden
                   className={`relative h-full min-w-0 flex-1 self-end mr-[0.18rem] text-[clamp(2.28rem,8.85vw,5.95rem)] max-md:mr-0 ${HERO_NAME_MOBILE_DISPLAY_FONT_CLASS}`}
                   initial={false}
-                  animate={{ opacity: reduceMotion ? 1 : auxVisible ? 1 : 0 }}
-                  transition={heroNameMasterFadeTransition(!reduceMotion && auxVisible)}
+                  animate={{
+                    opacity:
+                      reduceMotion || desktopAnimPerf ? 1 : auxVisible ? 1 : 0,
+                  }}
+                  transition={
+                    reduceMotion || desktopAnimPerf
+                      ? { duration: 0 }
+                      : heroNameMasterFadeTransition(!reduceMotion && auxVisible)
+                  }
                   style={{
                     height: "calc(1.04cap - 0.02em + 1px)",
                     marginBottom: "0.02em",
@@ -2590,7 +2601,7 @@ const HeroNameReveal = ({
                     className="absolute inset-0 overflow-hidden rounded-[7px] sm:rounded-[9px]"
                     style={{ clipPath: "inset(0 1px 0 1px)" }}
                   >
-                  {reduceMotion ? (
+                  {reduceMotion || desktopAnimPerf ? (
                     <div className="absolute inset-0 overflow-hidden rounded-[7px] border-2 border-white bg-black text-white sm:rounded-[9px]">
                       {renderAccentIconStrip()}
                     </div>
@@ -2784,6 +2795,7 @@ const Hero = ({
   const [heroTabletLandscapeViewport, setHeroTabletLandscapeViewport] = useState(
     matchesHeroTabletLandscapeViewport,
   );
+  const [desktopAnimPerf, setDesktopAnimPerf] = useState(matchesDesktopHeroPerfViewport);
   const portfolioNavPendingRef = useRef(false);
   const portfolioPressStartedAtRef = useRef<number | null>(null);
   const portfolioNavTimerRef = useRef<number | null>(null);
@@ -2823,6 +2835,16 @@ const Hero = ({
       `(min-width: ${HERO_TABLET_MIN_PX}px) and (max-width: ${HERO_TABLET_MAX_PX}px) and (orientation: landscape)`,
     );
     const onChange = () => setHeroTabletLandscapeViewport(mq.matches);
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  useEffect(() => {
+    const mq = window.matchMedia(
+      `(min-width: ${HERO_DESKTOP_DEBUG_MIN_PX}px) and (hover: hover) and (pointer: fine)`,
+    );
+    const onChange = () => setDesktopAnimPerf(mq.matches);
     onChange();
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
@@ -2938,9 +2960,9 @@ const Hero = ({
     setVideoRevealActive(true);
   }, [fontsReady, heroMediaReady, heroLiveTextPreloaded, heroRevealDelayDone, reduceMotion]);
 
-  /** Very gentle idle float — only after SVG + PORTFOLIO entrance complete. */
+  /** Very gentle idle float — only after SVG + PORTFOLIO entrance complete (CSS compositor). */
   useEffect(() => {
-    if (!portfolioFadeReady || reduceMotion) {
+    if (!active || !portfolioFadeReady || reduceMotion) {
       setHeroIdleFloat(false);
       return;
     }
@@ -2949,7 +2971,7 @@ const Hero = ({
       window.clearTimeout(t);
       setHeroIdleFloat(false);
     };
-  }, [portfolioFadeReady, reduceMotion]);
+  }, [active, portfolioFadeReady, reduceMotion]);
 
   /**
    * Mobile — apply final viewport-centered Y once (no settle tween).
@@ -3353,38 +3375,34 @@ const Hero = ({
 
   const heroVideoScaleDelayS = 0;
 
-  /* Mobile SVG/text: rest + float phase start at most-down (+amp). Desktop unchanged. */
-  const heroIdleFloatSine = isMobileHeroLayout
-    ? HERO_IDLE_FLOAT_SINE_FROM_BOTTOM
-    : HERO_IDLE_FLOAT_SINE;
-  const heroIdleFloatRestY = isMobileHeroLayout ? HERO_IDLE_FLOAT_Y_PX : 0;
-  const heroIdleFloatAnimate = heroIdleFloat
-    ? { y: heroIdleFloatSine.map((sample) => sample * HERO_IDLE_FLOAT_Y_PX) }
-    : { y: heroIdleFloatRestY };
-  const heroIdleFloatTransition = heroIdleFloat
-    ? {
-        duration: HERO_IDLE_FLOAT_DUR_S,
-        repeat: Infinity,
-        ease: "linear" as const,
-        times: [...HERO_IDLE_FLOAT_TIMES],
-      }
-    : { duration: isMobileHeroLayout ? 0 : 0.5, ease: EASE.out };
+  /* Mobile SVG/text: rest + float phase start at most-down (+amp). Desktop unchanged.
+   * Idle float is CSS keyframes (compositor) — not Framer Motion y arrays. */
+  const heroIdleFloatClass = heroIdleFloat
+    ? isMobileHeroLayout
+      ? "hero-idle-float--from-bottom"
+      : "hero-idle-float"
+    : isMobileHeroLayout
+      ? "hero-idle-float-rest--bottom"
+      : undefined;
 
   const wrapHeroIdleFloat = (node: React.ReactNode) => (
-    <motion.div
-      className="flex w-full max-w-full justify-center transform-gpu will-change-transform"
-      initial={false}
-      animate={heroIdleFloatAnimate}
-      transition={heroIdleFloatTransition}
+    <div
+      className={`flex w-full max-w-full justify-center${heroIdleFloatClass ? ` ${heroIdleFloatClass}` : ""}`}
     >
       {node}
-    </motion.div>
+    </div>
   );
 
   const heroVideoFaceShadow = isMobileHeroLayout
     ? "0 30px 72px rgba(0,0,0,0.58), 0 0 22px 3px rgba(255,255,255,0.035)"
-    : "0 36px 88px rgba(0,0,0,0.6), inset 0 -40px 70px rgba(0,0,0,0.52), 0 0 28px 4px rgba(255,255,255,0.04)";
-  const heroVideoFaceVignette = isMobileHeroLayout ? "none" : HERO_VIDEO_CARD_VIGNETTE;
+    : desktopAnimPerf && !sliderAnimDone
+      ? /* Lighter during scaleX — full stack shadows hitch desktop 60fps mid-wipe. */
+        "0 24px 56px rgba(0,0,0,0.55), 0 0 20px 2px rgba(255,255,255,0.03)"
+      : "0 36px 88px rgba(0,0,0,0.6), inset 0 -40px 70px rgba(0,0,0,0.52), 0 0 28px 4px rgba(255,255,255,0.04)";
+  const heroVideoFaceVignette =
+    isMobileHeroLayout || (desktopAnimPerf && !sliderAnimDone)
+      ? "none"
+      : HERO_VIDEO_CARD_VIGNETTE;
 
   const heroVideoCard = (
     <motion.div
@@ -3405,6 +3423,8 @@ const Hero = ({
       onAnimationComplete={() => setSliderAnimDone(true)}
       style={{
         transformOrigin: "center center",
+        /* Promote during scale reveal only — permanent will-change burns GPU memory. */
+        willChange: sliderAnimDone || reduceMotion ? undefined : "transform",
         ...(isMobileHeroLayout && mobileLockupWidthPx
           ? { width: "100%", maxWidth: mobileLockupWidthPx }
           : null),
@@ -3412,7 +3432,7 @@ const Hero = ({
     >
       <motion.span
         aria-hidden
-        className="pointer-events-none absolute -inset-4 max-sm:-inset-3 sm:-inset-7 -z-[1] rounded-[16px] sm:rounded-[20px] blur-3xl"
+        className="pointer-events-none absolute -inset-4 max-sm:-inset-3 sm:-inset-7 -z-[1] rounded-[16px] sm:rounded-[20px]"
         initial={{ opacity: 0 }}
         animate={{ opacity: HERO_VIDEO_GLOW_PEAK }}
         transition={
@@ -3421,8 +3441,9 @@ const Hero = ({
             : { delay: HERO_VIDEO_GLOW_DELAY_S, duration: HERO_VIDEO_GLOW_DUR_S, ease: HERO_VIDEO_SCALE_EASE }
         }
         style={{
+          /* Soft radial only — CSS blur-3xl forced an offscreen filter pass every frame. */
           background:
-            "radial-gradient(ellipse 90% 74% at 50% 44%, rgba(255,255,255,0.11) 0%, rgba(255,255,255,0.035) 46%, transparent 72%)",
+            "radial-gradient(ellipse 100% 88% at 50% 44%, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.05) 42%, transparent 72%)",
         }}
       />
       <div
@@ -3444,6 +3465,7 @@ const Hero = ({
   return (
     <section
       id="hero"
+      data-hero-active={active ? "true" : "false"}
       className={`relative h-[100svh] w-full overflow-hidden bg-black text-white ${SLIDE_NO_Y_SCROLL}`}
     >
       <SlideGridOverlay />
@@ -3512,6 +3534,7 @@ const Hero = ({
                   revealActive={lockupFadeReady}
                   reduceMotion={reduceMotion}
                   isMobileHeroLayout={isMobileHeroLayout}
+                  desktopAnimPerf={desktopAnimPerf}
                   mobileSvgNudgeXPx={mobileSvgNudgeXPx}
                   wrapNameLockup={wrapHeroIdleFloat}
                   heroMainGlobalDebugStyle={heroMainGlobalDebugStyle}
@@ -3534,37 +3557,22 @@ const Hero = ({
                       initial={{ opacity: 0, x: HERO_PORTFOLIO_ENTRANCE_X_PX }}
                       animate={
                         portfolioFadeReady
-                          ? /* Mobile: no idle float on PORTFOLIO CTA — SVG/text keeps float. */
-                            !isMobileHeroLayout && heroIdleFloat
-                            ? {
-                                opacity: 1,
-                                x: 0,
-                                y: HERO_IDLE_FLOAT_SINE.map((sample) => -sample * HERO_IDLE_FLOAT_Y_PX),
-                              }
-                            : { opacity: 1, x: 0, y: 0 }
-                          : { opacity: 0, x: HERO_PORTFOLIO_ENTRANCE_X_PX, y: 0 }
+                          ? { opacity: 1, x: 0 }
+                          : { opacity: 0, x: HERO_PORTFOLIO_ENTRANCE_X_PX }
                       }
-                      transition={
-                        portfolioFadeReady && !isMobileHeroLayout && heroIdleFloat
-                          ? {
-                              opacity: { duration: HERO_PORTFOLIO_ENTRANCE_DUR_S, ease: EASE.out },
-                              x: { duration: HERO_PORTFOLIO_ENTRANCE_DUR_S, ease: EASE.out },
-                              y: {
-                                duration: HERO_IDLE_FLOAT_DUR_S,
-                                repeat: Infinity,
-                                ease: "linear" as const,
-                                times: [...HERO_IDLE_FLOAT_TIMES],
-                              },
-                            }
-                          : {
-                              opacity: { duration: HERO_PORTFOLIO_ENTRANCE_DUR_S, ease: EASE.out },
-                              x: { duration: HERO_PORTFOLIO_ENTRANCE_DUR_S, ease: EASE.out },
-                              y: { duration: HERO_PORTFOLIO_ENTRANCE_DUR_S, ease: EASE.out },
-                            }
-                      }
-                      className={`shrink-0 self-end transform-gpu will-change-transform${portfolioFadeReady ? "" : " pointer-events-none"}`}
+                      transition={{
+                        opacity: { duration: HERO_PORTFOLIO_ENTRANCE_DUR_S, ease: EASE.out },
+                        x: { duration: HERO_PORTFOLIO_ENTRANCE_DUR_S, ease: EASE.out },
+                      }}
+                      className={`shrink-0 self-end${portfolioFadeReady ? "" : " pointer-events-none"}`}
                       aria-hidden={!portfolioFadeReady}
                     >
+                      {/* Nested CSS float — Framer transform must not fight idle keyframes. */}
+                      <div
+                        className={
+                          !isMobileHeroLayout && heroIdleFloat ? "hero-idle-float--counter" : undefined
+                        }
+                      >
                       <motion.button
                         type="button"
                         onPointerDown={handlePortfolioPointerDown}
@@ -3583,6 +3591,7 @@ const Hero = ({
                           <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z" />
                         </svg>
                       </motion.button>
+                      </div>
                     </motion.div>
                   }
                 />
@@ -4024,7 +4033,8 @@ const SideNavOverlay = ({
 
   useLayoutEffect(() => {
     if (!open) {
-      setExitMenuAlignY(0);
+      // Keep exitMenuAlignY through the panel exit tween — snapping to 0 here
+      // jumps the X while the drawer slides and reads as a diagonal slide.
       return;
     }
 
@@ -4077,6 +4087,7 @@ const SideNavOverlay = ({
       setExitMenuAlignY((prev) => prev + delta);
     };
 
+    setExitMenuAlignY(0);
     syncExitXTopToMenuTop();
     const raf = window.requestAnimationFrame(syncExitXTopToMenuTop);
     return () => window.cancelAnimationFrame(raf);
@@ -4128,7 +4139,8 @@ const SideNavOverlay = ({
                   ref={exitShellRef}
                   className="absolute right-0 top-0"
                   style={{
-                    transform: `translate(${exitButtonDebug.offsetX}px, ${exitButtonDebug.offsetY + exitMenuAlignY}px)`,
+                    // CSS translate (not transform) so Framer whileTap scale can compose cleanly
+                    translate: `${exitButtonDebug.offsetX}px ${exitButtonDebug.offsetY + exitMenuAlignY}px`,
                   }}
                 >
                   <motion.div
@@ -6970,20 +6982,14 @@ const ShowcaseIllustrationLightbox = ({
           onClick={(event) => event.stopPropagation()}
         >
           <div className="absolute right-[0.375rem] top-3 z-30 sm:right-[0.875rem] sm:top-4">
-            <motion.div
-              whileTap={reduceMotion ? undefined : PORTFOLIO_BOUNCE.tap}
-              transition={reduceMotion ? undefined : PORTFOLIO_BOUNCE.tapSpring}
-              className="inline-flex origin-center"
+            <button
+              type="button"
+              aria-label="Close illustration preview"
+              onClick={onClose}
+              className="pdf-viewer-chrome-btn illustration-lightbox-chrome-btn illustration-lightbox-close-btn"
             >
-              <button
-                type="button"
-                aria-label="Close illustration preview"
-                onClick={onClose}
-                className="pdf-viewer-chrome-btn illustration-lightbox-chrome-btn illustration-lightbox-close-btn"
-              >
-                <X aria-hidden />
-              </button>
-            </motion.div>
+              <X aria-hidden />
+            </button>
           </div>
 
           <div
@@ -7191,11 +7197,12 @@ const ShowcaseDetailIllustrationsGrid = ({
         })}
       </div>
 
-      {typeof document !== "undefined" && activeIndex != null
+      {typeof document !== "undefined"
         ? createPortal(
             <AnimatePresence>
-              {openableIndices.includes(activeIndex) ? (
+              {activeIndex != null && openableIndices.includes(activeIndex) ? (
                 <ShowcaseIllustrationLightbox
+                  key="illustrations-lightbox"
                   slides={slides}
                   openableIndices={openableIndices}
                   activeIndex={activeIndex}
@@ -8754,23 +8761,15 @@ const ExperienceTabPanelBody = ({ tabId }: { tabId: ExperienceTabId }) => {
           <div className="panel-header">
             <span className="panel-badge">Education</span>
             <div className="panel-title-row">
-              <h1 className="panel-title">University of Victoria</h1>
+              <h1 className="panel-title">Bachelor of Arts, Writing</h1>
               <p className="panel-period">2024</p>
             </div>
             <p className="panel-description">
-              Bachelor&apos;s Degree, Writing
+              University of Victoria
               <span className="panel-meta-sep max-md:hidden" aria-hidden="true">
                 •
               </span>
-              <span className="max-md:block max-md:mt-0.5">
-                <span className="max-md:hidden">
-                  University of Victoria
-                  <span className="panel-meta-sep" aria-hidden="true">
-                    •
-                  </span>
-                </span>
-                Victoria, BC
-              </span>
+              <span className="max-md:block max-md:mt-0.5">Victoria, BC</span>
             </p>
             <div className="experience-skill-tags" aria-label="Relevant skills">
               {CAREER_OVERVIEW_SKILL_TAG_ROWS.education.map((row) => (
@@ -8781,7 +8780,6 @@ const ExperienceTabPanelBody = ({ tabId }: { tabId: ExperienceTabId }) => {
           <div className="career-tabs-content-inner">
             <div className="panel-content">
               <div className="content-card">
-                <p className="card-text">University of Victoria / Victoria, BC / 2024</p>
                 <ul className="feature-list">
                   {CAREER_OVERVIEW_PANEL_BULLETS.education.map((bullet) => (
                     <li key={bullet}>
@@ -8789,20 +8787,6 @@ const ExperienceTabPanelBody = ({ tabId }: { tabId: ExperienceTabId }) => {
                     </li>
                   ))}
                 </ul>
-              </div>
-              <div className="stats-grid">
-                <div className="stat-item stat-item--fade-only">
-                  <div className="stat-value">B.A.</div>
-                  <div className="stat-label">Writing</div>
-                </div>
-                <div className="stat-item stat-item--fade-only">
-                  <div className="stat-value">UVic</div>
-                  <div className="stat-label">Victoria BC</div>
-                </div>
-                <div className="stat-item stat-item--fade-only">
-                  <div className="stat-value">Dist.</div>
-                  <div className="stat-label">Distinction</div>
-                </div>
               </div>
             </div>
           </div>
@@ -8845,6 +8829,9 @@ const ConfidantExperience = ({
   const [isMobileExperienceLayout, setIsMobileExperienceLayout] = useState(() =>
     typeof window !== "undefined" ? window.matchMedia(EXPERIENCE_MOBILE_MQ).matches : false,
   );
+  /** Mobile tab carousel edge fades: left while Digital Content is clipped coming back; right until Barista is fully in view. */
+  const [experienceTabsFadeLeft, setExperienceTabsFadeLeft] = useState(false);
+  const [experienceTabsFadeRight, setExperienceTabsFadeRight] = useState(true);
   const rm = !!reduceMotion;
 
   useEffect(() => {
@@ -8862,6 +8849,73 @@ const ConfidantExperience = ({
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
   }, []);
+
+  useEffect(() => {
+    if (!isMobileExperienceLayout) {
+      setExperienceTabsFadeLeft(false);
+      setExperienceTabsFadeRight(true);
+      return;
+    }
+    const root = tabsRootRef.current;
+    if (!root) return;
+    const nav = root.querySelector<HTMLElement>(".tabs-nav");
+    if (!nav) return;
+
+    let lastScrollLeft = nav.scrollLeft;
+    /** Left fade only while the user is scrolling back toward Digital Content. */
+    let scrollingBackToFirst = false;
+
+    const updateTabsEdgeFade = () => {
+      const scrollLeft = nav.scrollLeft;
+      const delta = scrollLeft - lastScrollLeft;
+      if (delta < -0.5) scrollingBackToFirst = true;
+      else if (delta > 0.5) scrollingBackToFirst = false;
+      lastScrollLeft = scrollLeft;
+
+      const navRect = nav.getBoundingClientRect();
+      const firstBtn = nav.querySelector<HTMLElement>('[data-tab="rawblem"]');
+      const lastBtn = nav.querySelector<HTMLElement>('[data-tab="starbucks"]');
+      const firstShell =
+        firstBtn?.closest<HTMLElement>(".experience-tab-btn-shell") ??
+        (nav.firstElementChild instanceof HTMLElement ? nav.firstElementChild : null);
+      const lastShell =
+        lastBtn?.closest<HTMLElement>(".experience-tab-btn-shell") ??
+        (nav.lastElementChild instanceof HTMLElement ? nav.lastElementChild : null);
+
+      // Left fade only while scrolling back and Digital Content is clipped on the left —
+      // not when swiping forward (e.g. to Social Media), where a partial first tab would flash.
+      let fadeLeft = false;
+      if (firstShell && scrollingBackToFirst) {
+        const firstRect = firstShell.getBoundingClientRect();
+        const clippedOnLeft = firstRect.left < navRect.left - 1;
+        const stillVisible = firstRect.right > navRect.left + 2;
+        fadeLeft = clippedOnLeft && stillVisible;
+      }
+      if (!fadeLeft && firstShell) {
+        const firstRect = firstShell.getBoundingClientRect();
+        // Reset once Digital Content is fully visible again.
+        if (firstRect.left >= navRect.left - 1) scrollingBackToFirst = false;
+      }
+      // Right fade until Barista is fully in view.
+      const fadeRight = lastShell
+        ? lastShell.getBoundingClientRect().right > navRect.right + 2
+        : nav.scrollLeft + nav.clientWidth < nav.scrollWidth - 2;
+
+      setExperienceTabsFadeLeft((prev) => (prev === fadeLeft ? prev : fadeLeft));
+      setExperienceTabsFadeRight((prev) => (prev === fadeRight ? prev : fadeRight));
+    };
+
+    updateTabsEdgeFade();
+    nav.addEventListener("scroll", updateTabsEdgeFade, { passive: true });
+    const ro = new ResizeObserver(updateTabsEdgeFade);
+    ro.observe(nav);
+    window.addEventListener("resize", updateTabsEdgeFade);
+    return () => {
+      nav.removeEventListener("scroll", updateTabsEdgeFade);
+      ro.disconnect();
+      window.removeEventListener("resize", updateTabsEdgeFade);
+    };
+  }, [isMobileExperienceLayout]);
 
   useEffect(() => {
     const mq = window.matchMedia(EXPERIENCE_TABLET_LANDSCAPE_MQ);
@@ -9323,7 +9377,13 @@ const ConfidantExperience = ({
           </motion.div>
           {/* Vertical Tabs Navigation */}
           <motion.nav
-            className="tabs-nav"
+            className={[
+              "tabs-nav",
+              experienceTabsFadeLeft ? "tabs-nav--fade-left" : "",
+              experienceTabsFadeRight ? "tabs-nav--fade-right" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
             variants={experienceTabsEntrance}
             initial="hidden"
             animate={panelSettled ? "visible" : "hidden"}
@@ -9931,17 +9991,28 @@ const SKILLS_RAIL_LINE_LABEL_OVERLAP = 0.5;
 const SKILLS_CARD_BULLETS_HEADER_OVERLAP = 0.84;
 /** Row 2 shells start this far through row 1 — slightly before row 1 finishes. */
 const SKILLS_ROW2_START_OVERLAP = 0.84;
-/** Global multiplier for SKILLS section entrance delays + durations (lower = faster). */
+/** Global multiplier for SKILLS section entrance delays + durations (lower = faster). Shared with main-menu chrome timing. */
 const SKILLS_ENTRANCE_SPEED = (0.95 / 1.2705) * 0.95;
 const skillsEntranceS = (seconds: number) => (seconds * SKILLS_ENTRANCE_SPEED) / SKILLS_ANIM_SPEED;
-/** Green accent scaleX — full line duration, ease-out tail for a softer landing. */
-const SKILLS_GREEN_LINE_DUR_S = skillsEntranceS(PROFILE_LINE_DURATION_S);
-const SKILLS_GREEN_LINE_EASE = [0.22, 1, 0.36, 1] as const;
+/** Skills page only — delay offsets; cumulative speed-ups (incl. latest +2.5%). */
+const SKILLS_PAGE_SPEED = 0.95 * 0.975;
+const SKILLS_PAGE_ENTRANCE_SPEED = (SKILLS_ENTRANCE_SPEED / 1.1) * SKILLS_PAGE_SPEED;
+const skillsPageEntranceS = (seconds: number) =>
+  (seconds * SKILLS_PAGE_ENTRANCE_SPEED) / SKILLS_ANIM_SPEED;
+/** Skills page motion — resume-card ease; prior 10% + another 5% faster. */
+const SKILLS_PAGE_MOTION_DUR_S = SUMMARY_DURATION_S * 1.5 * 0.9 * SKILLS_PAGE_SPEED;
+const SKILLS_PAGE_MOTION_EASE = EASE.out;
+/** Green accent scaleX — same ease/duration family as resume card land. */
+const SKILLS_GREEN_LINE_DUR_S = SKILLS_PAGE_MOTION_DUR_S;
+const SKILLS_GREEN_LINE_EASE = SKILLS_PAGE_MOTION_EASE;
 /** Header label/title slide — PROFILE `SectionHeader` slideFade duration parity. */
 const SKILLS_HEADER_ENTER_DUR_S = skillsEntranceS(0.5);
-/** Main + CORE/TOOLKIT rail title slide — slightly longer, softer decel; delays unchanged. */
+/** Main-menu + shared slide duration (do not slow — menu cadence). */
 const SKILLS_SECTION_HEADER_SLIDE_DUR_S = skillsEntranceS(0.5 * 1.12);
 const SKILLS_SECTION_HEADER_SLIDE_EASE = [0.12, 0.88, 0.26, 1] as const;
+/** Skills page headers / in-card titles — resume-card smooth land. */
+const SKILLS_PAGE_HEADER_SLIDE_DUR_S = SKILLS_PAGE_MOTION_DUR_S;
+const SKILLS_PAGE_HEADER_SLIDE_EASE = SKILLS_PAGE_MOTION_EASE;
 /** Start PROJECTS entrance this many seconds before the section panel wipe finishes. */
 const PROJECTS_PANEL_ENTRANCE_LEAD_S = 0.06;
 /** PROJECTS header entrance duration (seconds). */
@@ -11025,10 +11096,10 @@ const SkillsBranchRailHeader = ({
   reduceMotion?: boolean;
 }) => {
   const rm = reduceMotion;
-  const labelDuration = SKILLS_SECTION_HEADER_SLIDE_DUR_S;
+  const labelDuration = SKILLS_PAGE_HEADER_SLIDE_DUR_S;
   // CORE (left) slides right: starts left of target (negative x)
   // TOOLKIT (right) slides left: starts right of target (positive x)
-  const labelSlideX = align === "right" ? 28 : -28;
+  const labelSlideX = align === "right" ? 24 : -24;
 
   const labelsEntrance: Variants = {
     hidden: { opacity: rm ? 1 : 0, x: rm ? 0 : labelSlideX },
@@ -11038,7 +11109,7 @@ const SkillsBranchRailHeader = ({
       transition: {
         delay: rm ? 0 : revealDelay,
         duration: rm ? 0 : labelDuration,
-        ease: SKILLS_SECTION_HEADER_SLIDE_EASE,
+        ease: SKILLS_PAGE_MOTION_EASE,
         type: "tween",
       },
     },
@@ -11107,8 +11178,8 @@ const SkillsMainSectionHeader = ({
   reduceMotion?: boolean;
 }) => {
   const rm = reduceMotion;
-  const railLabelDuration = SKILLS_SECTION_HEADER_SLIDE_DUR_S;
-  const titleUpY = 10;
+  const railLabelDuration = SKILLS_PAGE_HEADER_SLIDE_DUR_S;
+  const titleUpY = 21;
 
   const titleEntrance: Variants = {
     hidden: { opacity: rm ? 1 : 0, y: rm ? 0 : titleUpY },
@@ -11118,7 +11189,7 @@ const SkillsMainSectionHeader = ({
       transition: {
         delay: rm ? 0 : revealDelay,
         duration: rm ? 0 : railLabelDuration,
-        ease: SKILLS_SECTION_HEADER_SLIDE_EASE,
+        ease: SKILLS_PAGE_MOTION_EASE,
         type: "tween",
       },
     },
@@ -11189,37 +11260,45 @@ const SkillsCardInnerContent = ({
   bullets: { key: string; label: string; icon: React.ReactNode }[];
 }) => {
   const rm = reduceMotion;
-  const cardHeaderUpY = 10;
-  const cardHeaderDur = SKILLS_SECTION_HEADER_SLIDE_DUR_S;
-  const cardBulletStagger = skillsEntranceS(0.034);
-  const cardBulletUpY = 8;
-  const cardBulletsDelayChildren = Math.max(0, bulletsRevealDelay - contentBaseDelay);
+  const cardHeaderUpY = 21;
+  const cardHeaderDur = SKILLS_PAGE_MOTION_DUR_S;
+  const cardBulletStagger = rm ? 0 : 0.09 * 0.8 * SKILLS_PAGE_SPEED * 0.95 * 0.9;
+  const cardBulletUpY = 14;
+  const cardBulletDur = SKILLS_PAGE_MOTION_DUR_S * 0.8 * 0.95 * 0.9;
+  const headerRevealDelay = rm ? 0 : contentBaseDelay;
+  const bulletsStartDelay = rm ? 0 : bulletsRevealDelay;
 
+  /** Shell content is visible immediately; title/line/bullets carry their own delays. */
   const innerRoot: Variants = {
     hidden: { opacity: rm ? 1 : 0 },
     visible: {
       opacity: 1,
-      transition: { delayChildren: rm ? 0 : contentBaseDelay },
+      transition: { duration: 0 },
     },
   };
   const cardHeaderEntrance: Variants = {
     hidden: {},
-    visible: { transition: { staggerChildren: 0 } },
+    visible: {},
   };
   const cardTitleEntrance: Variants = {
     hidden: { opacity: rm ? 1 : 0, y: rm ? 0 : cardHeaderUpY },
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: rm ? 0 : cardHeaderDur, ease: SKILLS_SECTION_HEADER_SLIDE_EASE, type: "tween" },
+      transition: {
+        delay: headerRevealDelay,
+        duration: rm ? 0 : cardHeaderDur,
+        ease: SKILLS_PAGE_MOTION_EASE,
+        type: "tween",
+      },
     },
   };
   const cardBulletsEntrance: Variants = {
     hidden: {},
     visible: {
       transition: {
-        delayChildren: rm ? 0 : cardBulletsDelayChildren,
-        staggerChildren: rm ? 0 : cardBulletStagger,
+        delayChildren: bulletsStartDelay,
+        staggerChildren: cardBulletStagger,
       },
     },
   };
@@ -11229,9 +11308,9 @@ const SkillsCardInnerContent = ({
       opacity: 1,
       y: 0,
       transition: {
-        duration: rm ? 0 : skillsAnimS(0.22),
-        ease: [0.22, 1, 0.36, 1],
         type: "tween",
+        opacity: { duration: rm ? 0 : cardBulletDur * 0.55, ease: SKILLS_PAGE_MOTION_EASE },
+        y: { duration: rm ? 0 : cardBulletDur, ease: SKILLS_PAGE_MOTION_EASE },
       },
     },
   };
@@ -11267,7 +11346,7 @@ const SkillsCardInnerContent = ({
           animate={{ scaleX: rm || panelSettled ? 1 : 0 }}
           transition={{
             duration: rm ? 0 : SKILLS_GREEN_LINE_DUR_S,
-            delay: rm ? 0 : bulletsRevealDelay,
+            delay: headerRevealDelay,
             ease: SKILLS_GREEN_LINE_EASE,
           }}
           aria-hidden
@@ -11299,30 +11378,105 @@ const SkillArsenal = ({
   reduceMotion?: boolean | null;
 }) => {
   const rm = !!reduceMotion;
-  const skillsCardSlideDur = skillsEntranceS(EXPERIENCE_TAB_ENTRANCE_DUR_S);
-  const skillsCardStagger = skillsEntranceS(EXPERIENCE_TAB_STAGGER_S);
-  const skillsCardSlideX = PROFILE_PILL_SLIDE_X;
+  /** Mobile band (<768) — stacked cascade; desktop/tablet keep shared 6-card timing. */
+  const [isMobileSkills, setIsMobileSkills] = useState(() =>
+    typeof window !== "undefined"
+      ? window.matchMedia("(max-width: 767.98px)").matches
+      : false,
+  );
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767.98px)");
+    const sync = () => setIsMobileSkills(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+
+  /** Per-card stagger — next card starts while prior is still easing (resume-card cadence). */
+  const SKILLS_CARD_STAGGER_S = 0.04 * SKILLS_PAGE_SPEED * 0.75;
+  const skillsCardStagger = rm ? 0 : SKILLS_CARD_STAGGER_S;
+  /** Resume-card motion, 10% faster than shared page motion dur. */
+  const skillsCardSlideDur = rm ? 0 : SKILLS_PAGE_MOTION_DUR_S * 0.9;
+  const skillsCardEntranceY = 21;
+  const skillsCardEntranceScale = 0.965;
   const skillsRowCardsEnd = (rowStart: number, count: number) =>
     rowStart + skillsCardSlideDur + (count - 1) * skillsCardStagger;
 
-  // Shells → main SKILLS title + rail + in-card headers together → bullets after column headers
-  const CARD_ROW_BASE = skillsEntranceS(0.034);
+  const CARD_ROW_BASE = skillsPageEntranceS(0.034);
   const skillsCardCount = CORE_SUBSKILLS_CATEGORIES.length;
   const toolsCardCount = SKILLS_TOOLS_CATEGORIES.length;
   const coreCardsRowEnd = skillsRowCardsEnd(CARD_ROW_BASE, skillsCardCount);
   const coreRowSpan = coreCardsRowEnd - CARD_ROW_BASE;
-  const TOOLS_CARD_ROW_BASE = CARD_ROW_BASE + coreRowSpan * SKILLS_ROW2_START_OVERLAP;
-  const cardsRowEnd = skillsRowCardsEnd(TOOLS_CARD_ROW_BASE, toolsCardCount);
-  /** In-card column headers run with CORE / TOOLKIT rail headers; bullets keep their inner tail. */
-  const CARD_INNER_BASE_DELAY = cardsRowEnd;
-  const cardHeaderDur = skillsEntranceS(EXPERIENCE_RAIL_LABEL_DUR_S);
-  const cardLineDur = skillsEntranceS(EXPERIENCE_RAIL_LINE_DUR_S);
+  const HEADER_EARLY_LEAD_S = rm ? 0 : 0.08 * SKILLS_PAGE_SPEED * 1.1;
+  const cardHeaderDur = SKILLS_PAGE_MOTION_DUR_S;
+  const cardLineDur = SKILLS_GREEN_LINE_DUR_S;
   const cardHeaderEnd = Math.max(cardHeaderDur, cardLineDur);
-  /** Main + CORE / TOOLKIT rail labels/lines — same t0 as in-card bullet reveal. */
-  const skillsBulletsRevealDelay =
-    cardsRowEnd + cardHeaderEnd * SKILLS_CARD_BULLETS_HEADER_OVERLAP;
+  const skillsBulletStagger = rm ? 0 : 0.09 * 0.8 * SKILLS_PAGE_SPEED * 0.95 * 0.9;
+  const skillsBulletDur = rm ? 0 : SKILLS_PAGE_MOTION_DUR_S * 0.8 * 0.95 * 0.9;
+  const skillsBulletCount = Math.max(
+    ...CORE_SUBSKILLS_CATEGORIES.map((c) => c.items.length),
+    ...SKILLS_TOOLS_CATEGORIES.map((c) => c.items.length),
+  );
+  const skillsBulletsEnd = (start: number) =>
+    start + skillsBulletDur + Math.max(0, skillsBulletCount - 1) * skillsBulletStagger;
+
+  /**
+   * Desktop/tablet: 6 cards → headers/subheaders → bullets (shared).
+   * Mobile: first 3 cards → headers/subheaders → first-3 bullets → last-3 cards → last-3 bullets.
+   */
+  const TOOLS_CARD_ROW_BASE = isMobileSkills
+    ? (() => {
+        const coreHeaderDelay = Math.max(0, coreCardsRowEnd - HEADER_EARLY_LEAD_S);
+        const coreBulletsDelay =
+          coreHeaderDelay + cardHeaderEnd * SKILLS_CARD_BULLETS_HEADER_OVERLAP;
+        return skillsBulletsEnd(coreBulletsDelay);
+      })()
+    : CARD_ROW_BASE + coreRowSpan * SKILLS_ROW2_START_OVERLAP;
+  const toolsCardsRowEnd = skillsRowCardsEnd(TOOLS_CARD_ROW_BASE, toolsCardCount);
+
+  const coreInnerDelay = isMobileSkills
+    ? Math.max(0, coreCardsRowEnd - HEADER_EARLY_LEAD_S)
+    : Math.max(0, toolsCardsRowEnd - HEADER_EARLY_LEAD_S);
+  const coreBulletsRevealDelay =
+    coreInnerDelay + cardHeaderEnd * SKILLS_CARD_BULLETS_HEADER_OVERLAP;
+  const toolsInnerDelay = isMobileSkills
+    ? Math.max(0, toolsCardsRowEnd - HEADER_EARLY_LEAD_S)
+    : coreInnerDelay;
+  const toolsBulletsRevealDelay = isMobileSkills
+    ? toolsInnerDelay + cardHeaderEnd * SKILLS_CARD_BULLETS_HEADER_OVERLAP
+    : coreBulletsRevealDelay;
+
+  /** Major headers: mobile after first 3 cards; desktop after all 6. */
+  const skillsMajorHeadersRevealDelay = coreInnerDelay;
 
   const skillsSectionRef = useRef<HTMLElement>(null);
+  /** Promote card slots only during the entrance window — drop after settle to free GPU. */
+  const [skillsEntranceLive, setSkillsEntranceLive] = useState(false);
+
+  useEffect(() => {
+    if (rm || !panelSettled) {
+      setSkillsEntranceLive(false);
+      return;
+    }
+    setSkillsEntranceLive(true);
+    const clearMs = Math.ceil(
+      (Math.max(toolsBulletsRevealDelay, coreBulletsRevealDelay) +
+        skillsBulletDur +
+        Math.max(0, skillsBulletCount - 1) * skillsBulletStagger +
+        0.35) *
+        1000,
+    );
+    const t = window.setTimeout(() => setSkillsEntranceLive(false), clearMs);
+    return () => window.clearTimeout(t);
+  }, [
+    panelSettled,
+    rm,
+    toolsBulletsRevealDelay,
+    coreBulletsRevealDelay,
+    skillsBulletDur,
+    skillsBulletStagger,
+    skillsBulletCount,
+  ]);
 
   /** WebKit mobile/tablet: grid overlay must track section + panel scroller (iPad landscape >1024px included). */
   useLayoutEffect(() => {
@@ -11342,36 +11496,44 @@ const SkillArsenal = ({
     },
   });
 
-  const skillsCoreCardItemEntrance: Variants = {
-    hidden: { opacity: rm ? 1 : 0, y: rm ? 0 : 18 },
+  /**
+   * Resume-card motion (y + scale), opacity snaps so frost `backdrop-filter`
+   * never fades — keeps shells on the compositor for steadier 60fps.
+   */
+  const skillsCardItemEntrance: Variants = {
+    hidden: {
+      opacity: rm ? 1 : 0,
+      y: rm ? 0 : skillsCardEntranceY,
+      scale: rm ? 1 : skillsCardEntranceScale,
+    },
     visible: {
       opacity: 1,
       y: 0,
+      scale: 1,
       transition: {
         type: "tween",
-        duration: rm ? 0 : skillsCardSlideDur,
-        ease: EASE.out,
+        opacity: { duration: 0 },
+        y: {
+          duration: rm ? 0 : skillsCardSlideDur,
+          ease: SKILLS_PAGE_MOTION_EASE,
+        },
+        scale: {
+          duration: rm ? 0 : skillsCardSlideDur,
+          ease: SKILLS_PAGE_MOTION_EASE,
+        },
       },
     },
   };
-  const skillsToolsCardItemEntrance: Variants = {
-    hidden: { opacity: rm ? 1 : 0, y: rm ? 0 : 18 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        type: "tween",
-        duration: rm ? 0 : skillsCardSlideDur,
-        ease: EASE.out,
-      },
-    },
-  };
+  const skillsCoreCardItemEntrance = skillsCardItemEntrance;
+  const skillsToolsCardItemEntrance = skillsCardItemEntrance;
 
   return (
     <section
       ref={skillsSectionRef}
       id="skills"
-      className={`no-scrollbar relative flex min-h-full max-lg:min-h-full w-full min-w-0 flex-col justify-start overflow-x-hidden overflow-y-visible bg-black text-white scroll-mt-6 max-md:min-h-max ${SECTION_MAIN_HEADER_INSET} pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:pb-8 md:pb-10`}
+      className={`no-scrollbar relative flex min-h-full max-lg:min-h-full w-full min-w-0 flex-col justify-start overflow-x-hidden overflow-y-visible bg-black text-white scroll-mt-6 max-md:min-h-max ${SECTION_MAIN_HEADER_INSET} pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:pb-8 md:pb-10${
+        skillsEntranceLive ? " skills-entrance-live" : ""
+      }`}
     >
       <SectionGridOverlay />
       <motion.div
@@ -11385,7 +11547,7 @@ const SkillArsenal = ({
         <div className={EXPERIENCE_GUTTER_SHELL_OUTER}>
           <div className={`${EXPERIENCE_GUTTER_SHELL_INNER} ${PROFILE_VIEWPORT_CONTENT_MAX} skills-profile-shell relative z-[2] mx-auto flex min-h-0 w-full flex-1 max-md:flex-none flex-col justify-start`}>
           <SkillsMainSectionHeader
-            revealDelay={skillsBulletsRevealDelay}
+            revealDelay={skillsMajorHeadersRevealDelay}
             panelSettled={panelSettled}
             reduceMotion={rm}
           />
@@ -11393,13 +11555,13 @@ const SkillArsenal = ({
           <motion.div className="skills-page-layout flex min-h-0 w-full min-w-0 flex-1 max-md:flex-none flex-col justify-start">
             <motion.div className="skills-page-grid flex min-h-0 w-full flex-1 max-md:flex-none flex-col justify-start">
 
-              {/* Cards first, then CORE rail header */}
+              {/* Cards → subheaders + major rails → bullets */}
               <div className="skills-page-band skills-page-band--core w-full min-w-0">
                 <SkillsBranchRailHeader
                   align="left"
                   sectionSubtitle={SKILLS_DATA.core.title}
                   sectionTitle={SKILLS_DATA.core.subtitle}
-                  revealDelay={skillsBulletsRevealDelay}
+                  revealDelay={skillsMajorHeadersRevealDelay}
                   panelSettled={panelSettled}
                   reduceMotion={rm}
                 />
@@ -11415,6 +11577,7 @@ const SkillArsenal = ({
                       key={categoryTitle}
                       className="skills-row-card-slot transform-gpu"
                       variants={skillsCoreCardItemEntrance}
+                      layout={false}
                     >
                       <div className="skills-card-surface skills-card-surface--page h-full border border-white/[0.09]">
                         <SkillsCardInnerContent
@@ -11423,8 +11586,8 @@ const SkillArsenal = ({
                           align="left"
                           panelSettled={panelSettled}
                           reduceMotion={rm}
-                          contentBaseDelay={CARD_INNER_BASE_DELAY}
-                          bulletsRevealDelay={skillsBulletsRevealDelay}
+                          contentBaseDelay={coreInnerDelay}
+                          bulletsRevealDelay={coreBulletsRevealDelay}
                           bullets={items.map(({ label, Icon }) => ({
                             key: label,
                             label,
@@ -11437,20 +11600,20 @@ const SkillArsenal = ({
                 </motion.div>
               </div>
 
-              {/* TOOLKIT band — row 2 cards after row 1; rail header with CORE */}
+              {/* TOOLKIT band — row 2 cards after row 1; rail with CORE / subheaders */}
               <div className="skills-page-band skills-page-band--tools w-full min-w-0">
                 <SkillsBranchRailHeader
                   align="right"
                   sectionSubtitle={SKILLS_DATA.tools.title}
                   sectionTitle={SKILLS_DATA.tools.subtitle}
-                  revealDelay={skillsBulletsRevealDelay}
+                  revealDelay={skillsMajorHeadersRevealDelay}
                   panelSettled={panelSettled}
                   reduceMotion={rm}
                 />
 
                 <motion.div
                   className="skills-row-cards skills-row-cards--page grid w-full grid-cols-1 md:grid-cols-3"
-                  variants={skillsCardRowEntrance(TOOLS_CARD_ROW_BASE, true)}
+                  variants={skillsCardRowEntrance(TOOLS_CARD_ROW_BASE, !isMobileSkills)}
                   initial="hidden"
                   animate={panelSettled || rm ? "visible" : "hidden"}
                 >
@@ -11459,6 +11622,7 @@ const SkillArsenal = ({
                       key={title}
                       className="skills-row-card-slot transform-gpu"
                       variants={skillsToolsCardItemEntrance}
+                      layout={false}
                     >
                       <div className="skills-card-surface skills-card-surface--page h-full border border-white/[0.09]">
                         <SkillsCardInnerContent
@@ -11466,8 +11630,8 @@ const SkillArsenal = ({
                           align="right"
                           panelSettled={panelSettled}
                           reduceMotion={rm}
-                          contentBaseDelay={CARD_INNER_BASE_DELAY}
-                          bulletsRevealDelay={skillsBulletsRevealDelay}
+                          contentBaseDelay={toolsInnerDelay}
+                          bulletsRevealDelay={toolsBulletsRevealDelay}
                           bullets={items.map((tool) => ({
                             key: tool,
                             label: tool,

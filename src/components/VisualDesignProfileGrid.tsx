@@ -139,20 +139,14 @@ const VisualDesignProfileLightbox = ({
 
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
         <header className="relative flex shrink-0 items-center justify-between gap-3 border-b border-white/[0.1] bg-black px-4 py-3.5 sm:px-5">
-          <motion.div
-            whileTap={reduceMotion ? undefined : PORTFOLIO_BOUNCE.tap}
-            transition={reduceMotion ? undefined : PORTFOLIO_BOUNCE.tapSpring}
-            className="inline-flex origin-center"
+          <button
+            type="button"
+            aria-label="Close preview"
+            onClick={onClose}
+            className="pdf-viewer-chrome-btn"
           >
-            <button
-              type="button"
-              aria-label="Close preview"
-              onClick={onClose}
-              className="pdf-viewer-chrome-btn"
-            >
-              <X aria-hidden />
-            </button>
-          </motion.div>
+            <X aria-hidden />
+          </button>
           <div className="pointer-events-none absolute left-1/2 top-1/2 w-[min(72%,34rem)] -translate-x-1/2 -translate-y-1/2 px-2 text-center">
             <p className="font-display text-[0.95rem] leading-snug tracking-tight text-white sm:text-base">
               {lightboxLabel}
@@ -289,10 +283,10 @@ export const VisualDesignProfileGallery = ({ slides }: VisualDesignProfileGaller
         })}
       </div>
 
-      {typeof document !== "undefined" && activeIndex != null
+      {typeof document !== "undefined"
         ? createPortal(
             <AnimatePresence>
-              {openableIndices.includes(activeIndex) ? (
+              {activeIndex != null && openableIndices.includes(activeIndex) ? (
                 <VisualDesignProfileLightbox
                   slides={slides}
                   openableIndices={openableIndices}

@@ -8,15 +8,136 @@
 @custom-variant dark (&:is(.dark *));
 
 /* Split-SVG name letters â€” cascade when chrome becomes visible (stable flag, no JS cancel). */
+/* translate3d keeps letter cascades on the compositor (60fps on mobile/tablet). */
 @keyframes hero-name-letter-in {
   from {
     opacity: 0;
-    transform: translateY(55%);
+    transform: translate3d(0, 55%, 0);
   }
   to {
     opacity: 1;
-    transform: translateY(0%);
+    transform: translate3d(0, 0, 0);
   }
+}
+
+/*
+ * Hero idle float — CSS only (was Framer Motion keyframe arrays).
+ * Amplitude 1px; sine samples match prior HERO_IDLE_FLOAT_* constants.
+ */
+@keyframes hero-idle-float-y {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  12.5% {
+    transform: translate3d(0, -0.7071px, 0);
+  }
+  25% {
+    transform: translate3d(0, -1px, 0);
+  }
+  37.5% {
+    transform: translate3d(0, -0.7071px, 0);
+  }
+  50% {
+    transform: translate3d(0, 0, 0);
+  }
+  62.5% {
+    transform: translate3d(0, 0.7071px, 0);
+  }
+  75% {
+    transform: translate3d(0, 1px, 0);
+  }
+  87.5% {
+    transform: translate3d(0, 0.7071px, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+@keyframes hero-idle-float-y-from-bottom {
+  0% {
+    transform: translate3d(0, 1px, 0);
+  }
+  12.5% {
+    transform: translate3d(0, 0.7071px, 0);
+  }
+  25% {
+    transform: translate3d(0, 0, 0);
+  }
+  37.5% {
+    transform: translate3d(0, -0.7071px, 0);
+  }
+  50% {
+    transform: translate3d(0, -1px, 0);
+  }
+  62.5% {
+    transform: translate3d(0, -0.7071px, 0);
+  }
+  75% {
+    transform: translate3d(0, 0, 0);
+  }
+  87.5% {
+    transform: translate3d(0, 0.7071px, 0);
+  }
+  100% {
+    transform: translate3d(0, 1px, 0);
+  }
+}
+@keyframes hero-idle-float-y-counter {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  12.5% {
+    transform: translate3d(0, 0.7071px, 0);
+  }
+  25% {
+    transform: translate3d(0, 1px, 0);
+  }
+  37.5% {
+    transform: translate3d(0, 0.7071px, 0);
+  }
+  50% {
+    transform: translate3d(0, 0, 0);
+  }
+  62.5% {
+    transform: translate3d(0, -0.7071px, 0);
+  }
+  75% {
+    transform: translate3d(0, -1px, 0);
+  }
+  87.5% {
+    transform: translate3d(0, -0.7071px, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.hero-idle-float,
+.hero-idle-float--from-bottom,
+.hero-idle-float--counter,
+.hero-idle-float-rest--bottom {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
+}
+.hero-idle-float-rest--bottom {
+  transform: translate3d(0, 1px, 0);
+}
+.hero-idle-float {
+  animation: hero-idle-float-y 5.6s linear infinite;
+}
+.hero-idle-float--from-bottom {
+  animation: hero-idle-float-y-from-bottom 5.6s linear infinite;
+}
+.hero-idle-float--counter {
+  animation: hero-idle-float-y-counter 5.6s linear infinite;
+}
+
+/* Pause idle float when slide is off-screen — grid drift keeps running. */
+#hero[data-hero-active="false"] .hero-idle-float,
+#hero[data-hero-active="false"] .hero-idle-float--from-bottom,
+#hero[data-hero-active="false"] .hero-idle-float--counter {
+  animation-play-state: paused;
 }
 /* Hero name + tagline ink / layout metrics â€” never user-selectable */
 [data-hero-svg-root],
@@ -30,10 +151,12 @@
 [data-hero-svg-root] [data-hero-tagline-sep] {
   transform-box: fill-box;
   transform-origin: center bottom;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 [data-hero-svg-root]:not([data-hero-chrome-animate="true"]) [data-hero-name-letter] {
   opacity: 0;
-  transform: translateY(55%);
+  transform: translate3d(0, 55%, 0);
 }
 [data-hero-svg-root][data-hero-chrome-animate="true"] [data-hero-name-letter] {
   animation-name: hero-name-letter-in;
@@ -47,7 +170,7 @@
 [data-hero-svg-root]:not([data-hero-tagline-animate="true"]) [data-hero-tagline-letter],
 [data-hero-svg-root]:not([data-hero-tagline-animate="true"]) [data-hero-tagline-sep] {
   opacity: 0;
-  transform: translateY(55%);
+  transform: translate3d(0, 55%, 0);
 }
 [data-hero-svg-root][data-hero-tagline-animate="true"] [data-hero-tagline-letter],
 [data-hero-svg-root][data-hero-tagline-animate="true"] [data-hero-tagline-sep] {
@@ -79,6 +202,14 @@
     transform: none !important;
     animation: none !important;
     transition: none !important;
+  }
+  .hero-idle-float,
+  .hero-idle-float--from-bottom,
+  .hero-idle-float--counter {
+    animation: none !important;
+  }
+  .hero-idle-float-rest--bottom {
+    transform: none;
   }
 }
 
@@ -328,7 +459,7 @@
   }
 
   /*
-   * Grid drift â€” pure CSS keyframes (compositor-friendly).
+   * Grid drift — pure CSS keyframes (compositor-friendly).
    * Do NOT drive via a root rAF `--portfolio-grid-drift-position` write: that
    * invalidates document styles every frame and stalls SVG letter cascades on
    * mobile / tablet. Phase lock across overlays uses negative animation-delay
@@ -962,6 +1093,7 @@
 
   /* PROFILE parity: same glass tokens as `.profile-card-surface` */
   /* Corner radius matches Video Editing detail meta cards (4px) */
+  /* Frost stays on this face; parent slot owns y/scale so backdrop isn't opacity-faded. */
   #skills .skills-card-surface {
     position: relative;
     z-index: 0;
@@ -974,6 +1106,10 @@
     filter: none;
     -webkit-backdrop-filter: var(--portfolio-glass-blur);
     backdrop-filter: var(--portfolio-glass-blur);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    isolation: isolate;
   }
 
   #skills .skills-card-surface:hover {
@@ -997,11 +1133,23 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    contain: layout style;
+  }
+
+  /* Entrance only — temporary layer promotion; cleared when `.skills-entrance-live` drops. */
+  #skills.skills-entrance-live .skills-row-card-slot {
+    will-change: transform, opacity;
   }
 
   #skills .skills-row-card-slot > * {
     flex: 1 1 auto;
     min-height: 100%;
+  }
+
+  #skills.skills-entrance-live .skills-page-card-row {
+    will-change: transform, opacity;
   }
 
   /**
@@ -3759,6 +3907,56 @@
       scroll-snap-type: x mandatory;
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
+      -webkit-mask-image: none;
+      mask-image: none;
+    }
+
+    /* Soften hard clip on overflowing selector tabs (edge classes toggled in Home.tsx). */
+    #experience .tabs-nav.tabs-nav--fade-right {
+      -webkit-mask-image: linear-gradient(
+        to right,
+        #000 0%,
+        #000 calc(100% - 2.75rem),
+        rgba(0, 0, 0, 0) 100%
+      );
+      mask-image: linear-gradient(
+        to right,
+        #000 0%,
+        #000 calc(100% - 2.75rem),
+        rgba(0, 0, 0, 0) 100%
+      );
+    }
+
+    #experience .tabs-nav.tabs-nav--fade-left {
+      -webkit-mask-image: linear-gradient(
+        to right,
+        rgba(0, 0, 0, 0) 0%,
+        #000 2.75rem,
+        #000 100%
+      );
+      mask-image: linear-gradient(
+        to right,
+        rgba(0, 0, 0, 0) 0%,
+        #000 2.75rem,
+        #000 100%
+      );
+    }
+
+    #experience .tabs-nav.tabs-nav--fade-left.tabs-nav--fade-right {
+      -webkit-mask-image: linear-gradient(
+        to right,
+        rgba(0, 0, 0, 0) 0%,
+        #000 2.75rem,
+        #000 calc(100% - 2.75rem),
+        rgba(0, 0, 0, 0) 100%
+      );
+      mask-image: linear-gradient(
+        to right,
+        rgba(0, 0, 0, 0) 0%,
+        #000 2.75rem,
+        #000 calc(100% - 2.75rem),
+        rgba(0, 0, 0, 0) 100%
+      );
     }
 
     #experience .tabs-nav::-webkit-scrollbar {
@@ -3792,7 +3990,7 @@
       flex: 0 0 auto;
       width: 100% !important;
       min-width: 0 !important;
-      margin-top: 1px;
+      margin-top: 3px;
     }
 
     #experience .tabs-content {
