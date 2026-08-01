@@ -1,0 +1,66 @@
+---
+name: portfoliov2-showcase-overlays
+description: >-
+  SHOWCASE carousel, FEATURED WRITING, section overlays, and #projects layout
+  rules for PortfolioTRUEV2 (parity tokens, overflow/scroll, dots, PDFs). Use
+  when editing SHOWCASE, project detail/FLIP, FEATURED WRITING, folder tabs,
+  section slide-in panels, overlay scrollbars, or clipping below the carousel.
+disable-model-invocation: false
+---
+
+# PortfolioTRUEV2 — SHOWCASE / overlays / projects panels
+
+Load for SHOWCASE, FEATURED WRITING, section overlays, or `#projects` layout work. Routine non-SHOWCASE edits should rely on thin `AGENTS.md` + section-map only.
+
+## Where things live
+
+| Area | Location |
+|------|----------|
+| SHOWCASE carousel, FEATURED WRITING, project detail / FLIP, section slide-in panels | `src/pages/Home.tsx` — locate via `.cursor/section-map.md` |
+| Folder tab strip + FEATURED WRITING chrome | `src/components/ShowcaseAttachedTabStrip.tsx` (`LAYOUT_ANCHOR_TAB_ID`, `FEATURED_WRITING_PREVIEW_GUTTER_PX`) |
+| PDF first-page thumbnails (FEATURED WRITING) | `src/components/FeaturedWritingPdfThumbnail.tsx` |
+| Global scrollbar utilities | `src/index.css` (`.no-scrollbar`, etc.) — Grep, do not full-read |
+
+Prefer **small, focused components** in `src/components/` when extracting from `Home.tsx`; keep behavior and tokens consistent with existing patterns.
+
+## Visual parity (SHOWCASE)
+
+- **Cards** (carousel tiles, project detail hero, FEATURED WRITING folder): share the same **rounded grey border** vocabulary — e.g. `border-white/[0.09]`, `rounded-[11px] sm:rounded-xl`, and the same **shadow** language as other showcase surfaces unless the user requests a change.
+- **Heights**: carousel cards and the flying-card / detail anchor use the shared **`DETAIL_CARD_H`** height string in `Home.tsx` (includes `min(..., …svh)` caps). Keep new showcase surfaces aligned with that token unless there is a deliberate exception.
+
+## Section overlay (full-screen panels: projects, profile, etc.)
+
+- The sliding **`motion.div`** (fixed `inset-0`) is the scroll container for tall content. It uses **`overflow-y-auto`** on most sections, and **`no-scrollbar`** plus WebKit / `scrollbarWidth` / `msOverflowStyle` suppression so **scrolling works but scrollbars stay hidden**.
+- **Do not** stack `overflow-hidden` and `h-full` on the projects subtree in a way that **clips** the FEATURED WRITING block. For `currentSection === "projects"`, the inner wrapper should allow vertical overflow to reach the panel scroller (`overflow-y-visible` on the appropriate wrapper); the panel scrolls, not an inner scrollbar (unless explicitly desired).
+
+## `#projects` / SHOWCASE column
+
+- Avoid forcing **`h-full`** on inner containers in ways that cap height and clip content below the carousel. Prefer **`min-h-full`** on the section where “at least full viewport” is needed, and let content grow so the **overlay** can scroll with hidden scrollbars.
+- Use **`overflow-x-hidden`** where horizontal clipping is required; avoid unnecessary **`overflow-y-hidden`** on ancestors of the folder card.
+- Bottom spacing: section padding can use **`max(..., env(safe-area-inset-bottom))`** so content clears notches and home indicators.
+
+## SHOWCASE carousel — dot pager alignment
+
+- Use **one horizontal padding wrapper** around both the **dot row** and the **Embla viewport** (`px-2 sm:px-4 lg:px-2 xl:px-3` — match FEATURED WRITING insets). Do not duplicate different horizontal padding on dots vs. carousel.
+- Dots are **`justify-end`**. If the cluster still sits slightly past the **card border**, nudge the dot group **left** with a small **`-translate-x-*`** on the dot flex (responsive values as needed). Align optically to the **bordered** cards, not an arbitrary screen edge.
+
+## FEATURED WRITING
+
+- Tabs map to PDFs and copy via the data structures next to **`ShowcaseWritingFeaturedPanel`** in `Home.tsx`.
+- Thumbnails: **`FeaturedWritingPdfThumbnail`** loads page 1 with **pdfjs**; URLs are **cached** in-module to avoid re-render flashes.
+- Folder body: avoid **`overflow-hidden`** clipping the footer row; use **`overflow-x-hidden`** and allow vertical visibility where needed. Keep **View PDF** placement consistent with the current design (user may refine position).
+
+## PDFs elsewhere
+
+- **`PdfJsDocumentView`** and related flows use **`no-scrollbar`** on internal scroll areas where appropriate.
+
+## PROFILE viewport gutters (side margins)
+
+Desktop left/right gaps on `#profile` come from the **centered two-column row** (text + gap + mascot), not container padding alone. Other sections that must match PROFILE (e.g. SKILLS) use shared `PROFILE_*` constants and `PROFILE_VIEWPORT_CONTENT_MAX` in `Home.tsx`. See `.cursor/skills/portfoliov2-profile-viewport-gutters/SKILL.md`.
+
+## General editing discipline
+
+- Match existing **imports, naming, and Tailwind** style in `Home.tsx`.
+- **Minimize scope**: change only what the task requires; avoid drive-by refactors across unrelated sections of `Home.tsx`.
+- Locate code with **section-map + Grep**, not by reading all of `Home.tsx`.
+- After layout or CSS changes that affect overflow, **verify** in the browser (see Browser QA budget in `AGENTS.md`): no clipped FEATURED WRITING footer, no visible scrollbar on the section panel (unless explicitly requested).

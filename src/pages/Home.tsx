@@ -87,7 +87,7 @@ import {
   useRuleOfThirdsEnabled,
 } from "../lib/portfolioDebugMode";
 import { UserFilledIcon } from "../components/icons/UserFilledIcon";
-import { DUR, EASE, HOVER, PORTFOLIO_BOUNCE, PORTFOLIO_SPEED, SHOWCASE_PDF_PROJECTS_FADE_OUT_S, SIDE_NAV_OVERLAY_FADE_S, SPRING, TAP } from "../lib/motion";
+import { DUR, EASE, HOVER, NAV_ICON_TAP, NAV_ICON_TAP_RELEASE, PORTFOLIO_BOUNCE, PORTFOLIO_SPEED, SHOWCASE_PDF_PROJECTS_FADE_OUT_S, SIDE_NAV_OVERLAY_FADE_S, SPRING, TAP } from "../lib/motion";
 import { useMasonryImageRatios } from "../lib/useMasonryImageRatios";
 import { 
   Instagram, 
@@ -1023,22 +1023,11 @@ const matchesTopNavTabletViewport = () => {
   );
 };
 
-const BackToMenuButton = ({
-  show,
-  onBack,
-  ariaLabel = "Back to menu",
-  opacity = 1,
-  buttonDebug,
-  debugActive = false,
-}: {
-  show: boolean;
-  onBack: () => void;
-  ariaLabel?: string;
-  /** 0–1 chrome visibility (scroll fade + PDF hide). */
-  opacity?: number;
-  buttonDebug: NavIconButtonDebugValues;
-  debugActive?: boolean;
-}) => {
+/** Desktop/tablet back-icon box + optical offset (shared top-nav chrome). */
+function useTopNavBackMetrics(
+  buttonDebug: NavIconButtonDebugValues,
+  debugActive: boolean,
+) {
   const [isTabletViewport, setIsTabletViewport] = useState(matchesTopNavTabletViewport);
   const [isDesktopViewport, setIsDesktopViewport] = useState(
     () =>
@@ -1082,71 +1071,23 @@ const BackToMenuButton = ({
     : isTabletViewport
       ? TOP_NAV_BACK_BUTTON_OFFSET_Y_TABLET
       : TOP_NAV_BACK_BUTTON_OFFSET_Y_MOBILE;
-  const offsetY = baseOffsetY + (debugActive ? buttonDebug.offsetY : 0);
-
+  // Integer px — subpixel margin + scale reads as stop-motion on some GPUs.
+  const offsetY = Math.round(baseOffsetY + (debugActive ? buttonDebug.offsetY : 0));
+  const offsetX = Math.round(
+    debugActive || isDesktopViewport || isTabletViewport ? buttonDebug.offsetX : 0,
+  );
   const useTabletDesktopSizing = isDesktopViewport || isTabletViewport;
-  const iconSizePx = debugActive
-    ? (buttonDebug.iconSize ?? 22)
-    : isDesktopViewport
-      ? 25
-      : isTabletViewport
-        ? 22
-        : 21;
-
   const buttonStyle = useTabletDesktopSizing
     ? {
         width: `${buttonDebug.size}px`,
         height: `${buttonDebug.size}px`,
         minWidth: `${buttonDebug.size}px`,
         minHeight: `${buttonDebug.size}px`,
-        transform: `translate(${buttonDebug.offsetX}px, ${offsetY}px)`,
       }
-    : {
-        transform: `translate(0px, ${offsetY}px)`,
-      };
+    : undefined;
 
-  const chromeOpacity = Math.max(0, Math.min(1, opacity));
-
-  return (
-  <AnimatePresence>
-    {show && (
-      <motion.div
-        initial={{ opacity: 0, x: -10 }}
-        animate={{ opacity: chromeOpacity, x: 0 }}
-        exit={{ opacity: 0, x: -10 }}
-        transition={{
-          opacity: { duration: DUR.micro, ease: EASE.out },
-          x: { duration: DUR.fast, ease: EASE.out },
-        }}
-        className={`fixed ${TOP_NAV_FIXED_TOP} left-1 z-50 max-sm:-translate-x-0.5 sm:left-4 sm:translate-x-0`}
-        style={{ pointerEvents: chromeOpacity < 0.05 ? "none" : "auto" }}
-        aria-hidden={chromeOpacity < 0.05}
-        data-top-nav-chrome
-      >
-        <motion.div whileTap={TAP} transition={SPRING.tap}>
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={onBack}
-            size="icon"
-            aria-label={ariaLabel}
-            tabIndex={chromeOpacity < 0.05 ? -1 : undefined}
-            className={TOP_NAV_ICON_BUTTON_CLASS}
-            style={buttonStyle}
-          >
-            <ArrowLeft
-              size={iconSizePx}
-              strokeWidth={2}
-              aria-hidden
-              style={{ width: iconSizePx, height: iconSizePx, minWidth: iconSizePx, minHeight: iconSizePx }}
-            />
-          </Button>
-        </motion.div>
-      </motion.div>
-    )}
-  </AnimatePresence>
-  );
-};
+  return { offsetX, offsetY, buttonStyle };
+}
 
 const SectionHeader = ({
   title,
@@ -11707,6 +11648,10 @@ export default function Home() {
   >("visible");
   const skillsFadeReplayRafRef = useRef<number | null>(null);
   const reduceMotion = useReducedMotion();
+  const topNavBackMetrics = useTopNavBackMetrics(
+    topNavBackButtonDebug,
+    showTopNavBackDebugPanel,
+  );
   const heroInViewRef = useRef<HTMLDivElement | null>(null);
   const isHeroInView = useInView(heroInViewRef, { margin: "-100px 0px 0px 0px" });
   const slidesRef = useRef<HTMLDivElement | null>(null);
@@ -12048,20 +11993,25 @@ export default function Home() {
 
     if (id === "menu") {
       // Clear before the panel exits so main-menu icons are outline as the menu is revealed.
-      setMenuLockedFillId(null);
-      setMenuPanelAtRight(true);
-      const raf = requestAnimationFrame(() => {
-        setTransitionTarget("menu");
-        setIsTransitioning(true);
-        setMenuPanelAtRight(false);
+      // Defer panel work off the click frame so top-nav whileTap can composite (hamburger
+      // only does setIsSideNavOpen — this path is much heavier).
+      const panelMs = PANEL_TRANSITION.duration * 1000;
+      requestAnimationFrame(() => {
+        setMenuLockedFillId(null);
+        setMenuPanelAtRight(true);
+        requestAnimationFrame(() => {
+          setTransitionTarget("menu");
+          setIsTransitioning(true);
+          setMenuPanelAtRight(false);
+          transitionTimeoutsRef.current.push(
+            window.setTimeout(() => {
+              setCurrentSection(null);
+              setIsTransitioning(false);
+              setTransitionTarget(null);
+            }, panelMs),
+          );
+        });
       });
-      transitionTimeoutsRef.current.push(
-        window.setTimeout(() => {
-          setCurrentSection(null);
-          setIsTransitioning(false);
-          setTransitionTarget(null);
-        }, PANEL_TRANSITION.duration * 1000)
-      );
     } else {
       // SHOWCASE (projects): settle immediately so carousel + tabs reserve height and fade with the panel — delayed settle caused a second layout/opacity beat after the slide.
       setPanelSettled(id === "projects");
@@ -12284,9 +12234,9 @@ export default function Home() {
         opacity: appReady ? 1 : 0,
       }}
     >
-      {/* Top-right controls (Resume + Hamburger) */}
+      {/* Top nav chrome — back (left) + resume/menu (right) share one opacity shell */}
       <motion.div
-        className={`fixed ${TOP_NAV_FIXED_TOP} right-2.5 sm:right-4 z-50 flex items-center gap-1.5 sm:gap-2.5`}
+        className={`fixed ${TOP_NAV_FIXED_TOP} inset-x-0 z-50`}
         initial={false}
         animate={{
           opacity: topNavChromeOpacity,
@@ -12300,42 +12250,106 @@ export default function Home() {
         }
         style={{ pointerEvents: topNavChromeOpacity < 0.05 ? "none" : "auto" }}
         aria-hidden={topNavChromeOpacity < 0.05}
-        data-top-nav-chrome
       >
-        {!(currentSlideId === "hero" && currentSection === null && !isResumeMode) && (
-          <motion.div
-            layoutId="resume-button"
-            whileTap={TAP}
-            transition={SPRING.tap}
+        {!isResumeMode && currentSection !== null && !isSideNavOpen && (
+          <div
+            className="absolute left-1 max-sm:-translate-x-0.5 sm:left-4 sm:translate-x-0"
+            style={{
+              marginTop: topNavBackMetrics.offsetY,
+              marginLeft: topNavBackMetrics.offsetX,
+            }}
+            data-top-nav-chrome
           >
-            <Button
-              variant="ghost"
-              onClick={() => setIsResumeMode(!isResumeMode)}
-              size="icon"
-              aria-label={isResumeMode ? "Exit resume mode" : "Enter resume mode"}
-              tabIndex={topNavChromeOpacity < 0.05 ? -1 : undefined}
-              className={`${TOP_NAV_ICON_BUTTON_CLASS} font-display flex items-center justify-center [&_svg]:!size-[17px] sm:[&_svg]:!size-5`}
+            <motion.div
+              whileTap={reduceMotion ? undefined : NAV_ICON_TAP}
+              transition={NAV_ICON_TAP_RELEASE}
             >
-              {isResumeMode ? <Zap size={20} /> : <FileText size={20} />}
-            </Button>
-          </motion.div>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  if (currentSection === "projects") {
+                    const showcasePdf = showcasePdfPreviewControlRef.current;
+                    if (showcasePdf?.isOpen) {
+                      showcasePdf.close();
+                      return;
+                    }
+                    if (activeShowcaseProjectId) {
+                      setActiveShowcaseProjectId(null);
+                      return;
+                    }
+                  }
+                  if (currentSection === "projects-supporting") {
+                    const pdfControl = supportingPdfPreviewControlRef.current;
+                    if (pdfControl?.isOpen) {
+                      pdfControl.close();
+                      return;
+                    }
+                    navigateTo("projects");
+                    return;
+                  }
+                  navigateTo("menu");
+                }}
+                size="icon"
+                aria-label={
+                  currentSection === "projects" && activeShowcaseProjectId
+                    ? "Back to showcase"
+                    : currentSection === "projects-supporting"
+                      ? "Back to showcase"
+                      : "Back to menu"
+                }
+                tabIndex={topNavChromeOpacity < 0.05 ? -1 : undefined}
+                className={`${TOP_NAV_ICON_BUTTON_CLASS} font-display flex items-center justify-center [&_svg]:!size-[17px] sm:[&_svg]:!size-5`}
+                style={topNavBackMetrics.buttonStyle}
+              >
+                <ArrowLeft size={20} aria-hidden />
+              </Button>
+            </motion.div>
+          </div>
         )}
 
-        {!isResumeMode && !(currentSlideId === "hero" && currentSection === null) && (currentSlideId !== "menu" || currentSection !== null) && (
-          <motion.div whileTap={TAP} transition={SPRING.tap}>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setIsSideNavOpen(true)}
-              size="icon"
-              aria-label="Open navigation menu"
-              tabIndex={topNavChromeOpacity < 0.05 ? -1 : undefined}
-              className={`${TOP_NAV_ICON_BUTTON_CLASS} font-display flex items-center justify-center [&_svg]:!size-[17px] sm:[&_svg]:!size-5`}
+        <div
+          className="absolute right-2.5 sm:right-4 flex items-center gap-1.5 sm:gap-2.5"
+          data-top-nav-chrome
+        >
+          {!(currentSlideId === "hero" && currentSection === null && !isResumeMode) && (
+            <motion.div
+              layoutId="resume-button"
+              whileTap={reduceMotion ? undefined : NAV_ICON_TAP}
+              transition={NAV_ICON_TAP_RELEASE}
             >
-              <Menu size={20} aria-hidden />
-            </Button>
-          </motion.div>
-        )}
+              <Button
+                variant="ghost"
+                onClick={() => setIsResumeMode(!isResumeMode)}
+                size="icon"
+                aria-label={isResumeMode ? "Exit resume mode" : "Enter resume mode"}
+                tabIndex={topNavChromeOpacity < 0.05 ? -1 : undefined}
+                className={`${TOP_NAV_ICON_BUTTON_CLASS} font-display flex items-center justify-center [&_svg]:!size-[17px] sm:[&_svg]:!size-5`}
+              >
+                {isResumeMode ? <Zap size={20} /> : <FileText size={20} />}
+              </Button>
+            </motion.div>
+          )}
+
+          {!isResumeMode && !(currentSlideId === "hero" && currentSection === null) && (currentSlideId !== "menu" || currentSection !== null) && (
+            <motion.div
+              whileTap={reduceMotion ? undefined : NAV_ICON_TAP}
+              transition={NAV_ICON_TAP_RELEASE}
+            >
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setIsSideNavOpen(true)}
+                size="icon"
+                aria-label="Open navigation menu"
+                tabIndex={topNavChromeOpacity < 0.05 ? -1 : undefined}
+                className={`${TOP_NAV_ICON_BUTTON_CLASS} font-display flex items-center justify-center [&_svg]:!size-[17px] sm:[&_svg]:!size-5`}
+              >
+                <Menu size={20} aria-hidden />
+              </Button>
+            </motion.div>
+          )}
+        </div>
       </motion.div>
 
       {!isResumeMode && (
@@ -12368,46 +12382,6 @@ export default function Home() {
           showIconSize
         />
       ) : null}
-
-      {/* Back to menu ? above panels so it stays clickable when viewing a section */}
-      {!isResumeMode && (
-        <BackToMenuButton
-          show={currentSection !== null && !isSideNavOpen}
-          opacity={topNavChromeOpacity}
-          buttonDebug={topNavBackButtonDebug}
-          debugActive={showTopNavBackDebugPanel}
-          ariaLabel={
-            currentSection === "projects" && activeShowcaseProjectId
-              ? "Back to showcase"
-              : currentSection === "projects-supporting"
-                ? "Back to showcase"
-                : "Back to menu"
-          }
-          onBack={() => {
-            if (currentSection === "projects") {
-              const showcasePdf = showcasePdfPreviewControlRef.current;
-              if (showcasePdf?.isOpen) {
-                showcasePdf.close();
-                return;
-              }
-              if (activeShowcaseProjectId) {
-                setActiveShowcaseProjectId(null);
-                return;
-              }
-            }
-            if (currentSection === "projects-supporting") {
-              const pdfControl = supportingPdfPreviewControlRef.current;
-              if (pdfControl?.isOpen) {
-                pdfControl.close();
-                return;
-              }
-              navigateTo("projects");
-              return;
-            }
-            navigateTo("menu");
-          }}
-        />
-      )}
 
       {/* Interaction lock during panel transition */}
       {!isResumeMode && isTransitioning && (

@@ -950,6 +950,11 @@
     overflow: visible !important;
   }
 
+  /* Top nav icon buttons — room for tap/hover scale. */
+  [data-top-nav-chrome] {
+    overflow: visible;
+  }
+
   /* FLIP measure: kill Framer tap transform for one frame. */
   #projects .project-card-tap-shell.is-flip-measure {
     transform: none !important;

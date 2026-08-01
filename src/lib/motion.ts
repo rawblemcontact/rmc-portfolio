@@ -34,6 +34,21 @@ export const TAP = {
 export const HOVER = { scale: 1.02 } as const;
 
 /**
+ * Fixed top-nav icon chrome (back / menu / resume).
+ * Light tween press — avoids TAP’s deep squash + SPRING.tap bounce, which
+ * reads as choppy when navigation unmounts the chrome on the same click.
+ */
+export const NAV_ICON_TAP = {
+  scale: 0.9,
+  transition: { type: "tween", duration: 0.1, ease: EASE.out },
+} as const;
+export const NAV_ICON_TAP_RELEASE = {
+  type: "tween",
+  duration: 0.14,
+  ease: EASE.out,
+} as const;
+
+/**
  * PORTFOLIO BOUNCE — on-click press-in + settle (no hover).
  * Same click feel as hero PORTFOLIO / PROJECTS main 4 cards.
  * Apply only when the user asks for “PORTFOLIO BOUNCE”.
