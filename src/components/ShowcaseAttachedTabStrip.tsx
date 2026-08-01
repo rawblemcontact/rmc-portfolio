@@ -48,10 +48,10 @@ function measureTabGeometryForLayout(
   const tr = tab.getBoundingClientRect();
   const tabLeft = tr.left - contentLeft;
   const tabRight = tr.right - contentLeft;
-  const ml = Math.max(0, tabLeft);
-  let w = Math.max(0, tabRight - ml);
+  const ml = Math.round(Math.max(0, tabLeft));
+  let w = Math.round(Math.max(0, tabRight - ml));
   if (ml + w > contentWidth) {
-    w = Math.max(0, contentWidth - ml);
+    w = Math.max(0, Math.round(contentWidth - ml));
   }
   return { ml, w };
 }
@@ -59,6 +59,11 @@ function measureTabGeometryForLayout(
 export type ShowcaseAttachedTabStripProps = {
   activeId: ShowcaseTabId;
   onTabChange: (id: ShowcaseTabId) => void;
+  /**
+   * When false, no tab shows active chrome (PROJECTS entrance: FEATURED WRITING lands idle,
+   * then Content Writing highlights). Panel content still follows `activeId`.
+   */
+  highlightActiveTab?: boolean;
   /** Optional width wrapper (parent usually sets w-full). */
   className?: string;
   panel?:
@@ -84,6 +89,7 @@ const FOLDER_TAB_TOP =
 export function ShowcaseAttachedTabStrip({
   activeId,
   onTabChange,
+  highlightActiveTab = true,
   className = "",
   panel,
 }: ShowcaseAttachedTabStripProps) {
@@ -114,9 +120,13 @@ export function ShowcaseAttachedTabStrip({
   const folderAnchorOffsetRef = useRef<number | null>(null);
   const [mobileSwitchDir, setMobileSwitchDir] = useState<1 | -1>(1);
   const mobileSwipeStartRef = useRef<{ x: number; y: number } | null>(null);
+  /** Lock preview inset after first stable measure — ignore highlight paint thrash. */
+  const insetLockedRef = useRef(false);
+  const lastBodyWidthRef = useRef(0);
   const activeTabIndex = TAB_ORDER.indexOf(activeId);
-  const canSelectPrev = activeTabIndex > 0;
-  const canSelectNext = activeTabIndex >= 0 && activeTabIndex < TAB_ORDER.length - 1;
+  const canSelectPrev = highlightActiveTab && activeTabIndex > 0;
+  const canSelectNext =
+    highlightActiveTab && activeTabIndex >= 0 && activeTabIndex < TAB_ORDER.length - 1;
 
   const syncFit = useCallback(() => {
     const el = bodyPadRef.current;
@@ -132,10 +142,29 @@ export function ShowcaseAttachedTabStrip({
       tabListRef.current,
       LAYOUT_ANCHOR_TAB_ID,
     );
-    setTabGeom((prev) =>
-      prev.ml === next.ml && prev.w === next.w ? prev : next,
-    );
+    setTabGeom((prev) => {
+      if (next.w <= 0) return prev;
+      if (
+        insetLockedRef.current &&
+        prev.w > 0 &&
+        Math.abs(prev.ml - next.ml) < 2 &&
+        Math.abs(prev.w - next.w) < 2
+      ) {
+        return prev;
+      }
+      if (prev.ml === next.ml && prev.w === next.w) {
+        if (next.w > 0) insetLockedRef.current = true;
+        return prev;
+      }
+      if (next.w > 0) insetLockedRef.current = true;
+      return next;
+    });
   }, []);
+
+  const unlockInsetAndSync = useCallback(() => {
+    insetLockedRef.current = false;
+    syncFit();
+  }, [syncFit]);
 
   useLayoutEffect(() => {
     syncFit();
@@ -143,17 +172,35 @@ export function ShowcaseAttachedTabStrip({
       window.requestAnimationFrame(syncFit);
     });
     const el = bodyPadRef.current;
-    const tl = tabListRef.current;
-    const ro = new ResizeObserver(() => syncFit());
-    if (el) ro.observe(el);
-    if (tl) ro.observe(tl);
-    window.addEventListener("resize", syncFit);
+    /** Body width only — tab chrome paint must not unlock preview inset. */
+    const ro = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) return;
+      const w = entry.contentRect.width;
+      if (Math.abs(w - lastBodyWidthRef.current) < 1) {
+        syncFit();
+        return;
+      }
+      lastBodyWidthRef.current = w;
+      unlockInsetAndSync();
+    });
+    if (el) {
+      lastBodyWidthRef.current = el.getBoundingClientRect().width;
+      ro.observe(el);
+    }
+    window.addEventListener("resize", unlockInsetAndSync);
     return () => {
       window.cancelAnimationFrame(raf);
       ro.disconnect();
-      window.removeEventListener("resize", syncFit);
+      window.removeEventListener("resize", unlockInsetAndSync);
     };
-  }, [syncFit]);
+  }, [syncFit, unlockInsetAndSync]);
+
+  /** User tab changes may need a fresh inset; ignore highlight-only toggles. */
+  useLayoutEffect(() => {
+    insetLockedRef.current = false;
+    syncFit();
+  }, [activeId, syncFit]);
 
   useEffect(() => {
     const mq = window.matchMedia(
@@ -369,13 +416,21 @@ export function ShowcaseAttachedTabStrip({
                     className="flex min-w-0 flex-col items-center text-center"
                   >
                     <span
-                      className="max-w-full truncate px-1 font-heading text-[13.5px] font-bold leading-snug tracking-[0.02em]"
-                      style={{ color: featuredTabSoftYellow }}
+                      className={`max-w-full truncate px-1 font-heading text-[13.5px] font-bold leading-snug tracking-[0.02em]${
+                        highlightActiveTab ? "" : " text-mono-2/42"
+                      }`}
+                      style={
+                        highlightActiveTab
+                          ? { color: featuredTabSoftYellow }
+                          : undefined
+                      }
                     >
                       {TAB_LABEL[activeId]}
                     </span>
                     <span className="font-heading text-[0.58rem] leading-tight tracking-[0.08em] text-mono-2/50">
-                      {activeTabIndex + 1} / {TAB_ORDER.length}
+                      {highlightActiveTab
+                        ? `${activeTabIndex + 1} / ${TAB_ORDER.length}`
+                        : "— / —"}
                     </span>
                   </motion.div>
                 </AnimatePresence>
@@ -426,18 +481,23 @@ export function ShowcaseAttachedTabStrip({
               className="flex h-full min-w-0 w-full items-end gap-0.5 overflow-visible max-sm:hidden"
             >
               {TAB_ORDER.map((id) => {
-                const active = activeId === id;
+                const visuallyActive = highlightActiveTab && id === activeId;
+                /**
+                 * Entrance: all tabs idle until highlight — then Content Writing grows
+                 * idle → active (height + fill + yellow). Tab row is fixed height /
+                 * items-end so grow goes up, not into the body.
+                 */
                 return (
                   <button
                     key={id}
                     type="button"
                     role="tab"
                     id={`showcase-tab-${id}`}
-                    aria-selected={active}
+                    aria-selected={visuallyActive}
                     tabIndex={0}
                     onClick={() => handleSelectTab(id)}
                     style={
-                      active
+                      visuallyActive
                         ? {
                             color: featuredTabSoftYellow,
                           }
@@ -448,7 +508,7 @@ export function ShowcaseAttachedTabStrip({
                       FOLDER_TAB_TOP,
                       "px-1.5 font-heading text-[13.5px] font-bold tracking-[0.02em] sm:px-2 sm:tracking-[0.03em]",
                       "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-portfolio-yellow/30 focus-visible:ring-offset-2 focus-visible:ring-offset-black",
-                      active
+                      visuallyActive
                         ? [
                             "featured-writing-tab-active",
                             "relative z-[3] -mb-px",

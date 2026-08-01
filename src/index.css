@@ -1152,6 +1152,21 @@
     will-change: transform, opacity;
   }
 
+  /* PROJECTS entrance — promote cards only; never will-change FEATURED WRITING
+   * (dropping will-change mid-sequence causes a 1px compositor nudge). */
+  #projects.projects-entrance-live .projects-main-card-entrance-slot {
+    will-change: transform, opacity;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+
+  /* Scroll anchoring: thumbnail mount/fade above must not shove FEATURED WRITING. */
+  #projects .projects-showcase-cards-cluster,
+  #projects .projects-showcase-featured-block,
+  #projects .featured-writing-folder {
+    overflow-anchor: none;
+  }
+
   /**
    * FEATURED WRITING â€” same stack as profile/project (panel = card surface). shell < panel < raised.
    */
@@ -1272,7 +1287,7 @@
     transform: translateZ(0);
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
-    /* Match #experience .tab-btn (--career-tab-hover-duration 0.18s / Material ease). */
+    /* Match #experience .tab-btn — height grow on idle hover; content tab stays active-height. */
     transition:
       height 0.18s cubic-bezier(0.4, 0, 0.2, 1),
       min-height 0.18s cubic-bezier(0.4, 0, 0.2, 1),

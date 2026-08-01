@@ -4501,15 +4501,32 @@ const SectionGridOverlay = () => {
   );
 };
 
-const RED_LINE_DELAY_MS = 229; // -10%
 const RED_LINE_DURATION_MS = 190; // -10%
-const RED_LINE_COMPLETE_MS = RED_LINE_DELAY_MS + RED_LINE_DURATION_MS;
 /** Fade-in for profile metadata line (ms). */
 const BUTTON_FADE_DURATION_MS = 486; // -10%
 /** Summary delay + duration. Buttons start after summary finishes. */
 const SUMMARY_DELAY_S = 0.0455; // -10%
 const SUMMARY_DURATION_S = 0.306; // 0.34 * 0.9
 const BUTTONS_DELAY_AFTER_SUMMARY_MS = 85;
+/** PROFILE card stack: metadata pill first, summary 0.05s later. */
+const PROFILE_CARD1_DELAY_S = 0;
+const PROFILE_CARD_STAGGER_S = 0.05;
+const PROFILE_CARD2_DELAY_S = PROFILE_CARD1_DELAY_S + PROFILE_CARD_STAGGER_S;
+/**
+ * Left-column content (metadata pill + summary) wall-clock end.
+ * Chrome (PROFILE header + red rule) arms near this beat so content still leads,
+ * without a long dead gap after the cards settle.
+ */
+const PROFILE_CONTENT_COMPLETE_MS = Math.max(
+  Math.round(PROFILE_CARD1_DELAY_S * 1000) + BUTTON_FADE_DURATION_MS,
+  Math.round((PROFILE_CARD2_DELAY_S + SUMMARY_DURATION_S) * 1000),
+);
+/** Pull chrome start forward into the card settle tail (ms). */
+const PROFILE_CHROME_EARLY_LEAD_MS = 160;
+const PROFILE_CHROME_START_MS = Math.max(
+  0,
+  PROFILE_CONTENT_COMPLETE_MS - PROFILE_CHROME_EARLY_LEAD_MS,
+);
 /** Profile-parity entrance (Experience mirrors PhantomProfile cadence). */
 const PROFILE_SECTION_ENTER_S = 0.342;
 const PROFILE_TITLE_DELAY_S = 0.152;
@@ -4550,10 +4567,8 @@ const PhantomProfile = ({
   const reduceMotion = useReducedMotion();
   const portfolioDebugEnabled = usePortfolioDebugEnabled();
   const profileLeftRef = useRef<HTMLDivElement>(null);
-  const dividerRef = useRef<HTMLDivElement>(null);
   const rawblemRef = useRef<HTMLDivElement>(null);
   const profileLeftInView = useInView(profileLeftRef, { once: false, amount: 0.2 });
-  const dividerInView = useInView(dividerRef, { once: false, amount: 0.5 });
   const rawblemInView = useInView(rawblemRef, { once: false, amount: 0.2 });
   const [profileTabletViewport, setProfileTabletViewport] = useState(matchesProfileTabletViewport);
   const [profileDesktopViewport, setProfileDesktopViewport] = useState(
@@ -4569,7 +4584,6 @@ const PhantomProfile = ({
   /** Latch: keep header/red line settled after first play — scroll-off must not replay. */
   const [profileHeaderLocked, setProfileHeaderLocked] = useState(false);
   const [profileRedLineLocked, setProfileRedLineLocked] = useState(false);
-  const prevProfileInView = useRef(false);
   const profileMascotInstant = profileTabletViewport || !!reduceMotion;
   /** Entrance gate: panel must be settled (same cadence as SkillArsenal / ConfidantExperience). */
   const profileEntranceArmed = !!reduceMotion || panelSettled;
@@ -4659,7 +4673,19 @@ const PhantomProfile = ({
     if (profileMascotInstant) setRawblemFloatReady(true);
   }, [profileMascotInstant]);
 
-  useLayoutEffect(() => {
+  // Content first: metadata pill + summary once per section open; scroll-off must not replay.
+  useEffect(() => {
+    if (!profileEntranceArmed) {
+      setOverlayRevealed(false);
+      return;
+    }
+    if (overlayRevealed) return;
+    if (!profileLeftInView) return;
+    setOverlayRevealed(true);
+  }, [profileEntranceArmed, profileLeftInView, overlayRevealed]);
+
+  // Header + red line after content finishes; latch so scroll-off does not replay.
+  useEffect(() => {
     if (!profileEntranceArmed) {
       // Section leave / panel unsettled — allow a fresh entrance next open.
       setProfileHeaderSlide(false);
@@ -4669,41 +4695,30 @@ const PhantomProfile = ({
     }
     if (profileHeaderLocked) {
       setProfileHeaderSlide(true);
+      if (!profileRedLineLocked) setProfileRedLineLocked(true);
       return;
     }
-    const armId = requestAnimationFrame(() => {
+    if (!overlayRevealed) return;
+    const chromeId = window.setTimeout(() => {
       setProfileHeaderSlide(true);
       setProfileHeaderLocked(true);
-    });
+      setProfileRedLineLocked(true);
+    }, reduceMotion ? 0 : PROFILE_CHROME_START_MS);
     return () => {
-      cancelAnimationFrame(armId);
+      window.clearTimeout(chromeId);
     };
-  }, [profileEntranceArmed, profileHeaderLocked]);
-
-  // Red line: latch on first in-view while armed; stay drawn when scrolled off-screen.
-  useEffect(() => {
-    if (!profileEntranceArmed || profileRedLineLocked) return;
-    if (dividerInView) setProfileRedLineLocked(true);
-  }, [profileEntranceArmed, profileRedLineLocked, dividerInView]);
+  }, [
+    profileEntranceArmed,
+    profileHeaderLocked,
+    profileRedLineLocked,
+    overlayRevealed,
+    reduceMotion,
+  ]);
 
   useEffect(() => {
     if (profileMascotInstant) return;
     if (!rawblemInView) setRawblemFloatReady(false);
   }, [rawblemInView, profileMascotInstant]);
-
-  // Overlay + buttons: once per section open after red line; scroll-off must not replay.
-  useEffect(() => {
-    if (!profileEntranceArmed) {
-      prevProfileInView.current = false;
-      setOverlayRevealed(false);
-      return;
-    }
-    if (overlayRevealed) return;
-    if (!profileLeftInView) return;
-    prevProfileInView.current = true;
-    const revealId = window.setTimeout(() => setOverlayRevealed(true), Math.max(0, RED_LINE_COMPLETE_MS - 90));
-    return () => window.clearTimeout(revealId);
-  }, [profileEntranceArmed, profileLeftInView, overlayRevealed]);
 
   return (
     <section id="profile" className="relative w-full min-w-0 overflow-x-hidden overflow-y-visible bg-black text-white scroll-mt-6 max-lg:min-h-min lg:min-h-screen">
@@ -4839,13 +4854,12 @@ const PhantomProfile = ({
                className="!mb-3 max-lg:mt-0 lg:mt-0 -ml-[3px] max-sm:translate-y-[2px]"
                slideFade
                slideFadeDuration={0.5}
-               slideFadeDelay={0.3}
+               slideFadeDelay={0}
                slideFadeActive={profileHeaderSlide}
                titleStatic
              />
             <div className={PROFILE_CARD_COLUMN}>
              <div
-               ref={dividerRef}
                className="relative mt-1 min-h-[2px] w-full overflow-hidden"
              >
                <motion.span
@@ -4858,7 +4872,7 @@ const PhantomProfile = ({
                 }
                  initial={false}
                  animate={{ scaleX: profileRedLineLocked ? 1 : 0 }}
-                 transition={{ duration: RED_LINE_DURATION_MS / 1000, delay: RED_LINE_DELAY_MS / 1000, ease: [0.16, 1, 0.3, 1] }}
+                 transition={{ duration: RED_LINE_DURATION_MS / 1000, delay: 0, ease: [0.16, 1, 0.3, 1] }}
                />
             </div>
             <div className="max-sm:translate-y-px">
@@ -4867,7 +4881,7 @@ const PhantomProfile = ({
                 style={profileRedLinePillDebugStyle}
                 initial={{ x: -24, opacity: 0 }}
                 animate={{ x: overlayRevealed ? 0 : -24, opacity: overlayRevealed ? 1 : 0 }}
-                transition={{ duration: BUTTON_FADE_DURATION_MS / 1000, delay: overlayRevealed ? BUTTONS_DELAY_AFTER_SUMMARY_MS / 1000 : 0, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: BUTTON_FADE_DURATION_MS / 1000, delay: overlayRevealed ? PROFILE_CARD1_DELAY_S : 0, ease: [0.16, 1, 0.3, 1] }}
               >
                 <div className="flex w-full min-w-0 items-center gap-3 sm:gap-4">
                   <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full border border-white/[0.16] bg-black/70 sm:h-16 sm:w-16">
@@ -4899,7 +4913,7 @@ const PhantomProfile = ({
                 className={`profile-card-surface relative ${PROFILE_METADATA_PILL_GAP} w-full rounded-[4px] px-4 py-4 sm:px-5 sm:py-5`}
                 initial={{ opacity: 0, y: 14 }}
                 animate={{ opacity: overlayRevealed ? 1 : 0, y: overlayRevealed ? 0 : 14 }}
-                transition={{ duration: SUMMARY_DURATION_S, delay: overlayRevealed ? SUMMARY_DELAY_S : 0, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: SUMMARY_DURATION_S, delay: overlayRevealed ? PROFILE_CARD2_DELAY_S : 0, ease: [0.16, 1, 0.3, 1] }}
               >
                 <p className={`${PROFILE_CARD_SECTION_LABEL_CLASS} mb-1.5`} style={{ color: PROFILE_ACCENT_SOFT }}>SUMMARY</p>
                 <p className="font-body text-mono-2 leading-relaxed mb-4">
@@ -5559,7 +5573,78 @@ const PROJECT_CARD_DETAIL_OPEN_LEAD_MS = 130;
 const PROJECT_CARD_AUTOPLAY_DELAY_MS = Math.round(360 / SHOWCASE_TIME_DIV);
 /** Showcase carousel: advance one snap after entrance; interval between advances. */
 const PROJECT_CAROUSEL_AUTO_ADVANCE_MS = 2500;
-const PROJECTS_CAROUSEL_ENTRANCE_FADE_S = 0.34;
+/**
+ * PROJECTS main-page entrance — same resume-card land as SKILLS cards / EXPERIENCE content.
+ * Sequence: header+line → [gap] → 4-card stagger → [gap] → FEATURED WRITING → [gap+extra] → tab on
+ * (mobile + tablet portrait: no delayed tab stage — Content Writing active with FEATURED WRITING).
+ * Motion stays transform/opacity only; temporary layer promotion via `.projects-entrance-live`.
+ */
+const PROJECTS_ENTRANCE_DELAY_SCALE = 0.95; // −5% waits between / before stages
+const PROJECTS_MAIN_CARD_ENTRANCE_Y = 21;
+const PROJECTS_MAIN_CARD_ENTRANCE_SCALE = 0.965;
+/** Mirrors SkillArsenal `SKILLS_CARD_STAGGER_S` / `skillsCardSlideDur` (page speed baked in). */
+const PROJECTS_MAIN_CARD_STAGGER_S = 0.04 * 0.95 * 0.975 * 0.75 * PROJECTS_ENTRANCE_DELAY_SCALE;
+const PROJECTS_MAIN_CARD_ENTRANCE_DUR_S = SUMMARY_DURATION_S * 1.5 * 0.9 * (0.95 * 0.975) * 0.9;
+/** Gap between major entrance stages (header/line ↔ cards ↔ featured ↔ tab). */
+const PROJECTS_STAGE_GAP_S = 0.02 * PROJECTS_ENTRANCE_DELAY_SCALE;
+/** Extra beat after FEATURED WRITING lands before Content Writing tab lights. */
+const PROJECTS_FEATURED_TO_TAB_EXTRA_S = 0.03 * PROJECTS_ENTRANCE_DELAY_SCALE;
+/**
+ * Yellow PROJECTS rule — same center-out scaleX as SKILLS main green line
+ * (`SKILLS_GREEN_LINE_DUR_S` / `EASE.out`). Positioning stays title-width / left-aligned.
+ */
+const PROJECTS_ACCENT_LINE_DUR_S = SUMMARY_DURATION_S * 1.5 * 0.9 * (0.95 * 0.975);
+const PROJECTS_ACCENT_LINE_EASE = EASE.out;
+/** Header / line start offset (PROFILE title delay, −5%). */
+const PROJECTS_TITLE_DELAY_S = PROFILE_TITLE_DELAY_S * PROJECTS_ENTRANCE_DELAY_SCALE;
+/**
+ * Featured block land — short coordinated opacity+y (not opacity-snap + long y crawl).
+ * Large frost panel reads sluggish if y eases out alone after a pop-in.
+ */
+const PROJECTS_FEATURED_ENTRANCE_Y = 12;
+const PROJECTS_FEATURED_ENTRANCE_DUR_S = 0.22;
+/** Drop entrance `will-change` this long after tab chrome starts. */
+const PROJECTS_ENTRANCE_LAYER_CLEAR_S = 0.42;
+/** Fade card thumbs this long after tab activate (media already mounted). */
+const PROJECTS_THUMBNAILS_FADE_AFTER_TAB_MS = 220 * PROJECTS_ENTRANCE_DELAY_SCALE;
+/** Clear card will-change this many ms before tab lights. */
+const PROJECTS_WILL_CHANGE_CLEAR_LEAD_MS = 80 * PROJECTS_ENTRANCE_DELAY_SCALE;
+
+const projectsMainCardRowEntrance = (rm: boolean): Variants => ({
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: rm ? 0 : PROJECTS_MAIN_CARD_STAGGER_S,
+    },
+  },
+});
+
+/** Opacity snaps; y + scale ease — matches SkillArsenal card land. */
+const projectsMainCardItemEntrance = (rm: boolean): Variants => ({
+  hidden: {
+    opacity: rm ? 1 : 0,
+    y: rm ? 0 : PROJECTS_MAIN_CARD_ENTRANCE_Y,
+    scale: rm ? 1 : PROJECTS_MAIN_CARD_ENTRANCE_SCALE,
+  },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      type: "tween",
+      opacity: { duration: 0 },
+      y: {
+        duration: rm ? 0 : PROJECTS_MAIN_CARD_ENTRANCE_DUR_S,
+        ease: EASE.out,
+      },
+      scale: {
+        duration: rm ? 0 : PROJECTS_MAIN_CARD_ENTRANCE_DUR_S,
+        ease: EASE.out,
+      },
+    },
+  },
+});
+
 const ENABLE_PROJECT_CARD_VIDEO_AUTOPLAY = false;
 /** Project row — single-line card titles (no wrap); optional `titlePrefix` stacks above without shifting tagline. */
 const PROJECT_CARD_TITLE_CLASS =
@@ -5678,6 +5763,11 @@ const PROJECTS_TABLET_PORTRAIT_MQ =
 const matchesProjectsTabletPortraitViewport = () =>
   typeof window !== "undefined" &&
   window.matchMedia(PROJECTS_TABLET_PORTRAIT_MQ).matches;
+/** Phone + small mobile — no FEATURED WRITING active-tab entrance stage. */
+const PROJECTS_MOBILE_VIEWPORT_MQ = "(max-width: 767.98px)";
+const matchesProjectsMobileViewport = () =>
+  typeof window !== "undefined" &&
+  window.matchMedia(PROJECTS_MOBILE_VIEWPORT_MQ).matches;
 const PROJECTS_TABLET_LANDSCAPE_WIDTH_SCALE = 1.05;
 /** Desktop main showcase lift vs pre-lift offsets; restored on iPad horizontal. */
 const PROJECTS_DESKTOP_MAIN_LIFT_Y = -2;
@@ -5716,18 +5806,25 @@ const SECTION_CONTAINER_GUTTER =
 const ProjectsStack = ({
   onSelect,
   focusProjectId = null,
-  contentReady = true,
   onContentReadyChange,
   carouselAutoAdvanceEnabled: _carouselAutoAdvanceEnabled = false,
   tabletThumbnailValues,
+  cardsEntranceArmed = false,
+  /** Mount media under opacity 0 (decode early; avoids DOM insert nudge at settle). */
+  thumbnailsMountArmed = true,
+  /** Fade media in after entrance sequence. */
+  thumbnailsFadeArmed = true,
 }: {
   onSelect: (id: string, el: HTMLElement) => void;
   focusProjectId?: string | null;
-  contentReady?: boolean;
   onContentReadyChange?: (ready: boolean) => void;
   /** When true, advance one slide every PROJECT_CAROUSEL_AUTO_ADVANCE_MS (after entrance). */
   carouselAutoAdvanceEnabled?: boolean;
   tabletThumbnailValues?: ProjectsTabletThumbnailDebugValues;
+  /** When true, play SKILLS-style staggered card land (gated by PalaceProjects). */
+  cardsEntranceArmed?: boolean;
+  thumbnailsMountArmed?: boolean;
+  thumbnailsFadeArmed?: boolean;
 }) => {
   const reduceMotion = useReducedMotion();
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
@@ -5740,11 +5837,28 @@ const ProjectsStack = ({
   const [pressLockId, setPressLockId] = useState<string | null>(null);
   /** Pointer hover — independent of press so click can settle at hover size first. */
   const [hoverCardId, setHoverCardId] = useState<string | null>(null);
+  const rm = !!reduceMotion;
+  const cardsEntranceLive = rm || cardsEntranceArmed;
+  const projectsCardRowEntrance = useMemo(() => projectsMainCardRowEntrance(rm), [rm]);
+  const projectsCardItemEntrance = useMemo(() => projectsMainCardItemEntrance(rm), [rm]);
+  const mediaMountAllowed = rm || thumbnailsMountArmed;
 
   const requiredMediaCount = useMemo(
     () => PROJECT_CARDS.reduce((count, card) => count + (card.thumbnail || card.thumbnailVideo ? 1 : 0), 0),
     [],
   );
+
+  /** Fade only after entrance settle + decode — mount can happen earlier at opacity 0. */
+  const contentReady =
+    mediaMountAllowed &&
+    (rm || thumbnailsFadeArmed) &&
+    (rm || requiredMediaCount === 0 || loadedMediaCount >= requiredMediaCount);
+
+  useEffect(() => {
+    if (mediaMountAllowed) return;
+    readyMediaRef.current.clear();
+    setLoadedMediaCount(0);
+  }, [mediaMountAllowed]);
 
   const markCardMediaReady = useCallback((index: number) => {
     if (readyMediaRef.current.has(index)) return;
@@ -5853,7 +5967,12 @@ const ProjectsStack = ({
     <div className="projects-carousel-stack -mt-1 sm:-mt-1.5 flex w-full min-w-0 flex-col justify-center overflow-x-visible overflow-y-visible pt-2 pb-0 sm:pt-3">
       <div className="w-full min-w-0">
         <div className="min-w-0 max-w-full w-full overflow-visible [--slide-gap:0.875rem] sm:[--slide-gap:1.25rem] lg:[--slide-gap:1rem] xl:[--slide-gap:1.125rem] max-sm:[--slide-gap:0.625rem]">
-          <div className="projects-carousel-grid grid w-full min-w-0 grid-cols-2 sm:grid-cols-4 gap-[var(--slide-gap)] overflow-visible">
+          <motion.div
+            className="projects-carousel-grid grid w-full min-w-0 grid-cols-2 sm:grid-cols-4 gap-[var(--slide-gap)] overflow-visible"
+            variants={projectsCardRowEntrance}
+            initial={rm ? false : "hidden"}
+            animate={cardsEntranceLive ? "visible" : "hidden"}
+          >
             {PROJECT_CARDS.map((card, index) => {
               const isPressing = pressLockId === card.id;
               const isHovered = hoverCardId === card.id;
@@ -5863,7 +5982,11 @@ const ProjectsStack = ({
                   ? 1
                   : PROJECT_CARD_HOVER.scale;
               return (
-              <div key={card.id} className="min-w-0 overflow-visible">
+              <motion.div
+                key={card.id}
+                className="projects-main-card-entrance-slot min-w-0 overflow-visible transform-gpu"
+                variants={projectsCardItemEntrance}
+              >
                 {/* PORTFOLIO SPEED: tap → hover size; hover off only after settle if pointer left. */}
                 <motion.div
                   className="project-card-tap-shell w-full origin-center"
@@ -5898,21 +6021,20 @@ const ProjectsStack = ({
                     }`}
                     style={contentReady ? undefined : { background: "transparent", backgroundImage: "none" }}
                   >
-                  <div
-                    className={`h-full transition-opacity duration-300 ease-out ${
-                      contentReady ? "opacity-100" : "opacity-0"
-                    } relative z-0`}
-                  >
-                      {card.thumbnail || card.thumbnailVideo ? (
+                  <div className="h-full relative z-0">
+                      {(card.thumbnail || card.thumbnailVideo) ? (
                         <>
                           <div
-                            className={
+                            className={`${
                               card.thumbnailVideo
                                 ? PROJECT_CARD_THUMBNAIL_SECTION
                                 : PROJECT_CARD_THUMBNAIL_IMAGE_BLEED
-                            }
+                            } transition-opacity duration-300 ease-out ${
+                              contentReady ? "opacity-100" : "opacity-0"
+                            }`}
                           >
-                            {card.thumbnailVideo ? (
+                            {mediaMountAllowed ? (
+                              card.thumbnailVideo ? (
                               <video
                                 ref={(node) => {
                                   videoRefs.current[index] = node;
@@ -6000,14 +6122,19 @@ const ProjectsStack = ({
                                   onError={() => markCardMediaReady(index)}
                                 />
                               </div>
-                            )}
+                            )
+                            ) : null}
                             <span
                               aria-hidden
                               className="pointer-events-none absolute inset-0 z-[1]"
                               style={{ background: PROJECT_CARD_THUMBNAIL_VIGNETTE }}
                             />
                           </div>
-                          <div className={PROJECT_CARD_DESCRIPTION_SECTION}>
+                          <div
+                            className={`${PROJECT_CARD_DESCRIPTION_SECTION}${
+                              contentReady ? "" : " !bg-transparent"
+                            }`}
+                          >
                             <div className={PROJECT_CARD_TITLE_INSET}>
                               <ShowcaseStackedTitle
                                 title={card.title}
@@ -6035,9 +6162,12 @@ const ProjectsStack = ({
                             </div>
                           </div>
                         </>
-                      ) : null}
-                      {!card.thumbnail && !card.thumbnailVideo ? (
-                        <div className={PROJECT_CARD_DESCRIPTION_SECTION}>
+                      ) : (
+                        <div
+                          className={`${PROJECT_CARD_DESCRIPTION_SECTION}${
+                            contentReady ? "" : " !bg-transparent"
+                          }`}
+                        >
                           <div className={PROJECT_CARD_TITLE_INSET}>
                             <ShowcaseStackedTitle
                               title={card.title}
@@ -6064,14 +6194,14 @@ const ProjectsStack = ({
                             </span>
                           </div>
                         </div>
-                      ) : null}
+                      )}
                     </div>
                   </button>
                 </motion.div>
-              </div>
+              </motion.div>
               );
             })}
-          </div>
+          </motion.div>
         </div>
       </div>
     </div>
@@ -7350,6 +7480,9 @@ const PalaceProjects = ({
   const [projectsTabletPortraitViewport, setProjectsTabletPortraitViewport] = useState(
     matchesProjectsTabletPortraitViewport,
   );
+  const [projectsMobileViewport, setProjectsMobileViewport] = useState(
+    matchesProjectsMobileViewport,
+  );
   const [projectsTabletThumbnailDebugEnabled, setProjectsTabletThumbnailDebugEnabled] =
     useState(false);
   const projectsTabletThumbnailSeed = useMemo(
@@ -7374,7 +7507,20 @@ const PalaceProjects = ({
   const [projectsEntered, setProjectsEntered] = useState(reduceMotion || entranceArmed);
   /** Keep header y at 0 after first enter — disarming entrance on panel exit must not replay y slide. */
   const [projectsHeaderYLocked, setProjectsHeaderYLocked] = useState(reduceMotion || entranceArmed);
-  const [projectsOverlayRevealed, setProjectsOverlayRevealed] = useState(false);
+  /** Step 2: 4 main cards stagger (after PROJECTS + line). */
+  const [projectsCardsRevealed, setProjectsCardsRevealed] = useState(!!reduceMotion);
+  /** Step 3: FEATURED WRITING land (tabs idle). */
+  const [projectsFeaturedRevealed, setProjectsFeaturedRevealed] = useState(!!reduceMotion);
+  /** Step 4: Content Writing tab chrome on. */
+  const [projectsFeaturedTabActive, setProjectsFeaturedTabActive] = useState(!!reduceMotion);
+  /** Temporary compositor promotion during entrance (cleared after settle — mirrors SKILLS). */
+  const [projectsEntranceLive, setProjectsEntranceLive] = useState(false);
+  /** True after full PROJECTS entrance — gates card thumbnail *fade* (mount is earlier). */
+  const [projectsEntranceSettled, setProjectsEntranceSettled] = useState(!!reduceMotion);
+  /** Mount thumbs under opacity 0 once cards start (decode early; no late DOM insert nudge). */
+  const [projectsThumbnailsMountArmed, setProjectsThumbnailsMountArmed] = useState(
+    !!reduceMotion,
+  );
   const [carouselAutoAdvanceReady, setCarouselAutoAdvanceReady] = useState(!!reduceMotion);
   const activeCard = activeProjectId ? PROJECT_CARDS.find((c) => c.id === activeProjectId) ?? null : null;
   const illustrationsDetailNoHero = Boolean(activeCard?.detailGallery?.length);
@@ -7428,6 +7574,24 @@ const PalaceProjects = ({
       window.removeEventListener("orientationchange", onChange);
     };
   }, []);
+
+  useEffect(() => {
+    const mq = window.matchMedia(PROJECTS_MOBILE_VIEWPORT_MQ);
+    const onChange = () => setProjectsMobileViewport(mq.matches);
+    onChange();
+    mq.addEventListener("change", onChange);
+    window.addEventListener("resize", onChange);
+    window.addEventListener("orientationchange", onChange);
+    return () => {
+      mq.removeEventListener("change", onChange);
+      window.removeEventListener("resize", onChange);
+      window.removeEventListener("orientationchange", onChange);
+    };
+  }, []);
+
+  /** Mobile + tablet portrait: FEATURED WRITING lands with Content Writing already active. */
+  const skipProjectsFeaturedTabEntrance =
+    projectsMobileViewport || projectsTabletPortraitViewport;
 
   const projectsShowcaseClusterStyleActive =
     projectsDesktopViewport || projectsTabletLandscapeViewport;
@@ -7575,38 +7739,94 @@ const PalaceProjects = ({
 
   useEffect(() => {
     if (reduceMotion) {
-      setProjectsOverlayRevealed(true);
+      setProjectsCardsRevealed(true);
+      setProjectsFeaturedRevealed(true);
+      setProjectsFeaturedTabActive(true);
+      setProjectsEntranceLive(false);
+      setProjectsEntranceSettled(true);
+      setProjectsThumbnailsMountArmed(true);
       return;
     }
+    // Arm only — never collapse staged visuals when entrance disarms on leave.
     if (!projectsEntered) {
-      setProjectsOverlayRevealed(false);
+      setProjectsEntranceLive(false);
       return;
     }
-    setProjectsOverlayRevealed(false);
-    const headerEndMs =
-      (PROFILE_TITLE_DELAY_S + PROJECTS_HEADER_ENTER_DUR_S) * 1000;
-    const revealId = window.setTimeout(
-      () => setProjectsOverlayRevealed(true),
-      Math.max(0, headerEndMs - PROJECTS_BELOW_HEADER_LEAD_MS),
+
+    const headerPhaseEndS =
+      PROJECTS_TITLE_DELAY_S +
+      Math.max(PROJECTS_HEADER_ENTER_DUR_S, PROJECTS_ACCENT_LINE_DUR_S);
+    const cardsStaggerSpanS =
+      PROJECTS_MAIN_CARD_ENTRANCE_DUR_S +
+      Math.max(0, PROJECT_CARDS.length - 1) * PROJECTS_MAIN_CARD_STAGGER_S;
+    const cardsStartMs = (headerPhaseEndS + PROJECTS_STAGE_GAP_S) * 1000;
+    const featuredStartMs =
+      cardsStartMs + (cardsStaggerSpanS + PROJECTS_STAGE_GAP_S) * 1000;
+    /** Mobile / tablet portrait: no delayed active-tab stage — light with FEATURED WRITING. */
+    const tabActivateMs = skipProjectsFeaturedTabEntrance
+      ? featuredStartMs
+      : featuredStartMs +
+        (PROJECTS_FEATURED_ENTRANCE_DUR_S +
+          PROJECTS_STAGE_GAP_S +
+          PROJECTS_FEATURED_TO_TAB_EXTRA_S) *
+          1000;
+    /** Drop card will-change before tab lights — avoids compositor nudge on clear. */
+    const layerClearMs = Math.max(0, tabActivateMs - PROJECTS_WILL_CHANGE_CLEAR_LEAD_MS);
+    /** Fade thumbs after tab chrome lands (media already mounted during card stagger). */
+    const thumbnailsFadeMs = skipProjectsFeaturedTabEntrance
+      ? featuredStartMs + PROJECTS_FEATURED_ENTRANCE_DUR_S * 1000
+      : tabActivateMs + PROJECTS_THUMBNAILS_FADE_AFTER_TAB_MS;
+
+    setProjectsEntranceLive(true);
+    const cardsId = window.setTimeout(() => {
+      setProjectsCardsRevealed(true);
+      setProjectsThumbnailsMountArmed(true);
+    }, cardsStartMs);
+    const featuredId = window.setTimeout(() => {
+      setProjectsFeaturedRevealed(true);
+      if (skipProjectsFeaturedTabEntrance) setProjectsFeaturedTabActive(true);
+    }, Math.max(0, featuredStartMs));
+    const tabId = skipProjectsFeaturedTabEntrance
+      ? null
+      : window.setTimeout(
+          () => setProjectsFeaturedTabActive(true),
+          Math.max(0, tabActivateMs),
+        );
+    const thumbsId = window.setTimeout(
+      () => setProjectsEntranceSettled(true),
+      Math.max(0, thumbnailsFadeMs),
     );
-    return () => window.clearTimeout(revealId);
-  }, [projectsEntered, reduceMotion]);
+    const clearId = window.setTimeout(
+      () => setProjectsEntranceLive(false),
+      Math.max(0, layerClearMs),
+    );
+    return () => {
+      window.clearTimeout(cardsId);
+      window.clearTimeout(featuredId);
+      if (tabId != null) window.clearTimeout(tabId);
+      window.clearTimeout(thumbsId);
+      window.clearTimeout(clearId);
+    };
+  }, [projectsEntered, reduceMotion, skipProjectsFeaturedTabEntrance]);
 
   useEffect(() => {
     if (reduceMotion) {
       setCarouselAutoAdvanceReady(true);
       return;
     }
-    if (!projectsOverlayRevealed) {
+    if (!projectsCardsRevealed) {
       setCarouselAutoAdvanceReady(false);
       return;
     }
+    const cardsStaggerSpanS =
+      PROJECTS_MAIN_CARD_ENTRANCE_DUR_S +
+      Math.max(0, PROJECT_CARDS.length - 1) * PROJECTS_MAIN_CARD_STAGGER_S;
     const readyId = window.setTimeout(
       () => setCarouselAutoAdvanceReady(true),
-      PROJECTS_CAROUSEL_ENTRANCE_FADE_S * 1000,
+      cardsStaggerSpanS * 1000,
     );
     return () => window.clearTimeout(readyId);
-  }, [projectsOverlayRevealed, reduceMotion]);
+  }, [projectsCardsRevealed, reduceMotion]);
 
   const [morphRect, setMorphRect] = useState<CardRect | null>(null);
   const [targetRect, setTargetRect] = useState<CardRect | null>(null);
@@ -7772,7 +7992,7 @@ const PalaceProjects = ({
     const section = projectsSectionRef.current;
     if (!section) return;
     return bindSectionGridOverlayHeightSync(section, "--projects-grid-overlay-height");
-  }, [projectDetailInFlow, activeProjectId, projectsOverlayRevealed, entranceArmed]);
+  }, [projectDetailInFlow, activeProjectId, projectsFeaturedRevealed, entranceArmed]);
 
   /** Mobile / iPad landscape VISUAL DESIGN: panel scroller retains scroll across detail open/close — reset to top. */
   useLayoutEffect(() => {
@@ -8049,7 +8269,7 @@ const PalaceProjects = ({
               projectDetailAllowsOverflowX ? "overflow-x-visible" : "overflow-x-hidden"
             }`
           : `max-2xl:min-h-min 2xl:min-h-full overflow-x-hidden ${PROJECTS_SHOWCASE_TABLET_PAD} ${SECTION_MAIN_HEADER_INSET}`
-      }`}
+      }${projectsEntranceLive ? " projects-entrance-live" : ""}`}
     >
       <SectionGridOverlay />
       {projectsTabletThumbnailDebugEnabled &&
@@ -8148,7 +8368,7 @@ const PalaceProjects = ({
             }}
             transition={{
               duration: reduceMotion ? 0 : PROJECTS_HEADER_ENTER_DUR_S,
-              delay: reduceMotion ? 0 : PROFILE_TITLE_DELAY_S,
+              delay: reduceMotion ? 0 : PROJECTS_TITLE_DELAY_S,
               ease: [0.16, 1, 0.3, 1],
             }}
           >
@@ -8164,14 +8384,17 @@ const PalaceProjects = ({
                     aria-hidden
                   >
                     <motion.span
-                      className="absolute bottom-0 left-0 right-0 h-[2px] origin-left"
-                      style={{ backgroundColor: PROJECTS_ACCENT_SOFT }}
+                      className="absolute bottom-0 left-0 right-0 h-[2px]"
+                      style={{
+                        backgroundColor: PROJECTS_ACCENT_SOFT,
+                        transformOrigin: "center center",
+                      }}
                       initial={false}
                       animate={{ scaleX: projectsEntered ? 1 : 0 }}
                       transition={{
-                        duration: PROFILE_LINE_DURATION_S,
-                        delay: RED_LINE_DELAY_MS / 1000,
-                        ease: [0.16, 1, 0.3, 1],
+                        duration: reduceMotion ? 0 : PROJECTS_ACCENT_LINE_DUR_S,
+                        delay: reduceMotion ? 0 : PROJECTS_TITLE_DELAY_S,
+                        ease: PROJECTS_ACCENT_LINE_EASE,
                       }}
                     />
                   </div>
@@ -8182,16 +8405,7 @@ const PalaceProjects = ({
           ) : null}
           <motion.div
             className="projects-showcase-carousel-block flex w-full shrink-0 flex-col"
-            initial={reduceMotion ? false : { opacity: 0 }}
-            animate={{
-              opacity: reduceMotion ? 1 : projectsOverlayRevealed ? 1 : 0,
-            }}
-            transition={{
-              duration: PROJECTS_CAROUSEL_ENTRANCE_FADE_S,
-              delay: 0,
-              ease: [0.22, 1, 0.36, 1],
-            }}
-            style={{ willChange: "opacity" }}
+            initial={false}
           >
             <motion.div
               className="projects-showcase-carousel-inner shrink-0"
@@ -8204,6 +8418,9 @@ const PalaceProjects = ({
                 focusProjectId={activeCard?.id ?? null}
                 carouselAutoAdvanceEnabled={!!carouselAutoAdvanceReady && !showcaseObscured}
                 tabletThumbnailValues={activeProjectsTabletThumbnailValues}
+                cardsEntranceArmed={!!projectsCardsRevealed}
+                thumbnailsMountArmed={projectsThumbnailsMountArmed}
+                thumbnailsFadeArmed={projectsEntranceSettled}
               />
             </motion.div>
           </motion.div>
@@ -8221,16 +8438,52 @@ const PalaceProjects = ({
           style={projectsRightDebugStyle}
         >
           <motion.div
-            className={`projects-showcase-featured-block flex w-full shrink-0 min-w-0 flex-col${
-              !projectsOverlayRevealed && !reduceMotion ? " invisible" : ""
-            }`}
-            initial={false}
-            animate={{ opacity: reduceMotion ? 1 : showcaseObscured ? 0 : 1 }}
-            transition={{ duration: showcaseFadeDuration, ease: SHOWCASE_EASE }}
+            className="projects-showcase-featured-block flex w-full shrink-0 min-w-0 flex-col transform-gpu"
+            initial={
+              reduceMotion
+                ? false
+                : {
+                    opacity: 0,
+                    y: PROJECTS_FEATURED_ENTRANCE_Y,
+                  }
+            }
+            animate={
+              reduceMotion || projectsFeaturedRevealed
+                ? {
+                    opacity: reduceMotion ? 1 : showcaseObscured ? 0 : 1,
+                    y: 0,
+                  }
+                : {
+                    opacity: 0,
+                    y: PROJECTS_FEATURED_ENTRANCE_Y,
+                  }
+            }
+            transition={{
+              type: "tween",
+              ease: EASE.out,
+              duration: reduceMotion
+                ? 0
+                : showcaseObscured
+                  ? showcaseFadeDuration
+                  : PROJECTS_FEATURED_ENTRANCE_DUR_S,
+            }}
+            style={{
+              pointerEvents:
+                (skipProjectsFeaturedTabEntrance
+                  ? projectsFeaturedRevealed
+                  : projectsFeaturedTabActive) && !showcaseObscured
+                  ? undefined
+                  : "none",
+            }}
           >
             <ShowcaseAttachedTabStrip
               activeId={showcaseTabId}
               onTabChange={setShowcaseTabId}
+              highlightActiveTab={
+                skipProjectsFeaturedTabEntrance
+                  ? projectsFeaturedRevealed || projectsFeaturedTabActive
+                  : projectsFeaturedTabActive
+              }
               className="w-full min-w-0"
               panel={({ tabId, previewColumnWidthPx, measureOnly }) => (
                 <ShowcaseWritingFeaturedPanel
@@ -10017,8 +10270,6 @@ const SKILLS_PAGE_HEADER_SLIDE_EASE = SKILLS_PAGE_MOTION_EASE;
 const PROJECTS_PANEL_ENTRANCE_LEAD_S = 0.06;
 /** PROJECTS header entrance duration (seconds). */
 const PROJECTS_HEADER_ENTER_DUR_S = 0.3;
-/** Start below-header content exactly when header ends. */
-const PROJECTS_BELOW_HEADER_LEAD_MS = 0;
 const SKILLS_CARD_DUR = skillsAnimS(0.22);
 
 const SKILLS_CARD_LAYOUT = {
