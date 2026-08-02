@@ -1,8 +1,12 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { directionalArrowIdlePhaseDelaySec } from "@/lib/motion";
 
 export type ShowcaseTabId = "tab-1" | "tab-2" | "tab-3" | "tab-4" | "tab-5" | "tab-6";
+
+/** Matches PROJECT DETAILS works-strip arrow tap feedback duration. */
+const FEATURED_ARROW_TAP_FEEDBACK_MS = 260;
 
 const TAB_ORDER: ShowcaseTabId[] = ["tab-1", "tab-2", "tab-3", "tab-4", "tab-5", "tab-6"];
 
@@ -120,6 +124,18 @@ export function ShowcaseAttachedTabStrip({
   const folderAnchorOffsetRef = useRef<number | null>(null);
   const [mobileSwitchDir, setMobileSwitchDir] = useState<1 | -1>(1);
   const mobileSwipeStartRef = useRef<{ x: number; y: number } | null>(null);
+  const [pressedNavArrow, setPressedNavArrow] = useState<"prev" | "next" | null>(null);
+  const navArrowReleaseTimerRef = useRef<number | null>(null);
+  const navArrowSwipePulseRef = useRef(0);
+  const reduceMotion = useReducedMotion();
+  /** Freeze once so re-renders do not restart the idle pulse out of phase. */
+  const arrowIdleDelayRef = useRef<string | null>(null);
+  if (arrowIdleDelayRef.current == null) {
+    arrowIdleDelayRef.current = `${directionalArrowIdlePhaseDelaySec()}s`;
+  }
+  const arrowIdleDelayStyle = {
+    ["--directional-arrow-idle-delay" as string]: arrowIdleDelayRef.current,
+  };
   /** Lock preview inset after first stable measure — ignore highlight paint thrash. */
   const insetLockedRef = useRef(false);
   const lastBodyWidthRef = useRef(0);
@@ -127,6 +143,11 @@ export function ShowcaseAttachedTabStrip({
   const canSelectPrev = highlightActiveTab && activeTabIndex > 0;
   const canSelectNext =
     highlightActiveTab && activeTabIndex >= 0 && activeTabIndex < TAB_ORDER.length - 1;
+
+  const usesFinePointerHover = useCallback(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+  }, []);
 
   const syncFit = useCallback(() => {
     const el = bodyPadRef.current;
@@ -252,6 +273,53 @@ export function ShowcaseAttachedTabStrip({
     const next = TAB_ORDER[activeTabIndex + 1];
     if (next) onTabChange(next);
   }, [activeTabIndex, canSelectNext, captureFolderScrollAnchor, onTabChange]);
+
+  const clearNavArrowReleaseTimer = useCallback(() => {
+    if (navArrowReleaseTimerRef.current !== null) {
+      window.clearTimeout(navArrowReleaseTimerRef.current);
+      navArrowReleaseTimerRef.current = null;
+    }
+  }, []);
+
+  const scheduleNavArrowRelease = useCallback(() => {
+    clearNavArrowReleaseTimer();
+    navArrowReleaseTimerRef.current = window.setTimeout(() => {
+      setPressedNavArrow(null);
+      navArrowReleaseTimerRef.current = null;
+    }, reduceMotion ? 0 : FEATURED_ARROW_TAP_FEEDBACK_MS);
+  }, [clearNavArrowReleaseTimer, reduceMotion]);
+
+  const triggerNavArrowFeedback = useCallback(
+    (side: "prev" | "next", options?: { fromFinePointerArrow?: boolean }) => {
+      if (options?.fromFinePointerArrow && usesFinePointerHover()) return;
+      clearNavArrowReleaseTimer();
+      navArrowSwipePulseRef.current += 1;
+      const pulseId = navArrowSwipePulseRef.current;
+      setPressedNavArrow(null);
+      requestAnimationFrame(() => {
+        if (navArrowSwipePulseRef.current !== pulseId) return;
+        setPressedNavArrow(side);
+        scheduleNavArrowRelease();
+      });
+    },
+    [clearNavArrowReleaseTimer, scheduleNavArrowRelease, usesFinePointerHover],
+  );
+
+  const handleNavArrowPointerDown = useCallback(
+    (side: "prev" | "next") => () => {
+      triggerNavArrowFeedback(side, { fromFinePointerArrow: true });
+    },
+    [triggerNavArrowFeedback],
+  );
+
+  const handleNavArrowPointerRelease = useCallback(() => {
+    if (usesFinePointerHover()) return;
+    scheduleNavArrowRelease();
+  }, [scheduleNavArrowRelease, usesFinePointerHover]);
+
+  useEffect(() => {
+    return () => clearNavArrowReleaseTimer();
+  }, [clearNavArrowReleaseTimer]);
 
   const handleSelectTab = useCallback(
     (id: ShowcaseTabId) => {
@@ -389,6 +457,7 @@ export function ShowcaseAttachedTabStrip({
           <div className="relative flex h-[3.5rem] min-h-[3.5rem] shrink-0 flex-col gap-0 overflow-visible pt-3 max-sm:h-[3.9rem] max-sm:min-h-[3.9rem] sm:h-16 sm:min-h-16 sm:pt-4">
             <div
               className="featured-writing-panel relative z-[3] -mb-px hidden max-sm:flex h-[3.15rem] min-h-[3.15rem] w-full items-center justify-between rounded-t-[9px] border border-white/[0.14] border-b-0 px-2.5"
+              style={arrowIdleDelayStyle}
               onTouchStart={handleMobileSelectorTouchStart}
               onTouchEnd={handleMobileSelectorTouchEnd}
               onTouchCancel={handleMobileSelectorTouchCancel}
@@ -397,12 +466,21 @@ export function ShowcaseAttachedTabStrip({
                 type="button"
                 aria-label="Previous writing category"
                 onClick={handleSelectPrevTab}
+                onPointerDown={handleNavArrowPointerDown("prev")}
+                onPointerUp={handleNavArrowPointerRelease}
+                onPointerCancel={handleNavArrowPointerRelease}
+                onPointerLeave={handleNavArrowPointerRelease}
                 disabled={!canSelectPrev}
-                className={`featured-tabs-mobile-nav-btn flex h-7 w-7 items-center justify-center rounded-full ${
+                className={`featured-tabs-mobile-nav-btn featured-tabs-mobile-nav-btn--prev flex h-7 w-7 items-center justify-center rounded-full${
+                  pressedNavArrow === "prev" ? " featured-tabs-mobile-nav-btn--pressed" : ""
+                } ${
                   canSelectPrev ? "text-mono-2/80 hover:text-mono-2/95" : "cursor-default text-mono-2/35"
                 }`}
               >
-                <ChevronLeft className="featured-tabs-scroll-hint h-3.5 w-3.5" aria-hidden />
+                <ChevronLeft
+                  className="featured-tabs-scroll-hint featured-tabs-mobile-nav-glyph h-3.5 w-3.5"
+                  aria-hidden
+                />
               </button>
               <div className="relative min-w-0 flex-1 overflow-hidden px-1">
                 <AnimatePresence initial={false} mode="wait" custom={mobileSwitchDir}>
@@ -439,12 +517,21 @@ export function ShowcaseAttachedTabStrip({
                 type="button"
                 aria-label="Next writing category"
                 onClick={handleSelectNextTab}
+                onPointerDown={handleNavArrowPointerDown("next")}
+                onPointerUp={handleNavArrowPointerRelease}
+                onPointerCancel={handleNavArrowPointerRelease}
+                onPointerLeave={handleNavArrowPointerRelease}
                 disabled={!canSelectNext}
-                className={`featured-tabs-mobile-nav-btn flex h-7 w-7 items-center justify-center rounded-full ${
+                className={`featured-tabs-mobile-nav-btn featured-tabs-mobile-nav-btn--next flex h-7 w-7 items-center justify-center rounded-full${
+                  pressedNavArrow === "next" ? " featured-tabs-mobile-nav-btn--pressed" : ""
+                } ${
                   canSelectNext ? "text-mono-2/80 hover:text-mono-2/95" : "cursor-default text-mono-2/35"
                 }`}
               >
-                <ChevronRight className="featured-tabs-scroll-hint h-3.5 w-3.5" aria-hidden />
+                <ChevronRight
+                  className="featured-tabs-scroll-hint featured-tabs-mobile-nav-glyph h-3.5 w-3.5"
+                  aria-hidden
+                />
               </button>
             </div>
             <button

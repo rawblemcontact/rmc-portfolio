@@ -1,32 +1,13 @@
-import { defineConfig, type Plugin } from "vite";
+import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
-import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 import { metaImagesPlugin } from "./vite-plugin-meta-images";
 
 const locatorBabelJsxWindows = path.resolve(
   import.meta.dirname,
   "vite-plugins/locator-babel-jsx-windows.cjs",
 );
-
-async function loadReplitDevPlugins(): Promise<Plugin[]> {
-  if (
-    process.env.NODE_ENV === "production" ||
-    process.env.REPL_ID === undefined
-  ) {
-    return [];
-  }
-
-  const [cartographerMod, devBannerMod] = await Promise.all([
-    import("@replit/vite-plugin-cartographer"),
-    import("@replit/vite-plugin-dev-banner"),
-  ]);
-
-  return [cartographerMod.cartographer(), devBannerMod.devBanner()];
-}
-
-const replitDevPlugins = await loadReplitDevPlugins();
 
 export default defineConfig(({ mode }) => ({
   base: "/",
@@ -46,12 +27,8 @@ export default defineConfig(({ mode }) => ({
             : [],
       },
     }),
-    ...(process.env.NODE_ENV !== "production" && process.env.REPL_ID !== undefined
-      ? [runtimeErrorOverlay()]
-      : []),
     tailwindcss(),
     metaImagesPlugin(),
-    ...replitDevPlugins,
   ],
   resolve: {
     alias: {

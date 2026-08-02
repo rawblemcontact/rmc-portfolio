@@ -7,6 +7,27 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Directional arrow idle pulse — shared by FEATURED WRITING + PROJECT DETAILS.
+ * Animate a registered custom property so press/hover can override `opacity`
+ * without `animation: none` (which restarts one arrow and desyncs the pair).
+ */
+@property --directional-arrow-idle-opacity {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0.45;
+}
+
+@keyframes directional-arrow-idle-pulse {
+  0%,
+  100% {
+    --directional-arrow-idle-opacity: 0.45;
+  }
+  50% {
+    --directional-arrow-idle-opacity: 1;
+  }
+}
+
 /* Split-SVG name letters â€” cascade when chrome becomes visible (stable flag, no JS cancel). */
 /* translate3d keeps letter cascades on the compositor (60fps on mobile/tablet). */
 @keyframes hero-name-letter-in {
@@ -2705,6 +2726,8 @@
   #experience .experience-tab-btn-shell {
     width: 100%;
     min-width: 0;
+    /* Contain inner whileTap scale so horizontal tabs-nav scrollWidth stays stable. */
+    overflow: hidden;
   }
 
   #experience .tab-btn::before {
@@ -4020,6 +4043,8 @@
       text-align: left;
       scroll-snap-align: start;
       transform: none !important;
+      /* whileTap scale on shell — don't clip label against button frame */
+      overflow: visible;
     }
 
     #experience .tabs-nav .experience-tab-btn-shell {
@@ -4202,6 +4227,8 @@
       text-align: left;
       scroll-snap-align: start;
       transform: none !important;
+      /* whileTap scale on shell — don't clip label against button frame */
+      overflow: visible;
     }
 
     #experience .tabs-nav .experience-tab-btn-shell {
@@ -5765,33 +5792,26 @@
     }
   }
 
-  /* VIDEO EDITING â€” Selected works strip: side arrows (opacity pulse only; no layout shift) */
-  @keyframes video-editing-works-arrow-pulse {
-    0%,
-    100% {
-      opacity: 0.45;
-    }
-    50% {
-      opacity: 1;
-    }
-  }
+  /* VIDEO EDITING — Selected works strip: side arrows (opacity pulse only; no layout shift) */
   .video-editing-works-arrow {
     --works-arrow-motion-dur: 0.34s;
     --works-arrow-motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --directional-arrow-idle-opacity: 0.45;
     transform: translateY(-50%);
-    animation: video-editing-works-arrow-pulse 1.85s ease-in-out infinite;
+    opacity: var(--directional-arrow-idle-opacity);
+    animation: directional-arrow-idle-pulse 1.85s ease-in-out infinite;
+    animation-delay: var(--directional-arrow-idle-delay, 0s);
     -webkit-tap-highlight-color: transparent;
     transition:
       transform var(--works-arrow-motion-dur) var(--works-arrow-motion-ease),
       color var(--works-arrow-motion-dur) var(--works-arrow-motion-ease),
-      filter var(--works-arrow-motion-dur) var(--works-arrow-motion-ease),
-      opacity var(--works-arrow-motion-dur) var(--works-arrow-motion-ease);
+      filter var(--works-arrow-motion-dur) var(--works-arrow-motion-ease);
   }
-  /* Hover accent + nudge â€” fine pointer only (avoids sticky :hover on touch). */
+  /* Hover accent + nudge — fine pointer only (avoids sticky :hover on touch). */
   @media (hover: hover) and (pointer: fine) {
     .video-editing-works-arrow:hover,
     .video-editing-works-arrow:active {
-      animation: none;
+      /* Keep idle animation running so prev/next stay phase-locked. */
       opacity: 1;
       color: var(--palette-yellow-projects);
       filter: drop-shadow(0 0 7px color-mix(in srgb, var(--palette-yellow-projects) 62%, transparent));
@@ -5805,9 +5825,9 @@
       transform: translateX(4px);
     }
   }
-  /* Touch/tablet tap â€” JS toggled class; releases after pointerup (no sticky hover). */
+  /* Touch/tablet tap — JS toggled class; releases after pointerup (no sticky hover). */
   .video-editing-works-arrow.video-editing-works-arrow--pressed {
-    animation: none;
+    /* Keep idle animation running so prev/next stay phase-locked. */
     opacity: 1;
     color: var(--palette-yellow-projects);
     filter: drop-shadow(0 0 7px color-mix(in srgb, var(--palette-yellow-projects) 62%, transparent));
@@ -5855,32 +5875,84 @@
   }
 
   /* FEATURED WRITING tabs (mobile): subtle arrows indicating horizontal scroll. */
-  @keyframes featured-tabs-scroll-hint-pulse {
-    0%,
-    100% {
-      opacity: 0.42;
-    }
-    50% {
-      opacity: 0.95;
-    }
-  }
   .featured-tabs-scroll-hint {
-    animation: featured-tabs-scroll-hint-pulse 1.85s ease-in-out infinite;
+    --directional-arrow-idle-opacity: 0.45;
+    opacity: var(--directional-arrow-idle-opacity);
+    animation: directional-arrow-idle-pulse 1.85s ease-in-out infinite;
+    animation-delay: var(--directional-arrow-idle-delay, 0s);
   }
   .featured-tabs-mobile-nav-btn {
+    --featured-arrow-motion-dur: 0.34s;
+    --featured-arrow-motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
     background: transparent;
     border: 0;
     padding: 0;
     pointer-events: auto;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+      color var(--featured-arrow-motion-dur) var(--featured-arrow-motion-ease),
+      filter var(--featured-arrow-motion-dur) var(--featured-arrow-motion-ease);
+  }
+  .featured-tabs-mobile-nav-glyph {
+    transition: transform var(--featured-arrow-motion-dur, 0.34s)
+      var(--featured-arrow-motion-ease, cubic-bezier(0.22, 1, 0.36, 1));
+  }
+  /* Hover accent + nudge — fine pointer only (avoids sticky :hover on touch). */
+  @media (hover: hover) and (pointer: fine) {
+    .featured-tabs-mobile-nav-btn:not(:disabled):hover,
+    .featured-tabs-mobile-nav-btn:not(:disabled):active {
+      color: var(--palette-yellow-projects);
+      filter: drop-shadow(0 0 7px color-mix(in srgb, var(--palette-yellow-projects) 62%, transparent));
+    }
+    .featured-tabs-mobile-nav-btn:not(:disabled):hover .featured-tabs-scroll-hint,
+    .featured-tabs-mobile-nav-btn:not(:disabled):active .featured-tabs-scroll-hint {
+      /* Keep idle animation running so prev/next stay phase-locked. */
+      opacity: 1;
+    }
+    .featured-tabs-mobile-nav-btn--prev:not(:disabled):hover .featured-tabs-mobile-nav-glyph,
+    .featured-tabs-mobile-nav-btn--prev:not(:disabled):active .featured-tabs-mobile-nav-glyph {
+      transform: translateX(-4px);
+    }
+    .featured-tabs-mobile-nav-btn--next:not(:disabled):hover .featured-tabs-mobile-nav-glyph,
+    .featured-tabs-mobile-nav-btn--next:not(:disabled):active .featured-tabs-mobile-nav-glyph {
+      transform: translateX(4px);
+    }
+  }
+  /* Touch/tablet tap — JS toggled class; releases after pointerup (no sticky hover). */
+  .featured-tabs-mobile-nav-btn.featured-tabs-mobile-nav-btn--pressed {
+    color: var(--palette-yellow-projects);
+    filter: drop-shadow(0 0 7px color-mix(in srgb, var(--palette-yellow-projects) 62%, transparent));
+  }
+  .featured-tabs-mobile-nav-btn.featured-tabs-mobile-nav-btn--pressed .featured-tabs-scroll-hint {
+    /* Keep idle animation running so prev/next stay phase-locked. */
+    opacity: 1;
+  }
+  .featured-tabs-mobile-nav-btn--prev.featured-tabs-mobile-nav-btn--pressed .featured-tabs-mobile-nav-glyph {
+    transform: translateX(-4px);
+  }
+  .featured-tabs-mobile-nav-btn--next.featured-tabs-mobile-nav-btn--pressed .featured-tabs-mobile-nav-glyph {
+    transform: translateX(4px);
   }
   .featured-tabs-mobile-nav-btn:disabled .featured-tabs-scroll-hint {
-    animation: none;
+    /* Keep timeline running so re-enable stays phase-locked with sibling. */
     opacity: 0.42;
   }
   @media (prefers-reduced-motion: reduce) {
     .featured-tabs-scroll-hint {
       animation: none;
       opacity: 0.78;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .featured-tabs-mobile-nav-btn--prev:not(:disabled):hover .featured-tabs-mobile-nav-glyph,
+      .featured-tabs-mobile-nav-btn--prev:not(:disabled):active .featured-tabs-mobile-nav-glyph,
+      .featured-tabs-mobile-nav-btn--next:not(:disabled):hover .featured-tabs-mobile-nav-glyph,
+      .featured-tabs-mobile-nav-btn--next:not(:disabled):active .featured-tabs-mobile-nav-glyph {
+        transform: none;
+      }
+    }
+    .featured-tabs-mobile-nav-btn--prev.featured-tabs-mobile-nav-btn--pressed .featured-tabs-mobile-nav-glyph,
+    .featured-tabs-mobile-nav-btn--next.featured-tabs-mobile-nav-btn--pressed .featured-tabs-mobile-nav-glyph {
+      transform: none;
     }
   }
 

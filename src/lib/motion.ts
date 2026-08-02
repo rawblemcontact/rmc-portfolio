@@ -5,6 +5,17 @@ export const EASE = {
   inOut: "easeInOut" as const,
 };
 
+/** Idle pulse duration (ms) — must match `directional-arrow-idle-pulse` in index.css. */
+export const DIRECTIONAL_ARROW_IDLE_MS = 1850;
+
+/**
+ * Negative animation-delay so newly mounted directional arrows join the same
+ * wall-clock idle phase (FEATURED WRITING + PROJECT DETAILS stay in sync).
+ */
+export function directionalArrowIdlePhaseDelaySec(): number {
+  return -((performance.now() % DIRECTIONAL_ARROW_IDLE_MS) / 1000);
+}
+
 export const DUR = {
   micro: 0.16,
   fast: 0.24,

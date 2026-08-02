@@ -111,16 +111,12 @@ import {
   Briefcase,
 } from "lucide-react";
 import styled from "styled-components";
-import { TiltCard } from "../components/TiltCard";
-import { FloatingPhone } from "../components/FloatingPhone";
 import { ShowcaseAttachedTabStrip, type ShowcaseTabId } from "../components/ShowcaseAttachedTabStrip";
 import { ShowcaseVideoEditingDetail, type ShowcaseDetailVideo } from "../components/ShowcaseVideoEditingDetail";
 import { FeaturedWritingPdfThumbnail } from "../components/FeaturedWritingPdfThumbnail";
 import { SupportingPdfPreviewDialog } from "../components/SupportingPdfPreviewDialog";
 import robHeroSplitSvgRaw from "../assets/rob-hero-split.svg?raw";
 import {
-  SiArc,
-  SiBytedance,
   SiHootsuite,
   SiInstagram,
   SiTiktok,
@@ -9233,7 +9229,7 @@ const ConfidantExperience = ({
   const [isMobileExperienceLayout, setIsMobileExperienceLayout] = useState(() =>
     typeof window !== "undefined" ? window.matchMedia(EXPERIENCE_MOBILE_MQ).matches : false,
   );
-  /** Mobile tab carousel edge fades: left while Digital Content is clipped coming back; right until Barista is fully in view. */
+  /** Mobile tab carousel edge fades: left while scrolling past start (or a tab straddles at rest); right until Barista is fully in view. */
   const [experienceTabsFadeLeft, setExperienceTabsFadeLeft] = useState(false);
   const [experienceTabsFadeRight, setExperienceTabsFadeRight] = useState(true);
   const rm = !!reduceMotion;
@@ -9265,57 +9261,67 @@ const ConfidantExperience = ({
     const nav = root.querySelector<HTMLElement>(".tabs-nav");
     if (!nav) return;
 
-    let lastScrollLeft = nav.scrollLeft;
-    /** Left fade only while the user is scrolling back toward Digital Content. */
-    let scrollingBackToFirst = false;
+    /** True while the strip is actively scrolling — keeps left fade continuous across tab gaps. */
+    let scrolling = false;
+    let scrollEndTimer = 0;
+
+    const anyTabStraddlingLeft = (navRect: DOMRect) => {
+      const shells = nav.querySelectorAll<HTMLElement>(".experience-tab-btn-shell");
+      for (const shell of shells) {
+        const r = shell.getBoundingClientRect();
+        if (r.left < navRect.left - 1 && r.right > navRect.left + 2) return true;
+      }
+      return false;
+    };
 
     const updateTabsEdgeFade = () => {
       const scrollLeft = nav.scrollLeft;
-      const delta = scrollLeft - lastScrollLeft;
-      if (delta < -0.5) scrollingBackToFirst = true;
-      else if (delta > 0.5) scrollingBackToFirst = false;
-      lastScrollLeft = scrollLeft;
-
       const navRect = nav.getBoundingClientRect();
-      const firstBtn = nav.querySelector<HTMLElement>('[data-tab="rawblem"]');
       const lastBtn = nav.querySelector<HTMLElement>('[data-tab="starbucks"]');
-      const firstShell =
-        firstBtn?.closest<HTMLElement>(".experience-tab-btn-shell") ??
-        (nav.firstElementChild instanceof HTMLElement ? nav.firstElementChild : null);
       const lastShell =
         lastBtn?.closest<HTMLElement>(".experience-tab-btn-shell") ??
         (nav.lastElementChild instanceof HTMLElement ? nav.lastElementChild : null);
 
-      // Left fade only while scrolling back and Digital Content is clipped on the left —
-      // not when swiping forward (e.g. to Social Media), where a partial first tab would flash.
-      let fadeLeft = false;
-      if (firstShell && scrollingBackToFirst) {
-        const firstRect = firstShell.getBoundingClientRect();
-        const clippedOnLeft = firstRect.left < navRect.left - 1;
-        const stillVisible = firstRect.right > navRect.left + 2;
-        fadeLeft = clippedOnLeft && stillVisible;
-      }
-      if (!fadeLeft && firstShell) {
-        const firstRect = firstShell.getBoundingClientRect();
-        // Reset once Digital Content is fully visible again.
-        if (firstRect.left >= navRect.left - 1) scrollingBackToFirst = false;
-      }
+      // While scrolling past start: keep left fade on so it doesn't flicker off between
+      // one tab fully leaving and the next starting to clip (e.g. Digital Content → Social Media).
+      // At rest: only fade if a tab still straddles the left edge (fully visible tabs stay clear).
+      const pastStart = scrollLeft > 1;
+      const fadeLeft = pastStart && (scrolling || anyTabStraddlingLeft(navRect));
       // Right fade until Barista is fully in view.
       const fadeRight = lastShell
         ? lastShell.getBoundingClientRect().right > navRect.right + 2
-        : nav.scrollLeft + nav.clientWidth < nav.scrollWidth - 2;
+        : scrollLeft + nav.clientWidth < nav.scrollWidth - 2;
 
       setExperienceTabsFadeLeft((prev) => (prev === fadeLeft ? prev : fadeLeft));
       setExperienceTabsFadeRight((prev) => (prev === fadeRight ? prev : fadeRight));
     };
 
+    const onScroll = () => {
+      scrolling = true;
+      updateTabsEdgeFade();
+      window.clearTimeout(scrollEndTimer);
+      scrollEndTimer = window.setTimeout(() => {
+        scrolling = false;
+        updateTabsEdgeFade();
+      }, 140);
+    };
+
+    const onScrollEnd = () => {
+      window.clearTimeout(scrollEndTimer);
+      scrolling = false;
+      updateTabsEdgeFade();
+    };
+
     updateTabsEdgeFade();
-    nav.addEventListener("scroll", updateTabsEdgeFade, { passive: true });
+    nav.addEventListener("scroll", onScroll, { passive: true });
+    nav.addEventListener("scrollend", onScrollEnd);
     const ro = new ResizeObserver(updateTabsEdgeFade);
     ro.observe(nav);
     window.addEventListener("resize", updateTabsEdgeFade);
     return () => {
-      nav.removeEventListener("scroll", updateTabsEdgeFade);
+      nav.removeEventListener("scroll", onScroll);
+      nav.removeEventListener("scrollend", onScrollEnd);
+      window.clearTimeout(scrollEndTimer);
       ro.disconnect();
       window.removeEventListener("resize", updateTabsEdgeFade);
     };
@@ -9459,21 +9465,26 @@ const ConfidantExperience = ({
     return (
       <motion.div
         key={tabId}
-        className="experience-tab-btn-shell origin-center w-full min-w-0"
+        className="experience-tab-btn-shell w-full min-w-0"
         variants={motionVariants}
-        whileTap={rm ? undefined : PORTFOLIO_BOUNCE.tap}
-        transition={rm ? undefined : PORTFOLIO_BOUNCE.tapSpring}
       >
-        <button
-          className={`${className} w-full`}
-          data-tab={tabId}
-          type="button"
-          onClick={onClick}
-          onTouchStart={onClick}
-          onKeyDown={onKeyDown}
+        {/* Inner whileTap — scaling the flex shell shifts mobile tabs-nav overflow. */}
+        <motion.div
+          className="origin-center w-full"
+          whileTap={rm ? undefined : PORTFOLIO_BOUNCE.tap}
+          transition={rm ? undefined : PORTFOLIO_BOUNCE.tapSpring}
         >
-          {label}
-        </button>
+          <button
+            className={`${className} w-full`}
+            data-tab={tabId}
+            type="button"
+            onClick={onClick}
+            onTouchStart={onClick}
+            onKeyDown={onKeyDown}
+          >
+            {label}
+          </button>
+        </motion.div>
       </motion.div>
     );
   };
@@ -12206,6 +12217,8 @@ export default function Home() {
   const [currentSection, setCurrentSection] = useState<string | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [transitionTarget, setTransitionTarget] = useState<string | "menu" | null>(null);
+  /** Leading wipe edge only for menu→section enter (side-nav swaps stay at x:0 — edge would flash left). */
+  const [showPanelWipeEdge, setShowPanelWipeEdge] = useState(false);
   const [menuPanelAtRight, setMenuPanelAtRight] = useState(false);
   const [panelSettled, setPanelSettled] = useState(false);
   /** Side-nav SKILLS re-click: snap hidden, then fade in only (no animated fade-out). */
@@ -12476,6 +12489,8 @@ export default function Home() {
     const fromShowcase =
       currentSection === "projects" || currentSection === "projects-supporting";
     const toShowcase = id === "projects" || id === "projects-supporting";
+    // Real enter wipe only when panel mounts from menu; side-nav swaps stay at x:0%.
+    const willShowWipeEdge = currentSection === null && id !== "menu";
     // Exit fade must commit while PROJECTS is still mounted; otherwise AnimatePresence
     // keeps the previous exit={{ opacity: 0 }} and flickers under the closing side-nav.
     if (fromShowcase && !toShowcase) {
@@ -12561,6 +12576,7 @@ export default function Home() {
     }
 
     if (reduceMotion) {
+      setShowPanelWipeEdge(false);
       setProjectsEntranceArmed(id === "projects");
       setCurrentSection(id === "menu" ? null : id);
       if (id === "menu") setMenuLockedFillId(null);
@@ -12581,6 +12597,7 @@ export default function Home() {
         setMenuLockedFillId(null);
         setMenuPanelAtRight(true);
         requestAnimationFrame(() => {
+          setShowPanelWipeEdge(false);
           setTransitionTarget("menu");
           setIsTransitioning(true);
           setMenuPanelAtRight(false);
@@ -12595,6 +12612,7 @@ export default function Home() {
       });
     } else {
       // SHOWCASE (projects): settle immediately so carousel + tabs reserve height and fade with the panel — delayed settle caused a second layout/opacity beat after the slide.
+      setShowPanelWipeEdge(willShowWipeEdge);
       setPanelSettled(id === "projects");
       setCurrentSection(id);
       setTransitionTarget(id);
@@ -12611,6 +12629,7 @@ export default function Home() {
         window.setTimeout(() => {
           setIsTransitioning(false);
           setTransitionTarget(null);
+          setShowPanelWipeEdge(false);
           startTransition(() => {
             if (id !== "projects") setPanelSettled(true);
           });
@@ -13189,7 +13208,7 @@ export default function Home() {
             >
               {/* Grid backdrop: ensures the panel background always has grid texture regardless of section coverage */}
               <SectionGridOverlay />
-              {!reduceMotion && transitionTarget !== "menu" && transitionTarget === currentSection && (
+              {!reduceMotion && showPanelWipeEdge && transitionTarget !== "menu" && transitionTarget === currentSection && (
                 <div
                   className="absolute left-0 top-0 bottom-0 z-20 w-[2px] pointer-events-none"
                   style={{

@@ -1,0 +1,208 @@
+CREDITS
+PortfolioTRUEV2 — third-party software and assets used in this portfolio
+
+This file lists third-party items that ship with or power the live site.
+Original portfolio content (illustrations, writing PDFs, RAWBLEM branding,
+hero artwork) is by Robbie McLaughlin and is not listed here.
+
+
+========================================================================
+FONTS
+========================================================================
+
+Satoshi
+  Creator:      Indian Type Foundry (ITF)
+  Source:       https://www.fontshare.com/fonts/satoshi
+  License:      ITF Free Font License
+                https://www.fontshare.com/licenses/itf-ffl
+  Attribution:  Optional
+  Used in:      Site display, heading, and body type
+                (public/fonts/Satoshi-*.woff2, src/styles/fonts.css)
+
+Inter
+  Creator:      Rasmus Andersson
+  Source:       https://fonts.google.com/specimen/Inter
+  License:      SIL Open Font License 1.1
+  Attribution:  Not required for typical webfont use
+  Used in:      Hero subheading (loaded via Google Fonts in index.html)
+
+
+========================================================================
+ICONS
+========================================================================
+
+Lucide
+  Creator:      Lucide Contributors (Feather portions: Cole Bemis)
+  Source:       https://lucide.dev
+  License:      ISC (Feather portions MIT)
+  Attribution:  Preserve license notices with the project
+  Used in:      UI icons across Home, PDF viewer, showcase controls,
+                and toast UI
+
+Tabler Icons
+  Creator:      Tabler / Paweł Kuna and contributors
+  Source:       https://tabler.io/icons
+  License:      MIT
+  Attribution:  Preserve license notices with the project
+  Used in:      Skills / competencies icons (Home.tsx)
+
+Simple Icons (via @icons-pack/react-simple-icons)
+  Creator:      Simple Icons contributors
+  Source:       https://simpleicons.org
+                https://github.com/icons-pack/react-simple-icons
+  License:      Icon artwork CC0-1.0; React package MIT
+  Attribution:  Not required for CC0 artwork; trademarks belong to
+                their owners
+  Used in:      Brand tool / social marks (Hootsuite, TikTok, Instagram,
+                YouTube, YouTube Shorts)
+
+Font Awesome Free
+  Creator:      Fonticons, Inc.
+  Source:       https://fontawesome.com
+  License:      Icons: CC BY 4.0
+                https://creativecommons.org/licenses/by/4.0/
+                https://fontawesome.com/license/free
+  Attribution:  Required
+  Used in:      Contact section YouTube, LinkedIn, and TikTok icons
+                (Home.tsx)
+  Credit:       Social icons (YouTube, LinkedIn, TikTok) by Font Awesome
+                Free — CC BY 4.0 — https://fontawesome.com
+
+
+========================================================================
+UI ELEMENTS (UIVERSE.IO)
+========================================================================
+
+All Uiverse elements below: MIT License
+https://github.com/uiverse-io/galaxy
+Attribution encouraged.
+
+PDF fold loader
+  Creator:      vk-uiux (orange-horse-73)
+  Source:       https://uiverse.io
+  License:      MIT
+  Used in:      PdfFoldLoader / PDF loading indicator
+                (src/components/PdfFoldLoader.tsx, src/index.css)
+
+Skills card shell (UiverseCard)
+  Creator:      Adrwaan
+  Source:       https://uiverse.io
+  License:      MIT
+  Used in:      Skills cards (Home.tsx)
+
+Showcase sample cards
+  Creator:      Sashank02
+  Source:       https://uiverse.io
+  License:      MIT
+  Used in:      SHOWCASE sample card styles
+                (src/index.css .showcase-samples-grid .card)
+
+
+========================================================================
+LIBRARIES (RUNTIME / BUILD)
+========================================================================
+
+React
+  Creator:      Meta and contributors
+  Source:       https://react.dev
+  License:      MIT
+  Used in:      Application framework
+
+Vite
+  Creator:      VoidZero / Vite contributors
+  Source:       https://vite.dev
+  License:      MIT
+  Used in:      Dev server and production build
+
+Tailwind CSS
+  Creator:      Tailwind Labs
+  Source:       https://tailwindcss.com
+  License:      MIT
+  Used in:      Styling (including @tailwindcss/vite)
+
+Framer Motion
+  Creator:      Motion (formerly Framer Motion) contributors
+  Source:       https://motion.dev
+  License:      MIT
+  Used in:      Animation throughout the site
+
+styled-components
+  Creator:      styled-components contributors
+  Source:       https://styled-components.com
+  License:      MIT
+  Used in:      Skills UiverseCard and related styled UI
+
+Embla Carousel
+  Creator:      Embla Carousel contributors
+  Source:       https://www.embla-carousel.com
+  License:      MIT
+  Used in:      SHOWCASE / visual design carousels
+                (embla-carousel-react)
+
+PDF.js
+  Creator:      Mozilla and contributors
+  Source:       https://mozilla.github.io/pdf.js/
+  License:      Apache License 2.0
+  Used in:      Featured writing / PDF viewer
+                (pdfjs-dist)
+
+Plyr
+  Creator:       Sam Potts and contributors
+  Source:       https://plyr.io
+  License:      MIT
+  Used in:      Video editing showcase player
+
+TanStack Query
+  Creator:      TanStack contributors
+  Source:       https://tanstack.com/query
+  License:      MIT
+  Used in:      App data/query provider
+
+Radix UI Primitives
+  Creator:      WorkOS / Radix
+  Source:       https://www.radix-ui.com
+  License:      MIT
+  Used in:      Button slot, toast, and tooltip primitives
+                (@radix-ui/react-slot, react-toast, react-tooltip)
+
+class-variance-authority
+  Creator:      Joe Bell
+  Source:       https://cva.style
+  License:      Apache License 2.0
+  Used in:      Button / toast variant classes
+
+clsx
+  Creator:      Luke Edwards
+  Source:       https://github.com/lukeed/clsx
+  License:      MIT
+  Used in:      className helpers (src/lib/utils.ts)
+
+tailwind-merge
+  Creator:      Dany Castillo
+  Source:       https://github.com/dcastil/tailwind-merge
+  License:      MIT
+  Used in:      className helpers (src/lib/utils.ts)
+
+shadcn/ui (selected components)
+  Creator:      shadcn
+  Source:       https://ui.shadcn.com
+  License:      MIT
+  Used in:      Button, toast, and tooltip UI wrappers
+                (src/components/ui/)
+
+
+========================================================================
+SUMMARY
+========================================================================
+
+Requires attribution:
+  - Font Awesome Free contact icons (CC BY 4.0)
+
+Preserve license notices with the project (typical OSS):
+  - MIT / ISC / Apache-2.0 libraries listed above
+  - Uiverse MIT elements (attribution encouraged)
+
+Attribution optional / not required:
+  - Satoshi (ITF Free Font License)
+  - Inter (SIL OFL 1.1)
+  - Simple Icons artwork (CC0-1.0)

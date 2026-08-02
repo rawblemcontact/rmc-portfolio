@@ -4,6 +4,7 @@ import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import Plyr from "plyr";
 import type { Options as PlyrOptions } from "plyr";
 import "plyr/dist/plyr.css";
+import { directionalArrowIdlePhaseDelaySec } from "@/lib/motion";
 
 export type ShowcaseDetailVideo = {
   readonly id: string;
@@ -492,10 +493,9 @@ export function ShowcaseVideoEditingDetail({
 
       ref.arrowFiredForGestureId = ref.gestureId;
       ref.suppressTap = true;
-      triggerWorksArrowFeedback(dx < 0 ? "next" : "prev");
       return true;
     },
-    [triggerWorksArrowFeedback],
+    [],
   );
 
   const resolveThumbIndexFromStripScroll = useCallback((): number | null => {
@@ -775,6 +775,16 @@ export function ShowcaseVideoEditingDetail({
 
   const worksArrowBtnClass =
     "video-editing-works-arrow absolute top-[2.45rem] z-10 flex h-[1.65rem] w-[1.65rem] items-center justify-center border-0 bg-transparent p-0 text-white/85 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--palette-yellow-projects)] focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:h-[1.925rem] sm:w-[1.925rem]";
+  /** Shared wall-clock phase so prev/next (and FEATURED WRITING) idle pulses stay locked. */
+  const worksArrowIdleDelay = useMemo(
+    () => `${directionalArrowIdlePhaseDelaySec()}s`,
+    // Recompute when the detail surface remounts a new card's works strip.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: phase freeze per card
+    [card.id],
+  );
+  const worksArrowIdleStyle = {
+    ["--directional-arrow-idle-delay" as string]: worksArrowIdleDelay,
+  };
   const worksStripThumbBasisClass = matchInteractiveMediaChrome
     ? "basis-[calc((100%-0.5rem)/2)] sm:basis-[calc((100%-0.625rem)/2)] md:basis-[calc((100%-1.25rem)/3)] lg:basis-[calc((100%-1.25rem)/3)]"
     : "basis-[calc((100%-0.5rem)/2)] sm:basis-[calc((100%-0.625rem)/2)] md:basis-[calc((100%-1.25rem)/3)] lg:basis-[calc((100%-1.875rem)/4)]";
@@ -1170,7 +1180,7 @@ export function ShowcaseVideoEditingDetail({
                 </div>
               </div>
               <div className="video-editing-detail-works mt-3 w-full min-w-0 overflow-x-visible">
-                <div className={worksStripOuterClass}>
+                <div className={worksStripOuterClass} style={worksArrowIdleStyle}>
                   {videos.length > 1 ? (
                     <button
                       type="button"
