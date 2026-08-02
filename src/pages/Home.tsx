@@ -1428,6 +1428,17 @@ function measureViewportCenterYPx(): number {
 }
 
 /**
+ * translateY needed so `el`'s visual center matches true viewport center.
+ * Strips the element's current translateY so the result is layout-relative.
+ */
+function measureHeroVideoCenterOpenOffsetPx(el: HTMLElement): number {
+  const rect = el.getBoundingClientRect();
+  const currentY = readTranslateYPx(el);
+  const naturalCenterY = (rect.top + rect.bottom) / 2 - currentY;
+  return measureViewportCenterYPx() - naturalCenterY;
+}
+
+/**
  * How far to shift the settled mobile stack so its midpoint matches the
  * full-viewport center (viewport rule of thirds) — not the nav ruler band.
  * `assumedNameY` (the pending "settle" offset) is the coordinate space lockup/button rects
@@ -1522,9 +1533,12 @@ const HERO_VIDEO_SCALE_EASE: [number, number, number, number] = [0.22, 1, 0.36, 
 const HERO_VIDEO_GLOW_DELAY_S = 0.28;
 const HERO_VIDEO_GLOW_DUR_S = 0.72;
 const HERO_VIDEO_GLOW_PEAK = 0.55;
-/** Brief beat after video opens before SVG fade-in. */
-/** Brief beat after video starts opening before SVG fade-in (overlaps video scale). */
-const HERO_LOCKUP_FADE_AFTER_VIDEO_MS = 120;
+/** Beat after video scaleX open completes, before rise to final spot. */
+const HERO_VIDEO_CENTER_HOLD_MS = 300;
+/** Rise from viewport center → final layout Y. */
+const HERO_VIDEO_RISE_DUR_S = 0.55;
+/** Rise ease — gentle ease-in at start, stronger ease-out at the end. */
+const HERO_VIDEO_RISE_EASE: [number, number, number, number] = [0.42, 0.0, 0.16, 1];
 /** Slide distance for PORTFOLIO entrance (negative = from the left). */
 const HERO_PORTFOLIO_ENTRANCE_X_PX = -28;
 /** Shared duration for PORTFOLIO entrance opacity + x (play together). */
@@ -1581,7 +1595,10 @@ const HERO_NAME_MOBILE_DISPLAY_FONT_CLASS =
  */
 const HERO_NAME_MOBILE_PORTFOLIO_BUTTON_CLASS =
   "max-md:!h-auto max-md:!min-h-[2.55rem] max-md:!max-h-none max-md:!px-[1.25rem] max-md:!py-2 max-md:text-[0.72rem] max-md:[&_.texts]:gap-1 max-md:[&_.texts]:text-[0.72rem] max-md:[&_.texts]:!tracking-normal";
-const HERO_NAME_SWEEP_MS = 700;
+/** Divider center-out scaleX — keep in sync with `animation-duration` on `[data-hero-name-rule]` in index.css. */
+const HERO_NAME_RULE_DUR_MS = 420;
+/** Beat after divider starts before ROBBIE/MCLAUGHLIN cascade. */
+const HERO_NAME_CASCADE_AFTER_RULE_MS = 120;
 const HERO_NAME_SPLIT_MS = 600;
 /** Rainbow accents — main-menu section colors (NAV order) for name/tagline/accent fades. */
 const HERO_NAME_RAINBOW_MENU_IDS = ["profile", "projects", "experience", "skills", "social"] as const;
@@ -1604,9 +1621,11 @@ const HERO_NAME_TEXT_ENTRANCE_MS =
   HERO_NAME_TEXT_WHITE_DELAY_MS + HERO_NAME_TEXT_WHITE_LAYER_MS;
 /** Brief hold after color fades resolve before settle / video. */
 const HERO_NAME_COLOR_FADE_BEAT_MS = 320;
-/** Name reveal start → color fades done + beat (gates settle phase). */
+/** Name reveal start → cascade delay + color fades done + beat (gates settle phase). */
 const HERO_NAME_PHASE1_COMPLETE_MS =
-  HERO_NAME_SWEEP_MS + HERO_NAME_TEXT_ENTRANCE_MS + HERO_NAME_COLOR_FADE_BEAT_MS;
+  HERO_NAME_CASCADE_AFTER_RULE_MS +
+  HERO_NAME_TEXT_ENTRANCE_MS +
+  HERO_NAME_COLOR_FADE_BEAT_MS;
 const HERO_NAME_EASE_OUT_EXPO: [number, number, number, number] = [0.16, 1, 0.3, 1];
 /** Gentle ease across rainbow layers and into white. */
 const HERO_NAME_TEXT_BLEND_EASE: [number, number, number, number] = [0.33, 0.0, 0.2, 1];
@@ -1676,11 +1695,11 @@ const HERO_TAGLINE_STAGGER_MS = Math.max(
 const HERO_TAGLINE_CASCADE_MS =
   (HERO_TAGLINE_STREAM_LEN - 1) * HERO_TAGLINE_STAGGER_MS + HERO_NAME_LETTER_DURATION_MS;
 /**
- * PORTFOLIO slide+fade — only after ROBBIE/MCLAUGHLIN + tagline cascades both finish
- * (from lockup reveal: sweep → name cascade → tagline cascade).
+ * PORTFOLIO slide+fade — after ROBBIE/MCLAUGHLIN + tagline finish
+ * (from lockup reveal: rule → short beat → name cascade → tagline cascade).
  */
 const HERO_PORTFOLIO_ENTRANCE_AFTER_SVG_MS =
-  HERO_NAME_SWEEP_MS + HERO_NAME_CASCADE_MS + HERO_TAGLINE_CASCADE_MS;
+  HERO_NAME_CASCADE_AFTER_RULE_MS + HERO_NAME_CASCADE_MS + HERO_TAGLINE_CASCADE_MS;
 
 /** Cream glyph index → stagger slot (inserts X1 / X2 beats between phrases). */
 const heroTaglineGlyphDelayIndex = (glyphIndex: number) => {
@@ -1975,6 +1994,9 @@ const HeroNameReveal = ({
   /** Mobile — font-size so tagline glyph width matches ROBBIE + accent lockup. */
   const [mobileTaglineFontPx, setMobileTaglineFontPx] = useState<number | null>(null);
   const [heroNameLettersReady, setHeroNameLettersReady] = useState(false);
+  /** Latch — divider center-out starts on video-rise reveal; never restart. */
+  const [ruleAnimateLatched, setRuleAnimateLatched] = useState(false);
+  const ruleAnimateLatchedRef = useRef(false);
   /** Latch — once the name cascade starts, never restart (avoids loop on parent re-renders). */
   const [nameCascadeLatched, setNameCascadeLatched] = useState(false);
   const nameCascadeLatchedRef = useRef(false);
@@ -2003,7 +2025,6 @@ const HeroNameReveal = ({
   const [svgMountEpoch, setSvgMountEpoch] = useState(0);
   useLayoutEffect(() => {
     const settleLatchedGlyphs = (host: HTMLElement) => {
-      if (!nameCascadeLatchedRef.current) return;
       const settle = (selector: string) => {
         host.querySelectorAll(selector).forEach((node) => {
           const el = node as HTMLElement | SVGElement;
@@ -2012,6 +2033,10 @@ const HeroNameReveal = ({
           el.style.setProperty("animation", "none", "important");
         });
       };
+      if (ruleAnimateLatchedRef.current) {
+        settle("[data-hero-name-rule]");
+      }
+      if (!nameCascadeLatchedRef.current) return;
       settle("[data-hero-name-letter]");
       if (taglineTypeLatchedRef.current) {
         settle("[data-hero-tagline-letter]");
@@ -2113,6 +2138,8 @@ const HeroNameReveal = ({
     }
 
     if (reduceMotion) {
+      ruleAnimateLatchedRef.current = true;
+      setRuleAnimateLatched(true);
       nameCascadeLatchedRef.current = true;
       setNameCascadeLatched(true);
       taglineTypeLatchedRef.current = true;
@@ -2122,15 +2149,20 @@ const HeroNameReveal = ({
       return;
     }
 
-    // Already started — do not recreate sweep/reveal timers (would loop cascade).
+    // Already started — do not recreate rule/name timers (would loop cascade).
     if (nameCascadeLatchedRef.current) return;
 
+    /* Divider first; ROBBIE/MCLAUGHLIN a short beat later; tagline after name cascade. */
+    if (!ruleAnimateLatchedRef.current) {
+      ruleAnimateLatchedRef.current = true;
+      setRuleAnimateLatched(true);
+    }
     setStep("sweep");
     const revealTimer = window.setTimeout(() => {
       nameCascadeLatchedRef.current = true;
       setNameCascadeLatched(true);
       setStep("reveal");
-    }, HERO_NAME_SWEEP_MS);
+    }, HERO_NAME_CASCADE_AFTER_RULE_MS);
     const doneTimer = window.setTimeout(
       () => setStep("done"),
       HERO_NAME_PHASE1_COMPLETE_MS,
@@ -2534,21 +2566,34 @@ const HeroNameReveal = ({
               initial={false}
               animate={{
                 opacity:
-                  reduceMotion || nameCascadeLatched || auxVisible ? 1 : 0,
+                  reduceMotion ||
+                  ruleAnimateLatched ||
+                  nameCascadeLatched ||
+                  auxVisible
+                    ? 1
+                    : 0,
               }}
-              /* Instant show — letter cascade must not fight a shared opacity fade. */
+              /* Instant show — rule/letter cascade must not fight a shared opacity fade. */
               transition={{
                 duration:
-                  reduceMotion || nameCascadeLatched || !auxVisible ? 0 : 0.01,
+                  reduceMotion ||
+                  ruleAnimateLatched ||
+                  nameCascadeLatched ||
+                  !auxVisible
+                    ? 0
+                    : 0.01,
               }}
             >
             {/*
-              Name letters cascade via CSS keyframes when chrome flag flips once.
+              Divider scaleX then name letters via CSS when flags flip once.
               SVG markup is mounted once into the inner host (see heroSvgMountRef).
             */}
             <div
               role="img"
               data-hero-svg-root="true"
+              data-hero-rule-animate={
+                reduceMotion || ruleAnimateLatched ? "true" : "false"
+              }
               data-hero-chrome-animate={
                 reduceMotion || nameCascadeLatched || auxVisible
                   ? "true"
@@ -2761,8 +2806,21 @@ const Hero = ({
    * Gap clamp is idempotent against this so Safari late layout can re-run safely.
    */
   const mobileHeroBaseNameYRef = useRef(0);
-  /** Mobile video Y — settles in parallel with name so the stack centers on the viewport. */
-  const mobileVideoY = useMotionValue(0);
+  /**
+   * Video card Y — all breakpoints. Opens at viewport center, rises to finalY.
+   * Mobile finalY = ROT nudge; desktop/tablet finalY = 0.
+   */
+  const videoEntranceY = useMotionValue(0);
+  /** Controlled scaleX for open → beat → rise sequencing (avoids React frame churn). */
+  const videoScaleX = useMotionValue(0);
+  const videoStackRef = useRef<HTMLDivElement>(null);
+  /** Computed final translateY after rise (mobile ROT nudge, else 0). */
+  const videoFinalYRef = useRef(0);
+  const videoEntranceGenRef = useRef(0);
+  /** True after center-open Y has been pinned for this reveal (avoid mid-anim remeasure). */
+  const videoOpenPinnedRef = useRef(false);
+  /** True after open→beat→rise finished (or reduce-motion snap). */
+  const videoEntranceSettledRef = useRef(false);
   const desktopNameY = useMotionValue(0);
   const heroNameMotionRef = useRef<HTMLDivElement>(null);
   const [heroPhase1LayoutReady, setHeroPhase1LayoutReady] = useState(false);
@@ -2952,9 +3010,10 @@ const Hero = ({
       setSliderPhaseActive(true);
       setVideoRevealActive(true);
       setSliderAnimDone(true);
+      setLockupFadeReady(true);
       return;
     }
-    /* Video opens immediately; SVG follows after HERO_LOCKUP_FADE_AFTER_VIDEO_MS (overlaps scale). */
+    /* Video opens at viewport center → beat → rise; SVG arms after rise completes. */
     sliderPhaseActiveRef.current = true;
     setSliderPhaseActive(true);
     setVideoRevealActive(true);
@@ -2974,11 +3033,10 @@ const Hero = ({
   }, [active, portfolioFadeReady, reduceMotion]);
 
   /**
-   * Mobile — apply final viewport-centered Y once (no settle tween).
-   * Wait for mobileLockupWidthPx so viewBox/aspect sizing is already applied.
-   * Gap is predicted into the same .set() so nothing retargets during letter cascade.
-   * visualViewport / resize listeners wait until PORTFOLIO entrance — iOS chrome
-   * show/hide was retargeting Y mid-cascade and stalling SVG letter CSS.
+   * Mobile — compute final viewport-centered Y (ROT + gap clamp).
+   * During video entrance, only stash finalY for the rise target — do not overwrite
+   * videoEntranceY (owned by center-open → rise). After entrance settle / resize,
+   * apply final Y directly. visualViewport listeners wait until PORTFOLIO entrance.
    */
   useEffect(() => {
     if (!isMobileHeroLayout || !heroPhase1LayoutReady) return;
@@ -2989,7 +3047,8 @@ const Hero = ({
         sliderPhaseActiveRef.current = false;
         mobileHeroBaseNameYRef.current = 0;
         mobileNameY.set(0);
-        mobileVideoY.set(0);
+        videoFinalYRef.current = 0;
+        if (sliderAnimDone || reduceMotion) videoEntranceY.set(0);
         return;
       }
 
@@ -2999,7 +3058,8 @@ const Hero = ({
         const settle = heroMobileSettleOffsetPx();
         mobileHeroBaseNameYRef.current = settle;
         mobileNameY.set(settle);
-        mobileVideoY.set(0);
+        videoFinalYRef.current = 0;
+        if (sliderAnimDone || reduceMotion) videoEntranceY.set(0);
         return;
       }
 
@@ -3007,6 +3067,7 @@ const Hero = ({
       /*
        * Two-pass: gap-clamp pushes name only. Fold predicted gap into assumedNameY
        * so the viewport-center nudge still matches the final stack.
+       * Measure video as if at y=0 so ROT/gap aren't skewed by the center-open offset.
        */
       const videoFace =
         document.querySelector<HTMLElement>("#hero [data-hero-mobile-video-face='true']") ??
@@ -3020,6 +3081,7 @@ const Hero = ({
       const predictGapPush = (rotNudge: number, assumedNameFinalY: number) => {
         if (!videoFace || inkTop == null) return 0;
         const predictedInk = inkTop + (assumedNameFinalY - curNameY);
+        /* Strip live entrance Y so gap targets the post-rise video bottom. */
         const predictedVideoBottom =
           videoFace.getBoundingClientRect().bottom + (rotNudge - curVideoY);
         const predictedGap = predictedInk - predictedVideoBottom;
@@ -3040,8 +3102,12 @@ const Hero = ({
 
       const base = settle + rotNudge;
       mobileHeroBaseNameYRef.current = base;
-      mobileVideoY.set(rotNudge);
+      videoFinalYRef.current = rotNudge;
       mobileNameY.set(base + gapPush);
+      /* Only snap video Y after entrance finished (or reduced motion). */
+      if (sliderAnimDone || reduceMotion) {
+        videoEntranceY.set(rotNudge);
+      }
     };
 
     applyMobileHeroY();
@@ -3059,9 +3125,10 @@ const Hero = ({
     isMobileHeroLayout,
     mobileLockupWidthPx,
     mobileNameY,
-    mobileVideoY,
+    videoEntranceY,
     portfolioFadeReady,
     reduceMotion,
+    sliderAnimDone,
     sliderPhaseActive,
     videoRevealActive,
   ]);
@@ -3187,10 +3254,12 @@ const Hero = ({
         /* Mobile final Y (incl. ROT) applied once video is mounted — see effect above. */
         if (!sliderPhaseActiveRef.current || !videoRevealActive) {
           mobileNameY.set(heroMobileSettleOffsetPx());
-          mobileVideoY.set(0);
+          videoFinalYRef.current = 0;
+          if (sliderAnimDone || reduceMotion) videoEntranceY.set(0);
         }
       } else {
         desktopNameY.set(heroDesktopSettleOffsetPx());
+        videoFinalYRef.current = 0;
       }
 
       setHeroPhase1LayoutReady(true);
@@ -3204,26 +3273,111 @@ const Hero = ({
     heroReady,
     isMobileHeroLayout,
     mobileNameY,
-    mobileVideoY,
+    videoEntranceY,
     heroDesktopViewport,
     videoRevealActive,
+    sliderAnimDone,
+    reduceMotion,
   ]);
 
   const heroLayoutReady = heroReady && heroPhase1LayoutReady;
 
-  /** SVG fade — brief beat after video starts opening (overlap the scale; don't wait for it to finish). */
-  useEffect(() => {
+  /**
+   * Video entrance: measure center open offset → scaleX open → hold → rise to finalY
+   * → then arm ROBBIE lockup. Transform-only via MotionValues.
+   */
+  useLayoutEffect(() => {
     if (!videoRevealActive) {
+      videoOpenPinnedRef.current = false;
+      videoEntranceSettledRef.current = false;
+      videoScaleX.set(0);
+      videoEntranceY.set(0);
       setLockupFadeReady(false);
       return;
     }
+
+    const mobileReady = !isMobileHeroLayout || mobileLockupWidthPx != null;
+    if (!heroPhase1LayoutReady || !mobileReady) return;
+
     if (reduceMotion) {
+      videoOpenPinnedRef.current = true;
+      videoEntranceSettledRef.current = true;
+      videoScaleX.set(1);
+      videoEntranceY.set(videoFinalYRef.current);
       setLockupFadeReady(true);
+      setSliderAnimDone(true);
       return;
     }
-    const t = window.setTimeout(() => setLockupFadeReady(true), HERO_LOCKUP_FADE_AFTER_VIDEO_MS);
-    return () => window.clearTimeout(t);
-  }, [videoRevealActive, reduceMotion]);
+
+    if (videoOpenPinnedRef.current) return;
+
+    const el = videoStackRef.current;
+    if (!el) return;
+
+    /* Pin to true visual center before first painted open frame. */
+    const openOffset = measureHeroVideoCenterOpenOffsetPx(el);
+    videoEntranceY.set(openOffset);
+    videoScaleX.set(0);
+    videoOpenPinnedRef.current = true;
+  }, [
+    videoRevealActive,
+    heroPhase1LayoutReady,
+    isMobileHeroLayout,
+    mobileLockupWidthPx,
+    reduceMotion,
+    videoEntranceY,
+    videoScaleX,
+  ]);
+
+  useEffect(() => {
+    if (!videoRevealActive || reduceMotion) return;
+    const mobileReady = !isMobileHeroLayout || mobileLockupWidthPx != null;
+    if (!heroPhase1LayoutReady || !mobileReady) return;
+    if (!videoOpenPinnedRef.current || videoEntranceSettledRef.current) return;
+
+    const gen = ++videoEntranceGenRef.current;
+    let holdTimer: number | null = null;
+    let riseControl: { stop: () => void } | null = null;
+
+    const scaleControl = animate(videoScaleX, 1, {
+      duration: HERO_NAME_SETTLE_DUR_S,
+      ease: HERO_VIDEO_SCALE_EASE,
+      onComplete: () => {
+        if (gen !== videoEntranceGenRef.current) return;
+        holdTimer = window.setTimeout(() => {
+          if (gen !== videoEntranceGenRef.current) return;
+          const finalY = isMobileHeroLayout ? videoFinalYRef.current : 0;
+          riseControl = animate(videoEntranceY, finalY, {
+            duration: HERO_VIDEO_RISE_DUR_S,
+            ease: HERO_VIDEO_RISE_EASE,
+            onComplete: () => {
+              if (gen !== videoEntranceGenRef.current) return;
+              videoEntranceSettledRef.current = true;
+              setLockupFadeReady(true);
+              setSliderAnimDone(true);
+            },
+          });
+        }, HERO_VIDEO_CENTER_HOLD_MS);
+      },
+    });
+
+    return () => {
+      scaleControl.stop();
+      if (holdTimer != null) window.clearTimeout(holdTimer);
+      riseControl?.stop();
+      if (!videoEntranceSettledRef.current) {
+        videoEntranceGenRef.current += 1;
+      }
+    };
+  }, [
+    videoRevealActive,
+    heroPhase1LayoutReady,
+    isMobileHeroLayout,
+    mobileLockupWidthPx,
+    reduceMotion,
+    videoEntranceY,
+    videoScaleX,
+  ]);
 
   /** PORTFOLIO slide+fade — only after ROBBIE/MCLAUGHLIN + tagline cascades end. */
   useEffect(() => {
@@ -3373,8 +3527,6 @@ const Hero = ({
     };
   }, [heroPhase1LayoutReady, isMobileHeroLayout]);
 
-  const heroVideoScaleDelayS = 0;
-
   /* Mobile SVG/text: rest + float phase start at most-down (+amp). Desktop unchanged.
    * Idle float is CSS keyframes (compositor) — not Framer Motion y arrays. */
   const heroIdleFloatClass = heroIdleFloat
@@ -3409,21 +3561,10 @@ const Hero = ({
       data-hero-video-card="true"
       data-hero-mobile-video-slot={isMobileHeroLayout ? "true" : undefined}
       className={`relative mx-auto overflow-visible rounded-xl ${HERO_VIDEO_CARD_WIDTH_CLASS} max-md:w-full max-md:max-w-full`}
-      initial={{ scaleX: 0 }}
-      animate={{ scaleX: 1 }}
-      transition={
-        reduceMotion
-          ? { duration: 0 }
-          : {
-              duration: HERO_NAME_SETTLE_DUR_S,
-              ease: HERO_VIDEO_SCALE_EASE,
-              delay: heroVideoScaleDelayS,
-            }
-      }
-      onAnimationComplete={() => setSliderAnimDone(true)}
       style={{
+        scaleX: videoScaleX,
         transformOrigin: "center center",
-        /* Promote during scale reveal only — permanent will-change burns GPU memory. */
+        /* Promote during open+rise only — permanent will-change burns GPU memory. */
         willChange: sliderAnimDone || reduceMotion ? undefined : "transform",
         ...(isMobileHeroLayout && mobileLockupWidthPx
           ? { width: "100%", maxWidth: mobileLockupWidthPx }
@@ -3490,23 +3631,28 @@ const Hero = ({
             data-hero-video-align-probe="true"
             className={`pointer-events-none invisible absolute left-1/2 top-0 h-0 -translate-x-1/2 overflow-hidden max-md:hidden ${HERO_VIDEO_CARD_WIDTH_CLASS}`}
           />
-          {videoRevealActive &&
-            (heroDesktopLikeViewport ? (
-              <div className="mx-auto w-fit min-w-0 max-w-full" style={heroVideoGlobalDebugStyle}>
-                {heroVideoCard}
-              </div>
-            ) : isMobileHeroLayout ? (
-              <motion.div
-                data-hero-mobile-video-stack="true"
-                className="mx-auto w-full max-w-full"
-                style={{ y: mobileVideoY }}
-                initial={false}
-              >
-                {heroVideoCard}
-              </motion.div>
-            ) : (
-              heroVideoCard
-            ))}
+          {videoRevealActive && (
+            <motion.div
+              ref={videoStackRef}
+              data-hero-video-stack="true"
+              data-hero-mobile-video-stack={isMobileHeroLayout ? "true" : undefined}
+              className="mx-auto w-full max-w-full"
+              style={{
+                y: videoEntranceY,
+                /* Y outside debug zoom so center-open offset is true screen px. */
+                willChange: sliderAnimDone || reduceMotion ? undefined : "transform",
+              }}
+              initial={false}
+            >
+              {heroDesktopLikeViewport ? (
+                <div className="mx-auto w-fit min-w-0 max-w-full" style={heroVideoGlobalDebugStyle}>
+                  {heroVideoCard}
+                </div>
+              ) : (
+                heroVideoCard
+              )}
+            </motion.div>
+          )}
           </div>
         </div>
         <div
@@ -6959,14 +7105,16 @@ const ShowcaseIllustrationLightbox = ({
   onClose: () => void;
   onActiveIndexChange: (index: number) => void;
 }) => {
+  const activeOpenablePos = openableIndices.indexOf(activeIndex);
+  const [carouselReady, setCarouselReady] = useState(false);
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: "center",
     loop: false,
     skipSnaps: false,
     dragFree: false,
+    startIndex: activeOpenablePos >= 0 ? activeOpenablePos : 0,
   });
 
-  const activeOpenablePos = openableIndices.indexOf(activeIndex);
   const activeSlide = slides[activeIndex];
   const hasPrev = activeOpenablePos > 0;
   const hasNext =
@@ -7040,11 +7188,12 @@ const ShowcaseIllustrationLightbox = ({
     };
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!emblaApi || activeOpenablePos < 0) return;
     if (emblaApi.selectedScrollSnap() !== activeOpenablePos) {
       emblaApi.scrollTo(activeOpenablePos, true);
     }
+    setCarouselReady(true);
   }, [activeOpenablePos, emblaApi]);
 
   useEffect(() => {
@@ -7124,7 +7273,9 @@ const ShowcaseIllustrationLightbox = ({
 
           <div
             ref={emblaRef}
-            className="illustration-lightbox-media-viewport h-full min-h-0 flex-1 overflow-hidden touch-pan-y [-webkit-touch-callout:none]"
+            className={`illustration-lightbox-media-viewport h-full min-h-0 flex-1 overflow-hidden touch-pan-y [-webkit-touch-callout:none] ${
+              carouselReady ? "" : "invisible pointer-events-none"
+            }`}
             aria-roledescription="carousel"
           >
             <div className="flex h-full min-h-0 touch-pan-y [-webkit-touch-callout:none] lg:min-h-[min(78dvh,920px)]">
@@ -12070,12 +12221,22 @@ export default function Home() {
   const heroInViewRef = useRef<HTMLDivElement | null>(null);
   const isHeroInView = useInView(heroInViewRef, { margin: "-100px 0px 0px 0px" });
   const slidesRef = useRef<HTMLDivElement | null>(null);
+  /** Session-only: after PORTFOLIO leave, hero stays unmounted until refresh. */
+  const [heroDismissed, setHeroDismissed] = useState(false);
+  /** True only during PORTFOLIO → menu scroll so the snap track can move. */
+  const [heroExitScroll, setHeroExitScroll] = useState(false);
+  const heroExitScrollRef = useRef(false);
 
   /** Section overlay scroller — shared across pages; must reset on section change. */
   const sectionPanelRef = useRef<HTMLDivElement | null>(null);
-  const slideOrder = ["hero", "menu"];
+  const slideOrder = useMemo(
+    () => (heroDismissed ? ["menu"] : ["hero", "menu"]),
+    [heroDismissed],
+  );
   const [currentSlideId, setCurrentSlideId] = useState<string>("hero");
   const [menuIntroReady, setMenuIntroReady] = useState(false);
+  /** Hero mounted and not exiting — block swipe/wheel/keys off the intro. */
+  const heroScrollLocked = !heroDismissed && !heroExitScroll;
   const [profileSectionMounted, setProfileSectionMounted] = useState(false);
   const [menuLockedFillId, setMenuLockedFillId] = useState<string | null>(null);
   const [activeShowcaseProjectId, setActiveShowcaseProjectId] = useState<string | null>(null);
@@ -12297,9 +12458,14 @@ export default function Home() {
   }, []);
 
   const handleStart = () => {
+    if (heroDismissed) return;
     const root = slidesRef.current;
     const menuEl = document.getElementById("menu");
+    heroExitScrollRef.current = true;
+    setHeroExitScroll(true);
     if (root && menuEl) {
+      // Unlock overflow in the same frame before scrolling (state may lag one paint).
+      root.style.overflowX = "auto";
       root.scrollTo({ left: menuEl.offsetLeft, behavior: reduceMotion ? "auto" : "smooth" });
       return;
     }
@@ -12580,6 +12746,56 @@ export default function Home() {
     }
     prevSlideIdRef.current = currentSlideId;
   }, [currentSlideId]);
+
+  /** PORTFOLIO exit landed on menu — dismiss hero for this session (refresh restores). */
+  useEffect(() => {
+    if (heroDismissed) return;
+    if (currentSlideId !== "menu") return;
+    if (!heroExitScrollRef.current && !heroExitScroll) return;
+    heroExitScrollRef.current = false;
+    setHeroExitScroll(false);
+    setHeroDismissed(true);
+    setCurrentSlideId("menu");
+  }, [currentSlideId, heroDismissed, heroExitScroll]);
+
+  /** After hero unmounts, pin menu at scrollLeft 0 (flex track no longer has #hero). */
+  useLayoutEffect(() => {
+    if (!heroDismissed) return;
+    const root = slidesRef.current;
+    if (!root) return;
+    root.style.overflowX = "";
+    root.scrollLeft = 0;
+  }, [heroDismissed]);
+
+  /** While hero is locked, clamp any accidental horizontal scroll. */
+  useEffect(() => {
+    if (!heroScrollLocked) return;
+    const root = slidesRef.current;
+    if (!root) return;
+    const clamp = () => {
+      if (root.scrollLeft !== 0) root.scrollLeft = 0;
+    };
+    clamp();
+    root.addEventListener("scroll", clamp, { passive: true });
+    return () => root.removeEventListener("scroll", clamp);
+  }, [heroScrollLocked]);
+
+  /** During PORTFOLIO exit, allow scroll toward menu only — no swipe back to hero. */
+  useEffect(() => {
+    if (!heroExitScroll || heroDismissed) return;
+    const root = slidesRef.current;
+    if (!root) return;
+    let maxSeen = root.scrollLeft;
+    const onScroll = () => {
+      if (root.scrollLeft < maxSeen) {
+        root.scrollLeft = maxSeen;
+        return;
+      }
+      maxSeen = root.scrollLeft;
+    };
+    root.addEventListener("scroll", onScroll, { passive: true });
+    return () => root.removeEventListener("scroll", onScroll);
+  }, [heroExitScroll, heroDismissed]);
 
   useEffect(() => {
     if (currentSection === null) setMenuLockedFillId(null);
@@ -12871,37 +13087,46 @@ export default function Home() {
               ref={slidesRef}
               tabIndex={0}
               aria-label="Portfolio slideshow"
-              className="no-scrollbar flex h-screen w-screen overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-smooth focus:outline-none"
+              className={`no-scrollbar flex h-screen w-screen overflow-y-hidden snap-x snap-mandatory scroll-smooth focus:outline-none ${
+                heroScrollLocked || heroDismissed ? "overflow-x-hidden" : "overflow-x-auto"
+              }`}
               style={{ backgroundColor: "transparent", backgroundImage: "none" }}
               onKeyDown={(e) => {
               if (!slidesRef.current) return;
               if (e.key === "ArrowRight") {
                 e.preventDefault();
+                // Hero: PORTFOLIO only. After dismiss: single slide — no-op.
+                if (heroScrollLocked || heroDismissed) return;
                 slidesRef.current.scrollBy({ left: window.innerWidth, behavior: "smooth" });
               }
               if (e.key === "ArrowLeft") {
                 e.preventDefault();
+                if (heroScrollLocked || heroDismissed) return;
                 slidesRef.current.scrollBy({ left: -window.innerWidth, behavior: "smooth" });
               }
               if (e.key === "Home") {
                 e.preventDefault();
-                scrollToId("hero");
+                // No return to hero once left (or while locked on hero).
+                return;
               }
               if (e.key === "End") {
                 e.preventDefault();
+                if (heroScrollLocked) return;
                 if (currentSection) navigateTo("menu");
                 else scrollToId("menu");
               }
             }}
           >
-            <Hero 
-              onStart={handleStart}
-              onQuickProjects={() => navigateTo("projects")}
-              isResumeMode={isResumeMode}
-              toggleResumeMode={() => setIsResumeMode(!isResumeMode)}
-              heroInViewRef={heroInViewRef}
-              active={currentSlideId === "hero"}
-            />
+            {!heroDismissed && (
+              <Hero 
+                onStart={handleStart}
+                onQuickProjects={() => navigateTo("projects")}
+                isResumeMode={isResumeMode}
+                toggleResumeMode={() => setIsResumeMode(!isResumeMode)}
+                heroInViewRef={heroInViewRef}
+                active={currentSlideId === "hero"}
+              />
+            )}
             <RainbowMenuSlide
               active={currentSlideId === "menu"}
               introReady={menuIntroReady}

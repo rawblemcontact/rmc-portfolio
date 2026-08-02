@@ -20,6 +20,16 @@
   }
 }
 
+/* Divider under MCLAUGHLIN — center-out scaleX (compositor; keep in sync with HERO_NAME_RULE_DUR_MS). */
+@keyframes hero-name-rule-in {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
 /*
  * Hero idle float — CSS only (was Framer Motion keyframe arrays).
  * Amplitude 1px; sine samples match prior HERO_IDLE_FLOAT_* constants.
@@ -181,15 +191,33 @@
   animation-iteration-count: 1;
   /* animation-delay from each path's inline style */
 }
-/* Chrome â€” soft fade; exclude name + tagline glyphs (they have their own reveals). */
+/* Divider rule — center-out scaleX; gated by data-hero-rule-animate (before name letters). */
+[data-hero-svg-root] [data-hero-name-rule] {
+  /* stroke-box: path is stroke-only (zero fill height); fill-box breaks origin on some engines. */
+  transform-box: stroke-box;
+  transform-origin: center;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+[data-hero-svg-root]:not([data-hero-rule-animate="true"]) [data-hero-name-rule] {
+  transform: scaleX(0);
+}
+[data-hero-svg-root][data-hero-rule-animate="true"] [data-hero-name-rule] {
+  animation-name: hero-name-rule-in;
+  animation-duration: 0.42s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  animation-fill-mode: both;
+  animation-iteration-count: 1;
+}
+/* Chrome — soft fade; exclude name/tagline glyphs + divider rule (own reveals). */
 [data-hero-svg-root]:not([data-hero-chrome-animate="true"])
   svg
-  > *:not([data-hero-name-letter]):not([data-hero-tagline-letter]):not([data-hero-tagline-sep]) {
+  > *:not([data-hero-name-letter]):not([data-hero-tagline-letter]):not([data-hero-tagline-sep]):not([data-hero-name-rule]) {
   opacity: 0;
 }
 [data-hero-svg-root][data-hero-chrome-animate="true"]
   svg
-  > *:not([data-hero-name-letter]):not([data-hero-tagline-letter]):not([data-hero-tagline-sep]) {
+  > *:not([data-hero-name-letter]):not([data-hero-tagline-letter]):not([data-hero-tagline-sep]):not([data-hero-name-rule]) {
   opacity: 1;
   transition: opacity 0.4s ease-out;
 }
@@ -197,7 +225,8 @@
   [data-hero-svg-root] svg > *:not([data-hero-name-letter]):not([data-hero-tagline-letter]),
   [data-hero-svg-root] [data-hero-name-letter],
   [data-hero-svg-root] [data-hero-tagline-letter],
-  [data-hero-svg-root] [data-hero-tagline-sep] {
+  [data-hero-svg-root] [data-hero-tagline-sep],
+  [data-hero-svg-root] [data-hero-name-rule] {
     opacity: 1 !important;
     transform: none !important;
     animation: none !important;
@@ -3667,11 +3696,11 @@
       grid-row: auto !important;
     }
 
-    /* Header + tabs share title-anchored chrome width */
+    /* Full content width so equal-width horizontal tabs can breathe */
     #experience .experience-rail-chrome {
       display: flex;
       flex-direction: column;
-      width: fit-content;
+      width: 100%;
       max-width: 100%;
       min-width: 0;
     }
@@ -3691,13 +3720,17 @@
       right: 0;
     }
 
+    /*
+     * Four equal chips spanning the same width as the resume card below.
+     * Left-aligned label chrome matches desktop / landscape rail buttons.
+     */
     #experience .tabs-nav {
       width: 100% !important;
       min-width: 0 !important;
       flex-direction: row !important;
       flex-wrap: nowrap;
-      gap: 8px;
-      overflow-x: visible;
+      gap: 11px;
+      overflow-x: hidden;
       overflow-y: hidden;
       padding: 0 0 14px;
       border: 0 !important;
@@ -3713,21 +3746,21 @@
       display: none;
     }
 
-    /* Equal-width tabs that collectively fill the container */
     #experience .tabs-nav .tab-btn,
     #experience .tab-btn {
       flex: 1 1 0 !important;
+      width: 100%;
       min-width: 0 !important;
-      width: auto;
-      padding: 11px 10px;
-      text-align: center;
+      padding: 14px 14px 14px 12px;
+      text-align: left;
       transform: none !important;
     }
 
     #experience .tabs-nav .experience-tab-btn-shell {
       flex: 1 1 0 !important;
-      min-width: 0 !important;
       width: auto;
+      min-width: 0 !important;
+      max-width: none;
     }
 
     #experience .tab-title,

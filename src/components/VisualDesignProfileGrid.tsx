@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import useEmblaCarousel from "embla-carousel-react";
 import { X } from "lucide-react";
@@ -38,14 +38,16 @@ const VisualDesignProfileLightbox = ({
   onClose: () => void;
   onActiveIndexChange: (index: number) => void;
 }) => {
+  const activeOpenablePos = openableIndices.indexOf(activeIndex);
+  const [carouselReady, setCarouselReady] = useState(false);
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: "center",
     loop: false,
     skipSnaps: false,
     dragFree: false,
+    startIndex: activeOpenablePos >= 0 ? activeOpenablePos : 0,
   });
 
-  const activeOpenablePos = openableIndices.indexOf(activeIndex);
   const activeSlide = slides[activeIndex];
   const hasPrev = activeOpenablePos > 0;
   const hasNext =
@@ -71,11 +73,12 @@ const VisualDesignProfileLightbox = ({
     };
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!emblaApi || activeOpenablePos < 0) return;
     if (emblaApi.selectedScrollSnap() !== activeOpenablePos) {
       emblaApi.scrollTo(activeOpenablePos, true);
     }
+    setCarouselReady(true);
   }, [activeOpenablePos, emblaApi]);
 
   useEffect(() => {
@@ -166,7 +169,9 @@ const VisualDesignProfileLightbox = ({
         >
           <div
             ref={emblaRef}
-            className="min-h-0 flex-1 overflow-hidden touch-pan-y [-webkit-touch-callout:none]"
+            className={`min-h-0 flex-1 overflow-hidden touch-pan-y [-webkit-touch-callout:none] ${
+              carouselReady ? "" : "invisible pointer-events-none"
+            }`}
             aria-roledescription="carousel"
           >
             <div className="flex h-full min-h-[min(78dvh,920px)] touch-pan-y [-webkit-touch-callout:none]">
