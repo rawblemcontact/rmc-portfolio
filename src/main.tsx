@@ -1,10 +1,7 @@
 import { createRoot } from "react-dom/client";
-import setupLocatorUI from "@locator/runtime";
 import App from "./App";
 import "./index.css";
 
-if (import.meta.env.DEV) {
-  setupLocatorUI();
-}
+// Locator UI is kept as a dependency but hard-disabled (not initialized).
 
 createRoot(document.getElementById("root")!).render(<App />);

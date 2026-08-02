@@ -1,8 +1,6 @@
 import {
   createContext,
   useContext,
-  useEffect,
-  useState,
   type CSSProperties,
   type ReactNode,
 } from "react";
@@ -226,102 +224,14 @@ export function saveSectionDesktopLayoutDebugValues(
   console.info(`[${sectionId.toUpperCase()} Desktop Layout Saved]`, values);
 }
 
-function isFnToggleKey(event: KeyboardEvent) {
-  return (
-    event.key === "Fn" ||
-    event.key === "F13" ||
-    event.code === "FnLeft" ||
-    event.code === "FnRight"
-  );
-}
-
-function isDebugToggleKey(event: KeyboardEvent) {
-  return event.key === "w" || event.key === "W";
-}
-
-function isHeroDebugToggleKey(event: KeyboardEvent) {
-  return event.key === "e" || event.key === "E";
-}
-
-function isMainMenuDebugToggleKey(event: KeyboardEvent) {
-  return event.key === "m" || event.key === "M";
-}
-
-function isRulerDebugToggleKey(event: KeyboardEvent) {
-  return event.key === "r" || event.key === "R";
-}
-
-function isEditableTarget(target: EventTarget | null) {
-  if (!(target instanceof HTMLElement)) return false;
-  const tag = target.tagName;
-  return tag === "INPUT" || tag === "TEXTAREA" || target.isContentEditable;
-}
-
+/** Debug UI is hard-disabled — panels remain in the repo but cannot be toggled on. */
 export function PortfolioDebugProvider({ children }: { children: ReactNode }) {
-  const [enabled, setEnabled] = useState(false);
-  const [ruleOfThirdsEnabled, setRuleOfThirdsEnabled] = useState(false);
-  const [rulerDebugEnabled, setRulerDebugEnabled] = useState(false);
-  const [heroDebugEnabled, setHeroDebugEnabled] = useState(false);
-  const [mainMenuDebugEnabled, setMainMenuDebugEnabled] = useState(false);
-  const isDev = import.meta.env.DEV;
-
-  useEffect(() => {
-    if (!isDev) return;
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (isEditableTarget(event.target)) return;
-
-      if (isFnToggleKey(event)) {
-        event.preventDefault();
-        setEnabled((value) => !value);
-        return;
-      }
-
-      if (isDebugToggleKey(event)) {
-        if (event.metaKey || event.ctrlKey || event.altKey) return;
-        event.preventDefault();
-        setEnabled((value) => !value);
-        return;
-      }
-
-      if (isHeroDebugToggleKey(event)) {
-        if (event.metaKey || event.ctrlKey || event.altKey) return;
-        event.preventDefault();
-        setHeroDebugEnabled((value) => !value);
-        return;
-      }
-
-      if (isMainMenuDebugToggleKey(event)) {
-        if (event.metaKey || event.ctrlKey || event.altKey) return;
-        event.preventDefault();
-        setMainMenuDebugEnabled((value) => !value);
-        return;
-      }
-
-      if (event.key === "q" || event.key === "Q") {
-        if (event.metaKey || event.ctrlKey || event.altKey) return;
-        event.preventDefault();
-        setRuleOfThirdsEnabled((value) => !value);
-        return;
-      }
-
-      if (isRulerDebugToggleKey(event)) {
-        if (event.metaKey || event.ctrlKey || event.altKey) return;
-        event.preventDefault();
-        setRulerDebugEnabled((value) => !value);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isDev]);
-
   return (
-    <PortfolioDebugContext.Provider value={isDev && enabled}>
-      <HeroDebugContext.Provider value={isDev && heroDebugEnabled}>
-        <MainMenuDebugContext.Provider value={isDev && mainMenuDebugEnabled}>
-          <RuleOfThirdsContext.Provider value={isDev && ruleOfThirdsEnabled}>
-            <RulerDebugContext.Provider value={isDev && rulerDebugEnabled}>
+    <PortfolioDebugContext.Provider value={false}>
+      <HeroDebugContext.Provider value={false}>
+        <MainMenuDebugContext.Provider value={false}>
+          <RuleOfThirdsContext.Provider value={false}>
+            <RulerDebugContext.Provider value={false}>
               {children}
             </RulerDebugContext.Provider>
           </RuleOfThirdsContext.Provider>

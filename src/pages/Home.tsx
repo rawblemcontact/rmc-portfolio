@@ -87,6 +87,9 @@ import {
   useRuleOfThirdsEnabled,
 } from "../lib/portfolioDebugMode";
 import { UserFilledIcon } from "../components/icons/UserFilledIcon";
+import { BriefcaseIcon } from "../components/icons/BriefcaseIcon";
+import { BriefcaseFilledIcon } from "../components/icons/BriefcaseFilledIcon";
+import { UserIcon } from "../components/icons/UserIcon";
 import { DUR, EASE, HOVER, NAV_ICON_TAP, NAV_ICON_TAP_RELEASE, PORTFOLIO_BOUNCE, PORTFOLIO_SPEED, SHOWCASE_PDF_PROJECTS_FADE_OUT_S, SIDE_NAV_OVERLAY_FADE_S, SPRING, TAP } from "../lib/motion";
 import { useMasonryImageRatios } from "../lib/useMasonryImageRatios";
 import { 
@@ -107,8 +110,8 @@ import {
   LucideIcon,
   FileText,
   Zap,
-  User,
-  Briefcase,
+  Wrench,
+  Folder,
 } from "lucide-react";
 import styled from "styled-components";
 import { ShowcaseAttachedTabStrip, type ShowcaseTabId } from "../components/ShowcaseAttachedTabStrip";
@@ -843,10 +846,10 @@ const NAV_SUBHEAD_GRAY = "color-mix(in srgb, var(--color-mono-2) 70%, transparen
 const PROJECTS_ACCENT_SOFT = "var(--palette-yellow-projects)";
 
 const NAV_ITEMS: { id: string; label: string; icon: LucideIcon; color: string; sub: string; microLabel: string }[] = [
-  { id: "profile", label: "PROFILE", sub: "Summary", icon: User, color: "[background-color:var(--palette-red)]", microLabel: "OPEN" },
-  { id: "projects", label: "PROJECTS", sub: "Projects", icon: Zap, color: "[background-color:var(--palette-yellow-projects)]", microLabel: "VIEW" },
-  { id: "experience", label: "EXPERIENCE", sub: "Career History", icon: Star, color: "[background-color:var(--palette-blue)]", microLabel: "ENTER" },
-  { id: "skills", label: "SKILLS", sub: "Skills", icon: Briefcase, color: "[background-color:var(--palette-green)]", microLabel: "OPEN" },
+  { id: "profile", label: "PROFILE", sub: "Summary", icon: UserIcon, color: "[background-color:var(--palette-red)]", microLabel: "OPEN" },
+  { id: "projects", label: "PROJECTS", sub: "Projects", icon: Folder, color: "[background-color:var(--palette-yellow-projects)]", microLabel: "VIEW" },
+  { id: "experience", label: "EXPERIENCE", sub: "Career History", icon: BriefcaseIcon, color: "[background-color:var(--palette-blue)]", microLabel: "ENTER" },
+  { id: "skills", label: "SKILLS", sub: "Skills", icon: Wrench, color: "[background-color:var(--palette-green)]", microLabel: "OPEN" },
   { id: "social", label: "CONTACT", sub: "Contact", icon: Heart, color: "[background-color:var(--palette-orange)]", microLabel: "VIEW" },
 ];
 
@@ -1102,6 +1105,8 @@ const SectionHeader = ({
   slideFadeDuration,
   slideFadeDelay = 0,
   slideFadeActive,
+  /** Slide distance (px) — 21 matches SKILLS/PROJECTS main header land. */
+  slideFadeY = 21,
   titleTrigger = "viewport",
   titleClassName,
   subtitleClassName,
@@ -1132,6 +1137,8 @@ const SectionHeader = ({
   slideFadeDelay?: number;
   /** When set, slideFade is driven by this flag instead of whileInView (single trigger, no viewport flicker). */
   slideFadeActive?: boolean;
+  /** Vertical travel for slideFade (px). */
+  slideFadeY?: number;
   /** "mount" = animate once on mount only (no viewport); "viewport" = animate when in view. Use mount to prevent layout shift. */
   titleTrigger?: "mount" | "viewport";
   /** Extra classes for the title heading (e.g. xl/2xl scale). */
@@ -1197,8 +1204,14 @@ const SectionHeader = ({
 
   if (slideFade) {
     const slideTransition = {
+      type: "tween" as const,
       duration: slideFadeDuration ?? 0.4,
       ease: EASE.out,
+    };
+    /** Keep translate3d after settle — avoids 1px snap when Framer drops transform → none. */
+    const slideTransformTemplate = ({ y }: { y?: string | number }) => {
+      const yVal = y == null ? "0px" : typeof y === "number" ? `${y}px` : y;
+      return `translate3d(0, ${yVal}, 0)`;
     };
     if (slideFadeActive !== undefined) {
       return (
@@ -1206,13 +1219,14 @@ const SectionHeader = ({
           className={baseClass}
           initial={false}
           animate={{
-            y: slideFadeActive ? 0 : 14,
+            y: slideFadeActive ? 0 : slideFadeY,
             opacity: slideFadeActive ? 1 : 0,
           }}
           transition={{
             ...slideTransition,
             delay: slideFadeActive ? slideFadeDelay : 0,
           }}
+          transformTemplate={slideTransformTemplate}
         >
           {content}
         </motion.div>
@@ -1221,10 +1235,11 @@ const SectionHeader = ({
     return (
       <motion.div
         className={baseClass}
-        initial={{ y: 14, opacity: 0 }}
+        initial={{ y: slideFadeY, opacity: 0 }}
         whileInView={{ y: 0, opacity: 1 }}
         viewport={{ once: viewportOnce, amount: 0.2 }}
         transition={{ ...slideTransition, delay: slideFadeDelay }}
+        transformTemplate={slideTransformTemplate}
       >
         {content}
       </motion.div>
@@ -1526,9 +1541,6 @@ const HERO_VIDEO_REVEAL_DELAY_MOBILE_EXTRA_S = 0;
 const HERO_SETTLE_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 /** scaleX reveal — no overshoot (y2 ≤ 1) so the card does not pop past full width at the end. */
 const HERO_VIDEO_SCALE_EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
-const HERO_VIDEO_GLOW_DELAY_S = 0.28;
-const HERO_VIDEO_GLOW_DUR_S = 0.72;
-const HERO_VIDEO_GLOW_PEAK = 0.55;
 /** Beat after video scaleX open completes, before rise to final spot. */
 const HERO_VIDEO_CENTER_HOLD_MS = 300;
 /** Rise from viewport center → final layout Y. */
@@ -3541,12 +3553,6 @@ const Hero = ({
     </div>
   );
 
-  const heroVideoFaceShadow = isMobileHeroLayout
-    ? "0 30px 72px rgba(0,0,0,0.58), 0 0 22px 3px rgba(255,255,255,0.035)"
-    : desktopAnimPerf && !sliderAnimDone
-      ? /* Lighter during scaleX — full stack shadows hitch desktop 60fps mid-wipe. */
-        "0 24px 56px rgba(0,0,0,0.55), 0 0 20px 2px rgba(255,255,255,0.03)"
-      : "0 36px 88px rgba(0,0,0,0.6), inset 0 -40px 70px rgba(0,0,0,0.52), 0 0 28px 4px rgba(255,255,255,0.04)";
   const heroVideoFaceVignette =
     isMobileHeroLayout || (desktopAnimPerf && !sliderAnimDone)
       ? "none"
@@ -3567,27 +3573,11 @@ const Hero = ({
           : null),
       }}
     >
-      <motion.span
-        aria-hidden
-        className="pointer-events-none absolute -inset-4 max-sm:-inset-3 sm:-inset-7 -z-[1] rounded-[16px] sm:rounded-[20px]"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: HERO_VIDEO_GLOW_PEAK }}
-        transition={
-          reduceMotion
-            ? { duration: 0 }
-            : { delay: HERO_VIDEO_GLOW_DELAY_S, duration: HERO_VIDEO_GLOW_DUR_S, ease: HERO_VIDEO_SCALE_EASE }
-        }
-        style={{
-          /* Soft radial only — CSS blur-3xl forced an offscreen filter pass every frame. */
-          background:
-            "radial-gradient(ellipse 100% 88% at 50% 44%, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.05) 42%, transparent 72%)",
-        }}
-      />
       <div
         data-hero-mobile-video-face={isMobileHeroLayout ? "true" : undefined}
         className="relative z-[1] mx-auto w-full h-[clamp(150px,min(40vh,calc(100svh-11rem-max(1rem,env(safe-area-inset-top,0px)))),430px)] max-md:h-[clamp(150px,min(34vh,calc(100svh-11rem-max(1rem,env(safe-area-inset-top,0px)))),400px)] md:max-lg:h-[clamp(200px,min(44vh,calc(100svh-14rem-max(1rem,env(safe-area-inset-top,0px)))),500px)] lg:h-[clamp(240px,min(54vh,calc(100svh-11.5rem-max(1.5rem,env(safe-area-inset-top,0px)))),680px)] xl:h-[clamp(260px,min(56vh,calc(100svh-12rem-max(2rem,env(safe-area-inset-top,0px)))),760px)] overflow-hidden rounded-xl border border-white bg-black"
         style={{
-          boxShadow: heroVideoFaceShadow,
+          boxShadow: "none",
         }}
       >
         <span
@@ -4005,7 +3995,13 @@ const RainbowMenuSlide = ({
                   >
                     <FillIcon
                       icon={item.icon}
-                      filledIcon={item.id === "profile" ? UserFilledIcon : undefined}
+                      filledIcon={
+                        item.id === "profile"
+                          ? UserFilledIcon
+                          : item.id === "experience"
+                            ? BriefcaseFilledIcon
+                            : undefined
+                      }
                       forceFilled={
                         lockedFillId === item.id ||
                         hoveredId === item.id ||
@@ -4337,7 +4333,13 @@ const SideNavOverlay = ({
                       </span>
                       <FillIcon
                         icon={item.icon}
-                        filledIcon={item.id === "profile" ? UserFilledIcon : undefined}
+                        filledIcon={
+                          item.id === "profile"
+                            ? UserFilledIcon
+                            : item.id === "experience"
+                              ? BriefcaseFilledIcon
+                              : undefined
+                        }
                         forceFilled={
                           activeNavId === item.id ||
                           hoveredId === item.id ||
@@ -4650,21 +4652,20 @@ const BUTTON_FADE_DURATION_MS = 486; // -10%
 const SUMMARY_DELAY_S = 0.0455; // -10%
 const SUMMARY_DURATION_S = 0.306; // 0.34 * 0.9
 const BUTTONS_DELAY_AFTER_SUMMARY_MS = 85;
-/** PROFILE card stack: metadata pill first, summary 0.05s later. */
+/** PROFILE card stack: metadata pill first, summary 0.2s later. */
 const PROFILE_CARD1_DELAY_S = 0;
-const PROFILE_CARD_STAGGER_S = 0.05;
+const PROFILE_CARD_STAGGER_S = 0.2;
 const PROFILE_CARD2_DELAY_S = PROFILE_CARD1_DELAY_S + PROFILE_CARD_STAGGER_S;
 /**
  * Left-column content (metadata pill + summary) wall-clock end.
- * Chrome (PROFILE header + red rule) arms near this beat so content still leads,
- * without a long dead gap after the cards settle.
+ * Chrome (PROFILE header + red rule) arms just before the 2nd card settles.
  */
 const PROFILE_CONTENT_COMPLETE_MS = Math.max(
   Math.round(PROFILE_CARD1_DELAY_S * 1000) + BUTTON_FADE_DURATION_MS,
   Math.round((PROFILE_CARD2_DELAY_S + SUMMARY_DURATION_S) * 1000),
 );
-/** Pull chrome start forward into the card settle tail (ms). */
-const PROFILE_CHROME_EARLY_LEAD_MS = 160;
+/** Start chrome slightly before 2nd card finishes (~110ms into settle tail). */
+const PROFILE_CHROME_EARLY_LEAD_MS = 110;
 const PROFILE_CHROME_START_MS = Math.max(
   0,
   PROFILE_CONTENT_COMPLETE_MS - PROFILE_CHROME_EARLY_LEAD_MS,
@@ -4674,6 +4675,15 @@ const PROFILE_SECTION_ENTER_S = 0.342;
 const PROFILE_TITLE_DELAY_S = 0.152;
 const PROFILE_HERO_ENTER_S = 0.52;
 const PROFILE_LINE_DURATION_S = RED_LINE_DURATION_MS / 1000;
+/**
+ * PROFILE main header + red rule — same resume-card land family as SKILLS green /
+ * PROJECTS yellow mains (matched duration + EASE.out; y = 21).
+ */
+const PROFILE_MAIN_MOTION_DUR_S = SUMMARY_DURATION_S * 1.5 * 0.9 * (0.95 * 0.975);
+const PROFILE_HEADER_ENTER_DUR_S = PROFILE_MAIN_MOTION_DUR_S;
+const PROFILE_HEADER_ENTER_Y = 21;
+const PROFILE_ACCENT_LINE_DUR_S = PROFILE_MAIN_MOTION_DUR_S;
+const PROFILE_ACCENT_LINE_EASE = EASE.out;
 /** Vertical air around metadata pill (red rule → pill → summary card). */
 const PROFILE_METADATA_PILL_GAP = "mt-3";
 /** Shared width + left nudge for PROFILE red rule and card stack (pill + summary). */
@@ -4993,9 +5003,11 @@ const PhantomProfile = ({
                color="text-white"
                showBar={false}
                compact
-               className="!mb-3 max-lg:mt-0 lg:mt-0 -ml-[3px] max-sm:translate-y-[2px]"
+               className="!mb-3 max-lg:mt-0 lg:mt-0 -ml-[3px]"
+               titleClassName="max-sm:translate-y-[2px]"
                slideFade
-               slideFadeDuration={0.5}
+               slideFadeDuration={PROFILE_HEADER_ENTER_DUR_S}
+               slideFadeY={PROFILE_HEADER_ENTER_Y}
                slideFadeDelay={0}
                slideFadeActive={profileHeaderSlide}
                titleStatic
@@ -5006,15 +5018,19 @@ const PhantomProfile = ({
              >
                <motion.span
                  aria-hidden
-                className="absolute bottom-0 left-0.5 right-0 h-[2px] origin-left"
+                className="absolute bottom-0 left-0.5 right-0 h-[2px]"
                 style={
                   portfolioDebugEnabled
-                    ? profileRedLineSpanDebugStyle
-                    : { backgroundColor: PROFILE_ACCENT_SOFT }
+                    ? { ...profileRedLineSpanDebugStyle, transformOrigin: "left center" }
+                    : { backgroundColor: PROFILE_ACCENT_SOFT, transformOrigin: "left center" }
                 }
                  initial={false}
                  animate={{ scaleX: profileRedLineLocked ? 1 : 0 }}
-                 transition={{ duration: RED_LINE_DURATION_MS / 1000, delay: 0, ease: [0.16, 1, 0.3, 1] }}
+                 transition={{
+                   duration: PROFILE_ACCENT_LINE_DUR_S,
+                   delay: 0,
+                   ease: PROFILE_ACCENT_LINE_EASE,
+                 }}
                />
             </div>
             <div className="max-sm:translate-y-px">
@@ -10409,8 +10425,8 @@ const SKILLS_ROW2_START_OVERLAP = 0.84;
 /** Global multiplier for SKILLS section entrance delays + durations (lower = faster). Shared with main-menu chrome timing. */
 const SKILLS_ENTRANCE_SPEED = (0.95 / 1.2705) * 0.95;
 const skillsEntranceS = (seconds: number) => (seconds * SKILLS_ENTRANCE_SPEED) / SKILLS_ANIM_SPEED;
-/** Skills page only — delay offsets; cumulative speed-ups (incl. latest +2.5%). */
-const SKILLS_PAGE_SPEED = 0.95 * 0.975;
+/** Skills page only — delay offsets; cumulative speed-ups (incl. latest +5%). */
+const SKILLS_PAGE_SPEED = 0.95 * 0.975 * 0.95;
 const SKILLS_PAGE_ENTRANCE_SPEED = (SKILLS_ENTRANCE_SPEED / 1.1) * SKILLS_PAGE_SPEED;
 const skillsPageEntranceS = (seconds: number) =>
   (seconds * SKILLS_PAGE_ENTRANCE_SPEED) / SKILLS_ANIM_SPEED;
@@ -12436,31 +12452,6 @@ export default function Home() {
   useEffect(() => {
     if (currentSection !== "skills") setSkillsContentFade("visible");
   }, [currentSection]);
-
-  useEffect(() => {
-    const isEditableTarget = (target: EventTarget | null) => {
-      if (!(target instanceof HTMLElement)) return false;
-      if (target.isContentEditable) return true;
-      const tag = target.tagName;
-      return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
-    };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.repeat || event.metaKey || event.ctrlKey || event.altKey) return;
-      if (isEditableTarget(event.target)) return;
-      const key = event.key.toLowerCase();
-      if (key === "l") {
-        event.preventDefault();
-        setShowSideNavExitDebugPanel((value) => !value);
-        return;
-      }
-      if (key === "b") {
-        event.preventDefault();
-        setShowTopNavBackDebugPanel((value) => !value);
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
 
   useEffect(() => {
     return () => {

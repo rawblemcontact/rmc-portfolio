@@ -4,32 +4,11 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import { metaImagesPlugin } from "./vite-plugin-meta-images";
 
-const locatorBabelJsxWindows = path.resolve(
-  import.meta.dirname,
-  "vite-plugins/locator-babel-jsx-windows.cjs",
-);
+// Locator babel plugin is kept in the repo but hard-disabled (not registered).
 
-export default defineConfig(({ mode }) => ({
+export default defineConfig({
   base: "/",
-  plugins: [
-    react({
-      babel: {
-        plugins:
-          mode === "development"
-            ? [
-                [
-                  locatorBabelJsxWindows,
-                  {
-                    env: "development",
-                  },
-                ],
-              ]
-            : [],
-      },
-    }),
-    tailwindcss(),
-    metaImagesPlugin(),
-  ],
+  plugins: [react(), tailwindcss(), metaImagesPlugin()],
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "src"),
@@ -73,4 +52,4 @@ export default defineConfig(({ mode }) => ({
       logOverride: { "this-is-undefined-in-esbuild": "silent" },
     },
   },
-}));
+});

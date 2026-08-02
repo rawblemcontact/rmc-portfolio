@@ -212,8 +212,14 @@
   animation-iteration-count: 1;
   /* animation-delay from each path's inline style */
 }
+/* Name letters + divider + tagline × seps — pure white (lock vs cream / export drift). */
+[data-hero-svg-root] [data-hero-name-letter],
+[data-hero-svg-root] [data-hero-tagline-sep] {
+  fill: #FFFFFF;
+}
 /* Divider rule — center-out scaleX; gated by data-hero-rule-animate (before name letters). */
 [data-hero-svg-root] [data-hero-name-rule] {
+  stroke: #FFFFFF;
   /* stroke-box: path is stroke-only (zero fill height); fill-box breaks origin on some engines. */
   transform-box: stroke-box;
   transform-origin: center;
@@ -1198,10 +1204,6 @@
     min-height: 100%;
   }
 
-  #skills.skills-entrance-live .skills-page-card-row {
-    will-change: transform, opacity;
-  }
-
   /* PROJECTS entrance — promote cards only; never will-change FEATURED WRITING
    * (dropping will-change mid-sequence causes a 1px compositor nudge). */
   #projects.projects-entrance-live .projects-main-card-entrance-slot {
@@ -1481,8 +1483,8 @@
   /* Primary — static glass border (no rainbow pulse); hover = wipe / text only */
   .playstore-button--primary {
     border-color: rgba(255, 255, 255, 0.14);
-    /* Match hero name SVG ink (#FFFAEE) — text + arrow via currentColor. */
-    color: #fffaee;
+    /* Match hero name SVG ink (#FFFFFF) — text + arrow via currentColor. */
+    color: #FFFFFF;
     /* Satoshi Medium — override inherited display Bold (700). */
     font-family: "Satoshi", sans-serif;
     font-weight: 500;
@@ -1492,7 +1494,7 @@
   .playstore-button--primary:hover,
   .playstore-button--primary:focus-visible,
   .playstore-button--primary:active {
-    color: #fffaee;
+    color: #FFFFFF;
     background-color: rgba(0, 0, 0, 0.42);
     box-shadow: none;
   }
@@ -2730,6 +2732,13 @@
     overflow: hidden;
   }
 
+  /* Desktop vertical rail — room for hover translateX; mobile/tablet strips keep overflow:hidden. */
+  @media (min-width: 1024px) {
+    #experience .experience-tab-btn-shell {
+      overflow: visible;
+    }
+  }
+
   #experience .tab-btn::before {
     display: none;
   }
@@ -3526,7 +3535,8 @@
     }
 
     #experience .tabs-nav {
-      padding: 0 0 20px;
+      /* Right pad = hover shift so translated tabs are not clipped by the rail edge. */
+      padding: 0 var(--career-tab-hover-shift) 20px 0;
       gap: 11px;
       border: 0;
       border-right: 0;
@@ -7723,6 +7733,18 @@
     gap: var(--skills-row-gap) !important;
   }
 
+  /*
+   * Desktop settle lock — keep bullet glyphs on a stable compositor layer so
+   * card-slot will-change / scale demotion does not re-snap text/icons.
+   */
+  #skills .skills-page-card-row,
+  #skills .skills-page-card-icon,
+  #skills .skills-page-card-icon svg {
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+
 }
 
 @media (min-width: 1024px) and (pointer: fine) and (min-height: 900px),
@@ -7926,7 +7948,7 @@
     min-width: 0 !important;
     max-width: none !important;
     box-sizing: border-box;
-    padding: 0 0 calc(20px * var(--experience-scale)) !important;
+    padding: 0 var(--career-tab-hover-shift) calc(20px * var(--experience-scale)) 0 !important;
     gap: calc(11px * var(--experience-scale)) !important;
     border: 0 !important;
     border-right: 0 !important;
