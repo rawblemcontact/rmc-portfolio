@@ -1048,41 +1048,115 @@
     border-radius: 4px;
   }
 
-  /* PROFILE card â€” metadata pill + in-card labels (SUMMARY, etc.) */
-  #profile .profile-card-surface > p.profile-card-inline-label {
+  /* PROFILE card — metadata pill + in-card labels (SUMMARY, etc.) */
+  #profile .profile-card-surface > p.profile-card-inline-label,
+  #profile .profile-summary-card-scroll > p.profile-card-inline-label {
     font-size: var(--section-eyebrow-font);
     line-height: var(--section-eyebrow-lh);
     letter-spacing: var(--section-eyebrow-tracking);
     font-weight: 700;
   }
 
-  #profile .profile-card-surface > p.profile-card-inline-label:first-of-type {
+  #profile .profile-card-surface > p.profile-card-inline-label:first-of-type,
+  #profile .profile-summary-card-scroll > p.profile-card-inline-label:first-of-type {
     color: var(--section-eyebrow-muted);
   }
 
-  #profile .profile-card-surface > p.profile-card-inline-label.profile-card-section-label {
+  #profile .profile-card-surface > p.profile-card-inline-label.profile-card-section-label,
+  #profile .profile-summary-card-scroll > p.profile-card-inline-label.profile-card-section-label {
     font-size: clamp(0.82rem, calc(0.2vw + 0.77rem), 0.9rem);
     line-height: 1.24;
     letter-spacing: 0.07em;
     font-weight: 700;
   }
 
-  #profile .profile-card-surface > p.font-body {
+  #profile .profile-card-surface > p.font-body,
+  #profile .profile-summary-card-scroll > p.font-body {
     font-size: clamp(0.875rem, calc(0.35vw + 0.78rem), 1rem);
     line-height: 1.45;
   }
 
-  #profile .profile-card-surface > ul.font-body {
+  #profile .profile-card-surface > ul.font-body,
+  #profile .profile-summary-card-scroll > ul.font-body {
     font-size: clamp(0.875rem, calc(0.35vw + 0.78rem), 1rem);
     line-height: 1.45;
   }
 
   @media (min-width: 640px) {
     #profile .profile-card-surface > p.font-body,
-    #profile .profile-card-surface > ul.font-body {
+    #profile .profile-card-surface > ul.font-body,
+    #profile .profile-summary-card-scroll > p.font-body,
+    #profile .profile-summary-card-scroll > ul.font-body {
       font-size: clamp(0.9375rem, calc(0.42vw + 0.8rem), 1.0625rem);
       line-height: 1.5;
     }
+  }
+
+  /*
+   * PROFILE summary card — desktop + tablet landscape only.
+   * max-height is measured from a hidden pre–content-pass baseline (inline style).
+   * Mobile + tablet portrait: natural height, no internal scroll.
+   */
+  @media (min-width: 1024px) and (pointer: fine),
+    (min-width: 1367px),
+    ((min-width: 768px) and (max-width: 1366px) and (orientation: landscape)) {
+    #profile .profile-summary-card.profile-card-height-locked {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #profile .profile-summary-card.profile-card-height-locked .profile-summary-card-scroll-shell {
+      display: flex;
+      min-height: 0;
+      flex: 1 1 auto;
+      flex-direction: column;
+    }
+
+    #profile .profile-summary-card-scroll {
+      min-height: 0;
+      flex: 1 1 auto;
+      overflow-x: hidden;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+
+  /* Soft cutoff mask — slightly gentler than before; toggled off at scroll end via JS. */
+  .content-cutoff-fade {
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 91%,
+      rgba(0, 0, 0, 0.72) 96%,
+      rgba(0, 0, 0, 0.2) 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 91%,
+      rgba(0, 0, 0, 0.72) 96%,
+      rgba(0, 0, 0, 0.2) 100%
+    );
+  }
+
+  /* FEATURED WRITING — fade hugs the very bottom edge so Tools lines stay clear at rest. */
+  .featured-writing-description.content-cutoff-fade {
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 97.5%,
+      rgba(0, 0, 0, 0.7) 99%,
+      rgba(0, 0, 0, 0.25) 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 97.5%,
+      rgba(0, 0, 0, 0.7) 99%,
+      rgba(0, 0, 0, 0.25) 100%
+    );
   }
 
   /**
@@ -6580,22 +6654,6 @@
   #projects.projects-slaywire-detail-open
     .video-editing-detail-meta-card
     .video-editing-detail-card-tabpanel {
-    -webkit-mask-image: linear-gradient(
-      to bottom,
-      #000 0%,
-      #000 81%,
-      rgba(0, 0, 0, 0.5) 90%,
-      rgba(0, 0, 0, 0) 97%,
-      rgba(0, 0, 0, 0) 100%
-    );
-    mask-image: linear-gradient(
-      to bottom,
-      #000 0%,
-      #000 81%,
-      rgba(0, 0, 0, 0.5) 90%,
-      rgba(0, 0, 0, 0) 97%,
-      rgba(0, 0, 0, 0) 100%
-    );
     position: relative;
   }
 
@@ -7206,22 +7264,6 @@
   #projects.projects-slaywire-detail-open
     .video-editing-detail-meta-card
     .video-editing-detail-card-tabpanel {
-    -webkit-mask-image: linear-gradient(
-      to bottom,
-      #000 0%,
-      #000 81%,
-      rgba(0, 0, 0, 0.5) 90%,
-      rgba(0, 0, 0, 0) 97%,
-      rgba(0, 0, 0, 0) 100%
-    );
-    mask-image: linear-gradient(
-      to bottom,
-      #000 0%,
-      #000 81%,
-      rgba(0, 0, 0, 0.5) 90%,
-      rgba(0, 0, 0, 0) 97%,
-      rgba(0, 0, 0, 0) 100%
-    );
     position: relative;
   }
 
@@ -7507,7 +7549,8 @@
     color: color-mix(in srgb, var(--color-mono-2) 68%, transparent) !important;
   }
 
-  #projects .featured-writing-content-col > p:not(.featured-writing-item-title):not(.featured-writing-item-subtitle) {
+  #projects .featured-writing-content-col > p:not(.featured-writing-item-title):not(.featured-writing-item-subtitle),
+  #projects .featured-writing-description {
     font-size: var(--projects-type-body) !important;
     line-height: 1.45 !important;
   }

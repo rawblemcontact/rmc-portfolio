@@ -26,6 +26,7 @@ import React, {
   type ReactNode,
 } from "react";
 import { createPortal, flushSync } from "react-dom";
+import { useCutoffScrollFade } from "../lib/useCutoffScrollFade";
 import { Button } from "../components/ui/button";
 import { FillIcon } from "../components/FillIcon";
 import { ProfileDesktopLayoutDebugPanel } from "../components/ProfileDesktopLayoutDebugPanel";
@@ -4692,7 +4693,7 @@ const PROFILE_CARD_COLUMN =
 /** Metadata pill + in-card section labels (SUMMARY, etc.) — paired with `#profile` CSS. */
 const PROFILE_CARD_INLINE_LABEL_CLASS =
   "profile-card-inline-label font-heading w-full min-w-0 max-w-full text-balance leading-snug uppercase";
-/** Slightly stronger hierarchy for red in-card labels (SUMMARY/CURRENT WORK/AVAILABILITY). */
+/** Slightly stronger hierarchy for red in-card labels (SUMMARY/CURRENT WORK/AREAS OF INTEREST/AVAILABILITY). */
 const PROFILE_CARD_SECTION_LABEL_CLASS = `${PROFILE_CARD_INLINE_LABEL_CLASS} profile-card-section-label`;
 /** Tablet band (768–1366px) — mascot must be in-layout before panel open; no whileInView entrance. */
 const PROFILE_TABLET_MIN_PX = 768;
@@ -4703,6 +4704,11 @@ const matchesProfileTabletViewport = () =>
   window.matchMedia(`(min-width: ${PROFILE_TABLET_MIN_PX}px) and (max-width: ${PROFILE_TABLET_MAX_PX}px)`).matches;
 const matchesProfileDesktopDebugViewport = () =>
   typeof window !== "undefined" && window.matchMedia(`(min-width: ${PROFILE_DESKTOP_DEBUG_MIN_PX}px)`).matches;
+/** Desktop + tablet landscape — lock PROFILE card heights to pre–content-pass footprint. */
+const PROFILE_CARD_HEIGHT_LOCK_MQ =
+  "((min-width: 1024px) and (pointer: fine)), (min-width: 1367px), ((min-width: 768px) and (max-width: 1366px) and (orientation: landscape))";
+const matchesProfileCardHeightLock = () =>
+  typeof window !== "undefined" && window.matchMedia(PROFILE_CARD_HEIGHT_LOCK_MQ).matches;
 
 const PhantomProfile = ({
   panelSettled = true,
@@ -4726,6 +4732,14 @@ const PhantomProfile = ({
   const [profileDesktopViewport, setProfileDesktopViewport] = useState(
     matchesProfileDesktopDebugViewport,
   );
+  const [profileCardHeightLock, setProfileCardHeightLock] = useState(matchesProfileCardHeightLock);
+  const [profileSummaryCardMaxH, setProfileSummaryCardMaxH] = useState<number | null>(null);
+  const profileSummaryBaselineRef = useRef<HTMLDivElement>(null);
+  const {
+    scrollRef: profileSummaryScrollRef,
+    showFade: profileSummaryCutoffFade,
+    updateFade: updateProfileSummaryCutoffFade,
+  } = useCutoffScrollFade(profileSummaryCardMaxH != null);
   const [profileDesktopLayoutDebugValues, setProfileDesktopLayoutDebugValues] =
     useState<ProfileDesktopLayoutDebugValues>(() => readSectionDesktopLayoutDebugValues("profile"));
   const [profileRedLineDebugValues, setProfileRedLineDebugValues] =
@@ -4757,6 +4771,39 @@ const PhantomProfile = ({
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
   }, []);
+
+  useEffect(() => {
+    const mq = window.matchMedia(PROFILE_CARD_HEIGHT_LOCK_MQ);
+    const onChange = () => setProfileCardHeightLock(mq.matches);
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!profileCardHeightLock) {
+      setProfileSummaryCardMaxH(null);
+      return;
+    }
+
+    let cancelled = false;
+    const measure = () => {
+      if (cancelled) return;
+      const sumH = profileSummaryBaselineRef.current?.offsetHeight ?? 0;
+      setProfileSummaryCardMaxH(sumH > 0 ? sumH : null);
+      requestAnimationFrame(() => updateProfileSummaryCutoffFade());
+    };
+
+    measure();
+    void document.fonts?.ready?.then(() => {
+      measure();
+    });
+    window.addEventListener("resize", measure);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("resize", measure);
+    };
+  }, [profileCardHeightLock, profileDesktopLayoutDebugValues, updateProfileSummaryCutoffFade]);
 
   const profileDesktopLayoutActive = profileDesktopViewport && !profileTabletViewport;
   const profileDesktopDebugActive = portfolioDebugEnabled && profileDesktopLayoutActive;
@@ -5033,7 +5080,35 @@ const PhantomProfile = ({
                  }}
                />
             </div>
-            <div className="max-sm:translate-y-px">
+            <div className="relative max-sm:translate-y-px">
+              {profileCardHeightLock ? (
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute inset-x-0 top-0 w-full"
+                  style={{ visibility: "hidden", height: 0, overflow: "hidden" }}
+                >
+                  <div
+                    ref={profileSummaryBaselineRef}
+                    className="profile-card-surface relative w-full rounded-[4px] px-4 py-4 sm:px-5 sm:py-5"
+                    style={{ position: "absolute", left: 0, right: 0, top: 0 }}
+                  >
+                    <p className={`${PROFILE_CARD_SECTION_LABEL_CLASS} mb-1.5`} style={{ color: PROFILE_ACCENT_SOFT }}>SUMMARY</p>
+                    <p className="font-body text-mono-2 leading-relaxed mb-4">
+                    Communications-focused writer, editor and digital media coordinator with proven experience producing narrative-driven web content and managing social
+                    media workflows across multiple platforms. Bachelor of Arts in Writing (Distinction), University of Victoria.
+                    </p>
+                    <p className={`${PROFILE_CARD_SECTION_LABEL_CLASS} mb-1.5`} style={{ color: PROFILE_ACCENT_SOFT }}>CURRENT WORK</p>
+                    <ul className="font-body text-mono-2 leading-relaxed mb-4 ml-3 list-disc list-outside space-y-2 pl-6 sm:pl-7 marker:text-mono-2/50">
+                      <li>RAWBLEM - Independent creative brand producing story-driven written, video, and interactive content across TikTok, Instagram Reels, YouTube Shorts, and more.</li>
+                      <li>SLAYWIRE - Self-produced original narrative IP.</li>
+                    </ul>
+                    <p className={`${PROFILE_CARD_SECTION_LABEL_CLASS} mb-1.5`} style={{ color: PROFILE_ACCENT_SOFT }}>AVAILABILITY</p>
+                    <ul className="font-body text-mono-2 leading-relaxed ml-3 list-disc list-outside space-y-2 pl-6 sm:pl-7 marker:text-mono-2/50">
+                      <li>Full-Time Content, Communications, or Social Media roles.</li>
+                    </ul>
+                  </div>
+                </div>
+              ) : null}
               <motion.div
                 className={`profile-card-surface relative ${PROFILE_METADATA_PILL_GAP} w-full rounded-[4px] px-4 py-4 sm:px-5 sm:py-5`}
                 style={profileRedLinePillDebugStyle}
@@ -5047,48 +5122,62 @@ const PhantomProfile = ({
                   </div>
                   <div className="h-12 w-px shrink-0 bg-white/[0.1] sm:h-14" aria-hidden />
                   <div className="min-w-0 flex-1 space-y-1 text-left">
-                    <div className="flex min-w-0 items-start justify-between gap-3">
-                      <p className="min-w-0 flex-1 font-display text-base leading-tight tracking-[-0.01em] text-white sm:text-lg">
-                        ROBBIE MCLAUGHLIN
-                      </p>
-                      <p
-                        className="profile-card-inline-label shrink-0 pt-0.5 text-right text-[0.68rem] leading-snug tracking-[0.06em] whitespace-nowrap uppercase sm:text-xs"
-                        style={{ color: NAV_SUBHEAD_GRAY }}
-                      >
-                        VICTORIA, BC
-                      </p>
-                    </div>
+                    <p className="min-w-0 font-display text-base leading-tight tracking-[-0.01em] text-white sm:text-lg">
+                      ROBBIE MCLAUGHLIN
+                    </p>
                     <p className={`${PROFILE_CARD_INLINE_LABEL_CLASS} text-[0.68rem] sm:text-xs tracking-[0.06em]`} style={{ color: NAV_SUBHEAD_GRAY }}>
-                      WRITING, CONTENT PRODUCTION, &amp; SOCIAL MEDIA
+                      WRITER, CONTENT PRODUCTION, &amp; SOCIAL MEDIA
                     </p>
                     <p className={`${PROFILE_CARD_INLINE_LABEL_CLASS} text-[0.68rem] sm:text-xs tracking-[0.06em]`} style={{ color: NAV_SUBHEAD_GRAY }}>
                       B.A. WRITING
+                    </p>
+                    <p className={`${PROFILE_CARD_INLINE_LABEL_CLASS} text-[0.68rem] sm:text-xs tracking-[0.06em]`} style={{ color: NAV_SUBHEAD_GRAY }}>
+                      VICTORIA, BC
                     </p>
                   </div>
                 </div>
               </motion.div>
               <motion.div
-                className={`profile-card-surface relative ${PROFILE_METADATA_PILL_GAP} w-full rounded-[4px] px-4 py-4 sm:px-5 sm:py-5`}
+                className={`profile-card-surface profile-summary-card relative ${PROFILE_METADATA_PILL_GAP} w-full rounded-[4px] px-4 py-4 sm:px-5 sm:py-5${
+                  profileSummaryCardMaxH != null ? " profile-card-height-locked" : ""
+                }`}
+                style={profileSummaryCardMaxH != null ? { maxHeight: profileSummaryCardMaxH } : undefined}
                 initial={{ opacity: 0, y: 14 }}
                 animate={{ opacity: overlayRevealed ? 1 : 0, y: overlayRevealed ? 0 : 14 }}
                 transition={{ duration: SUMMARY_DURATION_S, delay: overlayRevealed ? PROFILE_CARD2_DELAY_S : 0, ease: [0.16, 1, 0.3, 1] }}
               >
+                <div className="profile-summary-card-scroll-shell relative min-h-0 min-w-0 flex-1">
+                <div
+                  ref={profileSummaryScrollRef as React.RefObject<HTMLDivElement | null>}
+                  className={`profile-summary-card-scroll no-scrollbar min-h-0 min-w-0${
+                    profileSummaryCutoffFade ? " content-cutoff-fade" : ""
+                  }`}
+                >
                 <p className={`${PROFILE_CARD_SECTION_LABEL_CLASS} mb-1.5`} style={{ color: PROFILE_ACCENT_SOFT }}>SUMMARY</p>
                 <p className="font-body text-mono-2 leading-relaxed mb-4">
-                Communications-focused writer, editor and digital media coordinator with proven experience producing narrative-driven web content and managing social
+                Writer, editor, and digital media producer specialized in narrative-driven web content and coordinating social
                 media workflows across multiple platforms. Bachelor of Arts in Writing (Distinction), University of Victoria.
                 </p>
                 <p className={`${PROFILE_CARD_SECTION_LABEL_CLASS} mb-1.5`} style={{ color: PROFILE_ACCENT_SOFT }}>CURRENT WORK</p>
                 <ul className="font-body text-mono-2 leading-relaxed mb-4 ml-3 list-disc list-outside space-y-2 pl-6 sm:pl-7 marker:text-mono-2/50">
-                  <li>RAWBLEM - Independent creative brand producing story-driven written, video, and interactive content across TikTok, Instagram Reels, YouTube Shorts, and more.</li>
+                  <li><em>RAWBLEM</em> - Independent creative brand producing story-focused written, video, and interactive content across TikTok, Instagram Reels, YouTube Shorts, and more.</li>
                   <li>
-                  SLAYWIRE - Self-produced original narrative IP.
+                  <em>SLAYWIRE</em> - Self-produced original narrative IP.
                   </li>
+                </ul>
+                <p className={`${PROFILE_CARD_SECTION_LABEL_CLASS} mb-1.5`} style={{ color: PROFILE_ACCENT_SOFT }}>AREAS OF INTEREST</p>
+                <ul className="font-body text-mono-2 leading-relaxed mb-4 ml-3 list-disc list-outside space-y-2 pl-6 sm:pl-7 marker:text-mono-2/50">
+                  <li>Content Strategy</li>
+                  <li>Digital Communications</li>
+                  <li>Creative Production and Technology</li>
                 </ul>
                 <p className={`${PROFILE_CARD_SECTION_LABEL_CLASS} mb-1.5`} style={{ color: PROFILE_ACCENT_SOFT }}>AVAILABILITY</p>
                 <ul className="font-body text-mono-2 leading-relaxed ml-3 list-disc list-outside space-y-2 pl-6 sm:pl-7 marker:text-mono-2/50">
                   <li>Full-Time Content, Communications, or Social Media roles.</li>
+                  <li>On-site, Remote, or Hybrid.</li>
                 </ul>
+                </div>
+                </div>
               </motion.div>
             </div>
             </div>
@@ -5165,7 +5254,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
   {
     id: "project-visual-design",
     title: "VISUAL DESIGN",
-    tagline: "Graphic design, illustration and branding.",
+    tagline: "Graphic design, illustration, and branding.",
     thumbnail: "/illustrations/illustrations-charger.png",
     focalPoint: "50% 42%",
     detailGallery: [
@@ -5174,7 +5263,8 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         src: "/illustrations/illustrations-charger.png",
         alt: "CHARGER - SLAYWIRE Concept Art (2023)",
         caption: "CHARGER - SLAYWIRE Concept Art (2023)",
-        artistStatement: "Digital-ink style illustration for the lead protagonist of SLAYWIRE.\n\nTools: Procreate and Photoshop.",
+        artistStatement:
+          "Digital-ink style illustration for the lead protagonist of SLAYWIRE. Blends an anime aesthetic with dark mechanical texture and typography.\n\n<em>\"WITHOUT A CHARGER,\nA MACHINE IS NOTHING.\"</em>\n\nTools: Procreate and Photoshop.",
         focalPoint: "50% 42%",
       },
       {
@@ -5182,7 +5272,8 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         src: "/illustrations/illustrations-fragment.png",
         alt: "FRAGMENT - SLAYWIRE Concept Art (2023)",
         caption: "FRAGMENT - SLAYWIRE Concept Art (2023)",
-        artistStatement: "Digital-ink style illustration for the main antagonist of SLAYWIRE.\n\nTools: Procreate and Photoshop.",
+        artistStatement:
+          "Digital-ink style illustration for the lead antagonist of SLAYWIRE. Features shattered typography and fractured geometry.\n\n<em>\"WE ALL BEGIN\nAND WE SHALL ALL END\nIN FRAGMENTS\"</em>\n\nTools: Procreate and Photoshop.",
         focalPoint: "50% 45%",
       },
       {
@@ -5190,7 +5281,8 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         src: "/illustrations/illustrations-wisely.png",
         alt: "WISELY - SLAYWIRE Concept Art (2023)",
         caption: "WISELY - SLAYWIRE Concept Art (2023)",
-        artistStatement: "Digital-ink style illustration for a key character in SLAYWIRE.\n\nTools: Procreate and Photoshop.",
+        artistStatement:
+          "Digital-ink style illustration for SLAYWIRE's antihero. Merges cloaked fabric and metallic texture to achieve a unique expression of contrast.\n\n<em>\"O, CHILD.\nI CAN ONLY HOPE.\nYOU WERE NOT ONCE.\nLIKE ME.\nREST NOW.\nAND MAY YOUR IRON SLEEP.\nWITHOUT A FEELING.\"</em>\n\nTools: Procreate and Photoshop.",
         focalPoint: "50% 42%",
       },
       {
@@ -5198,7 +5290,8 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         src: "/illustrations/illustrations-star-fox.png",
         alt: "SPACE ANIMAL - Illustration (2023)",
         caption: "SPACE ANIMAL - Illustration (2023)",
-        artistStatement: "Digital Ink style homage to Star Fox (1993).\n\nThis is a noncommerical and transformative project. All trademarks and copyrights belong to their respective owners.\n\nTools: Clip Studio Paint.",
+        artistStatement:
+          "Digital-ink style homage to Star Fox (1993). Featuring the subject centered in profile; framed in the character's signature hexagonal \"shine\" pattern. Certain visual elements break past the framing and out into the larger canvas to communicate visual depth.\n\n<em>This is a noncommercial and transformative project. All trademarks and copyrights belong to their respective owners.</em>\n\nTools: Clip Studio Paint.",
         focalPoint: "50% 50%",
       },
       {
@@ -5214,7 +5307,8 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         src: "/illustrations/illustrations-slaywire.png",
         alt: "SLAYWIRE - Promotional Illustration (2022)",
         caption: "SLAYWIRE - Promotional Illustration (2022)",
-        artistStatement: "Digital-ink and texture brush artwork featuring DE, a key character in SLAYWIRE.\n\nTools: Procreate and Photoshop",
+        artistStatement:
+          "Digital-ink and textured brush artwork featuring DE, a key character in SLAYWIRE.\n\n<em>\"AM I...ERROR?\"</em>\n\nTools: Procreate and Photoshop",
         focalPoint: "50% 45%",
       },
       {
@@ -5222,7 +5316,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         src: "/illustrations/illustrations-dish-cat.png",
         alt: "DISHCAT - Illustration (2024)",
         caption: "DISHCAT - Illustration (2024)",
-        artistStatement: "Commissioned work for an individual client.\n\nTools: Clip Studio Paint",
+        artistStatement: "Commissioned work for an individual client. Monochrome palette and conservative linework used to emphasize a minimalist feel.\n\nTools: Clip Studio Paint",
         focalPoint: "50% 50%",
       },
       {
@@ -5231,7 +5325,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         alt: "Vancouver Island Melee - Poster Design (2020)",
         caption: "Vancouver Island Melee - Poster Design (2020)",
         artistStatement:
-          "Designed for the Vancouver Island UVIC E-Sports Community.\n\nManually captured in-game snapshots to capture dynamic poses for each character featured in this work, using Dolphin Emulator + an in-game greenscreen hack and an owned copy of Super Smash Bros. Melee for the Nintendo Gamecube (Nintendo, 2001).\n\nThis is a noncommerical and transformative project. All trademarks and copyrights belong to their respective owners.\n\nTools: Photoshop, GIMP\n\nSubtools: Dolphin Emulator, Screenshot Tools, Debug Background Colors Mod (UnclePunch, 2020)",
+          "Designed for the Vancouver Island UVic E-Sports Community.\n\nManually captured in-game snapshots to capture dynamic poses for each character featured in this work, using Dolphin Emulator + an in-game greenscreen hack and an owned copy of Super Smash Bros. Melee for the Nintendo GameCube (Nintendo, 2001).\n\nCombines splatter-paint strokes with strong drop shadows to yield a pop-up book style of expression.\n\n<em>This is a noncommercial and transformative project. All trademarks and copyrights belong to their respective owners.</em>\n\nTools: Photoshop, GIMP\n\nSubtools: Dolphin Emulator, Screenshot Tools, Debug Background Colors Mod (UnclePunch, 2020)",
         focalPoint: "50% 42%",
       },
       {
@@ -5240,7 +5334,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         alt: "Vancouver Island Melee - Poster Design (2020)",
         caption: "Vancouver Island Melee - Poster Design (2020)",
         artistStatement:
-          "Designed for the Vancouver Island UVIC E-Sports Community.\n\nA visual homage to Pokémon Emerald (2005) and its famous gym leader ranking system. Implemented as both a creative and functional solution to a four-person tie for the seasons's final rankings.\n\nUses in-game character models and background references, but each featured character in this design was recreated and modified by hand, using a 1px brush in Photoshop, dot by dot.\n\nAll re-models and re-designs visually resemble each ranked competitors likeness (with permission).\n\nThis is a noncommerical and transformative project. All trademarks and copyrights belong to their respective owners.\n\nTools: Photoshop, GIMP",
+          "Designed for the Vancouver Island UVic E-Sports Community.\n\nA visual homage to Pokémon Emerald (2005) and its famous gym leader ranking system. Implemented as both a creative and functional solution to a four-person tie for the season's final ranking results.\n\nUses in-game character models and background references, but each featured character in this design was recreated and modified by hand, using a 1px brush in Photoshop, dot by dot.\n\nAll re-models and re-designs visually resemble each competitor's likeness (with permission).\n\n<em>This is a noncommercial and transformative project. All trademarks and copyrights belong to their respective owners.</em>\n\nTools: Clip Studio Paint, Photoshop/GIMP, Inkscape and Figma (for SVG formats).",
         focalPoint: "50% 38%",
       },
       {
@@ -5291,13 +5385,15 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         label: "1",
         thumbnailSrc: "/edits-meme1-online-poster.jpg",
         selectorTitle: "RAWBLEM",
-        selectorSubtitle: "Social Media Ad",
+        selectorSubtitle: "Promotional Announcement (2025)",
         selectorDuration: "0:20",
         detailOverview:
-          "Comedic open with an immediate visual hook and subtitle-first framing to land context in under one second.",
-        detailRole: "Cut direction, beat timing, and caption hierarchy.",
-        detailTools: ["CapCut", "DaVinci Resolve"],
-        detailImpact: "Higher watch-through in the first 3 seconds with cleaner joke setup.",
+          "Short-form video content produced to increase engagement on the RAWBLEM Instagram account, using my own digital artwork as the subject.\n\nFeatures:\n- 9:16 mobile friendly aspect ratio\n- 60FPS animation\n- Rotating/scaling 3D motion effects\n- Dynamic video backgrounds\n- Color and filter effects (e.g., Motion blur, chromatic aberration, etc.)\n- Animated CTA (call to action) buttons and typography.",
+        detailRole:
+          "Independent\nCreative Director\nProducer\nWriter\nDigital Artist\nVideo Editor\nSocial Media Coordinator",
+        detailTools: ["CapCut", "Instagram Performance Insights"],
+        detailImpact:
+          "Completed and published on November 28th, 2025.\nTop-performing post on Instagram.\nSubstantial increase in profile views and followers gained, and overall account growth.\nIncreased sales of commercial RAWBLEM merch.\n\n<em>The featured design in this project is an unofficial fan work, and is not available for purchase.\nAll trademarks and copyrights belong to their respective owners.</em>",
       },
       {
         id: "video-edit-2",
@@ -5305,13 +5401,15 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         label: "2",
         thumbnailSrc: "/rawblem-thumbnail-poster.jpg",
         selectorTitle: "RAWBLEM",
-        selectorSubtitle: "Meme-Style Brand Ad",
+        selectorSubtitle: "Meme-Style Promotional Announcement (2025)",
         selectorDuration: "0:30",
         detailOverview:
-          "Reaction-led pacing pass focused on hit-point trims, dead-air removal, and stronger frame-to-frame rhythm.",
-        detailRole: "Pacing pass, pacing QA, and social-safe export prep.",
-        detailTools: ["DaVinci Resolve", "CapCut"],
-        detailImpact: "Tighter mid-section flow and fewer drop-offs across transition moments.",
+          "Short-form video content produced to increase engagement on the RAWBLEM Instagram, TikTok, YouTube Shorts, and online storefront.\nEmphasizes using internet meme absurdism and humor. Uses my own digital artwork as the subject.\n\nFeatures:\n- 60FPS Animation\n- 4K Resolution\n- 9:16 mobile friendly aspect ratio\n- Rotating/scaling/zooming/camera shake motion effects\n- Exaggerated scene transitions and bold typography\n- Timed to music",
+        detailRole:
+          "Independent\nCreative Director\nProducer\nWriter\nDigital Artist\nVideo Editor\nSocial Media Coordinator",
+        detailTools: ["CapCut", "Procreate", "Clip Studio Paint", "GIMP/Photoshop"],
+        detailImpact:
+          "Completed and published on November 23rd, 2025.\nIncreased sales of commercial RAWBLEM merch.\nIncreased unique visitors to RAWBLEM storefront following launch.\nStrengthened brand awareness and identity through a distinct and consistent artstyle.",
       },
       {
         id: "video-edit-3",
@@ -5322,24 +5420,26 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         selectorSubtitle: "Comedy/Horror Short Film",
         selectorDuration: "0:45",
         detailOverview:
-          "Text-forward variation tuned for mute autoplay with larger type, safer contrast, and clearer callouts.",
-        detailRole: "Caption design system and legibility balancing.",
-        detailTools: ["CapCut", "Typography overlays"],
-        detailImpact: "Improved message clarity for silent viewers and thumbnail-to-content continuity.",
+          "Undergraduate film project. Directed by Eliza Musselwhite and Written by Johnny Cole.\n<em>Wes must face his fear of scary movies to save Ellie from an endless-nightmare-horror-film-death loop.</em>\n\nFeatures:\n- 30FPS\n- 16:9 YouTube-friendly aspect ratio\n- Keyframed animation\n- Campy horror-themed aesthetic and sound\n- Intense camera-shake motion effects\n- Fast-paced TV static VFX and transitions\n- Color correction",
+        detailRole: "Video Editor\nMusic and Sound Effect Curator + Mixer",
+        detailTools: ["DaVinci Resolve", "Audacity"],
+        detailImpact:
+          "Completed and published April 8th, 2023.\nSuccessfully implemented a multi-stage editorial workflow while meeting all deadlines (e.g., assembly cut -> refined cut [audio and color correction pass] -> final cut)\nStrengthened skills and familiarity with tools in DaVinci Resolve (e.g., output blanking, dynamic pan, chroma keys, and LUTs).",
       },
       {
         id: "video-edit-4",
         url: "/8bit-festival-thumbnail.jpg",
         label: "4",
         thumbnailSrc: "/8bit-festival-thumbnail.jpg",
-        selectorTitle: "M.P.M.R",
-        selectorSubtitle: "Comedy/Psychological Short Film",
+        selectorTitle: "ANIMATION BREAKDOWN - SHINING RING",
+        selectorSubtitle: "Tutorial-style content",
         selectorDuration: "0:38",
         detailOverview:
-          "Ending re-cut with payoff-first sequencing and cleaner audio punch for stronger loop potential.",
-        detailRole: "Final polish, sound sync, and export optimization.",
-        detailTools: ["DaVinci Resolve", "CapCut"],
-        detailImpact: "Stronger final beat and better replay intent at the outro.",
+          "A frame-by-frame look at a 14-frame animation created for the release of <em>UNDERTALE: Forever Home Edition</em>.\n\nFeatures:\n- 60FPS\n- 4K Resolution\n- 9:16 mobile-friendly aspect ratio\n- Handcrafted pixel animation\n- 8-bit style typography\n- Timed to music",
+        detailRole: "Independent\nVideo Editor\nAnimator\nSocial Media Coordinator",
+        detailTools: ["DaVinci Resolve", "OBS Studio", "GameMaker Studio 2"],
+        detailImpact:
+          "Completed and published November 15th, 2025.\nDiversified RAWBLEM brand identity by introducing tutorial-style content to viewers for the first time.\nStrengthened visual communication by expressing the animation in both frame-by-frame and normal playback.",
       },
       {
         id: "video-edit-5",
@@ -5374,7 +5474,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
   {
     id: "project-interactive-media",
     title: "INTERACTIVE MEDIA",
-    tagline: "Web design, game dev, and animation.",
+    tagline: "Web design, game development, and animation.",
     thumbnail: "/portfolio-website-thumbnail-v2-poster.jpg",
     poster: "/portfolio-website-thumbnail-v2-poster.jpg",
     focalPoint: "50% 38%",
@@ -5389,52 +5489,65 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "/portfolio-website-thumbnail-v2-poster.jpg",
         label: "UNDERTALE FHE",
         thumbnailSrc: "/portfolio-website-thumbnail-v2-poster.jpg",
-        selectorTitle: "UNDERTALE FHE",
-        selectorSubtitle: "Games projects and web experiences",
+        selectorTitle: "UNDERTALE: FOREVER HOME EDITION (2025)",
+        selectorSubtitle: "Video Game",
         detailOverview:
-          "Playable and interactive work?from GameMaker prototypes to motion-forward web UI?where feel, pacing, and user flow are the design problem.",
-        detailRole: "Design, implementation, and iteration across game and front-end builds.",
-        detailTools: ["GameMaker Studio 2", "React", "Vite", "TypeScript", "Framer Motion"],
-        detailImpact: "Shippable slices with tight feedback loops and interfaces that reward exploration.",
+          "UNDERTALE - FOREVER HOME EDITION (UTFHE) is a narrative-driven game based on UNDERTALE by Toby Fox.\nThis was created to propose to my girlfriend and was completed over a one-year development period. She said YES!\n\nSince UNDERTALE is a game about choice-based outcomes, and happens to be my fiancé's favourite, it proved the perfect candidate for this project.\n\n<em>When the Underground is overhauled by an unknown entity, a lone girl faces one of the most important decisions of her life.</em>\n\nFeatures:\n- Heavy rewriting of the original game\n- Handcrafted pixel animations\n- Heavily edited visual assets\n- Brand new characters\n- Brand new cutscenes\n- Brand new explorable areas\n- Narrative driven mechanics (e.g. Multiple endings, choices matter, etc.)\n- Multiple endings\n- Social media promotional campaign\n- Full playability on PC (Windows)\n- Full video playthrough and YouTube release.\n\n<em>This is a noncommercial, transformative project created for educational and entertainment purposes.\nIt is not affiliated with, endorsed by, or sponsored by Toby Fox or any other rights holders.\nSome third-party assets have been modified or adapted for use in this project.\nNo copyright infringement is intended.</em>\n\n<em>Full credits available in the YouTube video description.</em>",
+        detailRole:
+          "Independent\nCreative Director\nWriter\nProducer\nProgrammer\nGame Developer\nVideo Editor\nAnimator\nSocial Media Coordinator",
+        detailTools: ["GameMaker Studio 2", "DaVinci Resolve", "CapCut", "OBS Studio", "Audacity"],
+        detailImpact:
+          "100,000+ combined viewers across TikTok, YouTube, and Instagram.\nSuccessfully managed all workflows independently from concept -> game development -> video production -> promotion\nTop performing posts across all RAWBLEM social media platforms.\nLed to professional work opportunities following the project's public release.\nGot engaged.",
       },
       {
         id: "interactive-media-2",
         url: "/portfolio-website-thumbnail-v2-poster.jpg",
-        label: "INTERACTIVE MEDIA",
+        label: "FugitiveFilms 1",
         thumbnailSrc: "/portfolio-website-thumbnail-v2-poster.jpg",
-        selectorTitle: "INTERACTIVE MEDIA",
-        selectorSubtitle: "Games projects and web experiences",
+        selectorTitle: "Animation for FugitiveFilms - 1 of 2 (2026)",
+        selectorSubtitle: "Commissioned Work",
         detailOverview:
-          "Playable and interactive work?from GameMaker prototypes to motion-forward web UI?where feel, pacing, and user flow are the design problem.",
-        detailRole: "Design, implementation, and iteration across game and front-end builds.",
-        detailTools: ["GameMaker Studio 2", "React", "Vite", "TypeScript", "Framer Motion"],
-        detailImpact: "Shippable slices with tight feedback loops and interfaces that reward exploration.",
+          "Handcrafted pixel animation for DOGBALL, produced by FugitiveFilms for the CineVic Presenter Series: Art for Art's Sake.\nThis project was created over a one-month development period.\n\nFeatures:\n- All original pixel artwork and animation\n- 8-bit retro-game style aesthetic\n- 16:9 YouTube-friendly aspect ratio\n- 4K resolution\n- Sound Effects - curated, modified, and mixed",
+        detailRole: "Animator\nCreative Lead (animation only)\nVideo Editor (animation only)",
+        detailTools: ["Aseprite (Animation Software)", "CapCut", "OBS Studio"],
+        detailImpact:
+          "3000+ combined views across all RAWBLEM social media platforms.\n97% Audience Retention on YouTube Shorts\nPremiered at The Roxy Theatre with strong positive audience reception.\nSuccessfully managed all relevant workflows from animation production -> video editing",
       },
       {
         id: "interactive-media-3",
         url: "/portfolio-website-thumbnail-v2-poster.jpg",
-        label: "INTERACTIVE MEDIA",
+        label: "FugitiveFilms 2",
         thumbnailSrc: "/portfolio-website-thumbnail-v2-poster.jpg",
-        selectorTitle: "INTERACTIVE MEDIA",
-        selectorSubtitle: "Games projects and web experiences",
+        selectorTitle: "Animation for FugitiveFilms - 2 of 2 (2026)",
+        selectorSubtitle: "Commissioned Work",
         detailOverview:
-          "Playable and interactive work?from GameMaker prototypes to motion-forward web UI?where feel, pacing, and user flow are the design problem.",
-        detailRole: "Design, implementation, and iteration across game and front-end builds.",
-        detailTools: ["GameMaker Studio 2", "React", "Vite", "TypeScript", "Framer Motion"],
-        detailImpact: "Shippable slices with tight feedback loops and interfaces that reward exploration.",
+          "Handcrafted pixel animation for DOGBALL, produced by FugitiveFilms for the CineVic Presenter Series: Art for Art's Sake.\nThis project was created over a one-month development period.\n\nFeatures:\n- All original pixel artwork and animation\n- 8-bit retro-game style aesthetic\n- 16:9 YouTube-friendly aspect ratio\n- 4K Resolution\n- Sound Effects - curated, modified, and mixed",
+        detailRole: "Animator\nCreative Lead (animation only)\nVideo Editor (animation only)",
+        detailTools: ["Aseprite (Animation Software)", "CapCut", "OBS Studio"],
+        detailImpact:
+          "3000+ combined views across all RAWBLEM social media platforms.\n97% Audience Retention on YouTube Shorts\nPremiered at The Roxy Theatre with strong positive audience reception.\nSuccessfully managed all relevant workflows from animation production -> video editing",
       },
       {
         id: "interactive-media-4",
         url: "/portfolio-website-thumbnail-v2-poster.jpg",
-        label: "INTERACTIVE MEDIA",
+        label: "RAWBLEM.COM",
         thumbnailSrc: "/portfolio-website-thumbnail-v2-poster.jpg",
-        selectorTitle: "INTERACTIVE MEDIA",
-        selectorSubtitle: "Games projects and web experiences",
+        selectorTitle: "RAWBLEM.COM (2026)",
+        selectorSubtitle: "Portfolio Website",
         detailOverview:
-          "Playable and interactive work?from GameMaker prototypes to motion-forward web UI?where feel, pacing, and user flow are the design problem.",
-        detailRole: "Design, implementation, and iteration across game and front-end builds.",
-        detailTools: ["GameMaker Studio 2", "React", "Vite", "TypeScript", "Framer Motion"],
-        detailImpact: "Shippable slices with tight feedback loops and interfaces that reward exploration.",
+          "Portfolio website showcasing selected works and career highlights across multiple disciplines, including writing, content production, and social media.\nThis project was completed over a six-month development period.\n\nCombined my existing knowledge of coding and design with agentic AI-assisted tools to create a fully-realized portfolio experience.\n\nDisplays a minimalist and modern editorial motif featuring a 5-color design theme (red, yellow, blue, green, violet)\n\nFeatures:\n- Single-page application with fluid client-side navigation (eliminates full page-reloads to enhance user experience)\n- Modern, minimalist editorial motif featuring a 5-color design theme (red, yellow, blue, green, violet).\n- Fully navigable Main Menu and Side Menu with 5 explorable sections.\n- Responsive viewport-specific designs for desktop, mobile, and tablet.\n- 60fps interactive web elements using Framer Motion (page transitions, CTA buttons, text, etc.)\n- Featured Writing Showcase: Tab System\n- Built-in Lightbox Gallery\n- Built-in Media Player\n- Built-in PDF Reader",
+        detailRole: "Creative Director\nVisual Designer\nWeb Developer (Assisted by Cursor AI)\nContent Writer",
+        detailTools: [
+          "Tech Stack: Vite 7",
+          "React 19",
+          "TypeScript",
+          "Tailwind CSS v4",
+          "Framer Motion",
+          "npm",
+          "Software: Cursor + VS Code",
+        ],
+        detailImpact:
+          "Completed and launched in August 2026.\nSuccessfully launched a central hub for all portfolio content outside of social media platforms.\nImproved skills with Agentic Ai IDEs",
       },
     ],
   },
@@ -5445,62 +5558,102 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     thumbnail: "/slaywire-thumbnail.png",
     focalPoint: "50% 40%",
     detailOverview:
-      "Original long-form illustrated narrative?worldbuilding, cast, and visual development for a standalone graphic novel.",
-    detailRole: "Writer, illustrator, and world/visual development.",
-    detailTools: ["Digital illustration", "Layout & print-minded pacing"],
-    detailImpact: "A durable IP bible and finished spreads that support pitching and incremental publishing.",
+      "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
+    detailRole:
+      "Creative Director\nGame Developer\nWriter\nAnimator\nVisual artist\nComposer",
+    detailTools: [
+      "GameMaker Studio 2 or Godot",
+      "Clip Studio Paint",
+      "Procreate",
+      "Photoshop/GIMP",
+      "Aseprite",
+      "FamiTracker (Music Composition Software)",
+    ],
+    detailImpact: "Active Development (2023 - Present)",
     detailVideos: [
       {
         id: "slaywire-cover",
         url: "/slaywire-thumbnail.png",
         label: "1",
         thumbnailSrc: "/slaywire-thumbnail.png",
-        selectorTitle: "SLAYWIRE",
-        selectorSubtitle: "Cover art",
+        selectorTitle: "",
+        selectorSubtitle: "",
         detailOverview:
-          "Original long-form illustrated narrative—worldbuilding, cast, and visual development for a standalone graphic novel.",
-        detailRole: "Writer, illustrator, and world/visual development.",
-        detailTools: ["Digital illustration", "Layout & print-minded pacing"],
-        detailImpact: "A durable IP bible and finished spreads that support pitching and incremental publishing.",
+          "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
+        detailRole:
+          "Creative Director\nGame Developer\nWriter\nAnimator\nVisual artist\nComposer",
+        detailTools: [
+          "GameMaker Studio 2 or Godot",
+          "Clip Studio Paint",
+          "Procreate",
+          "Photoshop/GIMP",
+          "Aseprite",
+          "FamiTracker (Music Composition Software)",
+        ],
+        detailImpact: "Active Development (2023 - Present)",
       },
       {
         id: "slaywire-de",
         url: "/illustrations/illustrations-slaywire.png",
         label: "2",
         thumbnailSrc: "/illustrations/illustrations-slaywire.png",
-        selectorTitle: "DE",
-        selectorSubtitle: "Character illustration",
+        selectorTitle: "",
+        selectorSubtitle: "",
         detailOverview:
-          "Digital-ink and texture brush artwork featuring DE, a key character in SLAYWIRE—cast design tied to the larger narrative bible.",
-        detailRole: "Character design, rendering, and promotional illustration.",
-        detailTools: ["Procreate", "Photoshop"],
-        detailImpact: "Anchor visual for pitching character-led moments in the IP.",
+          "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
+        detailRole:
+          "Creative Director\nGame Developer\nWriter\nAnimator\nVisual artist\nComposer",
+        detailTools: [
+          "GameMaker Studio 2 or Godot",
+          "Clip Studio Paint",
+          "Procreate",
+          "Photoshop/GIMP",
+          "Aseprite",
+          "FamiTracker (Music Composition Software)",
+        ],
+        detailImpact: "Active Development (2023 - Present)",
       },
       {
         id: "slaywire-world",
         url: "/slaywire-thumbnail.png",
         label: "3",
         thumbnailSrc: "/slaywire-thumbnail.png",
-        selectorTitle: "WORLD",
-        selectorSubtitle: "Visual development",
+        selectorTitle: "",
+        selectorSubtitle: "",
         detailOverview:
-          "Mood, palette, and layout exploration for print-minded pacing—spreads built to read on the page, not just on screen.",
-        detailRole: "Worldbuilding visuals and spread composition.",
-        detailTools: ["Digital illustration", "Layout & print-minded pacing"],
-        detailImpact: "Cohesive art direction that scales from pitch deck to finished chapter work.",
+          "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
+        detailRole:
+          "Creative Director\nGame Developer\nWriter\nAnimator\nVisual artist\nComposer",
+        detailTools: [
+          "GameMaker Studio 2 or Godot",
+          "Clip Studio Paint",
+          "Procreate",
+          "Photoshop/GIMP",
+          "Aseprite",
+          "FamiTracker (Music Composition Software)",
+        ],
+        detailImpact: "Active Development (2023 - Present)",
       },
       {
         id: "slaywire-promo",
         url: "/illustrations/illustrations-slaywire.png",
         label: "4",
         thumbnailSrc: "/illustrations/illustrations-slaywire.png",
-        selectorTitle: "PROMO",
-        selectorSubtitle: "Promotional illustration",
+        selectorTitle: "",
+        selectorSubtitle: "",
         detailOverview:
-          "Digital-ink and texture brush artwork featuring DE—a pitch-ready promo piece tied to the SLAYWIRE cast and world bible.",
-        detailRole: "Promotional illustration and IP-facing visual assets.",
-        detailTools: ["Procreate", "Photoshop"],
-        detailImpact: "Reusable promo art for decks, social, and incremental publishing beats.",
+          "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
+        detailRole:
+          "Creative Director\nGame Developer\nWriter\nAnimator\nVisual artist\nComposer",
+        detailTools: [
+          "GameMaker Studio 2 or Godot",
+          "Clip Studio Paint",
+          "Procreate",
+          "Photoshop/GIMP",
+          "Aseprite",
+          "FamiTracker (Music Composition Software)",
+        ],
+        detailImpact: "Active Development (2023 - Present)",
       },
     ],
   },
@@ -5597,7 +5750,7 @@ const SUPPORTING_ARCHIVE_PDF_ITEMS: SupportingArchivePdfItem[] = [
     subtitle: "Robbie McLaughlin",
     href: "/cnf/example-1-article.pdf",
     description:
-      "An interactive article, exploring the integration of the visual novel format with the gene creative nonfiction. Uses the limitations of written format to highlight the strengths of interactivity to tell real stories.",
+      "An interactive persuasive article, exploring the integration of the visual novel format with the genre of creative nonfiction. Uses limitations of the written format to highlight interactivity, and its ability to enhance the reader's experience, while keeping the content grounded in truth.",
   },
   {
     id: "cnf-media-literary",
@@ -5605,7 +5758,7 @@ const SUPPORTING_ARCHIVE_PDF_ITEMS: SupportingArchivePdfItem[] = [
     subtitle: "Robbie McLaughlin",
     href: "/cnf/example-2-media-literary-analysis.pdf",
     description:
-      "A written analysis on Omori: An indie psychological-horror game developed by OMOCAT (2020). Explores the title's utilization of horror through its medium, and the use of game mechanics to destigmatize mental health.",
+      "A written analysis on <em>Omori</em>: An indie psychological-horror game developed by OMOCAT (2020). Explores how horror elements and narrative-based game mechanics can be used to destigmatize mental health disorders.",
   },
   {
     id: "cnf-critical-essay",
@@ -5613,14 +5766,14 @@ const SUPPORTING_ARCHIVE_PDF_ITEMS: SupportingArchivePdfItem[] = [
     subtitle: "Robbie McLaughlin",
     href: "/cnf/example-3-critical-literary-essay.pdf",
     description:
-      "A structural breakdown of Séamas O'Reilly's award-winning memoir: Did Ye Hear Mammy Died? A closer look into the author's craft and technique in creative nonfiction."
+      "A structural breakdown of Séamas O'Reilly's award-winning memoir: <em>Did Ye Hear Mammy Died?</em> A closer look into the author's craft and technique in creative nonfiction.",
   },
   {
     id: "cnf-memoir",
     title: " Way of the Frog: Amphibious Meditations",
     subtitle: "Robbie McLaughlin (2023)",
     href: "/cnf/example-4-memoir.pdf",
-    description: "A reflection of a small frog's enlightenment, discussing anthropomorphism, mortality, and reincarnation."
+    description: "Reflections of a small frog's supposed enlightenment. Discusses anthropomorphism, mortality, and reincarnation.",
   },
 ];
 
@@ -5632,7 +5785,7 @@ const SCREENPLAY_PDF_ITEMS: SupportingArchivePdfItem[] = [
     subtitle: "Robbie McLaughlin",
     href: "/screenplays/audience-of-one-robbie-mclaughlin.pdf",
     description:
-      "Atop Peach Hill Cemetery, an aging detective must stop a disturbed sock puppeteer's fatal final act.",
+      "Atop Peach Hill Cemetery, a grieving detective must stop a disturbed sock puppeteer's fatal final act.\n\nTools: Arc Studio (Screenwriting Software)\n\nFormat: Short Film\nGenre: Psychological, film noir, dark fantasy.",
   },
   {
     id: "screenplay-rock-paper-promise",
@@ -5657,7 +5810,7 @@ const SHORT_GRAPHIC_NOVEL_PDF_ITEMS: SupportingArchivePdfItem[] = [
     subtitle: "Robbie McLaughlin",
     href: "/short-graphic-novels/blossom-ink-bw.pdf",
     description:
-      "A walking, talking tree comes to terms with his addiction to lighting himself on fire.",
+      "A walking, talking tree who speaks exclusively in poetics comes to terms with his addiction to lighting himself on fire.\n\nTools: Arc Studio (Screenwriting Software), Clip Studio Paint",
   },
   {
     id: "sgn-writ405-final",
@@ -7185,11 +7338,23 @@ const ShowcaseIllustrationLightbox = ({
     emblaApi?.scrollNext();
   }, [emblaApi]);
 
-  const renderToolsUnderlinedText = useCallback((text: string) => {
-    const parts = text.split(/(Tools)/gi);
-    return parts.map((part, index) =>
-      /^tools$/i.test(part) ? <span key={`${part}-${index}`} className="underline">{part}</span> : part,
-    );
+  const renderArtistStatementText = useCallback((text: string) => {
+    const parts = text.split(/(<em>[\s\S]*?<\/em>)/g);
+    return parts.map((part, index) => {
+      const emMatch = /^<em>([\s\S]*?)<\/em>$/.exec(part);
+      if (emMatch) {
+        return (
+          <em key={`em-${index}`} className="whitespace-pre-line">
+            {emMatch[1]}
+          </em>
+        );
+      }
+      return (
+        <span key={`txt-${index}`} className="whitespace-pre-line">
+          {part}
+        </span>
+      );
+    });
   }, []);
 
   useEffect(() => {
@@ -7370,13 +7535,21 @@ const ShowcaseIllustrationLightbox = ({
                     const text = paragraph.trim();
                     const toolsMatch = text.match(/^(Tools|Subtools):(.*)/is);
                     const isDisclaimer = /^This is a non\w*commercial/i.test(text);
+                    const isFullyEmWrapped = /^<em>[\s\S]*<\/em>$/.test(text);
                     return (
-                      <p key={paragraphIndex}>
+                      <p key={paragraphIndex} className="whitespace-pre-line">
                         {toolsMatch ? (
-                          <><span className="font-semibold underline">{renderToolsUnderlinedText(toolsMatch[1])}:</span>{renderToolsUnderlinedText(toolsMatch[2])}</>
-                        ) : isDisclaimer ? (
-                          <em>{renderToolsUnderlinedText(text)}</em>
-                        ) : renderToolsUnderlinedText(text)}
+                          <>
+                            <span className="font-semibold underline">{toolsMatch[1]}:</span>
+                            {toolsMatch[2]}
+                          </>
+                        ) : isFullyEmWrapped || isDisclaimer ? (
+                          <em className="whitespace-pre-line">
+                            {text.replace(/^<em>|<\/em>$/g, "")}
+                          </em>
+                        ) : (
+                          renderArtistStatementText(text)
+                        )}
                       </p>
                     );
                   })}
@@ -7554,6 +7727,21 @@ const ShowcaseDetailImpactTools = ({ card }: { card: ShowcaseProjectCard }) => (
   </div>
 );
 
+function renderInlineEmMarkup(text: string) {
+  const parts = text.split(/(<em>[\s\S]*?<\/em>)/g);
+  return parts.map((part, index) => {
+    const emMatch = /^<em>([\s\S]*?)<\/em>$/.exec(part);
+    if (emMatch) {
+      return <em key={`em-${index}`}>{emMatch[1]}</em>;
+    }
+    return <span key={`txt-${index}`}>{part}</span>;
+  });
+}
+
+function stripInlineEmMarkup(text: string) {
+  return text.replace(/<\/?em>/g, "");
+}
+
 function ShowcaseWritingFeaturedPanel({
   item,
   previewWidthPx,
@@ -7565,6 +7753,16 @@ function ShowcaseWritingFeaturedPanel({
   onOpenPdfInSupporting: (item: SupportingArchivePdfItem) => void;
   measureOnly?: boolean;
 }) {
+  const {
+    scrollRef: featuredDescScrollRef,
+    showFade: featuredDescCutoffFade,
+    updateFade: updateFeaturedDescCutoffFade,
+  } = useCutoffScrollFade(Boolean(item.description?.trim()) && !measureOnly);
+
+  useLayoutEffect(() => {
+    updateFeaturedDescCutoffFade();
+  }, [item.id, item.description, previewWidthPx, updateFeaturedDescCutoffFade]);
+
   return (
     <div className="featured-writing-panel-body flex w-full min-w-0 max-w-full flex-col gap-3 text-left sm:flex-row sm:items-start sm:gap-4">
       {measureOnly ? (
@@ -7600,10 +7798,13 @@ function ShowcaseWritingFeaturedPanel({
         </div>
         {item.description ? (
           <p
-            className="line-clamp-4 min-w-0 font-body text-sm leading-relaxed text-mono-2/70 sm:line-clamp-3 sm:text-[0.9375rem] sm:leading-relaxed md:text-base"
-            title={item.description}
+            ref={featuredDescScrollRef as React.RefObject<HTMLParagraphElement | null>}
+            className={`featured-writing-description no-scrollbar min-w-0 max-h-[5.8rem] overflow-y-auto overscroll-y-contain whitespace-pre-line font-body text-sm leading-relaxed text-mono-2/70 sm:max-h-[4.5rem] sm:text-[0.9375rem] sm:leading-relaxed md:text-base${
+              featuredDescCutoffFade ? " content-cutoff-fade" : ""
+            }`}
+            title={stripInlineEmMarkup(item.description)}
           >
-            {item.description}
+            {renderInlineEmMarkup(item.description)}
           </p>
         ) : null}
       </div>

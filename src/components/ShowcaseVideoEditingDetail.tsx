@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type Ref } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import Plyr from "plyr";
 import type { Options as PlyrOptions } from "plyr";
 import "plyr/dist/plyr.css";
 import { directionalArrowIdlePhaseDelaySec } from "@/lib/motion";
+import { useCutoffScrollFade } from "@/lib/useCutoffScrollFade";
 
 export type ShowcaseDetailVideo = {
   readonly id: string;
@@ -195,6 +196,22 @@ const DETAIL_CARD_TAB_LABEL: Record<DetailCardTabId, string> = {
   tools: "TOOLS",
 };
 
+function detailCardTabLabel(tabId: DetailCardTabId, isSlaywire: boolean) {
+  if (isSlaywire && tabId === "impact") return "STATUS";
+  return DETAIL_CARD_TAB_LABEL[tabId];
+}
+
+function renderDetailInlineEm(text: string) {
+  const parts = text.split(/(<em>[\s\S]*?<\/em>)/g);
+  return parts.map((part, index) => {
+    const emMatch = /^<em>([\s\S]*?)<\/em>$/.exec(part);
+    if (emMatch) {
+      return <em key={`em-${index}`}>{emMatch[1]}</em>;
+    }
+    return <span key={`txt-${index}`}>{part}</span>;
+  });
+}
+
 /** Move `nextTabId` to index 0; the previous first tab takes its vacated slot. */
 function swapDetailTabToFront(
   order: readonly DetailCardTabId[],
@@ -221,27 +238,6 @@ const DETAIL_TAB_BODY_IN_S = 0.24;
 const DETAIL_TAB_BODY_IN_DELAY_S = Math.max(0, DETAIL_TAB_SWAP_DUR_S - DETAIL_TAB_BODY_OUT_S);
 /** Yellow underline draw / retract — same length as tab FLIP; starts only after position settles. */
 const DETAIL_TAB_UNDERLINE_DUR_MS = Math.round(DETAIL_TAB_SWAP_DUR_S * 1000);
-
-/** iPad landscape filler — sized to fill the tab card down to the video player bottom. */
-const IPAD_DETAIL_CARD_LOREM: Record<DetailCardTabId, string> = {
-  overview:
-    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.\n\nDuis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\n\nInteger vitae justo eget magna fermentum iaculis eu non diam. Pharetra diam sit amet nisl suscipit adipiscing bibendum est ultricies. Dictumst quisque sagittis purus sit amet volutpat consequat mauris nunc.\n\nMorbi tincidunt ornare massa eget egestas purus viverra accumsan. Nisl rhoncus mattis rhoncus urna neque viverra justo nec ultrices. Amet nisl suscipit adipiscing bibendum est ultricies integer quis.",
-  role:
-    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lectus magna fringilla urna porttitor rhoncus dolor purus non enim.\n\nPraesent elementum facilisis leo vel fringilla est ullamcorper eget nulla. Nunc scelerisque viverra mauris in aliquam sem fringilla ut. Eget nullam non nisi est sit amet facilisis magna etiam.\n\nViverra nam libero justo laoreet sit amet cursus sit. Mattis ullamcorper velit sed ullamcorper morbi tincidunt ornare massa eget.\n\nFeugiat in fermentum posuere urna nec tincidunt praesent semper feugiat. Tellus mauris a diam maecenas sed enim ut sem. Tristique et egestas quis ipsum suspendisse ultrices gravida dictum fusce.",
-  impact:
-    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Facilisis volutpat est velit egestas dui id ornare arcu odio. Semper auctor neque vitae tempus quam pellentesque nec nam.\n\nTurpis egestas maecenas pharetra convallis posuere morbi leo urna molestie. Amet venenatis urna cursus eget nunc scelerisque viverra mauris. Id ornare arcu odio ut sem nulla pharetra diam.\n\nSit amet nisl suscipit adipiscing bibendum est ultricies integer. Volutpat ac tincidunt vitae semper quis lectus nulla at volutpat.\n\nElit eget gravida cum sociis natoque penatibus et magnis dis. Faucibus ornare suspendisse sed nisi lacus sed viverra tellus. Netus et malesuada fames ac turpis egestas integer eget aliquet.",
-  tools:
-    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ultrices gravida dictum fusce ut placerat orci nulla pellentesque dignissim.\n\nEnim ut tellus elementum sagittis vitae et leo duis ut. Aenean et tortor at risus viverra adipiscing at in. Tempus imperdiet nulla malesuada pellentesque elit eget gravida cum sociis.",
-};
-
-const IPAD_DETAIL_TOOLS_LOREM = [
-  "Lorem ipsum dolor sit",
-  "Consectetur adipiscing elit",
-  "Sed do eiusmod tempor",
-  "Ut labore et dolore magna",
-  "Quis nostrud exercitation",
-  "Ullamco laboris nisi",
-] as const;
 
 function matchesProjectsTabbedDetailViewport() {
   return typeof window !== "undefined" && window.matchMedia(PROJECTS_TABBED_DETAIL_MQ).matches;
@@ -280,6 +276,11 @@ export function ShowcaseVideoEditingDetail({
    * `null` = no bar (mid-transition after deselection).
    */
   const [underlineTabId, setUnderlineTabId] = useState<DetailCardTabId | null>("overview");
+  const {
+    scrollRef: detailTabpanelScrollRef,
+    showFade: detailTabpanelCutoffFade,
+    updateFade: updateDetailTabpanelCutoffFade,
+  } = useCutoffScrollFade(true);
   const underlineActiveTabRef = useRef<DetailCardTabId>("overview");
   const [detailCardMinHeightPx, setDetailCardMinHeightPx] = useState<number | null>(null);
   const detailRootRef = useRef<HTMLDivElement | null>(null);
@@ -328,6 +329,16 @@ export function ShowcaseVideoEditingDetail({
     setUnderlineTabId("overview");
     underlineActiveTabRef.current = "overview";
   }, [activeVideoIndex, card.id]);
+
+  useLayoutEffect(() => {
+    updateDetailTabpanelCutoffFade();
+  }, [
+    activeDetailCardTab,
+    activeVideoIndex,
+    card.id,
+    isIpadLandscapeViewport,
+    updateDetailTabpanelCutoffFade,
+  ]);
 
   useEffect(() => {
     if (reduceMotion) {
@@ -764,7 +775,9 @@ export function ShowcaseVideoEditingDetail({
 
   const safeIndex = Math.min(activeVideoIndex, videos.length - 1);
   const activeVideo = videos[safeIndex] ?? videos[0];
-  const activeSelectorTitle = activeVideo.selectorTitle?.trim() || activeVideo.label || "Selected work";
+  const activeSelectorTitle =
+    activeVideo.selectorTitle?.trim() ||
+    (isSlaywire ? card.title : activeVideo.label || "Selected work");
   const activeSelectorSubtitle = activeVideo.selectorSubtitle?.trim() || "";
   const activeDetails = {
     detailOverview: activeVideo.detailOverview?.trim() || card.detailOverview?.trim() || "?",
@@ -811,23 +824,59 @@ export function ShowcaseVideoEditingDetail({
     if (tabId === "overview") {
       return (
         <p className="m-0 whitespace-pre-line font-body text-sm leading-snug text-mono-2 sm:text-base">
-          {activeDetails.detailOverview}
+          {renderDetailInlineEm(activeDetails.detailOverview)}
         </p>
       );
     }
 
     if (tabId === "role") {
+      const roleLines = activeDetails.detailRole
+        .split(/\n+/)
+        .map((line) => line.trim())
+        .filter(Boolean);
+      if (roleLines.length > 1) {
+        return (
+          <ul className="ml-1 mb-0 list-disc list-outside space-y-1 pl-6 marker:text-mono-2/70 sm:pl-7">
+            {roleLines.map((line, index) => (
+              <li
+                key={`${line}-${index}`}
+                className="font-body text-sm leading-snug text-mono-2 sm:text-base"
+              >
+                {renderDetailInlineEm(line)}
+              </li>
+            ))}
+          </ul>
+        );
+      }
       return (
         <p className="m-0 whitespace-pre-line font-body text-sm leading-snug text-mono-2 sm:text-base">
-          {activeDetails.detailRole}
+          {renderDetailInlineEm(activeDetails.detailRole)}
         </p>
       );
     }
 
     if (tabId === "impact") {
+      const impactLines = activeDetails.detailImpact
+        .split(/\n+/)
+        .map((line) => line.trim())
+        .filter(Boolean);
+      if (impactLines.length > 1 || isSlaywire) {
+        return (
+          <ul className="ml-1 mb-0 list-disc list-outside space-y-1 pl-6 marker:text-mono-2/70 sm:pl-7">
+            {impactLines.map((line, index) => (
+              <li
+                key={`${line}-${index}`}
+                className="font-body text-sm leading-snug text-mono-2 sm:text-base"
+              >
+                {renderDetailInlineEm(line)}
+              </li>
+            ))}
+          </ul>
+        );
+      }
       return (
         <p className="m-0 whitespace-pre-line font-body text-sm leading-snug text-mono-2 sm:text-base">
-          {activeDetails.detailImpact}
+          {renderDetailInlineEm(activeDetails.detailImpact)}
         </p>
       );
     }
@@ -850,35 +899,7 @@ export function ShowcaseVideoEditingDetail({
     return <p className="m-0 font-body text-sm text-mono-2/55 sm:text-base">?</p>;
   };
 
-  const renderIpadDetailTabBody = (tabId: DetailCardTabId) => {
-    if (tabId === "tools") {
-      return (
-        <>
-          <p className="mb-2 whitespace-pre-line font-body text-sm leading-snug text-mono-2 sm:text-base">
-            {IPAD_DETAIL_CARD_LOREM.tools}
-          </p>
-          <ul className="ml-1 mb-0 list-disc list-outside space-y-1 pl-6 marker:text-mono-2/70 sm:pl-7">
-            {IPAD_DETAIL_TOOLS_LOREM.map((tool, index) => (
-              <li
-                key={`${tool}-${index}`}
-                className="font-body text-sm leading-snug text-mono-2 sm:text-base"
-              >
-                {tool}
-              </li>
-            ))}
-          </ul>
-        </>
-      );
-    }
-
-    return (
-      <p className="m-0 whitespace-pre-line font-body text-sm leading-snug text-mono-2 sm:text-base">
-        {IPAD_DETAIL_CARD_LOREM[tabId]}
-      </p>
-    );
-  };
-
-  const renderDetailCardTabBody = (tabId: DetailCardTabId, variant: "portrait" | "ipad") => (
+  const renderDetailCardTabBody = (tabId: DetailCardTabId, _variant: "portrait" | "ipad") => (
     <AnimatePresence mode="wait" initial={false}>
       <motion.div
         key={tabId}
@@ -906,7 +927,7 @@ export function ShowcaseVideoEditingDetail({
         }
         className="video-editing-detail-card-tab-body min-w-0"
       >
-        {variant === "ipad" ? renderIpadDetailTabBody(tabId) : renderPortraitDetailTabBody(tabId)}
+        {renderPortraitDetailTabBody(tabId)}
       </motion.div>
     </AnimatePresence>
   );
@@ -1042,7 +1063,7 @@ export function ShowcaseVideoEditingDetail({
               }}
             >
               <span className="relative inline-block w-max pb-2">
-                {DETAIL_CARD_TAB_LABEL[tabId]}
+                {detailCardTabLabel(tabId, isSlaywire)}
                 <span
                   className={`video-editing-detail-card-tab-underline pointer-events-none absolute inset-x-0 bottom-0 h-px origin-center bg-[color:var(--palette-yellow-projects)] ease-out ${
                     underlineActive ? "scale-x-100 opacity-100" : "scale-x-0 opacity-0"
@@ -1203,9 +1224,9 @@ export function ShowcaseVideoEditingDetail({
                   >
                     {videos.map((video, index) => {
                       const active = index === safeIndex;
-                      const selectorTitle = video.selectorTitle?.trim() || `Edit ${index + 1}`;
+                      const selectorTitle = video.selectorTitle?.trim() || (isSlaywire ? "" : `Edit ${index + 1}`);
                       const selectorSubtitle =
-                        video.selectorSubtitle?.trim() || (isSlaywire ? "Illustration" : "Video edit");
+                        video.selectorSubtitle?.trim() || (isSlaywire ? "" : "Video edit");
                       const selectorDuration = video.selectorDuration?.trim() || "";
                       return (
                         <div
@@ -1257,14 +1278,20 @@ export function ShowcaseVideoEditingDetail({
                               </span>
                             ) : null}
                           </span>
-                          <span className="video-editing-works-strip-thumb-caption">
-                            <span className="mt-1.5 block font-heading text-sm leading-tight uppercase text-white">
-                              {selectorTitle}
+                          {selectorTitle || selectorSubtitle ? (
+                            <span className="video-editing-works-strip-thumb-caption">
+                              {selectorTitle ? (
+                                <span className="mt-1.5 block font-heading text-sm leading-tight uppercase text-white">
+                                  {selectorTitle}
+                                </span>
+                              ) : null}
+                              {selectorSubtitle ? (
+                                <span className="mt-0.5 block font-body text-[12px] leading-tight text-mono-2">
+                                  {selectorSubtitle}
+                                </span>
+                              ) : null}
                             </span>
-                            <span className="mt-0.5 block font-body text-[12px] leading-tight text-mono-2">
-                              {selectorSubtitle}
-                            </span>
-                          </span>
+                          ) : null}
                         </div>
                       );
                     })}
@@ -1371,10 +1398,13 @@ export function ShowcaseVideoEditingDetail({
                       >
                         {renderDetailCardTabList()}
                         <div
+                          ref={detailTabpanelScrollRef as Ref<HTMLDivElement>}
                           role="tabpanel"
                           id={`video-detail-panel-${activeDetailCardTab}`}
                           aria-labelledby={`video-detail-tab-${activeDetailCardTab}`}
-                          className="video-editing-detail-card-tabpanel min-h-0 min-w-0 flex-1 overflow-y-auto no-scrollbar"
+                          className={`video-editing-detail-card-tabpanel min-h-0 min-w-0 flex-1 overflow-y-auto no-scrollbar${
+                            detailTabpanelCutoffFade ? " content-cutoff-fade" : ""
+                          }`}
                         >
                           <div className="video-editing-detail-card-tab-surface min-w-0">
                             {renderDetailCardTabBody(activeDetailCardTab, "ipad")}
@@ -1440,10 +1470,13 @@ export function ShowcaseVideoEditingDetail({
                     >
                       {renderDetailCardTabList()}
                       <div
+                        ref={detailTabpanelScrollRef as Ref<HTMLDivElement>}
                         role="tabpanel"
                         id={`video-detail-panel-${activeDetailCardTab}`}
                         aria-labelledby={`video-detail-tab-${activeDetailCardTab}`}
-                        className="video-editing-detail-card-tabpanel min-w-0"
+                        className={`video-editing-detail-card-tabpanel min-w-0${
+                          detailTabpanelCutoffFade ? " content-cutoff-fade" : ""
+                        }`}
                       >
                         <div className="video-editing-detail-card-tab-surface min-w-0 pt-1">
                           {renderDetailCardTabBody(activeDetailCardTab, "portrait")}
