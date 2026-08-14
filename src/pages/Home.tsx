@@ -120,6 +120,7 @@ import { ShowcaseVideoEditingDetail, type ShowcaseDetailVideo } from "../compone
 import { FeaturedWritingPdfThumbnail } from "../components/FeaturedWritingPdfThumbnail";
 import { SupportingPdfPreviewDialog } from "../components/SupportingPdfPreviewDialog";
 import robHeroSplitSvgRaw from "../assets/rob-hero-split.svg?raw";
+import heroVideoSrc from "../assets/hero1.mp4";
 import {
   SiHootsuite,
   SiInstagram,
@@ -1542,10 +1543,15 @@ const HERO_VIDEO_REVEAL_DELAY_MOBILE_EXTRA_S = 0;
 const HERO_SETTLE_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 /** scaleX reveal — no overshoot (y2 ≤ 1) so the card does not pop past full width at the end. */
 const HERO_VIDEO_SCALE_EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
-/** Beat after video scaleX open completes, before rise to final spot. */
-const HERO_VIDEO_CENTER_HOLD_MS = 300;
 /** Rise from viewport center → final layout Y. */
 const HERO_VIDEO_RISE_DUR_S = 0.55;
+/**
+ * Start the card rise this many seconds before the reel ends
+ * so the final frames play out during the rise.
+ */
+const HERO_VIDEO_RISE_BEFORE_END_S = 0.75;
+/** Fallback if media never reaches the early-rise mark (blocked play / missing duration). */
+const HERO_VIDEO_RISE_FALLBACK_MS = 20000;
 /** Rise ease — gentle ease-in at start, stronger ease-out at the end. */
 const HERO_VIDEO_RISE_EASE: [number, number, number, number] = [0.42, 0.0, 0.16, 1];
 /** Slide distance for PORTFOLIO entrance (negative = from the left). */
@@ -2823,6 +2829,9 @@ const Hero = ({
   /** Controlled scaleX for open → beat → rise sequencing (avoids React frame churn). */
   const videoScaleX = useMotionValue(0);
   const videoStackRef = useRef<HTMLDivElement>(null);
+  const heroVideoRef = useRef<HTMLVideoElement>(null);
+  /** True once open starts — keeps the reel playing through open/hold/rise. */
+  const [heroVideoShouldPlay, setHeroVideoShouldPlay] = useState(false);
   /** Computed final translateY after rise (mobile ROT nudge, else 0). */
   const videoFinalYRef = useRef(0);
   const videoEntranceGenRef = useRef(0);
@@ -2830,6 +2839,13 @@ const Hero = ({
   const videoOpenPinnedRef = useRef(false);
   /** True after open→beat→rise finished (or reduce-motion snap). */
   const videoEntranceSettledRef = useRef(false);
+
+  const startHeroVideoPlayback = useCallback(() => {
+    setHeroVideoShouldPlay(true);
+    const video = heroVideoRef.current;
+    if (!video) return;
+    void video.play().catch(() => undefined);
+  }, []);
   const desktopNameY = useMotionValue(0);
   const heroNameMotionRef = useRef<HTMLDivElement>(null);
   const [heroPhase1LayoutReady, setHeroPhase1LayoutReady] = useState(false);
@@ -2987,9 +3003,37 @@ const Hero = ({
     };
   }, []);
 
-  // Card shell only — no hero media to preload.
+  /** Preload enough media to avoid opening the card onto an unplayable black frame. */
   useEffect(() => {
-    setHeroMediaReady(true);
+    const video = document.createElement("video");
+    let settled = false;
+
+    video.preload = "auto";
+    video.muted = true;
+    video.playsInline = true;
+    video.src = heroVideoSrc;
+
+    const markReady = () => {
+      if (settled) return;
+      settled = true;
+      setHeroMediaReady(true);
+    };
+
+    if (video.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
+      markReady();
+    } else {
+      video.addEventListener("canplay", markReady, { once: true });
+      /* A failed media request must not trap the entire hero behind its readiness gate. */
+      video.addEventListener("error", markReady, { once: true });
+      video.load();
+    }
+
+    return () => {
+      video.removeEventListener("canplay", markReady);
+      video.removeEventListener("error", markReady);
+      video.removeAttribute("src");
+      video.load();
+    };
   }, []);
 
   useEffect(() => {
@@ -3022,7 +3066,7 @@ const Hero = ({
       setLockupFadeReady(true);
       return;
     }
-    /* Video opens at viewport center → beat → rise; SVG arms after rise completes. */
+    /* Video opens at viewport center → starts playback → beat → rise. */
     sliderPhaseActiveRef.current = true;
     setSliderPhaseActive(true);
     setVideoRevealActive(true);
@@ -3292,13 +3336,16 @@ const Hero = ({
   const heroLayoutReady = heroReady && heroPhase1LayoutReady;
 
   /**
-   * Video entrance: measure center open offset → scaleX open → hold → rise to finalY
-   * → then arm ROBBIE lockup. Transform-only via MotionValues.
+   * Video entrance: measure center open offset → start playback as scaleX open begins
+   * → stay centered until near end of reel → rise while final frames finish
+   * → arm ROBBIE lockup only after the reel has ended (final frames visible first).
+   * Transform-only via MotionValues.
    */
   useLayoutEffect(() => {
     if (!videoRevealActive) {
       videoOpenPinnedRef.current = false;
       videoEntranceSettledRef.current = false;
+      setHeroVideoShouldPlay(false);
       videoScaleX.set(0);
       videoEntranceY.set(0);
       setLockupFadeReady(false);
@@ -3313,6 +3360,7 @@ const Hero = ({
       videoEntranceSettledRef.current = true;
       videoScaleX.set(1);
       videoEntranceY.set(videoFinalYRef.current);
+      startHeroVideoPlayback();
       setLockupFadeReady(true);
       setSliderAnimDone(true);
       return;
@@ -3334,6 +3382,7 @@ const Hero = ({
     isMobileHeroLayout,
     mobileLockupWidthPx,
     reduceMotion,
+    startHeroVideoPlayback,
     videoEntranceY,
     videoScaleX,
   ]);
@@ -3345,35 +3394,136 @@ const Hero = ({
     if (!videoOpenPinnedRef.current || videoEntranceSettledRef.current) return;
 
     const gen = ++videoEntranceGenRef.current;
-    let holdTimer: number | null = null;
     let riseControl: { stop: () => void } | null = null;
+    let fallbackTimer: number | null = null;
+    let earlyRiseTimer: number | null = null;
+    let openComplete = false;
+    let playbackReadyForRise = false;
+    let playbackEnded = false;
+    let riseComplete = false;
+    let riseStarted = false;
+    let lockupArmed = false;
+
+    const armLockup = () => {
+      if (gen !== videoEntranceGenRef.current || lockupArmed) return;
+      /* Wait for rise settle + full reel so final frames read before text. */
+      if (!riseComplete || !playbackEnded) return;
+      lockupArmed = true;
+      setLockupFadeReady(true);
+    };
+
+    const beginRise = () => {
+      if (gen !== videoEntranceGenRef.current || riseStarted) return;
+      if (!openComplete || !playbackReadyForRise) return;
+      riseStarted = true;
+      if (fallbackTimer != null) {
+        window.clearTimeout(fallbackTimer);
+        fallbackTimer = null;
+      }
+      if (earlyRiseTimer != null) {
+        window.clearTimeout(earlyRiseTimer);
+        earlyRiseTimer = null;
+      }
+      const finalY = isMobileHeroLayout ? videoFinalYRef.current : 0;
+      riseControl = animate(videoEntranceY, finalY, {
+        duration: HERO_VIDEO_RISE_DUR_S,
+        ease: HERO_VIDEO_RISE_EASE,
+        onComplete: () => {
+          if (gen !== videoEntranceGenRef.current) return;
+          riseComplete = true;
+          videoEntranceSettledRef.current = true;
+          setSliderAnimDone(true);
+          armLockup();
+        },
+      });
+    };
+
+    const markPlaybackReadyForRise = () => {
+      if (gen !== videoEntranceGenRef.current) return;
+      playbackReadyForRise = true;
+      beginRise();
+    };
+
+    const markPlaybackEnded = () => {
+      if (gen !== videoEntranceGenRef.current) return;
+      playbackEnded = true;
+      /* If rise never armed (missing duration), allow rise on end. */
+      playbackReadyForRise = true;
+      beginRise();
+      armLockup();
+    };
+
+    const scheduleEarlyRiseFromDuration = (video: HTMLVideoElement) => {
+      if (!Number.isFinite(video.duration) || video.duration <= 0) return false;
+      const riseAt = Math.max(0, video.duration - HERO_VIDEO_RISE_BEFORE_END_S);
+      const remainingMs = Math.max(0, (riseAt - video.currentTime) * 1000);
+      if (earlyRiseTimer != null) window.clearTimeout(earlyRiseTimer);
+      earlyRiseTimer = window.setTimeout(() => {
+        markPlaybackReadyForRise();
+      }, remainingMs);
+      return true;
+    };
+
+    /* Start the reel as the card begins opening — don't wait for open to finish. */
+    startHeroVideoPlayback();
+
+    const video = heroVideoRef.current;
+    const onTimeUpdate = () => {
+      if (!video || gen !== videoEntranceGenRef.current) return;
+      if (!Number.isFinite(video.duration) || video.duration <= 0) return;
+      const riseAt = Math.max(0, video.duration - HERO_VIDEO_RISE_BEFORE_END_S);
+      if (video.currentTime >= riseAt - 0.04) {
+        markPlaybackReadyForRise();
+      }
+    };
+    const onEnded = () => markPlaybackEnded();
+    const onError = () => markPlaybackEnded();
+    const onLoadedMetadata = () => {
+      if (!video) return;
+      scheduleEarlyRiseFromDuration(video);
+    };
+
+    if (video) {
+      if (video.ended) {
+        markPlaybackEnded();
+      } else {
+        video.addEventListener("timeupdate", onTimeUpdate);
+        video.addEventListener("ended", onEnded);
+        video.addEventListener("error", onError);
+        if (Number.isFinite(video.duration) && video.duration > 0) {
+          scheduleEarlyRiseFromDuration(video);
+        } else {
+          video.addEventListener("loadedmetadata", onLoadedMetadata, { once: true });
+        }
+      }
+    } else {
+      markPlaybackEnded();
+    }
+
+    /* Safety — never leave the card centered forever if early-rise never fires. */
+    fallbackTimer = window.setTimeout(() => {
+      markPlaybackEnded();
+    }, HERO_VIDEO_RISE_FALLBACK_MS);
 
     const scaleControl = animate(videoScaleX, 1, {
       duration: HERO_NAME_SETTLE_DUR_S,
       ease: HERO_VIDEO_SCALE_EASE,
       onComplete: () => {
         if (gen !== videoEntranceGenRef.current) return;
-        holdTimer = window.setTimeout(() => {
-          if (gen !== videoEntranceGenRef.current) return;
-          const finalY = isMobileHeroLayout ? videoFinalYRef.current : 0;
-          riseControl = animate(videoEntranceY, finalY, {
-            duration: HERO_VIDEO_RISE_DUR_S,
-            ease: HERO_VIDEO_RISE_EASE,
-            onComplete: () => {
-              if (gen !== videoEntranceGenRef.current) return;
-              videoEntranceSettledRef.current = true;
-              setLockupFadeReady(true);
-              setSliderAnimDone(true);
-            },
-          });
-        }, HERO_VIDEO_CENTER_HOLD_MS);
+        openComplete = true;
+        beginRise();
       },
     });
 
     return () => {
       scaleControl.stop();
-      if (holdTimer != null) window.clearTimeout(holdTimer);
+      if (fallbackTimer != null) window.clearTimeout(fallbackTimer);
+      if (earlyRiseTimer != null) window.clearTimeout(earlyRiseTimer);
       riseControl?.stop();
+      video?.removeEventListener("timeupdate", onTimeUpdate);
+      video?.removeEventListener("ended", onEnded);
+      video?.removeEventListener("error", onError);
+      video?.removeEventListener("loadedmetadata", onLoadedMetadata);
       if (!videoEntranceSettledRef.current) {
         videoEntranceGenRef.current += 1;
       }
@@ -3384,9 +3534,29 @@ const Hero = ({
     isMobileHeroLayout,
     mobileLockupWidthPx,
     reduceMotion,
+    startHeroVideoPlayback,
     videoEntranceY,
     videoScaleX,
   ]);
+
+  /** Keep the reel running once armed — retry if play was blocked. */
+  useEffect(() => {
+    if (!heroVideoShouldPlay) return;
+    const video = heroVideoRef.current;
+    if (!video) return;
+
+    const ensurePlaying = () => {
+      if (video.paused) void video.play().catch(() => undefined);
+    };
+
+    ensurePlaying();
+    video.addEventListener("canplay", ensurePlaying);
+    video.addEventListener("loadeddata", ensurePlaying);
+    return () => {
+      video.removeEventListener("canplay", ensurePlaying);
+      video.removeEventListener("loadeddata", ensurePlaying);
+    };
+  }, [heroVideoShouldPlay]);
 
   /** PORTFOLIO slide+fade — only after ROBBIE/MCLAUGHLIN + tagline cascades end. */
   useEffect(() => {
@@ -3581,6 +3751,21 @@ const Hero = ({
           boxShadow: "none",
         }}
       >
+        <video
+          ref={heroVideoRef}
+          src={heroVideoSrc}
+          muted
+          playsInline
+          autoPlay={heroVideoShouldPlay}
+          preload="auto"
+          aria-label="Hero reel"
+          className="absolute inset-0 z-[1] block h-full w-full object-cover"
+          onCanPlay={() => {
+            setHeroMediaReady(true);
+            if (heroVideoShouldPlay) void heroVideoRef.current?.play().catch(() => undefined);
+          }}
+          onError={() => setHeroMediaReady(true)}
+        />
         <span
           aria-hidden
           className="pointer-events-none absolute inset-0 z-[2]"
