@@ -32,6 +32,7 @@ disable-model-invocation: true
 
 | Date | Note |
 |------|------|
+| 2026-08 | **Hero stutter-free reel** — When replacing `src/assets/hero1.mp4`, re-encode H.264 `yuv420p`, 1920×1080@30fps, `+faststart`, no audio, ~3–6 Mbps / a few MB for ~4s (validated ~3.2MB). Keep the real hero `<video>` mounted while visually closed; preload that same element; gate entrance on `HAVE_ENOUGH_DATA` or fully buffered (error/timeout fail-open); call `play()` and `scaleX` open in the same tick (no static frame). QA: desktop/mobile opened at `readyState` 4 with advancing `currentTime`. |
 | 2026-07 | **Docs token cut** — SHOWCASE/overlay walls moved from `AGENTS.md` to `portfoliov2-showcase-overlays`; changelog lives here; `AGENTS.md` slimmed to stack + retrieval. |
 | 2026-07 | **Agent token control** — `.cursor/section-map.md`; mandatory Grep/`offset`/`limit` retrieval for `Home.tsx`/`index.css`; senior always-on rule slimmed to pointer. |
 | 2026-07 | **PORTFOLIO SPEED** — named hover/press reaction preset in `src/lib/motion.ts` (`PORTFOLIO_SPEED`). Snappy like MAIN MENU / EXPERIENCE, slightly softer than `TAP` / `SPRING.tap`. Apply only when the user asks; currently used by PROJECTS main 4 cards. |
