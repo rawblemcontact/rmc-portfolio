@@ -6721,10 +6721,10 @@
 }
 
 /*
- * Hero â€” iPad / tablet portrait only (768â€“1023.98 Ã— portrait).
- * Enlarge video height + modest type; lift stack to full-viewport thirds
- * (vh/3 Â· 2vh/3) â€” not the nav-aware ruler overlay band.
- * Do NOT override video width â€” probe + SVG + PORTFOLIO share HERO_VIDEO_CARD_WIDTH_CLASS.
+ * Hero — iPad / tablet portrait only (768–1023.98 × portrait).
+ * Native 16:9 video face from shared card width; modest type; lift stack to
+ * full-viewport thirds (vh/3 · 2vh/3) — not the nav-aware ruler overlay band.
+ * Do NOT override video width — probe + SVG + PORTFOLIO share HERO_VIDEO_CARD_WIDTH_CLASS.
  * Does not alter mobile, tablet landscape, or desktop shared rules.
  */
 @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
@@ -6736,21 +6736,23 @@
   }
 
   /*
-   * Uniform Y lift (video + SVG/name + PORTFOLIO) to full-viewport thirds:
-   * video mid â†’ vh/3, lockup mid â†’ 2vh/3. Cleared below fixed nav (~80px).
+   * Uniform Y lift (video + SVG/name + PORTFOLIO) for optical vertical center.
+   * Stronger than geometric mid — 16:9 card + name/CTA read low without extra lift.
+   * Cleared below fixed nav (~80px). Also zero the shared md–lg video translate-y-3
+   * down-nudge so portrait lift is not partially cancelled.
    */
   #hero [data-hero-stage="true"] > div:first-child > div,
   #hero [data-hero-stage="true"] > div:last-child {
-    transform: translateY(-3.15rem);
+    transform: translateY(-6.5rem);
+    --tw-translate-y: 0px;
+    translate: 0;
   }
 
-  /* Video face â€” taller only (width stays on shared card class / align probe). */
+  /* Video face — native 16:9 from shared card width (no vh height band). */
   #hero [data-hero-video-card="true"] > div.relative {
-    height: clamp(
-      240px,
-      min(54vh, calc(100svh - 11.5rem - max(1rem, env(safe-area-inset-top, 0px)))),
-      580px
-    ) !important;
+    aspect-ratio: 16 / 9;
+    height: auto !important;
+    max-height: none;
   }
 
   /*

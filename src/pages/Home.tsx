@@ -1332,15 +1332,15 @@ function measureHeroPhase1RevealOffsetPx(motionEl: HTMLElement, lockupEl: HTMLEl
 }
 /** Mobile Phase 1 — layout centers the lockup in 100svh; motion value stays at 0. */
 /**
- * Mobile video card height band — keep in sync with `max-md:h-[…min(Nv h…)]` on the card.
- * When this drops, `heroMobileSettleOffsetPx` lifts the SVG by a matching share of Δvh.
+ * Mobile video card — native 16:9 face; height is width-derived (not a vh band).
+ * Settle still lifts the SVG vs the prior tall card so gaps stay even.
  * Vertical placement targets full-viewport thirds — not the nav ruler band.
  */
-const HERO_MOBILE_VIDEO_VH = 0.34;
-/** Prior mobile video vh — SVG lift uses a fraction of (this − current) so gaps stay even. */
+const HERO_MOBILE_VIDEO_ASPECT = 16 / 9;
+/** Prior tall mobile video vh — SVG lift uses a fraction of (legacy − actual) so gaps stay even. */
 const HERO_MOBILE_VIDEO_VH_LIFT_FROM = 0.42;
 /**
- * How much of the video-shorten Δvh pulls the name/SVG up.
+ * How much of the video-shorten Δpx pulls the name/SVG up.
  * Keep modest — gap floor clamp owns clearance so SVG never cuts the video on iPhone.
  */
 const HERO_MOBILE_SVG_LIFT_FACTOR = 0.36;
@@ -1348,38 +1348,45 @@ const HERO_MOBILE_SVG_LIFT_FACTOR = 0.36;
 const HERO_MOBILE_SETTLE_DOWN_NUDGE_REM = 2.15;
 /** Minimum visible air between video card bottom and ROBBIE ink (mobile / Safari). */
 const HERO_MOBILE_STACK_GAP_PX = 40;
+
+/** Full PROFILE content width (px-5 gutters) — used for a large 16:9 video card. */
+function measureHeroMobileVideoWidthPx(): number {
+  if (typeof window === "undefined") return 0;
+  const rootFontSize = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+  return Math.max(0, Math.round(window.innerWidth - 2 * rootFontSize * HERO_MOBILE_PROFILE_GUTTER_REM));
+}
+
+/** Prefer live face height; fall back to width × 9/16 before paint. */
+function measureHeroMobileVideoHeightPx(): number {
+  if (typeof window === "undefined") return 0;
+  const face =
+    document.querySelector<HTMLElement>("#hero [data-hero-mobile-video-face='true']") ??
+    document.querySelector<HTMLElement>("#hero [data-hero-mobile-video-slot='true']");
+  const liveH = face?.getBoundingClientRect().height ?? 0;
+  if (liveH > 1) return liveH;
+  const width = measureHeroMobileVideoWidthPx();
+  return width > 0 ? Math.round(width / HERO_MOBILE_VIDEO_ASPECT) : 0;
+}
+
 function heroMobileSettleOffsetPx(): number {
   if (typeof window === "undefined") return 0;
   const rootFontSize = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
   const base =
     window.innerHeight * 0.2 - rootFontSize * 1.25 + rootFontSize * HERO_MOBILE_SETTLE_DOWN_NUDGE_REM;
-  /* Lift ROBBIE SVG with the height taken off the video card (partial so gaps stay even). */
-  const videoShortenPx =
-    window.innerHeight *
-    Math.max(0, HERO_MOBILE_VIDEO_VH_LIFT_FROM - HERO_MOBILE_VIDEO_VH) *
-    HERO_MOBILE_SVG_LIFT_FACTOR;
+  /* Lift ROBBIE SVG with the height taken off the prior tall vh card (partial so gaps stay even). */
+  const legacyTallPx = window.innerHeight * HERO_MOBILE_VIDEO_VH_LIFT_FROM;
+  const actualH = measureHeroMobileVideoHeightPx();
+  const videoShortenPx = Math.max(0, legacyTallPx - actualH) * HERO_MOBILE_SVG_LIFT_FACTOR;
   return Math.max(0, base - videoShortenPx);
 }
 
-/** Keep in sync with hero video card mobile height clamp (`min(34vh,…)` / max-md). */
-function measureHeroMobileVideoHeightPx(): number {
-  if (typeof window === "undefined") return 0;
-  const rootFontSize = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-  const safeTop = readSafeAreaInsetTopPx();
-  const vhBand = window.innerHeight * HERO_MOBILE_VIDEO_VH;
-  const remCap = window.innerHeight - 11 * rootFontSize - Math.max(rootFontSize, safeTop);
-  return Math.min(400, Math.max(150, Math.min(vhBand, remCap)));
-}
+/** Mobile SVG/name width as a fraction of PROFILE content (`px-5` gutters). Video uses full width. */
+const HERO_MOBILE_LOCKUP_WIDTH_SCALE = 1;
 
-/** Mobile video + SVG width as a fraction of PROFILE content (`px-5` gutters). */
-const HERO_MOBILE_LOCKUP_WIDTH_SCALE = 0.9;
-
-/** Mobile content width — PROFILE column × scale (video card + ROBBIE SVG). */
+/** Mobile name/SVG width — PROFILE column × scale (video card uses full gutter width). */
 function measureHeroMobileProfileContentWidthPx(): number {
   if (typeof window === "undefined") return 0;
-  const rootFontSize = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-  const profileContent = window.innerWidth - 2 * rootFontSize * HERO_MOBILE_PROFILE_GUTTER_REM;
-  return Math.max(0, Math.round(profileContent * HERO_MOBILE_LOCKUP_WIDTH_SCALE));
+  return Math.max(0, Math.round(measureHeroMobileVideoWidthPx() * HERO_MOBILE_LOCKUP_WIDTH_SCALE));
 }
 
 /** Reads the current rendered `translateY` (px) of an element's CSS transform matrix. */
@@ -1546,13 +1553,13 @@ const HERO_VIDEO_SCALE_EASE: [number, number, number, number] = [0.22, 1, 0.36, 
 /** Rise from viewport center → final layout Y. */
 const HERO_VIDEO_RISE_DUR_S = 0.55;
 /** Hold at viewport center after open before rising (reel keeps looping under text). */
-const HERO_VIDEO_CENTER_HOLD_MS = 900;
+const HERO_VIDEO_CENTER_HOLD_MS = 2650;
 /** Fallback if open never completes (blocked play / missing layout). */
 const HERO_VIDEO_RISE_FALLBACK_MS = 8000;
 /** Rise ease — gentle ease-in at start, stronger ease-out at the end. */
 const HERO_VIDEO_RISE_EASE: [number, number, number, number] = [0.42, 0.0, 0.16, 1];
 /** Name cascade + PORTFOLIO wait until the reel has played at least this far. */
-const HERO_TEXT_MIN_VIDEO_TIME_S = 4;
+const HERO_TEXT_MIN_VIDEO_TIME_S = 4.45;
 /** Short hold after rise settle (and min video time) before ROBBIE / name cascade. */
 const HERO_TEXT_BEAT_BEFORE_MS = 220;
 /** Slide distance for PORTFOLIO entrance (negative = from the left). */
@@ -2841,12 +2848,22 @@ const Hero = ({
   /** True after open→beat→rise finished (or reduce-motion snap). */
   const videoEntranceSettledRef = useRef(false);
 
-  const startHeroVideoPlayback = useCallback(() => {
-    setHeroVideoShouldPlay(true);
+  const kickHeroVideoPlay = useCallback(() => {
     const video = heroVideoRef.current;
     if (!video) return;
+    /* Explicit props before play() — Low Power Mode / Safari often ignore attribute-only muted. */
+    video.muted = true;
+    video.defaultMuted = true;
+    video.playsInline = true;
+    video.setAttribute("playsinline", "");
+    video.setAttribute("webkit-playsinline", "");
     void video.play().catch(() => undefined);
   }, []);
+
+  const startHeroVideoPlayback = useCallback(() => {
+    setHeroVideoShouldPlay(true);
+    kickHeroVideoPlay();
+  }, [kickHeroVideoPlay]);
   const markHeroMediaReadyIfBuffered = useCallback(() => {
     const video = heroVideoRef.current;
     if (!video) return;
@@ -3415,6 +3432,7 @@ const Hero = ({
     let fallbackTimer: number | null = null;
     let centerHoldTimer: number | null = null;
     let textBeatTimer: number | null = null;
+    let textGateFallbackTimer: number | null = null;
     let openComplete = false;
     let riseComplete = false;
     let riseStarted = false;
@@ -3426,6 +3444,10 @@ const Hero = ({
       /* Text + beyond only after rise settle and ≥4s of reel playback. */
       if (!riseComplete || !videoPastTextGate) return;
       lockupArmed = true;
+      if (textGateFallbackTimer != null) {
+        window.clearTimeout(textGateFallbackTimer);
+        textGateFallbackTimer = null;
+      }
       textBeatTimer = window.setTimeout(() => {
         if (gen !== videoEntranceGenRef.current) return;
         setLockupFadeReady(true);
@@ -3499,6 +3521,11 @@ const Hero = ({
       markVideoPastTextGate();
     }
 
+    /* If LPM freezes currentTime, don't trap name/PORTFOLIO forever. */
+    textGateFallbackTimer = window.setTimeout(() => {
+      markVideoPastTextGate();
+    }, HERO_TEXT_MIN_VIDEO_TIME_S * 1000 + 8000);
+
     /* Safety — never leave the card centered forever if open never completes. */
     fallbackTimer = window.setTimeout(() => {
       openComplete = true;
@@ -3520,6 +3547,7 @@ const Hero = ({
       if (fallbackTimer != null) window.clearTimeout(fallbackTimer);
       if (centerHoldTimer != null) window.clearTimeout(centerHoldTimer);
       if (textBeatTimer != null) window.clearTimeout(textBeatTimer);
+      if (textGateFallbackTimer != null) window.clearTimeout(textGateFallbackTimer);
       riseControl?.stop();
       video?.removeEventListener("timeupdate", onTimeUpdate);
       video?.removeEventListener("error", onError);
@@ -3538,24 +3566,55 @@ const Hero = ({
     videoScaleX,
   ]);
 
-  /** Keep the reel running once armed — retry if play was blocked. */
+  /** Keep the reel running once armed — retry when LPM / Safari blocks or pauses autoplay. */
   useEffect(() => {
     if (!heroVideoShouldPlay) return;
     const video = heroVideoRef.current;
     if (!video) return;
 
     const ensurePlaying = () => {
-      if (video.paused) void video.play().catch(() => undefined);
+      if (video.paused || video.ended) kickHeroVideoPlay();
     };
 
     ensurePlaying();
     video.addEventListener("canplay", ensurePlaying);
     video.addEventListener("loadeddata", ensurePlaying);
+    video.addEventListener("loadedmetadata", ensurePlaying);
+    video.addEventListener("stalled", ensurePlaying);
+    video.addEventListener("suspend", ensurePlaying);
+    video.addEventListener("waiting", ensurePlaying);
+
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") ensurePlaying();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("pageshow", ensurePlaying);
+    window.addEventListener("focus", ensurePlaying);
+
+    /* First user gesture unlocks autoplay under Low Power Mode policies. */
+    const unlockOpts: AddEventListenerOptions = { capture: true, passive: true };
+    window.addEventListener("pointerdown", ensurePlaying, unlockOpts);
+    window.addEventListener("touchstart", ensurePlaying, unlockOpts);
+    window.addEventListener("keydown", ensurePlaying, unlockOpts);
+
+    const poll = window.setInterval(ensurePlaying, 900);
+
     return () => {
+      window.clearInterval(poll);
       video.removeEventListener("canplay", ensurePlaying);
       video.removeEventListener("loadeddata", ensurePlaying);
+      video.removeEventListener("loadedmetadata", ensurePlaying);
+      video.removeEventListener("stalled", ensurePlaying);
+      video.removeEventListener("suspend", ensurePlaying);
+      video.removeEventListener("waiting", ensurePlaying);
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("pageshow", ensurePlaying);
+      window.removeEventListener("focus", ensurePlaying);
+      window.removeEventListener("pointerdown", ensurePlaying, unlockOpts);
+      window.removeEventListener("touchstart", ensurePlaying, unlockOpts);
+      window.removeEventListener("keydown", ensurePlaying, unlockOpts);
     };
-  }, [heroVideoShouldPlay]);
+  }, [heroVideoShouldPlay, kickHeroVideoPlay]);
 
   /** PORTFOLIO slide+fade — only after ROBBIE/MCLAUGHLIN + tagline cascades end. */
   useEffect(() => {
@@ -3738,14 +3797,12 @@ const Hero = ({
         transformOrigin: "center center",
         /* Promote during open+rise only — permanent will-change burns GPU memory. */
         willChange: sliderAnimDone || reduceMotion ? undefined : "transform",
-        ...(isMobileHeroLayout && mobileLockupWidthPx
-          ? { width: "100%", maxWidth: mobileLockupWidthPx }
-          : null),
+        /* Mobile: full PROFILE gutter width (16:9). Name/SVG keep the 0.9 lockup width. */
       }}
     >
       <div
         data-hero-mobile-video-face={isMobileHeroLayout ? "true" : undefined}
-        className="relative z-[1] mx-auto w-full h-[clamp(150px,min(40vh,calc(100svh-11rem-max(1rem,env(safe-area-inset-top,0px)))),430px)] max-md:h-[clamp(150px,min(34vh,calc(100svh-11rem-max(1rem,env(safe-area-inset-top,0px)))),400px)] md:max-lg:h-[clamp(200px,min(44vh,calc(100svh-14rem-max(1rem,env(safe-area-inset-top,0px)))),500px)] lg:h-[clamp(240px,min(54vh,calc(100svh-11.5rem-max(1.5rem,env(safe-area-inset-top,0px)))),680px)] xl:h-[clamp(260px,min(56vh,calc(100svh-12rem-max(2rem,env(safe-area-inset-top,0px)))),760px)] overflow-hidden rounded-xl border border-white bg-black"
+        className="relative z-[1] mx-auto w-full h-[clamp(150px,min(40vh,calc(100svh-11rem-max(1rem,env(safe-area-inset-top,0px)))),430px)] max-md:aspect-video max-md:h-auto md:max-lg:h-[clamp(200px,min(44vh,calc(100svh-14rem-max(1rem,env(safe-area-inset-top,0px)))),500px)] lg:h-[clamp(240px,min(54vh,calc(100svh-11.5rem-max(1.5rem,env(safe-area-inset-top,0px)))),680px)] xl:h-[clamp(260px,min(56vh,calc(100svh-12rem-max(2rem,env(safe-area-inset-top,0px)))),760px)] overflow-hidden rounded-xl border border-white bg-black"
         style={{
           boxShadow: "none",
         }}
@@ -3759,6 +3816,7 @@ const Hero = ({
           autoPlay={heroVideoShouldPlay}
           preload="auto"
           aria-label="Hero reel"
+          disableRemotePlayback
           className="absolute inset-0 z-[1] block h-full w-full object-cover"
           onLoadedData={markHeroMediaReadyIfBuffered}
           onProgress={markHeroMediaReadyIfBuffered}
