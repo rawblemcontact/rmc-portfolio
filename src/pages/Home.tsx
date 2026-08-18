@@ -3838,6 +3838,11 @@ const Hero = ({
       data-hero-active={active ? "true" : "false"}
       className={`relative h-[100svh] w-full overflow-hidden bg-black text-white ${SLIDE_NO_Y_SCROLL}`}
     >
+      <span
+        aria-hidden
+        data-hero-test-dot="true"
+        className="pointer-events-none absolute right-4 top-4 z-[9999] h-3 w-3 rounded-full bg-red-500"
+      />
       <SlideGridOverlay />
       {heroStageMounted && (
       <motion.div
