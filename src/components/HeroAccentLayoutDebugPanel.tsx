@@ -52,7 +52,7 @@ export const HERO_PORTFOLIO_BUTTON_GLOBAL_LAYOUT_DEFAULTS: HeroGlobalLayoutContr
 
 /** Desktop rob-hero SVG lockup — additive to auto video-edge align X. */
 export const HERO_SVG_LOCKUP_LAYOUT_DEFAULTS: HeroGlobalLayoutControl = {
-  offsetX: 35,
+  offsetX: 33,
   offsetY: -44,
   scale: 1,
   widthScale: 0.95,

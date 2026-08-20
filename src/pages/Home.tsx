@@ -1381,7 +1381,7 @@ function heroMobileSettleOffsetPx(): number {
 }
 
 /** Mobile SVG/name width as a fraction of PROFILE content (`px-5` gutters). Video uses full width. */
-const HERO_MOBILE_LOCKUP_WIDTH_SCALE = 1;
+const HERO_MOBILE_LOCKUP_WIDTH_SCALE = 0.992;
 
 /** Mobile name/SVG width — PROFILE column × scale (video card uses full gutter width). */
 function measureHeroMobileProfileContentWidthPx(): number {
@@ -2504,7 +2504,15 @@ const HeroNameReveal = ({
   const heroSvgLockupStyle: React.CSSProperties | undefined = (() => {
     if (!heroDesktopViewport) {
       const mobileNudgeX = isMobileHeroLayout ? mobileSvgNudgeXPx : 0;
-      const nextX = Math.round(heroSvgAlignX + mobileNudgeX);
+      const tabletPortraitNudgeX =
+        !isMobileHeroLayout &&
+        typeof window !== "undefined" &&
+        window.matchMedia(
+          `(min-width: ${HERO_TABLET_MIN_PX}px) and (max-width: ${HERO_TABLET_MAX_PX}px) and (orientation: portrait)`,
+        ).matches
+          ? 2
+          : 0;
+      const nextX = Math.round(heroSvgAlignX + mobileNudgeX + tabletPortraitNudgeX);
       return nextX ? { transform: `translateX(${nextX}px)` } : undefined;
     }
     /* Integer px — subpixel translate rasterizes the scaled SVG soft. */
@@ -2990,8 +2998,11 @@ const Hero = ({
     : viewportPortfolioDefaults;
   const heroVideoGlobalDebugStyle = useMemo(() => {
     if (!heroDesktopLikeViewport) return undefined;
-    /* Prefer transform scale over CSS `zoom` — zoom on a <video> ancestor
-     * flips decode/compositing by viewport and makes blacks look different. */
+    /* Tablet landscape relies on zoom-style layout sizing to keep prior optical lockup parity. */
+    if (heroTabletLandscapeViewport) {
+      return buildHeroGlobalLayoutStyle(activeVideoLayout, "center center");
+    }
+    /* Desktop keeps transform scale to avoid zoom-triggered black-level/compositor shifts. */
     const zoom = activeVideoLayout.scale * activeVideoLayout.heightScale;
     const style: React.CSSProperties = {
       transform: `translate(${activeVideoLayout.offsetX}px, ${activeVideoLayout.offsetY}px) scale(${zoom})`,
@@ -3005,7 +3016,7 @@ const Hero = ({
       style.width = `${widthPercent}%`;
     }
     return style;
-  }, [activeVideoLayout, heroDesktopLikeViewport]);
+  }, [activeVideoLayout, heroDesktopLikeViewport, heroTabletLandscapeViewport]);
   const heroMainGlobalDebugStyle = heroDesktopLikeViewport
     ? buildHeroGlobalLayoutStyle(activeMainLayout)
     : undefined;
