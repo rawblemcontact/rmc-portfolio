@@ -13,6 +13,16 @@ npm run build  # output: dist/
 
 Design language: **`.cursor/rules/neo-tokyo-game-ui.mdc`** (`alwaysApply`).
 
+## Branch Safety
+
+All work in this repository must stay on `continue-publish-main`.
+
+- Never switch to `main`.
+- Never modify `main`.
+- Never commit to `main`.
+- Never push to `main`.
+- All development work, commits, and pushes for this project must use `continue-publish-main`.
+
 ## Agent retrieval (mandatory — token control)
 
 `Home.tsx` and `index.css` are very large. **Never** open either file in full.

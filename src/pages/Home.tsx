@@ -1559,7 +1559,7 @@ const HERO_VIDEO_RISE_FALLBACK_MS = 8000;
 /** Rise ease — gentle ease-in at start, stronger ease-out at the end. */
 const HERO_VIDEO_RISE_EASE: [number, number, number, number] = [0.42, 0.0, 0.16, 1];
 /** Name cascade + PORTFOLIO wait until the reel has played at least this far. */
-const HERO_TEXT_MIN_VIDEO_TIME_S = 4.45;
+const HERO_TEXT_MIN_VIDEO_TIME_S = 4.5;
 /** Short hold after rise settle (and min video time) before ROBBIE / name cascade. */
 const HERO_TEXT_BEAT_BEFORE_MS = 220;
 /** Slide distance for PORTFOLIO entrance (negative = from the left). */
@@ -1587,9 +1587,6 @@ const HERO_PORTFOLIO_TAP_SPRING = {
 } as const;
 /** Idle float — starts after entrance (video scale + PORTFOLIO fade) finishes. CSS keyframes in index.css. */
 const HERO_IDLE_FLOAT_START_MS = 700;
-/** Subtle edge darkening on hero video card media. */
-const HERO_VIDEO_CARD_VIGNETTE =
-  "radial-gradient(ellipse 74% 70% at 50% 48%, transparent 26%, rgba(0,0,0,0.4) 100%)";
 /** Hero video card width — matches name line span (58rem column + line bleed). */
 const HERO_VIDEO_CARD_WIDTH_CLASS =
   "max-[639px]:w-full max-[639px]:max-w-full w-[calc(min(100%,58rem)-8.4rem+2*max(1.25rem,min(4vw,2.5rem)))] sm:w-[calc(min(100%,58rem)-8.9rem+2*max(1.25rem,min(4vw,2.5rem)))]";
@@ -2991,9 +2988,24 @@ const Hero = ({
   const activePortfolioButtonLayout = heroDebugEnabled
     ? portfolioButtonGlobalDebugControls
     : viewportPortfolioDefaults;
-  const heroVideoGlobalDebugStyle = heroDesktopLikeViewport
-    ? buildHeroGlobalLayoutStyle(activeVideoLayout, "center center")
-    : undefined;
+  const heroVideoGlobalDebugStyle = useMemo(() => {
+    if (!heroDesktopLikeViewport) return undefined;
+    /* Prefer transform scale over CSS `zoom` — zoom on a <video> ancestor
+     * flips decode/compositing by viewport and makes blacks look different. */
+    const zoom = activeVideoLayout.scale * activeVideoLayout.heightScale;
+    const style: React.CSSProperties = {
+      transform: `translate(${activeVideoLayout.offsetX}px, ${activeVideoLayout.offsetY}px) scale(${zoom})`,
+      transformOrigin: "center center",
+    };
+    if (activeVideoLayout.widthScale !== 1 || activeVideoLayout.heightScale !== 1) {
+      const widthPercent =
+        activeVideoLayout.heightScale !== 0
+          ? (activeVideoLayout.widthScale / activeVideoLayout.heightScale) * 100
+          : activeVideoLayout.widthScale * 100;
+      style.width = `${widthPercent}%`;
+    }
+    return style;
+  }, [activeVideoLayout, heroDesktopLikeViewport]);
   const heroMainGlobalDebugStyle = heroDesktopLikeViewport
     ? buildHeroGlobalLayoutStyle(activeMainLayout)
     : undefined;
@@ -3782,11 +3794,6 @@ const Hero = ({
     </div>
   );
 
-  const heroVideoFaceVignette =
-    isMobileHeroLayout || (desktopAnimPerf && !sliderAnimDone)
-      ? "none"
-      : HERO_VIDEO_CARD_VIGNETTE;
-
   const heroVideoCard = (
     <motion.div
       data-hero-video-card="true"
@@ -3817,16 +3824,11 @@ const Hero = ({
           preload="auto"
           aria-label="Hero reel"
           disableRemotePlayback
-          className="absolute inset-0 z-[1] block h-full w-full object-cover"
+          className="absolute inset-0 z-[1] block h-full w-full object-cover [transform:translateZ(0)] [backface-visibility:hidden]"
           onLoadedData={markHeroMediaReadyIfBuffered}
           onProgress={markHeroMediaReadyIfBuffered}
           onCanPlayThrough={markHeroMediaReadyIfBuffered}
           onError={() => setHeroMediaReady(true)}
-        />
-        <span
-          aria-hidden
-          className="pointer-events-none absolute inset-0 z-[2]"
-          style={{ background: heroVideoFaceVignette }}
         />
       </div>
     </motion.div>
@@ -3838,11 +3840,6 @@ const Hero = ({
       data-hero-active={active ? "true" : "false"}
       className={`relative h-[100svh] w-full overflow-hidden bg-black text-white ${SLIDE_NO_Y_SCROLL}`}
     >
-      <span
-        aria-hidden
-        data-hero-test-dot="true"
-        className="pointer-events-none absolute right-4 top-4 z-[9999] h-3 w-3 rounded-full bg-red-500"
-      />
       <SlideGridOverlay />
       {heroStageMounted && (
       <motion.div
@@ -3877,13 +3874,18 @@ const Hero = ({
               }}
               initial={false}
             >
-              {heroDesktopLikeViewport ? (
-                <div className="mx-auto w-fit min-w-0 max-w-full" style={heroVideoGlobalDebugStyle}>
-                  {heroVideoCard}
-                </div>
-              ) : (
-                heroVideoCard
-              )}
+              {/* Stable wrapper — never remount <video> when desktop-like MQ flips.
+               * Use w-full when unstyled: w-fit + % card width collapses to a dot. */}
+              <div
+                className={
+                  heroVideoGlobalDebugStyle
+                    ? "mx-auto w-fit min-w-0 max-w-full"
+                    : "mx-auto w-full max-w-full"
+                }
+                style={heroVideoGlobalDebugStyle}
+              >
+                {heroVideoCard}
+              </div>
             </motion.div>
           </div>
         </div>
