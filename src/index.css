@@ -1662,8 +1662,8 @@
     }
 
     #hero .hero-portfolio-animated .hero-portfolio-arrow--2 {
-      /* Tablet V: 1px right nudge */
-      left: calc(0.7rem + 1px);
+      /* Mirror desktop asymmetry — hover arrow inset matches non-hover gap. */
+      left: calc(0.44rem + 1px);
     }
 
     #hero .hero-portfolio-animated .hero-portfolio-text {
@@ -1676,19 +1676,19 @@
     @media (any-hover: hover) and (any-pointer: fine) {
       #hero .hero-portfolio-animated:hover .hero-portfolio-text,
       #hero .hero-portfolio-animated:focus-visible .hero-portfolio-text {
-        transform: translate3d(0.88rem, 0, 0);
+        transform: translate3d(0.62rem, 0, 0);
       }
     }
 
     @media not ((any-hover: hover) and (any-pointer: fine)) {
       #hero .hero-portfolio-animated:active .hero-portfolio-text,
       #hero .hero-portfolio-animated:focus-visible .hero-portfolio-text {
-        transform: translate3d(0.88rem, 0, 0);
+        transform: translate3d(0.62rem, 0, 0);
       }
     }
 
     #hero .hero-portfolio-animated.hero-portfolio-animated--pressed .hero-portfolio-text {
-      transform: translate3d(0.88rem, 0, 0);
+      transform: translate3d(0.62rem, 0, 0);
       transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1), color 0.2s ease;
     }
   }
@@ -1700,8 +1700,8 @@
     }
 
     #hero .hero-portfolio-animated .hero-portfolio-arrow--2 {
-      /* Tablet H: 1px left nudge */
-      left: calc(1.05rem - 1px);
+      /* Mirror desktop asymmetry — hover arrow inset matches non-hover gap. */
+      left: calc(0.66rem - 1px);
     }
 
     #hero .hero-portfolio-animated .hero-portfolio-text {
@@ -1714,19 +1714,19 @@
     @media (any-hover: hover) and (any-pointer: fine) {
       #hero .hero-portfolio-animated:hover .hero-portfolio-text,
       #hero .hero-portfolio-animated:focus-visible .hero-portfolio-text {
-        transform: translate3d(0.95rem, 0, 0);
+        transform: translate3d(0.66rem, 0, 0);
       }
     }
 
     @media not ((any-hover: hover) and (any-pointer: fine)) {
       #hero .hero-portfolio-animated:active .hero-portfolio-text,
       #hero .hero-portfolio-animated:focus-visible .hero-portfolio-text {
-        transform: translate3d(0.95rem, 0, 0);
+        transform: translate3d(0.66rem, 0, 0);
       }
     }
 
     #hero .hero-portfolio-animated.hero-portfolio-animated--pressed .hero-portfolio-text {
-      transform: translate3d(0.95rem, 0, 0);
+      transform: translate3d(0.66rem, 0, 0);
       transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1), color 0.2s ease;
     }
   }
