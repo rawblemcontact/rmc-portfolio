@@ -70,12 +70,8 @@ export function buildHeroGlobalLayoutStyle(
   const style: CSSProperties = {
     transform: `translate(${control.offsetX}px, ${control.offsetY}px)`,
     transformOrigin,
+    zoom,
   };
-
-  /* Omit identity zoom — CSS zoom on large subtrees tanks compositor performance. */
-  if (zoom !== 1) {
-    style.zoom = zoom;
-  }
 
   if (control.widthScale !== 1 || control.heightScale !== 1) {
     const widthPercent =

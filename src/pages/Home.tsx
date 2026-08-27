@@ -1524,11 +1524,15 @@ function measureMobileHeroRotCenterNudgePx(assumedNameY: number): number {
 function heroDesktopSettleOffsetPx(): number {
   if (typeof window === "undefined") return 0;
   const rootFontSize = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-  /* Hard-crop (≥768): freeze settle Y to the wide-desktop design value — no width tracking. */
-  if (window.matchMedia(`(min-width: ${HERO_TABLET_MIN_PX}px)`).matches) {
-    return -0.75 * rootFontSize;
+  const width = window.innerWidth;
+  if (width < 768) return 0;
+  if (width < 1024) {
+    /* Tablet portrait — keep name + PORTFOLIO tucked under the video (no downward settle). */
+    if (window.matchMedia("(orientation: portrait)").matches) return 0;
+    return 0.75 * rootFontSize;
   }
-  return 0;
+  if (width <= 1366) return -1.5 * rootFontSize;
+  return -0.75 * rootFontSize;
 }
 /** Tablet md–lg: portrait packs under video; landscape restores prior centered / video nudge. */
 const HERO_TABLET_LANDSCAPE_NAME_CENTER =
@@ -1915,10 +1919,10 @@ const HERO_DESKTOP_DEBUG_MIN_PX = 1024;
 const HERO_TABLET_MIN_PX = 768;
 const HERO_TABLET_MAX_PX = 1366;
 const HERO_IPAD_HORIZONTAL_SVG_LOCKUP_LAYOUT_DEFAULTS: HeroGlobalLayoutControl = {
-  offsetX: 0,
+  offsetX: -11,
   offsetY: -35,
   scale: 1,
-  widthScale: 1,
+  widthScale: 0.94,
   heightScale: 1,
 };
 const HERO_IPAD_HORIZONTAL_VIDEO_GLOBAL_LAYOUT_DEFAULTS: HeroGlobalLayoutControl = {
@@ -1929,14 +1933,14 @@ const HERO_IPAD_HORIZONTAL_VIDEO_GLOBAL_LAYOUT_DEFAULTS: HeroGlobalLayoutControl
   heightScale: 0.9,
 };
 const HERO_IPAD_HORIZONTAL_MAIN_GLOBAL_LAYOUT_DEFAULTS: HeroGlobalLayoutControl = {
-  offsetX: 0,
+  offsetX: 55,
   offsetY: 0,
-  scale: 1,
+  scale: 0.95,
   widthScale: 1,
   heightScale: 1,
 };
 const HERO_IPAD_HORIZONTAL_PORTFOLIO_BUTTON_GLOBAL_LAYOUT_DEFAULTS: HeroGlobalLayoutControl = {
-  offsetX: 0,
+  offsetX: 41,
   offsetY: -20,
   scale: 0.94,
   widthScale: 1,
@@ -2163,9 +2167,26 @@ const HeroNameReveal = ({
       if (svg.getAttribute("viewBox") !== "0 0 283 94") {
         svg.setAttribute("viewBox", "0 0 283 94");
       }
-      /* Non-mobile: meet keeps glyphs unstretched; xMin pins ink to the shared left bound. */
-      if (svg.getAttribute("preserveAspectRatio") !== "xMinYMin meet") {
-        svg.setAttribute("preserveAspectRatio", "xMinYMin meet");
+      if (isHeroCropLayout) {
+        /* Hard-crop: meet + xMin pins ink to shared left bound. */
+        if (svg.getAttribute("preserveAspectRatio") !== "xMinYMin meet") {
+          svg.setAttribute("preserveAspectRatio", "xMinYMin meet");
+        }
+        return;
+      }
+      const tabletBand = window.matchMedia(
+        `(min-width: ${HERO_TABLET_MIN_PX}px) and (max-width: ${HERO_TABLET_MAX_PX}px)`,
+      ).matches;
+      if (tabletBand) {
+        /* iPad portrait + landscape — unstretched meet (pre-crop). */
+        if (svg.getAttribute("preserveAspectRatio") !== "xMidYMin meet") {
+          svg.setAttribute("preserveAspectRatio", "xMidYMin meet");
+        }
+        return;
+      }
+      /* True desktop (non-crop) — authored stretch-to-host. */
+      if (svg.getAttribute("preserveAspectRatio") !== "none") {
+        svg.setAttribute("preserveAspectRatio", "none");
       }
     };
 
@@ -2236,7 +2257,7 @@ const HeroNameReveal = ({
       mqMobileWidth.removeEventListener("change", onViewportRelayout);
       mqDesktopFine.removeEventListener("change", onViewportRelayout);
     };
-  }, [heroLockupSvg, isMobileHeroLayout]);
+  }, [heroLockupSvg, isMobileHeroLayout, isHeroCropLayout, heroDesktopViewport]);
 
   useLayoutEffect(() => {
     if (!heroReady || !revealActive) {
@@ -2317,9 +2338,11 @@ const HeroNameReveal = ({
   }, [nameCascadeLatched, reduceMotion]);
 
   /**
-   * Crop (desktop-only): frozen SVG X constant.
-   * Tablet: live video-edge measure (portrait CSS + iPad landscape defaults own the rest).
-   * Mobile: translate cleared (mobile nudge applied separately).
+   * Non-mobile — align ROBBIE/MCLAUGHLIN letter ink to the video card left edge; freeze until resize.
+   * Desktop hard-crop: frozen X constant.
+   * Desktop fine / iPad landscape: probe→lockup (+ locked SVG lockup offsetX in style; parent zoom).
+   * Tablet portrait: probe→lockup minus glyph inset (translate-only; no desktop lockup offset).
+   * Mobile untouched.
    */
   useLayoutEffect(() => {
     if (!heroReady) {
@@ -2337,42 +2360,58 @@ const HeroNameReveal = ({
       return;
     }
 
-    let frozen = false;
-    const retryTimeouts: number[] = [];
+    const matchesNonMobile = () =>
+      window.matchMedia(`(min-width: ${HERO_TABLET_MIN_PX}px)`).matches;
 
+    const matchesDesktopLayout = () => {
+      /* iPad landscape uses the desktop-like probe path (no glyph-inset subtract). */
+      const tabletLandscape = window.matchMedia(
+        `(min-width: ${HERO_TABLET_MIN_PX}px) and (max-width: ${HERO_TABLET_MAX_PX}px) and (orientation: landscape)`,
+      ).matches;
+      if (tabletLandscape) return true;
+      const desktop = window.matchMedia(`(min-width: ${HERO_DESKTOP_DEBUG_MIN_PX}px)`).matches;
+      const tablet = window.matchMedia(
+        `(min-width: ${HERO_TABLET_MIN_PX}px) and (max-width: ${HERO_TABLET_MAX_PX}px)`,
+      ).matches;
+      return desktop && !tablet;
+    };
+
+    /** Screen-px inset from align wrapper left → leftmost name glyph (stable under translateX). */
     const measureGlyphInsetPx = (alignEl: HTMLElement): number | null => {
       const svg = alignEl.querySelector("svg");
       if (!svg) return null;
-      const ctm = (svg as SVGSVGElement).getScreenCTM();
-      if (!ctm) return null;
       const alignLeft = alignEl.getBoundingClientRect().left;
       let glyphLeft = Infinity;
       const letterNodes = svg.querySelectorAll("[data-hero-name-letter]");
       const paths = letterNodes.length > 0 ? letterNodes : svg.querySelectorAll("path");
       for (const path of paths) {
-        try {
-          const bbox = (path as SVGGraphicsElement).getBBox();
-          if (bbox.width < 0.5 || bbox.height < 0.5) continue;
-          const pt = (svg as SVGSVGElement).createSVGPoint();
-          pt.x = bbox.x;
-          pt.y = bbox.y;
-          glyphLeft = Math.min(glyphLeft, pt.matrixTransform(ctm).x);
-        } catch {
-          /* getBBox throws if not rendered */
+        const box = (path as SVGGraphicsElement).getBoundingClientRect();
+        if (box.width > 2 && box.height > 8) {
+          glyphLeft = Math.min(glyphLeft, box.left);
         }
       }
       if (!Number.isFinite(glyphLeft)) return null;
       return glyphLeft - alignLeft;
     };
 
+    let frozen = false;
+    const retryTimeouts: number[] = [];
+
     const measure = (force = false, attempt = 0) => {
+      if (!matchesNonMobile()) {
+        frozen = false;
+        setHeroSvgAlignX(0);
+        return;
+      }
       if (frozen && !force) return;
+
       const lockup = containerRef.current?.querySelector<HTMLElement>(
         '[data-hero-name-lockup="true"]',
       );
-      const visual = measureHeroVideoVisualBounds(heroVideoBoundsZoom);
+      /* Prefer unscaled probe — never affected by video scaleX / settle / PORTFOLIO fade. */
+      const probe = document.querySelector<HTMLElement>('[data-hero-video-align-probe="true"]');
       const alignEl = heroSvgAlignRef.current;
-      if (!lockup || !visual || !alignEl) {
+      if (!lockup || !probe || !alignEl) {
         if (attempt < 12) {
           retryTimeouts.push(
             window.setTimeout(() => measure(force, attempt + 1), 16 + attempt * 12),
@@ -2380,9 +2419,7 @@ const HeroNameReveal = ({
         }
         return;
       }
-      const base = visual.left - lockup.getBoundingClientRect().left;
-      const inset = measureGlyphInsetPx(alignEl);
-      if (inset == null) {
+      if (probe.offsetWidth < 8) {
         if (attempt < 12) {
           retryTimeouts.push(
             window.setTimeout(() => measure(force, attempt + 1), 16 + attempt * 12),
@@ -2390,28 +2427,58 @@ const HeroNameReveal = ({
         }
         return;
       }
+
+      const base =
+        probe.getBoundingClientRect().left - lockup.getBoundingClientRect().left;
+
+      let next = base;
+      if (!matchesDesktopLayout()) {
+        const inset = measureGlyphInsetPx(alignEl);
+        if (inset == null) {
+          if (attempt < 12) {
+            retryTimeouts.push(
+              window.setTimeout(() => measure(force, attempt + 1), 16 + attempt * 12),
+            );
+          }
+          return;
+        }
+        next = base - inset;
+      }
+
       frozen = true;
       setHeroSvgAlignX((prev) => {
-        const rounded = snapHeroLayoutPx(base - inset);
-        return Math.abs(rounded - prev) < 0.5 ? prev : rounded;
+        const rounded = Math.round(next * 100) / 100;
+        return Math.abs(rounded - prev) < 0.25 ? prev : rounded;
       });
+    };
+
+    const forceRemeasure = () => {
+      frozen = false;
+      measure(true, 0);
+      retryTimeouts.push(window.setTimeout(() => measure(true, 0), 80));
+      retryTimeouts.push(window.setTimeout(() => measure(true, 0), 200));
     };
 
     measure(true);
     const raf = window.requestAnimationFrame(() => measure(true));
     const retry = window.setTimeout(() => measure(true), 120);
-    const onResize = () => {
-      frozen = false;
-      measure(true, 0);
-    };
-    window.addEventListener("resize", onResize);
+
+    window.addEventListener("resize", forceRemeasure);
+    window.addEventListener("orientationchange", forceRemeasure);
+    const mqNonMobile = window.matchMedia(`(min-width: ${HERO_TABLET_MIN_PX}px)`);
+    mqNonMobile.addEventListener("change", forceRemeasure);
+    const mqOrientation = window.matchMedia("(orientation: portrait)");
+    mqOrientation.addEventListener("change", forceRemeasure);
     return () => {
       window.cancelAnimationFrame(raf);
       window.clearTimeout(retry);
       retryTimeouts.forEach((id) => window.clearTimeout(id));
-      window.removeEventListener("resize", onResize);
+      window.removeEventListener("resize", forceRemeasure);
+      window.removeEventListener("orientationchange", forceRemeasure);
+      mqNonMobile.removeEventListener("change", forceRemeasure);
+      mqOrientation.removeEventListener("change", forceRemeasure);
     };
-  }, [heroReady, isMobileHeroLayout, isHeroCropLayout, heroVideoBoundsZoom, svgMountEpoch]);
+  }, [heroReady, isMobileHeroLayout, isHeroCropLayout, svgMountEpoch]);
 
   /** Mobile — scale tagline type so its one-line width matches the name lockup. */
   useLayoutEffect(() => {
@@ -2546,27 +2613,30 @@ const HeroNameReveal = ({
     onGlobalDebugReset();
   }, [onGlobalDebugReset, svgLockupDefaultsForViewport]);
 
-  /** Locked SVG layout in hard-crop / tablet; mobile keeps translate-only auto-align (+ optional nudge). */
+  /** Locked SVG layout on desktop-like / crop; portrait tablet + mobile: translate-only auto-align. */
   const activeSvgLockupLayout = heroDebugEnabled
     ? svgLockupDebugControls
     : svgLockupDefaultsForViewport;
   const heroSvgLockupStyle: React.CSSProperties | undefined = (() => {
-    if (isMobileHeroLayout) {
-      const nextX = snapHeroLayoutPx(heroSvgAlignX + mobileSvgNudgeXPx);
+    if (!heroDesktopViewport) {
+      const mobileNudgeX = isMobileHeroLayout ? mobileSvgNudgeXPx : 0;
+      const tabletPortraitNudgeX =
+        !isMobileHeroLayout &&
+        typeof window !== "undefined" &&
+        window.matchMedia(
+          `(min-width: ${HERO_TABLET_MIN_PX}px) and (max-width: ${HERO_TABLET_MAX_PX}px) and (orientation: portrait)`,
+        ).matches
+          ? 2
+          : 0;
+      const nextX = Math.round(heroSvgAlignX + mobileNudgeX + tabletPortraitNudgeX);
       return nextX ? { transform: `translateX(${nextX}px)` } : undefined;
     }
-    /* Crop + tablet: apply SVG Y + video-edge X. */
-    const x = snapHeroLayoutPx(heroSvgAlignX + activeSvgLockupLayout.offsetX);
-    const y = Math.round(activeSvgLockupLayout.offsetY);
-    const zoom = activeSvgLockupLayout.scale * activeSvgLockupLayout.heightScale;
-    if (zoom === 1 && activeSvgLockupLayout.widthScale === 1) {
-      return x || y ? { transform: `translate(${x}px, ${y}px)` } : undefined;
-    }
+    /* Integer px — subpixel translate rasterizes the scaled SVG soft. */
     return buildHeroGlobalLayoutStyle(
       {
         ...activeSvgLockupLayout,
-        offsetX: x,
-        offsetY: y,
+        offsetX: Math.round(heroSvgAlignX + activeSvgLockupLayout.offsetX),
+        offsetY: Math.round(activeSvgLockupLayout.offsetY),
       },
       "left top",
     );
@@ -2810,10 +2880,10 @@ const HeroNameReveal = ({
             } ${
               isHeroCropLayout
                 ? "-translate-y-[7px] pl-[6px] sm:pl-[20px]"
-                : "-translate-y-[0.44rem] pl-1.5 sm:-translate-y-[0.44rem] sm:pl-5"
+                : "-translate-x-1 -translate-y-[0.44rem] pl-1.5 pr-1.5 sm:-translate-x-1.5 sm:-translate-y-[0.44rem] sm:pl-5 sm:pr-4"
             }`}
           >
-            {!isMobileHeroLayout ? (
+            {heroDesktopViewport ? (
               <div className="w-fit min-w-0 max-w-full" style={heroPortfolioButtonGlobalDebugStyle}>
                 {button}
               </div>
@@ -2908,14 +2978,12 @@ const HeroNameReveal = ({
           />,
           document.body,
         )}
-      {!isMobileHeroLayout ? (
+      {isHeroCropLayout ? (
         <div
           ref={heroSharedBoundsRef}
           data-hero-shared-bounds="true"
-          className={`relative mx-auto max-w-full${
-            isHeroCropLayout ? "" : ` ${HERO_VIDEO_CARD_WIDTH_CLASS}`
-          }`}
-          style={isHeroCropLayout ? { width: HERO_CROP_SHARED_BOUNDS_WIDTH_PX } : undefined}
+          className="relative mx-auto max-w-full"
+          style={{ width: HERO_CROP_SHARED_BOUNDS_WIDTH_PX }}
         >
           {heroMainGlobalDebugStyle ? (
             <div className="w-full min-w-0 max-w-full" style={heroMainGlobalDebugStyle}>
@@ -2924,6 +2992,10 @@ const HeroNameReveal = ({
           ) : (
             heroMainContent
           )}
+        </div>
+      ) : heroDesktopViewport ? (
+        <div className="w-fit min-w-0 max-w-full" style={heroMainGlobalDebugStyle}>
+          {heroMainContent}
         </div>
       ) : (
         heroMainContent
@@ -3152,47 +3224,57 @@ const Hero = ({
     ? portfolioButtonGlobalDebugControls
     : viewportPortfolioDefaults;
   const heroVideoGlobalDebugStyle = useMemo(() => {
-    if (isMobileHeroLayout) return undefined;
-    const layout = heroDebugEnabled ? videoGlobalDebugControls : viewportVideoDefaults;
-    const zoom = layout.scale * layout.heightScale;
-    return {
-      transform: `translate(${layout.offsetX}px, ${layout.offsetY}px) scale(${zoom})`,
-      transformOrigin: "center center" as const,
+    if (isHeroCropLayout) {
+      /* Desktop hard-crop: transform scale (avoid zoom black-level / compositor shifts). */
+      const layout = heroDebugEnabled ? videoGlobalDebugControls : viewportVideoDefaults;
+      const zoom = layout.scale * layout.heightScale;
+      return {
+        transform: `translate(${layout.offsetX}px, ${layout.offsetY}px) scale(${zoom})`,
+        transformOrigin: "center center" as const,
+      };
+    }
+    if (!heroDesktopLikeViewport) return undefined;
+    /* Tablet landscape relies on zoom-style layout sizing for optical lockup parity. */
+    if (heroTabletLandscapeViewport) {
+      return buildHeroGlobalLayoutStyle(activeVideoLayout, "center center");
+    }
+    /* Desktop-like (non-crop): transform scale. */
+    const zoom = activeVideoLayout.scale * activeVideoLayout.heightScale;
+    const style: React.CSSProperties = {
+      transform: `translate(${activeVideoLayout.offsetX}px, ${activeVideoLayout.offsetY}px) scale(${zoom})`,
+      transformOrigin: "center center",
     };
+    if (activeVideoLayout.widthScale !== 1 || activeVideoLayout.heightScale !== 1) {
+      const widthPercent =
+        activeVideoLayout.heightScale !== 0
+          ? (activeVideoLayout.widthScale / activeVideoLayout.heightScale) * 100
+          : activeVideoLayout.widthScale * 100;
+      style.width = `${widthPercent}%`;
+    }
+    return style;
   }, [
-    isMobileHeroLayout,
+    isHeroCropLayout,
+    heroDesktopLikeViewport,
+    heroTabletLandscapeViewport,
     heroDebugEnabled,
     videoGlobalDebugControls,
     viewportVideoDefaults,
+    activeVideoLayout,
   ]);
-  const heroMainGlobalDebugStyle = !isMobileHeroLayout
-    ? (() => {
-        const style = buildHeroGlobalLayoutStyle(activeMainLayout);
-        const t = style.transform;
-        if (
-          (!style.zoom || style.zoom === 1) &&
-          (t === "translate(0px, 0px)" || t === "translate(0px,0px)")
-        ) {
-          return undefined;
-        }
-        return style;
-      })()
-    : undefined;
-  const heroPortfolioButtonGlobalDebugStyle = !isMobileHeroLayout
-    ? (() => {
-        const zoom =
-          activePortfolioButtonLayout.scale * activePortfolioButtonLayout.heightScale;
-        return {
-          transform: `translate(${activePortfolioButtonLayout.offsetX}px, ${activePortfolioButtonLayout.offsetY}px) scale(${zoom})`,
-          transformOrigin: "right top",
-        } satisfies React.CSSProperties;
-      })()
-    : undefined;
-  const heroVideoBoundsZoom = !isMobileHeroLayout
-    ? heroDebugEnabled
-      ? videoGlobalDebugControls.scale * videoGlobalDebugControls.heightScale
-      : viewportVideoDefaults.scale * viewportVideoDefaults.heightScale
-    : 1;
+  const heroMainGlobalDebugStyle =
+    isHeroCropLayout || heroDesktopLikeViewport
+      ? buildHeroGlobalLayoutStyle(activeMainLayout)
+      : undefined;
+  const heroPortfolioButtonGlobalDebugStyle =
+    isHeroCropLayout || heroDesktopLikeViewport
+      ? buildHeroGlobalLayoutStyle(activePortfolioButtonLayout)
+      : undefined;
+  const heroVideoBoundsZoom =
+    isHeroCropLayout || heroDesktopLikeViewport
+      ? heroDebugEnabled
+        ? videoGlobalDebugControls.scale * videoGlobalDebugControls.heightScale
+        : viewportVideoDefaults.scale * viewportVideoDefaults.heightScale
+      : 1;
 
   const handleVideoGlobalDebugChange = useCallback((patch: Partial<HeroGlobalLayoutControl>) => {
     setVideoGlobalDebugControls((prev) => ({ ...prev, ...patch }));
@@ -3960,31 +4042,44 @@ const Hero = ({
   }, [heroPhase1LayoutReady, isMobileHeroLayout]);
 
   /**
-   * Non-mobile — SVG host can be taller than 283×94; preserveAspectRatio="none"
-   * stretches glyphs. Keep meet on all ≥768 so art stays unstretched.
-   * xMinYMin pins ink to the shared video left bound.
+   * Tablet (iPad portrait + landscape) — SVG host is taller than 283×94, and
+   * preserveAspectRatio="none" was stretching glyphs ~5–6% vertically.
+   * Use meet so art stays unstretched; layout box / video-edge align unchanged.
+   * Hard-crop keeps xMinYMin; true desktop (non-crop) keeps none.
    */
   useLayoutEffect(() => {
     if (isMobileHeroLayout) return;
+    const mq = window.matchMedia(HERO_TABLET_DEVICE_MQ);
     const apply = () => {
       const svgLockup = document.querySelector<SVGSVGElement>('#hero [data-hero-svg-root="true"] svg');
       if (!svgLockup) return;
-      if (svgLockup.getAttribute("viewBox") !== "0 0 283 94") {
-        svgLockup.setAttribute("viewBox", "0 0 283 94");
+      if (isHeroCropLayout) {
+        if (svgLockup.getAttribute("preserveAspectRatio") !== "xMinYMin meet") {
+          svgLockup.setAttribute("preserveAspectRatio", "xMinYMin meet");
+        }
+        return;
       }
-      if (svgLockup.getAttribute("preserveAspectRatio") !== "xMinYMin meet") {
-        svgLockup.setAttribute("preserveAspectRatio", "xMinYMin meet");
+      if (mq.matches) {
+        if (svgLockup.getAttribute("preserveAspectRatio") !== "xMidYMin meet") {
+          svgLockup.setAttribute("preserveAspectRatio", "xMidYMin meet");
+        }
+      } else {
+        const ratio = svgLockup.getAttribute("preserveAspectRatio");
+        if (ratio === "xMidYMin meet" || ratio === "xMidYMid meet" || ratio === "xMinYMin meet") {
+          svgLockup.setAttribute("preserveAspectRatio", "none");
+        }
       }
     };
     apply();
-    /* SVG mounts async inside HeroNameReveal — short retry after phase-1. */
     const retry = window.setTimeout(apply, 80);
     const retry2 = window.setTimeout(apply, 240);
+    mq.addEventListener("change", apply);
     return () => {
       window.clearTimeout(retry);
       window.clearTimeout(retry2);
+      mq.removeEventListener("change", apply);
     };
-  }, [heroPhase1LayoutReady, isMobileHeroLayout]);
+  }, [heroPhase1LayoutReady, isMobileHeroLayout, isHeroCropLayout]);
 
   /* Mobile SVG/text: rest + float phase start at most-down (+amp). Desktop unchanged.
    * Idle float is CSS keyframes (compositor) — not Framer Motion y arrays. */
@@ -4022,10 +4117,10 @@ const Hero = ({
         data-hero-mobile-video-face={isMobileHeroLayout ? "true" : undefined}
         className={
           isMobileHeroLayout
-            ? "relative z-[1] mx-auto w-full h-[clamp(150px,min(40vh,calc(100svh-11rem-max(1rem,env(safe-area-inset-top,0px)))),430px)] max-md:aspect-video max-md:h-auto overflow-hidden rounded-xl border border-white bg-black"
+            ? "relative z-[1] mx-auto w-full h-[clamp(150px,min(40vh,calc(100svh-11rem-max(1rem,env(safe-area-inset-top,0px)))),430px)] max-md:aspect-video max-md:h-auto md:max-lg:h-[clamp(200px,min(44vh,calc(100svh-14rem-max(1rem,env(safe-area-inset-top,0px)))),500px)] lg:h-[clamp(240px,min(54vh,calc(100svh-11.5rem-max(1.5rem,env(safe-area-inset-top,0px)))),680px)] xl:h-[clamp(260px,min(56vh,calc(100svh-12rem-max(2rem,env(safe-area-inset-top,0px)))),760px)] overflow-hidden rounded-xl border border-white bg-black"
             : isHeroCropLayout
               ? "relative z-[1] mx-auto w-full overflow-hidden rounded-xl border border-white bg-black"
-              : "relative z-[1] mx-auto w-full h-[clamp(150px,min(40vh,calc(100svh-11rem-max(1rem,env(safe-area-inset-top,0px)))),430px)] overflow-hidden rounded-xl border border-white bg-black"
+              : "relative z-[1] mx-auto w-full h-[clamp(150px,min(40vh,calc(100svh-11rem-max(1rem,env(safe-area-inset-top,0px)))),430px)] max-md:aspect-video max-md:h-auto md:max-lg:h-[clamp(200px,min(44vh,calc(100svh-14rem-max(1rem,env(safe-area-inset-top,0px)))),500px)] lg:h-[clamp(240px,min(54vh,calc(100svh-11.5rem-max(1.5rem,env(safe-area-inset-top,0px)))),680px)] xl:h-[clamp(260px,min(56vh,calc(100svh-12rem-max(2rem,env(safe-area-inset-top,0px)))),760px)] overflow-hidden rounded-xl border border-white bg-black"
         }
         style={{
           boxShadow: "none",
@@ -4067,13 +4162,11 @@ const Hero = ({
         data-hero-stage="true"
         data-hero-crop={isHeroCropLayout ? "true" : undefined}
         className={
-          isMobileHeroLayout
-            ? `relative z-[5] mx-auto grid h-full w-full max-w-[1680px] grid-rows-[minmax(0,1.55fr)_minmax(0,1fr)] px-5 pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1rem,env(safe-area-inset-bottom,0px))]${
-                !sliderPhaseActive ? " max-md:grid-rows-1" : ""
+          isHeroCropLayout
+            ? `absolute left-1/2 top-0 z-[5] flex h-full flex-col items-center justify-center px-[32px] pt-[max(32px,env(safe-area-inset-top,0px))] pb-[24px] ${HERO_CROP_STACK_GAP_CLASS}`
+            : `relative z-[5] mx-auto grid h-full w-full max-w-[1680px] grid-rows-[minmax(0,1.55fr)_minmax(0,1fr)] px-4 max-md:px-5 pt-[max(1rem,env(safe-area-inset-top,0px))] pb-4 max-md:pt-[max(1rem,env(safe-area-inset-top,0px))] max-md:pb-[max(1rem,env(safe-area-inset-bottom,0px))] max-lg:grid-rows-[minmax(0,1.5fr)_minmax(0,1fr)] md:max-lg:grid-rows-[minmax(0,1.38fr)_minmax(0,1fr)] md:px-6 md:pt-[max(1.5rem,env(safe-area-inset-top,0px))] md:pb-5 md:max-lg:px-5 md:max-lg:pt-3 md:max-lg:pb-[max(1.25rem,env(safe-area-inset-bottom,0px))] lg:grid-rows-[minmax(0,2fr)_minmax(0,1fr)] lg:px-8 lg:pt-[max(2rem,env(safe-area-inset-top,0px))] lg:pb-6 [@media(min-width:744px)_and_(max-width:1366px)_and_(orientation:landscape)_and_(any-pointer:coarse)]:pt-[max(1.25rem,env(safe-area-inset-top,0px))] [@media(min-width:744px)_and_(max-width:1366px)_and_(orientation:landscape)_and_(any-pointer:coarse)]:pb-[max(1.25rem,env(safe-area-inset-bottom,0px))]${
+                isMobileHeroLayout && !sliderPhaseActive ? " max-md:grid-rows-1" : ""
               }`
-            : isHeroCropLayout
-              ? `absolute left-1/2 top-0 z-[5] flex h-full flex-col items-center justify-center px-[32px] pt-[max(32px,env(safe-area-inset-top,0px))] pb-[24px] ${HERO_CROP_STACK_GAP_CLASS}`
-              : `relative z-[5] mx-auto grid h-full w-full max-w-[1680px] grid-rows-[minmax(0,1.55fr)_minmax(0,1fr)] px-8 pt-[max(2rem,env(safe-area-inset-top,0px))] pb-6 ${HERO_TABLET_LANDSCAPE_NAME_CENTER}`
         }
         style={
           isHeroCropLayout
@@ -4088,18 +4181,16 @@ const Hero = ({
         <div
           data-hero-mobile-video-row={isMobileHeroLayout ? "true" : undefined}
           className={
-            isMobileHeroLayout
-              ? "relative flex min-h-0 items-center justify-center"
-              : isHeroCropLayout
-                ? "relative flex w-full shrink-0 items-center justify-center"
-                : `relative flex min-h-0 items-center justify-center ${HERO_TABLET_LANDSCAPE_VIDEO_NUDGE}`
+            isHeroCropLayout
+              ? "relative flex w-full shrink-0 items-center justify-center"
+              : "relative flex min-h-0 items-center justify-center max-lg:items-end max-lg:pb-2 md:max-lg:pb-3"
           }
         >
           <div
             className={
-              isMobileHeroLayout
-                ? "absolute inset-0 flex w-full items-center justify-center max-md:px-0 max-[400px]:px-0 sm:px-0"
-                : "relative flex w-full items-center justify-center"
+              isHeroCropLayout
+                ? "relative flex w-full items-center justify-center"
+                : `absolute inset-0 flex w-full items-center justify-center max-lg:items-end max-lg:pb-2 md:max-lg:translate-y-3 md:max-lg:pb-1 ${HERO_TABLET_LANDSCAPE_VIDEO_NUDGE} max-md:px-0 max-[400px]:px-0 sm:px-0`
             }
           >
           {/* Stable width probe — same card width as video; never scaled so SVG align can freeze early. */}
@@ -4126,11 +4217,11 @@ const Hero = ({
               initial={false}
             >
               {/* Stable wrapper — never remount <video> when desktop-like MQ flips.
-               * Crop: w-fit + fixed px card width. Tablet: w-full so % card width
-               * resolves (w-fit + % collapses to a dot). */}
+               * Crop / iPad landscape: w-fit (zoom or fixed-px). Portrait / mobile: w-full. */}
               <div
                 className={
-                  isHeroCropLayout && heroVideoGlobalDebugStyle
+                  heroVideoGlobalDebugStyle &&
+                  (isHeroCropLayout || heroTabletLandscapeViewport)
                     ? "mx-auto w-fit min-w-0 max-w-full"
                     : "mx-auto w-full max-w-full"
                 }
@@ -4143,11 +4234,13 @@ const Hero = ({
         </div>
         <div
           className={
-            isMobileHeroLayout
-              ? `relative z-40 flex min-h-0 flex-col items-center overflow-visible pt-0 max-md:col-span-full max-md:col-start-1 max-md:row-span-full max-md:row-start-1 max-md:absolute max-md:inset-0 max-md:z-[45] max-md:justify-center max-md:pt-0`
-              : isHeroCropLayout
-                ? "relative z-40 flex w-full shrink-0 flex-col items-center overflow-visible pt-0"
-                : "relative z-40 flex min-h-0 flex-col items-center overflow-visible pt-0"
+            isHeroCropLayout
+              ? "relative z-40 flex w-full shrink-0 flex-col items-center overflow-visible pt-0"
+              : `relative z-40 flex min-h-0 flex-col items-center overflow-visible pt-0 max-lg:justify-start max-lg:pt-2 md:max-lg:justify-start md:max-lg:pt-2 ${HERO_TABLET_LANDSCAPE_NAME_CENTER}${
+                  isMobileHeroLayout
+                    ? " max-md:col-span-full max-md:col-start-1 max-md:row-span-full max-md:row-start-1 max-md:absolute max-md:inset-0 max-md:z-[45] max-md:justify-center max-md:pt-0"
+                    : ""
+                }`
           }
         >
           {/* Y-transform wrapper: mobile centers in viewport then tweens down; desktop uses phase-1 lift → settle. */}
@@ -4155,11 +4248,9 @@ const Hero = ({
             ref={heroNameMotionRef}
             data-hero-mobile-name-stack={isMobileHeroLayout ? "true" : undefined}
             className={
-              isMobileHeroLayout
-                ? `mx-auto flex h-full w-full max-w-[1220px] flex-col items-center justify-center gap-0 px-1 py-2 max-md:justify-center max-md:px-0 max-md:py-0 sm:px-2 sm:py-2`
-                : isHeroCropLayout
-                  ? "mx-auto flex w-full flex-col items-center justify-center gap-0 px-0 py-0"
-                  : "mx-auto flex h-full w-full max-w-[1220px] flex-col items-center justify-center gap-0 px-1 py-2 sm:px-2 sm:py-2"
+              isHeroCropLayout
+                ? "mx-auto flex w-full flex-col items-center justify-center gap-0 px-0 py-0"
+                : `mx-auto flex h-full w-full max-w-[1220px] flex-col items-center justify-center gap-0 px-1 py-2 max-lg:justify-start max-lg:py-1 max-md:justify-center max-md:px-0 max-md:py-0 sm:px-2 sm:py-2 md:max-lg:justify-start md:max-lg:py-1 ${HERO_TABLET_LANDSCAPE_NAME_CENTER} lg:py-3`
             }
             style={{ y: isMobileHeroLayout ? mobileNameY : desktopNameY }}
             initial={false}
@@ -4167,11 +4258,9 @@ const Hero = ({
             <div
               ref={heroInViewRef}
               className={
-                isMobileHeroLayout
-                  ? "mx-auto flex w-full min-w-0 max-w-[min(100%,58rem)] flex-col px-1 max-[639px]:px-0 max-md:px-0 max-[400px]:px-0 max-md:max-[400px]:px-0 max-md:pt-2 sm:px-2"
-                  : isHeroCropLayout
-                    ? "mx-auto flex w-full min-w-0 flex-col px-0"
-                    : "mx-auto flex w-full min-w-0 max-w-[min(100%,58rem)] flex-col px-1 sm:px-2"
+                isHeroCropLayout
+                  ? "mx-auto flex w-full min-w-0 flex-col px-0"
+                  : "mx-auto flex w-full min-w-0 max-w-[min(100%,58rem)] flex-col px-1 max-[639px]:px-0 max-md:px-0 max-[400px]:px-0 max-md:max-[400px]:px-0 max-md:pt-2 sm:px-2"
               }
             >
               <div
@@ -4194,7 +4283,7 @@ const Hero = ({
                   heroPortfolioButtonGlobalDebugStyle={heroPortfolioButtonGlobalDebugStyle}
                   heroVideoBoundsZoom={heroVideoBoundsZoom}
                   svgLockupDefaultsForViewport={viewportSvgLockupDefaults}
-                  heroDesktopViewport={!isMobileHeroLayout}
+                  heroDesktopViewport={isHeroCropLayout || heroDesktopLikeViewport}
                   heroControlledViewportActive={heroControlledViewportActive}
                   heroControlledViewport={heroControlledViewport}
                   onHeroControlledViewportChange={setHeroControlledViewport}
