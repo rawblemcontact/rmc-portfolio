@@ -33,43 +33,49 @@ export const HERO_VIDEO_GLOBAL_LAYOUT_DEFAULTS: HeroGlobalLayoutControl = {
 };
 
 export const HERO_MAIN_GLOBAL_LAYOUT_DEFAULTS: HeroGlobalLayoutControl = {
-  offsetX: 55,
+  // Horizontal bounds come from the video align probe — do not encode X here.
+  offsetX: 0,
   // Keep container-level Y neutral; name-lockup nudges should be handled in
   // the hero text/SVG optical offsets so the whole hero stack doesn't drift.
   offsetY: 0,
-  scale: 0.95,
+  // Row scale must stay 1 so probe left/right edges are not shrunk by zoom.
+  scale: 1,
   widthScale: 1,
   heightScale: 1,
 };
 
 export const HERO_PORTFOLIO_BUTTON_GLOBAL_LAYOUT_DEFAULTS: HeroGlobalLayoutControl = {
-  offsetX: 39,
+  offsetX: 0,
   offsetY: 3,
   scale: 0.94,
   widthScale: 1,
   heightScale: 0.91,
 };
 
-/** Desktop rob-hero SVG lockup — additive to auto video-edge align X. */
+/** Desktop rob-hero SVG lockup — Y nudge only; X from video-edge auto-align. Keep widthScale=1 so meet stays uniform. */
 export const HERO_SVG_LOCKUP_LAYOUT_DEFAULTS: HeroGlobalLayoutControl = {
-  offsetX: 33,
+  offsetX: 0,
   offsetY: -44,
   scale: 1,
-  widthScale: 0.95,
+  widthScale: 1,
   heightScale: 1,
 };
 
 /** Crisp zoom + width/height for hero debug targets (desktop). */
 export function buildHeroGlobalLayoutStyle(
   control: HeroGlobalLayoutControl,
-  transformOrigin: "left top" | "center center" = "left top",
+  transformOrigin: "left top" | "center center" | "right top" = "left top",
 ): CSSProperties {
   const zoom = control.scale * control.heightScale;
   const style: CSSProperties = {
     transform: `translate(${control.offsetX}px, ${control.offsetY}px)`,
     transformOrigin,
-    zoom,
   };
+
+  /* Omit identity zoom — CSS zoom on large subtrees tanks compositor performance. */
+  if (zoom !== 1) {
+    style.zoom = zoom;
+  }
 
   if (control.widthScale !== 1 || control.heightScale !== 1) {
     const widthPercent =

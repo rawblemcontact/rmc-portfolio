@@ -6721,15 +6721,13 @@
 }
 
 /*
- * Hero — iPad / tablet portrait only (768–1023.98 × portrait).
- * Native 16:9 video face from shared card width; modest type; lift stack to
- * full-viewport thirds (vh/3 · 2vh/3) — not the nav-aware ruler overlay band.
- * Do NOT override video width — probe + SVG + PORTFOLIO share HERO_VIDEO_CARD_WIDTH_CLASS.
- * Does not alter mobile, tablet landscape, or desktop shared rules.
+ * Hero — legacy iPad / tablet portrait reflow (768–1023.98 × portrait).
+ * Hard-crop (`data-hero-crop="true"`) is desktop at any size; skip this block
+ * when crop is active so frozen face height / type / Y are not overridden.
  */
 @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
   /* Keep prior band ratio â€” vertical placement is owned by the shared translate. */
-  #hero [data-hero-stage="true"] {
+  #hero [data-hero-stage="true"]:not([data-hero-crop="true"]) {
     grid-template-rows: minmax(0, 1.92fr) minmax(0, 1fr);
     padding-top: max(1.5rem, env(safe-area-inset-top, 0px));
     padding-bottom: max(1.35rem, env(safe-area-inset-bottom, 0px));
@@ -6741,15 +6739,15 @@
    * Cleared below fixed nav (~80px). Also zero the shared md–lg video translate-y-3
    * down-nudge so portrait lift is not partially cancelled.
    */
-  #hero [data-hero-stage="true"] > div:first-child > div,
-  #hero [data-hero-stage="true"] > div:last-child {
+  #hero [data-hero-stage="true"]:not([data-hero-crop="true"]) > div:first-child > div,
+  #hero [data-hero-stage="true"]:not([data-hero-crop="true"]) > div:last-child {
     transform: translateY(-6.5rem);
     --tw-translate-y: 0px;
     translate: 0;
   }
 
   /* Video face — native 16:9 from shared card width (no vh height band). */
-  #hero [data-hero-video-card="true"] > div.relative {
+  #hero [data-hero-stage="true"]:not([data-hero-crop="true"]) [data-hero-video-card="true"] > div.relative {
     aspect-ratio: 16 / 9;
     height: auto !important;
     max-height: none;
@@ -6759,19 +6757,19 @@
    * Name sizing â€” modest bump so lockup + PORTFOLIO still span the video card.
    * Aggressive vw growth widened the auto column and broke right-edge CTA align.
    */
-  #hero [data-hero-name-lockup="true"] .font-bold.uppercase,
-  #hero [data-hero-name-lockup="true"] [class*="8.85vw"] {
+  #hero [data-hero-stage="true"]:not([data-hero-crop="true"]) [data-hero-name-lockup="true"] .font-bold.uppercase,
+  #hero [data-hero-stage="true"]:not([data-hero-crop="true"]) [data-hero-name-lockup="true"] [class*="8.85vw"] {
     font-size: clamp(2.45rem, 9.35vw, 5.95rem) !important;
   }
 
   /* PORTFOLIO CTA â€” type/padding only (no transform scale; preserves video-edge pin). */
-  #hero .playstore-button--primary {
+  #hero [data-hero-stage="true"]:not([data-hero-crop="true"]) .playstore-button--primary {
     font-size: 0.8rem;
     min-height: 2.95rem;
     padding-inline: 1rem;
   }
 
-  #hero .playstore-button--primary .texts {
+  #hero [data-hero-stage="true"]:not([data-hero-crop="true"]) .playstore-button--primary .texts {
     font-size: 0.8rem;
     letter-spacing: 0.07em;
   }
