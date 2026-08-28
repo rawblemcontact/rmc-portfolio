@@ -46,7 +46,7 @@ export const HERO_MAIN_GLOBAL_LAYOUT_DEFAULTS: HeroGlobalLayoutControl = {
 
 export const HERO_PORTFOLIO_BUTTON_GLOBAL_LAYOUT_DEFAULTS: HeroGlobalLayoutControl = {
   offsetX: 0,
-  offsetY: -5,
+  offsetY: -30,
   scale: 0.94,
   widthScale: 0.78,
   heightScale: 0.91,
