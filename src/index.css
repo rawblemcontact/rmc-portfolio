@@ -1622,7 +1622,7 @@
       min-height: 2.55rem !important;
       height: auto !important;
       max-height: none !important;
-      padding: 0.55rem 1.25rem !important;
+      padding: 0.55rem 1.1rem !important;
       border-width: 1.5px;
       background-color: rgba(0, 0, 0, 0.5);
     }
@@ -1648,7 +1648,8 @@
     }
 
     #hero .hero-portfolio-animated .hero-portfolio-arrow--2 {
-      left: 0.9rem;
+      /* Mobile hover: pull toward the left edge so [gap][→][gap][text] matches. */
+      left: 0.76rem;
     }
 
     #hero .hero-portfolio-animated .hero-portfolio-text {
@@ -1683,13 +1684,13 @@
    */
   @media (min-width: 768px) and (max-width: 1366px) and (orientation: portrait) {
     #hero .hero-portfolio-animated .hero-portfolio-arrow--1 {
-      /* Tablet V rest — shared start; 768–1023 already even with 1rem pad. */
-      right: calc(0.7rem + 1px);
+      /* Tablet V rest: pull toward the right edge so [text][gap][→][gap] matches. */
+      right: calc(0.56rem + 1px);
     }
 
     #hero .hero-portfolio-animated .hero-portfolio-arrow--2 {
-      /* Tablet V hover/press — shared start. */
-      left: calc(0.7rem + 1px);
+      /* Tablet V hover: pull toward the left edge so [gap][→][gap][text] matches. */
+      left: calc(0.56rem + 1px);
     }
 
     #hero .hero-portfolio-animated .hero-portfolio-text {
@@ -1725,7 +1726,7 @@
    */
   @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
     #hero .hero-portfolio-animated .hero-portfolio-arrow--2 {
-      left: calc(0.46rem + 1px);
+      left: calc(0.32rem + 1px);
     }
   }
 
@@ -1734,23 +1735,23 @@
    */
   @media (min-width: 1024px) and (max-width: 1366px) and (orientation: portrait) {
     #hero .hero-portfolio-animated .hero-portfolio-arrow--1 {
-      right: calc(0.96rem + 1px);
+      right: calc(0.82rem + 1px);
     }
 
     #hero .hero-portfolio-animated .hero-portfolio-arrow--2 {
-      left: calc(0.82rem + 1px);
+      left: calc(0.68rem + 1px);
     }
   }
 
   @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) {
     #hero .hero-portfolio-animated .hero-portfolio-arrow--1 {
-      /* Tablet H rest: slight inward so [text][gap][→][gap] reads even (1px optical). */
-      right: calc(1.14rem - 1px);
+      /* Tablet H rest: pull toward the right edge so [text][gap][→][gap] matches. */
+      right: calc(1rem - 1px);
     }
 
     #hero .hero-portfolio-animated .hero-portfolio-arrow--2 {
-      /* Tablet H hover/press: slight toward edge so [gap][→][gap][text] matches. */
-      left: calc(0.97rem - 1px);
+      /* Tablet H hover: pull toward the left edge so [gap][→][gap][text] matches. */
+      left: calc(0.83rem - 1px);
     }
 
     #hero .hero-portfolio-animated .hero-portfolio-text {
@@ -1782,7 +1783,8 @@
 
   /*
    * Desktop PORTFOLIO arrow — glyph + gap retune after 32→20px pad.
-   * Rest [text][gap][→][gap] and hover [gap][→][gap][text] (1px optical).
+   * Rest [text][gap][→][gap]. Hover [gap][→][gap][text]: pull arrow toward the
+   * left edge so left/right gaps around the glyph match in the settled hover pose.
    * ≥1024 + fine pointer (excludes iPad coarse).
    */
   @media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
@@ -1796,7 +1798,7 @@
     }
 
     #hero .hero-portfolio-animated .hero-portfolio-arrow--2 {
-      left: calc(0.58rem - 1px);
+      left: calc(0.44rem - 1px);
     }
 
     #hero .hero-portfolio-animated .hero-portfolio-text {
@@ -1808,6 +1810,36 @@
     #hero .hero-portfolio-animated:focus-visible .hero-portfolio-text,
     #hero .hero-portfolio-animated.hero-portfolio-animated--pressed .hero-portfolio-text {
       transform: translate3d(0.64rem, 0, 0);
+    }
+  }
+
+  /*
+   * iPad / tablet landscape arrows — after desktop so 1024–1366 landscape
+   * (fine pointer resize) keeps tablet-H insets, not desktop.
+   */
+  @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) {
+    #hero .hero-portfolio-animated .hero-portfolio-arrow--1 {
+      right: calc(1rem - 1px);
+    }
+
+    #hero .hero-portfolio-animated .hero-portfolio-arrow--2 {
+      left: calc(0.83rem - 1px);
+    }
+  }
+
+  @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
+    #hero .hero-portfolio-animated .hero-portfolio-arrow--2 {
+      left: calc(0.32rem + 1px);
+    }
+  }
+
+  @media (min-width: 1024px) and (max-width: 1366px) and (orientation: portrait) {
+    #hero .hero-portfolio-animated .hero-portfolio-arrow--1 {
+      right: calc(0.82rem + 1px);
+    }
+
+    #hero .hero-portfolio-animated .hero-portfolio-arrow--2 {
+      left: calc(0.68rem + 1px);
     }
   }
 

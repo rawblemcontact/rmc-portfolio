@@ -1645,7 +1645,7 @@ const HERO_NAME_MOBILE_DISPLAY_FONT_CLASS =
  * Mobile PORTFOLIO CTA — content-sized (no band); presence via type/padding/hit target only.
  */
 const HERO_NAME_MOBILE_PORTFOLIO_BUTTON_CLASS =
-  "max-md:!h-auto max-md:!min-h-[2.55rem] max-md:!max-h-none max-md:!px-[1.25rem] max-md:!py-2 max-md:text-[0.72rem] max-md:[&_.texts]:gap-1 max-md:[&_.texts]:text-[0.72rem] max-md:[&_.texts]:!tracking-normal";
+  "max-md:!h-auto max-md:!min-h-[2.55rem] max-md:!max-h-none max-md:!px-[1.1rem] max-md:!py-2 max-md:text-[0.72rem] max-md:[&_.texts]:gap-1 max-md:[&_.texts]:text-[0.72rem] max-md:[&_.texts]:!tracking-normal";
 /** Divider center-out scaleX — keep in sync with `animation-duration` on `[data-hero-name-rule]` in index.css. */
 const HERO_NAME_RULE_DUR_MS = 420;
 /** Beat after divider starts before ROBBIE/MCLAUGHLIN cascade. */
