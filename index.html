@@ -2,52 +2,43 @@
 <html lang="en" class="scroll-smooth">
   <head>
     <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, shrink-to-fit=no"
+    />
     <script>
-      /* Vertical-tablet fit: when the device's physical width is in the iPad
-       * portrait band (768–1023px), emit the viewport meta with width=390 so the
-       * browser renders the exact mobile layout (same adaptation you get when
-       * resizing a desktop window down past 768). All Tailwind sm:/md: utilities
-       * deactivate and every mobile-only CSS block becomes active. Outside the
-       * band, emit the normal viewport so mobile, iPad landscape, and desktop
-       * are unaffected.
-       *
-       * `document.write` is used so the meta is in the DOM BEFORE the rest of
-       * <head> parses — no flash of wrong layout, no iOS Safari quirk where
-       * post-parse meta swaps are ignored. `screen.width` is the detection
-       * signal because it reflects the real device and is immune to whatever
-       * viewport meta is currently active (so resize logic stays correct).
-       *
-       * After the initial write, a resize/orientationchange handler swaps the
-       * meta node (remove + recreate) — also for iOS Safari reliability. */
+      /* iPad/iOS: after rotate, WebKit can keep a visual scale > 1. Refreshing
+       * the same tab restores that scale when maximum-scale=1 is set (or was
+       * set on the previous load). Bounce initial-scale only when scale is
+       * already wrong so a normal load is unchanged. */
       (function () {
-        var MOBILE_VIEWPORT = "width=390, initial-scale=1, viewport-fit=cover";
-        var DEFAULT_VIEWPORT = "width=device-width, initial-scale=1.0, maximum-scale=1";
-        function pickViewport() {
-          var w = (window.screen && window.screen.width) || window.innerWidth || 0;
-          return w >= 768 && w <= 1023 ? MOBILE_VIEWPORT : DEFAULT_VIEWPORT;
+        var BASE =
+          "width=device-width, initial-scale=1, viewport-fit=cover, shrink-to-fit=no";
+        function isIosTablet() {
+          var ua = navigator.userAgent || "";
+          if (/iPad/.test(ua)) return true;
+          return navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
         }
-        document.write(
-          '<meta name="viewport" content="' + pickViewport() + '">'
-        );
-        var currentContent = pickViewport();
-        function swapMeta(content) {
-          if (content === currentContent) return;
-          var old = document.querySelector('meta[name="viewport"]');
-          if (old && old.parentNode) old.parentNode.removeChild(old);
-          var meta = document.createElement("meta");
-          meta.setAttribute("name", "viewport");
-          meta.setAttribute("content", content);
-          (document.head || document.getElementsByTagName("head")[0] || document.documentElement)
-            .appendChild(meta);
-          currentContent = content;
+        function scaled() {
+          var vv = window.visualViewport;
+          return vv && Math.abs(vv.scale - 1) > 0.02;
         }
-        var raf = 0;
-        function schedule() {
-          if (raf) cancelAnimationFrame(raf);
-          raf = requestAnimationFrame(function () { swapMeta(pickViewport()); });
+        function resetScale() {
+          if (!isIosTablet() || !scaled()) return;
+          var meta = document.querySelector('meta[name="viewport"]');
+          if (!meta) return;
+          meta.setAttribute(
+            "content",
+            "width=device-width, initial-scale=1.01, viewport-fit=cover, shrink-to-fit=no"
+          );
+          setTimeout(function () {
+            meta.setAttribute("content", BASE);
+          }, 0);
         }
-        window.addEventListener("resize", schedule, { passive: true });
-        window.addEventListener("orientationchange", schedule, { passive: true });
+        window.addEventListener("pageshow", resetScale);
+        window.addEventListener("orientationchange", function () {
+          setTimeout(resetScale, 250);
+        });
       })();
     </script>
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
