@@ -1324,10 +1324,7 @@ function measureHeroPhase1RevealOffsetPx(motionEl: HTMLElement, lockupEl: HTMLEl
           )
       : lockupEl.getBoundingClientRect();
   const settleCenterY = (targetRect.top + targetRect.bottom) / 2 - translateY;
-  const isMobileViewport = window.innerWidth < 768;
-  const viewportCenterY = isMobileViewport
-    ? measureViewportCenterYPx()
-    : (window.visualViewport?.offsetTop ?? 0) + (window.visualViewport?.height ?? window.innerHeight) / 2;
+  const viewportCenterY = measureViewportCenterYPx();
   return viewportCenterY - settleCenterY;
 }
 /** Mobile Phase 1 — layout centers the lockup in 100svh; motion value stays at 0. */
@@ -1353,7 +1350,7 @@ const HERO_MOBILE_STACK_GAP_PX = 40;
 function measureHeroMobileVideoWidthPx(): number {
   if (typeof window === "undefined") return 0;
   const rootFontSize = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-  return Math.max(0, Math.round(window.innerWidth - 2 * rootFontSize * HERO_MOBILE_PROFILE_GUTTER_REM));
+  return Math.max(0, Math.round(heroLayoutViewportWidthPx() - 2 * rootFontSize * HERO_MOBILE_PROFILE_GUTTER_REM));
 }
 
 /** Prefer live face height; fall back to width × 9/16 before paint. */
@@ -1441,8 +1438,40 @@ function measureHeroNameInkTopSettledPx(): number | null {
   return inkTop;
 }
 
+function isHeroPinchZoomed(): boolean {
+  const vv = window.visualViewport;
+  if (!vv) return false;
+  if (Math.abs(vv.scale - 1) > 0.02) return true;
+  /* Safari can keep scale at 1 while the visual width shrinks. */
+  if (window.innerWidth > 0 && vv.width > 0 && vv.width / window.innerWidth < 0.97) return true;
+  return false;
+}
+
+/**
+ * 1× CSS layout width. Never `vv.width * scale` when `vv.width` already
+ * matches inner/html width (that double-applies pinch and blows up ROBBIE).
+ * Prefer `documentElement.clientWidth` — it stays layout-sized if `innerWidth` shrinks.
+ */
+function heroLayoutViewportWidthPx(): number {
+  const htmlW = document.documentElement.clientWidth || 0;
+  const inner = window.innerWidth || 0;
+  const layout = Math.max(htmlW, inner);
+  const vv = window.visualViewport;
+  if (!vv || layout <= 0 || Math.abs(vv.scale - 1) <= 0.02) return layout || inner;
+  const scaled = Math.round(vv.width * vv.scale);
+  if (Math.abs(vv.width - layout) / layout < 0.08) return layout;
+  return Math.max(layout, scaled);
+}
+
+function heroNameLockupSvgReady(): boolean {
+  const svg = document.querySelector("#hero [data-hero-svg-root='true'] svg");
+  if (!svg) return false;
+  return svg.querySelectorAll("[data-hero-name-letter]").length > 0;
+}
+
 /** Full-viewport vertical center (not the nav-aware ruler band). */
 function measureViewportCenterYPx(): number {
+  if (isHeroPinchZoomed()) return window.innerHeight / 2;
   const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
   return (window.visualViewport?.offsetTop ?? 0) + viewportHeight / 2;
 }
@@ -2216,6 +2245,7 @@ const HeroNameReveal = ({
     if (!host) return;
 
     const onViewportRelayout = () => {
+      if (isHeroPinchZoomed()) return;
       const hostNode = heroSvgMountRef.current;
       const hasSvg = Boolean(hostNode?.querySelector("svg"));
       /* Mid letter entrance — only heal a missing host; skip fit/re-inject thrash. */
@@ -2398,6 +2428,15 @@ const HeroNameReveal = ({
     const retryTimeouts: number[] = [];
 
     const measure = (force = false, attempt = 0) => {
+      if (isHeroPinchZoomed()) return;
+      if (!heroNameLockupSvgReady()) {
+        if (attempt < 12) {
+          retryTimeouts.push(
+            window.setTimeout(() => measure(force, attempt + 1), 16 + attempt * 12),
+          );
+        }
+        return;
+      }
       if (!matchesNonMobile()) {
         frozen = false;
         setHeroSvgAlignX(0);
@@ -2453,6 +2492,8 @@ const HeroNameReveal = ({
     };
 
     const forceRemeasure = () => {
+      if (isHeroPinchZoomed()) return;
+      if (!heroNameLockupSvgReady()) return;
       frozen = false;
       measure(true, 0);
       retryTimeouts.push(window.setTimeout(() => measure(true, 0), 80));
@@ -2506,6 +2547,8 @@ const HeroNameReveal = ({
     };
 
     const fitTaglineToLockup = () => {
+      if (isHeroPinchZoomed()) return;
+      if (!heroNameLockupSvgReady()) return;
       const targetW = lockup.getBoundingClientRect().width;
       if (targetW < 8) return;
 
@@ -3032,6 +3075,22 @@ const Hero = ({
   const [lockupFadeReady, setLockupFadeReady] = useState(false);
   const [portfolioFadeReady, setPortfolioFadeReady] = useState(false);
   const [isMobileHeroLayout, setIsMobileHeroLayout] = useState(matchesMobileHeroLayout);
+
+  useLayoutEffect(() => {
+    const hero = document.getElementById("hero");
+    if (!hero) return;
+    const freeze = () => {
+      if (isHeroPinchZoomed() && hero.style.getPropertyValue("--hero-layout-vw")) return;
+      const layoutW = heroLayoutViewportWidthPx();
+      const rootFontSize = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+      const lockupW = Math.max(0, Math.round(layoutW - 2 * rootFontSize * HERO_MOBILE_PROFILE_GUTTER_REM));
+      hero.style.setProperty("--hero-layout-vw", `${layoutW / 100}px`);
+      if (lockupW > 0) hero.style.setProperty("--hero-lockup-width", `${lockupW}px`);
+    };
+    freeze();
+    window.addEventListener("orientationchange", freeze);
+    return () => window.removeEventListener("orientationchange", freeze);
+  }, []);
   /** Mobile: video card width synced to ROBBIE+rectangle / MCLAUGHLIN lockup. */
   const [mobileLockupWidthPx, setMobileLockupWidthPx] = useState<number | null>(null);
   const [mobileSvgNudgeXPx, setMobileSvgNudgeXPx] = useState(0);
@@ -3077,6 +3136,10 @@ const Hero = ({
   const kickHeroVideoPlay = useCallback(() => {
     const video = heroVideoRef.current;
     if (!video) return;
+    if (isHeroPinchZoomed()) {
+      video.pause();
+      return;
+    }
     /* Explicit props before play() — Low Power Mode / Safari often ignore attribute-only muted. */
     video.muted = true;
     video.defaultMuted = true;
@@ -3401,13 +3464,18 @@ const Hero = ({
    * Mobile — compute final viewport-centered Y (ROT + gap clamp).
    * During video entrance, only stash finalY for the rise target — do not overwrite
    * videoEntranceY (owned by center-open → rise). After entrance settle / resize,
-   * apply final Y directly. visualViewport listeners wait until PORTFOLIO entrance.
+   * apply final Y directly. visualViewport listeners wait until PORTFOLIO
+   * entrance. While pinch-zoomed, keep the 1x layout (browser magnifies it)
+   * so we do not size against the visual viewport on top of pinch-zoom.
    */
   useEffect(() => {
     if (!isMobileHeroLayout || !heroPhase1LayoutReady) return;
     if (mobileLockupWidthPx == null) return;
 
     const applyMobileHeroY = () => {
+      /* Pinch is optical-only — do not write new Y/widths from visual viewport. */
+      if (isHeroPinchZoomed()) return;
+
       if (!sliderPhaseActive) {
         sliderPhaseActiveRef.current = false;
         mobileHeroBaseNameYRef.current = 0;
@@ -3476,14 +3544,18 @@ const Hero = ({
     };
 
     applyMobileHeroY();
-    if (!portfolioFadeReady) return;
+    const onViewportRelayoutY = () => applyMobileHeroY();
+    window.visualViewport?.addEventListener("resize", onViewportRelayoutY);
+    if (!portfolioFadeReady) {
+      return () => {
+        window.visualViewport?.removeEventListener("resize", onViewportRelayoutY);
+      };
+    }
 
-    window.addEventListener("resize", applyMobileHeroY);
-    const vv = window.visualViewport;
-    vv?.addEventListener("resize", applyMobileHeroY);
+    window.addEventListener("resize", onViewportRelayoutY);
     return () => {
-      window.removeEventListener("resize", applyMobileHeroY);
-      vv?.removeEventListener("resize", applyMobileHeroY);
+      window.removeEventListener("resize", onViewportRelayoutY);
+      window.visualViewport?.removeEventListener("resize", onViewportRelayoutY);
     };
   }, [
     heroPhase1LayoutReady,
@@ -3693,8 +3765,8 @@ const Hero = ({
     const el = videoStackRef.current;
     if (!el) return;
 
-    /* Pin to true visual center before first painted open frame. */
-    const openOffset = measureHeroVideoCenterOpenOffsetPx(el);
+    /* Pinch-zoom is optical: never center from the visual crop. */
+    const openOffset = isHeroPinchZoomed() ? 0 : measureHeroVideoCenterOpenOffsetPx(el);
     videoEntranceY.set(openOffset);
     videoScaleX.set(0);
     videoOpenPinnedRef.current = true;
@@ -3807,6 +3879,8 @@ const Hero = ({
     } else {
       markVideoPastTextGate();
     }
+    /* Paused under pinch — currentTime never advances; don't trap ROBBIE. */
+    if (isHeroPinchZoomed()) markVideoPastTextGate();
 
     /* If LPM freezes currentTime, don't trap name/PORTFOLIO forever. */
     textGateFallbackTimer = window.setTimeout(() => {
@@ -3928,6 +4002,19 @@ const Hero = ({
     };
   }, [heroVideoShouldPlay, kickHeroVideoPlay]);
 
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const onPinch = () => {
+      const video = heroVideoRef.current;
+      if (!video) return;
+      if (isHeroPinchZoomed()) video.pause();
+      else if (heroVideoShouldPlay) kickHeroVideoPlay();
+    };
+    vv.addEventListener("resize", onPinch);
+    return () => vv.removeEventListener("resize", onPinch);
+  }, [heroVideoShouldPlay, kickHeroVideoPlay]);
+
   /** PORTFOLIO slide+fade — only after ROBBIE/MCLAUGHLIN + tagline cascades end. */
   useEffect(() => {
     if (!lockupFadeReady) {
@@ -3957,76 +4044,71 @@ const Hero = ({
     }
 
     const measure = () => {
+      /* Already have a 1x size — pinch must not rewrite width (innerWidth×scale was huge). */
+      if (isHeroPinchZoomed() && committedW > 0) return;
+
+      const targetW = measureHeroMobileProfileContentWidthPx();
+      if (targetW <= 0) return;
+      if (committedW > 0 && targetW < committedW * 0.97) return;
+      committedW = targetW;
+      setMobileLockupWidthPx((prev) => (prev === targetW ? prev : targetW));
+
       const svgLockup = document.querySelector<SVGSVGElement>('#hero [data-hero-svg-root="true"] svg');
       const lockup = document.querySelector<HTMLElement>('[data-hero-name-lockup="true"]');
-      /* Crop side-padding + keep aspect so wide PROFILE width does not squash letters. */
-      if (svgLockup) {
-        if (svgLockup.getAttribute("viewBox") !== HERO_MOBILE_SVG_VIEWBOX) {
-          svgLockup.setAttribute("viewBox", HERO_MOBILE_SVG_VIEWBOX);
-        }
-        if (svgLockup.getAttribute("preserveAspectRatio") !== "xMidYMid meet") {
-          svgLockup.setAttribute("preserveAspectRatio", "xMidYMid meet");
-        }
+      if (!svgLockup || !heroNameLockupSvgReady()) return;
+
+      if (svgLockup.getAttribute("viewBox") !== HERO_MOBILE_SVG_VIEWBOX) {
+        svgLockup.setAttribute("viewBox", HERO_MOBILE_SVG_VIEWBOX);
       }
-      const targetW = measureHeroMobileProfileContentWidthPx();
-      if (targetW > 0) {
-        setMobileLockupWidthPx((prev) => (prev === targetW ? prev : targetW));
+      if (svgLockup.getAttribute("preserveAspectRatio") !== "xMidYMid meet") {
+        svgLockup.setAttribute("preserveAspectRatio", "xMidYMid meet");
       }
       const aspectH = Math.round(
         (targetW * HERO_MOBILE_SVG_VIEWBOX_H) / HERO_MOBILE_SVG_VIEWBOX_W,
       );
-      if (svgLockup && targetW > 0) {
-        const wPx = `${targetW}px`;
-        const hPx = `${aspectH}px`;
-        /* Important beats leftover Tailwind h-full / !h-* that squash on Safari. */
-        svgLockup.style.setProperty("width", wPx, "important");
-        svgLockup.style.setProperty("height", hPx, "important");
-        svgLockup.style.setProperty("max-width", "100%", "important");
-      }
-      const framePath =
-        svgLockup?.querySelector<SVGPathElement>('path[stroke="#FFFFFF"], path[stroke="white"]');
-      const svgRect = svgLockup?.getBoundingClientRect();
-      const frameRect = framePath?.getBoundingClientRect();
-      if (svgRect && frameRect && frameRect.width > 0) {
-        const leftInset = frameRect.left - svgRect.left;
-        const nextX = Math.round((((svgRect.width - frameRect.width) / 2) - leftInset) * 10) / 10;
-        /* Freeze after first real nudge — late frame paints during cascade were shifting X. */
-        setMobileSvgNudgeXPx((prev) => (prev !== 0 || prev === nextX ? prev : nextX));
-      }
-      /* Width + aspect min-height so the absolute SVG host matches unsquished art. */
-      if (lockup && targetW > 0) {
-        if (lockup.style.width !== `${targetW}px`) lockup.style.width = `${targetW}px`;
-        if (lockup.style.maxWidth !== "100%") lockup.style.maxWidth = "100%";
-        if (lockup.style.minHeight !== `${aspectH}px`) lockup.style.minHeight = `${aspectH}px`;
-        const shell = lockup.parentElement;
-        if (shell) {
-          if (shell.style.width !== "100%") shell.style.width = "100%";
-          if (shell.style.maxWidth !== "100%") shell.style.maxWidth = "100%";
+      const wPx = `${targetW}px`;
+      const hPx = `${aspectH}px`;
+      svgLockup.style.setProperty("width", wPx, "important");
+      svgLockup.style.setProperty("height", hPx, "important");
+      svgLockup.style.setProperty("max-width", wPx, "important");
+      if (!isHeroPinchZoomed()) {
+        const framePath =
+          svgLockup.querySelector<SVGPathElement>('path[stroke="#FFFFFF"], path[stroke="white"]');
+        const svgRect = svgLockup.getBoundingClientRect();
+        const frameRect = framePath?.getBoundingClientRect();
+        if (svgRect && frameRect && frameRect.width > 0) {
+          const leftInset = frameRect.left - svgRect.left;
+          const nextX = Math.round((((svgRect.width - frameRect.width) / 2) - leftInset) * 10) / 10;
+          setMobileSvgNudgeXPx((prev) => (prev !== 0 || prev === nextX ? prev : nextX));
         }
+      }
+      if (lockup) {
+        if (lockup.style.width !== wPx) lockup.style.width = wPx;
+        if (lockup.style.maxWidth !== wPx) lockup.style.maxWidth = wPx;
+        if (lockup.style.minHeight !== hPx) lockup.style.minHeight = hPx;
       }
     };
 
+    let committedW = 0;
     measure();
     const raf = window.requestAnimationFrame(measure);
     const svgLockup = document.querySelector<SVGSVGElement>('#hero [data-hero-svg-root="true"] svg');
     const lockup = document.querySelector<HTMLElement>('[data-hero-name-lockup="true"]');
-    const ro = svgLockup || lockup ? new ResizeObserver(measure) : null;
-    if (svgLockup && ro) ro.observe(svgLockup);
-    if (lockup && ro) ro.observe(lockup);
+    /* Do not RO-observe the SVG — writing width/height retriggers measure (pinch loop). */
     window.addEventListener("resize", measure);
+    const onOrientation = () => {
+      committedW = 0;
+      measure();
+    };
+    window.addEventListener("orientationchange", onOrientation);
     return () => {
       window.cancelAnimationFrame(raf);
-      ro?.disconnect();
       window.removeEventListener("resize", measure);
+      window.removeEventListener("orientationchange", onOrientation);
       if (lockup) {
         lockup.style.minHeight = "";
         lockup.style.width = "";
         lockup.style.maxWidth = "";
-        const shell = lockup.parentElement;
-        if (shell) {
-          shell.style.width = "";
-          shell.style.maxWidth = "";
-        }
       }
       if (svgLockup) {
         if (svgLockup.getAttribute("viewBox") === HERO_MOBILE_SVG_VIEWBOX) {
@@ -4915,7 +4997,9 @@ const SideNavOverlay = ({
                         minHeight: `${exitButtonDebug.size}px`,
                       }}
                     >
-                      <X size={22} strokeWidth={1} aria-hidden />
+                      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                        <path d="M18.3 5.71 12 12.01 5.7 5.7 4.29 7.11 10.59 13.4 4.29 19.7 5.7 21.11 12 14.82 18.3 21.12 19.71 19.71 13.41 13.4 19.71 7.11z" />
+                      </svg>
                     </Button>
                   </motion.div>
                 </div>
@@ -7185,6 +7269,7 @@ function bindSectionGridOverlayHeightSync(
   const panel = section.closest<HTMLElement>(SECTION_PANEL_GRID_SELECTOR);
 
   const sync = () => {
+    if (isHeroPinchZoomed()) return;
     section.style.setProperty(cssVar, `${sectionGridOverlayHeightPx(section, cssVar)}px`);
   };
 
@@ -7506,6 +7591,7 @@ const SupportingProjectsSection = ({
     if (contentEl) ro.observe(contentEl);
     const vv = typeof window !== "undefined" ? window.visualViewport : null;
     const onViewportChange = () => {
+      if (isHeroPinchZoomed()) return;
       updateArchiveOpticalScrollMetrics();
     };
     if (vv) {

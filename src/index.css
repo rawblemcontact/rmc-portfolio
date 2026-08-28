@@ -189,6 +189,29 @@
   opacity: 0;
   transform: translate3d(0, 55%, 0);
 }
+
+/*
+ * Pinch-zoom can change `vw` / parent % width. Freeze ROBBIE type + lockup
+ * to the 1x layout viewport (`--hero-layout-vw` / `--hero-lockup-width` on #hero).
+ */
+@media (max-width: 767.98px) {
+  #hero [data-hero-name-lockup="true"] {
+    width: var(--hero-lockup-width, calc(100svw - 2.5rem)) !important;
+    max-width: var(--hero-lockup-width, calc(100svw - 2.5rem)) !important;
+  }
+  #hero [data-hero-name-lockup="true"] .font-bold.uppercase,
+  #hero [data-hero-name-lockup="true"] [class*="8.85vw"],
+  #hero [data-hero-name-lockup="true"] [class*="14.55vw"] {
+    font-size: clamp(3.407rem, calc(14.55 * var(--hero-layout-vw, 1svw)), 5.082rem) !important;
+  }
+}
+@media (max-width: 400px) {
+  #hero [data-hero-name-lockup="true"] .font-bold.uppercase,
+  #hero [data-hero-name-lockup="true"] [class*="8.1vw"],
+  #hero [data-hero-name-lockup="true"] [class*="13.4vw"] {
+    font-size: clamp(3.176rem, calc(13.4 * var(--hero-layout-vw, 1svw)), 5.082rem) !important;
+  }
+}
 [data-hero-svg-root][data-hero-chrome-animate="true"] [data-hero-name-letter] {
   animation-name: hero-name-letter-in;
   animation-duration: 0.324s;

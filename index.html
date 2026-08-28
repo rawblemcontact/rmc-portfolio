@@ -6,41 +6,6 @@
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover, shrink-to-fit=no"
     />
-    <script>
-      /* iPad/iOS: after rotate, WebKit can keep a visual scale > 1. Refreshing
-       * the same tab restores that scale when maximum-scale=1 is set (or was
-       * set on the previous load). Bounce initial-scale only when scale is
-       * already wrong so a normal load is unchanged. */
-      (function () {
-        var BASE =
-          "width=device-width, initial-scale=1, viewport-fit=cover, shrink-to-fit=no";
-        function isIosTablet() {
-          var ua = navigator.userAgent || "";
-          if (/iPad/.test(ua)) return true;
-          return navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
-        }
-        function scaled() {
-          var vv = window.visualViewport;
-          return vv && Math.abs(vv.scale - 1) > 0.02;
-        }
-        function resetScale() {
-          if (!isIosTablet() || !scaled()) return;
-          var meta = document.querySelector('meta[name="viewport"]');
-          if (!meta) return;
-          meta.setAttribute(
-            "content",
-            "width=device-width, initial-scale=1.01, viewport-fit=cover, shrink-to-fit=no"
-          );
-          setTimeout(function () {
-            meta.setAttribute("content", BASE);
-          }, 0);
-        }
-        window.addEventListener("pageshow", resetScale);
-        window.addEventListener("orientationchange", function () {
-          setTimeout(resetScale, 250);
-        });
-      })();
-    </script>
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
