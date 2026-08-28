@@ -1612,7 +1612,7 @@ const HERO_CROP_VIDEO_FACE_HEIGHT_PX = 486;
 const HERO_CROP_DISPLAY_FONT_CLASS = "text-[95.2px] leading-[0.78]";
 const HERO_CROP_TAGLINE_FONT_CLASS = "text-[14.72px]";
 const HERO_CROP_PORTFOLIO_BUTTON_CLASS =
-  "!h-[74.256px] max-h-[77.6px] !px-[32px] [&_.texts]:!text-[16.8px] [&_.texts]:!tracking-[0.085em]";
+  "!h-[74.256px] max-h-[77.6px] !px-[20px] [&_.texts]:!text-[16.8px] [&_.texts]:!tracking-[0.085em]";
 /** Gap between video block and name pack in crop mode (fixed). */
 const HERO_CROP_STACK_GAP_CLASS = "gap-[12px]";
 /** Fluid tablet/desktop-pre-crop display (vw). Crop uses px constants above. */
@@ -1620,7 +1620,7 @@ const HERO_FLUID_DISPLAY_FONT_CLASS =
   "text-[clamp(2.28rem,8.85vw,5.95rem)] max-[400px]:text-[clamp(2rem,8.1vw,5.95rem)] leading-[0.8] sm:leading-[0.78]";
 const HERO_FLUID_TAGLINE_FONT_CLASS = "text-[clamp(0.8rem,2.25vw,0.92rem)]";
 const HERO_FLUID_PORTFOLIO_BUTTON_CLASS =
-  "h-[calc(clamp(2.28rem,8.85vw,5.95rem)*0.78)] max-h-[4.85rem] px-8 [&_.texts]:text-[clamp(0.96rem,1.68vw,1.12rem)] [&_.texts]:tracking-[0.085em]";
+  "h-[calc(clamp(2.28rem,8.85vw,5.95rem)*0.78)] max-h-[4.85rem] px-5 [&_.texts]:text-[clamp(0.96rem,1.68vw,1.12rem)] [&_.texts]:tracking-[0.085em]";
 /**
  * Mobile hero L/R gutter — must match PROFILE_SECTION_CONTAINER `px-5` (1.25rem).
  * Content width = 100vw − 2× this.
@@ -1943,7 +1943,7 @@ const HERO_IPAD_HORIZONTAL_PORTFOLIO_BUTTON_GLOBAL_LAYOUT_DEFAULTS: HeroGlobalLa
   offsetX: 41,
   offsetY: -20,
   scale: 0.94,
-  widthScale: 1,
+  widthScale: 0.78,
   heightScale: 0.91,
 };
 const HERO_CONTROLLED_VIEWPORT_DEFAULT: HeroControlledViewport = "desktop";
@@ -3267,7 +3267,7 @@ const Hero = ({
       : undefined;
   const heroPortfolioButtonGlobalDebugStyle =
     isHeroCropLayout || heroDesktopLikeViewport
-      ? buildHeroGlobalLayoutStyle(activePortfolioButtonLayout)
+      ? buildHeroGlobalLayoutStyle(activePortfolioButtonLayout, "right top")
       : undefined;
   const heroVideoBoundsZoom =
     isHeroCropLayout || heroDesktopLikeViewport
@@ -3321,11 +3321,10 @@ const Hero = ({
   }, []);
 
   /**
-   * The real card video mounts closed and owns its own preload. Gate the entrance
-   * on that same element so we never warm a detached video then decode a second one.
+   * The real card video mounts closed (does not wait on fonts) and owns preload.
+   * Gate the entrance on that same element so we never warm a detached video.
    */
   useEffect(() => {
-    if (!fontsReady) return;
     const video = heroVideoRef.current;
     if (!video) return;
 
@@ -3347,7 +3346,7 @@ const Hero = ({
       video.removeEventListener("canplaythrough", markReady);
       video.removeEventListener("error", failOpen);
     };
-  }, [fontsReady, markHeroMediaReadyIfBuffered]);
+  }, [markHeroMediaReadyIfBuffered]);
 
   useEffect(() => {
     // Startup beat runs in parallel with live-name preload (gate uses both).
@@ -3596,8 +3595,8 @@ const Hero = ({
     [clearPortfolioNavTimer, onStart, reduceMotion, shouldDeferPortfolioNavForHover],
   );
 
-  /** Mount the closed stage early so its real video and live-name can preload together. */
-  const heroStageMounted = fontsReady;
+  /** Closed stage (incl. real <video>) mounts immediately; entrance still waits on fonts + buffer. */
+  const heroStageMounted = true;
   const heroDomReady = fontsReady && heroMediaReady;
   /** Entrance animations wait until live-name preload succeeds. */
   const heroReady = heroDomReady && heroLiveTextPreloaded && heroRevealDelayDone;

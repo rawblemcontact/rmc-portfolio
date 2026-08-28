@@ -515,11 +515,24 @@
   }
 
   /*
-   * Grid drift — pure CSS keyframes (compositor-friendly).
-   * Do NOT drive via a root rAF `--portfolio-grid-drift-position` write: that
-   * invalidates document styles every frame and stalls SVG letter cascades on
-   * mobile / tablet. Phase lock across overlays uses negative animation-delay
-   * (see `gridDriftPhaseDelaySec` in Home.tsx).
+   * Same 48px / 12s loop as gridDriftSmooth, via transform (compositor) instead
+   * of background-position (paints the full overlay every frame).
+   */
+  @keyframes gridDriftSmoothCompositor {
+    from {
+      transform: translate3d(0, 0, 0);
+    }
+    to {
+      transform: translate3d(48px, 48px, 0);
+    }
+  }
+
+  /*
+   * Grid drift — CSS keyframes; phase lock via negative animation-delay
+   * (see `gridDriftPhaseDelaySec` in Home.tsx). Do NOT drive via a root rAF
+   * `--portfolio-grid-drift-position` write.
+   * Default path still uses background-position (section overlays with JS height).
+   * Hero / menu on desktop fine-pointer use the compositor keyframes below.
    */
   .grid-drift-bg {
     animation: gridDriftSmooth 12s linear infinite;
@@ -555,6 +568,19 @@
   @media (min-width: 744px) and (max-width: 1366px) and (any-pointer: coarse) {
     .portfolio-grid-overlay {
       opacity: 0.153;
+    }
+  }
+
+  /*
+   * Desktop hero (and adjacent menu slide): shift a 48px-oversized layer instead
+   * of animating background-position. Overflow on #hero / #menu clips the extra;
+   * the visible 48px cell pattern and 12s period are unchanged.
+   */
+  @media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
+    #hero > .grid-drift-bg.portfolio-grid-overlay,
+    #menu > .grid-drift-bg.portfolio-grid-overlay {
+      inset: -48px;
+      animation-name: gridDriftSmoothCompositor;
     }
   }
 
@@ -1657,12 +1683,12 @@
    */
   @media (min-width: 768px) and (max-width: 1366px) and (orientation: portrait) {
     #hero .hero-portfolio-animated .hero-portfolio-arrow--1 {
-      /* Tablet V: 1px left nudge */
+      /* Tablet V rest — shared start; 768–1023 already even with 1rem pad. */
       right: calc(0.7rem + 1px);
     }
 
     #hero .hero-portfolio-animated .hero-portfolio-arrow--2 {
-      /* Tablet V: 1px right nudge */
+      /* Tablet V hover/press — shared start. */
       left: calc(0.7rem + 1px);
     }
 
@@ -1693,15 +1719,38 @@
     }
   }
 
-  @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) {
+  /*
+   * iPad portrait ≤1023 — button uses padding-inline 1rem. Rest is already even;
+   * hover arrow sat tight to the label, so pull it toward the left edge.
+   */
+  @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
+    #hero .hero-portfolio-animated .hero-portfolio-arrow--2 {
+      left: calc(0.46rem + 1px);
+    }
+  }
+
+  /*
+   * Large iPad portrait (1024–1366) — px-8 pad, same inward equal-gap as desktop.
+   */
+  @media (min-width: 1024px) and (max-width: 1366px) and (orientation: portrait) {
     #hero .hero-portfolio-animated .hero-portfolio-arrow--1 {
-      /* Tablet H: 1px right nudge */
-      right: calc(1.05rem - 1px);
+      right: calc(0.96rem + 1px);
     }
 
     #hero .hero-portfolio-animated .hero-portfolio-arrow--2 {
-      /* Tablet H: 1px left nudge */
-      left: calc(1.05rem - 1px);
+      left: calc(0.82rem + 1px);
+    }
+  }
+
+  @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) {
+    #hero .hero-portfolio-animated .hero-portfolio-arrow--1 {
+      /* Tablet H rest: slight inward so [text][gap][→][gap] reads even (1px optical). */
+      right: calc(1.14rem - 1px);
+    }
+
+    #hero .hero-portfolio-animated .hero-portfolio-arrow--2 {
+      /* Tablet H hover/press: slight toward edge so [gap][→][gap][text] matches. */
+      left: calc(0.97rem - 1px);
     }
 
     #hero .hero-portfolio-animated .hero-portfolio-text {
@@ -1728,6 +1777,37 @@
     #hero .hero-portfolio-animated.hero-portfolio-animated--pressed .hero-portfolio-text {
       transform: translate3d(0.95rem, 0, 0);
       transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1), color 0.2s ease;
+    }
+  }
+
+  /*
+   * Desktop PORTFOLIO arrow — glyph + gap retune after 32→20px pad.
+   * Rest [text][gap][→][gap] and hover [gap][→][gap][text] (1px optical).
+   * ≥1024 + fine pointer (excludes iPad coarse).
+   */
+  @media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
+    #hero .hero-portfolio-animated .hero-portfolio-arrow {
+      width: 0.84em;
+      height: 0.84em;
+    }
+
+    #hero .hero-portfolio-animated .hero-portfolio-arrow--1 {
+      right: calc(0.72rem - 1px);
+    }
+
+    #hero .hero-portfolio-animated .hero-portfolio-arrow--2 {
+      left: calc(0.58rem - 1px);
+    }
+
+    #hero .hero-portfolio-animated .hero-portfolio-text {
+      padding-right: 0.62rem;
+      transform: translate3d(-0.28rem, 0, 0);
+    }
+
+    #hero .hero-portfolio-animated:hover .hero-portfolio-text,
+    #hero .hero-portfolio-animated:focus-visible .hero-portfolio-text,
+    #hero .hero-portfolio-animated.hero-portfolio-animated--pressed .hero-portfolio-text {
+      transform: translate3d(0.64rem, 0, 0);
     }
   }
 
@@ -1783,7 +1863,14 @@
     /* Match arrow/text morph — desynced 0.42 vs 0.74 felt stuttery on desktop hover. */
     transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
     pointer-events: none;
-    will-change: transform;
+  }
+
+  @media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
+    #hero .hero-portfolio-animated:hover::before,
+    #hero .hero-portfolio-animated:focus-visible::before,
+    #hero .hero-portfolio-animated.hero-portfolio-animated--pressed::before {
+      will-change: transform;
+    }
   }
 
   .hero-portfolio-animated .hero-portfolio-arrow {
@@ -1798,14 +1885,14 @@
   }
 
   .hero-portfolio-animated .hero-portfolio-arrow--1 {
-    /* Desktop: 1px right nudge */
-    right: calc(0.86rem - 1px);
+    /* Desktop rest: inset so [text][gap][→][gap] reads even (1px optical). */
+    right: calc(1.12rem - 1px);
     transform: translate3d(0, -50%, 0);
   }
 
   .hero-portfolio-animated .hero-portfolio-arrow--2 {
-    /* Desktop: 1px left nudge */
-    left: calc(0.54rem - 1px);
+    /* Desktop hover: inset so [gap][→][gap][text] matches rest (1px optical). */
+    left: calc(0.94rem - 1px);
     transform: translate3d(-255%, -50%, 0);
     transition: fill 0.28s ease, transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
   }
@@ -6772,6 +6859,18 @@
   #hero [data-hero-stage="true"]:not([data-hero-crop="true"]) .playstore-button--primary .texts {
     font-size: 0.8rem;
     letter-spacing: 0.07em;
+  }
+}
+
+/*
+ * Hero — iPad / tablet landscape: uniform shrink from viewport center so
+ * video + lockup + PORTFOLIO keep relative scale while gaining edge room.
+ * Coarse pointer only — desktop crop / fine-pointer windows stay untouched.
+ */
+@media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse) {
+  #hero [data-hero-stage="true"]:not([data-hero-crop="true"]) {
+    transform: scale(0.96);
+    transform-origin: center center;
   }
 }
 
