@@ -8,6 +8,7 @@ import {
   PortfolioDebugProvider,
 } from "./lib/portfolioDebugMode";
 import Home from "./pages/Home";
+import { usePauseVideosWhilePinched } from "./lib/visualViewport";
 
 function PortfolioDebugTools() {
   if (!import.meta.env.DEV) return null;
@@ -15,6 +16,7 @@ function PortfolioDebugTools() {
 }
 
 function App() {
+  usePauseVideosWhilePinched();
   return (
     <QueryClientProvider client={queryClient}>
       <PortfolioDebugProvider>

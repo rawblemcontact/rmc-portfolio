@@ -1,4 +1,5 @@
 import { motion, useReducedMotion } from "framer-motion";
+import { useNavLayoutFreeze } from "@/lib/navLayoutFreeze";
 import { PdfFoldLoader } from "./PdfFoldLoader";
 import { DUR, EASE } from "@/lib/motion";
 
@@ -18,6 +19,7 @@ export function PdfLoadingIndicator({
   exiting = false,
   onExitComplete,
 }: Props) {
+  useNavLayoutFreeze(true);
   const reduceMotion = useReducedMotion();
   const fadeTransition = {
     duration: reduceMotion ? 0 : exiting ? PDF_LOADING_FADE_OUT_S : PDF_LOADING_FADE_IN_S,

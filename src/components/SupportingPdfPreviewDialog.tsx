@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Download, ExternalLink, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavLayoutFreeze } from "@/lib/navLayoutFreeze";
 import { createPortal } from "react-dom";
 import { PdfJsDocumentView } from "./PdfJsDocumentView";
 import { PDF_FOLD_LOADER_CYCLE_MS } from "./PdfFoldLoader";
@@ -47,6 +48,7 @@ export function SupportingPdfPreviewDialog({
   openFadeS,
   onCloseAnimationComplete,
 }: Props) {
+  useNavLayoutFreeze(true);
   const showGridLoader = !showFrame && !isClosing;
   const [pdfLoaded, setPdfLoaded] = useState(false);
   const [loaderExiting, setLoaderExiting] = useState(false);

@@ -210,7 +210,7 @@ export function PdfJsDocumentView({
       {!showError && (
         <div
           ref={bindMeasureRef}
-          className="no-scrollbar min-h-0 flex-1 overflow-y-auto overflow-x-hidden scroll-smooth rounded-xl bg-[#3c4043]/5"
+          className="no-scrollbar min-h-0 flex-1 overflow-y-auto overflow-x-hidden scroll-smooth rounded-xl bg-[#3c4043]/5 [touch-action:pan-y_pinch-zoom]"
           style={{ WebkitOverflowScrolling: "touch", scrollBehavior: "smooth" }}
           aria-label={isEmpty ? "PDF viewer (no document)" : undefined}
         >

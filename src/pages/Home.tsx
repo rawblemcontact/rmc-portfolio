@@ -27,6 +27,8 @@ import React, {
 } from "react";
 import { createPortal, flushSync } from "react-dom";
 import { useCutoffScrollFade } from "../lib/useCutoffScrollFade";
+import { afterOrientationSettle, isDocumentPinchZoomed, isRecentOrientationChange, unlessPinched } from "../lib/visualViewport";
+import { useNavLayoutFreeze } from "../lib/navLayoutFreeze";
 import { Button } from "../components/ui/button";
 import { FillIcon } from "../components/FillIcon";
 import { ProfileDesktopLayoutDebugPanel } from "../components/ProfileDesktopLayoutDebugPanel";
@@ -1041,11 +1043,11 @@ function useTopNavBackMetrics(
     const desktopMq = window.matchMedia(`(min-width: ${TOP_NAV_DESKTOP_MIN_PX}px)`);
     const portraitMq = window.matchMedia(TOP_NAV_TABLET_PORTRAIT_MQ);
     const landscapeMq = window.matchMedia(TOP_NAV_TABLET_LANDSCAPE_MQ);
-    const sync = () => {
+    const sync = unlessPinched(() => {
       const tablet = portraitMq.matches || landscapeMq.matches;
       setIsTabletViewport(tablet);
       setIsDesktopViewport(desktopMq.matches && !tablet);
-    };
+    });
     sync();
     if (typeof desktopMq.addEventListener === "function") {
       desktopMq.addEventListener("change", sync);
@@ -1439,12 +1441,7 @@ function measureHeroNameInkTopSettledPx(): number | null {
 }
 
 function isHeroPinchZoomed(): boolean {
-  const vv = window.visualViewport;
-  if (!vv) return false;
-  if (Math.abs(vv.scale - 1) > 0.02) return true;
-  /* Safari can keep scale at 1 while the visual width shrinks. */
-  if (window.innerWidth > 0 && vv.width > 0 && vv.width / window.innerWidth < 0.97) return true;
-  return false;
+  return isDocumentPinchZoomed();
 }
 
 /**
@@ -2245,7 +2242,7 @@ const HeroNameReveal = ({
     if (!host) return;
 
     const onViewportRelayout = () => {
-      if (isHeroPinchZoomed()) return;
+      if (isHeroPinchZoomed() && !isRecentOrientationChange()) return;
       const hostNode = heroSvgMountRef.current;
       const hasSvg = Boolean(hostNode?.querySelector("svg"));
       /* Mid letter entrance — only heal a missing host; skip fit/re-inject thrash. */
@@ -2428,7 +2425,7 @@ const HeroNameReveal = ({
     const retryTimeouts: number[] = [];
 
     const measure = (force = false, attempt = 0) => {
-      if (isHeroPinchZoomed()) return;
+      if (isHeroPinchZoomed() && !isRecentOrientationChange()) return;
       if (!heroNameLockupSvgReady()) {
         if (attempt < 12) {
           retryTimeouts.push(
@@ -2492,7 +2489,7 @@ const HeroNameReveal = ({
     };
 
     const forceRemeasure = () => {
-      if (isHeroPinchZoomed()) return;
+      if (isHeroPinchZoomed() && !isRecentOrientationChange()) return;
       if (!heroNameLockupSvgReady()) return;
       frozen = false;
       measure(true, 0);
@@ -3080,7 +3077,6 @@ const Hero = ({
     const hero = document.getElementById("hero");
     if (!hero) return;
     const freeze = () => {
-      if (isHeroPinchZoomed() && hero.style.getPropertyValue("--hero-layout-vw")) return;
       const layoutW = heroLayoutViewportWidthPx();
       const rootFontSize = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
       const lockupW = Math.max(0, Math.round(layoutW - 2 * rootFontSize * HERO_MOBILE_PROFILE_GUTTER_REM));
@@ -3088,8 +3084,9 @@ const Hero = ({
       if (lockupW > 0) hero.style.setProperty("--hero-lockup-width", `${lockupW}px`);
     };
     freeze();
-    window.addEventListener("orientationchange", freeze);
-    return () => window.removeEventListener("orientationchange", freeze);
+    const onOrient = () => afterOrientationSettle(freeze);
+    window.addEventListener("orientationchange", onOrient);
+    return () => window.removeEventListener("orientationchange", onOrient);
   }, []);
   /** Mobile: video card width synced to ROBBIE+rectangle / MCLAUGHLIN lockup. */
   const [mobileLockupWidthPx, setMobileLockupWidthPx] = useState<number | null>(null);
@@ -3227,7 +3224,7 @@ const Hero = ({
 
   useEffect(() => {
     const mq = window.matchMedia(`(min-width: ${HERO_DESKTOP_DEBUG_MIN_PX}px)`);
-    const onChange = () => setHeroDesktopViewport(mq.matches);
+    const onChange = unlessPinched(() => setHeroDesktopViewport(mq.matches));
     onChange();
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
@@ -3235,7 +3232,7 @@ const Hero = ({
 
   useEffect(() => {
     const mq = window.matchMedia(HERO_TABLET_DEVICE_MQ);
-    const onChange = () => setHeroTabletViewport(mq.matches);
+    const onChange = unlessPinched(() => setHeroTabletViewport(mq.matches));
     onChange();
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
@@ -3243,7 +3240,7 @@ const Hero = ({
 
   useEffect(() => {
     const mq = window.matchMedia(HERO_TABLET_LANDSCAPE_DEVICE_MQ);
-    const onChange = () => setHeroTabletLandscapeViewport(mq.matches);
+    const onChange = unlessPinched(() => setHeroTabletLandscapeViewport(mq.matches));
     onChange();
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
@@ -3253,7 +3250,7 @@ const Hero = ({
     const mq = window.matchMedia(
       `(min-width: ${HERO_DESKTOP_DEBUG_MIN_PX}px) and (hover: hover) and (pointer: fine)`,
     );
-    const onChange = () => setDesktopAnimPerf(mq.matches);
+    const onChange = unlessPinched(() => setDesktopAnimPerf(mq.matches));
     onChange();
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
@@ -3360,7 +3357,7 @@ const Hero = ({
   useEffect(() => {
     const mqWidth = window.matchMedia(HERO_MOBILE_WIDTH_MQ);
     const mqDesktop = window.matchMedia(HERO_DESKTOP_FINE_POINTER_MQ);
-    const update = () => setIsMobileHeroLayout(matchesMobileHeroLayout());
+    const update = unlessPinched(() => setIsMobileHeroLayout(matchesMobileHeroLayout()));
     update();
     mqWidth.addEventListener("change", update);
     mqDesktop.addEventListener("change", update);
@@ -3473,8 +3470,7 @@ const Hero = ({
     if (mobileLockupWidthPx == null) return;
 
     const applyMobileHeroY = () => {
-      /* Pinch is optical-only — do not write new Y/widths from visual viewport. */
-      if (isHeroPinchZoomed()) return;
+      if (isHeroPinchZoomed() && !isRecentOrientationChange()) return;
 
       if (!sliderPhaseActive) {
         sliderPhaseActiveRef.current = false;
@@ -3545,15 +3541,19 @@ const Hero = ({
 
     applyMobileHeroY();
     const onViewportRelayoutY = () => applyMobileHeroY();
+    const onOrientY = () => afterOrientationSettle(applyMobileHeroY);
+    window.addEventListener("orientationchange", onOrientY);
     window.visualViewport?.addEventListener("resize", onViewportRelayoutY);
     if (!portfolioFadeReady) {
       return () => {
+        window.removeEventListener("orientationchange", onOrientY);
         window.visualViewport?.removeEventListener("resize", onViewportRelayoutY);
       };
     }
 
     window.addEventListener("resize", onViewportRelayoutY);
     return () => {
+      window.removeEventListener("orientationchange", onOrientY);
       window.removeEventListener("resize", onViewportRelayoutY);
       window.visualViewport?.removeEventListener("resize", onViewportRelayoutY);
     };
@@ -4005,14 +4005,42 @@ const Hero = ({
   useEffect(() => {
     const vv = window.visualViewport;
     if (!vv) return;
+    const retryTimers: number[] = [];
+    const scheduleResumeTries = () => {
+      if (!heroVideoShouldPlay) return;
+      retryTimers.forEach((id) => window.clearTimeout(id));
+      retryTimers.length = 0;
+      const play = () => kickHeroVideoPlay();
+      retryTimers.push(window.setTimeout(play, 50));
+      retryTimers.push(window.setTimeout(play, 180));
+      retryTimers.push(window.setTimeout(play, 400));
+    };
     const onPinch = () => {
       const video = heroVideoRef.current;
       if (!video) return;
-      if (isHeroPinchZoomed()) video.pause();
-      else if (heroVideoShouldPlay) kickHeroVideoPlay();
+      if (isHeroPinchZoomed()) {
+        video.pause();
+        return;
+      }
+      if (!heroVideoShouldPlay) return;
+      kickHeroVideoPlay();
     };
+    const onGestureEnd = () => {
+      onPinch();
+      scheduleResumeTries();
+    };
+    const opts = { passive: true } as AddEventListenerOptions;
     vv.addEventListener("resize", onPinch);
-    return () => vv.removeEventListener("resize", onPinch);
+    vv.addEventListener("scroll", onPinch);
+    window.addEventListener("touchend", onGestureEnd, opts);
+    window.addEventListener("touchcancel", onGestureEnd, opts);
+    return () => {
+      retryTimers.forEach((id) => window.clearTimeout(id));
+      vv.removeEventListener("resize", onPinch);
+      vv.removeEventListener("scroll", onPinch);
+      window.removeEventListener("touchend", onGestureEnd);
+      window.removeEventListener("touchcancel", onGestureEnd);
+    };
   }, [heroVideoShouldPlay, kickHeroVideoPlay]);
 
   /** PORTFOLIO slide+fade — only after ROBBIE/MCLAUGHLIN + tagline cascades end. */
@@ -4043,9 +4071,9 @@ const Hero = ({
       return;
     }
 
-    const measure = () => {
+    const measure = (force = false) => {
       /* Already have a 1x size — pinch must not rewrite width (innerWidth×scale was huge). */
-      if (isHeroPinchZoomed() && committedW > 0) return;
+      if (!force && isHeroPinchZoomed() && committedW > 0 && !isRecentOrientationChange()) return;
 
       const targetW = measureHeroMobileProfileContentWidthPx();
       if (targetW <= 0) return;
@@ -4098,7 +4126,7 @@ const Hero = ({
     window.addEventListener("resize", measure);
     const onOrientation = () => {
       committedW = 0;
-      measure();
+      afterOrientationSettle(() => measure(true));
     };
     window.addEventListener("orientationchange", onOrientation);
     return () => {
@@ -4131,7 +4159,7 @@ const Hero = ({
   useLayoutEffect(() => {
     if (isMobileHeroLayout) return;
     const mq = window.matchMedia(HERO_TABLET_DEVICE_MQ);
-    const apply = () => {
+    const apply = unlessPinched(() => {
       const svgLockup = document.querySelector<SVGSVGElement>('#hero [data-hero-svg-root="true"] svg');
       if (!svgLockup) return;
       if (isHeroCropLayout) {
@@ -4150,7 +4178,7 @@ const Hero = ({
           svgLockup.setAttribute("preserveAspectRatio", "none");
         }
       }
-    };
+    });
     apply();
     const retry = window.setTimeout(apply, 80);
     const retry2 = window.setTimeout(apply, 240);
@@ -4537,7 +4565,7 @@ const RainbowMenuSlide = ({
 
   useEffect(() => {
     const mq = window.matchMedia(`(min-width: ${HERO_DESKTOP_DEBUG_MIN_PX}px)`);
-    const onChange = () => setMainMenuDesktopViewport(mq.matches);
+    const onChange = unlessPinched(() => setMainMenuDesktopViewport(mq.matches));
     onChange();
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
@@ -5457,7 +5485,7 @@ const PhantomProfile = ({
     const mq = window.matchMedia(
       `(min-width: ${PROFILE_TABLET_MIN_PX}px) and (max-width: ${PROFILE_TABLET_MAX_PX}px)`,
     );
-    const onChange = () => setProfileTabletViewport(mq.matches);
+    const onChange = unlessPinched(() => setProfileTabletViewport(mq.matches));
     onChange();
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
@@ -5465,7 +5493,7 @@ const PhantomProfile = ({
 
   useEffect(() => {
     const mq = window.matchMedia(`(min-width: ${PROFILE_DESKTOP_DEBUG_MIN_PX}px)`);
-    const onChange = () => setProfileDesktopViewport(mq.matches);
+    const onChange = unlessPinched(() => setProfileDesktopViewport(mq.matches));
     onChange();
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
@@ -5473,7 +5501,7 @@ const PhantomProfile = ({
 
   useEffect(() => {
     const mq = window.matchMedia(PROFILE_CARD_HEIGHT_LOCK_MQ);
-    const onChange = () => setProfileCardHeightLock(mq.matches);
+    const onChange = unlessPinched(() => setProfileCardHeightLock(mq.matches));
     onChange();
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
@@ -7238,7 +7266,8 @@ function sectionGridOverlayHeightPx(
   if (
     cssVar === "--projects-grid-overlay-height" &&
     section.id === "projects" &&
-    section.classList.contains("projects-showcase-tablet-pad")
+    section.classList.contains("projects-showcase-tablet-pad") &&
+    !isHeroPinchZoomed()
   ) {
     const stackBottom =
       section.querySelector<HTMLElement>(".projects-showcase-flow") ??
@@ -7269,8 +7298,12 @@ function bindSectionGridOverlayHeightSync(
   const panel = section.closest<HTMLElement>(SECTION_PANEL_GRID_SELECTOR);
 
   const sync = () => {
-    if (isHeroPinchZoomed()) return;
-    section.style.setProperty(cssVar, `${sectionGridOverlayHeightPx(section, cssVar)}px`);
+    /* Always size the grid — skipping while pinched left PROJECTS on a black field. */
+    let h = sectionGridOverlayHeightPx(section, cssVar);
+    if (h < 8) {
+      h = panel?.clientHeight || document.documentElement.clientHeight || 0;
+    }
+    if (h > 0) section.style.setProperty(cssVar, `${h}px`);
   };
 
   const syncAfterOrientation = () => {
@@ -7299,7 +7332,7 @@ function bindSectionGridOverlayHeightSync(
     typeof window.matchMedia === "function"
       ? window.matchMedia("(orientation: portrait)")
       : null;
-  const onOrientationMq = () => syncAfterOrientation();
+  const onOrientationMq = unlessPinched(() => syncAfterOrientation());
   if (orientationMq) {
     if (typeof orientationMq.addEventListener === "function") {
       orientationMq.addEventListener("change", onOrientationMq);
@@ -7971,6 +8004,7 @@ const ShowcaseIllustrationLightbox = ({
   onClose: () => void;
   onActiveIndexChange: (index: number) => void;
 }) => {
+  useNavLayoutFreeze(true);
   const activeOpenablePos = openableIndices.indexOf(activeIndex);
   const [carouselReady, setCarouselReady] = useState(false);
   const [emblaRef, emblaApi] = useEmblaCarousel({
@@ -7979,6 +8013,9 @@ const ShowcaseIllustrationLightbox = ({
     skipSnaps: false,
     dragFree: false,
     startIndex: activeOpenablePos >= 0 ? activeOpenablePos : 0,
+    /* Two-finger pinch must reach the browser, not Embla drag. */
+    watchDrag: (_embla, event) =>
+      !("touches" in event && event.touches.length > 1),
   });
 
   const activeSlide = slides[activeIndex];
@@ -8151,12 +8188,12 @@ const ShowcaseIllustrationLightbox = ({
 
           <div
             ref={emblaRef}
-            className={`illustration-lightbox-media-viewport h-full min-h-0 flex-1 overflow-hidden touch-pan-y [-webkit-touch-callout:none] ${
+            className={`illustration-lightbox-media-viewport h-full min-h-0 flex-1 overflow-hidden [touch-action:pan-y_pinch-zoom] [-webkit-touch-callout:none] ${
               carouselReady ? "" : "invisible pointer-events-none"
             }`}
             aria-roledescription="carousel"
           >
-            <div className="flex h-full min-h-0 touch-pan-y [-webkit-touch-callout:none] lg:min-h-[min(78dvh,920px)]">
+            <div className="flex h-full min-h-0 [touch-action:pan-y_pinch-zoom] [-webkit-touch-callout:none] lg:min-h-[min(78dvh,920px)]">
               {openableIndices.map((slideIndex) => {
                 const slide = slides[slideIndex]!;
                 const label = slide.alt?.trim() || `Illustration ${slideIndex + 1}`;
@@ -8609,7 +8646,7 @@ const PalaceProjects = ({
 
   useEffect(() => {
     const mq = window.matchMedia(`(min-width: ${PROFILE_DESKTOP_DEBUG_MIN_PX}px)`);
-    const onChange = () => setProjectsDesktopViewport(mq.matches);
+    const onChange = unlessPinched(() => setProjectsDesktopViewport(mq.matches));
     onChange();
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
@@ -8617,7 +8654,7 @@ const PalaceProjects = ({
 
   useEffect(() => {
     const mq = window.matchMedia(PROJECTS_TABLET_LANDSCAPE_MQ);
-    const onChange = () => setProjectsTabletLandscapeViewport(mq.matches);
+    const onChange = unlessPinched(() => setProjectsTabletLandscapeViewport(mq.matches));
     onChange();
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
@@ -8625,10 +8662,10 @@ const PalaceProjects = ({
 
   useEffect(() => {
     const mq = window.matchMedia(PROJECTS_TABLET_PORTRAIT_MQ);
-    const onChange = () => {
+    const onChange = unlessPinched(() => {
       setProjectsTabletPortraitViewport(mq.matches);
       if (!mq.matches) setProjectsTabletThumbnailDebugEnabled(false);
-    };
+    });
     onChange();
     mq.addEventListener("change", onChange);
     window.addEventListener("resize", onChange);
@@ -8642,7 +8679,7 @@ const PalaceProjects = ({
 
   useEffect(() => {
     const mq = window.matchMedia(PROJECTS_MOBILE_VIEWPORT_MQ);
-    const onChange = () => setProjectsMobileViewport(mq.matches);
+    const onChange = unlessPinched(() => setProjectsMobileViewport(mq.matches));
     onChange();
     mq.addEventListener("change", onChange);
     window.addEventListener("resize", onChange);
@@ -10154,7 +10191,7 @@ const ConfidantExperience = ({
 
   useEffect(() => {
     const mq = window.matchMedia(`(min-width: ${PROFILE_DESKTOP_DEBUG_MIN_PX}px)`);
-    const onChange = () => setExperienceDesktopViewport(mq.matches);
+    const onChange = unlessPinched(() => setExperienceDesktopViewport(mq.matches));
     onChange();
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
@@ -10162,7 +10199,7 @@ const ConfidantExperience = ({
 
   useEffect(() => {
     const mq = window.matchMedia(EXPERIENCE_MOBILE_MQ);
-    const onChange = () => setIsMobileExperienceLayout(mq.matches);
+    const onChange = unlessPinched(() => setIsMobileExperienceLayout(mq.matches));
     onChange();
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
@@ -10247,7 +10284,7 @@ const ConfidantExperience = ({
 
   useEffect(() => {
     const mq = window.matchMedia(EXPERIENCE_TABLET_LANDSCAPE_MQ);
-    const onChange = () => setExperienceTabletLandscapeViewport(mq.matches);
+    const onChange = unlessPinched(() => setExperienceTabletLandscapeViewport(mq.matches));
     onChange();
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
@@ -10336,7 +10373,7 @@ const ConfidantExperience = ({
 
   useEffect(() => {
     const mq = window.matchMedia(COMPACT_EXPERIENCE_MQ);
-    const onChange = () => setIsCompactExperienceLayout(mq.matches);
+    const onChange = unlessPinched(() => setIsCompactExperienceLayout(mq.matches));
     onChange();
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
@@ -12717,7 +12754,7 @@ const SkillArsenal = ({
   );
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 767.98px)");
-    const sync = () => setIsMobileSkills(mq.matches);
+    const sync = unlessPinched(() => setIsMobileSkills(mq.matches));
     sync();
     mq.addEventListener("change", sync);
     return () => mq.removeEventListener("change", sync);
@@ -13156,6 +13193,7 @@ export default function Home() {
   const [heroDismissed, setHeroDismissed] = useState(false);
   /** True only during PORTFOLIO → menu scroll so the snap track can move. */
   const [heroExitScroll, setHeroExitScroll] = useState(false);
+  const [sideNavMotionBusy, setSideNavMotionBusy] = useState(false);
   const heroExitScrollRef = useRef(false);
 
   /** Section overlay scroller — shared across pages; must reset on section change. */
@@ -13166,6 +13204,18 @@ export default function Home() {
   );
   const [currentSlideId, setCurrentSlideId] = useState<string>("hero");
   const [menuIntroReady, setMenuIntroReady] = useState(false);
+
+  const sideNavOpenReadyRef = useRef(false);
+  useEffect(() => {
+    if (!sideNavOpenReadyRef.current) {
+      sideNavOpenReadyRef.current = true;
+      return;
+    }
+    setSideNavMotionBusy(true);
+    const ms = Math.round(SIDE_NAV_OVERLAY_FADE_S * 1000) + 48;
+    const t = window.setTimeout(() => setSideNavMotionBusy(false), ms);
+    return () => window.clearTimeout(t);
+  }, [isSideNavOpen]);
   /** Hero mounted and not exiting — block swipe/wheel/keys off the intro. */
   const heroScrollLocked = !heroDismissed && !heroExitScroll;
   const [profileSectionMounted, setProfileSectionMounted] = useState(false);
@@ -13208,6 +13258,27 @@ export default function Home() {
   const topNavChromeOpacity = navButtonsFaded ? 0 : topNavScrollOpacity;
   const showcasePdfViewerActive =
     showcasePdfObscuring || Boolean(showcasePdfOverlay) || showcasePdfClosing;
+  const [projectDetailMotionBusy, setProjectDetailMotionBusy] = useState(false);
+  const projectDetailFreezeReadyRef = useRef(false);
+  useEffect(() => {
+    if (!projectDetailFreezeReadyRef.current) {
+      projectDetailFreezeReadyRef.current = true;
+      return;
+    }
+    setProjectDetailMotionBusy(true);
+    const t = window.setTimeout(() => setProjectDetailMotionBusy(false), 480);
+    return () => window.clearTimeout(t);
+  }, [activeShowcaseProjectId]);
+
+  useNavLayoutFreeze(
+    isTransitioning ||
+      heroExitScroll ||
+      (heroDismissed && !menuIntroReady) ||
+      sideNavMotionBusy ||
+      archivePdfNavActive ||
+      showcasePdfViewerActive ||
+      projectDetailMotionBusy,
+  );
   const prevSlideIdRef = useRef<string>("hero");
   const transitionTimeoutsRef = useRef<number[]>([]);
   const hasWarmedProjectMediaRef = useRef(false);
@@ -14068,9 +14139,9 @@ export default function Home() {
                 pointerEvents: transitionTarget === "menu" ? "none" : "auto",
                 // Dropping will-change after settle avoids Chromium keeping section text on a blurry GPU layer.
                 // iOS: keep transform layer while panel is open — dropping at panelSettled blanks content/grid on iPad.
+                // Side-nav swaps stay at x:0 — toggling will-change here restarts the panel grid animation.
                 willChange:
-                  isTransitioning ||
-                  !panelSettled ||
+                  ((isTransitioning || !panelSettled) && showPanelWipeEdge) ||
                   (IS_IOS_TOUCH &&
                     (currentSection === "experience" ||
                       currentSection === "projects" ||
@@ -14139,16 +14210,23 @@ export default function Home() {
                         activeShowcaseProjectId ? "min-h-min shrink-0" : "max-2xl:min-h-min max-2xl:flex-none 2xl:min-h-0 2xl:flex-1"
                       }`
                     : currentSection === "profile"
-                      ? "flex min-h-min w-full min-w-0 max-lg:flex-none flex-col overflow-x-hidden overflow-y-visible lg:h-full lg:min-h-0 lg:flex-1"
+                      ? "relative flex min-h-min w-full min-w-0 max-lg:flex-none flex-col overflow-x-hidden overflow-y-visible lg:h-full lg:min-h-0 lg:flex-1"
                     : currentSection === "skills"
-                      ? "flex min-h-min w-full min-w-0 max-md:flex-none flex-col overflow-x-hidden overflow-y-visible md:min-h-full md:flex-1"
+                      ? "relative flex min-h-min w-full min-w-0 max-md:flex-none flex-col overflow-x-hidden overflow-y-visible md:min-h-full md:flex-1"
                     : currentSection === "experience"
-                      ? "flex min-h-min w-full min-w-0 max-lg:flex-none flex-col overflow-x-hidden overflow-y-visible lg:h-full lg:min-h-0 lg:flex-1"
+                      ? "relative flex min-h-min w-full min-w-0 max-lg:flex-none flex-col overflow-x-hidden overflow-y-visible lg:h-full lg:min-h-0 lg:flex-1"
                       : "flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden"
                 }
               >
                 {profileSectionMounted && (
-                  <div className={currentSection !== "profile" ? "hidden" : undefined} aria-hidden={currentSection !== "profile"}>
+                  <div
+                    className={
+                      currentSection !== "profile"
+                        ? "pointer-events-none invisible absolute inset-0 overflow-hidden"
+                        : undefined
+                    }
+                    aria-hidden={currentSection !== "profile"}
+                  >
                     <PhantomProfile
                       panelSettled={panelSettled && currentSection === "profile"}
                       mascotFadeOnPanelSettle={profileMascotSettleFade}

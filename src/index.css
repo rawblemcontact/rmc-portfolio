@@ -425,6 +425,7 @@
     scroll-behavior: smooth;
     height: 100%;
     overflow: hidden;
+    overscroll-behavior: none;
   }
   @media (prefers-reduced-motion: reduce) {
     html {
@@ -453,6 +454,7 @@
     background-image: none !important;
     height: 100%;
     overflow: hidden;
+    overscroll-behavior: none;
   }
   /* Force solid backgrounds to eliminate diagonal artifacts (no patterns/gradients) */
   #root {
@@ -1703,16 +1705,15 @@
   }
 
   /*
-   * iPad / tablet PORTFOLIO — 1px edge nudges; transform-only text slide.
+   * iPad / tablet PORTFOLIO — morph kept; even [gap] around the arrow.
    */
   @media (min-width: 768px) and (max-width: 1366px) and (orientation: portrait) {
     #hero .hero-portfolio-animated .hero-portfolio-arrow--1 {
-      /* Tablet V rest: pull toward the right edge so [text][gap][→][gap] matches. */
-      right: calc(0.56rem + 1px);
+      /* Rest: more inset so [text][gap][→][gap] matches (glyph, not pad box). */
+      right: calc(0.70rem + 1px);
     }
 
     #hero .hero-portfolio-animated .hero-portfolio-arrow--2 {
-      /* Tablet V hover: pull toward the left edge so [gap][→][gap][text] matches. */
       left: calc(0.56rem + 1px);
     }
 
@@ -1743,26 +1744,19 @@
     }
   }
 
-  /*
-   * iPad portrait ≤1023 — button uses padding-inline 1rem. Rest is already even;
-   * hover arrow sat tight to the label, so pull it toward the left edge.
-   */
   @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
     #hero .hero-portfolio-animated .hero-portfolio-arrow--2 {
-      left: calc(0.32rem + 1px);
+      left: calc(0.46rem + 1px);
     }
   }
 
-  /*
-   * Large iPad portrait (1024–1366) — px-8 pad, same inward equal-gap as desktop.
-   */
   @media (min-width: 1024px) and (max-width: 1366px) and (orientation: portrait) {
     #hero .hero-portfolio-animated .hero-portfolio-arrow--1 {
-      right: calc(0.82rem + 1px);
+      right: calc(0.72rem + 1px);
     }
 
     #hero .hero-portfolio-animated .hero-portfolio-arrow--2 {
-      left: calc(0.68rem + 1px);
+      left: calc(0.48rem + 1px);
     }
   }
 
@@ -1838,7 +1832,7 @@
 
   /*
    * iPad / tablet landscape arrows — after desktop so 1024–1366 landscape
-   * (fine pointer resize) keeps tablet-H insets, not desktop.
+   * (coarse iPad) keeps tablet-H insets, not desktop.
    */
   @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) {
     #hero .hero-portfolio-animated .hero-portfolio-arrow--1 {
@@ -1850,19 +1844,33 @@
     }
   }
 
+  /*
+   * Laptop 1024–1366 landscape — desktop equal-gap wins over the tablet-H
+   * reassert (resized desktop windows; iPad coarse still uses tablet-H).
+   */
+  @media (min-width: 1024px) and (max-width: 1366px) and (orientation: landscape) and (hover: hover) and (pointer: fine) {
+    #hero .hero-portfolio-animated .hero-portfolio-arrow--1 {
+      right: calc(0.72rem - 1px);
+    }
+
+    #hero .hero-portfolio-animated .hero-portfolio-arrow--2 {
+      left: calc(0.44rem - 1px);
+    }
+  }
+
   @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
     #hero .hero-portfolio-animated .hero-portfolio-arrow--2 {
-      left: calc(0.32rem + 1px);
+      left: calc(0.46rem + 1px);
     }
   }
 
   @media (min-width: 1024px) and (max-width: 1366px) and (orientation: portrait) {
     #hero .hero-portfolio-animated .hero-portfolio-arrow--1 {
-      right: calc(0.82rem + 1px);
+      right: calc(0.72rem + 1px);
     }
 
     #hero .hero-portfolio-animated .hero-portfolio-arrow--2 {
-      left: calc(0.68rem + 1px);
+      left: calc(0.48rem + 1px);
     }
   }
 
@@ -7548,7 +7556,7 @@
 
   #projects.projects-visual-design-detail-open .projects-showcase-stage {
     overflow-y: auto !important;
-    overscroll-behavior-y: auto;
+    overscroll-behavior-y: contain;
   }
 
   #projects .showcase-header-title-rule > .section-main-header-title {

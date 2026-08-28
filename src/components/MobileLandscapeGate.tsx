@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { isDocumentPinchZoomed } from "../lib/visualViewport";
+import { isNavLayoutFrozen } from "../lib/navLayoutFreeze";
 
 const MOBILE_LANDSCAPE_MQ =
   "(orientation: landscape) and (max-height: 500px) and (max-width: 960px)";
@@ -20,7 +22,10 @@ export function MobileLandscapeGate() {
 
   useEffect(() => {
     const mq = window.matchMedia(MOBILE_LANDSCAPE_MQ);
-    const sync = () => setBlocked(mq.matches);
+    const sync = () => {
+      if (isDocumentPinchZoomed() || isNavLayoutFrozen()) return;
+      setBlocked(mq.matches);
+    };
     sync();
     mq.addEventListener("change", sync);
     return () => mq.removeEventListener("change", sync);
