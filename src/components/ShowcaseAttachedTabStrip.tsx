@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { directionalArrowIdlePhaseDelaySec } from "@/lib/motion";
+import { featuredTabsArrowNudgePhaseDelaySec } from "@/lib/motion";
 
 export type ShowcaseTabId = "tab-1" | "tab-2" | "tab-3" | "tab-4" | "tab-5" | "tab-6";
 
@@ -131,7 +131,7 @@ export function ShowcaseAttachedTabStrip({
   /** Freeze once so re-renders do not restart the idle pulse out of phase. */
   const arrowIdleDelayRef = useRef<string | null>(null);
   if (arrowIdleDelayRef.current == null) {
-    arrowIdleDelayRef.current = `${directionalArrowIdlePhaseDelaySec()}s`;
+    arrowIdleDelayRef.current = `${featuredTabsArrowNudgePhaseDelaySec()}s`;
   }
   const arrowIdleDelayStyle = {
     ["--directional-arrow-idle-delay" as string]: arrowIdleDelayRef.current,
@@ -307,9 +307,11 @@ export function ShowcaseAttachedTabStrip({
 
   const handleNavArrowPointerDown = useCallback(
     (side: "prev" | "next") => () => {
+      if (side === "prev" && !canSelectPrev) return;
+      if (side === "next" && !canSelectNext) return;
       triggerNavArrowFeedback(side, { fromFinePointerArrow: true });
     },
-    [triggerNavArrowFeedback],
+    [canSelectNext, canSelectPrev, triggerNavArrowFeedback],
   );
 
   const handleNavArrowPointerRelease = useCallback(() => {
@@ -454,9 +456,9 @@ export function ShowcaseAttachedTabStrip({
           ref={folderRef}
           className="featured-writing-folder relative flex min-w-0 w-full flex-col"
         >
-          <div className="relative flex h-[3.5rem] min-h-[3.5rem] shrink-0 flex-col gap-0 overflow-visible pt-3 max-sm:h-[3.9rem] max-sm:min-h-[3.9rem] sm:h-16 sm:min-h-16 sm:pt-4">
+          <div className="relative flex h-[3.5rem] min-h-[3.5rem] shrink-0 flex-col gap-0 overflow-visible pt-3 max-sm:h-[3.95rem] max-sm:min-h-[3.95rem] sm:h-16 sm:min-h-16 sm:pt-4">
             <div
-              className="featured-writing-panel relative z-[3] -mb-px hidden max-sm:flex h-[3.15rem] min-h-[3.15rem] w-full items-center justify-between rounded-t-[9px] border border-white/[0.14] border-b-0 px-2.5"
+              className="featured-writing-panel featured-tabs-mobile-arrow-clock relative z-[3] -mb-px hidden max-sm:flex h-[3.2rem] min-h-[3.2rem] w-full items-center justify-between rounded-t-[9px] border border-white/[0.14] border-b-0 px-2.5"
               style={arrowIdleDelayStyle}
               onTouchStart={handleMobileSelectorTouchStart}
               onTouchEnd={handleMobileSelectorTouchEnd}
@@ -465,22 +467,22 @@ export function ShowcaseAttachedTabStrip({
               <button
                 type="button"
                 aria-label="Previous writing category"
+                aria-disabled={!canSelectPrev}
+                tabIndex={canSelectPrev ? 0 : -1}
                 onClick={handleSelectPrevTab}
                 onPointerDown={handleNavArrowPointerDown("prev")}
                 onPointerUp={handleNavArrowPointerRelease}
                 onPointerCancel={handleNavArrowPointerRelease}
                 onPointerLeave={handleNavArrowPointerRelease}
-                disabled={!canSelectPrev}
-                className={`featured-tabs-mobile-nav-btn featured-tabs-mobile-nav-btn--prev flex h-7 w-7 items-center justify-center rounded-full${
-                  pressedNavArrow === "prev" ? " featured-tabs-mobile-nav-btn--pressed" : ""
-                } ${
-                  canSelectPrev ? "text-mono-2/80 hover:text-mono-2/95" : "cursor-default text-mono-2/35"
-                }`}
+                className={`featured-tabs-mobile-nav-btn featured-tabs-mobile-nav-btn--prev flex h-7 w-7 items-center justify-center rounded-full text-mono-2/80${
+                  pressedNavArrow === "prev" && canSelectPrev ? " featured-tabs-mobile-nav-btn--pressed" : ""
+                }${canSelectPrev ? " hover:text-mono-2/95" : " cursor-default"}`}
               >
-                <ChevronLeft
-                  className="featured-tabs-scroll-hint featured-tabs-mobile-nav-glyph h-3.5 w-3.5"
-                  aria-hidden
-                />
+                <span className="featured-tabs-mobile-nav-glyph" aria-hidden>
+                  <ChevronLeft
+                    className="featured-tabs-scroll-hint h-3.5 w-3.5"
+                  />
+                </span>
               </button>
               <div className="relative min-w-0 flex-1 overflow-hidden px-1">
                 <AnimatePresence initial={false} mode="wait" custom={mobileSwitchDir}>
@@ -491,7 +493,7 @@ export function ShowcaseAttachedTabStrip({
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: mobileSwitchDir > 0 ? -14 : 14 }}
                     transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-                    className="flex min-w-0 flex-col items-center text-center"
+                    className="flex min-w-0 flex-col items-center gap-px text-center"
                   >
                     <span
                       className={`max-w-full truncate px-1 font-heading text-[13.5px] font-bold leading-snug tracking-[0.02em]${
@@ -516,33 +518,32 @@ export function ShowcaseAttachedTabStrip({
               <button
                 type="button"
                 aria-label="Next writing category"
+                aria-disabled={!canSelectNext}
+                tabIndex={canSelectNext ? 0 : -1}
                 onClick={handleSelectNextTab}
                 onPointerDown={handleNavArrowPointerDown("next")}
                 onPointerUp={handleNavArrowPointerRelease}
                 onPointerCancel={handleNavArrowPointerRelease}
                 onPointerLeave={handleNavArrowPointerRelease}
-                disabled={!canSelectNext}
-                className={`featured-tabs-mobile-nav-btn featured-tabs-mobile-nav-btn--next flex h-7 w-7 items-center justify-center rounded-full${
-                  pressedNavArrow === "next" ? " featured-tabs-mobile-nav-btn--pressed" : ""
-                } ${
-                  canSelectNext ? "text-mono-2/80 hover:text-mono-2/95" : "cursor-default text-mono-2/35"
-                }`}
+                className={`featured-tabs-mobile-nav-btn featured-tabs-mobile-nav-btn--next flex h-7 w-7 items-center justify-center rounded-full text-mono-2/80${
+                  pressedNavArrow === "next" && canSelectNext ? " featured-tabs-mobile-nav-btn--pressed" : ""
+                }${canSelectNext ? " hover:text-mono-2/95" : " cursor-default"}`}
               >
-                <ChevronRight
-                  className="featured-tabs-scroll-hint featured-tabs-mobile-nav-glyph h-3.5 w-3.5"
-                  aria-hidden
-                />
+                <span className="featured-tabs-mobile-nav-glyph" aria-hidden>
+                  <ChevronRight
+                    className="featured-tabs-scroll-hint h-3.5 w-3.5"
+                  />
+                </span>
               </button>
             </div>
             <button
               type="button"
               aria-label="Previous writing tab"
+              aria-disabled={!canSelectPrev}
+              tabIndex={canSelectPrev ? 0 : -1}
               onClick={handleSelectPrevTab}
-              disabled={!canSelectPrev}
-              className={`featured-tabs-mobile-nav-btn featured-tabs-mobile-nav-btn--prev absolute inset-y-0 left-1 z-[5] hidden items-end pb-2 ${
-                canSelectPrev
-                  ? "text-mono-2/70 hover:text-mono-2/95"
-                  : "cursor-default text-mono-2/35"
+              className={`featured-tabs-mobile-nav-btn featured-tabs-mobile-nav-btn--prev absolute inset-y-0 left-1 z-[5] hidden items-end pb-2 text-mono-2/70${
+                canSelectPrev ? " hover:text-mono-2/95" : " cursor-default"
               }`}
             >
               <ChevronLeft className="featured-tabs-scroll-hint h-3.5 w-3.5" aria-hidden />
@@ -550,12 +551,11 @@ export function ShowcaseAttachedTabStrip({
             <button
               type="button"
               aria-label="Next writing tab"
+              aria-disabled={!canSelectNext}
+              tabIndex={canSelectNext ? 0 : -1}
               onClick={handleSelectNextTab}
-              disabled={!canSelectNext}
-              className={`featured-tabs-mobile-nav-btn featured-tabs-mobile-nav-btn--next absolute inset-y-0 right-1 z-[5] hidden items-end pb-2 ${
-                canSelectNext
-                  ? "text-mono-2/70 hover:text-mono-2/95"
-                  : "cursor-default text-mono-2/35"
+              className={`featured-tabs-mobile-nav-btn featured-tabs-mobile-nav-btn--next absolute inset-y-0 right-1 z-[5] hidden items-end pb-2 text-mono-2/70${
+                canSelectNext ? " hover:text-mono-2/95" : " cursor-default"
               }`}
             >
               <ChevronRight className="featured-tabs-scroll-hint h-3.5 w-3.5" aria-hidden />

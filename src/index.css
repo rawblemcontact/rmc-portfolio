@@ -28,6 +28,24 @@
   }
 }
 
+@property --featured-tabs-arrow-nudge {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+/* FEATURED WRITING mobile/iPad-portrait — one shared clock for both chevrons. */
+@keyframes featured-tabs-arrow-nudge-clock {
+  0%,
+  27.2%,
+  100% {
+    --featured-tabs-arrow-nudge: 0px;
+  }
+  13.6% {
+    --featured-tabs-arrow-nudge: 4px;
+  }
+}
+
 /* Split-SVG name letters â€” cascade when chrome becomes visible (stable flag, no JS cancel). */
 /* translate3d keeps letter cascades on the compositor (60fps on mobile/tablet). */
 @keyframes hero-name-letter-in {
@@ -1193,7 +1211,8 @@
   }
 
   /* FEATURED WRITING — fade hugs the very bottom edge so Tools lines stay clear at rest. */
-  .featured-writing-description.content-cutoff-fade {
+  .featured-writing-description.content-cutoff-fade,
+  .featured-writing-description-wrap.content-cutoff-fade {
     -webkit-mask-image: linear-gradient(
       to bottom,
       #000 0%,
@@ -1265,6 +1284,12 @@
   /* Top nav icon buttons — room for tap/hover scale. */
   [data-top-nav-chrome] {
     overflow: visible;
+  }
+
+  /* Section swaps: leftover overlay scroll must not keep chrome dimmed. */
+  .top-nav-chrome-hold,
+  .top-nav-chrome-hold * {
+    opacity: 1 !important;
   }
 
   /* FLIP measure: kill Framer tap transform for one frame. */
@@ -2760,6 +2785,73 @@
       white-space: normal;
       line-height: 1.2;
       font-size: clamp(0.75rem, 6.2cqi, 0.95rem);
+    }
+
+    #projects .featured-writing-folder {
+      container-type: inline-size;
+    }
+
+    #projects .featured-writing-content-col {
+      gap: 0.5rem !important;
+    }
+
+    #projects .featured-writing-title-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-rows: auto;
+      align-items: start;
+      column-gap: 0.5rem;
+      row-gap: 0;
+    }
+
+    #projects .featured-writing-title-stack {
+      gap: 0.5rem;
+    }
+
+    #projects .featured-writing-view-cta {
+      position: static;
+      grid-column: 2;
+      grid-row: 1;
+      margin-right: 0 !important;
+      gap: 0.25rem;
+      padding: 0.375rem 0.5rem !important;
+      font-size: 9px !important;
+      line-height: 1.2 !important;
+      border-radius: 8px;
+      transform: translateY(-0.1875rem);
+    }
+
+    #projects .featured-writing-view-cta svg {
+      width: 10px;
+      height: 10px;
+    }
+
+    #projects .featured-writing-item-title {
+      grid-column: 1;
+      grid-row: 1;
+      min-width: 0;
+      font-size: 0.875rem !important;
+      line-height: 1.2 !important;
+      letter-spacing: -0.025em !important;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: unset;
+      padding-right: 0;
+    }
+
+    #projects .featured-writing-description.content-cutoff-fade,
+    #projects .featured-writing-description-wrap.content-cutoff-fade {
+      -webkit-mask-image: none;
+      mask-image: none;
+    }
+
+    #projects .featured-writing-description-blocks {
+      gap: 0.5rem;
+    }
+
+    #projects .featured-writing-panel-body[data-writing-item="cnf-article"] .featured-writing-description-wrap {
+      max-height: 6.85rem !important;
+      overflow-y: visible !important;
     }
   }
 
@@ -6110,10 +6202,9 @@
 
   /* FEATURED WRITING tabs (mobile): subtle arrows indicating horizontal scroll. */
   .featured-tabs-scroll-hint {
-    --directional-arrow-idle-opacity: 0.45;
-    opacity: var(--directional-arrow-idle-opacity);
-    animation: directional-arrow-idle-pulse 1.85s ease-in-out infinite;
-    animation-delay: var(--directional-arrow-idle-delay, 0s);
+    opacity: 0.85;
+    transition: transform var(--featured-arrow-motion-dur, 0.34s)
+      var(--featured-arrow-motion-ease, cubic-bezier(0.22, 1, 0.36, 1));
   }
   .featured-tabs-mobile-nav-btn {
     --featured-arrow-motion-dur: 0.34s;
@@ -6121,71 +6212,90 @@
     background: transparent;
     border: 0;
     padding: 0;
+    opacity: 1;
     pointer-events: auto;
     -webkit-tap-highlight-color: transparent;
     transition:
       color var(--featured-arrow-motion-dur) var(--featured-arrow-motion-ease),
-      filter var(--featured-arrow-motion-dur) var(--featured-arrow-motion-ease);
+      filter var(--featured-arrow-motion-dur) var(--featured-arrow-motion-ease),
+      opacity var(--featured-arrow-motion-dur) var(--featured-arrow-motion-ease);
+  }
+  .featured-tabs-mobile-arrow-clock {
+    animation: featured-tabs-arrow-nudge-clock 2.5s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+    animation-delay: var(--directional-arrow-idle-delay, 0s);
   }
   .featured-tabs-mobile-nav-glyph {
-    transition: transform var(--featured-arrow-motion-dur, 0.34s)
-      var(--featured-arrow-motion-ease, cubic-bezier(0.22, 1, 0.36, 1));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .featured-tabs-mobile-nav-btn--prev .featured-tabs-mobile-nav-glyph {
+    transform: translateX(calc(-1 * var(--featured-tabs-arrow-nudge, 0px)));
+  }
+  .featured-tabs-mobile-nav-btn--next .featured-tabs-mobile-nav-glyph {
+    transform: translateX(var(--featured-tabs-arrow-nudge, 0px));
   }
   /* Hover accent + nudge — fine pointer only (avoids sticky :hover on touch). */
   @media (hover: hover) and (pointer: fine) {
-    .featured-tabs-mobile-nav-btn:not(:disabled):hover,
-    .featured-tabs-mobile-nav-btn:not(:disabled):active {
+    .featured-tabs-mobile-nav-btn:not([aria-disabled="true"]):hover,
+    .featured-tabs-mobile-nav-btn:not([aria-disabled="true"]):active {
       color: var(--palette-yellow-projects);
       filter: drop-shadow(0 0 7px color-mix(in srgb, var(--palette-yellow-projects) 62%, transparent));
     }
-    .featured-tabs-mobile-nav-btn:not(:disabled):hover .featured-tabs-scroll-hint,
-    .featured-tabs-mobile-nav-btn:not(:disabled):active .featured-tabs-scroll-hint {
-      /* Keep idle animation running so prev/next stay phase-locked. */
+    .featured-tabs-mobile-nav-btn:not([aria-disabled="true"]):hover .featured-tabs-scroll-hint,
+    .featured-tabs-mobile-nav-btn:not([aria-disabled="true"]):active .featured-tabs-scroll-hint {
       opacity: 1;
     }
-    .featured-tabs-mobile-nav-btn--prev:not(:disabled):hover .featured-tabs-mobile-nav-glyph,
-    .featured-tabs-mobile-nav-btn--prev:not(:disabled):active .featured-tabs-mobile-nav-glyph {
+    .featured-tabs-mobile-nav-btn--prev:not([aria-disabled="true"]):hover .featured-tabs-scroll-hint,
+    .featured-tabs-mobile-nav-btn--prev:not([aria-disabled="true"]):active .featured-tabs-scroll-hint {
       transform: translateX(-4px);
     }
-    .featured-tabs-mobile-nav-btn--next:not(:disabled):hover .featured-tabs-mobile-nav-glyph,
-    .featured-tabs-mobile-nav-btn--next:not(:disabled):active .featured-tabs-mobile-nav-glyph {
+    .featured-tabs-mobile-nav-btn--next:not([aria-disabled="true"]):hover .featured-tabs-scroll-hint,
+    .featured-tabs-mobile-nav-btn--next:not([aria-disabled="true"]):active .featured-tabs-scroll-hint {
       transform: translateX(4px);
     }
   }
   /* Touch/tablet tap — JS toggled class; releases after pointerup (no sticky hover). */
-  .featured-tabs-mobile-nav-btn.featured-tabs-mobile-nav-btn--pressed {
+  .featured-tabs-mobile-nav-btn:not([aria-disabled="true"]).featured-tabs-mobile-nav-btn--pressed {
     color: var(--palette-yellow-projects);
     filter: drop-shadow(0 0 7px color-mix(in srgb, var(--palette-yellow-projects) 62%, transparent));
   }
-  .featured-tabs-mobile-nav-btn.featured-tabs-mobile-nav-btn--pressed .featured-tabs-scroll-hint {
-    /* Keep idle animation running so prev/next stay phase-locked. */
+  .featured-tabs-mobile-nav-btn:not([aria-disabled="true"]).featured-tabs-mobile-nav-btn--pressed .featured-tabs-scroll-hint {
     opacity: 1;
   }
-  .featured-tabs-mobile-nav-btn--prev.featured-tabs-mobile-nav-btn--pressed .featured-tabs-mobile-nav-glyph {
+  .featured-tabs-mobile-nav-btn--prev:not([aria-disabled="true"]).featured-tabs-mobile-nav-btn--pressed .featured-tabs-scroll-hint {
     transform: translateX(-4px);
   }
-  .featured-tabs-mobile-nav-btn--next.featured-tabs-mobile-nav-btn--pressed .featured-tabs-mobile-nav-glyph {
+  .featured-tabs-mobile-nav-btn--next:not([aria-disabled="true"]).featured-tabs-mobile-nav-btn--pressed .featured-tabs-scroll-hint {
     transform: translateX(4px);
   }
-  .featured-tabs-mobile-nav-btn:disabled .featured-tabs-scroll-hint {
-    /* Keep timeline running so re-enable stays phase-locked with sibling. */
-    opacity: 0.42;
+  .featured-tabs-mobile-nav-btn[aria-disabled="true"] {
+    cursor: default;
+    opacity: 0;
+    filter: none;
+    pointer-events: none;
   }
   @media (prefers-reduced-motion: reduce) {
-    .featured-tabs-scroll-hint {
+    .featured-tabs-mobile-nav-btn {
+      transition: none;
+    }
+    .featured-tabs-mobile-arrow-clock {
       animation: none;
-      opacity: 0.78;
+    }
+    .featured-tabs-mobile-nav-btn--prev .featured-tabs-mobile-nav-glyph,
+    .featured-tabs-mobile-nav-btn--next .featured-tabs-mobile-nav-glyph {
+      transform: none;
     }
     @media (hover: hover) and (pointer: fine) {
-      .featured-tabs-mobile-nav-btn--prev:not(:disabled):hover .featured-tabs-mobile-nav-glyph,
-      .featured-tabs-mobile-nav-btn--prev:not(:disabled):active .featured-tabs-mobile-nav-glyph,
-      .featured-tabs-mobile-nav-btn--next:not(:disabled):hover .featured-tabs-mobile-nav-glyph,
-      .featured-tabs-mobile-nav-btn--next:not(:disabled):active .featured-tabs-mobile-nav-glyph {
+      .featured-tabs-mobile-nav-btn--prev:not([aria-disabled="true"]):hover .featured-tabs-scroll-hint,
+      .featured-tabs-mobile-nav-btn--prev:not([aria-disabled="true"]):active .featured-tabs-scroll-hint,
+      .featured-tabs-mobile-nav-btn--next:not([aria-disabled="true"]):hover .featured-tabs-scroll-hint,
+      .featured-tabs-mobile-nav-btn--next:not([aria-disabled="true"]):active .featured-tabs-scroll-hint {
         transform: none;
       }
     }
-    .featured-tabs-mobile-nav-btn--prev.featured-tabs-mobile-nav-btn--pressed .featured-tabs-mobile-nav-glyph,
-    .featured-tabs-mobile-nav-btn--next.featured-tabs-mobile-nav-btn--pressed .featured-tabs-mobile-nav-glyph {
+    .featured-tabs-mobile-nav-btn--prev.featured-tabs-mobile-nav-btn--pressed .featured-tabs-scroll-hint,
+    .featured-tabs-mobile-nav-btn--next.featured-tabs-mobile-nav-btn--pressed .featured-tabs-scroll-hint {
       transform: none;
     }
   }
@@ -6962,6 +7072,21 @@
   padding-bottom: 0.125rem;
 }
 
+#projects .project-card-tagline-compact {
+  display: none;
+}
+
+@media (max-width: 767.98px),
+  (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
+  #projects .project-card-tagline-compact {
+    display: inline;
+  }
+
+  #projects .project-card-tagline-full {
+    display: none;
+  }
+}
+
 #projects .project-card-tagline-tablet-portrait-suffix {
   display: none;
 }
@@ -7028,33 +7153,38 @@
     /* header bottom â†’ card top AND card bottom â†’ FEATURED WRITING tab row */
     --projects-four-cards-gap: clamp(0.625rem, 1.5svh, 0.875rem);
     /* Trim FEATURED WRITING from the bottom; stage shifts down by the same amount. */
-    --projects-fw-height-trim: 0.5rem;
+    --projects-fw-height-trim: 1.85rem;
+    --projects-portrait-card-h: calc(((min(444px, 54dvh) - var(--slide-gap)) / 2) * 1.05);
+    --projects-portrait-card-bottom-extra: 1.05rem;
   }
 
   /*
-   * Content (carousel + FEATURED WRITING) uses full EXPERIENCE gutter width
-   * (container px-5 + EXPERIENCE_GUTTER shells). Header + yellow line stay at
-   * the narrower centered PROFILE tablet column (560px) â€” do not expand them.
+   * Content (carousel + FEATURED WRITING + header) shares one full-width column
+   * (container px-5 + EXPERIENCE_GUTTER shells) so left/right gutters match.
    */
   #projects.projects-showcase-tablet-pad .projects-showcase-viewport {
     width: 100%;
     max-width: none;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    box-sizing: border-box;
+  }
+
+  #projects.projects-showcase-tablet-pad .projects-showcase-header-block,
+  #projects.projects-showcase-tablet-pad .projects-showcase-cards-cluster,
+  #projects.projects-showcase-tablet-pad .projects-showcase-flow {
+    width: 100%;
+    max-width: none;
     margin-left: 0;
     margin-right: 0;
+    align-self: stretch;
   }
 
-  /* Keep header + yellow line at PROFILE tablet width, flush-left with content. */
-  #projects.projects-showcase-tablet-pad .projects-showcase-header-block {
-    width: 100%;
-    max-width: min(100%, 560px);
-    margin-left: 0;
-    margin-right: auto;
-    align-self: flex-start;
-  }
-
-  /* Compensate FW height trim â€” keep panel bottom edge; open air above. */
+  /* Compensate FW height trim — keep panel bottom edge; open air above. */
   #projects .projects-showcase-stage {
-    transform: translateY(calc(-2% + var(--projects-fw-height-trim)));
+    transform: translateY(calc(-2% + 0.5rem));
   }
 
   /* FIXED_H thumbnail is 216px â€” pull bottom in slightly (does not change header/line). */
@@ -7080,15 +7210,17 @@
   }
 
   #projects [data-carousel-card] {
-    height: calc(((min(444px, 57svh) - var(--slide-gap)) / 2) * 1.05) !important;
+    height: calc(
+      var(--projects-portrait-card-h) + var(--projects-portrait-card-bottom-extra)
+    ) !important;
   }
 
   #projects [data-carousel-card] .project-card-thumbnail-section {
-    height: 60% !important;
+    height: calc(100% - (var(--projects-portrait-card-h) * 0.4)) !important;
   }
 
   #projects [data-carousel-card] .project-card-description-section {
-    height: 40% !important;
+    height: calc(var(--projects-portrait-card-h) * 0.4) !important;
     transform: none !important;
     /* Keep black fill inside the stroke so it cannot paint over the card border. */
     left: 1px !important;
@@ -7145,35 +7277,100 @@
     padding-bottom: 0 !important;
   }
 
-  /* Gap below four cards â†’ FEATURED WRITING tab row */
+  /* Gap below four cards → FEATURED WRITING tab row */
   #projects .projects-showcase-featured-block {
-    margin-top: clamp(1rem, 2.25svh, 1.375rem) !important;
+    margin-top: clamp(0.5rem, 1.35svh, 0.875rem) !important;
   }
 
-  /* SLAYWIRE project detail â€” portrait: align header start with VIDEO EDITING. */
+  /* Safari tabs shrink the visual frame; keep FEATURED WRITING above the panel bottom. */
+  #projects.projects-showcase-tablet-pad {
+    padding-bottom: max(1.75rem, calc(1.5rem + env(safe-area-inset-bottom, 0px))) !important;
+  }
+
+  #projects.projects-showcase-tablet-pad .projects-showcase-flow > .section-tablet-bottom-spacer {
+    min-height: max(2.75rem, calc(2rem + env(safe-area-inset-bottom, 0px) / 3)) !important;
+  }
+
+  #projects.projects-showcase-tablet-pad .featured-writing-folder > div:first-child {
+    height: 2.6875rem !important;
+    min-height: 2.6875rem !important;
+  }
+
+  /* Banner grew slightly so title → n/6 gap fits without covering the preview gutter. */
+  #projects.projects-showcase-tablet-pad .featured-writing-folder > div:first-child > div.featured-writing-panel {
+    height: 100% !important;
+    min-height: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  #projects.projects-showcase-tablet-pad .featured-writing-body-card .profile-card-surface {
+    padding: 0 0.75rem 0.625rem !important;
+  }
+
+  /* Keep body copy inside the card so it scrolls internally; chevron = more text.
+   * Preview → title gap must match L/R/top inner inset (0.75rem). */
+  #projects.projects-showcase-tablet-pad .featured-writing-panel-body {
+    align-items: stretch !important;
+    gap: 0.75rem !important;
+  }
+
+  #projects.projects-showcase-tablet-pad .featured-writing-content-col {
+    max-height: none;
+  }
+
+  #projects.projects-showcase-tablet-pad .featured-writing-description-wrap {
+    display: flex;
+    min-height: 0;
+    flex: 0 0 auto;
+    flex-direction: column;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  #projects.projects-showcase-tablet-pad p.featured-writing-description {
+    max-height: none !important;
+    min-height: 0;
+    flex: 0 0 auto;
+    overflow: visible !important;
+  }
+
+  #projects.projects-showcase-tablet-pad .featured-writing-body-card .featured-writing-item-title {
+    font-size: 1.125rem !important;
+    line-height: 1.375 !important;
+    letter-spacing: -0.015em !important;
+  }
+
+  /* SLAYWIRE project detail — portrait: align header start with VIDEO EDITING.
+   * Nested min-height:0 flex children were locking the section to the viewport
+   * so the overlay had nothing to scroll. Let the stack grow; panel scrolls. */
   #projects.projects-slaywire-detail-open {
     min-height: 100svh !important;
+    height: auto !important;
     display: flex !important;
     flex-direction: column !important;
     padding-top: max(calc(4.5rem + 14px), calc(env(safe-area-inset-top, 0px) + 4rem + 14px)) !important;
     padding-bottom: max(3.75rem, env(safe-area-inset-bottom, 0px)) !important;
     overflow-x: visible !important;
+    overflow-y: visible !important;
   }
 
   #projects.projects-slaywire-detail-open > .container,
   #projects.projects-slaywire-detail-open > .container > div,
   #projects.projects-slaywire-detail-open > .container > div > div,
   #projects.projects-slaywire-detail-open .projects-slaywire-detail-stage {
-    flex: 1 1 auto !important;
+    flex: 0 0 auto !important;
     display: flex !important;
     flex-direction: column !important;
     justify-content: flex-start !important;
-    min-height: 0 !important;
+    min-height: min-content !important;
+    height: auto !important;
   }
 
   #projects.projects-slaywire-detail-open .video-editing-detail {
     overflow-x: visible !important;
+    overflow-y: visible !important;
     width: 100%;
+    flex: 0 0 auto;
   }
 
   /* VISUAL DESIGN detail â€” portrait: align header start with VIDEO EDITING. */
@@ -7660,7 +7857,8 @@
       calc(0.375rem * var(--projects-fit)) !important;
   }
 
-  #projects .project-card-tagline {
+  #projects .project-card-tagline,
+  #projects p.featured-writing-description {
     font-size: var(--projects-type-body) !important;
     line-height: 1.4 !important;
     color: color-mix(in srgb, var(--color-mono-2) 72%, transparent) !important;
@@ -7729,8 +7927,7 @@
     color: color-mix(in srgb, var(--color-mono-2) 68%, transparent) !important;
   }
 
-  #projects .featured-writing-content-col > p:not(.featured-writing-item-title):not(.featured-writing-item-subtitle),
-  #projects .featured-writing-description {
+  #projects .featured-writing-content-col > p:not(.featured-writing-item-title):not(.featured-writing-item-subtitle) {
     font-size: var(--projects-type-body) !important;
     line-height: 1.45 !important;
   }
@@ -8646,10 +8843,55 @@
     display: none !important;
   }
 
-  /* Panel body: column layout (thumbnail above text) â€” revert sm:flex-row */
-  #projects .featured-writing-panel-body {
+  /* Panel body: column layout (thumbnail above text) — revert sm:flex-row.
+   * Same specificity as the earlier tablet-pad gap so 0.75rem actually wins. */
+  #projects.projects-showcase-tablet-pad .featured-writing-panel-body {
     flex-direction: column !important;
     align-items: stretch !important;
     gap: 0.75rem !important;
+  }
+
+  /*
+   * Tab chrome overlaps body padding-top, so side padding never moves the tile down.
+   * Inset the grid preview with the same L/R gutter (0.75rem).
+   */
+  #projects .featured-writing-body-card .profile-card-surface {
+    padding-top: 0 !important;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+
+  #projects.projects-showcase-tablet-pad .featured-writing-raised {
+    margin-top: 0.75rem !important;
+  }
+
+  #projects.projects-showcase-tablet-pad .featured-writing-description-wrap.content-cutoff-fade,
+  #projects.projects-showcase-tablet-pad .featured-writing-description.content-cutoff-fade {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  /*
+   * Panel is the only vertical scroller. overflow-x:hidden on #projects computes
+   * overflow-y to auto (CSS overflow), which traps iPad pans in a viewport-tall box.
+   */
+  [aria-label="Section: projects"] {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  [aria-label="Section: projects"] > div.relative.z-10.flex,
+  [aria-label="Section: projects"] > div.relative.z-10.flex > div.flex {
+    overflow: visible !important;
+    height: auto !important;
+    min-height: min-content !important;
+    flex: 0 0 auto !important;
+  }
+
+  #projects,
+  #projects.projects-showcase-tablet-pad,
+  #projects.projects-slaywire-detail-open {
+    overflow: visible !important;
   }
 }

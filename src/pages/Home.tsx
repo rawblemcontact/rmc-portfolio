@@ -5980,7 +5980,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
   {
     id: "project-visual-design",
     title: "VISUAL DESIGN",
-    tagline: "Graphic design, illustration, and branding.",
+    tagline: "Graphic design, digital art, and branding.",
     thumbnail: "/illustrations/illustrations-charger.png",
     focalPoint: "50% 42%",
     detailGallery: [
@@ -6201,6 +6201,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     id: "project-interactive-media",
     title: "INTERACTIVE MEDIA",
     tagline: "Web design, game development, and animation.",
+    mobileTagline: "Web design, game dev, and animation.",
     thumbnail: "/portfolio-website-thumbnail-v2-poster.jpg",
     poster: "/portfolio-website-thumbnail-v2-poster.jpg",
     focalPoint: "50% 38%",
@@ -6480,7 +6481,7 @@ const SUPPORTING_ARCHIVE_PDF_ITEMS: SupportingArchivePdfItem[] = [
   },
   {
     id: "cnf-media-literary",
-    title: "Addressing Ethical Issues in Gaming - Omori",
+    title: "Addressing Ethical Issues in Gaming: Omori",
     subtitle: "Robbie McLaughlin",
     href: "/cnf/example-2-media-literary-analysis.pdf",
     description:
@@ -6767,14 +6768,16 @@ const PROJECT_CARD_TAGLINE_PANEL =
   "project-card-tagline-panel flex min-h-0 flex-1 flex-col justify-start gap-1.5 px-2.5 pb-3 pt-0 sm:gap-2 sm:px-3 sm:pb-3.5";
 const PROJECT_CARD_TITLE_INSET =
   "project-card-title-inset shrink-0 px-2.5 pb-1.5 pt-2.5 sm:px-3 sm:pb-2 sm:pt-3";
+const PROJECTS_MAIN_DESC_TYPE =
+  "font-body text-xs leading-snug sm:text-[0.8125rem] md:text-sm lg:text-[0.9375rem] text-mono-2/70";
 const PROJECT_CARD_TAGLINE_CLASS =
-  "project-card-tagline font-body block w-full text-left text-xs leading-snug sm:text-[0.8125rem] md:text-sm lg:text-[0.9375rem] text-mono-2/70 transition-colors group-hover:text-white/90";
+  `project-card-tagline ${PROJECTS_MAIN_DESC_TYPE} block w-full text-left transition-colors group-hover:text-white/90`;
 
 const showcaseTaglineCopy = (card: Pick<ShowcaseProjectCard, "tagline" | "mobileTagline">) =>
   card.mobileTagline ? (
     <>
-      <span className="max-md:hidden">{card.tagline}</span>
-      <span className="hidden max-md:inline">{card.mobileTagline}</span>
+      <span className="project-card-tagline-full">{card.tagline}</span>
+      <span className="project-card-tagline-compact">{card.mobileTagline}</span>
     </>
   ) : (
     card.tagline
@@ -8548,7 +8551,10 @@ function ShowcaseWritingFeaturedPanel({
   }, [item.id, item.description, previewWidthPx, updateFeaturedDescCutoffFade]);
 
   return (
-    <div className="featured-writing-panel-body flex w-full min-w-0 max-w-full flex-col gap-3 text-left sm:flex-row sm:items-start sm:gap-4">
+    <div
+      className="featured-writing-panel-body flex w-full min-w-0 max-w-full flex-col gap-3 text-left sm:flex-row sm:items-start sm:gap-4"
+      data-writing-item={item.id}
+    >
       {measureOnly ? (
         <div
           aria-hidden
@@ -8564,13 +8570,15 @@ function ShowcaseWritingFeaturedPanel({
         />
       )}
       <div className="featured-writing-content-col flex min-h-0 min-w-0 w-full flex-1 flex-col gap-2.5 sm:min-w-0 sm:gap-3">
-        <div className="featured-writing-title-row grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] grid-rows-[auto_auto] items-start gap-x-2.5 gap-y-1 sm:gap-x-3">
-          <p className="featured-writing-item-title col-start-1 row-start-1 min-w-0 font-display text-lg leading-[1.15] tracking-tight text-white sm:text-xl md:text-2xl md:leading-tight">
-            {item.title}
-          </p>
-          <p className="featured-writing-item-subtitle col-start-1 row-start-2 min-w-0 font-body text-xs leading-snug text-mono-2/75 sm:text-sm">
-            {item.subtitle}
-          </p>
+        <div className="featured-writing-title-row grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2.5 sm:gap-x-3">
+          <div className="featured-writing-title-stack col-start-1 row-start-1 flex min-w-0 flex-col gap-y-1">
+            <p className="featured-writing-item-title min-w-0 font-display text-lg leading-[1.15] tracking-tight text-white sm:text-xl md:text-2xl md:leading-tight">
+              {item.title}
+            </p>
+            <p className="featured-writing-item-subtitle min-w-0 font-body text-xs leading-snug text-mono-2/75 sm:text-sm">
+              {item.subtitle}
+            </p>
+          </div>
           <button
             type="button"
             className="featured-writing-view-cta col-start-2 row-start-1 inline-flex w-fit shrink-0 items-center gap-2 self-start justify-self-end rounded-[11px] sm:rounded-xl px-2.5 py-1.5 font-heading text-[10px] sm:text-xs font-semibold tracking-eyebrow-tight uppercase text-[color:var(--palette-yellow-projects)] transition-[background-color,color,border-color,box-shadow] duration-300 ease-out hover:text-[color:var(--palette-yellow-projects)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--palette-yellow-projects)] focus-visible:ring-offset-2 focus-visible:ring-offset-black mr-[6px] sm:px-3 sm:py-2"
@@ -8581,15 +8589,22 @@ function ShowcaseWritingFeaturedPanel({
           </button>
         </div>
         {item.description ? (
-          <p
-            ref={featuredDescScrollRef as React.RefObject<HTMLParagraphElement | null>}
-            className={`featured-writing-description no-scrollbar min-w-0 max-h-[5.8rem] overflow-y-auto overscroll-y-contain whitespace-pre-line font-body text-sm leading-relaxed text-mono-2/70 sm:max-h-[4.5rem] sm:text-[0.9375rem] sm:leading-relaxed md:text-base${
+          <div
+            ref={featuredDescScrollRef as React.RefObject<HTMLDivElement | null>}
+            className={`featured-writing-description-wrap featured-writing-description-blocks no-scrollbar relative flex min-h-0 min-w-0 flex-col gap-3 max-h-[5.8rem] overflow-y-auto overscroll-y-contain sm:max-h-[4.5rem]${
               featuredDescCutoffFade ? " content-cutoff-fade" : ""
             }`}
             title={stripInlineEmMarkup(item.description)}
           >
-            {renderInlineEmMarkup(item.description)}
-          </p>
+            {item.description.split(/\n\n+/).filter(Boolean).map((block, blockIndex) => (
+              <p
+                key={`${item.id}-desc-${blockIndex}`}
+                className={`featured-writing-description min-w-0 whitespace-pre-line ${PROJECTS_MAIN_DESC_TYPE}`}
+              >
+                {renderInlineEmMarkup(block)}
+              </p>
+            ))}
+          </div>
         ) : null}
       </div>
     </div>
@@ -9400,7 +9415,7 @@ const PalaceProjects = ({
       onPointerUp={handleProjectsTabletGridPointerUp}
       style={
         projectsTabletPortraitViewport
-          ? { touchAction: "manipulation" }
+          ? { touchAction: "pan-y pinch-zoom" }
           : undefined
       }
       className={`relative flex w-full min-w-0 max-w-full flex-col justify-start lg:pb-[max(1.25rem,calc(var(--slide-gap)*1.5),env(safe-area-inset-bottom,0px))] text-white scroll-mt-6 [--slide-gap:0.875rem] sm:[--slide-gap:1.25rem] lg:[--slide-gap:1rem] xl:[--slide-gap:1.125rem] ${
@@ -13267,6 +13282,7 @@ export default function Home() {
   const [profileSectionMounted, setProfileSectionMounted] = useState(false);
   const [menuLockedFillId, setMenuLockedFillId] = useState<string | null>(null);
   const [activeShowcaseProjectId, setActiveShowcaseProjectId] = useState<string | null>(null);
+  const topNavFadeViewKey = `${currentSection ?? "none"}:${activeShowcaseProjectId ?? "list"}`;
   const slaywireShowcaseDetailOpen =
     currentSection === "projects" && activeShowcaseProjectId === "project-slaywire";
   /** Showcase 4-up hover scale needs X room; keep X clipped for most project details. */
@@ -13299,9 +13315,21 @@ export default function Home() {
   const [topNavScrollOpacity, setTopNavScrollOpacity] = useState(1);
   const topNavScrollOpacityRef = useRef(1);
   const topNavScrollFadeRangeRef = useRef(TOP_NAV_SCROLL_FADE_FALLBACK_PX);
+  const topNavFadeDistanceRef = useRef(0);
+  const [topNavForceOpaque, setTopNavForceOpaque] = useState(false);
   const navButtonsFaded =
     archivePdfNavActive || Boolean(showcasePdfOverlay) || showcasePdfClosing || showcasePdfObscuring;
-  const topNavChromeOpacity = navButtonsFaded ? 0 : topNavScrollOpacity;
+  const topNavChromeOpacity = navButtonsFaded
+    ? 0
+    : topNavForceOpaque
+      ? 1
+      : topNavScrollOpacity;
+  const resetTopNavScrollFade = useCallback(() => {
+    topNavFadeDistanceRef.current = 0;
+    topNavScrollOpacityRef.current = 1;
+    setTopNavScrollOpacity(1);
+    setTopNavForceOpaque(true);
+  }, []);
   const showcasePdfViewerActive =
     showcasePdfObscuring || Boolean(showcasePdfOverlay) || showcasePdfClosing;
   const [projectDetailMotionBusy, setProjectDetailMotionBusy] = useState(false);
@@ -13381,92 +13409,115 @@ export default function Home() {
 
   /** Clear panel scroll when switching pages so the next section opens at the top (mobile retains scrollTop otherwise). */
   useLayoutEffect(() => {
+    resetTopNavScrollFade();
     if (!currentSection) return;
     const panel = sectionPanelRef.current;
-    if (panel) panel.scrollTop = 0;
-    topNavScrollOpacityRef.current = 1;
-    setTopNavScrollOpacity(1);
-  }, [currentSection]);
+    if (panel) {
+      panel.scrollTop = 0;
+      panel.querySelectorAll<HTMLElement>(
+        ".overflow-y-auto, .overflow-y-scroll, [class*='overflow-y-auto']",
+      ).forEach((el) => {
+        const overflowY = getComputedStyle(el).overflowY;
+        if (overflowY === "auto" || overflowY === "scroll") el.scrollTop = 0;
+      });
+    }
+    if (typeof document !== "undefined") {
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }
+  }, [topNavFadeViewKey, resetTopNavScrollFade]);
 
-  /** TOP NAV: fade out before content optically crosses button path; fade back toward page top. */
+  useEffect(() => {
+    resetTopNavScrollFade();
+    const panel = sectionPanelRef.current;
+    const id = window.requestAnimationFrame(() => {
+      if (panel) panel.scrollTop = 0;
+      resetTopNavScrollFade();
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [topNavFadeViewKey, resetTopNavScrollFade]);
+
+  /** TOP NAV: fade with this overlay’s scroll. Panel remounts per section so leftover iPad scroll dies. */
   useEffect(() => {
     if (!currentSection) {
+      topNavFadeDistanceRef.current = 0;
       topNavScrollOpacityRef.current = 1;
       setTopNavScrollOpacity(1);
+      setTopNavForceOpaque(true);
       return;
     }
     const panel = sectionPanelRef.current;
     if (!panel) return;
 
+    const isVerticalScroller = (el: HTMLElement) => {
+      const overflowY = getComputedStyle(el).overflowY;
+      if (overflowY !== "auto" && overflowY !== "scroll") return false;
+      return el.scrollHeight > el.clientHeight + 1;
+    };
+
     const resolveScroller = (): HTMLElement => {
-      if (panel.scrollHeight > panel.clientHeight + 1) return panel;
-      const nested = panel.querySelector<HTMLElement>(
+      if (isVerticalScroller(panel)) return panel;
+      const nested = panel.querySelectorAll<HTMLElement>(
         ".overflow-y-auto, .overflow-y-scroll, [class*='overflow-y-auto']",
       );
-      return nested ?? panel;
+      for (let i = 0; i < nested.length; i++) {
+        const el = nested[i];
+        if (isVerticalScroller(el)) return el;
+      }
+      return panel;
     };
 
     const refreshFadeRange = () => {
-      const scroller = resolveScroller();
-      topNavScrollFadeRangeRef.current = measureTopNavScrollFadeRangePx(scroller);
+      topNavScrollFadeRangeRef.current = measureTopNavScrollFadeRangePx(resolveScroller());
     };
 
-    const opacityFromScrollTop = (scrollTop: number) => {
-      if (scrollTop <= 0) return 1;
+    const syncOpacity = (distance: number) => {
+      if (distance <= 0) {
+        topNavScrollOpacityRef.current = 1;
+        setTopNavScrollOpacity(1);
+        return;
+      }
       const range = topNavScrollFadeRangeRef.current;
-      return Math.max(0, Math.min(1, 1 - scrollTop / range));
-    };
-
-    const syncOpacity = (scrollTop: number) => {
-      const next = opacityFromScrollTop(scrollTop);
+      const next = Math.max(0, Math.min(1, 1 - distance / range));
+      if (next < 0.992) setTopNavForceOpaque(false);
       if (Math.abs(next - topNavScrollOpacityRef.current) < 0.008) return;
       topNavScrollOpacityRef.current = next;
       setTopNavScrollOpacity(next);
     };
 
-    const lastNestedScrollTop = new WeakMap<HTMLElement, number>();
-
     const onScroll = (event: Event) => {
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
       if (target !== panel && !panel.contains(target)) return;
-
-      // Prefer the section panel when it is the page scroller (ignore carousels / nested).
-      if (panel.scrollHeight > panel.clientHeight + 1) {
+      if (isVerticalScroller(panel)) {
         if (target !== panel) return;
-        syncOpacity(panel.scrollTop);
+        topNavFadeDistanceRef.current = Math.max(0, panel.scrollTop);
+        syncOpacity(topNavFadeDistanceRef.current);
         return;
       }
-
-      // Panel itself does not scroll (e.g. writing archive) — track nested vertical scroll.
-      if (target.scrollHeight <= target.clientHeight + 1) return;
-      const prevTop = lastNestedScrollTop.get(target);
-      lastNestedScrollTop.set(target, target.scrollTop);
-      if (prevTop !== undefined && prevTop === target.scrollTop) return;
-      syncOpacity(target.scrollTop);
+      if (!isVerticalScroller(target)) return;
+      topNavFadeDistanceRef.current = Math.max(0, target.scrollTop);
+      syncOpacity(topNavFadeDistanceRef.current);
     };
 
-    const onResize = () => {
-      refreshFadeRange();
-      syncOpacity(resolveScroller().scrollTop);
-    };
-
-    // Layout may still be settling after section swap — measure twice.
     refreshFadeRange();
-    syncOpacity(resolveScroller().scrollTop);
-    const measureAgain = window.setTimeout(() => {
-      refreshFadeRange();
-      syncOpacity(resolveScroller().scrollTop);
-    }, 120);
+    panel.scrollTop = 0;
+    topNavFadeDistanceRef.current = 0;
+    syncOpacity(0);
 
     panel.addEventListener("scroll", onScroll, { capture: true, passive: true });
-    window.addEventListener("resize", onResize);
+    window.addEventListener("resize", refreshFadeRange);
     return () => {
-      window.clearTimeout(measureAgain);
       panel.removeEventListener("scroll", onScroll, true);
-      window.removeEventListener("resize", onResize);
+      window.removeEventListener("resize", refreshFadeRange);
     };
-  }, [currentSection]);
+  }, [topNavFadeViewKey]);
+
+  const sideNavWasOpenRef = useRef(false);
+  useEffect(() => {
+    if (isSideNavOpen && !sideNavWasOpenRef.current) resetTopNavScrollFade();
+    sideNavWasOpenRef.current = isSideNavOpen;
+  }, [isSideNavOpen, resetTopNavScrollFade]);
 
   useEffect(() => {
     if (currentSection !== "skills") setSkillsContentFade("visible");
@@ -13496,6 +13547,9 @@ export default function Home() {
   };
 
   const navigateTo = (id: string) => {
+    if (id !== currentSection || id === "menu") resetTopNavScrollFade();
+    const panelLeaving = sectionPanelRef.current;
+    if (id !== currentSection && panelLeaving) panelLeaving.scrollTop = 0;
     const fromShowcase =
       currentSection === "projects" || currentSection === "projects-supporting";
     const toShowcase = id === "projects" || id === "projects-supporting";
@@ -13895,20 +13949,16 @@ export default function Home() {
       }}
     >
       {/* Top nav chrome — back (left) + resume/menu (right) share one opacity shell */}
-      <motion.div
-        className={`fixed ${TOP_NAV_FIXED_TOP} inset-x-0 z-50`}
-        initial={false}
-        animate={{
+      <div
+        className={`fixed ${TOP_NAV_FIXED_TOP} inset-x-0 z-50${topNavForceOpaque && !navButtonsFaded ? " top-nav-chrome-hold" : ""}`}
+        style={{
           opacity: topNavChromeOpacity,
-          y: 0,
-          scale: 1,
+          pointerEvents: topNavChromeOpacity < 0.05 ? "none" : "auto",
+          transition:
+            reduceMotion || topNavForceOpaque || topNavChromeOpacity >= 0.995
+              ? "none"
+              : `opacity ${DUR.micro}s ease-out`,
         }}
-        transition={
-          reduceMotion
-            ? { duration: 0 }
-            : { duration: DUR.micro, ease: EASE.out }
-        }
-        style={{ pointerEvents: topNavChromeOpacity < 0.05 ? "none" : "auto" }}
         aria-hidden={topNavChromeOpacity < 0.05}
       >
         {!isResumeMode && currentSection !== null && !isSideNavOpen && (
@@ -13974,7 +14024,6 @@ export default function Home() {
         >
           {!(currentSlideId === "hero" && currentSection === null && !isResumeMode) && (
             <motion.div
-              layoutId="resume-button"
               whileTap={reduceMotion ? undefined : NAV_ICON_TAP}
               transition={NAV_ICON_TAP_RELEASE}
             >
@@ -14010,7 +14059,7 @@ export default function Home() {
             </motion.div>
           )}
         </div>
-      </motion.div>
+      </div>
 
       {!isResumeMode && (
         <SideNavOverlay
@@ -14169,6 +14218,7 @@ export default function Home() {
           {/* Section panel: layered black, accent edge when incoming, content settle */}
           {currentSection && (
             <motion.div
+              key={currentSection}
               ref={sectionPanelRef}
               className={`fixed inset-0 flex min-h-0 flex-col no-scrollbar ${
                 currentSection === "projects"
@@ -14200,9 +14250,7 @@ export default function Home() {
               }}
               aria-label={`Section: ${currentSection}`}
               initial={
-                !reduceMotion && transitionTarget && transitionTarget !== "menu"
-                  ? { x: "100%" }
-                  : false
+                !reduceMotion && showPanelWipeEdge ? { x: "100%" } : false
               }
               animate={{
                 x: reduceMotion
