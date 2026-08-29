@@ -454,7 +454,7 @@ export function ShowcaseAttachedTabStrip({
       >
         <div
           ref={folderRef}
-          className="featured-writing-folder relative flex min-w-0 w-full flex-col"
+          className="featured-writing-folder relative flex min-w-0 w-full flex-col max-lg:overflow-hidden max-sm:rounded-sm sm:max-lg:rounded-xl"
         >
           <div className="relative flex h-[3.5rem] min-h-[3.5rem] shrink-0 flex-col gap-0 overflow-visible pt-3 max-sm:h-[3.95rem] max-sm:min-h-[3.95rem] sm:h-16 sm:min-h-16 sm:pt-4">
             <div

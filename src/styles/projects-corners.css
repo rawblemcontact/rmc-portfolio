@@ -1,0 +1,56 @@
+/* Loaded after index.css (unlayered) so these beat @layer utilities / Tailwind rounded-*. */
+
+@media (max-width: 639.98px) {
+  /* Phone tiles are small — 11px reads as a pill. 4px matches PROFILE / SKILLS / desktop glass. */
+  #projects .featured-writing-folder,
+  #projects [data-carousel-card],
+  #projects .video-editing-player,
+  #projects .video-editing-works-strip-thumb-art,
+  #projects .video-editing-detail-cards-im > section.profile-card-surface,
+  #projects section.profile-card-surface,
+  #projects .project-card-surface:not([data-carousel-card]) {
+    border-radius: 4px !important;
+    overflow: hidden !important;
+  }
+
+  #projects .video-editing-detail-meta-card {
+    border-radius: 4px !important;
+  }
+
+  #projects .featured-writing-folder .profile-card-surface,
+  #projects .featured-writing-folder .featured-writing-panel {
+    border-radius: 0 !important;
+  }
+}
+
+/* Main PROJECTS page on tablet: keep the 12px that already looks right. */
+@media (min-width: 640px) and (max-width: 1023.98px) {
+  #projects .featured-writing-folder,
+  #projects [data-carousel-card] {
+    border-radius: 12px !important;
+  }
+}
+
+/* iPad / tablet portrait — main PROJECTS + details: same 4px as phone. */
+@media (min-width: 640px) and (max-width: 1366px) and (max-aspect-ratio: 1/1) {
+  #projects .featured-writing-folder,
+  #projects [data-carousel-card],
+  #projects .video-editing-player,
+  #projects .video-editing-works-strip-thumb-art,
+  #projects .video-editing-detail-cards-im > section.profile-card-surface,
+  #projects section.profile-card-surface,
+  #projects .project-card-surface:not([data-carousel-card]) {
+    border-radius: 4px !important;
+    overflow: hidden !important;
+  }
+
+  /* Meta card already clips; overflow:hidden + fixed height traps iPad page pans. */
+  #projects .video-editing-detail-meta-card {
+    border-radius: 4px !important;
+  }
+
+  #projects .featured-writing-folder .profile-card-surface,
+  #projects .featured-writing-folder .featured-writing-panel {
+    border-radius: 0 !important;
+  }
+}

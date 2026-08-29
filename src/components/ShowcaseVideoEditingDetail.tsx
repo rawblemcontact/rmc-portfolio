@@ -180,7 +180,7 @@ type ShowcaseVideoEditingDetailProps = {
 };
 
 const showcaseDetailCardClass =
-  "profile-card-surface relative rounded-[11px] sm:rounded-xl px-3 py-3 sm:px-4 sm:py-3.5";
+  "profile-card-surface relative rounded-sm sm:rounded-xl px-3 py-3 sm:px-4 sm:py-3.5";
 
 /** Desktop + iPad landscape use the same tabbed right-column detail treatment. */
 const PROJECTS_TABBED_DETAIL_MQ =
@@ -1177,7 +1177,7 @@ export function ShowcaseVideoEditingDetail({
           <div className="video-editing-detail-body">
             <div className="video-editing-detail-media-col min-w-0">
               <div
-                className={`video-editing-player video-editing-player--plyr group relative overflow-hidden rounded-[11px] sm:rounded-xl${
+                className={`video-editing-player video-editing-player--plyr group relative overflow-hidden rounded-sm sm:rounded-xl${
                   matchInteractiveMediaChrome
                     ? " border border-solid border-[color:var(--portfolio-glass-stroke)] shadow-[var(--portfolio-glass-shadow)]"
                     : " ring-1 ring-white/[0.09]"
@@ -1245,7 +1245,7 @@ export function ShowcaseVideoEditingDetail({
                           onKeyDown={handleThumbKeyDown(index)}
                         >
                           <span
-                            className={`video-editing-works-strip-thumb-art relative block h-[4.9rem] w-full overflow-hidden rounded-[10px] border transition-colors ${
+                            className={`video-editing-works-strip-thumb-art relative block h-[4.9rem] w-full overflow-hidden rounded-sm sm:rounded-xl border transition-colors ${
                               active
                                 ? "border-[color:var(--palette-yellow-projects)]"
                                 : "border-white/[0.14]"

@@ -232,7 +232,7 @@
 }
 [data-hero-svg-root][data-hero-chrome-animate="true"] [data-hero-name-letter] {
   animation-name: hero-name-letter-in;
-  animation-duration: 0.324s;
+  animation-duration: 0.22s;
   animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
   animation-fill-mode: both;
   animation-iteration-count: 1;
@@ -247,7 +247,7 @@
 [data-hero-svg-root][data-hero-tagline-animate="true"] [data-hero-tagline-letter],
 [data-hero-svg-root][data-hero-tagline-animate="true"] [data-hero-tagline-sep] {
   animation-name: hero-name-letter-in;
-  animation-duration: 0.324s;
+  animation-duration: 0.22s;
   animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
   animation-fill-mode: both;
   animation-iteration-count: 1;
@@ -272,7 +272,7 @@
 }
 [data-hero-svg-root][data-hero-rule-animate="true"] [data-hero-name-rule] {
   animation-name: hero-name-rule-in;
-  animation-duration: 0.42s;
+  animation-duration: 0.28s;
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   animation-fill-mode: both;
   animation-iteration-count: 1;
@@ -1112,6 +1112,18 @@
     box-shadow: var(--portfolio-glass-shadow);
   }
 
+  /* FEATURED WRITING sits on `.profile-card-surface` — 1.05rem is rounder than
+   * carousel `rounded-[11px] sm:rounded-xl`. Beat it with #projects (no orientation). */
+  #projects .featured-writing-body-card .profile-card-surface {
+    border-radius: 0 0 11px 11px;
+  }
+
+  @media (min-width: 640px) {
+    #projects .featured-writing-body-card .profile-card-surface {
+      border-radius: 0 0 12px 12px;
+    }
+  }
+
   /* PROFILE content cards — match Video Editing detail meta card radius (4px) */
   #profile .profile-card-surface {
     border-radius: 4px;
@@ -1369,6 +1381,40 @@
     overflow-anchor: none;
   }
 
+  /* Keep the folder *cut* (overflow + square inners). Stroke lives on the folder so
+   * a 1px inner border isn't sliced into weird tips at the clip. */
+  @media (max-width: 1023.98px) {
+    #projects .featured-writing-folder {
+      border: 1px solid var(--portfolio-glass-stroke);
+    }
+
+    #projects .featured-writing-folder .featured-writing-panel,
+    #projects .featured-writing-folder .featured-writing-tab-active,
+    #projects .featured-writing-folder .featured-writing-tab-idle-edge,
+    #projects .featured-writing-folder .profile-card-surface {
+      border-radius: 0 !important;
+      border-width: 0 !important;
+      box-shadow: none !important;
+    }
+  }
+
+  @media (min-width: 1024px) and (max-width: 1366px) and (max-aspect-ratio: 1/1) {
+    #projects .featured-writing-folder {
+      overflow: hidden !important;
+      border-radius: 12px !important;
+      border: 1px solid var(--portfolio-glass-stroke);
+    }
+
+    #projects .featured-writing-folder .featured-writing-panel,
+    #projects .featured-writing-folder .featured-writing-tab-active,
+    #projects .featured-writing-folder .featured-writing-tab-idle-edge,
+    #projects .featured-writing-folder .profile-card-surface {
+      border-radius: 0 !important;
+      border-width: 0 !important;
+      box-shadow: none !important;
+    }
+  }
+
   /**
    * FEATURED WRITING â€” same stack as profile/project (panel = card surface). shell < panel < raised.
    */
@@ -1388,12 +1434,12 @@
     --fw-tab-idle-hover: rgba(255, 255, 255, 0.25);
     --fw-tab-active-bg: var(--portfolio-glass-fill);
     --fw-tab-idle-bg: var(--portfolio-glass-fill);
-    --fw-tab-radius: 9px;
+    --fw-tab-radius: 11px;
   }
 
   @media (min-width: 640px) {
     .featured-writing-shell {
-      --fw-tab-radius: 10px;
+      --fw-tab-radius: 12px;
     }
   }
 
@@ -1426,20 +1472,26 @@
     }
   }
 
-  @media (min-width: 1024px) and (pointer: fine),
+  /* Desktop + tablet landscape only — iPad portrait must keep carousel card radius (12px). */
+  @media (min-width: 1024px) and (pointer: fine) and (orientation: landscape),
     (min-width: 1367px),
     ((min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse)) {
     .featured-writing-shell {
       --fw-tab-radius: 4px;
     }
 
-    .featured-writing-inner-rule-body-top > .profile-card-surface {
+    .featured-writing-inner-rule-body-top > .profile-card-surface,
+    #projects .featured-writing-body-card .profile-card-surface {
       border-radius: 0 0 4px 4px !important;
     }
 
     .featured-writing-raised {
       border-radius: 4px !important;
       transform: translateX(-2px);
+    }
+
+    #projects .featured-writing-folder {
+      border-radius: 4px !important;
     }
   }
 
@@ -5958,17 +6010,6 @@
     height: auto;
   }
 
-  /*
-   * SLAYWIRE — media selector strip: desktop + iPad landscape (two-column).
-   * Hide on phone / tablet portrait only.
-   */
-  @media (max-width: 1023px) and (orientation: portrait),
-    ((min-width: 1024px) and (pointer: coarse) and (orientation: portrait)) {
-    #projects.projects-slaywire-detail-open .video-editing-detail-works {
-      display: none !important;
-    }
-  }
-
   .video-editing-player--plyr .plyr {
     overflow: hidden;
   }
@@ -7106,9 +7147,9 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  /* Cards â†’ FEATURED WRITING (global bump subtract was collapsing this to ~0). */
+  /* Cards → FEATURED WRITING: match 2×2 grid gap (`--slide-gap`). */
   #projects .projects-showcase-featured-block {
-    margin-top: clamp(1rem, 2.25svh, 1.375rem) !important;
+    margin-top: var(--slide-gap) !important;
   }
 }
 
@@ -7277,9 +7318,9 @@
     padding-bottom: 0 !important;
   }
 
-  /* Gap below four cards → FEATURED WRITING tab row */
+  /* Gap below bottom two cards → FEATURED WRITING: same as grid gap between main cards */
   #projects .projects-showcase-featured-block {
-    margin-top: clamp(0.5rem, 1.35svh, 0.875rem) !important;
+    margin-top: var(--slide-gap) !important;
   }
 
   /* Safari tabs shrink the visual frame; keep FEATURED WRITING above the panel bottom. */
@@ -7338,39 +7379,6 @@
     font-size: 1.125rem !important;
     line-height: 1.375 !important;
     letter-spacing: -0.015em !important;
-  }
-
-  /* SLAYWIRE project detail — portrait: align header start with VIDEO EDITING.
-   * Nested min-height:0 flex children were locking the section to the viewport
-   * so the overlay had nothing to scroll. Let the stack grow; panel scrolls. */
-  #projects.projects-slaywire-detail-open {
-    min-height: 100svh !important;
-    height: auto !important;
-    display: flex !important;
-    flex-direction: column !important;
-    padding-top: max(calc(4.5rem + 14px), calc(env(safe-area-inset-top, 0px) + 4rem + 14px)) !important;
-    padding-bottom: max(3.75rem, env(safe-area-inset-bottom, 0px)) !important;
-    overflow-x: visible !important;
-    overflow-y: visible !important;
-  }
-
-  #projects.projects-slaywire-detail-open > .container,
-  #projects.projects-slaywire-detail-open > .container > div,
-  #projects.projects-slaywire-detail-open > .container > div > div,
-  #projects.projects-slaywire-detail-open .projects-slaywire-detail-stage {
-    flex: 0 0 auto !important;
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: flex-start !important;
-    min-height: min-content !important;
-    height: auto !important;
-  }
-
-  #projects.projects-slaywire-detail-open .video-editing-detail {
-    overflow-x: visible !important;
-    overflow-y: visible !important;
-    width: 100%;
-    flex: 0 0 auto;
   }
 
   /* VISUAL DESIGN detail â€” portrait: align header start with VIDEO EDITING. */
@@ -8800,29 +8808,59 @@
  * FEATURED WRITING mobile tab selector â€” crisp card-border seam (mobile + iPad portrait).
  * Replaces the blurry backdrop-filter edge under the selected tab with project-card stroke.
  */
-@media (max-width: 639.98px), (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
+@media (max-width: 639.98px),
+  (min-width: 744px) and (max-width: 1366px) and (max-aspect-ratio: 1/1) {
   .featured-writing-folder > div:first-child > div.featured-writing-panel {
+    border-radius: 0 !important;
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
     filter: none !important;
-    /* Same base as desktop glass fill, denser without backdrop blur. */
     background: color-mix(in srgb, var(--portfolio-section-card) 62%, transparent) !important;
     background-image: none !important;
-    border-color: var(--portfolio-stroke-outer) !important;
-    border-bottom: 1px solid var(--portfolio-stroke-outer) !important;
+    border: 0 !important;
     box-shadow: none !important;
   }
 
   .featured-writing-inner-rule-body-top > .profile-card-surface {
-    border-top: 0 !important;
-    border-left-color: var(--portfolio-stroke-outer) !important;
-    border-right-color: var(--portfolio-stroke-outer) !important;
-    border-bottom-color: var(--portfolio-stroke-outer) !important;
+    border: 0 !important;
+  }
+}
+
+/* Phone: same folder chrome as tablet portrait — collapse extra pt/height so overflow:hidden doesn't clip the selector. */
+@media (max-width: 639.98px) {
+  #projects .featured-writing-folder > div:first-child {
+    height: auto !important;
+    min-height: 0 !important;
+    padding-top: 0 !important;
+  }
+
+  /* Same corners as every other showcase card: 11px phone / 12px sm+. */
+  #projects .featured-writing-folder {
+    border-radius: 11px !important;
+  }
+
+  #projects [data-carousel-card] {
+    border-radius: 11px !important;
+  }
+
+  /* Same as tablet portrait: cards → FEATURED WRITING = grid `--slide-gap` (global bump subtract was 0). */
+  #projects .projects-showcase-featured-block {
+    margin-top: var(--slide-gap) !important;
+  }
+
+  #projects .featured-writing-body-card .profile-card-surface {
+    padding-top: 0 !important;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+
+  #projects .featured-writing-raised {
+    margin-top: 0.75rem !important;
   }
 }
 
 /* â”€â”€â”€ FEATURED WRITING â€” iPad portrait: use mobile single-tab nav layout â”€â”€â”€ */
-@media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
+@media (min-width: 744px) and (max-width: 1366px) and (max-aspect-ratio: 1/1) {
   /*
    * Mobile tab row is shown on portrait, but Tailwind sm:h-16 / sm:pt-4 still apply
    * and blow out the gap below the four carousel cards â€” collapse to mobile height.
@@ -8831,6 +8869,10 @@
     height: auto !important;
     min-height: 0 !important;
     padding-top: 0 !important;
+  }
+
+  #projects .projects-showcase-featured-block {
+    margin-top: var(--slide-gap) !important;
   }
 
   /* Show the mobile prev/next selector (Tailwind 'hidden' on sm+) */
@@ -8890,8 +8932,7 @@
   }
 
   #projects,
-  #projects.projects-showcase-tablet-pad,
-  #projects.projects-slaywire-detail-open {
+  #projects.projects-showcase-tablet-pad {
     overflow: visible !important;
   }
 }

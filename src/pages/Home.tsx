@@ -83,6 +83,7 @@ import {
   PROFILE_DESKTOP_LAYOUT_DEBUG_DEFAULTS,
   PROJECTS_DESKTOP_LAYOUT_DEBUG_DEFAULTS,
   type ProfileDesktopLayoutDebugValues,
+  useAllowDebugPanels,
   useHeroDebugEnabled,
   useMainMenuDebugEnabled,
   usePortfolioDebugEnabled,
@@ -1472,15 +1473,43 @@ function measureViewportCenterYPx(): number {
   return (window.visualViewport?.offsetTop ?? 0) + viewportHeight / 2;
 }
 
+/** iPad / tablet portrait layout — width × orientation only (works in desktop device mode). */
+function matchesHeroIpadPortraitLayout(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    window.matchMedia(
+      "(min-width: 768px) and (max-width: 1366px) and (orientation: portrait)",
+    ).matches
+  );
+}
+
 /**
- * translateY needed so `el`'s visual center matches true viewport center.
- * Strips the element's current translateY so the result is layout-relative.
+ * translateY needed so the video face's visual center matches true viewport center.
+ * Strips the stack's current translateY so the result is layout-relative.
+ * Uses the bordered face (not the stack box) so a stretched iPad grid cell cannot
+ * report the first-row midpoint as the card center.
  */
 function measureHeroVideoCenterOpenOffsetPx(el: HTMLElement): number {
-  const rect = el.getBoundingClientRect();
   const currentY = readTranslateYPx(el);
-  const naturalCenterY = (rect.top + rect.bottom) / 2 - currentY;
-  return measureViewportCenterYPx() - naturalCenterY;
+  if (!matchesHeroIpadPortraitLayout()) {
+    const rect = el.getBoundingClientRect();
+    const naturalCenterY = (rect.top + rect.bottom) / 2 - currentY;
+    return measureViewportCenterYPx() - naturalCenterY;
+  }
+  const face =
+    el.querySelector<HTMLElement>("[data-hero-video-card='true'] > .relative") ??
+    el.querySelector<HTMLElement>("[data-hero-video-card='true']") ??
+    el;
+  const faceRect = face.getBoundingClientRect();
+  const layoutH = face.offsetHeight;
+  const visualH = faceRect.height;
+  const collapsed = layoutH > 1 && visualH < layoutH * 0.5;
+  const visualCenterY = collapsed
+    ? (faceRect.top + faceRect.bottom) / 2
+    : faceRect.top + (layoutH || visualH) / 2;
+  const naturalCenterY = visualCenterY - currentY;
+  /* innerHeight/2 = full window mid. Do not use visualViewport or the nav ruler band. */
+  return window.innerHeight / 2 - naturalCenterY;
 }
 
 /**
@@ -1586,11 +1615,11 @@ const HERO_VIDEO_RISE_EASE: [number, number, number, number] = [0.42, 0.0, 0.16,
 /** Name cascade + PORTFOLIO wait until the reel has played at least this far. */
 const HERO_TEXT_MIN_VIDEO_TIME_S = 4.5;
 /** Short hold after rise settle (and min video time) before ROBBIE / name cascade. */
-const HERO_TEXT_BEAT_BEFORE_MS = 220;
+const HERO_TEXT_BEAT_BEFORE_MS = 5;
 /** Slide distance for PORTFOLIO entrance (negative = from the left). */
 const HERO_PORTFOLIO_ENTRANCE_X_PX = -28;
 /** Shared duration for PORTFOLIO entrance opacity + x (play together). */
-const HERO_PORTFOLIO_ENTRANCE_DUR_S = 0.42;
+const HERO_PORTFOLIO_ENTRANCE_DUR_S = 0.28;
 /**
  * PORTFOLIO click→MENU wait (mobile/tablet).
  * Matches snappy `--pressed` morph timings in index.css (wipe + arrows).
@@ -1611,7 +1640,7 @@ const HERO_PORTFOLIO_TAP_SPRING = {
   mass: 0.52,
 } as const;
 /** Idle float — starts after entrance (video scale + PORTFOLIO fade) finishes. CSS keyframes in index.css. */
-const HERO_IDLE_FLOAT_START_MS = 700;
+const HERO_IDLE_FLOAT_START_MS = 450;
 /** Desktop hard-crop stage — fixed design width; viewport clips instead of reflowing. */
 const HERO_CROP_STAGE_PX = 1680;
 /** Hero video card width — matches name line span (58rem column + line bleed). */
@@ -1672,14 +1701,14 @@ const HERO_NAME_MOBILE_DISPLAY_FONT_CLASS =
 const HERO_NAME_MOBILE_PORTFOLIO_BUTTON_CLASS =
   "max-md:!h-auto max-md:!min-h-[2.55rem] max-md:!max-h-none max-md:!px-[1.1rem] max-md:!py-2 max-md:text-[0.72rem] max-md:[&_.texts]:gap-1 max-md:[&_.texts]:text-[0.72rem] max-md:[&_.texts]:!tracking-normal";
 /** Divider center-out scaleX — keep in sync with `animation-duration` on `[data-hero-name-rule]` in index.css. */
-const HERO_NAME_RULE_DUR_MS = 420;
+const HERO_NAME_RULE_DUR_MS = 280;
 /** Beat after divider starts before ROBBIE/MCLAUGHLIN cascade. */
-const HERO_NAME_CASCADE_AFTER_RULE_MS = 120;
+const HERO_NAME_CASCADE_AFTER_RULE_MS = 70;
 const HERO_NAME_SPLIT_MS = 600;
 /** Rainbow accents — main-menu section colors (NAV order) for name/tagline/accent fades. */
 const HERO_NAME_RAINBOW_MENU_IDS = ["profile", "projects", "experience", "skills", "social"] as const;
-/** >1 shortens color-fade durations (2.25 = 50% faster twice from baseline). */
-const HERO_NAME_COLOR_FADE_SPEED = 2.25;
+/** >1 shortens color-fade durations (2.55 = slightly faster than prior 2.25). */
+const HERO_NAME_COLOR_FADE_SPEED = 2.85;
 const heroNameColorFadeMs = (ms: number) => Math.round(ms / HERO_NAME_COLOR_FADE_SPEED);
 const HERO_NAME_RAINBOW_STAGGER_MS = heroNameColorFadeMs(72);
 const HERO_NAME_LAST_RAINBOW_DELAY_MS =
@@ -1696,7 +1725,7 @@ const HERO_NAME_TEXT_WHITE_LAYER_MS =
 const HERO_NAME_TEXT_ENTRANCE_MS =
   HERO_NAME_TEXT_WHITE_DELAY_MS + HERO_NAME_TEXT_WHITE_LAYER_MS;
 /** Brief hold after color fades resolve before settle / video. */
-const HERO_NAME_COLOR_FADE_BEAT_MS = 320;
+const HERO_NAME_COLOR_FADE_BEAT_MS = 200;
 /** Name reveal start → cascade delay + color fades done + beat (gates settle phase). */
 const HERO_NAME_PHASE1_COMPLETE_MS =
   HERO_NAME_CASCADE_AFTER_RULE_MS +
@@ -1737,12 +1766,14 @@ const HERO_TAGLINE_TEXT = "Writer · content production · social media";
 /** Split lockup — first N `#FFFFFF` name paths are ROBBIE (6) + MCLAUGHLIN (10). */
 const HERO_NAME_LETTER_COUNT = 16;
 /** Cascade spacing — readable left→right pop across ROBBIE + MCLAUGHLIN. */
-const HERO_NAME_LETTER_STAGGER_MS = 32;
+const HERO_NAME_LETTER_STAGGER_MS = 21;
 /** Keep in sync with `animation-duration` on `[data-hero-name-letter]` in index.css. */
-const HERO_NAME_LETTER_DURATION_MS = 324;
+const HERO_NAME_LETTER_DURATION_MS = 220;
 /** Name cascade end (from chrome/latch start) — gates tagline cascade reveal. */
 const HERO_NAME_CASCADE_MS =
   (HERO_NAME_LETTER_COUNT - 1) * HERO_NAME_LETTER_STAGGER_MS + HERO_NAME_LETTER_DURATION_MS;
+/** Start tagline before the last name letters fully settle (~10% overlap). */
+const HERO_TAGLINE_AFTER_NAME_MS = Math.round(HERO_NAME_CASCADE_MS * 0.63);
 /**
  * Tagline letter cascade — gated after name.
  * Stream order: WRITER → X1 → CONTENT PRODUCTION → X2 → SOCIAL MEDIA.
@@ -1770,12 +1801,16 @@ const HERO_TAGLINE_STAGGER_MS = Math.max(
 /** Tagline cascade end (from tagline latch / `data-hero-tagline-animate`). */
 const HERO_TAGLINE_CASCADE_MS =
   (HERO_TAGLINE_STREAM_LEN - 1) * HERO_TAGLINE_STAGGER_MS + HERO_NAME_LETTER_DURATION_MS;
+/** Extra hold after the tagline cascade before PORTFOLIO. */
+const HERO_PORTFOLIO_AFTER_TAGLINE_HOLD_MS = 180;
 /**
- * PORTFOLIO slide+fade — after ROBBIE/MCLAUGHLIN + tagline finish
- * (from lockup reveal: rule → short beat → name cascade → tagline cascade).
+ * PORTFOLIO slide+fade — after the full tagline cascade + hold (tagline still overlaps the name).
  */
 const HERO_PORTFOLIO_ENTRANCE_AFTER_SVG_MS =
-  HERO_NAME_CASCADE_AFTER_RULE_MS + HERO_NAME_CASCADE_MS + HERO_TAGLINE_CASCADE_MS;
+  HERO_NAME_CASCADE_AFTER_RULE_MS +
+  HERO_TAGLINE_AFTER_NAME_MS +
+  HERO_TAGLINE_CASCADE_MS +
+  HERO_PORTFOLIO_AFTER_TAGLINE_HOLD_MS;
 
 /** Cream glyph index → stagger slot (inserts X1 / X2 beats between phrases). */
 const heroTaglineGlyphDelayIndex = (glyphIndex: number) => {
@@ -2142,6 +2177,7 @@ const HeroNameReveal = ({
   const heroSvgMountRef = useRef<HTMLDivElement>(null);
   const heroSvgMountedRef = useRef(false);
   const heroDebugEnabled = useHeroDebugEnabled();
+  const allowDebugPanels = useAllowDebugPanels();
   const heroLockupSvg = HERO_ROB_LOCKUP_SVG;
 
   /**
@@ -2356,7 +2392,7 @@ const HeroNameReveal = ({
     const taglineTimer = window.setTimeout(() => {
       taglineTypeLatchedRef.current = true;
       setTaglineTypeLatched(true);
-    }, HERO_NAME_CASCADE_MS);
+    }, HERO_TAGLINE_AFTER_NAME_MS);
 
     return () => {
       window.clearTimeout(taglineTimer);
@@ -2991,7 +3027,8 @@ const HeroNameReveal = ({
       <p className="sr-only pointer-events-none" aria-hidden="true" data-hero-ats-scan="true">
         Robbie McLaughlin. {HERO_TAGLINE_TEXT}. PORTFOLIO
       </p>
-      {heroDebugEnabled &&
+      {allowDebugPanels &&
+        heroDebugEnabled &&
         typeof document !== "undefined" &&
         createPortal(
           <HeroAccentLayoutDebugPanel
@@ -3765,10 +3802,24 @@ const Hero = ({
     if (!el) return;
 
     /* Pinch-zoom is optical: never center from the visual crop. */
-    const openOffset = isHeroPinchZoomed() ? 0 : measureHeroVideoCenterOpenOffsetPx(el);
-    videoEntranceY.set(openOffset);
+    const applyOpenOffset = () => {
+      const node = videoStackRef.current;
+      if (!node || isHeroPinchZoomed()) {
+        videoEntranceY.set(0);
+        return;
+      }
+      videoEntranceY.set(measureHeroVideoCenterOpenOffsetPx(node));
+    };
+    applyOpenOffset();
     videoScaleX.set(0);
     videoOpenPinnedRef.current = true;
+    /* iPad portrait: 16:9 face height resolves a frame later than the clamp class. */
+    if (matchesHeroIpadPortraitLayout()) {
+      requestAnimationFrame(() => {
+        if (!videoOpenPinnedRef.current || videoEntranceSettledRef.current) return;
+        applyOpenOffset();
+      });
+    }
   }, [
     videoRevealActive,
     heroPhase1LayoutReady,
@@ -4482,6 +4533,7 @@ const RainbowMenuSlide = ({
   const lineHoverSinceRef = useRef<Partial<Record<string, number>>>({});
   const navTimerRef = useRef<number | null>(null);
   const mainMenuDebugEnabled = useMainMenuDebugEnabled();
+  const allowDebugPanels = useAllowDebugPanels();
   const [mainMenuGlobalDebugControls, setMainMenuGlobalDebugControls] =
     useState<MainMenuGlobalLayoutControl>(() => ({ ...MAIN_MENU_GLOBAL_LAYOUT_DEFAULTS }));
   const [mainMenuDesktopViewport, setMainMenuDesktopViewport] = useState(matchesHeroDesktopDebugViewport);
@@ -4626,7 +4678,8 @@ const RainbowMenuSlide = ({
       aria-label="Menu"
     >
       <SlideGridOverlay />
-      {mainMenuDebugEnabled &&
+      {allowDebugPanels &&
+        mainMenuDebugEnabled &&
         typeof document !== "undefined" &&
         createPortal(
           <MainMenuLayoutDebugPanel
@@ -5450,6 +5503,7 @@ const PhantomProfile = ({
 } = {}) => {
   const reduceMotion = useReducedMotion();
   const portfolioDebugEnabled = usePortfolioDebugEnabled();
+  const allowDebugPanels = useAllowDebugPanels();
   const profileLeftRef = useRef<HTMLDivElement>(null);
   const rawblemRef = useRef<HTMLDivElement>(null);
   const profileLeftInView = useInView(profileLeftRef, { once: false, amount: 0.2 });
@@ -5648,7 +5702,8 @@ const PhantomProfile = ({
   return (
     <section id="profile" className="relative w-full min-w-0 overflow-x-hidden overflow-y-visible bg-black text-white scroll-mt-6 max-lg:min-h-min lg:min-h-screen">
       <SectionGridOverlay />
-      {profileDesktopDebugActive &&
+      {allowDebugPanels &&
+        profileDesktopDebugActive &&
         typeof document !== "undefined" &&
         createPortal(
           <ProfileDesktopLayoutDebugPanel
@@ -5664,7 +5719,8 @@ const PhantomProfile = ({
           />,
           document.body,
         )}
-      {portfolioDebugEnabled &&
+      {allowDebugPanels &&
+        portfolioDebugEnabled &&
         typeof document !== "undefined" &&
         createPortal(
           <ProfileRedLineDebugPanel
@@ -6808,6 +6864,12 @@ const PROJECTS_MOBILE_VIEWPORT_MQ = "(max-width: 767.98px)";
 const matchesProjectsMobileViewport = () =>
   typeof window !== "undefined" &&
   window.matchMedia(PROJECTS_MOBILE_VIEWPORT_MQ).matches;
+/** Phone + iPad/tablet portrait — 4px project-detail corners (matches phone main cards). */
+const PROJECTS_DETAIL_SHARP_RADIUS_MQ =
+  "(max-width: 639.98px), (min-width: 640px) and (max-width: 1366px) and (max-aspect-ratio: 1/1)";
+const matchProjectsDetailSharpRadius = () =>
+  typeof window !== "undefined" &&
+  window.matchMedia(PROJECTS_DETAIL_SHARP_RADIUS_MQ).matches;
 const PROJECTS_TABLET_LANDSCAPE_WIDTH_SCALE = 1.05;
 /** Desktop main showcase lift vs pre-lift offsets; restored on iPad horizontal. */
 const PROJECTS_DESKTOP_MAIN_LIFT_Y = -2;
@@ -7048,7 +7110,7 @@ const ProjectsStack = ({
                     onPointerUp={() => handleCardPointerUpOrCancel(card.id)}
                     onPointerCancel={() => handleCardPointerUpOrCancel(card.id)}
                     onClick={(e) => handleCardActivate(card.id, e.currentTarget)}
-                    className={`group project-card-surface relative w-full [container-type:inline-size] ${SHOWCASE_CAROUSEL_CARD_H} rounded-[11px] sm:rounded-xl border border-[var(--portfolio-glass-stroke)] shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)] text-center overflow-hidden transition-[opacity,background-color,border-color] duration-300 ease-out ${
+                    className={`group project-card-surface relative w-full [container-type:inline-size] ${SHOWCASE_CAROUSEL_CARD_H} rounded-sm sm:rounded-xl border border-[var(--portfolio-glass-stroke)] shadow-[0_18px_48px_-28px_rgba(0,0,0,0.9)] text-center overflow-hidden transition-[opacity,background-color,border-color] duration-300 ease-out ${
                       contentReady
                         ? "hover:border-[color:var(--palette-yellow-projects)] hover:bg-black [background:#000]"
                         : "[background:transparent!important] hover:[background:transparent!important]"
@@ -7914,7 +7976,7 @@ const DetailCardMedia = ({ card }: { card: ShowcaseProjectCard }) => (
  * (`profile-card-surface` + explicit `rounded-*` overrides). Same `--portfolio-glass-*` frost as PROFILE / FEATURED WRITING.
  */
 const showcaseDetailCard =
-  "profile-card-surface relative rounded-[11px] sm:rounded-xl px-3 py-3 sm:px-4 sm:py-3.5";
+  "profile-card-surface relative rounded-sm sm:rounded-xl px-3 py-3 sm:px-4 sm:py-3.5";
 
 /** Same frame as project detail insets; darker wash + soft stacked shadow (single box-shadow, two layers). Corners: sharp TL/BR, rounded TR/BL (StealthWorm reference). */
 const SKILLS_SUBCATEGORY_CARD_FACE =
@@ -8632,6 +8694,7 @@ const PalaceProjects = ({
 }) => {
   const reduceMotion = useReducedMotion();
   const portfolioDebugEnabled = usePortfolioDebugEnabled();
+  const allowDebugPanels = useAllowDebugPanels();
   const projectsSectionRef = useRef<HTMLElement>(null);
   const projectsDividerRef = useRef<HTMLDivElement | null>(null);
   const [projectsDesktopViewport, setProjectsDesktopViewport] = useState(
@@ -9060,6 +9123,7 @@ const PalaceProjects = ({
   const handleProjectsTabletGridPointerUp = useCallback(
     (event: React.PointerEvent<HTMLElement>) => {
       if (
+        !allowDebugPanels ||
         !import.meta.env.DEV ||
         !projectsTabletPortraitViewport ||
         projectDetailInFlow
@@ -9112,6 +9176,7 @@ const PalaceProjects = ({
       });
     },
     [
+      allowDebugPanels,
       lockedProjectsTabletThumbnailValues,
       projectDetailInFlow,
       projectsTabletPortraitViewport,
@@ -9185,8 +9250,8 @@ const PalaceProjects = ({
   const [detailRow2Reveal, setDetailRow2Reveal] = useState(false);
   const [detailHeroMediaFadeIn, setDetailHeroMediaFadeIn] = useState(false);
   const [detailCardRadiusPx, setDetailCardRadiusPx] = useState<number>(() => {
-    if (typeof window === "undefined") return 11;
-    return window.matchMedia("(min-width: 640px)").matches ? 12 : 11;
+    if (typeof window === "undefined") return 4;
+    return matchProjectsDetailSharpRadius() ? 4 : 12;
   });
   const detailRevealTimersRef = useRef<number[]>([]);
   const detailAnchorRef = useRef<HTMLDivElement>(null);
@@ -9196,16 +9261,15 @@ const PalaceProjects = ({
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const mq = window.matchMedia("(min-width: 640px)");
-    const apply = (matches: boolean) => setDetailCardRadiusPx(matches ? 12 : 11);
-    apply(mq.matches);
-    const onChange = (event: MediaQueryListEvent) => apply(event.matches);
+    const mq = window.matchMedia(PROJECTS_DETAIL_SHARP_RADIUS_MQ);
+    const apply = () => setDetailCardRadiusPx(mq.matches ? 4 : 12);
+    apply();
     if (typeof mq.addEventListener === "function") {
-      mq.addEventListener("change", onChange);
-      return () => mq.removeEventListener("change", onChange);
+      mq.addEventListener("change", apply);
+      return () => mq.removeEventListener("change", apply);
     }
-    mq.addListener(onChange);
-    return () => mq.removeListener(onChange);
+    mq.addListener(apply);
+    return () => mq.removeListener(apply);
   }, []);
 
   const morphDur = projectDetailMotionReduced ? 0.12 / SHOWCASE_TIME_DIV : SHOWCASE_CARD_MORPH_DUR_S;
@@ -9435,7 +9499,8 @@ const PalaceProjects = ({
       }${projectsEntranceLive ? " projects-entrance-live" : ""}`}
     >
       <SectionGridOverlay />
-      {projectsTabletThumbnailDebugEnabled &&
+      {allowDebugPanels &&
+        projectsTabletThumbnailDebugEnabled &&
         projectsTabletPortraitViewport &&
         !projectDetailInFlow &&
         typeof document !== "undefined" &&
@@ -9450,7 +9515,8 @@ const PalaceProjects = ({
           />,
           document.body,
         )}
-      {projectsDesktopDebugActive &&
+      {allowDebugPanels &&
+        projectsDesktopDebugActive &&
         typeof document !== "undefined" &&
         createPortal(
           <ProfileDesktopLayoutDebugPanel
@@ -9465,7 +9531,8 @@ const PalaceProjects = ({
           />,
           document.body,
         )}
-      {projectsDesktopDebugActive &&
+      {allowDebugPanels &&
+        projectsDesktopDebugActive &&
         projectDetailInFlow &&
         activeCard &&
         typeof document !== "undefined" &&
@@ -9686,7 +9753,7 @@ const PalaceProjects = ({
                 <div
                   className={`project-card-surface relative z-[1] mx-auto w-full max-w-full ${
                     projectDetailLayoutStyle ? "" : PROFILE_VIEWPORT_CONTENT_MAX
-                  } ${DETAIL_CARD_H} overflow-hidden rounded-[11px] sm:rounded-xl border border-white/[0.09]`}
+                  } ${DETAIL_CARD_H} overflow-hidden rounded-sm sm:rounded-xl border border-white/[0.09]`}
                   style={{
                     boxShadow: `${SHOWCASE_SLIDER_MEDIA_BOX_SHADOW}, 0 18px 48px -28px rgba(0,0,0,0.9)`,
                     borderRadius: `${detailCardRadiusPx}px`,
@@ -10222,6 +10289,7 @@ const ConfidantExperience = ({
   const tabsRootRef = useRef<HTMLDivElement>(null);
   const experienceLandscapePanelMinWidthRef = useRef<number | null>(null);
   const portfolioDebugEnabled = usePortfolioDebugEnabled();
+  const allowDebugPanels = useAllowDebugPanels();
   const [activeExperienceTabId, setActiveExperienceTabId] = useState<ExperienceTabId>("rawblem");
   const [experienceDesktopViewport, setExperienceDesktopViewport] = useState(
     matchesProfileDesktopDebugViewport,
@@ -10756,7 +10824,8 @@ const ConfidantExperience = ({
       className="career-viewport bg-black font-body text-white max-lg:relative max-lg:h-auto max-lg:min-h-0 max-lg:w-full max-lg:overflow-visible"
     >
       <SectionGridOverlay />
-      {experienceDesktopDebugActive &&
+      {allowDebugPanels &&
+        experienceDesktopDebugActive &&
         typeof document !== "undefined" &&
         createPortal(
           <ProfileDesktopLayoutDebugPanel
@@ -13243,6 +13312,7 @@ export default function Home() {
   >("visible");
   const skillsFadeReplayRafRef = useRef<number | null>(null);
   const reduceMotion = useReducedMotion();
+  const allowDebugPanels = useAllowDebugPanels();
   const topNavBackMetrics = useTopNavBackMetrics(
     topNavBackButtonDebug,
     showTopNavBackDebugPanel,
@@ -13283,12 +13353,9 @@ export default function Home() {
   const [menuLockedFillId, setMenuLockedFillId] = useState<string | null>(null);
   const [activeShowcaseProjectId, setActiveShowcaseProjectId] = useState<string | null>(null);
   const topNavFadeViewKey = `${currentSection ?? "none"}:${activeShowcaseProjectId ?? "list"}`;
-  const slaywireShowcaseDetailOpen =
-    currentSection === "projects" && activeShowcaseProjectId === "project-slaywire";
   /** Showcase 4-up hover scale needs X room; keep X clipped for most project details. */
   const projectsPanelOverflowX =
-    currentSection === "projects" &&
-    (!activeShowcaseProjectId || slaywireShowcaseDetailOpen)
+    currentSection === "projects" && !activeShowcaseProjectId
       ? "overflow-x-visible"
       : "overflow-x-hidden";
   const [projectsEntranceArmed, setProjectsEntranceArmed] = useState(false);
@@ -14071,7 +14138,7 @@ export default function Home() {
         />
       )}
 
-      {showSideNavExitDebugPanel ? (
+      {allowDebugPanels && showSideNavExitDebugPanel ? (
         <NavIconButtonDebugPanel
           title="Side Nav Exit Debug (L)"
           values={sideNavExitButtonDebug}
@@ -14080,7 +14147,7 @@ export default function Home() {
         />
       ) : null}
 
-      {showTopNavBackDebugPanel ? (
+      {allowDebugPanels && showTopNavBackDebugPanel ? (
         <NavIconButtonDebugPanel
           title="Top Nav Back Debug (B)"
           values={topNavBackButtonDebug}

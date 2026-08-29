@@ -5,6 +5,11 @@ import {
   type ReactNode,
 } from "react";
 
+/** Debug overlays/panels stay in the repo but cannot be shown on any breakpoint. */
+export function useAllowDebugPanels() {
+  return false;
+}
+
 const PortfolioDebugContext = createContext(false);
 const RuleOfThirdsContext = createContext(false);
 const RulerDebugContext = createContext(false);

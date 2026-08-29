@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import heroVideoSrc from "./assets/hero1.mp4";
 import "./index.css";
+import "./styles/projects-corners.css";
 
 // Locator UI is kept as a dependency but hard-disabled (not initialized).
 
