@@ -6563,12 +6563,19 @@
 }
 
 .illustration-lightbox-nav-btn {
-  top: 50%;
+  /* Midpoint between close X (media top) and caption V (just below the divider). */
+  top: calc(50% + 1.5rem);
   /* CSS translate (not transform) so Framer whileTap scale can compose cleanly */
   translate: 0 -50%;
   background-color: transparent !important;
   color: #fff !important;
   box-shadow: none !important;
+}
+
+@media (min-width: 640px) {
+  .illustration-lightbox-nav-btn {
+    top: calc(50% + 1.75rem);
+  }
 }
 
 .illustration-lightbox-nav-btn:hover,
@@ -6579,19 +6586,30 @@
   box-shadow: none !important;
 }
 
-@media (max-width: 767.98px) {
-  .illustration-lightbox-nav-btn {
-    display: none !important;
-  }
+.illustration-lightbox-media-viewport > div {
+  backface-visibility: hidden;
+}
 
+.illustration-lightbox-media-viewport img {
+  filter: none;
+}
+
+@media (max-width: 767.98px) {
   .illustration-lightbox-media-viewport {
     min-height: min(58dvh, 34rem);
   }
 }
 
 .illustration-lightbox-close-btn {
+  position: relative;
   border-color: transparent;
   background-color: transparent;
+}
+
+.illustration-lightbox-close-btn::after {
+  content: "";
+  position: absolute;
+  inset: -0.45rem;
 }
 
 .illustration-lightbox-close-btn:hover,

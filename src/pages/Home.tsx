@@ -10,7 +10,6 @@ import {
   animate,
 } from "framer-motion";
 import useEmblaCarousel from "embla-carousel-react";
-import type { EmblaCarouselType } from "embla-carousel";
 import React, {
   useEffect,
   useLayoutEffect,
@@ -7987,6 +7986,8 @@ const ShowcaseVisualDesignDetail = ({
 
 /** ILLUSTRATIONS grid lightbox fade (matches PDF preview open feel). */
 const ILLUSTRATION_LIGHTBOX_FADE_S = 0.18;
+/** Embla physics duration (not ms). Arrow/keyboard only; drag uses gesture force. Lower = faster. */
+const ILLUSTRATION_LIGHTBOX_SLIDE_DURATION = 22;
 
 /** Full-screen illustration viewer — Embla swipe/drag + arrow buttons + keyboard. */
 const ShowcaseIllustrationLightbox = ({
@@ -8007,21 +8008,30 @@ const ShowcaseIllustrationLightbox = ({
   useNavLayoutFreeze(true);
   const activeOpenablePos = openableIndices.indexOf(activeIndex);
   const [carouselReady, setCarouselReady] = useState(false);
+  const [canScrollPrev, setCanScrollPrev] = useState(
+    () => openableIndices.indexOf(activeIndex) > 0,
+  );
+  const [canScrollNext, setCanScrollNext] = useState(() => {
+    const pos = openableIndices.indexOf(activeIndex);
+    return pos >= 0 && pos < openableIndices.length - 1;
+  });
+  const jumpAlignDoneRef = useRef(false);
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: "center",
     loop: false,
     skipSnaps: false,
     dragFree: false,
+    dragThreshold: 4,
+    duration: reduceMotion ? 1 : ILLUSTRATION_LIGHTBOX_SLIDE_DURATION,
     startIndex: activeOpenablePos >= 0 ? activeOpenablePos : 0,
-    /* Two-finger pinch must reach the browser, not Embla drag. */
+    /* One-finger horizontal swipe stays with Embla; pinch reaches the browser. */
     watchDrag: (_embla, event) =>
       !("touches" in event && event.touches.length > 1),
   });
 
   const activeSlide = slides[activeIndex];
-  const hasPrev = activeOpenablePos > 0;
-  const hasNext =
-    activeOpenablePos >= 0 && activeOpenablePos < openableIndices.length - 1;
+  const hasPrev = canScrollPrev;
+  const hasNext = canScrollNext;
 
   const lightboxLabel =
     activeSlide?.alt?.trim() ||
@@ -8069,12 +8079,14 @@ const ShowcaseIllustrationLightbox = ({
   }, [artistStatement]);
 
   const handleShowPrev = useCallback(() => {
-    emblaApi?.scrollPrev();
-  }, [emblaApi]);
+    if (!emblaApi) return;
+    emblaApi.scrollPrev(!!reduceMotion);
+  }, [emblaApi, reduceMotion]);
 
   const handleShowNext = useCallback(() => {
-    emblaApi?.scrollNext();
-  }, [emblaApi]);
+    if (!emblaApi) return;
+    emblaApi.scrollNext(!!reduceMotion);
+  }, [emblaApi, reduceMotion]);
 
   const renderArtistStatementText = useCallback((text: string) => {
     const parts = text.split(/(<em>[\s\S]*?<\/em>)/g);
@@ -8105,8 +8117,11 @@ const ShowcaseIllustrationLightbox = ({
 
   useLayoutEffect(() => {
     if (!emblaApi || activeOpenablePos < 0) return;
-    if (emblaApi.selectedScrollSnap() !== activeOpenablePos) {
-      emblaApi.scrollTo(activeOpenablePos, true);
+    if (!jumpAlignDoneRef.current) {
+      if (emblaApi.selectedScrollSnap() !== activeOpenablePos) {
+        emblaApi.scrollTo(activeOpenablePos, true);
+      }
+      jumpAlignDoneRef.current = true;
     }
     setCarouselReady(true);
   }, [activeOpenablePos, emblaApi]);
@@ -8120,11 +8135,20 @@ const ShowcaseIllustrationLightbox = ({
         onActiveIndexChange(nextIndex);
       }
     };
+    const syncScrollButtons = () => {
+      setCanScrollPrev(emblaApi.canScrollPrev());
+      setCanScrollNext(emblaApi.canScrollNext());
+    };
     syncActiveIndex();
-    emblaApi.on("select", syncActiveIndex);
+    syncScrollButtons();
+    emblaApi.on("select", syncScrollButtons);
+    emblaApi.on("reInit", syncScrollButtons);
+    emblaApi.on("settle", syncActiveIndex);
     emblaApi.on("reInit", syncActiveIndex);
     return () => {
-      emblaApi.off("select", syncActiveIndex);
+      emblaApi.off("select", syncScrollButtons);
+      emblaApi.off("reInit", syncScrollButtons);
+      emblaApi.off("settle", syncActiveIndex);
       emblaApi.off("reInit", syncActiveIndex);
     };
   }, [activeIndex, emblaApi, onActiveIndexChange, openableIndices]);
@@ -8175,7 +8199,29 @@ const ShowcaseIllustrationLightbox = ({
           className="relative flex min-h-0 flex-1 flex-col py-6 sm:py-8"
           onClick={(event) => event.stopPropagation()}
         >
-          <div className="absolute right-[0.375rem] top-3 z-30 sm:right-[0.875rem] sm:top-4">
+          {hasPrev ? (
+            <button
+              type="button"
+              aria-label="Previous illustration"
+              onClick={handleShowPrev}
+              className="pdf-viewer-chrome-btn illustration-lightbox-chrome-btn illustration-lightbox-nav-btn absolute left-3 z-30 sm:left-5"
+            >
+              <ArrowLeft aria-hidden />
+            </button>
+          ) : null}
+
+          {hasNext ? (
+            <button
+              type="button"
+              aria-label="Next illustration"
+              onClick={handleShowNext}
+              className="pdf-viewer-chrome-btn illustration-lightbox-chrome-btn illustration-lightbox-nav-btn absolute right-3 z-30 sm:right-5"
+            >
+              <ArrowRight aria-hidden />
+            </button>
+          ) : null}
+
+          <div className="absolute right-3 top-3 z-30 sm:right-5 sm:top-4">
             <button
               type="button"
               aria-label="Close illustration preview"
@@ -8188,12 +8234,12 @@ const ShowcaseIllustrationLightbox = ({
 
           <div
             ref={emblaRef}
-            className={`illustration-lightbox-media-viewport h-full min-h-0 flex-1 overflow-hidden [touch-action:pan-y_pinch-zoom] [-webkit-touch-callout:none] ${
+            className={`illustration-lightbox-media-viewport h-full min-h-0 flex-1 cursor-grab overflow-hidden [touch-action:pan-x_pinch-zoom] [-webkit-touch-callout:none] active:cursor-grabbing ${
               carouselReady ? "" : "invisible pointer-events-none"
             }`}
             aria-roledescription="carousel"
           >
-            <div className="flex h-full min-h-0 [touch-action:pan-y_pinch-zoom] [-webkit-touch-callout:none] lg:min-h-[min(78dvh,920px)]">
+            <div className="flex h-full min-h-0 [touch-action:pan-x_pinch-zoom] [-webkit-touch-callout:none] lg:min-h-[min(78dvh,920px)]">
               {openableIndices.map((slideIndex) => {
                 const slide = slides[slideIndex]!;
                 const label = slide.alt?.trim() || `Illustration ${slideIndex + 1}`;
@@ -8213,7 +8259,7 @@ const ShowcaseIllustrationLightbox = ({
                     <img
                       src={slide.src}
                       alt={label}
-                      className={`h-full w-auto max-w-[min(calc(100vw-3rem),72rem)] md:max-w-[min(calc(100vw-9rem),72rem)] lg:max-w-[min(calc(100vw-11rem),72rem)] object-contain object-center select-none ${
+                      className={`pointer-events-none h-full w-auto max-w-[min(calc(100vw-3rem),72rem)] md:max-w-[min(calc(100vw-9rem),72rem)] lg:max-w-[min(calc(100vw-11rem),72rem)] object-contain object-center select-none ${
                         shrinkForCloseButton
                           ? "max-h-[calc(100%-2.8rem)] sm:max-h-[calc(100%-3.3rem)] lg:max-h-[min(66dvh,800px)]"
                           : "max-h-full lg:max-h-[min(78dvh,920px)]"
