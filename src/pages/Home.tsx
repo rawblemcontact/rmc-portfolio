@@ -13699,6 +13699,13 @@ export default function Home() {
       return;
     }
 
+    // Already on PROFILE: close the side nav without disarming its latched entrance.
+    if (id === "profile" && currentSection === "profile") {
+      transitionTimeoutsRef.current.forEach((t) => window.clearTimeout(t));
+      transitionTimeoutsRef.current = [];
+      return;
+    }
+
     // Already on EXPERIENCE: no-op (keep desktop behavior consistent across browsers).
     if (id === "experience" && currentSection === "experience") {
       transitionTimeoutsRef.current.forEach((t) => window.clearTimeout(t));
