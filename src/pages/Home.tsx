@@ -8653,7 +8653,7 @@ function ShowcaseWritingFeaturedPanel({
         {item.description ? (
           <div
             ref={featuredDescScrollRef as React.RefObject<HTMLDivElement | null>}
-            className={`featured-writing-description-wrap featured-writing-description-blocks no-scrollbar relative flex min-h-0 min-w-0 flex-col gap-3 max-h-[5.8rem] overflow-y-auto overscroll-y-contain sm:max-h-[4.5rem]${
+            className={`featured-writing-description-wrap featured-writing-description-blocks no-scrollbar relative flex min-h-0 min-w-0 flex-col gap-3 max-h-none overflow-visible overscroll-auto sm:max-h-[4.5rem] sm:overflow-y-auto sm:overscroll-y-contain${
               featuredDescCutoffFade ? " content-cutoff-fade" : ""
             }`}
             title={stripInlineEmMarkup(item.description)}

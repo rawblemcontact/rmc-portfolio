@@ -1222,6 +1222,26 @@
     );
   }
 
+  /* PROFILE summary card — short bottom dissolve; most copy stays solid. */
+  #profile .content-cutoff-fade {
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 88%,
+      rgba(0, 0, 0, 0.7) 94%,
+      rgba(0, 0, 0, 0.28) 98%,
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 88%,
+      rgba(0, 0, 0, 0.7) 94%,
+      rgba(0, 0, 0, 0.28) 98%,
+      transparent 100%
+    );
+  }
+
   /* FEATURED WRITING — fade hugs the very bottom edge so Tools lines stay clear at rest. */
   .featured-writing-description.content-cutoff-fade,
   .featured-writing-description-wrap.content-cutoff-fade {
@@ -1239,6 +1259,25 @@
       rgba(0, 0, 0, 0.7) 99%,
       rgba(0, 0, 0, 0.25) 100%
     );
+  }
+
+  /* Desktop only — FEATURED WRITING body copy: no cutoff fade, no inner scroller. */
+  @media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
+    #projects .featured-writing-description.content-cutoff-fade,
+    #projects .featured-writing-description-wrap.content-cutoff-fade {
+      -webkit-mask-image: none;
+      mask-image: none;
+    }
+
+    #projects .featured-writing-description-wrap {
+      max-height: none !important;
+      overflow: visible !important;
+    }
+
+    #projects p.featured-writing-description {
+      max-height: none !important;
+      overflow: visible !important;
+    }
   }
 
   /**
@@ -1464,6 +1503,28 @@
     filter: none;
     -webkit-backdrop-filter: var(--portfolio-glass-blur);
     backdrop-filter: var(--portfolio-glass-blur);
+  }
+
+  /* Phone: PROJECTS owns vertical scrolling; never trap a page pan in description copy. */
+  @media (max-width: 639.98px) {
+    [aria-label="Section: projects"],
+    #projects {
+      overflow-anchor: none;
+    }
+
+    /*
+     * `overflow-x: hidden` computes `overflow-y: auto`, creating a second,
+     * 1px-range vertical scroller that steals touch/wheel input from the panel.
+     */
+    #projects {
+      overflow-x: clip !important;
+      overflow-y: visible !important;
+    }
+
+    #projects .featured-writing-body-card,
+    #projects .featured-writing-body-card > .profile-card-surface {
+      touch-action: pan-y;
+    }
   }
 
   @media (min-width: 640px) {
@@ -7950,6 +8011,10 @@
   #projects .featured-writing-view-cta-label {
     display: inline-block;
     transform: translateY(1px);
+  }
+
+  #projects .featured-writing-view-cta svg {
+    transform: translateY(-1px);
   }
 
   #projects .featured-writing-raised {

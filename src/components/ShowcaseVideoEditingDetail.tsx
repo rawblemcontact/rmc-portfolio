@@ -238,6 +238,9 @@ const DETAIL_TAB_BODY_IN_S = 0.24;
 const DETAIL_TAB_BODY_IN_DELAY_S = Math.max(0, DETAIL_TAB_SWAP_DUR_S - DETAIL_TAB_BODY_OUT_S);
 /** Yellow underline draw / retract — same length as tab FLIP; starts only after position settles. */
 const DETAIL_TAB_UNDERLINE_DUR_MS = Math.round(DETAIL_TAB_SWAP_DUR_S * 1000);
+/** Mobile description-card height keyframes stay synchronized with the tab swap. */
+const DETAIL_CARD_RESIZE_DUR_MS = DETAIL_TAB_UNDERLINE_DUR_MS;
+const DETAIL_CARD_RESIZE_EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
 
 function matchesProjectsTabbedDetailViewport() {
   return typeof window !== "undefined" && window.matchMedia(PROJECTS_TABBED_DETAIL_MQ).matches;
@@ -267,6 +270,7 @@ export function ShowcaseVideoEditingDetail({
   const [isIpadLandscapeViewport, setIsIpadLandscapeViewport] = useState(
     matchesProjectsTabbedDetailViewport,
   );
+  const [isPhoneViewport, setIsPhoneViewport] = useState(false);
   const [activeDetailCardTab, setActiveDetailCardTab] = useState<DetailCardTabId>("overview");
   const [detailCardTabOrder, setDetailCardTabOrder] = useState<DetailCardTabId[]>(() => [
     ...DETAIL_CARD_TAB_IDS,
@@ -283,6 +287,17 @@ export function ShowcaseVideoEditingDetail({
   } = useCutoffScrollFade(true);
   const underlineActiveTabRef = useRef<DetailCardTabId>("overview");
   const [detailCardMinHeightPx, setDetailCardMinHeightPx] = useState<number | null>(null);
+  /** Phone-only: reserve the tallest tab outside the natural-height description card. */
+  const detailPanelReserveRef = useRef<HTMLDivElement | null>(null);
+  const detailTabActiveNaturalRef = useRef<HTMLDivElement | null>(null);
+  const detailTabHiddenMeasureRefs = useRef<Record<DetailCardTabId, HTMLDivElement | null>>({
+    overview: null,
+    role: null,
+    impact: null,
+    tools: null,
+  });
+  const detailCardChromeHeightRef = useRef<number | null>(null);
+  const detailCardResizeAnimationRef = useRef<Animation | null>(null);
   const detailRootRef = useRef<HTMLDivElement | null>(null);
   const detailCardSurfaceRef = useRef<HTMLElement | null>(null);
   const pendingPortraitTabAnchorRef = useRef<{
@@ -321,6 +336,18 @@ export function ShowcaseVideoEditingDetail({
     onChange();
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 639.98px)");
+    const onChange = () => setIsPhoneViewport(mq.matches);
+    onChange();
+    if (typeof mq.addEventListener === "function") {
+      mq.addEventListener("change", onChange);
+      return () => mq.removeEventListener("change", onChange);
+    }
+    mq.addListener(onChange);
+    return () => mq.removeListener(onChange);
   }, []);
 
   useEffect(() => {
@@ -804,14 +831,14 @@ export function ShowcaseVideoEditingDetail({
   const worksStripOuterClass =
     videos.length > 1
       ? matchInteractiveMediaChrome
-        ? "relative -mx-5 w-[calc(100%+2.5rem)] overflow-visible sm:-mx-7 sm:w-[calc(100%+3.5rem)]"
-        : "relative -mx-4 w-[calc(100%+2rem)] overflow-visible sm:-mx-6 sm:w-[calc(100%+3rem)]"
+        ? "relative -mx-5 overflow-visible sm:-mx-7"
+        : "relative -mx-4 overflow-visible sm:-mx-6"
       : "relative w-full min-w-0";
   const worksStripClass =
     videos.length > 1
       ? matchInteractiveMediaChrome
-        ? "mx-5 w-[calc(100%-2.5rem)] sm:mx-7 sm:w-[calc(100%-3.5rem)]"
-        : "mx-4 w-[calc(100%-2rem)] sm:mx-6 sm:w-[calc(100%-3rem)]"
+        ? "mx-5 sm:mx-7"
+        : "mx-4 sm:mx-6"
       : "w-full";
   const worksArrowPrevOffsetClass = matchInteractiveMediaChrome
     ? "left-[-6px] sm:left-0"
@@ -976,6 +1003,44 @@ export function ShowcaseVideoEditingDetail({
     (nextTabId: DetailCardTabId) => {
       if (nextTabId === activeDetailCardTab) return;
 
+      if (isPhoneViewport && !isIpadLandscapeViewport && !reduceMotion) {
+        const cardSurface = detailCardSurfaceRef.current;
+        const activeNatural = detailTabActiveNaturalRef.current;
+        const targetProbe = detailTabHiddenMeasureRefs.current[nextTabId];
+        if (cardSurface && activeNatural && targetProbe) {
+          const fromHeight = cardSurface.getBoundingClientRect().height;
+          const measuredChromeHeight = Math.max(
+            0,
+            fromHeight - activeNatural.getBoundingClientRect().height,
+          );
+          const chromeHeight =
+            detailCardChromeHeightRef.current ?? measuredChromeHeight;
+          detailCardChromeHeightRef.current = chromeHeight;
+          const toHeight = chromeHeight + targetProbe.getBoundingClientRect().height;
+
+          detailCardResizeAnimationRef.current?.cancel();
+          if (Math.abs(toHeight - fromHeight) > 0.5) {
+            const resizeAnimation = cardSurface.animate(
+              [
+                { height: `${fromHeight}px` },
+                { height: `${toHeight}px` },
+              ],
+              {
+                duration: DETAIL_CARD_RESIZE_DUR_MS,
+                easing: DETAIL_CARD_RESIZE_EASE,
+                fill: "both",
+              },
+            );
+            detailCardResizeAnimationRef.current = resizeAnimation;
+            resizeAnimation.onfinish = () => {
+              if (detailCardResizeAnimationRef.current !== resizeAnimation) return;
+              resizeAnimation.cancel();
+              detailCardResizeAnimationRef.current = null;
+            };
+          }
+        }
+      }
+
       setDetailCardTabOrder((prev) => swapDetailTabToFront(prev, nextTabId));
 
       if (isIpadLandscapeViewport) {
@@ -986,7 +1051,13 @@ export function ShowcaseVideoEditingDetail({
       capturePortraitTabScrollAnchor();
       setActiveDetailCardTab(nextTabId);
     },
-    [activeDetailCardTab, capturePortraitTabScrollAnchor, isIpadLandscapeViewport],
+    [
+      activeDetailCardTab,
+      capturePortraitTabScrollAnchor,
+      isIpadLandscapeViewport,
+      isPhoneViewport,
+      reduceMotion,
+    ],
   );
 
   const focusDetailCardTab = useCallback((tabId: DetailCardTabId) => {
@@ -1125,6 +1196,42 @@ export function ShowcaseVideoEditingDetail({
       window.cancelAnimationFrame(raf2);
     };
   }, [activeDetailCardTab, isIpadLandscapeViewport]);
+
+  useLayoutEffect(() => {
+    const reserve = detailPanelReserveRef.current;
+    if (!isPhoneViewport || isIpadLandscapeViewport) {
+      if (reserve) reserve.style.minHeight = "";
+      return;
+    }
+
+    const cardSurface = detailCardSurfaceRef.current;
+    const activeNatural = detailTabActiveNaturalRef.current;
+    if (!reserve || !cardSurface || !activeNatural) return;
+
+    let tallest = 0;
+    for (const tabId of DETAIL_CARD_TAB_IDS) {
+      const probe = detailTabHiddenMeasureRefs.current[tabId];
+      if (!probe) continue;
+      tallest = Math.max(tallest, Math.ceil(probe.getBoundingClientRect().height));
+    }
+    const activeHeight = activeNatural.getBoundingClientRect().height;
+    const cardHeight = cardSurface.getBoundingClientRect().height;
+    const measuredChromeHeight = Math.max(0, cardHeight - activeHeight);
+    if (!detailCardResizeAnimationRef.current) {
+      detailCardChromeHeightRef.current = measuredChromeHeight;
+    }
+    const fixedChromeHeight =
+      detailCardChromeHeightRef.current ?? measuredChromeHeight;
+    reserve.style.minHeight =
+      tallest > 0 ? `${Math.ceil(fixedChromeHeight + tallest)}px` : "";
+  }, [activeDetailCardTab, activeVideo.id, card.id, isIpadLandscapeViewport, isPhoneViewport]);
+
+  useEffect(() => {
+    return () => {
+      detailCardResizeAnimationRef.current?.cancel();
+      detailCardResizeAnimationRef.current = null;
+    };
+  }, []);
 
   return (
     <>
@@ -1447,45 +1554,64 @@ export function ShowcaseVideoEditingDetail({
                   </AnimatePresence>
                 </div>
               </div>
-              <section
-                ref={detailCardSurfaceRef}
-                className={`${showcaseDetailCardClass} video-editing-detail-meta-card mt-3.5 flex w-full min-w-0 flex-col overflow-hidden [overflow-anchor:none] sm:mt-4`}
-              >
-                <div className="video-editing-detail-overview w-full min-w-0">
-                  <AnimatePresence mode="wait" initial={false}>
-                    <motion.div
-                      key={activeVideo.id}
-                      initial={reduceMotion ? false : { opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={reduceMotion ? undefined : { opacity: 0 }}
-                      transition={
-                        reduceMotion
-                          ? undefined
-                          : {
-                              duration: 0.22,
-                              ease: [0.22, 1, 0.36, 1],
-                            }
-                      }
-                      className="video-editing-detail-cards-tabs flex w-full min-w-0 flex-col gap-2.5"
-                    >
-                      {renderDetailCardTabList()}
-                      <div
-                        ref={detailTabpanelScrollRef as Ref<HTMLDivElement>}
-                        role="tabpanel"
-                        id={`video-detail-panel-${activeDetailCardTab}`}
-                        aria-labelledby={`video-detail-tab-${activeDetailCardTab}`}
-                        className={`video-editing-detail-card-tabpanel min-w-0${
-                          detailTabpanelCutoffFade ? " content-cutoff-fade" : ""
-                        }`}
+              <div ref={detailPanelReserveRef} className="w-full min-w-0">
+                <section
+                  ref={detailCardSurfaceRef}
+                  className={`${showcaseDetailCardClass} video-editing-detail-meta-card mt-3.5 flex w-full min-w-0 flex-col overflow-hidden [overflow-anchor:none] sm:mt-4`}
+                >
+                  <div className="video-editing-detail-overview w-full min-w-0">
+                    <AnimatePresence mode="wait" initial={false}>
+                      <motion.div
+                        key={activeVideo.id}
+                        initial={reduceMotion ? false : { opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={reduceMotion ? undefined : { opacity: 0 }}
+                        transition={
+                          reduceMotion
+                            ? undefined
+                            : {
+                                duration: 0.22,
+                                ease: [0.22, 1, 0.36, 1],
+                              }
+                        }
+                        className="video-editing-detail-cards-tabs flex w-full min-w-0 flex-col gap-2.5"
                       >
-                        <div className="video-editing-detail-card-tab-surface min-w-0 pt-1">
-                          {renderDetailCardTabBody(activeDetailCardTab, "portrait")}
+                        {renderDetailCardTabList()}
+                        <div
+                          ref={detailTabpanelScrollRef as Ref<HTMLDivElement>}
+                          role="tabpanel"
+                          id={`video-detail-panel-${activeDetailCardTab}`}
+                          aria-labelledby={`video-detail-tab-${activeDetailCardTab}`}
+                          className={`video-editing-detail-card-tabpanel min-w-0${
+                            detailTabpanelCutoffFade ? " content-cutoff-fade" : ""
+                          }`}
+                        >
+                          <div className="video-editing-detail-card-tab-surface relative min-w-0 pt-1">
+                            <div ref={detailTabActiveNaturalRef} className="min-w-0">
+                              {renderDetailCardTabBody(activeDetailCardTab, "portrait")}
+                            </div>
+                            {isPhoneViewport ? (
+                              <div className="pointer-events-none absolute left-0 top-0 -z-10 h-0 w-full overflow-hidden opacity-0" aria-hidden>
+                                {DETAIL_CARD_TAB_IDS.map((tabId) => (
+                                  <div
+                                    key={`measure-${tabId}`}
+                                    ref={(el) => {
+                                      detailTabHiddenMeasureRefs.current[tabId] = el;
+                                    }}
+                                    className="min-w-0"
+                                  >
+                                    {renderPortraitDetailTabBody(tabId)}
+                                  </div>
+                                ))}
+                              </div>
+                            ) : null}
+                          </div>
                         </div>
-                      </div>
-                    </motion.div>
-                  </AnimatePresence>
-                </div>
-              </section>
+                      </motion.div>
+                    </AnimatePresence>
+                  </div>
+                </section>
+              </div>
                 </>
               )}
             </div>

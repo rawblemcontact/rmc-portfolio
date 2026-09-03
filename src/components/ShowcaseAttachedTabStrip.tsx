@@ -7,6 +7,9 @@ export type ShowcaseTabId = "tab-1" | "tab-2" | "tab-3" | "tab-4" | "tab-5" | "t
 
 /** Matches PROJECT DETAILS works-strip arrow tap feedback duration. */
 const FEATURED_ARROW_TAP_FEEDBACK_MS = 260;
+/** Mobile FEATURED WRITING card resize keyframes match PROJECT DETAILS. */
+const FEATURED_CARD_RESIZE_DUR_MS = 420;
+const FEATURED_CARD_RESIZE_EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
 
 const TAB_ORDER: ShowcaseTabId[] = ["tab-1", "tab-2", "tab-3", "tab-4", "tab-5", "tab-6"];
 
@@ -104,6 +107,8 @@ export function ShowcaseAttachedTabStrip({
   const panelShellRef = useRef<HTMLDivElement>(null);
   /** Natural (unpadded) active tab content — measured separately from the page-height reserve. */
   const activeNaturalRef = useRef<HTMLDivElement>(null);
+  const cardChromeHeightRef = useRef<number | null>(null);
+  const cardResizeAnimationRef = useRef<Animation | null>(null);
   const hiddenPanelMeasureRefs = useRef<Record<ShowcaseTabId, HTMLDivElement | null>>({
     "tab-1": null,
     "tab-2": null,
@@ -113,15 +118,11 @@ export function ShowcaseAttachedTabStrip({
     "tab-6": null,
   });
   const mobilePanelTallestRef = useRef(0);
+  const mobileFolderChromeHeightRef = useRef<number | null>(null);
   const [tabGeom, setTabGeom] = useState({ ml: 0, w: 0 });
   const [bodyContentWidth, setBodyContentWidth] = useState(0);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [isPhoneViewport, setIsPhoneViewport] = useState(false);
-  /**
-   * Phone-only: distance from projects panel viewport top to Featured Writing folder top,
-   * captured on tab select and restored after layout (belt-and-suspenders with height reserve).
-   */
-  const folderAnchorOffsetRef = useRef<number | null>(null);
   const [mobileSwitchDir, setMobileSwitchDir] = useState<1 | -1>(1);
   const mobileSwipeStartRef = useRef<{ x: number; y: number } | null>(null);
   const [pressedNavArrow, setPressedNavArrow] = useState<"prev" | "next" | null>(null);
@@ -249,30 +250,84 @@ export function ShowcaseAttachedTabStrip({
     return () => mq.removeListener(apply);
   }, []);
 
-  const captureFolderScrollAnchor = useCallback(() => {
-    if (!isPhoneViewport) return;
-    const folder = folderRef.current;
-    const scrollEl = folder?.closest<HTMLElement>('[aria-label="Section: projects"]');
-    if (!folder || !scrollEl) return;
-    folderAnchorOffsetRef.current =
-      folder.getBoundingClientRect().top - scrollEl.getBoundingClientRect().top;
-  }, [isPhoneViewport]);
+  const animateMobileCardToTab = useCallback(
+    (nextId: ShowcaseTabId) => {
+      if (!isPhoneViewport || reduceMotion) return;
+
+      const card = bodyPadRef.current;
+      const activeNatural = activeNaturalRef.current;
+      const targetProbe = hiddenPanelMeasureRefs.current[nextId];
+      if (!card || !activeNatural || !targetProbe) return;
+
+      const fromHeight = card.getBoundingClientRect().height;
+      const measuredChromeHeight = Math.max(
+        0,
+        fromHeight - activeNatural.getBoundingClientRect().height,
+      );
+      const chromeHeight = cardChromeHeightRef.current ?? measuredChromeHeight;
+      cardChromeHeightRef.current = chromeHeight;
+      const toHeight = chromeHeight + targetProbe.getBoundingClientRect().height;
+
+      cardResizeAnimationRef.current?.cancel();
+      card.style.pointerEvents = "";
+      if (Math.abs(toHeight - fromHeight) <= 0.5) return;
+
+      /*
+       * A touch pan that starts on a height-animating element is cancelled by mobile
+       * browsers. Route hit-testing through the stable outer shell during the resize.
+       */
+      card.style.pointerEvents = "none";
+      const resizeAnimation = card.animate(
+        [
+          { height: `${fromHeight}px` },
+          { height: `${toHeight}px` },
+        ],
+        {
+          duration: FEATURED_CARD_RESIZE_DUR_MS,
+          easing: FEATURED_CARD_RESIZE_EASE,
+          fill: "both",
+        },
+      );
+      cardResizeAnimationRef.current = resizeAnimation;
+      resizeAnimation.onfinish = () => {
+        if (cardResizeAnimationRef.current !== resizeAnimation) return;
+        resizeAnimation.cancel();
+        cardResizeAnimationRef.current = null;
+        card.style.pointerEvents = "";
+      };
+    },
+    [isPhoneViewport, reduceMotion],
+  );
 
   const handleSelectPrevTab = useCallback(() => {
     if (!canSelectPrev) return;
-    captureFolderScrollAnchor();
     setMobileSwitchDir(-1);
     const previous = TAB_ORDER[activeTabIndex - 1];
-    if (previous) onTabChange(previous);
-  }, [activeTabIndex, canSelectPrev, captureFolderScrollAnchor, onTabChange]);
+    if (previous) {
+      animateMobileCardToTab(previous);
+      onTabChange(previous);
+    }
+  }, [
+    activeTabIndex,
+    animateMobileCardToTab,
+    canSelectPrev,
+    onTabChange,
+  ]);
 
   const handleSelectNextTab = useCallback(() => {
     if (!canSelectNext) return;
-    captureFolderScrollAnchor();
     setMobileSwitchDir(1);
     const next = TAB_ORDER[activeTabIndex + 1];
-    if (next) onTabChange(next);
-  }, [activeTabIndex, canSelectNext, captureFolderScrollAnchor, onTabChange]);
+    if (next) {
+      animateMobileCardToTab(next);
+      onTabChange(next);
+    }
+  }, [
+    activeTabIndex,
+    animateMobileCardToTab,
+    canSelectNext,
+    onTabChange,
+  ]);
 
   const clearNavArrowReleaseTimer = useCallback(() => {
     if (navArrowReleaseTimerRef.current !== null) {
@@ -323,12 +378,22 @@ export function ShowcaseAttachedTabStrip({
     return () => clearNavArrowReleaseTimer();
   }, [clearNavArrowReleaseTimer]);
 
+  useEffect(() => {
+    return () => {
+      cardResizeAnimationRef.current?.cancel();
+      cardResizeAnimationRef.current = null;
+      if (bodyPadRef.current) {
+        bodyPadRef.current.style.pointerEvents = "";
+      }
+    };
+  }, []);
+
   const handleSelectTab = useCallback(
     (id: ShowcaseTabId) => {
-      captureFolderScrollAnchor();
+      animateMobileCardToTab(id);
       onTabChange(id);
     },
-    [captureFolderScrollAnchor, onTabChange],
+    [animateMobileCardToTab, onTabChange],
   );
 
   const handleMobileSelectorTouchStart = useCallback(
@@ -393,19 +458,18 @@ export function ShowcaseAttachedTabStrip({
       : panel;
 
   /**
-   * Phone-only: keep projects scroll height at the tallest Featured Writing panel via
-   * paddingBottom on an outer shell. The body card / tab section itself stays content-sized
-   * so shorter/longer blurbs shrink or grow naturally without jolting page position.
+   * Phone-only: keep page height at the tallest Featured Writing state on the outer shell.
+   * The folder and inner card remain natural-sized, with no compensating bottom padding.
    */
   useLayoutEffect(() => {
     const shell = panelShellRef.current;
     if (!isPhoneViewport) {
       mobilePanelTallestRef.current = 0;
+      mobileFolderChromeHeightRef.current = null;
+      cardChromeHeightRef.current = null;
       if (shell) {
         shell.style.minHeight = "";
-        shell.style.paddingBottom = "";
       }
-      folderAnchorOffsetRef.current = null;
       return;
     }
 
@@ -419,6 +483,14 @@ export function ShowcaseAttachedTabStrip({
     const activeH = activeNatural
       ? Math.ceil(activeNatural.getBoundingClientRect().height)
       : 0;
+    const card = bodyPadRef.current;
+    if (card && activeNatural && !cardResizeAnimationRef.current) {
+      cardChromeHeightRef.current = Math.max(
+        0,
+        card.getBoundingClientRect().height -
+          activeNatural.getBoundingClientRect().height,
+      );
+    }
     if (activeH > 0) {
       tallest = Math.max(tallest, activeH);
     }
@@ -426,28 +498,24 @@ export function ShowcaseAttachedTabStrip({
       mobilePanelTallestRef.current = Math.max(mobilePanelTallestRef.current, tallest);
     }
     const reserved = mobilePanelTallestRef.current;
-    const pad = reserved > 0 && activeH > 0 ? Math.max(0, reserved - activeH) : 0;
-    if (shell) {
-      shell.style.minHeight = "";
-      shell.style.paddingBottom = pad > 0 ? `${pad}px` : "";
-    }
-
-    const savedOffset = folderAnchorOffsetRef.current;
-    if (savedOffset == null) return;
     const folder = folderRef.current;
-    const scrollEl = folder?.closest<HTMLElement>('[aria-label="Section: projects"]');
-    if (!folder || !scrollEl) return;
-
-    const newOffset =
-      folder.getBoundingClientRect().top - scrollEl.getBoundingClientRect().top;
-    scrollEl.scrollTop += newOffset - savedOffset;
-    folderAnchorOffsetRef.current =
-      folder.getBoundingClientRect().top - scrollEl.getBoundingClientRect().top;
+    if (folder && activeNatural && !cardResizeAnimationRef.current) {
+      mobileFolderChromeHeightRef.current = Math.max(
+        0,
+        folder.getBoundingClientRect().height -
+          activeNatural.getBoundingClientRect().height,
+      );
+    }
+    const folderChromeHeight = mobileFolderChromeHeightRef.current ?? 0;
+    if (shell && reserved > 0) {
+      shell.style.minHeight = `${Math.ceil(folderChromeHeight + reserved)}px`;
+    }
   }, [activeId, isPhoneViewport, previewColumnWidthPx]);
 
   return (
     <div className={`flex w-full flex-col ${className}`}>
       <div
+        ref={panelShellRef}
         className={[
           "featured-writing-shell flex min-w-0 w-full max-w-full flex-col",
         ].join(" ")}
@@ -616,7 +684,7 @@ export function ShowcaseAttachedTabStrip({
             </div>
           </div>
 
-          <div ref={panelShellRef} className="relative min-w-0 w-full">
+          <div className="relative min-w-0 w-full">
             <div
               className={[
                 "featured-writing-body-card featured-writing-inner-rule-body-top relative z-[1] flex flex-col overflow-visible",
@@ -642,7 +710,7 @@ export function ShowcaseAttachedTabStrip({
                     <div
                       aria-hidden
                       inert
-                      className="pointer-events-none absolute left-0 top-0 -z-10 w-full"
+                      className="pointer-events-none absolute left-0 top-0 -z-10 h-0 w-full overflow-hidden"
                       style={{ visibility: "hidden" }}
                     >
                       {TAB_ORDER.map((id) => (
