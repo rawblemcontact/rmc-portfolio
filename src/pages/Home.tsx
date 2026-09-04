@@ -1647,10 +1647,11 @@ const HERO_CROP_STAGE_PX = 1680;
 const HERO_VIDEO_CARD_WIDTH_CLASS =
   "max-[639px]:w-full max-[639px]:max-w-full w-[calc(min(100%,58rem)-8.4rem+2*max(1.25rem,min(4vw,2.5rem)))] sm:w-[calc(min(100%,58rem)-8.9rem+2*max(1.25rem,min(4vw,2.5rem)))]";
 /**
- * Fixed layout width for crop-mode video/probe (58rem − 8.9rem + 5rem at 16px root).
+ * Fixed layout width for crop-mode video/probe (desktop hard-crop design).
  * Avoids % / MQ / zoom-path drift so hard-crop composition never reflows on resize.
+ * Visual shared width = layout × HERO_CROP_VIDEO_ZOOM (980 × 0.9 = 882).
  */
-const HERO_CROP_VIDEO_LAYOUT_WIDTH_PX = 58 * 16 - 8.9 * 16 + 5 * 16; // 865.6
+const HERO_CROP_VIDEO_LAYOUT_WIDTH_PX = 980;
 /** Crop-mode visual zoom — matches HERO_VIDEO_GLOBAL_LAYOUT_DEFAULTS heightScale. */
 const HERO_CROP_VIDEO_ZOOM = 0.9;
 /** Visual shared bounds width = layout × zoom (video face after center-origin scale). */
@@ -1658,17 +1659,22 @@ const HERO_CROP_SHARED_BOUNDS_WIDTH_PX = HERO_CROP_VIDEO_LAYOUT_WIDTH_PX * HERO_
 /**
  * Crop-mode SVG ink ↔ video-edge X (local px). Hard-coded so resize / breakpoint
  * remasure cannot freeze a mid-cascade or mid-entrance value.
+ * Scaled with layout footprint (980/865.6) so ink↔edge parity stays with the larger crop.
  */
-const HERO_CROP_SVG_ALIGN_X_PX = -19;
-/** Frozen video face height in crop mode — no vh tracking. */
-const HERO_CROP_VIDEO_FACE_HEIGHT_PX = 486;
-/** Frozen display size at crop design (16px root) — px so html rem MQ cannot reflow. */
-const HERO_CROP_DISPLAY_FONT_CLASS = "text-[95.2px] leading-[0.78]";
-const HERO_CROP_TAGLINE_FONT_CLASS = "text-[14.72px]";
+const HERO_CROP_SVG_ALIGN_X_PX = -22;
+/** Frozen video face height in crop mode — no vh tracking. (~486 × 980/865.6). */
+const HERO_CROP_VIDEO_FACE_HEIGHT_PX = 551;
+/**
+ * Frozen display / chrome sizes at crop design — scaled with layout footprint
+ * (980/865.6) so name lockup + PORTFOLIO stay cohesive with the larger video.
+ * px so html rem MQ cannot reflow.
+ */
+const HERO_CROP_DISPLAY_FONT_CLASS = "text-[107.8px] leading-[0.78]";
+const HERO_CROP_TAGLINE_FONT_CLASS = "text-[16.67px]";
 const HERO_CROP_PORTFOLIO_BUTTON_CLASS =
-  "!h-[74.256px] max-h-[77.6px] !px-[20px] [&_.texts]:!text-[16.8px] [&_.texts]:!tracking-[0.085em]";
+  "!h-[84.07px] max-h-[87.86px] !px-[22.64px] [&_.texts]:!text-[19.02px] [&_.texts]:!tracking-[0.085em]";
 /** Gap between video block and name pack in crop mode (fixed). */
-const HERO_CROP_STACK_GAP_CLASS = "gap-[12px]";
+const HERO_CROP_STACK_GAP_CLASS = "gap-[13.59px]";
 /** Fluid tablet/desktop-pre-crop display (vw). Crop uses px constants above. */
 const HERO_FLUID_DISPLAY_FONT_CLASS =
   "text-[clamp(2.28rem,8.85vw,5.95rem)] max-[400px]:text-[clamp(2rem,8.1vw,5.95rem)] leading-[0.8] sm:leading-[0.78]";
@@ -2857,7 +2863,7 @@ const HeroNameReveal = ({
               isMobileHeroLayout
                 ? `px-3 pt-3 pb-[0.234375rem] sm:rounded-xl sm:px-4 sm:pt-3.5 sm:pb-[0.28125rem] ${HERO_NAME_MOBILE_NAME_BOX_CLASS}`
                 : isHeroCropLayout
-                  ? "rounded-xl px-[16px] pt-[14px] pb-[4.5px]"
+                  ? "rounded-xl px-[18.11px] pt-[15.85px] pb-[5.09px]"
                   : "px-3 pt-3 pb-[0.234375rem] sm:rounded-xl sm:px-4 sm:pt-3.5 sm:pb-[0.28125rem]"
             }`}
             aria-hidden
@@ -2954,7 +2960,7 @@ const HeroNameReveal = ({
               isMobileHeroLayout ? "hidden" : ""
             } ${
               isHeroCropLayout
-                ? "-translate-y-[7px] pl-[6px] sm:pl-[20px]"
+                ? "-translate-y-[7.93px] pl-[6.79px] sm:pl-[22.64px]"
                 : "-translate-x-1 -translate-y-[0.44rem] pl-1.5 pr-1.5 sm:-translate-x-1.5 sm:-translate-y-[0.44rem] sm:pl-5 sm:pr-4"
             }`}
           >
@@ -2974,7 +2980,7 @@ const HeroNameReveal = ({
               isMobileHeroLayout
                 ? `pl-[1.16rem] pr-3 py-[0.4rem] sm:mt-0 sm:rounded-xl sm:pl-[1.42rem] sm:pr-4 sm:py-[0.45rem] text-[clamp(0.8rem,2.25vw,0.92rem)] sm:text-[clamp(0.8rem,2.25vw,0.92rem)] ${HERO_NAME_MOBILE_TAGLINE_CLASS}`
                 : isHeroCropLayout
-                  ? `rounded-xl pl-[22.72px] pr-4 py-[7.2px] ${HERO_CROP_TAGLINE_FONT_CLASS}`
+                  ? `rounded-xl pl-[25.72px] pr-4 py-[8.15px] ${HERO_CROP_TAGLINE_FONT_CLASS}`
                   : `pl-[1.16rem] pr-3 py-[0.4rem] sm:mt-0 sm:rounded-xl sm:pl-[1.42rem] sm:pr-4 sm:py-[0.45rem] ${HERO_FLUID_TAGLINE_FONT_CLASS}`
             }`}
             aria-hidden
