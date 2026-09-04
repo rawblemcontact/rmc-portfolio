@@ -7,9 +7,12 @@ export type ShowcaseTabId = "tab-1" | "tab-2" | "tab-3" | "tab-4" | "tab-5" | "t
 
 /** Matches PROJECT DETAILS works-strip arrow tap feedback duration. */
 const FEATURED_ARROW_TAP_FEEDBACK_MS = 260;
-/** Mobile FEATURED WRITING card resize keyframes match PROJECT DETAILS. */
+/** Phone + tablet portrait FEATURED WRITING card resize keyframes match PROJECT DETAILS. */
 const FEATURED_CARD_RESIZE_DUR_MS = 420;
 const FEATURED_CARD_RESIZE_EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
+/** Phone + tablet portrait — anti-jump height reserve + card resize. */
+const FEATURED_COMPACT_PORTRAIT_MQ =
+  "(max-width: 639.98px), (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait)";
 
 const TAB_ORDER: ShowcaseTabId[] = ["tab-1", "tab-2", "tab-3", "tab-4", "tab-5", "tab-6"];
 
@@ -84,7 +87,7 @@ export type ShowcaseAttachedTabStripProps = {
         previewWidthPx: number;
         tabInsetLeftPx: number;
         previewGutterPx: number;
-        /** Hidden phone-only measurement copy; avoid expensive media work. */
+        /** Hidden compact-portrait measurement copy; avoid expensive media work. */
         measureOnly?: boolean;
       }) => React.ReactNode);
 };
@@ -103,7 +106,7 @@ export function ShowcaseAttachedTabStrip({
   const tabListRef = useRef<HTMLDivElement>(null);
   const bodyPadRef = useRef<HTMLDivElement>(null);
   const folderRef = useRef<HTMLDivElement>(null);
-  /** Phone-only: outer pad keeps page scroll height at tallest tab; card itself stays natural. */
+  /** Compact portrait: outer pad keeps page scroll height at tallest tab; card itself stays natural. */
   const panelShellRef = useRef<HTMLDivElement>(null);
   /** Natural (unpadded) active tab content — measured separately from the page-height reserve. */
   const activeNaturalRef = useRef<HTMLDivElement>(null);
@@ -122,7 +125,6 @@ export function ShowcaseAttachedTabStrip({
   const [tabGeom, setTabGeom] = useState({ ml: 0, w: 0 });
   const [bodyContentWidth, setBodyContentWidth] = useState(0);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
-  const [isPhoneViewport, setIsPhoneViewport] = useState(false);
   const [mobileSwitchDir, setMobileSwitchDir] = useState<1 | -1>(1);
   const mobileSwipeStartRef = useRef<{ x: number; y: number } | null>(null);
   const [pressedNavArrow, setPressedNavArrow] = useState<"prev" | "next" | null>(null);
@@ -225,22 +227,8 @@ export function ShowcaseAttachedTabStrip({
   }, [activeId, syncFit]);
 
   useEffect(() => {
-    const mq = window.matchMedia(
-      "(max-width: 639.98px), (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait)",
-    );
+    const mq = window.matchMedia(FEATURED_COMPACT_PORTRAIT_MQ);
     const apply = () => setIsMobileViewport(mq.matches);
-    apply();
-    if (typeof mq.addEventListener === "function") {
-      mq.addEventListener("change", apply);
-      return () => mq.removeEventListener("change", apply);
-    }
-    mq.addListener(apply);
-    return () => mq.removeListener(apply);
-  }, []);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 639.98px)");
-    const apply = () => setIsPhoneViewport(mq.matches);
     apply();
     if (typeof mq.addEventListener === "function") {
       mq.addEventListener("change", apply);
@@ -252,7 +240,7 @@ export function ShowcaseAttachedTabStrip({
 
   const animateMobileCardToTab = useCallback(
     (nextId: ShowcaseTabId) => {
-      if (!isPhoneViewport || reduceMotion) return;
+      if (!isMobileViewport || reduceMotion) return;
 
       const card = bodyPadRef.current;
       const activeNatural = activeNaturalRef.current;
@@ -296,7 +284,7 @@ export function ShowcaseAttachedTabStrip({
         card.style.pointerEvents = "";
       };
     },
-    [isPhoneViewport, reduceMotion],
+    [isMobileViewport, reduceMotion],
   );
 
   const handleSelectPrevTab = useCallback(() => {
@@ -458,12 +446,12 @@ export function ShowcaseAttachedTabStrip({
       : panel;
 
   /**
-   * Phone-only: keep page height at the tallest Featured Writing state on the outer shell.
+   * Phone + tablet portrait: keep page height at the tallest Featured Writing state on the outer shell.
    * The folder and inner card remain natural-sized, with no compensating bottom padding.
    */
   useLayoutEffect(() => {
     const shell = panelShellRef.current;
-    if (!isPhoneViewport) {
+    if (!isMobileViewport) {
       mobilePanelTallestRef.current = 0;
       mobileFolderChromeHeightRef.current = null;
       cardChromeHeightRef.current = null;
@@ -510,7 +498,7 @@ export function ShowcaseAttachedTabStrip({
     if (shell && reserved > 0) {
       shell.style.minHeight = `${Math.ceil(folderChromeHeight + reserved)}px`;
     }
-  }, [activeId, isPhoneViewport, previewColumnWidthPx]);
+  }, [activeId, isMobileViewport, previewColumnWidthPx]);
 
   return (
     <div className={`flex w-full flex-col ${className}`}>
@@ -706,7 +694,7 @@ export function ShowcaseAttachedTabStrip({
                   <div ref={activeNaturalRef} className="min-w-0">
                     {resolvedPanel != null ? resolvedPanel : null}
                   </div>
-                  {isPhoneViewport && typeof panel === "function" ? (
+                  {isMobileViewport && typeof panel === "function" ? (
                     <div
                       aria-hidden
                       inert

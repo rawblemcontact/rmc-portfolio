@@ -4838,7 +4838,7 @@ const RainbowMenuSlide = ({
               />
               <motion.span
                 aria-hidden
-                className={`absolute bottom-0 left-0 right-0 origin-left ${item.id === "profile" ? "h-[2.5px]" : "h-[2px]"} ${item.color}`}
+                className={`absolute bottom-0 left-0 right-0 origin-left ${item.id === "profile" || item.id === "skills" ? "h-[2px] md:h-[2.5px]" : "h-[2px]"} ${item.color}`}
                 initial={false}
                 animate={{
                   scaleX: hoveredId === item.id || pendingNavId === item.id ? 1 : 0,
@@ -5145,7 +5145,7 @@ const SideNavOverlay = ({
                   </div>
                   <motion.span
                     aria-hidden
-                    className={`absolute bottom-0 left-0 right-0 origin-left ${item.id === "profile" ? "h-[2.5px]" : "h-[2px]"} ${item.color}`}
+                    className={`absolute bottom-0 left-0 right-0 origin-left h-[2px] ${item.color}`}
                     initial={false}
                     animate={{ scaleX: hoveredId === item.id || pendingNavId === item.id ? 1 : 0 }}
                     transition={CMD_HOVER}
@@ -5532,6 +5532,8 @@ const PhantomProfile = ({
     useState<ProfileRedLineDebugValues>(PROFILE_RED_LINE_DEBUG_DEFAULTS);
   const [overlayRevealed, setOverlayRevealed] = useState(false);
   const [rawblemFloatReady, setRawblemFloatReady] = useState(false);
+  /** Desktop mascot: entrance finished once — re-arm float after resize/inView flickers. */
+  const [rawblemEntered, setRawblemEntered] = useState(false);
   const [profileHeaderSlide, setProfileHeaderSlide] = useState(false);
   /** Latch: keep header/red line settled after first play — scroll-off must not replay. */
   const [profileHeaderLocked, setProfileHeaderLocked] = useState(false);
@@ -5638,11 +5640,11 @@ const PhantomProfile = ({
     ? buildDesktopLayoutSideStyle(activeProfileDesktopLayout, "right", "transform")
     : undefined;
 
-  const profileRedLineSpanDebugStyle = portfolioDebugEnabled
+  const profileRedLineSpanDebugStyle = allowDebugPanels && portfolioDebugEnabled
     ? buildProfileRedLineSpanDebugStyle(profileRedLineDebugValues)
     : undefined;
 
-  const profileRedLinePillDebugStyle = portfolioDebugEnabled
+  const profileRedLinePillDebugStyle = allowDebugPanels && portfolioDebugEnabled
     ? buildProfileRedLinePillDebugStyle(profileRedLineDebugValues)
     : undefined;
 
@@ -5655,7 +5657,11 @@ const PhantomProfile = ({
   }, []);
 
   useLayoutEffect(() => {
-    if (profileMascotInstant) setRawblemFloatReady(true);
+    if (profileMascotInstant) {
+      setRawblemFloatReady(true);
+      // Instant path already shows the mascot — treat as entered for desktop return after resize.
+      setRawblemEntered(true);
+    }
   }, [profileMascotInstant]);
 
   // Content first: metadata pill + summary once per section open; scroll-off must not replay.
@@ -5676,6 +5682,8 @@ const PhantomProfile = ({
       setProfileHeaderSlide(false);
       setProfileHeaderLocked(false);
       setProfileRedLineLocked(false);
+      setRawblemEntered(false);
+      setRawblemFloatReady(false);
       return;
     }
     if (profileHeaderLocked) {
@@ -5702,8 +5710,32 @@ const PhantomProfile = ({
 
   useEffect(() => {
     if (profileMascotInstant) return;
-    if (!rawblemInView) setRawblemFloatReady(false);
-  }, [rawblemInView, profileMascotInstant]);
+
+    const syncRawblemFloat = () => {
+      const el = rawblemRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const visible =
+        rect.height > 0 &&
+        rect.width > 0 &&
+        rect.bottom > 0 &&
+        rect.top < window.innerHeight;
+      if (!visible) {
+        setRawblemFloatReady(false);
+        return;
+      }
+      // Entrance already done (or returning from tablet) — keep float alive after resize remounts.
+      if (rawblemEntered) setRawblemFloatReady(true);
+    };
+
+    // Defer one frame so conditional mascot remounts attach rawblemRef before measure.
+    const raf = window.requestAnimationFrame(syncRawblemFloat);
+    window.addEventListener("resize", syncRawblemFloat);
+    return () => {
+      window.cancelAnimationFrame(raf);
+      window.removeEventListener("resize", syncRawblemFloat);
+    };
+  }, [profileMascotInstant, rawblemEntered, rawblemInView, profileTabletViewport, profileDesktopViewport]);
 
   return (
     <section id="profile" className="relative w-full min-w-0 overflow-x-hidden overflow-y-visible bg-black text-white scroll-mt-6 max-lg:min-h-min lg:min-h-screen">
@@ -5777,6 +5809,7 @@ const PhantomProfile = ({
             >
               <div className={PROFILE_MASCOT_FRAME} style={profileRightDebugStyle}>
                 <motion.img
+                  key={rawblemFloatReady ? "rawblem-float" : "rawblem-rest"}
                   src="/rawblem3.svg"
                   alt="RAWBLEM"
                   width={300}
@@ -5803,12 +5836,14 @@ const PhantomProfile = ({
             viewport={{ once: false, amount: 0.2 }}
             transition={{ duration: 0.52, ease: [0.16, 1, 0.3, 1] }}
             onAnimationComplete={() => {
+              setRawblemEntered(true);
               if (rawblemInView) setRawblemFloatReady(true);
             }}
             className={`${PROFILE_MASCOT_COLUMN} profile-tablet-mascot-column max-sm:hidden`}
           >
             <div className={PROFILE_MASCOT_FRAME} style={profileRightDebugStyle}>
               <motion.img
+                key={rawblemFloatReady ? "rawblem-float" : "rawblem-rest"}
                 src="/rawblem3.svg"
                 alt="RAWBLEM"
                 width={300}
@@ -5838,7 +5873,7 @@ const PhantomProfile = ({
                color="text-white"
                showBar={false}
                compact
-               className="!mb-3 max-lg:mt-0 lg:mt-0 -ml-[3px]"
+               className="!mb-3 max-lg:mt-0 lg:mt-0 -ml-[5px]"
                titleClassName="max-sm:translate-y-[2px]"
                slideFade
                slideFadeDuration={PROFILE_HEADER_ENTER_DUR_S}
@@ -5849,11 +5884,11 @@ const PhantomProfile = ({
              />
             <div className={PROFILE_CARD_COLUMN}>
              <div
-               className="relative mt-1 min-h-[2px] w-full overflow-hidden"
+               className="profile-main-accent-line relative mt-1 min-h-[2px] w-full overflow-hidden"
              >
                <motion.span
                  aria-hidden
-                className="absolute bottom-0 left-0.5 right-0 h-[2px]"
+                className="profile-main-accent-line-span absolute bottom-0 left-0 right-0.5 h-[2px]"
                 style={
                   portfolioDebugEnabled
                     ? { ...profileRedLineSpanDebugStyle, transformOrigin: "left center" }
@@ -13562,6 +13597,21 @@ export default function Home() {
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
       if (target !== panel && !panel.contains(target)) return;
+      const isDesktopTopNav =
+        window.matchMedia(`(min-width: ${TOP_NAV_DESKTOP_MIN_PX}px)`).matches &&
+        !matchesTopNavTabletViewport();
+      // Desktop: nested/internal scroll must not fade top nav (PROFILE card + PROJECT DETAILS).
+      if (isDesktopTopNav && target !== panel) {
+        if (
+          currentSection === "profile" &&
+          target.closest(".profile-summary-card-scroll")
+        ) {
+          return;
+        }
+        if (currentSection === "projects" && activeShowcaseProjectId) {
+          return;
+        }
+      }
       if (isVerticalScroller(panel)) {
         if (target !== panel) return;
         topNavFadeDistanceRef.current = Math.max(0, panel.scrollTop);
@@ -14104,6 +14154,7 @@ export default function Home() {
         >
           {!(currentSlideId === "hero" && currentSection === null && !isResumeMode) && (
             <motion.div
+              layoutId={reduceMotion ? undefined : "resume-button"}
               whileTap={reduceMotion ? undefined : NAV_ICON_TAP}
               transition={NAV_ICON_TAP_RELEASE}
             >

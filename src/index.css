@@ -1505,8 +1505,9 @@
     backdrop-filter: var(--portfolio-glass-blur);
   }
 
-  /* Phone: PROJECTS owns vertical scrolling; never trap a page pan in description copy. */
-  @media (max-width: 639.98px) {
+  /* Phone + tablet portrait: PROJECTS owns vertical scrolling; never trap a page pan in description copy. */
+  @media (max-width: 639.98px),
+    (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
     [aria-label="Section: projects"],
     #projects {
       overflow-anchor: none;
@@ -2738,8 +2739,11 @@
     transform-origin: center center;
   }
 
+  /* Match main-menu EXPERIENCE underline: 2px solid --palette-blue */
   #experience .career-nav-section-divider {
-    border-bottom-color: var(--palette-blue);
+    height: 2px;
+    border-bottom: none;
+    background: var(--palette-blue);
   }
 
   #skills .skills-subpanel-header .career-nav-section-divider,
@@ -6053,8 +6057,17 @@
       .video-editing-detail:not(.video-editing-detail--interactive-media)
       .video-editing-works-strip
       .video-editing-works-strip-thumb {
-      flex-basis: calc((100% - 1.25rem) / 3) !important;
-      max-width: calc((100% - 1.25rem) / 3);
+      /* -1px slack: exact (100% − gaps) / n subpixel-rounds and clips the last thumb’s right edge */
+      flex-basis: calc((100% - 1.25rem) / 3 - 1px) !important;
+      max-width: calc((100% - 1.25rem) / 3 - 1px);
+    }
+
+    #projects.projects-slaywire-detail-open
+      .video-editing-detail:not(.video-editing-detail--interactive-media)
+      .video-editing-works-strip
+      .video-editing-works-strip-thumb {
+      flex-basis: calc((100% - 1.875rem) / 4 - 1px) !important;
+      max-width: calc((100% - 1.875rem) / 4 - 1px);
     }
   }
 
@@ -8441,7 +8454,8 @@
     min-width: 0 !important;
     max-width: none !important;
     box-sizing: border-box;
-    padding: 0 var(--career-tab-hover-shift) calc(20px * var(--experience-scale)) 0 !important;
+    /* No right pad — tab buttons match blue line width; hover shift uses rail gutter */
+    padding: 0 0 calc(20px * var(--experience-scale)) 0 !important;
     gap: calc(11px * var(--experience-scale)) !important;
     border: 0 !important;
     border-right: 0 !important;
@@ -8451,6 +8465,7 @@
     filter: none !important;
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
+    overflow: visible !important;
   }
 
   #experience .tabs-nav .tab-btn {

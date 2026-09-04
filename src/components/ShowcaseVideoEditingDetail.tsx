@@ -238,9 +238,12 @@ const DETAIL_TAB_BODY_IN_S = 0.24;
 const DETAIL_TAB_BODY_IN_DELAY_S = Math.max(0, DETAIL_TAB_SWAP_DUR_S - DETAIL_TAB_BODY_OUT_S);
 /** Yellow underline draw / retract — same length as tab FLIP; starts only after position settles. */
 const DETAIL_TAB_UNDERLINE_DUR_MS = Math.round(DETAIL_TAB_SWAP_DUR_S * 1000);
-/** Mobile description-card height keyframes stay synchronized with the tab swap. */
+/** Description-card height keyframes stay synchronized with the tab swap (phone + tablet portrait). */
 const DETAIL_CARD_RESIZE_DUR_MS = DETAIL_TAB_UNDERLINE_DUR_MS;
 const DETAIL_CARD_RESIZE_EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
+/** Phone + tablet portrait — same compact band as FEATURED WRITING anti-jump. */
+const DETAIL_COMPACT_PORTRAIT_MQ =
+  "(max-width: 639.98px), (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait)";
 
 function matchesProjectsTabbedDetailViewport() {
   return typeof window !== "undefined" && window.matchMedia(PROJECTS_TABBED_DETAIL_MQ).matches;
@@ -270,7 +273,7 @@ export function ShowcaseVideoEditingDetail({
   const [isIpadLandscapeViewport, setIsIpadLandscapeViewport] = useState(
     matchesProjectsTabbedDetailViewport,
   );
-  const [isPhoneViewport, setIsPhoneViewport] = useState(false);
+  const [isCompactPortraitViewport, setIsCompactPortraitViewport] = useState(false);
   const [activeDetailCardTab, setActiveDetailCardTab] = useState<DetailCardTabId>("overview");
   const [detailCardTabOrder, setDetailCardTabOrder] = useState<DetailCardTabId[]>(() => [
     ...DETAIL_CARD_TAB_IDS,
@@ -287,7 +290,7 @@ export function ShowcaseVideoEditingDetail({
   } = useCutoffScrollFade(true);
   const underlineActiveTabRef = useRef<DetailCardTabId>("overview");
   const [detailCardMinHeightPx, setDetailCardMinHeightPx] = useState<number | null>(null);
-  /** Phone-only: reserve the tallest tab outside the natural-height description card. */
+  /** Phone + tablet portrait: reserve the tallest tab outside the natural-height description card. */
   const detailPanelReserveRef = useRef<HTMLDivElement | null>(null);
   const detailTabActiveNaturalRef = useRef<HTMLDivElement | null>(null);
   const detailTabHiddenMeasureRefs = useRef<Record<DetailCardTabId, HTMLDivElement | null>>({
@@ -339,8 +342,8 @@ export function ShowcaseVideoEditingDetail({
   }, []);
 
   useEffect(() => {
-    const mq = window.matchMedia("(max-width: 639.98px)");
-    const onChange = () => setIsPhoneViewport(mq.matches);
+    const mq = window.matchMedia(DETAIL_COMPACT_PORTRAIT_MQ);
+    const onChange = () => setIsCompactPortraitViewport(mq.matches);
     onChange();
     if (typeof mq.addEventListener === "function") {
       mq.addEventListener("change", onChange);
@@ -1003,7 +1006,7 @@ export function ShowcaseVideoEditingDetail({
     (nextTabId: DetailCardTabId) => {
       if (nextTabId === activeDetailCardTab) return;
 
-      if (isPhoneViewport && !isIpadLandscapeViewport && !reduceMotion) {
+      if (isCompactPortraitViewport && !isIpadLandscapeViewport && !reduceMotion) {
         const cardSurface = detailCardSurfaceRef.current;
         const activeNatural = detailTabActiveNaturalRef.current;
         const targetProbe = detailTabHiddenMeasureRefs.current[nextTabId];
@@ -1055,7 +1058,7 @@ export function ShowcaseVideoEditingDetail({
       activeDetailCardTab,
       capturePortraitTabScrollAnchor,
       isIpadLandscapeViewport,
-      isPhoneViewport,
+      isCompactPortraitViewport,
       reduceMotion,
     ],
   );
@@ -1199,7 +1202,7 @@ export function ShowcaseVideoEditingDetail({
 
   useLayoutEffect(() => {
     const reserve = detailPanelReserveRef.current;
-    if (!isPhoneViewport || isIpadLandscapeViewport) {
+    if (!isCompactPortraitViewport || isIpadLandscapeViewport) {
       if (reserve) reserve.style.minHeight = "";
       return;
     }
@@ -1224,7 +1227,7 @@ export function ShowcaseVideoEditingDetail({
       detailCardChromeHeightRef.current ?? measuredChromeHeight;
     reserve.style.minHeight =
       tallest > 0 ? `${Math.ceil(fixedChromeHeight + tallest)}px` : "";
-  }, [activeDetailCardTab, activeVideo.id, card.id, isIpadLandscapeViewport, isPhoneViewport]);
+  }, [activeDetailCardTab, activeVideo.id, card.id, isIpadLandscapeViewport, isCompactPortraitViewport]);
 
   useEffect(() => {
     return () => {
@@ -1590,7 +1593,7 @@ export function ShowcaseVideoEditingDetail({
                             <div ref={detailTabActiveNaturalRef} className="min-w-0">
                               {renderDetailCardTabBody(activeDetailCardTab, "portrait")}
                             </div>
-                            {isPhoneViewport ? (
+                            {isCompactPortraitViewport ? (
                               <div className="pointer-events-none absolute left-0 top-0 -z-10 h-0 w-full overflow-hidden opacity-0" aria-hidden>
                                 {DETAIL_CARD_TAB_IDS.map((tabId) => (
                                   <div
