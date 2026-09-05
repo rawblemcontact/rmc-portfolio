@@ -12,7 +12,7 @@ const FEATURED_CARD_RESIZE_DUR_MS = 420;
 const FEATURED_CARD_RESIZE_EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
 /** Phone + tablet portrait — anti-jump height reserve + card resize. */
 const FEATURED_COMPACT_PORTRAIT_MQ =
-  "(max-width: 639.98px), (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait)";
+  "(max-width: 639.98px), (min-width: 768px) and (max-width: 1366px) and (orientation: portrait)";
 
 const TAB_ORDER: ShowcaseTabId[] = ["tab-1", "tab-2", "tab-3", "tab-4", "tab-5", "tab-6"];
 

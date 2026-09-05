@@ -5420,11 +5420,11 @@ function NavIconButtonDebugPanel({
 }
 
 // --- PROFILE (About) ---
-const SectionGridOverlay = () => {
+const SectionGridOverlay = ({ className = "" }: { className?: string }) => {
   const style = useSyncedGridOverlayStyle();
   return (
     <div
-      className="pointer-events-none absolute inset-0 z-0 grid-drift-bg portfolio-grid-overlay"
+      className={`pointer-events-none absolute inset-0 z-0 grid-drift-bg portfolio-grid-overlay ${className}`.trim()}
       style={style}
       aria-hidden
     />
@@ -7389,9 +7389,23 @@ function sectionGridOverlayHeightPx(
   const contentShell = section.querySelector<HTMLElement>(
     ":scope > div:not(.portfolio-grid-overlay)",
   );
-  const contentH = contentShell
+  let contentH = contentShell
     ? Math.max(contentShell.offsetHeight, contentShell.scrollHeight)
     : Math.max(section.offsetHeight, section.scrollHeight);
+
+  if (
+    cssVar === "--projects-grid-overlay-height" &&
+    section.classList.contains("projects-visual-design-detail-open")
+  ) {
+    const visualDetailStage = section.querySelector<HTMLElement>(
+      ".projects-visual-design-detail-stage",
+    );
+    if (visualDetailStage) {
+      const sectionBox = section.getBoundingClientRect();
+      const detailBox = visualDetailStage.getBoundingClientRect();
+      contentH = Math.max(contentH, Math.ceil(detailBox.bottom - sectionBox.top));
+    }
+  }
 
   return contentH;
 }
@@ -7405,7 +7419,20 @@ function bindSectionGridOverlayHeightSync(
   const sync = () => {
     /* Always size the grid — skipping while pinched left PROJECTS on a black field. */
     let h = sectionGridOverlayHeightPx(section, cssVar);
-    if (h < 8) {
+    const isProjectsShowcaseList =
+      cssVar === "--projects-grid-overlay-height" &&
+      section.id === "projects" &&
+      section.classList.contains("projects-showcase-tablet-pad");
+    /*
+     * Showcase list only: floor to panel / viewport so Safari chrome changes
+     * don’t leave a black field. Do not apply in PROJECT DETAILS (no tablet-pad).
+     */
+    if (isProjectsShowcaseList) {
+      const panelH = panel?.clientHeight ?? 0;
+      const vvH = Math.ceil(window.visualViewport?.height ?? 0);
+      const winH = window.innerHeight || 0;
+      h = Math.max(h, panelH, vvH, winH);
+    } else if (h < 8) {
       h = panel?.clientHeight || document.documentElement.clientHeight || 0;
     }
     if (h > 0) section.style.setProperty(cssVar, `${h}px`);
@@ -8310,7 +8337,7 @@ const ShowcaseIllustrationLightbox = ({
               type="button"
               aria-label="Previous illustration"
               onClick={handleShowPrev}
-              className="pdf-viewer-chrome-btn illustration-lightbox-chrome-btn illustration-lightbox-nav-btn absolute left-3 z-30 sm:left-5"
+              className="pdf-viewer-chrome-btn illustration-lightbox-chrome-btn illustration-lightbox-nav-btn absolute left-3 z-30 hidden md:inline-flex sm:left-5"
             >
               <ArrowLeft aria-hidden />
             </button>
@@ -8321,7 +8348,7 @@ const ShowcaseIllustrationLightbox = ({
               type="button"
               aria-label="Next illustration"
               onClick={handleShowNext}
-              className="pdf-viewer-chrome-btn illustration-lightbox-chrome-btn illustration-lightbox-nav-btn absolute right-3 z-30 sm:right-5"
+              className="pdf-viewer-chrome-btn illustration-lightbox-chrome-btn illustration-lightbox-nav-btn absolute right-3 z-30 hidden md:inline-flex sm:right-5"
             >
               <ArrowRight aria-hidden />
             </button>
@@ -9256,12 +9283,23 @@ const PalaceProjects = ({
     };
   })();
 
-  /** Tablet: grid overlay tracks section + panel scroller (iPad landscape >1024px included). */
+  /** Grid overlay tracks the showcase list and the full VISUAL DESIGN masonry height.
+   * Other PROJECT DETAILS must not inherit list height-floor / overscan sync. */
   useLayoutEffect(() => {
     const section = projectsSectionRef.current;
     if (!section) return;
+    if (projectDetailInFlow && !visualDesignDetailInFlow) {
+      section.style.removeProperty("--projects-grid-overlay-height");
+      return;
+    }
     return bindSectionGridOverlayHeightSync(section, "--projects-grid-overlay-height");
-  }, [projectDetailInFlow, activeProjectId, projectsFeaturedRevealed, entranceArmed]);
+  }, [
+    projectDetailInFlow,
+    visualDesignDetailInFlow,
+    activeProjectId,
+    projectsFeaturedRevealed,
+    entranceArmed,
+  ]);
 
   /** Mobile / iPad landscape VISUAL DESIGN: panel scroller retains scroll across detail open/close — reset to top. */
   useLayoutEffect(() => {
@@ -9539,7 +9577,7 @@ const PalaceProjects = ({
           : `max-2xl:min-h-min 2xl:min-h-full overflow-x-hidden ${PROJECTS_SHOWCASE_TABLET_PAD} ${SECTION_MAIN_HEADER_INSET}`
       }${projectsEntranceLive ? " projects-entrance-live" : ""}`}
     >
-      <SectionGridOverlay />
+      <SectionGridOverlay key={projectDetailInFlow ? "projects-detail-grid" : "projects-list-grid"} />
       {allowDebugPanels &&
         projectsTabletThumbnailDebugEnabled &&
         projectsTabletPortraitViewport &&
@@ -14395,8 +14433,10 @@ export default function Home() {
                 ease: PANEL_TRANSITION.ease,
               }}
             >
-              {/* Grid backdrop: ensures the panel background always has grid texture regardless of section coverage */}
-              <SectionGridOverlay />
+              {/* Grid backdrop for non-PROJECTS panels. #projects mounts its own
+                  SectionGridOverlay — stacking both caused double/offset grid lines
+                  (worse with showcase compositor drift) especially on PROJECT DETAILS. */}
+              {currentSection !== "projects" ? <SectionGridOverlay /> : null}
               {!reduceMotion && showPanelWipeEdge && transitionTarget !== "menu" && transitionTarget === currentSection && (
                 <div
                   className="absolute left-0 top-0 bottom-0 z-20 w-[2px] pointer-events-none"

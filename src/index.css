@@ -649,19 +649,29 @@
 
   /* PROJECTS mobile: sync overlay height to section scrollHeight (set in section components). */
   @media (max-width: 1024px) {
-    #projects > .portfolio-grid-overlay {
+    #projects:not([class*="detail-open"]) > .portfolio-grid-overlay {
       bottom: auto;
       height: var(--projects-grid-overlay-height, 100%);
       min-height: 100%;
     }
+
+    #projects[class*="detail-open"] > .portfolio-grid-overlay {
+      inset: 0 !important;
+      width: auto !important;
+      height: auto !important;
+      min-height: 100% !important;
+      animation-name: gridDriftSmooth !important;
+      transform: translateZ(0) !important;
+    }
   }
 
   /*
-   * PROJECTS tablet (768pxâ€“1366px): grid bg fills panel + scroll (iPad landscape >1024px included).
+   * PROJECTS tablet (768px–1366px): grid bg fills panel + scroll (iPad landscape >1024px included).
    * Pairs with bindSectionGridOverlayHeightSync in PalaceProjects.
+   * PROJECT DETAILS (*.detail-open): exclude — use normal inset fill, not list height sync.
    */
   @media (min-width: 768px) and (max-width: 1366px) {
-    #projects > .portfolio-grid-overlay {
+    #projects:not([class*="detail-open"]) > .portfolio-grid-overlay {
       bottom: auto;
       left: 0;
       right: 0;
@@ -670,27 +680,46 @@
       min-height: 100%;
     }
 
-    #projects {
+    #projects:not([class*="detail-open"]) {
       min-height: var(--projects-grid-overlay-height, 100%);
+    }
+
+    #projects[class*="detail-open"] > .portfolio-grid-overlay {
+      inset: 0 !important;
+      width: auto !important;
+      height: auto !important;
+      min-height: 100% !important;
+      animation-name: gridDriftSmooth !important;
+      transform: translateZ(0) !important;
     }
   }
 
   /*
-   * PROJECTS tablet landscape â€” shrink-wrap showcase (no viewport stretch / black gap below).
-   * lgâ€“xl (1024â€“1366) Tailwind used min-h-full + flex-1 + justify-center for desktop centering;
-   * in landscape the stack is shorter than the panel so flex growth leaves empty black space.
+   * PROJECTS tablet landscape — content stack shrink-wraps (no flex-1 stretch gaps),
+   * but section + grid track --projects-grid-overlay-height (floored to the panel/viewport
+   * in JS) so Safari chrome changes don’t leave a black field below.
+   * Overlay uses inset fill (not a fixed px height) so padding/subpixel can’t leave a
+   * hairline of section #000 under the grid. Breathing room is the flow spacer only.
    */
   @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse) {
     #projects.projects-showcase-tablet-pad {
-      min-height: 0 !important;
+      min-height: var(--projects-grid-overlay-height, 100%) !important;
       height: auto !important;
       align-self: flex-start !important;
-      padding-bottom: max(0.5rem, calc(0.625rem + env(safe-area-inset-bottom, 0px) * 0.25)) !important;
+      /* Avoid padding-only dead strip under the grid; spacer owns bottom gap. */
+      padding-bottom: 0 !important;
     }
 
     #projects.projects-showcase-tablet-pad > .portfolio-grid-overlay {
-      min-height: 0 !important;
-      height: var(--projects-grid-overlay-height, auto) !important;
+      /* Fill section box only — no -48px compositor overscan (that stacked/offset
+       * against the panel grid and carried a misaligned look into PROJECT DETAILS). */
+      top: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      width: auto !important;
+      height: auto !important;
+      min-height: 100% !important;
     }
 
     #projects.projects-showcase-tablet-pad > .container,
@@ -707,8 +736,9 @@
       min-height: max(0.75rem, calc(0.875rem + env(safe-area-inset-bottom, 0px) / 3)) !important;
     }
 
-    [aria-label="Section: projects"] > div.relative.z-10.flex,
-    [aria-label="Section: projects"] > div.relative.z-10.flex > div.flex {
+    /* Showcase list only — do not shrink-wrap wrappers while PROJECT DETAILS is open. */
+    [aria-label="Section: projects"]:has(#projects.projects-showcase-tablet-pad) > div.relative.z-10.flex,
+    [aria-label="Section: projects"]:has(#projects.projects-showcase-tablet-pad) > div.relative.z-10.flex > div.flex {
       flex: 0 0 auto !important;
       min-height: 0 !important;
       align-self: flex-start !important;
@@ -835,9 +865,16 @@
   }
 
   @media (min-width: 768px) and (max-width: 1366px) and (any-pointer: coarse) {
-    /* PROJECTS showcase list â€” scroll-end breathing room (touch tablet only). */
+    /* PROJECTS showcase list — scroll-end breathing room (touch tablet portrait).
+     * Landscape zeroes padding (grid fill); spacer still provides content gap. */
     #projects.projects-showcase-tablet-pad {
       padding-bottom: calc(2.5rem / 3);
+    }
+
+    @media (orientation: landscape) {
+      #projects.projects-showcase-tablet-pad {
+        padding-bottom: 0;
+      }
     }
 
     #projects.projects-showcase-tablet-pad .projects-showcase-flow > .section-tablet-bottom-spacer {
@@ -1222,6 +1259,37 @@
     );
   }
 
+  /* PROJECT DETAILS info card — always dissolve the scroll clip when capped. */
+  #projects .video-editing-detail-card-tabpanel.content-cutoff-fade {
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 calc(100% - 2.75rem),
+      rgba(0, 0, 0, 0.55) calc(100% - 1.25rem),
+      rgba(0, 0, 0, 0.18) calc(100% - 0.4rem),
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 calc(100% - 2.75rem),
+      rgba(0, 0, 0, 0.55) calc(100% - 1.25rem),
+      rgba(0, 0, 0, 0.18) calc(100% - 0.4rem),
+      transparent 100%
+    );
+  }
+
+  #projects .video-editing-detail-card-tabpanel.overflow-y-auto {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  #projects .video-editing-detail-card-tabpanel.overflow-y-auto::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
   /* PROFILE summary card — short bottom dissolve; most copy stays solid. */
   #profile .content-cutoff-fade {
     -webkit-mask-image: linear-gradient(
@@ -1507,7 +1575,7 @@
 
   /* Phone + tablet portrait: PROJECTS owns vertical scrolling; never trap a page pan in description copy. */
   @media (max-width: 639.98px),
-    (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
+    (min-width: 768px) and (max-width: 1366px) and (orientation: portrait) {
     [aria-label="Section: projects"],
     #projects {
       overflow-anchor: none;
@@ -1525,6 +1593,11 @@
     #projects .featured-writing-body-card,
     #projects .featured-writing-body-card > .profile-card-surface {
       touch-action: pan-y;
+    }
+
+    /* Let WAAPI height keyframes drive the info card without CSS transition fights. */
+    #projects .video-editing-detail-meta-card {
+      transition-property: none;
     }
   }
 
@@ -2815,7 +2888,7 @@
 
   /* Section main title â€” Experience rail */
   #experience .nav-header .section-main-header-title {
-    margin: 0 0 0 -0.08em;
+    margin: 0 0 0 -0.06em;
     padding: 0;
     width: 100%;
     color: #fff;
@@ -3042,7 +3115,7 @@
   }
 
   #projects .showcase-header-title-rule > .section-main-header-title {
-    margin: 0 0 0 -0.08em;
+    margin: 0 0 0 -0.06em;
     padding: 0;
     width: auto;
     max-width: 100%;
@@ -4171,6 +4244,13 @@
       min-width: 0;
     }
 
+    /* Blue underline spans full content column (match tabs / resume card right edge). */
+    #experience .experience-rail-chrome .career-nav-section-labels,
+    #experience .experience-rail-title-block {
+      width: 100%;
+      max-width: 100%;
+    }
+
     #experience .nav-header {
       display: flex;
       padding: 0;
@@ -4388,6 +4468,19 @@
       min-width: 0 !important;
       grid-column: auto !important;
       grid-row: auto !important;
+    }
+
+    /* Blue underline spans full content column (match tabs / resume card right edge). */
+    #experience .experience-rail-chrome {
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+    }
+
+    #experience .experience-rail-chrome .career-nav-section-labels,
+    #experience .experience-rail-title-block {
+      width: 100%;
+      max-width: 100%;
     }
 
     #experience .nav-header {
@@ -4621,6 +4714,19 @@
       min-width: 0;
       display: flex;
       flex-direction: column;
+    }
+
+    /* Blue underline spans full content column (match tabs / resume card right edge). */
+    #experience .experience-rail-chrome {
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+    }
+
+    #experience .experience-rail-chrome .career-nav-section-labels,
+    #experience .experience-rail-title-block {
+      width: 100%;
+      max-width: 100%;
     }
 
     #experience .nav-header {
@@ -5152,6 +5258,11 @@
     text-align: inherit;
     white-space: nowrap;
     text-wrap: nowrap;
+  }
+
+  /* CORE COMPETENCIES — same optical left lock as EXPERIENCE / PROJECTS mains. */
+  #skills .skills-branch-header--page.skills-branch-header--left .career-nav-section-subtitle {
+    margin-left: -0.06em;
   }
 
   #skills .skills-branch-header--page .career-nav-section-divider {
@@ -6993,6 +7104,8 @@
     border-radius: 4px !important;
     padding: 0.75rem !important;
     min-width: 0 !important;
+    /* Height comes from JS (animated drawer + player-bottom cap). */
+    min-height: 0 !important;
   }
 
   #projects.projects-interactive-media-detail-open
@@ -7048,6 +7161,7 @@
     .video-editing-detail-meta-card
     .video-editing-detail-card-tabpanel {
     position: relative;
+    min-height: 0 !important;
   }
 
   #projects.projects-interactive-media-detail-open
@@ -7373,7 +7487,7 @@
   }
 
   #projects .showcase-header-title-rule > .section-main-header-title {
-    transform: translate(1px, -0.125rem) !important;
+    transform: translateY(-0.125rem) !important;
   }
 
   /* Yellow rule â€” spans PROJECTS title width (title-rule w-fit) */
@@ -7604,7 +7718,7 @@
 
   /*
    * iPad landscape — tabbed detail cards (OVERVIEW / ROLE / IMPACT / TOOLS).
-   * One card visible at a time; preserve card surface style. Stay in-viewport.
+   * Expanding drawer with player-aligned max-height; scroll inside when capped.
    */
   #projects.projects-interactive-media-detail-open .video-editing-player,
   #projects.projects-video-editing-detail-open .video-editing-player,
@@ -7669,6 +7783,8 @@
     border-radius: 4px !important;
     padding: 0.75rem !important;
     min-width: 0 !important;
+    /* Height comes from JS (animated drawer + player-bottom cap). */
+    min-height: 0 !important;
   }
 
   #projects.projects-interactive-media-detail-open
@@ -7724,6 +7840,7 @@
     .video-editing-detail-meta-card
     .video-editing-detail-card-tabpanel {
     position: relative;
+    min-height: 0 !important;
   }
 
   #projects.projects-interactive-media-detail-open
@@ -7804,6 +7921,16 @@
   align-self: flex-start !important;
   padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px)) !important;
   overflow-x: visible !important;
+}
+
+#projects.projects-visual-design-detail-open > .portfolio-grid-overlay {
+  top: 0 !important;
+  right: 0 !important;
+  bottom: auto !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: var(--projects-grid-overlay-height, 100%) !important;
+  min-height: 100% !important;
 }
 
 #projects.projects-visual-design-detail-open > .container,

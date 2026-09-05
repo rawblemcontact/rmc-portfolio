@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type Ref } from "react";
+import { flushSync } from "react-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import Plyr from "plyr";
 import type { Options as PlyrOptions } from "plyr";
 import "plyr/dist/plyr.css";
 import { directionalArrowIdlePhaseDelaySec } from "@/lib/motion";
-import { useCutoffScrollFade } from "@/lib/useCutoffScrollFade";
 
 export type ShowcaseDetailVideo = {
   readonly id: string;
@@ -182,9 +182,20 @@ type ShowcaseVideoEditingDetailProps = {
 const showcaseDetailCardClass =
   "profile-card-surface relative rounded-sm sm:rounded-xl px-3 py-3 sm:px-4 sm:py-3.5";
 
-/** Desktop + iPad landscape use the same tabbed right-column detail treatment. */
-const PROJECTS_TABBED_DETAIL_MQ =
-  "((min-width: 1024px) and (pointer: fine)), (min-width: 1367px), ((min-width: 768px) and (max-width: 1366px) and (orientation: landscape))";
+/**
+ * Desktop landscape + large desktop + tablet landscape — info card may grow/shrink,
+ * but max-height locks to the main video/player bottom edge.
+ * Tablet portrait is excluded so it stays on the mobile natural drawer.
+ */
+const DETAIL_PLAYER_CAP_MQ =
+  "((min-width: 1024px) and (pointer: fine) and (orientation: landscape)), (min-width: 1367px), ((min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse))";
+
+/**
+ * Phone + full tablet portrait band — natural-height drawer (no player cap).
+ * Matches FEATURED WRITING compact portrait intent; includes iPad Pro portrait (1024–1366).
+ */
+const DETAIL_NATURAL_DRAWER_MQ =
+  "(max-width: 639.98px), (min-width: 768px) and (max-width: 1366px) and (orientation: portrait)";
 
 const DETAIL_CARD_TAB_IDS = ["overview", "role", "impact", "tools"] as const;
 type DetailCardTabId = (typeof DETAIL_CARD_TAB_IDS)[number];
@@ -235,18 +246,80 @@ const DETAIL_TAB_SWAP_EASE = [0.22, 1, 0.36, 1] as const;
  */
 const DETAIL_TAB_BODY_OUT_S = 0.16;
 const DETAIL_TAB_BODY_IN_S = 0.24;
-const DETAIL_TAB_BODY_IN_DELAY_S = Math.max(0, DETAIL_TAB_SWAP_DUR_S - DETAIL_TAB_BODY_OUT_S);
+const DETAIL_BODY_OUT_MS = Math.round(DETAIL_TAB_BODY_OUT_S * 1000);
 /** Yellow underline draw / retract — same length as tab FLIP; starts only after position settles. */
 const DETAIL_TAB_UNDERLINE_DUR_MS = Math.round(DETAIL_TAB_SWAP_DUR_S * 1000);
-/** Description-card height keyframes stay synchronized with the tab swap (phone + tablet portrait). */
+/** Description-card height keyframes stay synchronized with the tab swap. */
 const DETAIL_CARD_RESIZE_DUR_MS = DETAIL_TAB_UNDERLINE_DUR_MS;
 const DETAIL_CARD_RESIZE_EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
-/** Phone + tablet portrait — same compact band as FEATURED WRITING anti-jump. */
-const DETAIL_COMPACT_PORTRAIT_MQ =
-  "(max-width: 639.98px), (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait)";
+/**
+ * New tab copy waits until height resize finishes + one paint so clamp/mask
+ * can settle while opacity is still 0 (avoids a bottom-edge flicker).
+ */
+const DETAIL_TAB_BODY_IN_DELAY_S = (DETAIL_CARD_RESIZE_DUR_MS + 32) / 1000;
+/**
+ * Natural drawers: height waits for tab FLIP to finish (avoids layout+resize screenshake),
+ * so enter delay spans (FLIP − body-out) + resize + paint.
+ */
+const DETAIL_NATURAL_HEIGHT_DELAY_MS = DETAIL_TAB_UNDERLINE_DUR_MS;
+const DETAIL_TAB_BODY_IN_DELAY_NATURAL_S =
+  (DETAIL_NATURAL_HEIGHT_DELAY_MS - DETAIL_BODY_OUT_MS + DETAIL_CARD_RESIZE_DUR_MS + 32) /
+  1000;
+/** Thumbnail title reflow completes before its description drawer changes size. */
+const DETAIL_TITLE_MOVE_DUR_MS = DETAIL_CARD_RESIZE_DUR_MS;
+/**
+ * Phone + tablet portrait/landscape + desktop — expanding drawer with resize keyframes.
+ * Natural (phone/tablet portrait) also keeps an anti-jump height reserve.
+ * Player-cap viewports also clamp max-height.
+ */
+const DETAIL_COMPACT_DRAWER_MQ = [
+  DETAIL_NATURAL_DRAWER_MQ,
+  "((min-width: 1024px) and (pointer: fine))",
+  "(min-width: 1367px)",
+  "((min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse))",
+].join(", ");
 
-function matchesProjectsTabbedDetailViewport() {
-  return typeof window !== "undefined" && window.matchMedia(PROJECTS_TABBED_DETAIL_MQ).matches;
+function matchesDetailPlayerCapViewport() {
+  return typeof window !== "undefined" && window.matchMedia(DETAIL_PLAYER_CAP_MQ).matches;
+}
+
+function matchesDetailNaturalDrawerViewport() {
+  return typeof window !== "undefined" && window.matchMedia(DETAIL_NATURAL_DRAWER_MQ).matches;
+}
+
+function measureDetailCardChromeHeight(
+  cardSurface: HTMLElement,
+  activeNatural: HTMLElement,
+): number {
+  const cardH = cardSurface.offsetHeight;
+  const naturalH = activeNatural.offsetHeight;
+  if (naturalH <= cardH + 0.5) {
+    return Math.max(0, cardH - naturalH);
+  }
+  const tabpanel = cardSurface.querySelector(".video-editing-detail-card-tabpanel");
+  if (tabpanel instanceof HTMLElement) {
+    return Math.max(0, cardH - tabpanel.clientHeight);
+  }
+  return Math.max(0, cardH - naturalH);
+}
+
+/** Convert visual px (getBoundingClientRect) → layout px (style/offset), accounting for CSS zoom. */
+function visualPxToLayoutPx(el: HTMLElement, visualPx: number): number {
+  const visualH = el.getBoundingClientRect().height;
+  const layoutH = el.offsetHeight;
+  if (visualH < 0.5 || layoutH < 0.5) return Math.round(visualPx);
+  return Math.round(visualPx * (layoutH / visualH));
+}
+
+function measureDetailCardHeightForProbe(
+  cardSurface: HTMLElement,
+  targetProbe: HTMLElement,
+): number {
+  const visualBeforeBody =
+    targetProbe.getBoundingClientRect().top - cardSurface.getBoundingClientRect().top;
+  const layoutBeforeBody = visualPxToLayoutPx(cardSurface, visualBeforeBody);
+  const paddingBottom = parseFloat(getComputedStyle(cardSurface).paddingBottom) || 0;
+  return Math.ceil(layoutBeforeBody + targetProbe.offsetHeight + paddingBottom);
 }
 
 export function ShowcaseVideoEditingDetail({
@@ -270,10 +343,18 @@ export function ShowcaseVideoEditingDetail({
   const STRIP_SWIPE_TAP_CANCEL_PX = 10;
   const videos = useMemo(() => card.detailVideos ?? [], [card.detailVideos]);
   const [activeVideoIndex, setActiveVideoIndex] = useState(0);
-  const [isIpadLandscapeViewport, setIsIpadLandscapeViewport] = useState(
-    matchesProjectsTabbedDetailViewport,
+  /** Desktop + tablet landscape — expand/shrink drawer clamped to player bottom. */
+  const [isPlayerCappedDrawerViewport, setIsPlayerCappedDrawerViewport] = useState(
+    matchesDetailPlayerCapViewport,
   );
-  const [isCompactPortraitViewport, setIsCompactPortraitViewport] = useState(false);
+  /** Phone + tablet portrait — natural drawer + anti-jump reserve (no player cap). */
+  const [isNaturalDrawerViewport, setIsNaturalDrawerViewport] = useState(
+    matchesDetailNaturalDrawerViewport,
+  );
+  /** Phone + tablet + desktop — expanding/shrinking description drawer with keyframes. */
+  const [isCompactDrawerViewport, setIsCompactDrawerViewport] = useState(false);
+  /** Natural drawer: never shrink the page-height reserve below the tallest tab seen. */
+  const detailPanelTallestBodyRef = useRef(0);
   const [activeDetailCardTab, setActiveDetailCardTab] = useState<DetailCardTabId>("overview");
   const [detailCardTabOrder, setDetailCardTabOrder] = useState<DetailCardTabId[]>(() => [
     ...DETAIL_CARD_TAB_IDS,
@@ -283,14 +364,28 @@ export function ShowcaseVideoEditingDetail({
    * `null` = no bar (mid-transition after deselection).
    */
   const [underlineTabId, setUnderlineTabId] = useState<DetailCardTabId | null>("overview");
-  const {
-    scrollRef: detailTabpanelScrollRef,
-    showFade: detailTabpanelCutoffFade,
-    updateFade: updateDetailTabpanelCutoffFade,
-  } = useCutoffScrollFade(true);
   const underlineActiveTabRef = useRef<DetailCardTabId>("overview");
-  const [detailCardMinHeightPx, setDetailCardMinHeightPx] = useState<number | null>(null);
-  /** Phone + tablet portrait: reserve the tallest tab outside the natural-height description card. */
+  /** Player-capped drawer: ceiling at main video card bottom (expand/shrink below this). */
+  const [detailCardMaxHeightPx, setDetailCardMaxHeightPx] = useState<number | null>(null);
+  const detailCardMaxHeightPxRef = useRef<number | null>(null);
+  /** Player-capped drawer: explicit height so tall tabs fill to the video bottom. */
+  const [detailCardHeightPx, setDetailCardHeightPx] = useState<number | null>(null);
+  const [detailCardContentIsClamped, setDetailCardContentIsClamped] = useState(false);
+  const detailCardIsAtMaxHeight =
+    isPlayerCappedDrawerViewport && detailCardContentIsClamped;
+  const detailTabpanelScrollRef = useRef<HTMLElement | null>(null);
+  const [detailTabpanelCutoffFade, setDetailTabpanelCutoffFade] = useState(false);
+  /** Hold description copy invisible until box height/title moves finish. */
+  const [detailBodyVisible, setDetailBodyVisible] = useState(true);
+  const detailBodyVisibleRef = useRef(true);
+  const detailBodySwapTimerRef = useRef<number | null>(null);
+  const detailBodyRevealTimerRef = useRef<number | null>(null);
+  /** Suppress cutoff remasure while a tab swap resize is in flight. */
+  const detailTabMaskLockRef = useRef(false);
+  const detailTabMaskSettleTimerRef = useRef<number | null>(null);
+  /** Pin overflow:hidden during tab resize so the body can’t race-scroll as height changes. */
+  const [detailTabpanelScrollFrozen, setDetailTabpanelScrollFrozen] = useState(false);
+  /** Compact drawer: reserve the tallest tab outside the natural-height description card. */
   const detailPanelReserveRef = useRef<HTMLDivElement | null>(null);
   const detailTabActiveNaturalRef = useRef<HTMLDivElement | null>(null);
   const detailTabHiddenMeasureRefs = useRef<Record<DetailCardTabId, HTMLDivElement | null>>({
@@ -299,14 +394,16 @@ export function ShowcaseVideoEditingDetail({
     impact: null,
     tools: null,
   });
+  const detailVideoOverviewMeasureRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const detailTitleMeasureRefs = useRef<Array<HTMLDivElement | null>>([]);
   const detailCardChromeHeightRef = useRef<number | null>(null);
   const detailCardResizeAnimationRef = useRef<Animation | null>(null);
+  const detailTitleResizeAnimationRef = useRef<Animation | null>(null);
   const detailRootRef = useRef<HTMLDivElement | null>(null);
   const detailCardSurfaceRef = useRef<HTMLElement | null>(null);
-  const pendingPortraitTabAnchorRef = useRef<{
-    scrollParent: HTMLElement;
-    offset: number;
-  } | null>(null);
+  const detailNowPlayingRef = useRef<HTMLDivElement | null>(null);
+  /** Natural drawer: unlock section scroll / card hit-testing after a tab resize. */
+  const detailNaturalResizeCleanupRef = useRef<(() => void) | null>(null);
   const [pressedWorksArrow, setPressedWorksArrow] = useState<"prev" | "next" | null>(null);
   const thumbRefs = useRef<Array<HTMLElement | null>>([]);
   const thumbStripRef = useRef<HTMLDivElement | null>(null);
@@ -334,16 +431,20 @@ export function ShowcaseVideoEditingDetail({
   }, []);
 
   useEffect(() => {
-    const mq = window.matchMedia(PROJECTS_TABBED_DETAIL_MQ);
-    const onChange = () => setIsIpadLandscapeViewport(mq.matches);
+    const mq = window.matchMedia(DETAIL_PLAYER_CAP_MQ);
+    const onChange = () => setIsPlayerCappedDrawerViewport(mq.matches);
     onChange();
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
   }, []);
 
   useEffect(() => {
-    const mq = window.matchMedia(DETAIL_COMPACT_PORTRAIT_MQ);
-    const onChange = () => setIsCompactPortraitViewport(mq.matches);
+    const mq = window.matchMedia(DETAIL_NATURAL_DRAWER_MQ);
+    const onChange = () => {
+      const matches = mq.matches;
+      setIsNaturalDrawerViewport(matches);
+      if (!matches) detailPanelTallestBodyRef.current = 0;
+    };
     onChange();
     if (typeof mq.addEventListener === "function") {
       mq.addEventListener("change", onChange);
@@ -354,19 +455,114 @@ export function ShowcaseVideoEditingDetail({
   }, []);
 
   useEffect(() => {
+    const mq = window.matchMedia(DETAIL_COMPACT_DRAWER_MQ);
+    const onChange = () => setIsCompactDrawerViewport(mq.matches);
+    onChange();
+    if (typeof mq.addEventListener === "function") {
+      mq.addEventListener("change", onChange);
+      return () => mq.removeEventListener("change", onChange);
+    }
+    mq.addListener(onChange);
+    return () => mq.removeListener(onChange);
+  }, []);
+
+  // Only reset the anti-jump reserve when leaving this project card.
+  // Resetting on every media switch collapsed page height mid-transition (mobile/tablet shake).
+  useEffect(() => {
+    detailPanelTallestBodyRef.current = 0;
+    const reserve = detailPanelReserveRef.current;
+    if (reserve) reserve.style.minHeight = "";
+  }, [card.id]);
+
+  useEffect(() => {
     setActiveDetailCardTab("overview");
     setDetailCardTabOrder([...DETAIL_CARD_TAB_IDS]);
     setUnderlineTabId("overview");
     underlineActiveTabRef.current = "overview";
   }, [activeVideoIndex, card.id]);
 
-  useLayoutEffect(() => {
+  const updateDetailTabpanelCutoffFade = useCallback(() => {
+    const panel = detailTabpanelScrollRef.current;
+    const content = detailTabActiveNaturalRef.current;
+    // While body opacity is transitioning, leave the mask state alone so it
+    // dissolves with the copy instead of snapping off like a hard delete.
+    if (!detailBodyVisibleRef.current || detailTabMaskLockRef.current) {
+      return;
+    }
+    if (!panel || !content || !detailCardIsAtMaxHeight) {
+      setDetailTabpanelCutoffFade(false);
+      return;
+    }
+
+    const panelRect = panel.getBoundingClientRect();
+    const contentRect = content.getBoundingClientRect();
+    // Fade only while real copy still extends past the visible fold.
+    const contentPastFold = contentRect.bottom > panelRect.bottom + 1;
+    const canScroll = panel.scrollHeight - panel.clientHeight > 1;
+    const atBottom =
+      panel.scrollTop + panel.clientHeight >= panel.scrollHeight - 4;
+    setDetailTabpanelCutoffFade(canScroll && contentPastFold && !atBottom);
+  }, [detailCardIsAtMaxHeight]);
+
+  const syncDetailTabpanelAfterSwitch = useCallback(() => {
+    const panel = detailTabpanelScrollRef.current;
+    // During a tab resize lock, defer scroll reset until copy is invisible — resetting
+    // scrollTop while overview is still fading reads as a rapid upward scroll.
+    if (panel && !detailTabMaskLockRef.current) {
+      panel.scrollTop = 0;
+    }
+    if (!detailBodyVisibleRef.current || detailTabMaskLockRef.current) {
+      return;
+    }
     updateDetailTabpanelCutoffFade();
+    requestAnimationFrame(() => {
+      updateDetailTabpanelCutoffFade();
+      requestAnimationFrame(updateDetailTabpanelCutoffFade);
+    });
+  }, [updateDetailTabpanelCutoffFade]);
+
+  useLayoutEffect(() => {
+    syncDetailTabpanelAfterSwitch();
   }, [
     activeDetailCardTab,
     activeVideoIndex,
     card.id,
-    isIpadLandscapeViewport,
+    detailCardIsAtMaxHeight,
+    detailCardHeightPx,
+    detailBodyVisible,
+    syncDetailTabpanelAfterSwitch,
+  ]);
+
+  useEffect(() => {
+    const panel = detailTabpanelScrollRef.current;
+    if (!panel || !detailCardIsAtMaxHeight || !detailBodyVisible) {
+      return;
+    }
+
+    const onScroll = () => updateDetailTabpanelCutoffFade();
+    panel.addEventListener("scroll", onScroll, { passive: true });
+    const ro =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(() => updateDetailTabpanelCutoffFade())
+        : null;
+    ro?.observe(panel);
+    const content = detailTabActiveNaturalRef.current;
+    if (content) ro?.observe(content);
+
+    const timerId = window.setTimeout(updateDetailTabpanelCutoffFade, 32);
+
+    return () => {
+      panel.removeEventListener("scroll", onScroll);
+      ro?.disconnect();
+      window.clearTimeout(timerId);
+    };
+  }, [
+    activeDetailCardTab,
+    activeVideoIndex,
+    card.id,
+    detailCardIsAtMaxHeight,
+    detailCardHeightPx,
+    detailBodyVisible,
     updateDetailTabpanelCutoffFade,
   ]);
 
@@ -391,46 +587,51 @@ export function ShowcaseVideoEditingDetail({
   }, [activeDetailCardTab, reduceMotion]);
 
   useEffect(() => {
-    if (!isIpadLandscapeViewport) {
-      setDetailCardMinHeightPx(null);
+    if (!isPlayerCappedDrawerViewport) {
+      setDetailCardMaxHeightPx(null);
+      detailCardMaxHeightPxRef.current = null;
+      setDetailCardHeightPx(null);
+      setDetailCardContentIsClamped(false);
       return;
     }
 
     const root = detailRootRef.current;
     if (!root) return;
 
-    const syncDetailCardHeightToPlayer = () => {
+    const syncDetailCardMaxHeightToPlayer = () => {
       const player = root.querySelector(".video-editing-player");
       const cardEl = detailCardSurfaceRef.current;
-      if (!player || !cardEl) return;
+      if (!(player instanceof HTMLElement) || !cardEl) return;
       const playerBottom = player.getBoundingClientRect().bottom;
       const cardTop = cardEl.getBoundingClientRect().top;
-      const next = Math.max(0, Math.round(playerBottom - cardTop));
-      setDetailCardMinHeightPx((prev) => (prev === next ? prev : next));
+      const visualCap = Math.max(0, playerBottom - cardTop);
+      const next = visualPxToLayoutPx(cardEl, visualCap);
+      detailCardMaxHeightPxRef.current = next;
+      setDetailCardMaxHeightPx((prev) => (prev === next ? prev : next));
     };
 
-    syncDetailCardHeightToPlayer();
-    const raf = window.requestAnimationFrame(syncDetailCardHeightToPlayer);
+    syncDetailCardMaxHeightToPlayer();
+    const raf = window.requestAnimationFrame(syncDetailCardMaxHeightToPlayer);
     const player = root.querySelector(".video-editing-player");
     const resizeObserver =
       typeof ResizeObserver !== "undefined"
-        ? new ResizeObserver(() => syncDetailCardHeightToPlayer())
+        ? new ResizeObserver(() => syncDetailCardMaxHeightToPlayer())
         : null;
     if (player && resizeObserver) resizeObserver.observe(player);
     if (detailCardSurfaceRef.current && resizeObserver) {
       resizeObserver.observe(detailCardSurfaceRef.current);
     }
-    window.addEventListener("resize", syncDetailCardHeightToPlayer);
-    window.addEventListener("orientationchange", syncDetailCardHeightToPlayer);
+    window.addEventListener("resize", syncDetailCardMaxHeightToPlayer);
+    window.addEventListener("orientationchange", syncDetailCardMaxHeightToPlayer);
 
     return () => {
       window.cancelAnimationFrame(raf);
       resizeObserver?.disconnect();
-      window.removeEventListener("resize", syncDetailCardHeightToPlayer);
-      window.removeEventListener("orientationchange", syncDetailCardHeightToPlayer);
+      window.removeEventListener("resize", syncDetailCardMaxHeightToPlayer);
+      window.removeEventListener("orientationchange", syncDetailCardMaxHeightToPlayer);
     };
   }, [
-    isIpadLandscapeViewport,
+    isPlayerCappedDrawerViewport,
     activeDetailCardTab,
     activeVideoIndex,
     detailPlayerReveal,
@@ -562,6 +763,421 @@ export function ShowcaseVideoEditingDetail({
     return bestIndex;
   }, [videos.length]);
 
+  const releaseNaturalDrawerResizeLock = useCallback(() => {
+    detailNaturalResizeCleanupRef.current?.();
+    detailNaturalResizeCleanupRef.current = null;
+    const cardSurface = detailCardSurfaceRef.current;
+    if (cardSurface) {
+      cardSurface.style.pointerEvents = "";
+      cardSurface.style.willChange = "";
+      cardSurface.style.transform = "";
+    }
+  }, []);
+
+  /**
+   * Keep the page-height reserve from shrinking below the next overview body
+   * before a media switch animates (prevents section scroll extent collapse).
+   */
+  const bumpNaturalDrawerReserveForProbe = useCallback(
+    (targetProbe: HTMLElement | null | undefined) => {
+      if (!isNaturalDrawerViewport || !targetProbe || targetProbe.offsetHeight <= 0) {
+        return;
+      }
+      const reserve = detailPanelReserveRef.current;
+      const cardSurface = detailCardSurfaceRef.current;
+      if (!reserve || !cardSurface) return;
+
+      const nextBody = Math.ceil(targetProbe.offsetHeight);
+      detailPanelTallestBodyRef.current = Math.max(
+        detailPanelTallestBodyRef.current,
+        nextBody,
+      );
+      const activeNatural = detailTabActiveNaturalRef.current;
+      const chrome =
+        detailCardChromeHeightRef.current ??
+        (activeNatural
+          ? measureDetailCardChromeHeight(cardSurface, activeNatural)
+          : Math.max(0, cardSurface.offsetHeight - nextBody));
+      detailCardChromeHeightRef.current = chrome;
+      const naturalReserve = Math.ceil(chrome + detailPanelTallestBodyRef.current);
+      const currentMin = parseFloat(reserve.style.minHeight) || 0;
+      if (naturalReserve > currentMin) {
+        reserve.style.minHeight = `${naturalReserve}px`;
+      }
+    },
+    [isNaturalDrawerViewport],
+  );
+
+  /** Freeze section scroll + disable card hit-testing while natural height WAAPI runs. */
+  const armNaturalDrawerResizeLock = useCallback(
+    (cardSurface: HTMLElement) => {
+      releaseNaturalDrawerResizeLock();
+      /*
+       * Touch pans that start on a height-animating element are cancelled / jittered by
+       * mobile browsers (same guard as FEATURED WRITING). Route hits through the stable shell.
+       */
+      cardSurface.style.pointerEvents = "none";
+      // Own compositor layer so height/FLIP work doesn’t invalidate the section scroller.
+      cardSurface.style.willChange = "height";
+      cardSurface.style.transform = "translateZ(0)";
+
+      const scrollParent =
+        cardSurface.closest<HTMLElement>('[aria-label^="Section:"]') ??
+        (() => {
+          let current = cardSurface.parentElement;
+          while (current) {
+            const style = window.getComputedStyle(current);
+            if (/(auto|scroll|overlay)/.test(style.overflowY)) return current;
+            current = current.parentElement;
+          }
+          return null;
+        })();
+
+      if (!scrollParent) {
+        detailNaturalResizeCleanupRef.current = () => {
+          cardSurface.style.pointerEvents = "";
+          cardSurface.style.willChange = "";
+          cardSurface.style.transform = "";
+        };
+        return;
+      }
+
+      const lockedTop = scrollParent.scrollTop;
+      const prevOverflowAnchor = scrollParent.style.overflowAnchor;
+      const prevOverscroll = scrollParent.style.overscrollBehaviorY;
+      // Pin scroll without toggling overflowY — hiding overflow on iOS/WebKit
+      // was itself reading as a one-frame screenshake during media switches.
+      scrollParent.style.overflowAnchor = "none";
+      scrollParent.style.overscrollBehaviorY = "none";
+      scrollParent.scrollTop = lockedTop;
+
+      const pinScroll = () => {
+        if (scrollParent.scrollTop !== lockedTop) {
+          scrollParent.scrollTop = lockedTop;
+        }
+      };
+      scrollParent.addEventListener("scroll", pinScroll, { passive: true });
+
+      let rafId = 0;
+      const pin = () => {
+        pinScroll();
+        rafId = window.requestAnimationFrame(pin);
+      };
+      rafId = window.requestAnimationFrame(pin);
+
+      detailNaturalResizeCleanupRef.current = () => {
+        window.cancelAnimationFrame(rafId);
+        scrollParent.removeEventListener("scroll", pinScroll);
+        scrollParent.style.overflowAnchor = prevOverflowAnchor;
+        scrollParent.style.overscrollBehaviorY = prevOverscroll;
+        scrollParent.scrollTop = lockedTop;
+        cardSurface.style.pointerEvents = "";
+        cardSurface.style.willChange = "";
+        cardSurface.style.transform = "";
+      };
+    },
+    [releaseNaturalDrawerResizeLock],
+  );
+
+  useEffect(() => {
+    return () => releaseNaturalDrawerResizeLock();
+  }, [releaseNaturalDrawerResizeLock]);
+
+  const animateDetailCardToMeasuredBody = useCallback(
+    (targetProbe: HTMLElement, delayMs = 0) => {
+      const cardSurface = detailCardSurfaceRef.current;
+      const activeNatural = detailTabActiveNaturalRef.current;
+      if (!cardSurface || !activeNatural || targetProbe.offsetHeight <= 0) return;
+
+      const fromHeightRaw = cardSurface.offsetHeight;
+      const maxHeight = detailCardMaxHeightPxRef.current;
+      const naturalToHeight = measureDetailCardHeightForProbe(cardSurface, targetProbe);
+      detailCardChromeHeightRef.current = naturalToHeight - targetProbe.offsetHeight;
+      const toHeight =
+        maxHeight != null ? Math.min(naturalToHeight, maxHeight) : naturalToHeight;
+      const fromHeight =
+        maxHeight != null ? Math.min(fromHeightRaw, maxHeight) : fromHeightRaw;
+      setDetailCardContentIsClamped(
+        maxHeight != null && naturalToHeight >= maxHeight - 0.5,
+      );
+
+      if (!isCompactDrawerViewport || reduceMotion) {
+        if (maxHeight != null) {
+          cardSurface.style.height = `${toHeight}px`;
+          setDetailCardHeightPx(toHeight);
+        } else {
+          cardSurface.style.height = "";
+          cardSurface.style.transition = "";
+        }
+        return;
+      }
+
+      detailCardResizeAnimationRef.current?.cancel();
+      detailCardResizeAnimationRef.current = null;
+      if (Math.abs(toHeight - fromHeight) <= 0.5) {
+        if (maxHeight != null) {
+          cardSurface.style.height = `${toHeight}px`;
+          setDetailCardHeightPx(toHeight);
+        }
+        return;
+      }
+
+      if (maxHeight != null) {
+        setDetailCardHeightPx(fromHeight);
+        cardSurface.style.height = `${fromHeight}px`;
+      } else {
+        cardSurface.style.transition = "none";
+        cardSurface.style.height = `${fromHeight}px`;
+      }
+
+      const resizeAnimation = cardSurface.animate(
+        [{ height: `${fromHeight}px` }, { height: `${toHeight}px` }],
+        {
+          duration: DETAIL_CARD_RESIZE_DUR_MS,
+          delay: delayMs,
+          easing: DETAIL_CARD_RESIZE_EASE,
+          fill: "both",
+        },
+      );
+      detailCardResizeAnimationRef.current = resizeAnimation;
+      const finishResize = () => {
+        if (detailCardResizeAnimationRef.current !== resizeAnimation) return;
+        if (maxHeight != null) {
+          flushSync(() => {
+            setDetailCardHeightPx(toHeight);
+          });
+          cardSurface.style.height = `${toHeight}px`;
+          resizeAnimation.cancel();
+          detailCardResizeAnimationRef.current = null;
+          return;
+        }
+
+        // The newly mounted thumbnail copy can resolve a few pixels away from its
+        // hidden pre-measure. Re-measure via the probe without releasing to height:auto
+        // (auto caused a mobile/tablet reflow screenshake).
+        resizeAnimation.cancel();
+        const settledHeight = measureDetailCardHeightForProbe(cardSurface, targetProbe);
+        cardSurface.style.height = `${toHeight}px`;
+        cardSurface.style.transition = "none";
+
+        if (Math.abs(settledHeight - toHeight) > 0.5) {
+          const settleAnimation = cardSurface.animate(
+            [{ height: `${toHeight}px` }, { height: `${settledHeight}px` }],
+            {
+              duration: 120,
+              easing: DETAIL_CARD_RESIZE_EASE,
+              fill: "both",
+            },
+          );
+          detailCardResizeAnimationRef.current = settleAnimation;
+          settleAnimation.finished
+            .then(() => {
+              if (detailCardResizeAnimationRef.current !== settleAnimation) return;
+              cardSurface.style.height = `${settledHeight}px`;
+              cardSurface.style.transition = "none";
+              settleAnimation.cancel();
+              detailCardResizeAnimationRef.current = null;
+              // Section scroll unlock is owned by the work-switch reveal timer / tab settle.
+            })
+            .catch(() => {
+              // Cancelled by a newer thumbnail or tab selection.
+            });
+          return;
+        }
+
+        detailCardResizeAnimationRef.current = null;
+      };
+      resizeAnimation.finished.then(finishResize).catch(() => {
+        // Cancelled by a newer thumbnail or tab selection.
+      });
+    },
+    [isCompactDrawerViewport, reduceMotion],
+  );
+
+  const animateDetailTitleToMeasuredHeight = useCallback(
+    (nextIndex: number): number => {
+      if (reduceMotion) return 0;
+
+      const titleArea = detailNowPlayingRef.current;
+      const targetProbe = detailTitleMeasureRefs.current[nextIndex];
+      if (!titleArea || !targetProbe) return 0;
+
+      const fromHeight = titleArea.offsetHeight;
+      const toHeight = targetProbe.offsetHeight;
+      detailTitleResizeAnimationRef.current?.cancel();
+      detailTitleResizeAnimationRef.current = null;
+      if (Math.abs(toHeight - fromHeight) <= 0.5) return 0;
+
+      titleArea.style.height = `${fromHeight}px`;
+      const titleResizeAnimation = titleArea.animate(
+        [{ height: `${fromHeight}px` }, { height: `${toHeight}px` }],
+        {
+          duration: DETAIL_TITLE_MOVE_DUR_MS,
+          easing: DETAIL_CARD_RESIZE_EASE,
+          fill: "both",
+        },
+      );
+      detailTitleResizeAnimationRef.current = titleResizeAnimation;
+      titleResizeAnimation.finished
+        .then(() => {
+          if (detailTitleResizeAnimationRef.current !== titleResizeAnimation) return;
+          titleArea.style.height = `${toHeight}px`;
+          titleResizeAnimation.cancel();
+          detailTitleResizeAnimationRef.current = null;
+          // Natural drawers: keep explicit height. Clearing to auto reflows the section
+          // and reads as screenshake during thumbnail / arrow switches.
+          if (isNaturalDrawerViewport) return;
+          requestAnimationFrame(() => {
+            if (detailTitleResizeAnimationRef.current) return;
+            if (detailNowPlayingRef.current === titleArea) {
+              titleArea.style.height = "";
+            }
+          });
+        })
+        .catch(() => {
+          // Cancelled by a newer thumbnail selection.
+        });
+
+      return DETAIL_TITLE_MOVE_DUR_MS;
+    },
+    [isNaturalDrawerViewport, reduceMotion],
+  );
+
+  const clearDetailBodySwapTimers = useCallback(() => {
+    if (detailBodySwapTimerRef.current !== null) {
+      window.clearTimeout(detailBodySwapTimerRef.current);
+      detailBodySwapTimerRef.current = null;
+    }
+    if (detailBodyRevealTimerRef.current !== null) {
+      window.clearTimeout(detailBodyRevealTimerRef.current);
+      detailBodyRevealTimerRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => clearDetailBodySwapTimers();
+  }, [clearDetailBodySwapTimers]);
+
+  const applyActiveWorkIndex = useCallback(
+    (nextIndex: number) => {
+      const drawerDelayMs = reduceMotion ? 0 : animateDetailTitleToMeasuredHeight(nextIndex);
+      const targetOverviewProbe = detailVideoOverviewMeasureRefs.current[nextIndex];
+      if (targetOverviewProbe) {
+        animateDetailCardToMeasuredBody(targetOverviewProbe, drawerDelayMs);
+      }
+
+      setActiveDetailCardTab("overview");
+      setDetailCardTabOrder([...DETAIL_CARD_TAB_IDS]);
+      setUnderlineTabId("overview");
+      underlineActiveTabRef.current = "overview";
+      activeVideoIndexRef.current = nextIndex;
+      setActiveVideoIndex(nextIndex);
+      // Body is fully hidden here — safe to drop the mask before the new copy mounts.
+      setDetailTabpanelCutoffFade(false);
+
+      const revealDelay = reduceMotion
+        ? 0
+        : drawerDelayMs + DETAIL_CARD_RESIZE_DUR_MS;
+      detailBodyRevealTimerRef.current = window.setTimeout(() => {
+        detailBodyRevealTimerRef.current = null;
+        // Arm the cutoff mask before opacity rises so it doesn’t pop in at the end.
+        detailBodyVisibleRef.current = true;
+        updateDetailTabpanelCutoffFade();
+        setDetailBodyVisible(true);
+        // Title + card resize window is done — safe to unlock section scroll.
+        releaseNaturalDrawerResizeLock();
+        requestAnimationFrame(() => {
+          updateDetailTabpanelCutoffFade();
+        });
+      }, revealDelay);
+    },
+    [
+      animateDetailCardToMeasuredBody,
+      animateDetailTitleToMeasuredHeight,
+      reduceMotion,
+      releaseNaturalDrawerResizeLock,
+      updateDetailTabpanelCutoffFade,
+    ],
+  );
+
+  const commitActiveWorkIndex = useCallback(
+    (nextIndex: number) => {
+      if (nextIndex === activeVideoIndexRef.current && detailBodyVisible) return;
+
+      clearDetailBodySwapTimers();
+      activeVideoIndexRef.current = nextIndex;
+
+      // Hold page-height reserve + freeze section scroll before fade/resize (thumbnail/arrows).
+      // Natural (phone/tablet portrait) + coarse tablet landscape — not desktop fine-pointer.
+      const freezeSectionForMediaSwitch =
+        isNaturalDrawerViewport ||
+        (isPlayerCappedDrawerViewport && !usesFinePointerHover());
+      if (freezeSectionForMediaSwitch) {
+        if (isNaturalDrawerViewport) {
+          bumpNaturalDrawerReserveForProbe(
+            detailVideoOverviewMeasureRefs.current[nextIndex],
+          );
+        }
+        const lockTarget =
+          detailCardSurfaceRef.current ?? detailRootRef.current ?? detailNowPlayingRef.current;
+        if (lockTarget) armNaturalDrawerResizeLock(lockTarget);
+      }
+
+      if (reduceMotion) {
+        detailBodyVisibleRef.current = true;
+        setDetailBodyVisible(true);
+        applyActiveWorkIndex(nextIndex);
+        return;
+      }
+
+      const waitForFadeOut = detailBodyVisible;
+      detailBodyVisibleRef.current = false;
+      setDetailBodyVisible(false);
+      // Keep any active cutoff mask through the body opacity out so both fade together.
+
+      detailBodySwapTimerRef.current = window.setTimeout(
+        () => {
+          detailBodySwapTimerRef.current = null;
+          applyActiveWorkIndex(nextIndex);
+        },
+        waitForFadeOut ? DETAIL_BODY_OUT_MS : 0,
+      );
+    },
+    [
+      applyActiveWorkIndex,
+      armNaturalDrawerResizeLock,
+      bumpNaturalDrawerReserveForProbe,
+      clearDetailBodySwapTimers,
+      detailBodyVisible,
+      isNaturalDrawerViewport,
+      isPlayerCappedDrawerViewport,
+      reduceMotion,
+      usesFinePointerHover,
+    ],
+  );
+
+  /** Center a works-strip thumb without scrollIntoView (avoids scrolling the section on mobile). */
+  const centerWorksStripThumb = useCallback(
+    (index: number) => {
+      const strip = thumbStripRef.current;
+      const thumb = thumbRefs.current[index];
+      if (!strip || !thumb) return;
+      const stripRect = strip.getBoundingClientRect();
+      const thumbRect = thumb.getBoundingClientRect();
+      const delta =
+        thumbRect.left +
+        thumbRect.width / 2 -
+        (stripRect.left + stripRect.width / 2);
+      const nextLeft = strip.scrollLeft + delta;
+      if (reduceMotion || typeof strip.scrollTo !== "function") {
+        strip.scrollLeft = nextLeft;
+        return;
+      }
+      strip.scrollTo({ left: nextLeft, behavior: "smooth" });
+    },
+    [reduceMotion],
+  );
+
   const navigateToWorkIndex = useCallback(
     (
       nextIndex: number,
@@ -581,19 +1197,19 @@ export function ShowcaseVideoEditingDetail({
         });
       }
 
-      activeVideoIndexRef.current = nextIndex;
-      setActiveVideoIndex(nextIndex);
+      commitActiveWorkIndex(nextIndex);
 
       if (options?.scrollStrip === false) return;
 
       lockWorksStripScrollSync();
-      thumbRefs.current[nextIndex]?.scrollIntoView({
-        behavior: reduceMotion ? "auto" : "smooth",
-        block: "nearest",
-        inline: "center",
-      });
+      centerWorksStripThumb(nextIndex);
     },
-    [lockWorksStripScrollSync, reduceMotion, triggerWorksArrowFeedback],
+    [
+      centerWorksStripThumb,
+      commitActiveWorkIndex,
+      lockWorksStripScrollSync,
+      triggerWorksArrowFeedback,
+    ],
   );
 
   const syncActiveVideoFromStripScroll = useCallback(() => {
@@ -605,9 +1221,8 @@ export function ShowcaseVideoEditingDetail({
     const prevIndex = activeVideoIndexRef.current;
     if (nextIndex === prevIndex) return;
 
-    activeVideoIndexRef.current = nextIndex;
-    setActiveVideoIndex(nextIndex);
-  }, [resolveThumbIndexFromStripScroll]);
+    commitActiveWorkIndex(nextIndex);
+  }, [commitActiveWorkIndex, resolveThumbIndexFromStripScroll]);
 
   const queueWorksStripScrollSync = useCallback(() => {
     clearWorksStripScrollSyncTimer();
@@ -951,7 +1566,9 @@ export function ShowcaseVideoEditingDetail({
             ? { duration: 0 }
             : {
                 duration: DETAIL_TAB_BODY_IN_S,
-                delay: DETAIL_TAB_BODY_IN_DELAY_S,
+                delay: isNaturalDrawerViewport
+                  ? DETAIL_TAB_BODY_IN_DELAY_NATURAL_S
+                  : DETAIL_TAB_BODY_IN_DELAY_S,
                 ease: DETAIL_TAB_SWAP_EASE,
               }
         }
@@ -962,67 +1579,105 @@ export function ShowcaseVideoEditingDetail({
     </AnimatePresence>
   );
 
-  const capturePortraitTabScrollAnchor = useCallback(() => {
-    if (isIpadLandscapeViewport) {
-      pendingPortraitTabAnchorRef.current = null;
-      return;
-    }
-
-    const anchorEl = detailCardSurfaceRef.current ?? detailRootRef.current;
-    if (!anchorEl) {
-      pendingPortraitTabAnchorRef.current = null;
-      return;
-    }
-
-    const scrollParent =
-      anchorEl.closest<HTMLElement>('[aria-label^="Section:"]') ??
-      (() => {
-        let current = anchorEl.parentElement;
-        while (current) {
-          const style = window.getComputedStyle(current);
-          if (/(auto|scroll|overlay)/.test(style.overflowY)) {
-            return current;
-          }
-          current = current.parentElement;
-        }
-        return document.scrollingElement instanceof HTMLElement
-          ? document.scrollingElement
-          : null;
-      })();
-
-    if (!scrollParent) {
-      pendingPortraitTabAnchorRef.current = null;
-      return;
-    }
-
-    pendingPortraitTabAnchorRef.current = {
-      scrollParent,
-      offset:
-        anchorEl.getBoundingClientRect().top - scrollParent.getBoundingClientRect().top,
-    };
-  }, [isIpadLandscapeViewport]);
-
   const handleDetailCardTabChange = useCallback(
     (nextTabId: DetailCardTabId) => {
       if (nextTabId === activeDetailCardTab) return;
 
-      if (isCompactPortraitViewport && !isIpadLandscapeViewport && !reduceMotion) {
+      // Hold scroll/mask chrome through the out fade; settle after resize while copy is opacity 0.
+      detailTabMaskLockRef.current = true;
+      if (detailTabMaskSettleTimerRef.current != null) {
+        window.clearTimeout(detailTabMaskSettleTimerRef.current);
+        detailTabMaskSettleTimerRef.current = null;
+      }
+      // Player-capped only: freeze scrollport before height changes. Natural drawer
+      // (phone/tablet portrait) is not a scrollport — flushSync here only caused hitch/shake.
+      if (isPlayerCappedDrawerViewport) {
+        flushSync(() => {
+          setDetailTabpanelScrollFrozen(true);
+        });
+      }
+      const maxHeight = detailCardMaxHeightPxRef.current;
+
+      if (isCompactDrawerViewport && !reduceMotion) {
         const cardSurface = detailCardSurfaceRef.current;
         const activeNatural = detailTabActiveNaturalRef.current;
         const targetProbe = detailTabHiddenMeasureRefs.current[nextTabId];
+        // Lock section scroll for the whole FLIP + resize window on natural drawers.
+        if (isNaturalDrawerViewport && cardSurface) {
+          armNaturalDrawerResizeLock(cardSurface);
+        }
         if (cardSurface && activeNatural && targetProbe) {
-          const fromHeight = cardSurface.getBoundingClientRect().height;
-          const measuredChromeHeight = Math.max(
-            0,
-            fromHeight - activeNatural.getBoundingClientRect().height,
+          const fromHeightRaw = cardSurface.offsetHeight;
+          const naturalToHeight = measureDetailCardHeightForProbe(
+            cardSurface,
+            targetProbe,
           );
-          const chromeHeight =
-            detailCardChromeHeightRef.current ?? measuredChromeHeight;
-          detailCardChromeHeightRef.current = chromeHeight;
-          const toHeight = chromeHeight + targetProbe.getBoundingClientRect().height;
+          detailCardChromeHeightRef.current =
+            naturalToHeight - targetProbe.offsetHeight;
+          const toHeight =
+            maxHeight != null ? Math.min(naturalToHeight, maxHeight) : naturalToHeight;
+          const fromHeight =
+            maxHeight != null ? Math.min(fromHeightRaw, maxHeight) : fromHeightRaw;
+          const nextClamped =
+            maxHeight != null && naturalToHeight >= maxHeight - 0.5;
+
+          const settleMaskAfterResize = () => {
+            const panel = detailTabpanelScrollRef.current;
+            if (panel) panel.scrollTop = 0;
+            // Apply clamp only after the out-fade so we don’t tear off overflow/mask mid-copy.
+            flushSync(() => {
+              setDetailCardContentIsClamped(nextClamped);
+              if (isPlayerCappedDrawerViewport) {
+                setDetailTabpanelScrollFrozen(false);
+              }
+            });
+            detailTabMaskLockRef.current = false;
+            if (!nextClamped) {
+              setDetailTabpanelCutoffFade(false);
+              return;
+            }
+            // Measure with the post-clamp DOM; don’t use the stale callback closure.
+            const content = detailTabActiveNaturalRef.current;
+            if (!panel || !content) {
+              setDetailTabpanelCutoffFade(false);
+              return;
+            }
+            const panelRect = panel.getBoundingClientRect();
+            const contentRect = content.getBoundingClientRect();
+            const contentPastFold = contentRect.bottom > panelRect.bottom + 1;
+            const canScroll = panel.scrollHeight - panel.clientHeight > 1;
+            const atBottom =
+              panel.scrollTop + panel.clientHeight >= panel.scrollHeight - 4;
+            setDetailTabpanelCutoffFade(canScroll && contentPastFold && !atBottom);
+          };
 
           detailCardResizeAnimationRef.current?.cancel();
+          detailCardResizeAnimationRef.current = null;
           if (Math.abs(toHeight - fromHeight) > 0.5) {
+            // Seed React height to `from` so cancel never snaps to a stale prior tab size.
+            if (maxHeight != null) {
+              setDetailCardHeightPx(fromHeight);
+              cardSurface.style.height = `${fromHeight}px`;
+            } else {
+              // Natural drawer (phone + tablet portrait): kill CSS transitions that fight WAAPI height.
+              cardSurface.style.transition = "none";
+              cardSurface.style.height = `${fromHeight}px`;
+            }
+
+            // Once copy is fully gone, drop the old mask + reset scroll (invisible).
+            detailTabMaskSettleTimerRef.current = window.setTimeout(() => {
+              detailTabMaskSettleTimerRef.current = null;
+              if (detailTabMaskLockRef.current) {
+                const panel = detailTabpanelScrollRef.current;
+                if (panel) panel.scrollTop = 0;
+                setDetailTabpanelCutoffFade(false);
+              }
+            }, DETAIL_BODY_OUT_MS);
+
+            const resizeDelayMs = isNaturalDrawerViewport
+              ? DETAIL_NATURAL_HEIGHT_DELAY_MS
+              : DETAIL_BODY_OUT_MS;
+
             const resizeAnimation = cardSurface.animate(
               [
                 { height: `${fromHeight}px` },
@@ -1030,180 +1685,208 @@ export function ShowcaseVideoEditingDetail({
               ],
               {
                 duration: DETAIL_CARD_RESIZE_DUR_MS,
+                // Desktop: after body out. Natural: after tab FLIP settles (keeps reorder, less shake).
+                delay: resizeDelayMs,
                 easing: DETAIL_CARD_RESIZE_EASE,
                 fill: "both",
               },
             );
             detailCardResizeAnimationRef.current = resizeAnimation;
-            resizeAnimation.onfinish = () => {
+            const finishResize = () => {
               if (detailCardResizeAnimationRef.current !== resizeAnimation) return;
+              // Persist end height in React + DOM before canceling WAAPI so the
+              // prior tab height cannot flash for a frame.
+              if (maxHeight != null) {
+                flushSync(() => {
+                  setDetailCardHeightPx(toHeight);
+                });
+                cardSurface.style.height = `${toHeight}px`;
+              } else if (typeof resizeAnimation.commitStyles === "function") {
+                resizeAnimation.commitStyles();
+              } else {
+                cardSurface.style.height = `${toHeight}px`;
+              }
               resizeAnimation.cancel();
               detailCardResizeAnimationRef.current = null;
+              if (maxHeight == null) {
+                // Keep the explicit pixel height on natural drawers. Clearing to
+                // auto after WAAPI caused a mobile/tablet reflow screenshake.
+                cardSurface.style.height = `${toHeight}px`;
+                cardSurface.style.transition = "none";
+                releaseNaturalDrawerResizeLock();
+              }
+              // Enter fade is delayed +32ms past resize end — settle while still opacity 0.
+              settleMaskAfterResize();
             };
+            resizeAnimation.finished.then(finishResize).catch(() => {
+              // Cancelled by a newer tab swap — leave the replacement animation in charge.
+            });
+          } else if (maxHeight != null) {
+            cardSurface.style.height = `${toHeight}px`;
+            setDetailCardHeightPx(toHeight);
+            detailTabMaskSettleTimerRef.current = window.setTimeout(() => {
+              detailTabMaskSettleTimerRef.current = null;
+              settleMaskAfterResize();
+            }, DETAIL_BODY_OUT_MS);
+          } else {
+            detailTabMaskSettleTimerRef.current = window.setTimeout(() => {
+              detailTabMaskSettleTimerRef.current = null;
+              settleMaskAfterResize();
+              if (isNaturalDrawerViewport) {
+                releaseNaturalDrawerResizeLock();
+              }
+            }, DETAIL_NATURAL_HEIGHT_DELAY_MS);
+          }
+        } else {
+          detailTabMaskLockRef.current = false;
+          setDetailTabpanelScrollFrozen(false);
+          if (isNaturalDrawerViewport) {
+            releaseNaturalDrawerResizeLock();
           }
         }
+      } else {
+        if (maxHeight != null) {
+          const targetProbe = detailTabHiddenMeasureRefs.current[nextTabId];
+          const cardSurface = detailCardSurfaceRef.current;
+          if (cardSurface && targetProbe) {
+            const naturalToHeight = measureDetailCardHeightForProbe(
+              cardSurface,
+              targetProbe,
+            );
+            setDetailCardContentIsClamped(naturalToHeight >= maxHeight - 0.5);
+          }
+        }
+        detailTabMaskLockRef.current = false;
+        setDetailTabpanelScrollFrozen(false);
+        updateDetailTabpanelCutoffFade();
       }
 
       setDetailCardTabOrder((prev) => swapDetailTabToFront(prev, nextTabId));
-
-      if (isIpadLandscapeViewport) {
-        setActiveDetailCardTab(nextTabId);
-        return;
-      }
-
-      capturePortraitTabScrollAnchor();
       setActiveDetailCardTab(nextTabId);
     },
     [
       activeDetailCardTab,
-      capturePortraitTabScrollAnchor,
-      isIpadLandscapeViewport,
-      isCompactPortraitViewport,
+      armNaturalDrawerResizeLock,
+      isCompactDrawerViewport,
+      isNaturalDrawerViewport,
+      isPlayerCappedDrawerViewport,
       reduceMotion,
+      releaseNaturalDrawerResizeLock,
+      updateDetailTabpanelCutoffFade,
     ],
   );
 
-  const focusDetailCardTab = useCallback((tabId: DetailCardTabId) => {
-    requestAnimationFrame(() => {
-      document.getElementById(`video-detail-tab-${tabId}`)?.focus({ preventScroll: true });
-    });
-  }, []);
+  const focusDetailCardTab = useCallback(
+    (tabId: DetailCardTabId) => {
+      // Focusing the tab can scroll the section on mobile WebKit even with preventScroll.
+      if (isNaturalDrawerViewport || !usesFinePointerHover()) return;
+      requestAnimationFrame(() => {
+        document.getElementById(`video-detail-tab-${tabId}`)?.focus({ preventScroll: true });
+      });
+    },
+    [isNaturalDrawerViewport, usesFinePointerHover],
+  );
 
   const renderDetailCardTabList = () => (
-    <LayoutGroup id="video-detail-card-tabs">
-      <div
-        className="video-editing-detail-card-tablist flex w-full min-w-0 shrink-0 items-stretch justify-between gap-0 border-b border-transparent"
-        role="tablist"
-        aria-label="Project detail sections"
-        onKeyDown={(event) => {
-          const idx = detailCardTabOrder.findIndex((id) => id === activeDetailCardTab);
-          if (idx < 0) return;
-          let next = idx;
-          if (event.key === "ArrowRight" || event.key === "ArrowDown") {
-            next = (idx + 1) % detailCardTabOrder.length;
-          } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
-            next = (idx - 1 + detailCardTabOrder.length) % detailCardTabOrder.length;
-          } else if (event.key === "Home") {
-            next = 0;
-          } else if (event.key === "End") {
-            next = detailCardTabOrder.length - 1;
-          } else {
-            return;
-          }
-          event.preventDefault();
-          const nextId = detailCardTabOrder[next];
-          if (!nextId) return;
-          handleDetailCardTabChange(nextId);
-          focusDetailCardTab(nextId);
-        }}
-      >
-        {detailCardTabOrder.map((tabId) => {
-          const selected = activeDetailCardTab === tabId;
-          const underlineActive = underlineTabId === tabId;
-          return (
-            <motion.button
-              key={tabId}
-              type="button"
-              role="tab"
-              id={`video-detail-tab-${tabId}`}
-              aria-selected={selected}
-              aria-controls={`video-detail-panel-${tabId}`}
-              tabIndex={selected ? 0 : -1}
-              layout={reduceMotion ? false : "position"}
-              transition={
-                reduceMotion
-                  ? { duration: 0 }
-                  : {
-                      layout: {
-                        type: "tween",
-                        duration: DETAIL_TAB_SWAP_DUR_S,
-                        ease: DETAIL_TAB_SWAP_EASE,
-                      },
-                    }
-              }
-              className={`video-editing-detail-card-tab relative flex min-w-0 flex-none items-end justify-center px-0.5 pb-0 pt-0.5 text-center font-heading text-[0.625rem] leading-none tracking-eyebrow-tight uppercase transition-colors duration-[420ms] ease-out focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--palette-yellow-projects)] focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:text-[0.6875rem] ${
-                selected
-                  ? "text-[color:var(--palette-yellow-projects)]"
-                  : "text-mono-2/70 hover:text-[color:var(--palette-yellow-projects)]"
-              }`}
-              onMouseDown={(event) => {
-                if (event.button !== 0) return;
-                capturePortraitTabScrollAnchor();
-                event.preventDefault();
-              }}
-              onClick={() => {
-                handleDetailCardTabChange(tabId);
-                focusDetailCardTab(tabId);
-              }}
-            >
-              <span className="relative inline-block w-max pb-2">
-                {detailCardTabLabel(tabId, isSlaywire)}
-                <span
-                  className={`video-editing-detail-card-tab-underline pointer-events-none absolute inset-x-0 bottom-0 h-px origin-center bg-[color:var(--palette-yellow-projects)] ease-out ${
-                    underlineActive ? "scale-x-100 opacity-100" : "scale-x-0 opacity-0"
-                  }`}
-                  style={{
-                    // Always list both so close can fade; open uses 0ms opacity (scale only).
-                    transitionProperty: "transform, opacity",
-                    transitionDuration: reduceMotion
-                      ? "0ms, 0ms"
-                      : underlineActive
-                        ? `${DETAIL_TAB_UNDERLINE_DUR_MS}ms, 0ms`
-                        : `${DETAIL_TAB_UNDERLINE_DUR_MS}ms, ${DETAIL_TAB_UNDERLINE_DUR_MS}ms`,
-                  }}
-                  aria-hidden
-                />
-              </span>
-            </motion.button>
-          );
-        })}
-      </div>
-    </LayoutGroup>
+    // layoutRoot: keep tab FLIP projections from dirtying the section scroller (mobile shake).
+    <motion.div layoutRoot className="w-full min-w-0">
+      <LayoutGroup id="video-detail-card-tabs">
+        <div
+          className="video-editing-detail-card-tablist isolate flex w-full min-w-0 shrink-0 items-stretch justify-between gap-0 border-b border-transparent"
+          role="tablist"
+          aria-label="Project detail sections"
+          onKeyDown={(event) => {
+            const idx = detailCardTabOrder.findIndex((id) => id === activeDetailCardTab);
+            if (idx < 0) return;
+            let next = idx;
+            if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+              next = (idx + 1) % detailCardTabOrder.length;
+            } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+              next = (idx - 1 + detailCardTabOrder.length) % detailCardTabOrder.length;
+            } else if (event.key === "Home") {
+              next = 0;
+            } else if (event.key === "End") {
+              next = detailCardTabOrder.length - 1;
+            } else {
+              return;
+            }
+            event.preventDefault();
+            const nextId = detailCardTabOrder[next];
+            if (!nextId) return;
+            handleDetailCardTabChange(nextId);
+            focusDetailCardTab(nextId);
+          }}
+        >
+          {detailCardTabOrder.map((tabId) => {
+            const selected = activeDetailCardTab === tabId;
+            const underlineActive = underlineTabId === tabId;
+            return (
+              <motion.button
+                key={tabId}
+                type="button"
+                role="tab"
+                id={`video-detail-tab-${tabId}`}
+                aria-selected={selected}
+                aria-controls={`video-detail-panel-${tabId}`}
+                tabIndex={selected ? 0 : -1}
+                layout={reduceMotion ? false : "position"}
+                transition={
+                  reduceMotion
+                    ? { duration: 0 }
+                    : {
+                        layout: {
+                          type: "tween",
+                          duration: DETAIL_TAB_SWAP_DUR_S,
+                          ease: DETAIL_TAB_SWAP_EASE,
+                        },
+                      }
+                }
+                className={`video-editing-detail-card-tab relative flex min-w-0 flex-none items-end justify-center px-0.5 pb-0 pt-0.5 text-center font-heading text-[0.625rem] leading-none tracking-eyebrow-tight uppercase transition-colors duration-[420ms] ease-out focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--palette-yellow-projects)] focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:text-[0.6875rem] ${
+                  selected
+                    ? "text-[color:var(--palette-yellow-projects)]"
+                    : "text-mono-2/70 hover:text-[color:var(--palette-yellow-projects)]"
+                }`}
+                onMouseDown={(event) => {
+                  if (event.button !== 0) return;
+                  // Prevent focus scroll jump on press; focus runs with preventScroll on click.
+                  event.preventDefault();
+                }}
+                onClick={() => {
+                  handleDetailCardTabChange(tabId);
+                  focusDetailCardTab(tabId);
+                }}
+              >
+                <span className="relative inline-block w-max pb-2">
+                  {detailCardTabLabel(tabId, isSlaywire)}
+                  <span
+                    className={`video-editing-detail-card-tab-underline pointer-events-none absolute inset-x-0 bottom-0 h-px origin-center bg-[color:var(--palette-yellow-projects)] ease-out ${
+                      underlineActive ? "scale-x-100 opacity-100" : "scale-x-0 opacity-0"
+                    }`}
+                    style={{
+                      // Always list both so close can fade; open uses 0ms opacity (scale only).
+                      transitionProperty: "transform, opacity",
+                      transitionDuration: reduceMotion
+                        ? "0ms, 0ms"
+                        : underlineActive
+                          ? `${DETAIL_TAB_UNDERLINE_DUR_MS}ms, 0ms`
+                          : `${DETAIL_TAB_UNDERLINE_DUR_MS}ms, ${DETAIL_TAB_UNDERLINE_DUR_MS}ms`,
+                    }}
+                    aria-hidden
+                  />
+                </span>
+              </motion.button>
+            );
+          })}
+        </div>
+      </LayoutGroup>
+    </motion.div>
   );
 
   useLayoutEffect(() => {
-    if (isIpadLandscapeViewport) {
-      pendingPortraitTabAnchorRef.current = null;
-      return;
-    }
-
-    const pending = pendingPortraitTabAnchorRef.current;
-    if (!pending) return;
-
-    const applyAnchorCorrection = () => {
-      const anchorEl = detailCardSurfaceRef.current;
-      if (!anchorEl) return;
-      const newOffset =
-        anchorEl.getBoundingClientRect().top - pending.scrollParent.getBoundingClientRect().top;
-      const delta = newOffset - pending.offset;
-      if (Math.abs(delta) > 0.5) {
-        pending.scrollParent.scrollTop += delta;
-      }
-      pending.offset =
-        anchorEl.getBoundingClientRect().top - pending.scrollParent.getBoundingClientRect().top;
-    };
-
-    applyAnchorCorrection();
-
-    let raf2 = 0;
-    const raf1 = window.requestAnimationFrame(() => {
-      applyAnchorCorrection();
-      raf2 = window.requestAnimationFrame(() => {
-        applyAnchorCorrection();
-        pendingPortraitTabAnchorRef.current = null;
-      });
-    });
-
-    return () => {
-      window.cancelAnimationFrame(raf1);
-      window.cancelAnimationFrame(raf2);
-    };
-  }, [activeDetailCardTab, isIpadLandscapeViewport]);
-
-  useLayoutEffect(() => {
     const reserve = detailPanelReserveRef.current;
-    if (!isCompactPortraitViewport || isIpadLandscapeViewport) {
+    if (!isCompactDrawerViewport) {
       if (reserve) reserve.style.minHeight = "";
+      detailPanelTallestBodyRef.current = 0;
       return;
     }
 
@@ -1215,24 +1898,109 @@ export function ShowcaseVideoEditingDetail({
     for (const tabId of DETAIL_CARD_TAB_IDS) {
       const probe = detailTabHiddenMeasureRefs.current[tabId];
       if (!probe) continue;
-      tallest = Math.max(tallest, Math.ceil(probe.getBoundingClientRect().height));
+      tallest = Math.max(tallest, Math.ceil(probe.offsetHeight));
     }
-    const activeHeight = activeNatural.getBoundingClientRect().height;
-    const cardHeight = cardSurface.getBoundingClientRect().height;
-    const measuredChromeHeight = Math.max(0, cardHeight - activeHeight);
+    const activeNaturalH = Math.ceil(activeNatural.offsetHeight);
+    if (activeNaturalH > 0) {
+      tallest = Math.max(tallest, activeNaturalH);
+    }
+    const measuredChromeHeight = measureDetailCardChromeHeight(cardSurface, activeNatural);
     if (!detailCardResizeAnimationRef.current) {
       detailCardChromeHeightRef.current = measuredChromeHeight;
     }
     const fixedChromeHeight =
       detailCardChromeHeightRef.current ?? measuredChromeHeight;
-    reserve.style.minHeight =
-      tallest > 0 ? `${Math.ceil(fixedChromeHeight + tallest)}px` : "";
-  }, [activeDetailCardTab, activeVideo.id, card.id, isIpadLandscapeViewport, isCompactPortraitViewport]);
+
+    // Phone + tablet portrait: keep page height at the tallest tab ever seen (FEATURED WRITING parity).
+    if (isNaturalDrawerViewport && tallest > 0) {
+      detailPanelTallestBodyRef.current = Math.max(
+        detailPanelTallestBodyRef.current,
+        tallest,
+      );
+    } else if (!isNaturalDrawerViewport) {
+      detailPanelTallestBodyRef.current = tallest;
+    }
+
+    const reservedBody =
+      isNaturalDrawerViewport && detailPanelTallestBodyRef.current > 0
+        ? detailPanelTallestBodyRef.current
+        : tallest;
+    const naturalReserve =
+      reservedBody > 0 ? Math.ceil(fixedChromeHeight + reservedBody) : 0;
+    const maxHeight = detailCardMaxHeightPx;
+    const cappedReserve =
+      naturalReserve > 0 && maxHeight != null
+        ? Math.min(naturalReserve, maxHeight)
+        : naturalReserve;
+    // Natural drawers: never shrink the page-height reserve mid-session (media/tab
+    // switches). Shrinking scroll extent under a pinned player reads as screenshake.
+    if (isNaturalDrawerViewport) {
+      const currentMin = parseFloat(reserve.style.minHeight) || 0;
+      const nextMin = Math.max(currentMin, cappedReserve);
+      reserve.style.minHeight = nextMin > 0 ? `${nextMin}px` : "";
+    } else {
+      reserve.style.minHeight = cappedReserve > 0 ? `${cappedReserve}px` : "";
+    }
+
+    // Height for player-capped drawers is owned by the tab resize animation / onfinish.
+    // Remeasuring here after cancel caused a one-frame flash of the wrong size.
+  }, [
+    activeDetailCardTab,
+    activeVideo.id,
+    card.id,
+    isCompactDrawerViewport,
+    isNaturalDrawerViewport,
+    detailCardMaxHeightPx,
+  ]);
+
+  /** Initial / cap-change height only — tab swaps animate height themselves. */
+  useLayoutEffect(() => {
+    if (!isPlayerCappedDrawerViewport || detailCardMaxHeightPx == null) {
+      return;
+    }
+    if (detailCardResizeAnimationRef.current) return;
+
+    let nextHeight = detailCardHeightPx;
+    if (nextHeight != null) {
+      nextHeight = Math.min(nextHeight, detailCardMaxHeightPx);
+    } else {
+      const cardSurface = detailCardSurfaceRef.current;
+      const activeNatural = detailTabActiveNaturalRef.current;
+      if (!cardSurface || !activeNatural) {
+        nextHeight = detailCardMaxHeightPx;
+      } else {
+        const chrome =
+          detailCardChromeHeightRef.current ??
+          measureDetailCardChromeHeight(cardSurface, activeNatural);
+        detailCardChromeHeightRef.current = chrome;
+        nextHeight = Math.min(
+          Math.ceil(chrome + activeNatural.offsetHeight),
+          detailCardMaxHeightPx,
+        );
+      }
+    }
+    setDetailCardHeightPx(nextHeight);
+    setDetailCardContentIsClamped(nextHeight >= detailCardMaxHeightPx - 1);
+  }, [
+    isPlayerCappedDrawerViewport,
+    detailCardMaxHeightPx,
+    detailCardHeightPx,
+  ]);
 
   useEffect(() => {
     return () => {
       detailCardResizeAnimationRef.current?.cancel();
       detailCardResizeAnimationRef.current = null;
+      detailTitleResizeAnimationRef.current?.cancel();
+      detailTitleResizeAnimationRef.current = null;
+      const cardSurface = detailCardSurfaceRef.current;
+      if (cardSurface) {
+        cardSurface.style.height = "";
+        cardSurface.style.transition = "";
+      }
+      if (detailNowPlayingRef.current) {
+        detailNowPlayingRef.current.style.height = "";
+      }
     };
   }, []);
 
@@ -1444,91 +2212,38 @@ export function ShowcaseVideoEditingDetail({
                   }}
                 />
               </motion.div>
-              {isIpadLandscapeViewport ? (
-                <>
-                  <div className="video-editing-detail-now-playing w-full min-w-0">
-                    <div className="flex w-full min-w-0 flex-col items-stretch gap-y-1.5 text-left">
-                      <AnimatePresence mode="wait" initial={false}>
-                        <motion.div
-                          key={activeVideo.id}
-                          initial={reduceMotion ? false : { opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={reduceMotion ? undefined : { opacity: 0 }}
-                          transition={
-                            reduceMotion
-                              ? undefined
-                              : {
-                                  duration: 0.22,
-                                  ease: [0.22, 1, 0.36, 1],
-                                }
-                          }
-                          className="flex w-full min-w-0 flex-col items-stretch gap-y-1.5 text-left"
-                        >
-                          <h3 className="m-0 w-full font-display text-2xl md:text-3xl leading-[1.1] tracking-[-0.015em] text-white">
-                            {activeSelectorTitle}
-                          </h3>
-                          {activeSelectorSubtitle ? (
-                            <p className="m-0 w-full pl-[2px] font-body text-sm sm:text-base leading-snug text-mono-2">
-                              {activeSelectorSubtitle}
-                            </p>
-                          ) : null}
-                        </motion.div>
-                      </AnimatePresence>
-                    </div>
-                  </div>
-                <section
-                  ref={detailCardSurfaceRef}
-                  className={`${showcaseDetailCardClass} video-editing-detail-meta-card mt-3.5 flex min-h-0 w-full min-w-0 flex-col overflow-hidden px-0 py-0 sm:mt-4 sm:px-0 sm:py-0`}
-                  style={
-                    detailCardMinHeightPx != null
-                      ? {
-                          height: `${detailCardMinHeightPx}px`,
-                          minHeight: `${detailCardMinHeightPx}px`,
-                          maxHeight: `${detailCardMinHeightPx}px`,
-                        }
-                      : undefined
-                  }
-                >
-                  <div className="video-editing-detail-overview w-full min-w-0">
-                    <AnimatePresence mode="wait" initial={false}>
-                      <motion.div
-                        key={activeVideo.id}
-                        initial={reduceMotion ? false : { opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={reduceMotion ? undefined : { opacity: 0 }}
-                        transition={
-                          reduceMotion
-                            ? undefined
-                            : {
-                                duration: 0.22,
-                                ease: [0.22, 1, 0.36, 1],
-                              }
-                        }
-                        className="video-editing-detail-cards-tabs flex min-h-0 w-full min-w-0 flex-1 flex-col gap-2.5"
-                      >
-                        {renderDetailCardTabList()}
-                        <div
-                          ref={detailTabpanelScrollRef as Ref<HTMLDivElement>}
-                          role="tabpanel"
-                          id={`video-detail-panel-${activeDetailCardTab}`}
-                          aria-labelledby={`video-detail-tab-${activeDetailCardTab}`}
-                          className={`video-editing-detail-card-tabpanel min-h-0 min-w-0 flex-1 overflow-y-auto no-scrollbar${
-                            detailTabpanelCutoffFade ? " content-cutoff-fade" : ""
-                          }`}
-                        >
-                          <div className="video-editing-detail-card-tab-surface min-w-0">
-                            {renderDetailCardTabBody(activeDetailCardTab, "ipad")}
-                          </div>
-                        </div>
-                      </motion.div>
-                    </AnimatePresence>
-                  </div>
-                </section>
-                </>
-              ) : (
-                <>
-              <div className="video-editing-detail-now-playing mt-3.5 w-full min-w-0 sm:mt-4">
+              <div
+                ref={detailNowPlayingRef}
+                className={`video-editing-detail-now-playing relative w-full min-w-0${
+                  isPlayerCappedDrawerViewport ? "" : " mt-3.5 sm:mt-4"
+                }`}
+              >
                 <div className="flex w-full min-w-0 flex-col items-stretch gap-y-1.5 text-left">
+                  {videos.map((video, index) => {
+                    const selectorTitle =
+                      video.selectorTitle?.trim() ||
+                      (isSlaywire ? card.title : video.label || "Selected work");
+                    const selectorSubtitle = video.selectorSubtitle?.trim() || "";
+                    return (
+                      <div
+                        key={`title-reserve-${video.id}`}
+                        ref={(el) => {
+                          detailTitleMeasureRefs.current[index] = el;
+                        }}
+                        className="pointer-events-none absolute left-0 top-0 -z-10 flex w-full min-w-0 flex-col items-stretch gap-y-1.5 overflow-hidden opacity-0 text-left"
+                        aria-hidden
+                      >
+                        <h3 className="m-0 w-full font-display text-2xl md:text-3xl leading-[1.1] tracking-[-0.015em] text-white">
+                          {selectorTitle}
+                        </h3>
+                        {selectorSubtitle ? (
+                          <p className="m-0 w-full pl-[2px] font-body text-sm sm:text-base leading-snug text-mono-2">
+                            {selectorSubtitle}
+                          </p>
+                        ) : null}
+                      </div>
+                    );
+                  })}
                   <AnimatePresence mode="wait" initial={false}>
                     <motion.div
                       key={activeVideo.id}
@@ -1557,27 +2272,38 @@ export function ShowcaseVideoEditingDetail({
                   </AnimatePresence>
                 </div>
               </div>
-              <div ref={detailPanelReserveRef} className="w-full min-w-0">
+              <div
+                ref={detailPanelReserveRef}
+                className="w-full min-w-0 [overflow-anchor:none]"
+              >
                 <section
                   ref={detailCardSurfaceRef}
-                  className={`${showcaseDetailCardClass} video-editing-detail-meta-card mt-3.5 flex w-full min-w-0 flex-col overflow-hidden [overflow-anchor:none] sm:mt-4`}
+                  className={`${showcaseDetailCardClass} video-editing-detail-meta-card mt-3.5 flex w-full min-w-0 flex-col overflow-hidden [overflow-anchor:none] sm:mt-4${
+                    detailCardMaxHeightPx != null ? " min-h-0" : ""
+                  }`}
+                  style={
+                    detailCardMaxHeightPx != null
+                      ? {
+                          maxHeight: `${detailCardMaxHeightPx}px`,
+                          ...(detailCardHeightPx != null
+                            ? { height: `${detailCardHeightPx}px` }
+                            : {}),
+                        }
+                      : undefined
+                  }
                 >
-                  <div className="video-editing-detail-overview w-full min-w-0">
+                  <div
+                    className={`video-editing-detail-overview w-full min-w-0${
+                      detailCardIsAtMaxHeight ? " flex min-h-0 flex-1 flex-col" : ""
+                    }`}
+                  >
                     <AnimatePresence mode="wait" initial={false}>
                       <motion.div
                         key={activeVideo.id}
-                        initial={reduceMotion ? false : { opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={reduceMotion ? undefined : { opacity: 0 }}
-                        transition={
-                          reduceMotion
-                            ? undefined
-                            : {
-                                duration: 0.22,
-                                ease: [0.22, 1, 0.36, 1],
-                              }
-                        }
-                        className="video-editing-detail-cards-tabs flex w-full min-w-0 flex-col gap-2.5"
+                        initial={false}
+                        className={`video-editing-detail-cards-tabs flex w-full min-w-0 flex-col gap-2.5${
+                          detailCardIsAtMaxHeight ? " min-h-0 flex-1" : ""
+                        }`}
                       >
                         {renderDetailCardTabList()}
                         <div
@@ -1585,25 +2311,60 @@ export function ShowcaseVideoEditingDetail({
                           role="tabpanel"
                           id={`video-detail-panel-${activeDetailCardTab}`}
                           aria-labelledby={`video-detail-tab-${activeDetailCardTab}`}
-                          className={`video-editing-detail-card-tabpanel min-w-0${
-                            detailTabpanelCutoffFade ? " content-cutoff-fade" : ""
+                          className={`video-editing-detail-card-tabpanel min-w-0 [overflow-anchor:none]${
+                            detailCardIsAtMaxHeight
+                              ? detailTabpanelScrollFrozen
+                                ? " min-h-0 flex-1 overflow-hidden"
+                                : " min-h-0 flex-1 overflow-y-auto no-scrollbar"
+                              : ""
+                          }${
+                            detailCardIsAtMaxHeight && detailTabpanelCutoffFade
+                              ? " content-cutoff-fade"
+                              : ""
                           }`}
+                          style={{
+                            opacity: detailBodyVisible ? 1 : 0,
+                            transition: reduceMotion
+                              ? undefined
+                              : `opacity ${
+                                  detailBodyVisible
+                                    ? DETAIL_TAB_BODY_IN_S
+                                    : DETAIL_TAB_BODY_OUT_S
+                                }s ${DETAIL_CARD_RESIZE_EASE}`,
+                          }}
                         >
                           <div className="video-editing-detail-card-tab-surface relative min-w-0 pt-1">
                             <div ref={detailTabActiveNaturalRef} className="min-w-0">
                               {renderDetailCardTabBody(activeDetailCardTab, "portrait")}
                             </div>
-                            {isCompactPortraitViewport ? (
-                              <div className="pointer-events-none absolute left-0 top-0 -z-10 h-0 w-full overflow-hidden opacity-0" aria-hidden>
+                            {isCompactDrawerViewport ? (
+                              <div className="pointer-events-none absolute left-0 top-1 -z-10 h-0 w-full overflow-hidden opacity-0" aria-hidden>
                                 {DETAIL_CARD_TAB_IDS.map((tabId) => (
                                   <div
                                     key={`measure-${tabId}`}
                                     ref={(el) => {
                                       detailTabHiddenMeasureRefs.current[tabId] = el;
                                     }}
-                                    className="min-w-0"
+                                    className="absolute left-0 top-0 w-full min-w-0"
                                   >
                                     {renderPortraitDetailTabBody(tabId)}
+                                  </div>
+                                ))}
+                                {videos.map((video, index) => (
+                                  <div
+                                    key={`measure-video-overview-${video.id}`}
+                                    ref={(el) => {
+                                      detailVideoOverviewMeasureRefs.current[index] = el;
+                                    }}
+                                    className="absolute left-0 top-0 w-full min-w-0"
+                                  >
+                                    <p className="m-0 whitespace-pre-line font-body text-sm leading-snug text-mono-2 sm:text-base">
+                                      {renderDetailInlineEm(
+                                        video.detailOverview?.trim() ||
+                                          card.detailOverview?.trim() ||
+                                          "?",
+                                      )}
+                                    </p>
                                   </div>
                                 ))}
                               </div>
@@ -1615,8 +2376,6 @@ export function ShowcaseVideoEditingDetail({
                   </div>
                 </section>
               </div>
-                </>
-              )}
             </div>
           </div>
         </div>
