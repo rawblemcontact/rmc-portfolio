@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type Ref } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type Ref } from "react";
 import { flushSync } from "react-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
@@ -248,6 +248,11 @@ const DETAIL_TAB_BODY_OUT_S = 0.16;
 const DETAIL_TAB_BODY_IN_S = 0.24;
 const DETAIL_BODY_OUT_MS = Math.round(DETAIL_TAB_BODY_OUT_S * 1000);
 /**
+ * After height settles, arm the cutoff dissolve briefly before body opacity
+ * so the soft edge is already easing when copy fades in.
+ */
+const DETAIL_CUTOFF_LEAD_MS = 200;
+/**
  * Wait for tab FLIP to settle before drawing the new underline (avoids scaling
  * while the parent is still translating).
  */
@@ -429,6 +434,11 @@ export function ShowcaseVideoEditingDetail({
   const [detailTabpanelCutoffFade, setDetailTabpanelCutoffFade] = useState<
     "none" | "top" | "bottom" | "both"
   >("none");
+  const detailTabpanelCutoffFadeRef = useRef(detailTabpanelCutoffFade);
+  detailTabpanelCutoffFadeRef.current = detailTabpanelCutoffFade;
+  /** Snap cutoff strength (no CSS ease) while height/copy are mid-swap. */
+  const [detailTabCutoffInstant, setDetailTabCutoffInstant] = useState(false);
+  const detailTabCutoffInstantRef = useRef(false);
   /** Hold description copy invisible until box height/title moves finish. */
   const [detailBodyVisible, setDetailBodyVisible] = useState(true);
   const detailBodyVisibleRef = useRef(true);
@@ -554,42 +564,56 @@ export function ShowcaseVideoEditingDetail({
     if (!detailBodyVisibleRef.current || detailTabMaskLockRef.current) {
       return;
     }
+    // While the drawer height is still WAAPI-settling, skip mask updates — mid-tween
+    // "not at cap" → none → final bottom reads as an end flicker (e.g. RAWBLEM.COM).
+    if (
+      detailCardHeightTransitioningRef.current ||
+      detailCardResizeAnimationRef.current ||
+      detailCardResizeDelayTimerRef.current != null
+    ) {
+      return;
+    }
     const surface = detailCardSurfaceRef.current;
     const paintedHeight = surface?.offsetHeight ?? detailCardHeightPx;
     const maxHeight = detailCardMaxHeightPxRef.current ?? detailCardMaxHeightPx;
     // Fade is only for drawers actually at the player ceiling. Below-max cards
     // size to content — no dissolve over the last line (e.g. TOOLS → Audacity).
+    let next: "none" | "top" | "bottom" | "both" = "none";
     if (
-      !panel ||
-      !content ||
-      !detailCardUsesInnerScroll ||
-      !detailCardIsAtPlayerCap(paintedHeight, maxHeight)
+      panel &&
+      content &&
+      detailCardUsesInnerScroll &&
+      detailCardIsAtPlayerCap(paintedHeight, maxHeight)
     ) {
-      setDetailTabpanelCutoffFade("none");
-      return;
+      const panelRect = panel.getBoundingClientRect();
+      const contentRect = content.getBoundingClientRect();
+      const panelH = panel.clientHeight;
+      const contentH = Math.max(content.offsetHeight, content.scrollHeight);
+      // Prefer layout sizes over scroll metrics — scrollHeight can lag one frame
+      // after a height commit and briefly under-report (mask arms late → snap).
+      const canScroll =
+        panel.scrollHeight - panelH > 1 || contentH - panelH > 1;
+      const contentPastFold =
+        contentRect.bottom > panelRect.bottom + 1 || contentH > panelH + 1;
+      const atTop = panel.scrollTop <= 1;
+      const atBottom =
+        panel.scrollTop + panelH >= Math.max(panel.scrollHeight, contentH) - 4;
+      // Top dissolve while scrolled: softens the clip at the body-start inset
+      // (all tabs). Keep it at the true bottom so a mid-line isn't hard-cut.
+      const showTop = canScroll && !atTop;
+      const showBottom = canScroll && contentPastFold && !atBottom;
+      next =
+        showTop && showBottom
+          ? "both"
+          : showTop
+            ? "top"
+            : showBottom
+              ? "bottom"
+              : "none";
     }
-
-    const panelRect = panel.getBoundingClientRect();
-    const contentRect = content.getBoundingClientRect();
-    // Fade only while real copy still extends past the visible fold.
-    const contentPastFold = contentRect.bottom > panelRect.bottom + 1;
-    const canScroll = panel.scrollHeight - panel.clientHeight > 1;
-    const atTop = panel.scrollTop <= 1;
-    const atBottom =
-      panel.scrollTop + panel.clientHeight >= panel.scrollHeight - 4;
-    // Top dissolve while scrolled: softens the clip at the body-start inset
-    // (all tabs). Keep it at the true bottom so a mid-line isn't hard-cut.
-    const showTop = canScroll && !atTop;
-    const showBottom = canScroll && contentPastFold && !atBottom;
-    setDetailTabpanelCutoffFade(
-      showTop && showBottom
-        ? "both"
-        : showTop
-          ? "top"
-          : showBottom
-            ? "bottom"
-            : "none",
-    );
+    if (next === detailTabpanelCutoffFadeRef.current) return;
+    detailTabpanelCutoffFadeRef.current = next;
+    setDetailTabpanelCutoffFade(next);
   }, [detailCardHeightPx, detailCardMaxHeightPx, detailCardUsesInnerScroll]);
 
   const syncDetailTabpanelAfterSwitch = useCallback(() => {
@@ -603,10 +627,6 @@ export function ShowcaseVideoEditingDetail({
       return;
     }
     updateDetailTabpanelCutoffFade();
-    requestAnimationFrame(() => {
-      updateDetailTabpanelCutoffFade();
-      requestAnimationFrame(updateDetailTabpanelCutoffFade);
-    });
   }, [updateDetailTabpanelCutoffFade]);
 
   useLayoutEffect(() => {
@@ -1589,13 +1609,13 @@ export function ShowcaseVideoEditingDetail({
         });
       }
 
-      const targetOverviewProbe = detailVideoOverviewMeasureRefs.current[nextIndex];
-      if (targetOverviewProbe) {
-        animateDetailCardToMeasuredBody(targetOverviewProbe, drawerDelayMs, {
-          snap: rapid,
-          switchEpoch: epoch,
-        });
-      }
+      // Hold mask off through the height tween. Snap strength to 0 while hidden
+      // so the later arm can ease 0→1 (mask-image class swaps always pop).
+      detailTabMaskLockRef.current = true;
+      detailTabCutoffInstantRef.current = true;
+      setDetailTabCutoffInstant(true);
+      detailTabpanelCutoffFadeRef.current = "none";
+      setDetailTabpanelCutoffFade("none");
 
       setActiveDetailCardTab("overview");
       setDetailCardTabOrder([...DETAIL_CARD_TAB_IDS]);
@@ -1603,31 +1623,60 @@ export function ShowcaseVideoEditingDetail({
       underlineActiveTabRef.current = "overview";
       activeVideoIndexRef.current = nextIndex;
       setActiveVideoIndex(nextIndex);
-      // Body is fully hidden here — safe to drop the mask before the new copy mounts.
-      setDetailTabpanelCutoffFade("none");
 
-      const revealDelay = rapid ? 0 : drawerDelayMs + DETAIL_CARD_RESIZE_DUR_MS;
-      const reveal = () => {
+      const revealAfterHeightSettle = () => {
         if (epoch !== workSwitchEpochRef.current) return;
         detailBodyRevealTimerRef.current = null;
-        // Arm the cutoff mask before opacity rises so it doesn’t pop in at the end.
-        detailBodyVisibleRef.current = true;
-        updateDetailTabpanelCutoffFade();
-        setDetailBodyVisible(true);
-        // Title + card resize window is done — safe to unlock section scroll.
-        releaseNaturalDrawerResizeLock();
         requestAnimationFrame(() => {
           if (epoch !== workSwitchEpochRef.current) return;
-          updateDetailTabpanelCutoffFade();
+          // Measure/arm while opacity is still 0.
+          detailBodyVisibleRef.current = true;
+          detailTabMaskLockRef.current = false;
+          detailTabCutoffInstantRef.current = false;
+          flushSync(() => {
+            setDetailTabCutoffInstant(false);
+          });
+          requestAnimationFrame(() => {
+            if (epoch !== workSwitchEpochRef.current) return;
+            updateDetailTabpanelCutoffFade();
+            const showBody = () => {
+              if (epoch !== workSwitchEpochRef.current) return;
+              detailBodyRevealTimerRef.current = null;
+              setDetailBodyVisible(true);
+              releaseNaturalDrawerResizeLock();
+              finishWorkSwitch(epoch);
+            };
+            // Rapid / reduced-motion: no lead. Otherwise let dissolve start first.
+            const leadMs = rapid ? 0 : DETAIL_CUTOFF_LEAD_MS;
+            if (leadMs <= 0) {
+              showBody();
+              return;
+            }
+            detailBodyRevealTimerRef.current = window.setTimeout(showBody, leadMs);
+          });
         });
-        finishWorkSwitch(epoch);
       };
 
-      if (revealDelay <= 0) {
-        reveal();
+      const targetOverviewProbe = detailVideoOverviewMeasureRefs.current[nextIndex];
+      if (targetOverviewProbe) {
+        animateDetailCardToMeasuredBody(targetOverviewProbe, drawerDelayMs, {
+          snap: rapid,
+          switchEpoch: epoch,
+          onSettled: revealAfterHeightSettle,
+        });
         return;
       }
-      detailBodyRevealTimerRef.current = window.setTimeout(reveal, revealDelay);
+
+      // No probe — fall back to the old title+resize timer window.
+      const revealDelay = rapid ? 0 : drawerDelayMs + DETAIL_CARD_RESIZE_DUR_MS;
+      if (revealDelay <= 0) {
+        revealAfterHeightSettle();
+        return;
+      }
+      detailBodyRevealTimerRef.current = window.setTimeout(
+        revealAfterHeightSettle,
+        revealDelay,
+      );
     },
     [
       animateDetailCardToMeasuredBody,
@@ -2102,6 +2151,8 @@ export function ShowcaseVideoEditingDetail({
 
       // Hold scroll/mask chrome through the out fade; settle after resize while copy is opacity 0.
       detailTabMaskLockRef.current = true;
+      detailTabCutoffInstantRef.current = true;
+      setDetailTabCutoffInstant(true);
       if (detailTabMaskSettleTimerRef.current != null) {
         window.clearTimeout(detailTabMaskSettleTimerRef.current);
         detailTabMaskSettleTimerRef.current = null;
@@ -2132,8 +2183,14 @@ export function ShowcaseVideoEditingDetail({
             });
           }
           detailTabMaskLockRef.current = false;
-          // Remeasure fade after unlock; below-max cards clear the mask entirely.
-          updateDetailTabpanelCutoffFade();
+          detailTabCutoffInstantRef.current = false;
+          flushSync(() => {
+            setDetailTabCutoffInstant(false);
+          });
+          // Next frame: ease strength 0→1 (same host already painted at 0).
+          requestAnimationFrame(() => {
+            updateDetailTabpanelCutoffFade();
+          });
           if (isNaturalDrawerViewport) {
             releaseNaturalDrawerResizeLock();
           }
@@ -2160,6 +2217,8 @@ export function ShowcaseVideoEditingDetail({
           });
         } else {
           detailTabMaskLockRef.current = false;
+          detailTabCutoffInstantRef.current = false;
+          setDetailTabCutoffInstant(false);
           setDetailTabpanelScrollFrozen(false);
           if (isNaturalDrawerViewport) {
             releaseNaturalDrawerResizeLock();
@@ -2167,6 +2226,8 @@ export function ShowcaseVideoEditingDetail({
         }
       } else {
         detailTabMaskLockRef.current = false;
+        detailTabCutoffInstantRef.current = false;
+        setDetailTabCutoffInstant(false);
         setDetailTabpanelScrollFrozen(false);
         updateDetailTabpanelCutoffFade();
       }
@@ -2425,8 +2486,10 @@ export function ShowcaseVideoEditingDetail({
       activeNatural;
 
     const settleCutoff = () => {
-      updateDetailTabpanelCutoffFade();
-      requestAnimationFrame(updateDetailTabpanelCutoffFade);
+      // Apply once after height is idle — avoid thrashing mask classes during settle.
+      requestAnimationFrame(() => {
+        updateDetailTabpanelCutoffFade();
+      });
     };
 
     // Player cap shrank under the card (title grew / layout moved).
@@ -2822,13 +2885,30 @@ export function ShowcaseVideoEditingDetail({
                         >
                           <div
                             className={`video-editing-detail-card-tabpanel-fade-host min-w-0${
-                              detailCardUsesInnerScroll ? " min-h-0 flex-1 overflow-hidden" : ""
-                            }${
-                              detailCardUsesInnerScroll &&
-                              detailTabpanelCutoffFade !== "none"
-                                ? ` content-cutoff-fade content-cutoff-fade--${detailTabpanelCutoffFade}`
+                              detailCardUsesInnerScroll
+                                ? ` video-editing-detail-card-tabpanel-fade-host--scroll min-h-0 flex-1 overflow-hidden${
+                                    detailTabCutoffInstant || reduceMotion
+                                      ? " is-cutoff-instant"
+                                      : ""
+                                  }`
                                 : ""
                             }`}
+                            style={
+                              detailCardUsesInnerScroll
+                                ? ({
+                                    ["--detail-cutoff-top" as string]:
+                                      detailTabpanelCutoffFade === "top" ||
+                                      detailTabpanelCutoffFade === "both"
+                                        ? 1
+                                        : 0,
+                                    ["--detail-cutoff-bottom" as string]:
+                                      detailTabpanelCutoffFade === "bottom" ||
+                                      detailTabpanelCutoffFade === "both"
+                                        ? 1
+                                        : 0,
+                                  } as CSSProperties)
+                                : undefined
+                            }
                           >
                             <div
                               ref={detailTabpanelScrollRef as Ref<HTMLDivElement>}
