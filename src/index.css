@@ -1259,14 +1259,14 @@
     );
   }
 
-  /* PROJECT DETAILS info card — dissolve scroll clips at body-start (top) and/or fold (bottom). */
-  #projects .video-editing-detail-card-tabpanel.content-cutoff-fade {
+  /* PROJECT DETAILS info card — mask on a non-scrolling host so the dissolve
+   * looks correct, while overflow:auto stays unmasked (rubber-band + dual-scroll). */
+  #projects .video-editing-detail-card-tabpanel-fade-host.content-cutoff-fade {
     --detail-body-top-fade: 0.5rem;
-    /* Bottom dissolve hugs the card edge; keep a soft ramp so clipped lines don’t hard-cut. */
     --detail-body-bottom-fade: 0.85rem;
   }
 
-  #projects .video-editing-detail-card-tabpanel.content-cutoff-fade--bottom {
+  #projects .video-editing-detail-card-tabpanel-fade-host.content-cutoff-fade--bottom {
     -webkit-mask-image: linear-gradient(
       to bottom,
       #000 0%,
@@ -1285,8 +1285,7 @@
     );
   }
 
-  /* Top dissolve aligns with the resting body-start inset under the tabs (all tabs). */
-  #projects .video-editing-detail-card-tabpanel.content-cutoff-fade--top {
+  #projects .video-editing-detail-card-tabpanel-fade-host.content-cutoff-fade--top {
     -webkit-mask-image: linear-gradient(
       to bottom,
       transparent 0%,
@@ -1305,7 +1304,7 @@
     );
   }
 
-  #projects .video-editing-detail-card-tabpanel.content-cutoff-fade--both {
+  #projects .video-editing-detail-card-tabpanel-fade-host.content-cutoff-fade--both {
     -webkit-mask-image: linear-gradient(
       to bottom,
       transparent 0%,
@@ -1333,6 +1332,7 @@
   #projects .video-editing-detail-card-tabpanel.overflow-y-auto {
     scrollbar-width: none;
     -ms-overflow-style: none;
+    -webkit-overflow-scrolling: touch;
   }
 
   #projects .video-editing-detail-card-tabpanel.overflow-y-auto::-webkit-scrollbar {

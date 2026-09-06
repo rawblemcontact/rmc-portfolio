@@ -5,7 +5,7 @@ import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import Plyr from "plyr";
 import type { Options as PlyrOptions } from "plyr";
 import "plyr/dist/plyr.css";
-import { directionalArrowIdlePhaseDelaySec } from "@/lib/motion";
+import { directionalArrowIdlePhaseDelaySec, EASE } from "@/lib/motion";
 
 export type ShowcaseDetailVideo = {
   readonly id: string;
@@ -247,10 +247,20 @@ const DETAIL_TAB_SWAP_EASE = [0.22, 1, 0.36, 1] as const;
 const DETAIL_TAB_BODY_OUT_S = 0.16;
 const DETAIL_TAB_BODY_IN_S = 0.24;
 const DETAIL_BODY_OUT_MS = Math.round(DETAIL_TAB_BODY_OUT_S * 1000);
-/** Yellow underline draw / retract — same length as tab FLIP; starts only after position settles. */
-const DETAIL_TAB_UNDERLINE_DUR_MS = Math.round(DETAIL_TAB_SWAP_DUR_S * 1000);
+/**
+ * Wait for tab FLIP to settle before drawing the new underline (avoids scaling
+ * while the parent is still translating).
+ */
+const DETAIL_TAB_UNDERLINE_DRAW_DELAY_MS = Math.round(DETAIL_TAB_SWAP_DUR_S * 1000);
+/**
+ * Center-out scaleX — same ease family as hero / PROJECTS accent.
+ * Close is shorter + fades so the old bar clears before the new one draws.
+ */
+const DETAIL_TAB_UNDERLINE_DUR_S = 0.28;
+const DETAIL_TAB_UNDERLINE_CLOSE_DUR_S = 0.08;
+const DETAIL_TAB_UNDERLINE_EASE = EASE.out;
 /** Description-card height keyframes stay synchronized with the tab swap. */
-const DETAIL_CARD_RESIZE_DUR_MS = DETAIL_TAB_UNDERLINE_DUR_MS;
+const DETAIL_CARD_RESIZE_DUR_MS = Math.round(DETAIL_TAB_SWAP_DUR_S * 1000);
 const DETAIL_CARD_RESIZE_EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
 /**
  * New tab copy waits until height resize finishes + one paint so clamp/mask
@@ -261,7 +271,7 @@ const DETAIL_TAB_BODY_IN_DELAY_S = (DETAIL_CARD_RESIZE_DUR_MS + 32) / 1000;
  * Natural drawers: height waits for tab FLIP to finish (avoids layout+resize screenshake),
  * so enter delay spans (FLIP − body-out) + resize + paint.
  */
-const DETAIL_NATURAL_HEIGHT_DELAY_MS = DETAIL_TAB_UNDERLINE_DUR_MS;
+const DETAIL_NATURAL_HEIGHT_DELAY_MS = DETAIL_TAB_UNDERLINE_DRAW_DELAY_MS;
 const DETAIL_TAB_BODY_IN_DELAY_NATURAL_S =
   (DETAIL_NATURAL_HEIGHT_DELAY_MS - DETAIL_BODY_OUT_MS + DETAIL_CARD_RESIZE_DUR_MS + 32) /
   1000;
@@ -385,8 +395,8 @@ export function ShowcaseVideoEditingDetail({
     ...DETAIL_CARD_TAB_IDS,
   ]);
   /**
-   * Yellow underline: deselected tab retracts immediately; selected tab draws only after FLIP settles.
-   * `null` = no bar (mid-transition after deselection).
+   * Yellow underline: deselected tab retracts + fades immediately; selected tab
+   * draws from center only after FLIP settles. `null` = no bar mid-transition.
    */
   const [underlineTabId, setUnderlineTabId] = useState<DetailCardTabId | null>("overview");
   const underlineActiveTabRef = useRef<DetailCardTabId>("overview");
@@ -645,10 +655,10 @@ export function ShowcaseVideoEditingDetail({
   ]);
 
   /**
-   * Tablet landscape: drive the capped body with JS touch pans so it responds
-   * immediately even while the section panel is still coasting / rubber-banding.
-   * Does not pin or freeze the page scroller — both stay free.
-   * Adds inertia after release so it still feels like native scroll.
+   * Tablet / touch: only JS-claim the body while the section scroller is coasting
+   * (so inner + page stay usable together). Idle gestures stay fully native so
+   * overflowing tabs keep the same rubber-band feel as short ones (e.g. TOOLS).
+   * Mask stays on the fade-host, not this node.
    */
   useEffect(() => {
     if (!detailCardUsesInnerScroll || !isPlayerCappedDrawerViewport) return;
@@ -657,16 +667,39 @@ export function ShowcaseVideoEditingDetail({
     const panel = detailTabpanelScrollRef.current;
     if (!panel) return;
 
+    const sectionScroller =
+      panel.closest<HTMLElement>('[aria-label^="Section:"]') ??
+      (() => {
+        let current = panel.parentElement;
+        while (current) {
+          const style = window.getComputedStyle(current);
+          if (/(auto|scroll|overlay)/.test(style.overflowY) && current !== panel) {
+            return current;
+          }
+          current = current.parentElement;
+        }
+        return null;
+      })();
+
+    /** Outer scroll is "hot" briefly after it moves — next inner gesture may need JS claim. */
+    let outerHotUntil = 0;
+    const markOuterHot = () => {
+      outerHotUntil = performance.now() + 380;
+    };
+    sectionScroller?.addEventListener("scroll", markOuterHot, { passive: true });
+
     let touchId: number | null = null;
     let lastY = 0;
     let lastMoveTime = 0;
     let startX = 0;
     let startY = 0;
+    let startOuterTop = 0;
+    let startInnerTop = 0;
     /** px/ms — positive scrolls content upward (finger moving up). */
     let velocityY = 0;
     let momentumRaf = 0;
-    /** undecided until we know the gesture is vertical on an overflowing panel */
-    let mode: "undecided" | "inner" | "ignore" = "undecided";
+    /** undecided | native (rubber-band) | js (dual-scroll claim) | ignore */
+    let mode: "undecided" | "native" | "js" | "ignore" = "undecided";
 
     const maxScrollTop = () =>
       Math.max(0, panel.scrollHeight - panel.clientHeight);
@@ -693,7 +726,6 @@ export function ShowcaseVideoEditingDetail({
       const step = (now: number) => {
         const dt = Math.min(34, Math.max(0, now - prev));
         prev = now;
-        // ~iOS-like exponential decay
         v *= Math.exp(-0.0032 * dt);
         if (Math.abs(v) < 0.02) {
           momentumRaf = 0;
@@ -718,10 +750,11 @@ export function ShowcaseVideoEditingDetail({
       if (touchId == null) return;
       for (let i = 0; i < event.changedTouches.length; i++) {
         if (event.changedTouches[i]?.identifier === touchId) {
-          const wasInner = mode === "inner";
+          const wasJs = mode === "js";
           touchId = null;
           mode = "undecided";
-          if (wasInner) startMomentum();
+          // Only continue JS inertia when we claimed the gesture; native keeps its own.
+          if (wasJs) startMomentum();
           return;
         }
       }
@@ -738,8 +771,11 @@ export function ShowcaseVideoEditingDetail({
       lastMoveTime = performance.now();
       startX = touch.clientX;
       startY = touch.clientY;
+      startOuterTop = sectionScroller?.scrollTop ?? 0;
+      startInnerTop = panel.scrollTop;
       velocityY = 0;
-      mode = "undecided";
+      // Prefer native rubber-band unless the page is still coasting.
+      mode = performance.now() < outerHotUntil ? "js" : "undecided";
     };
 
     const onTouchMove = (event: TouchEvent) => {
@@ -762,7 +798,9 @@ export function ShowcaseVideoEditingDetail({
           mode = "ignore";
           return;
         }
-        mode = "inner";
+        // Default to native (ROLE/TOOLS rubber-band). Escalate to JS only if the
+        // section steals the pan while the body should be scrolling.
+        mode = "native";
       }
 
       const now = performance.now();
@@ -772,8 +810,21 @@ export function ShowcaseVideoEditingDetail({
       velocityY = velocityY * 0.65 + instant * 0.35;
       lastY = touch.clientY;
       lastMoveTime = now;
+
+      if (mode === "native") {
+        const outerMoved =
+          sectionScroller != null &&
+          Math.abs(sectionScroller.scrollTop - startOuterTop) > 1.5;
+        const innerMoved = Math.abs(panel.scrollTop - startInnerTop) > 1.5;
+        if (outerMoved && !innerMoved && Math.abs(touch.clientY - startY) > 10) {
+          // Page ate the gesture — claim for the rest of this touch.
+          mode = "js";
+        } else {
+          return;
+        }
+      }
+
       applyScrollTop(panel.scrollTop + delta);
-      // Claim this touch for the body without touching the section scroller.
       if (event.cancelable) event.preventDefault();
     };
 
@@ -784,6 +835,7 @@ export function ShowcaseVideoEditingDetail({
 
     return () => {
       stopMomentum();
+      sectionScroller?.removeEventListener("scroll", markOuterHot);
       panel.removeEventListener("touchstart", onTouchStart);
       panel.removeEventListener("touchmove", onTouchMove);
       panel.removeEventListener("touchend", endTouch);
@@ -811,7 +863,7 @@ export function ShowcaseVideoEditingDetail({
 
     const timerId = window.setTimeout(() => {
       setUnderlineTabId(activeDetailCardTab);
-    }, DETAIL_TAB_UNDERLINE_DUR_MS);
+    }, DETAIL_TAB_UNDERLINE_DRAW_DELAY_MS);
 
     return () => window.clearTimeout(timerId);
   }, [activeDetailCardTab, reduceMotion]);
@@ -2217,19 +2269,37 @@ export function ShowcaseVideoEditingDetail({
               >
                 <span className="relative inline-block w-max pb-2">
                   {detailCardTabLabel(tabId, isSlaywire)}
-                  <span
-                    className={`video-editing-detail-card-tab-underline pointer-events-none absolute inset-x-0 bottom-0 h-px origin-center bg-[color:var(--palette-yellow-projects)] ease-out ${
-                      underlineActive ? "scale-x-100 opacity-100" : "scale-x-0 opacity-0"
-                    }`}
-                    style={{
-                      // Always list both so close can fade; open uses 0ms opacity (scale only).
-                      transitionProperty: "transform, opacity",
-                      transitionDuration: reduceMotion
-                        ? "0ms, 0ms"
+                  <motion.span
+                    className="video-editing-detail-card-tab-underline pointer-events-none absolute inset-x-0 bottom-0 h-px bg-[color:var(--palette-yellow-projects)]"
+                    style={{ transformOrigin: "center center" }}
+                    initial={false}
+                    animate={
+                      underlineActive
+                        ? { scaleX: 1, opacity: 1 }
+                        : { scaleX: 0, opacity: 0 }
+                    }
+                    transition={
+                      reduceMotion
+                        ? { duration: 0 }
                         : underlineActive
-                          ? `${DETAIL_TAB_UNDERLINE_DUR_MS}ms, 0ms`
-                          : `${DETAIL_TAB_UNDERLINE_DUR_MS}ms, ${DETAIL_TAB_UNDERLINE_DUR_MS}ms`,
-                    }}
+                          ? {
+                              scaleX: {
+                                duration: DETAIL_TAB_UNDERLINE_DUR_S,
+                                ease: DETAIL_TAB_UNDERLINE_EASE,
+                              },
+                              opacity: { duration: 0 },
+                            }
+                          : {
+                              scaleX: {
+                                duration: DETAIL_TAB_UNDERLINE_CLOSE_DUR_S,
+                                ease: DETAIL_TAB_UNDERLINE_EASE,
+                              },
+                              opacity: {
+                                duration: DETAIL_TAB_UNDERLINE_CLOSE_DUR_S,
+                                ease: "easeOut",
+                              },
+                            }
+                    }
                     aria-hidden
                   />
                 </span>
@@ -2746,69 +2816,81 @@ export function ShowcaseVideoEditingDetail({
                       >
                         {renderDetailCardTabList()}
                         <div
-                          ref={detailTabpanelScrollRef as Ref<HTMLDivElement>}
-                          role="tabpanel"
-                          id={`video-detail-panel-${activeDetailCardTab}`}
-                          aria-labelledby={`video-detail-tab-${activeDetailCardTab}`}
-                          className={`video-editing-detail-card-tabpanel min-w-0 [overflow-anchor:none]${
-                            detailCardUsesInnerScroll
-                              ? detailTabpanelScrollFrozen
-                                ? " min-h-0 flex-1 overflow-hidden"
-                                : " min-h-0 flex-1 overflow-y-auto no-scrollbar"
-                              : ""
-                          }${
-                            detailCardUsesInnerScroll &&
-                            detailTabpanelCutoffFade !== "none"
-                              ? ` content-cutoff-fade content-cutoff-fade--${detailTabpanelCutoffFade}`
-                              : ""
+                          className={`video-editing-detail-card-tabpanel-shell relative min-w-0${
+                            detailCardUsesInnerScroll ? " flex min-h-0 flex-1 flex-col" : ""
                           }`}
-                          style={{
-                            opacity: detailBodyVisible ? 1 : 0,
-                            transition: reduceMotion
-                              ? undefined
-                              : `opacity ${
-                                  detailBodyVisible
-                                    ? DETAIL_TAB_BODY_IN_S
-                                    : DETAIL_TAB_BODY_OUT_S
-                                }s ${DETAIL_CARD_RESIZE_EASE}`,
-                          }}
                         >
-                          <div className="video-editing-detail-card-tab-surface relative min-w-0 pt-1">
-                            <div ref={detailTabActiveNaturalRef} className="min-w-0">
-                              {renderDetailCardTabBody(activeDetailCardTab, "portrait")}
-                            </div>
-                            {isCompactDrawerViewport ? (
-                              <div className="pointer-events-none absolute left-0 top-1 -z-10 w-full overflow-hidden opacity-0 [height:0]" aria-hidden>
-                                {DETAIL_CARD_TAB_IDS.map((tabId) => (
-                                  <div
-                                    key={`measure-${tabId}`}
-                                    ref={(el) => {
-                                      detailTabHiddenMeasureRefs.current[tabId] = el;
-                                    }}
-                                    className="absolute left-0 top-0 w-full min-w-0"
-                                  >
-                                    {renderPortraitDetailTabBody(tabId)}
+                          <div
+                            className={`video-editing-detail-card-tabpanel-fade-host min-w-0${
+                              detailCardUsesInnerScroll ? " min-h-0 flex-1 overflow-hidden" : ""
+                            }${
+                              detailCardUsesInnerScroll &&
+                              detailTabpanelCutoffFade !== "none"
+                                ? ` content-cutoff-fade content-cutoff-fade--${detailTabpanelCutoffFade}`
+                                : ""
+                            }`}
+                          >
+                            <div
+                              ref={detailTabpanelScrollRef as Ref<HTMLDivElement>}
+                              role="tabpanel"
+                              id={`video-detail-panel-${activeDetailCardTab}`}
+                              aria-labelledby={`video-detail-tab-${activeDetailCardTab}`}
+                              className={`video-editing-detail-card-tabpanel min-w-0 [overflow-anchor:none]${
+                                detailCardUsesInnerScroll
+                                  ? detailTabpanelScrollFrozen
+                                    ? " h-full min-h-0 overflow-hidden"
+                                    : " h-full min-h-0 overflow-y-auto overscroll-y-auto touch-pan-y no-scrollbar"
+                                  : ""
+                              }`}
+                              style={{
+                                opacity: detailBodyVisible ? 1 : 0,
+                                transition: reduceMotion
+                                  ? undefined
+                                  : `opacity ${
+                                      detailBodyVisible
+                                        ? DETAIL_TAB_BODY_IN_S
+                                        : DETAIL_TAB_BODY_OUT_S
+                                    }s ${DETAIL_CARD_RESIZE_EASE}`,
+                              }}
+                            >
+                              <div className="video-editing-detail-card-tab-surface relative min-w-0 pt-1">
+                                <div ref={detailTabActiveNaturalRef} className="min-w-0">
+                                  {renderDetailCardTabBody(activeDetailCardTab, "portrait")}
+                                </div>
+                                {isCompactDrawerViewport ? (
+                                  <div className="pointer-events-none absolute left-0 top-1 -z-10 w-full overflow-hidden opacity-0 [height:0]" aria-hidden>
+                                    {DETAIL_CARD_TAB_IDS.map((tabId) => (
+                                      <div
+                                        key={`measure-${tabId}`}
+                                        ref={(el) => {
+                                          detailTabHiddenMeasureRefs.current[tabId] = el;
+                                        }}
+                                        className="absolute left-0 top-0 w-full min-w-0"
+                                      >
+                                        {renderPortraitDetailTabBody(tabId)}
+                                      </div>
+                                    ))}
+                                    {videos.map((video, index) => (
+                                      <div
+                                        key={`measure-video-overview-${video.id}`}
+                                        ref={(el) => {
+                                          detailVideoOverviewMeasureRefs.current[index] = el;
+                                        }}
+                                        className="absolute left-0 top-0 w-full min-w-0"
+                                      >
+                                        <p className="m-0 whitespace-pre-line font-body text-sm leading-snug text-mono-2 sm:text-base">
+                                          {renderDetailInlineEm(
+                                            video.detailOverview?.trim() ||
+                                              card.detailOverview?.trim() ||
+                                              "?",
+                                          )}
+                                        </p>
+                                      </div>
+                                    ))}
                                   </div>
-                                ))}
-                                {videos.map((video, index) => (
-                                  <div
-                                    key={`measure-video-overview-${video.id}`}
-                                    ref={(el) => {
-                                      detailVideoOverviewMeasureRefs.current[index] = el;
-                                    }}
-                                    className="absolute left-0 top-0 w-full min-w-0"
-                                  >
-                                    <p className="m-0 whitespace-pre-line font-body text-sm leading-snug text-mono-2 sm:text-base">
-                                      {renderDetailInlineEm(
-                                        video.detailOverview?.trim() ||
-                                          card.detailOverview?.trim() ||
-                                          "?",
-                                      )}
-                                    </p>
-                                  </div>
-                                ))}
+                                ) : null}
                               </div>
-                            ) : null}
+                            </div>
                           </div>
                         </div>
                       </motion.div>
