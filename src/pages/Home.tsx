@@ -10387,7 +10387,7 @@ const ConfidantExperience = ({
   const [isMobileExperienceLayout, setIsMobileExperienceLayout] = useState(() =>
     typeof window !== "undefined" ? window.matchMedia(EXPERIENCE_MOBILE_MQ).matches : false,
   );
-  /** Mobile tab carousel edge fades: left while scrolling past start (or a tab straddles at rest); right until Barista is fully in view. */
+  /** Mobile tab carousel edge fades (CSS vars ease in/out; left while scrolling past start or a tab straddles at rest; right until Barista is fully in view). */
   const [experienceTabsFadeLeft, setExperienceTabsFadeLeft] = useState(false);
   const [experienceTabsFadeRight, setExperienceTabsFadeRight] = useState(true);
   const rm = !!reduceMotion;
@@ -10637,7 +10637,6 @@ const ConfidantExperience = ({
             data-tab={tabId}
             type="button"
             onClick={onClick}
-            onTouchStart={onClick}
             onKeyDown={onKeyDown}
           >
             {label}
@@ -10951,13 +10950,13 @@ const ConfidantExperience = ({
           </motion.div>
           {/* Vertical Tabs Navigation */}
           <motion.nav
-            className={[
-              "tabs-nav",
-              experienceTabsFadeLeft ? "tabs-nav--fade-left" : "",
-              experienceTabsFadeRight ? "tabs-nav--fade-right" : "",
-            ]
-              .filter(Boolean)
-              .join(" ")}
+            className="tabs-nav"
+            style={
+              {
+                ["--experience-tabs-fade-left" as string]: experienceTabsFadeLeft ? 1 : 0,
+                ["--experience-tabs-fade-right" as string]: experienceTabsFadeRight ? 1 : 0,
+              } as React.CSSProperties
+            }
             variants={experienceTabsEntrance}
             initial="hidden"
             animate={panelSettled ? "visible" : "hidden"}

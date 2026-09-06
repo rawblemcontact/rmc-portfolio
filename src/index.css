@@ -48,6 +48,20 @@
   initial-value: 0;
 }
 
+/* EXPERIENCE mobile tab carousel — animate edge-fade strength instead of
+ * swapping mask-image (class toggles always snap). */
+@property --experience-tabs-fade-left {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+@property --experience-tabs-fade-right {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
 /* FEATURED WRITING mobile/iPad-portrait — one shared clock for both chevrons. */
 @keyframes featured-tabs-arrow-nudge-clock {
   0%,
@@ -4553,65 +4567,68 @@
       overflow-x: auto;
       overflow-y: hidden;
       padding: 0 0 14px;
-      border: 0 !important;
-      border-right: 0 !important;
+      /* Invisible hitbox only: transparent border grows the touch target;
+       * negative margin cancels layout shift; mask stays on the padding box. */
+      border-style: solid !important;
+      border-color: transparent !important;
+      border-width: 18px 0 !important;
+      margin: -18px 0;
+      background-clip: padding-box;
+      -webkit-mask-clip: padding-box;
+      mask-clip: padding-box;
+      -webkit-mask-origin: padding-box;
+      mask-origin: padding-box;
       background: transparent !important;
       background-image: none !important;
       -webkit-backdrop-filter: none !important;
       backdrop-filter: none !important;
       scroll-snap-type: x mandatory;
       -webkit-overflow-scrolling: touch;
+      touch-action: pan-x;
       scrollbar-width: none;
-      -webkit-mask-image: none;
-      mask-image: none;
-    }
-
-    /* Soften hard clip on overflowing selector tabs (edge classes toggled in Home.tsx). */
-    #experience .tabs-nav.tabs-nav--fade-right {
+      /* Soften hard clip; --experience-tabs-fade-* set inline from Home.tsx. */
+      --experience-tabs-fade-left: 0;
+      --experience-tabs-fade-right: 0;
+      --experience-tabs-fade-width: 3.25rem;
+      transition:
+        --experience-tabs-fade-left 0.62s cubic-bezier(0.33, 0.05, 0.2, 1),
+        --experience-tabs-fade-right 0.62s cubic-bezier(0.33, 0.05, 0.2, 1);
       -webkit-mask-image: linear-gradient(
         to right,
-        #000 0%,
-        #000 calc(100% - 2.75rem),
-        rgba(0, 0, 0, 0) 100%
+        rgba(0, 0, 0, calc(1 - var(--experience-tabs-fade-left))) 0%,
+        rgba(0, 0, 0, calc(1 - 0.72 * var(--experience-tabs-fade-left)))
+          calc(var(--experience-tabs-fade-width) * 0.28 * var(--experience-tabs-fade-left)),
+        rgba(0, 0, 0, calc(1 - 0.28 * var(--experience-tabs-fade-left)))
+          calc(var(--experience-tabs-fade-width) * 0.62 * var(--experience-tabs-fade-left)),
+        #000 calc(var(--experience-tabs-fade-width) * var(--experience-tabs-fade-left)),
+        #000 calc(100% - var(--experience-tabs-fade-width) * var(--experience-tabs-fade-right)),
+        rgba(0, 0, 0, calc(1 - 0.28 * var(--experience-tabs-fade-right)))
+          calc(100% - var(--experience-tabs-fade-width) * 0.62 * var(--experience-tabs-fade-right)),
+        rgba(0, 0, 0, calc(1 - 0.72 * var(--experience-tabs-fade-right)))
+          calc(100% - var(--experience-tabs-fade-width) * 0.28 * var(--experience-tabs-fade-right)),
+        rgba(0, 0, 0, calc(1 - var(--experience-tabs-fade-right))) 100%
       );
       mask-image: linear-gradient(
         to right,
-        #000 0%,
-        #000 calc(100% - 2.75rem),
-        rgba(0, 0, 0, 0) 100%
+        rgba(0, 0, 0, calc(1 - var(--experience-tabs-fade-left))) 0%,
+        rgba(0, 0, 0, calc(1 - 0.72 * var(--experience-tabs-fade-left)))
+          calc(var(--experience-tabs-fade-width) * 0.28 * var(--experience-tabs-fade-left)),
+        rgba(0, 0, 0, calc(1 - 0.28 * var(--experience-tabs-fade-left)))
+          calc(var(--experience-tabs-fade-width) * 0.62 * var(--experience-tabs-fade-left)),
+        #000 calc(var(--experience-tabs-fade-width) * var(--experience-tabs-fade-left)),
+        #000 calc(100% - var(--experience-tabs-fade-width) * var(--experience-tabs-fade-right)),
+        rgba(0, 0, 0, calc(1 - 0.28 * var(--experience-tabs-fade-right)))
+          calc(100% - var(--experience-tabs-fade-width) * 0.62 * var(--experience-tabs-fade-right)),
+        rgba(0, 0, 0, calc(1 - 0.72 * var(--experience-tabs-fade-right)))
+          calc(100% - var(--experience-tabs-fade-width) * 0.28 * var(--experience-tabs-fade-right)),
+        rgba(0, 0, 0, calc(1 - var(--experience-tabs-fade-right))) 100%
       );
     }
 
-    #experience .tabs-nav.tabs-nav--fade-left {
-      -webkit-mask-image: linear-gradient(
-        to right,
-        rgba(0, 0, 0, 0) 0%,
-        #000 2.75rem,
-        #000 100%
-      );
-      mask-image: linear-gradient(
-        to right,
-        rgba(0, 0, 0, 0) 0%,
-        #000 2.75rem,
-        #000 100%
-      );
-    }
-
-    #experience .tabs-nav.tabs-nav--fade-left.tabs-nav--fade-right {
-      -webkit-mask-image: linear-gradient(
-        to right,
-        rgba(0, 0, 0, 0) 0%,
-        #000 2.75rem,
-        #000 calc(100% - 2.75rem),
-        rgba(0, 0, 0, 0) 100%
-      );
-      mask-image: linear-gradient(
-        to right,
-        rgba(0, 0, 0, 0) 0%,
-        #000 2.75rem,
-        #000 calc(100% - 2.75rem),
-        rgba(0, 0, 0, 0) 100%
-      );
+    @media (prefers-reduced-motion: reduce) {
+      #experience .tabs-nav {
+        transition: none;
+      }
     }
 
     #experience .tabs-nav::-webkit-scrollbar {
