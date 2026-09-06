@@ -9139,7 +9139,7 @@ const PalaceProjects = ({
   const visualDesignDetailInFlow =
     projectDetailInFlow && activeCard?.id === "project-visual-design";
   const projectDetailAllowsOverflowX =
-    videoEditingDetailNoMainCard || slaywireDetailInFlow;
+    videoEditingDetailNoMainCard || slaywireDetailInFlow || visualDesignDetailInFlow;
 
   const activeProjectsTabletThumbnailValues =
     projectsTabletPortraitViewport
@@ -9819,11 +9819,6 @@ const PalaceProjects = ({
             }${
               visualDesignDetailInFlow
                 ? " projects-visual-design-detail-stage"
-                : ""
-            }${
-              illustrationsDetailNoHero &&
-              !projectsTabletLandscapeViewport
-                ? " overflow-y-auto overscroll-y-contain no-scrollbar"
                 : ""
             }`}
             style={projectDetailLayoutStyle}
@@ -13432,9 +13427,12 @@ export default function Home() {
   const [menuLockedFillId, setMenuLockedFillId] = useState<string | null>(null);
   const [activeShowcaseProjectId, setActiveShowcaseProjectId] = useState<string | null>(null);
   const topNavFadeViewKey = `${currentSection ?? "none"}:${activeShowcaseProjectId ?? "list"}`;
-  /** Showcase 4-up hover scale needs X room; keep X clipped for most project details. */
+  /** Showcase 4-up hover scale needs X room; keep X clipped for most project details.
+   * VISUAL DESIGN masonry must keep overflow-x visible too — otherwise overflow-y
+   * computes to auto (CSS overflow pairing) and nests a second scroller under the panel. */
   const projectsPanelOverflowX =
-    currentSection === "projects" && !activeShowcaseProjectId
+    currentSection === "projects" &&
+    (!activeShowcaseProjectId || activeShowcaseProjectId === "project-visual-design")
       ? "overflow-x-visible"
       : "overflow-x-hidden";
   const [projectsEntranceArmed, setProjectsEntranceArmed] = useState(false);

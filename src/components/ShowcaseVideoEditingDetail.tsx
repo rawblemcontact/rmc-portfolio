@@ -268,6 +268,11 @@ const DETAIL_TAB_BODY_IN_DELAY_NATURAL_S =
 /** Thumbnail title reflow completes before its description drawer changes size. */
 const DETAIL_TITLE_MOVE_DUR_MS = DETAIL_CARD_RESIZE_DUR_MS;
 /**
+ * Clicks closer than this are "rapid": abort/coalesce and snap instead of stacking
+ * the full title→card→reveal choreography.
+ */
+const WORK_SWITCH_RAPID_IDLE_MS = 180;
+/**
  * Phone + tablet portrait/landscape + desktop — expanding drawer with resize keyframes.
  * Natural (phone/tablet portrait) also keeps an anti-jump height reserve.
  * Player-cap viewports also clamp max-height.
@@ -319,7 +324,28 @@ function measureDetailCardHeightForProbe(
     targetProbe.getBoundingClientRect().top - cardSurface.getBoundingClientRect().top;
   const layoutBeforeBody = visualPxToLayoutPx(cardSurface, visualBeforeBody);
   const paddingBottom = parseFloat(getComputedStyle(cardSurface).paddingBottom) || 0;
-  return Math.ceil(layoutBeforeBody + targetProbe.offsetHeight + paddingBottom);
+  // Tab-surface bottom padding sits below the natural body but inside the card —
+  // omit it and short tabs (e.g. TOOLS) settle a few px short with a false fade.
+  const tabSurface = cardSurface.querySelector(".video-editing-detail-card-tab-surface");
+  const tabSurfacePadBottom =
+    tabSurface instanceof HTMLElement
+      ? parseFloat(getComputedStyle(tabSurface).paddingBottom) || 0
+      : 0;
+  // scrollHeight catches cases where offsetHeight under-reports (stacked measure layer).
+  const bodyH = Math.max(targetProbe.offsetHeight, targetProbe.scrollHeight);
+  return Math.ceil(layoutBeforeBody + bodyH + paddingBottom + tabSurfacePadBottom);
+}
+
+/** True when the drawer is painted at the player-aligned ceiling (tolerance for subpixels). */
+function detailCardIsAtPlayerCap(
+  heightPx: number | null | undefined,
+  maxHeightPx: number | null | undefined,
+): boolean {
+  return (
+    heightPx != null &&
+    maxHeightPx != null &&
+    heightPx >= maxHeightPx - 1
+  );
 }
 
 export function ShowcaseVideoEditingDetail({
@@ -337,7 +363,6 @@ export function ShowcaseVideoEditingDetail({
   detailSlideCubic,
 }: ShowcaseVideoEditingDetailProps) {
   const WORKS_ARROW_TAP_FEEDBACK_MS = 260;
-  const WORKS_STRIP_SCROLL_SYNC_MS = 220;
   const WORKS_STRIP_PROGRAMMATIC_LOCK_MS = 750;
   const STRIP_SWIPE_ARROW_THRESHOLD_PX = 3;
   const STRIP_SWIPE_TAP_CANCEL_PX = 10;
@@ -370,11 +395,30 @@ export function ShowcaseVideoEditingDetail({
   const detailCardMaxHeightPxRef = useRef<number | null>(null);
   /** Player-capped drawer: explicit height so tall tabs fill to the video bottom. */
   const [detailCardHeightPx, setDetailCardHeightPx] = useState<number | null>(null);
-  const [detailCardContentIsClamped, setDetailCardContentIsClamped] = useState(false);
-  const detailCardIsAtMaxHeight =
-    isPlayerCappedDrawerViewport && detailCardContentIsClamped;
+  /**
+   * While WAAPI owns height, keep React from re-applying a stale `height` style on
+   * unrelated re-renders (that snapped TOOLS→OVERVIEW back to the old target).
+   * Still always paint *some* height — clearing it to "" flashed the card (RAWBLEM).
+   */
+  const [detailCardHeightTransitioning, setDetailCardHeightTransitioning] =
+    useState(false);
+  const detailCardHeightTransitioningRef = useRef(false);
+  /** Height React should keep applied while transitioning (pinned from-height). */
+  const detailCardTransitionHeightRef = useRef<number | null>(null);
+  /**
+   * Player-capped drawers always pin an explicit height under the video. Inner scroll +
+   * cutoff fade must arm whenever that height is active — not only when height == max.
+   * Otherwise a stale short height (below the player cap) hard-clips tall OVERVIEW copy
+   * with overflow:hidden and no scroll/fade.
+   */
+  const detailCardUsesInnerScroll =
+    isPlayerCappedDrawerViewport &&
+    detailCardMaxHeightPx != null &&
+    detailCardHeightPx != null;
   const detailTabpanelScrollRef = useRef<HTMLElement | null>(null);
-  const [detailTabpanelCutoffFade, setDetailTabpanelCutoffFade] = useState(false);
+  const [detailTabpanelCutoffFade, setDetailTabpanelCutoffFade] = useState<
+    "none" | "top" | "bottom" | "both"
+  >("none");
   /** Hold description copy invisible until box height/title moves finish. */
   const [detailBodyVisible, setDetailBodyVisible] = useState(true);
   const detailBodyVisibleRef = useRef(true);
@@ -398,6 +442,10 @@ export function ShowcaseVideoEditingDetail({
   const detailTitleMeasureRefs = useRef<Array<HTMLDivElement | null>>([]);
   const detailCardChromeHeightRef = useRef<number | null>(null);
   const detailCardResizeAnimationRef = useRef<Animation | null>(null);
+  /** Bumps on every new card resize so delayed/stale WAAPI finishes cannot apply. */
+  const detailCardResizeEpochRef = useRef(0);
+  /** Delay timer before card resize — target height is measured when this fires, not when scheduled. */
+  const detailCardResizeDelayTimerRef = useRef<number | null>(null);
   const detailTitleResizeAnimationRef = useRef<Animation | null>(null);
   const detailRootRef = useRef<HTMLDivElement | null>(null);
   const detailCardSurfaceRef = useRef<HTMLElement | null>(null);
@@ -408,12 +456,19 @@ export function ShowcaseVideoEditingDetail({
   const thumbRefs = useRef<Array<HTMLElement | null>>([]);
   const thumbStripRef = useRef<HTMLDivElement | null>(null);
   const activeVideoIndexRef = useRef(0);
+  /**
+   * Whole entry-switch generation. Title/card/reveal completions no-op when stale.
+   * Distinct from detailCardResizeEpochRef (height-only).
+   */
+  const workSwitchEpochRef = useRef(0);
+  /** True from commit until body reveal (or snap) finishes. */
+  const workSwitchInFlightRef = useRef(false);
+  /** Last commit timestamp — gaps under WORK_SWITCH_RAPID_IDLE_MS use the snap path. */
+  const workSwitchLastCommitAtRef = useRef(0);
   const worksArrowReleaseTimerRef = useRef<number | null>(null);
-  const worksStripScrollSyncTimerRef = useRef<number | null>(null);
   const worksStripProgrammaticUnlockTimerRef = useRef<number | null>(null);
   const worksStripNavLockUntilRef = useRef(0);
   const stripProgrammaticScrollRef = useRef(false);
-  const worksStripSupportsScrollEndRef = useRef(false);
   const worksArrowSwipePulseRef = useRef(0);
   const stripSwipeArrowRef = useRef({
     gestureId: 0,
@@ -489,8 +544,18 @@ export function ShowcaseVideoEditingDetail({
     if (!detailBodyVisibleRef.current || detailTabMaskLockRef.current) {
       return;
     }
-    if (!panel || !content || !detailCardIsAtMaxHeight) {
-      setDetailTabpanelCutoffFade(false);
+    const surface = detailCardSurfaceRef.current;
+    const paintedHeight = surface?.offsetHeight ?? detailCardHeightPx;
+    const maxHeight = detailCardMaxHeightPxRef.current ?? detailCardMaxHeightPx;
+    // Fade is only for drawers actually at the player ceiling. Below-max cards
+    // size to content — no dissolve over the last line (e.g. TOOLS → Audacity).
+    if (
+      !panel ||
+      !content ||
+      !detailCardUsesInnerScroll ||
+      !detailCardIsAtPlayerCap(paintedHeight, maxHeight)
+    ) {
+      setDetailTabpanelCutoffFade("none");
       return;
     }
 
@@ -499,10 +564,23 @@ export function ShowcaseVideoEditingDetail({
     // Fade only while real copy still extends past the visible fold.
     const contentPastFold = contentRect.bottom > panelRect.bottom + 1;
     const canScroll = panel.scrollHeight - panel.clientHeight > 1;
+    const atTop = panel.scrollTop <= 1;
     const atBottom =
       panel.scrollTop + panel.clientHeight >= panel.scrollHeight - 4;
-    setDetailTabpanelCutoffFade(canScroll && contentPastFold && !atBottom);
-  }, [detailCardIsAtMaxHeight]);
+    // Top dissolve while scrolled: softens the clip at the body-start inset
+    // (all tabs). Keep it at the true bottom so a mid-line isn't hard-cut.
+    const showTop = canScroll && !atTop;
+    const showBottom = canScroll && contentPastFold && !atBottom;
+    setDetailTabpanelCutoffFade(
+      showTop && showBottom
+        ? "both"
+        : showTop
+          ? "top"
+          : showBottom
+            ? "bottom"
+            : "none",
+    );
+  }, [detailCardHeightPx, detailCardMaxHeightPx, detailCardUsesInnerScroll]);
 
   const syncDetailTabpanelAfterSwitch = useCallback(() => {
     const panel = detailTabpanelScrollRef.current;
@@ -527,7 +605,7 @@ export function ShowcaseVideoEditingDetail({
     activeDetailCardTab,
     activeVideoIndex,
     card.id,
-    detailCardIsAtMaxHeight,
+    detailCardUsesInnerScroll,
     detailCardHeightPx,
     detailBodyVisible,
     syncDetailTabpanelAfterSwitch,
@@ -535,7 +613,7 @@ export function ShowcaseVideoEditingDetail({
 
   useEffect(() => {
     const panel = detailTabpanelScrollRef.current;
-    if (!panel || !detailCardIsAtMaxHeight || !detailBodyVisible) {
+    if (!panel || !detailCardUsesInnerScroll || !detailBodyVisible) {
       return;
     }
 
@@ -560,10 +638,162 @@ export function ShowcaseVideoEditingDetail({
     activeDetailCardTab,
     activeVideoIndex,
     card.id,
-    detailCardIsAtMaxHeight,
+    detailCardUsesInnerScroll,
     detailCardHeightPx,
     detailBodyVisible,
     updateDetailTabpanelCutoffFade,
+  ]);
+
+  /**
+   * Tablet landscape: drive the capped body with JS touch pans so it responds
+   * immediately even while the section panel is still coasting / rubber-banding.
+   * Does not pin or freeze the page scroller — both stay free.
+   * Adds inertia after release so it still feels like native scroll.
+   */
+  useEffect(() => {
+    if (!detailCardUsesInnerScroll || !isPlayerCappedDrawerViewport) return;
+    if (usesFinePointerHover()) return;
+
+    const panel = detailTabpanelScrollRef.current;
+    if (!panel) return;
+
+    let touchId: number | null = null;
+    let lastY = 0;
+    let lastMoveTime = 0;
+    let startX = 0;
+    let startY = 0;
+    /** px/ms — positive scrolls content upward (finger moving up). */
+    let velocityY = 0;
+    let momentumRaf = 0;
+    /** undecided until we know the gesture is vertical on an overflowing panel */
+    let mode: "undecided" | "inner" | "ignore" = "undecided";
+
+    const maxScrollTop = () =>
+      Math.max(0, panel.scrollHeight - panel.clientHeight);
+
+    const applyScrollTop = (next: number) => {
+      const clamped = Math.max(0, Math.min(maxScrollTop(), next));
+      panel.scrollTop = clamped;
+      return clamped;
+    };
+
+    const stopMomentum = () => {
+      if (momentumRaf) {
+        window.cancelAnimationFrame(momentumRaf);
+        momentumRaf = 0;
+      }
+    };
+
+    const startMomentum = () => {
+      stopMomentum();
+      let v = Math.max(-2.8, Math.min(2.8, velocityY));
+      if (Math.abs(v) < 0.045) return;
+
+      let prev = performance.now();
+      const step = (now: number) => {
+        const dt = Math.min(34, Math.max(0, now - prev));
+        prev = now;
+        // ~iOS-like exponential decay
+        v *= Math.exp(-0.0032 * dt);
+        if (Math.abs(v) < 0.02) {
+          momentumRaf = 0;
+          return;
+        }
+        const before = panel.scrollTop;
+        const after = applyScrollTop(before + v * dt);
+        if (
+          after === before ||
+          after <= 0 ||
+          after >= maxScrollTop() - 0.5
+        ) {
+          momentumRaf = 0;
+          return;
+        }
+        momentumRaf = window.requestAnimationFrame(step);
+      };
+      momentumRaf = window.requestAnimationFrame(step);
+    };
+
+    const endTouch = (event: TouchEvent) => {
+      if (touchId == null) return;
+      for (let i = 0; i < event.changedTouches.length; i++) {
+        if (event.changedTouches[i]?.identifier === touchId) {
+          const wasInner = mode === "inner";
+          touchId = null;
+          mode = "undecided";
+          if (wasInner) startMomentum();
+          return;
+        }
+      }
+    };
+
+    const onTouchStart = (event: TouchEvent) => {
+      if (detailTabpanelScrollFrozen) return;
+      if (panel.scrollHeight - panel.clientHeight <= 1) return;
+      const touch = event.changedTouches[0];
+      if (!touch) return;
+      stopMomentum();
+      touchId = touch.identifier;
+      lastY = touch.clientY;
+      lastMoveTime = performance.now();
+      startX = touch.clientX;
+      startY = touch.clientY;
+      velocityY = 0;
+      mode = "undecided";
+    };
+
+    const onTouchMove = (event: TouchEvent) => {
+      if (touchId == null || mode === "ignore") return;
+      let touch: Touch | null = null;
+      for (let i = 0; i < event.touches.length; i++) {
+        const candidate = event.touches[i];
+        if (candidate && candidate.identifier === touchId) {
+          touch = candidate;
+          break;
+        }
+      }
+      if (!touch) return;
+
+      if (mode === "undecided") {
+        const dx = touch.clientX - startX;
+        const dy = touch.clientY - startY;
+        if (Math.abs(dx) < 3 && Math.abs(dy) < 3) return;
+        if (Math.abs(dx) > Math.abs(dy)) {
+          mode = "ignore";
+          return;
+        }
+        mode = "inner";
+      }
+
+      const now = performance.now();
+      const delta = lastY - touch.clientY;
+      const dt = Math.max(8, now - lastMoveTime);
+      const instant = delta / dt;
+      velocityY = velocityY * 0.65 + instant * 0.35;
+      lastY = touch.clientY;
+      lastMoveTime = now;
+      applyScrollTop(panel.scrollTop + delta);
+      // Claim this touch for the body without touching the section scroller.
+      if (event.cancelable) event.preventDefault();
+    };
+
+    panel.addEventListener("touchstart", onTouchStart, { passive: true });
+    panel.addEventListener("touchmove", onTouchMove, { passive: false });
+    panel.addEventListener("touchend", endTouch, { passive: true });
+    panel.addEventListener("touchcancel", endTouch, { passive: true });
+
+    return () => {
+      stopMomentum();
+      panel.removeEventListener("touchstart", onTouchStart);
+      panel.removeEventListener("touchmove", onTouchMove);
+      panel.removeEventListener("touchend", endTouch);
+      panel.removeEventListener("touchcancel", endTouch);
+    };
+  }, [
+    detailCardUsesInnerScroll,
+    detailTabpanelScrollFrozen,
+    isPlayerCappedDrawerViewport,
+    usesFinePointerHover,
   ]);
 
   useEffect(() => {
@@ -586,69 +816,10 @@ export function ShowcaseVideoEditingDetail({
     return () => window.clearTimeout(timerId);
   }, [activeDetailCardTab, reduceMotion]);
 
-  useEffect(() => {
-    if (!isPlayerCappedDrawerViewport) {
-      setDetailCardMaxHeightPx(null);
-      detailCardMaxHeightPxRef.current = null;
-      setDetailCardHeightPx(null);
-      setDetailCardContentIsClamped(false);
-      return;
-    }
-
-    const root = detailRootRef.current;
-    if (!root) return;
-
-    const syncDetailCardMaxHeightToPlayer = () => {
-      const player = root.querySelector(".video-editing-player");
-      const cardEl = detailCardSurfaceRef.current;
-      if (!(player instanceof HTMLElement) || !cardEl) return;
-      const playerBottom = player.getBoundingClientRect().bottom;
-      const cardTop = cardEl.getBoundingClientRect().top;
-      const visualCap = Math.max(0, playerBottom - cardTop);
-      const next = visualPxToLayoutPx(cardEl, visualCap);
-      detailCardMaxHeightPxRef.current = next;
-      setDetailCardMaxHeightPx((prev) => (prev === next ? prev : next));
-    };
-
-    syncDetailCardMaxHeightToPlayer();
-    const raf = window.requestAnimationFrame(syncDetailCardMaxHeightToPlayer);
-    const player = root.querySelector(".video-editing-player");
-    const resizeObserver =
-      typeof ResizeObserver !== "undefined"
-        ? new ResizeObserver(() => syncDetailCardMaxHeightToPlayer())
-        : null;
-    if (player && resizeObserver) resizeObserver.observe(player);
-    if (detailCardSurfaceRef.current && resizeObserver) {
-      resizeObserver.observe(detailCardSurfaceRef.current);
-    }
-    window.addEventListener("resize", syncDetailCardMaxHeightToPlayer);
-    window.addEventListener("orientationchange", syncDetailCardMaxHeightToPlayer);
-
-    return () => {
-      window.cancelAnimationFrame(raf);
-      resizeObserver?.disconnect();
-      window.removeEventListener("resize", syncDetailCardMaxHeightToPlayer);
-      window.removeEventListener("orientationchange", syncDetailCardMaxHeightToPlayer);
-    };
-  }, [
-    isPlayerCappedDrawerViewport,
-    activeDetailCardTab,
-    activeVideoIndex,
-    detailPlayerReveal,
-    card.id,
-  ]);
-
   const clearWorksArrowReleaseTimer = useCallback(() => {
     if (worksArrowReleaseTimerRef.current !== null) {
       window.clearTimeout(worksArrowReleaseTimerRef.current);
       worksArrowReleaseTimerRef.current = null;
-    }
-  }, []);
-
-  const clearWorksStripScrollSyncTimer = useCallback(() => {
-    if (worksStripScrollSyncTimerRef.current !== null) {
-      window.clearTimeout(worksStripScrollSyncTimerRef.current);
-      worksStripScrollSyncTimerRef.current = null;
     }
   }, []);
 
@@ -696,14 +867,9 @@ export function ShowcaseVideoEditingDetail({
   useEffect(() => {
     return () => {
       clearWorksArrowReleaseTimer();
-      clearWorksStripScrollSyncTimer();
       clearWorksStripProgrammaticUnlockTimer();
     };
-  }, [
-    clearWorksArrowReleaseTimer,
-    clearWorksStripProgrammaticUnlockTimer,
-    clearWorksStripScrollSyncTimer,
-  ]);
+  }, [clearWorksArrowReleaseTimer, clearWorksStripProgrammaticUnlockTimer]);
 
   const resetStripSwipeArrowGesture = useCallback((clientX: number, clientY: number) => {
     const ref = stripSwipeArrowRef.current;
@@ -739,29 +905,6 @@ export function ShowcaseVideoEditingDetail({
     },
     [],
   );
-
-  const resolveThumbIndexFromStripScroll = useCallback((): number | null => {
-    const strip = thumbStripRef.current;
-    if (!strip || videos.length <= 1) return null;
-
-    const stripRect = strip.getBoundingClientRect();
-    const stripCenter = stripRect.left + stripRect.width / 2;
-    let bestIndex = 0;
-    let bestDistance = Number.POSITIVE_INFINITY;
-
-    thumbRefs.current.forEach((thumb, index) => {
-      if (!thumb) return;
-      const thumbRect = thumb.getBoundingClientRect();
-      const thumbCenter = thumbRect.left + thumbRect.width / 2;
-      const distance = Math.abs(thumbCenter - stripCenter);
-      if (distance < bestDistance) {
-        bestDistance = distance;
-        bestIndex = index;
-      }
-    });
-
-    return bestIndex;
-  }, [videos.length]);
 
   const releaseNaturalDrawerResizeLock = useCallback(() => {
     detailNaturalResizeCleanupRef.current?.();
@@ -883,121 +1026,399 @@ export function ShowcaseVideoEditingDetail({
     return () => releaseNaturalDrawerResizeLock();
   }, [releaseNaturalDrawerResizeLock]);
 
+  const cancelScheduledDetailCardResize = useCallback(() => {
+    if (detailCardResizeDelayTimerRef.current != null) {
+      window.clearTimeout(detailCardResizeDelayTimerRef.current);
+      detailCardResizeDelayTimerRef.current = null;
+    }
+    detailCardResizeAnimationRef.current?.cancel();
+    detailCardResizeAnimationRef.current = null;
+  }, []);
+
+  const beginDetailCardHeightTransition = useCallback(() => {
+    const surface = detailCardSurfaceRef.current;
+    const maxHeight = detailCardMaxHeightPxRef.current;
+    const current =
+      surface && surface.offsetHeight > 0
+        ? surface.offsetHeight
+        : detailCardHeightPx;
+    if (current != null && current > 0) {
+      const pinned =
+        maxHeight != null ? Math.min(current, maxHeight) : current;
+      detailCardTransitionHeightRef.current = pinned;
+      if (surface) surface.style.height = `${pinned}px`;
+    }
+    detailCardHeightTransitioningRef.current = true;
+    setDetailCardHeightTransitioning(true);
+  }, [detailCardHeightPx]);
+
+  const endDetailCardHeightTransition = useCallback((nextHeight: number | null) => {
+    detailCardHeightTransitioningRef.current = false;
+    if (nextHeight != null) {
+      detailCardTransitionHeightRef.current = nextHeight;
+      flushSync(() => {
+        setDetailCardHeightPx(nextHeight);
+        setDetailCardHeightTransitioning(false);
+      });
+    } else {
+      detailCardTransitionHeightRef.current = null;
+      setDetailCardHeightTransitioning(false);
+    }
+  }, []);
+
+  /** Fresh player-bottom cap — title moves change cardTop without resizing the card. */
+  const syncDetailCardMaxHeightNow = useCallback(() => {
+    if (!isPlayerCappedDrawerViewport) return null;
+    const root = detailRootRef.current;
+    const cardEl = detailCardSurfaceRef.current;
+    if (!root || !cardEl) return detailCardMaxHeightPxRef.current;
+    const player = root.querySelector(".video-editing-player");
+    if (!(player instanceof HTMLElement)) return detailCardMaxHeightPxRef.current;
+    const playerBottom = player.getBoundingClientRect().bottom;
+    const cardTop = cardEl.getBoundingClientRect().top;
+    const visualCap = Math.max(0, playerBottom - cardTop);
+    const next = visualPxToLayoutPx(cardEl, visualCap);
+    detailCardMaxHeightPxRef.current = next;
+    setDetailCardMaxHeightPx((prev) => (prev === next ? prev : next));
+
+    // When the title grows, cardTop drops and the ceiling shrinks. ResizeObserver on
+    // the card alone does not see that (size unchanged) — clamp height to the new max.
+    const liveHeight =
+      detailCardTransitionHeightRef.current ?? cardEl.offsetHeight;
+    if (liveHeight > next) {
+      detailCardTransitionHeightRef.current = next;
+      cardEl.style.height = `${next}px`;
+      setDetailCardHeightPx((prev) => (prev === next ? prev : next));
+    }
+    return next;
+  }, [isPlayerCappedDrawerViewport]);
+
+  useEffect(() => {
+    if (!isPlayerCappedDrawerViewport) {
+      setDetailCardMaxHeightPx(null);
+      detailCardMaxHeightPxRef.current = null;
+      setDetailCardHeightPx(null);
+      detailCardHeightTransitioningRef.current = false;
+      setDetailCardHeightTransitioning(false);
+      return;
+    }
+
+    const root = detailRootRef.current;
+    if (!root) return;
+
+    const syncDetailCardMaxHeightToPlayer = () => {
+      syncDetailCardMaxHeightNow();
+    };
+
+    syncDetailCardMaxHeightToPlayer();
+    const raf = window.requestAnimationFrame(syncDetailCardMaxHeightToPlayer);
+    const player = root.querySelector(".video-editing-player");
+    const titleArea = detailNowPlayingRef.current;
+    const resizeObserver =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(() => syncDetailCardMaxHeightToPlayer())
+        : null;
+    if (player && resizeObserver) resizeObserver.observe(player);
+    if (detailCardSurfaceRef.current && resizeObserver) {
+      resizeObserver.observe(detailCardSurfaceRef.current);
+    }
+    // Title height changes move cardTop; observe so the player-cap ceiling tracks.
+    if (titleArea && resizeObserver) resizeObserver.observe(titleArea);
+    window.addEventListener("resize", syncDetailCardMaxHeightToPlayer);
+    window.addEventListener("orientationchange", syncDetailCardMaxHeightToPlayer);
+
+    return () => {
+      window.cancelAnimationFrame(raf);
+      resizeObserver?.disconnect();
+      window.removeEventListener("resize", syncDetailCardMaxHeightToPlayer);
+      window.removeEventListener("orientationchange", syncDetailCardMaxHeightToPlayer);
+    };
+  }, [
+    isPlayerCappedDrawerViewport,
+    activeDetailCardTab,
+    activeVideoIndex,
+    detailPlayerReveal,
+    card.id,
+    syncDetailCardMaxHeightNow,
+  ]);
+
+  /**
+   * Animate the info card to a probe’s height. Target height is measured when the
+   * resize actually starts (after `delayMs`), so title moves / player-cap shifts
+   * cannot leave a stale toHeight from schedule time.
+   */
   const animateDetailCardToMeasuredBody = useCallback(
-    (targetProbe: HTMLElement, delayMs = 0) => {
+    (
+      targetProbe: HTMLElement,
+      delayMs = 0,
+      options?: {
+        onSettled?: () => void;
+        /** Skip WAAPI — pin measured height immediately (rapid work switches). */
+        snap?: boolean;
+        /** When set, settle no-ops if the whole work-switch epoch moved on. */
+        switchEpoch?: number;
+        /** Force destination height (still clamped to the player cap when present). */
+        toHeightPx?: number;
+      },
+    ) => {
+      const onSettled = options?.onSettled;
+      const snap = Boolean(options?.snap);
+      const switchEpoch = options?.switchEpoch;
+      const forcedToHeightPx = options?.toHeightPx;
       const cardSurface = detailCardSurfaceRef.current;
       const activeNatural = detailTabActiveNaturalRef.current;
-      if (!cardSurface || !activeNatural || targetProbe.offsetHeight <= 0) return;
-
-      const fromHeightRaw = cardSurface.offsetHeight;
-      const maxHeight = detailCardMaxHeightPxRef.current;
-      const naturalToHeight = measureDetailCardHeightForProbe(cardSurface, targetProbe);
-      detailCardChromeHeightRef.current = naturalToHeight - targetProbe.offsetHeight;
-      const toHeight =
-        maxHeight != null ? Math.min(naturalToHeight, maxHeight) : naturalToHeight;
-      const fromHeight =
-        maxHeight != null ? Math.min(fromHeightRaw, maxHeight) : fromHeightRaw;
-      setDetailCardContentIsClamped(
-        maxHeight != null && naturalToHeight >= maxHeight - 0.5,
-      );
-
-      if (!isCompactDrawerViewport || reduceMotion) {
-        if (maxHeight != null) {
-          cardSurface.style.height = `${toHeight}px`;
-          setDetailCardHeightPx(toHeight);
-        } else {
-          cardSurface.style.height = "";
-          cardSurface.style.transition = "";
-        }
+      const probeReady =
+        targetProbe.offsetHeight > 0 ||
+        targetProbe.scrollHeight > 0 ||
+        forcedToHeightPx != null;
+      if (!cardSurface || !activeNatural || !probeReady) {
+        onSettled?.();
         return;
       }
 
-      detailCardResizeAnimationRef.current?.cancel();
-      detailCardResizeAnimationRef.current = null;
-      if (Math.abs(toHeight - fromHeight) <= 0.5) {
-        if (maxHeight != null) {
-          cardSurface.style.height = `${toHeight}px`;
-          setDetailCardHeightPx(toHeight);
+      const epoch = ++detailCardResizeEpochRef.current;
+      cancelScheduledDetailCardResize();
+      if (!snap) {
+        beginDetailCardHeightTransition();
+      }
+
+      const isSwitchStale = () =>
+        switchEpoch != null && switchEpoch !== workSwitchEpochRef.current;
+
+      const pinFromHeight = () => {
+        const surface = detailCardSurfaceRef.current;
+        if (!surface) return;
+        const maxHeight = detailCardMaxHeightPxRef.current;
+        const fromHeightRaw = surface.offsetHeight;
+        const fromHeight =
+          maxHeight != null ? Math.min(fromHeightRaw, maxHeight) : fromHeightRaw;
+        detailCardTransitionHeightRef.current = fromHeight;
+        surface.style.height = `${fromHeight}px`;
+        if (maxHeight == null) {
+          surface.style.transition = "none";
         }
-        return;
-      }
+      };
 
-      if (maxHeight != null) {
-        setDetailCardHeightPx(fromHeight);
-        cardSurface.style.height = `${fromHeight}px`;
-      } else {
-        cardSurface.style.transition = "none";
-        cardSurface.style.height = `${fromHeight}px`;
-      }
+      const commitHeight = (surface: HTMLElement, nextHeight: number, maxHeight: number | null) => {
+        detailCardTransitionHeightRef.current = nextHeight;
+        surface.style.height = `${nextHeight}px`;
+        if (maxHeight == null) {
+          surface.style.transition = "none";
+        }
+        endDetailCardHeightTransition(maxHeight != null ? nextHeight : null);
+      };
 
-      const resizeAnimation = cardSurface.animate(
-        [{ height: `${fromHeight}px` }, { height: `${toHeight}px` }],
-        {
-          duration: DETAIL_CARD_RESIZE_DUR_MS,
-          delay: delayMs,
-          easing: DETAIL_CARD_RESIZE_EASE,
-          fill: "both",
-        },
-      );
-      detailCardResizeAnimationRef.current = resizeAnimation;
-      const finishResize = () => {
-        if (detailCardResizeAnimationRef.current !== resizeAnimation) return;
-        if (maxHeight != null) {
-          flushSync(() => {
-            setDetailCardHeightPx(toHeight);
-          });
-          cardSurface.style.height = `${toHeight}px`;
-          resizeAnimation.cancel();
-          detailCardResizeAnimationRef.current = null;
+      const runResize = () => {
+        detailCardResizeDelayTimerRef.current = null;
+        if (epoch !== detailCardResizeEpochRef.current) return;
+        if (isSwitchStale()) {
+          endDetailCardHeightTransition(null);
           return;
         }
 
-        // The newly mounted thumbnail copy can resolve a few pixels away from its
-        // hidden pre-measure. Re-measure via the probe without releasing to height:auto
-        // (auto caused a mobile/tablet reflow screenshake).
-        resizeAnimation.cancel();
-        const settledHeight = measureDetailCardHeightForProbe(cardSurface, targetProbe);
-        cardSurface.style.height = `${toHeight}px`;
-        cardSurface.style.transition = "none";
+        const surface = detailCardSurfaceRef.current;
+        if (!surface || (!forcedToHeightPx && targetProbe.offsetHeight <= 0 && targetProbe.scrollHeight <= 0)) {
+          endDetailCardHeightTransition(null);
+          onSettled?.();
+          return;
+        }
 
-        if (Math.abs(settledHeight - toHeight) > 0.5) {
-          const settleAnimation = cardSurface.animate(
-            [{ height: `${toHeight}px` }, { height: `${settledHeight}px` }],
-            {
-              duration: 120,
-              easing: DETAIL_CARD_RESIZE_EASE,
-              fill: "both",
-            },
-          );
-          detailCardResizeAnimationRef.current = settleAnimation;
-          settleAnimation.finished
-            .then(() => {
-              if (detailCardResizeAnimationRef.current !== settleAnimation) return;
-              cardSurface.style.height = `${settledHeight}px`;
-              cardSurface.style.transition = "none";
+        // Remeasure after title / layout delay so the player-cap matches the card’s new top.
+        syncDetailCardMaxHeightNow();
+        const maxHeight = detailCardMaxHeightPxRef.current;
+        const naturalToHeight =
+          forcedToHeightPx != null
+            ? forcedToHeightPx
+            : measureDetailCardHeightForProbe(surface, targetProbe);
+        const probeBodyH = Math.max(targetProbe.offsetHeight, targetProbe.scrollHeight);
+        if (forcedToHeightPx == null && probeBodyH > 0) {
+          detailCardChromeHeightRef.current = Math.max(0, naturalToHeight - probeBodyH);
+        }
+        const toHeight =
+          maxHeight != null ? Math.min(naturalToHeight, maxHeight) : naturalToHeight;
+        const fromHeightRaw = surface.offsetHeight;
+        const fromHeight =
+          maxHeight != null ? Math.min(fromHeightRaw, maxHeight) : fromHeightRaw;
+
+        if (snap || !isCompactDrawerViewport || reduceMotion) {
+          if (maxHeight != null) {
+            commitHeight(surface, toHeight, maxHeight);
+          } else {
+            surface.style.height = `${toHeight}px`;
+            surface.style.transition = "none";
+            endDetailCardHeightTransition(null);
+          }
+          onSettled?.();
+          return;
+        }
+
+        if (Math.abs(toHeight - fromHeight) <= 0.5) {
+          commitHeight(surface, toHeight, maxHeight);
+          onSettled?.();
+          return;
+        }
+
+        surface.style.height = `${fromHeight}px`;
+        detailCardTransitionHeightRef.current = fromHeight;
+        if (maxHeight == null) {
+          surface.style.transition = "none";
+        }
+
+        const resizeAnimation = surface.animate(
+          [{ height: `${fromHeight}px` }, { height: `${toHeight}px` }],
+          {
+            duration: DETAIL_CARD_RESIZE_DUR_MS,
+            easing: DETAIL_CARD_RESIZE_EASE,
+            // forwards (not both): avoid a finished fill fighting React after settle.
+            fill: "forwards",
+          },
+        );
+        detailCardResizeAnimationRef.current = resizeAnimation;
+        let finishOnce = false;
+
+        const clearThisAnimation = () => {
+          if (detailCardResizeAnimationRef.current === resizeAnimation) {
+            detailCardResizeAnimationRef.current = null;
+          }
+          try {
+            if (typeof resizeAnimation.commitStyles === "function") {
+              resizeAnimation.commitStyles();
+            }
+          } catch {
+            // commitStyles can throw if the animation already canceled.
+          }
+          try {
+            resizeAnimation.cancel();
+          } catch {
+            // ignore
+          }
+          // Scrub leftover finished height animations (fill artifacts in some engines).
+          try {
+            for (const anim of surface.getAnimations()) {
+              const effect = anim.effect;
+              const keyframes =
+                effect && "getKeyframes" in effect
+                  ? (effect as KeyframeEffect).getKeyframes()
+                  : null;
+              const touchesHeight = Array.isArray(keyframes)
+                ? keyframes.some((frame) => frame.height != null)
+                : false;
+              if (!touchesHeight) continue;
+              try {
+                if (typeof anim.commitStyles === "function") anim.commitStyles();
+              } catch {
+                // ignore
+              }
+              anim.cancel();
+            }
+          } catch {
+            // ignore
+          }
+        };
+
+        const finishResize = () => {
+          if (finishOnce) return;
+          finishOnce = true;
+
+          if (epoch !== detailCardResizeEpochRef.current || isSwitchStale()) {
+            clearThisAnimation();
+            return;
+          }
+
+          clearThisAnimation();
+
+          if (maxHeight != null) {
+            // Commit the height we actually animated to. Re-probing here caused a
+            // visible end flicker (RAWBLEM) when the settle measure disagreed by a few px.
+            syncDetailCardMaxHeightNow();
+            const latestMax = detailCardMaxHeightPxRef.current;
+            const settledTo =
+              latestMax != null ? Math.min(toHeight, latestMax) : toHeight;
+            commitHeight(surface, settledTo, latestMax);
+            onSettled?.();
+            return;
+          }
+
+          // Natural drawers: re-measure via the probe without releasing to height:auto
+          // (auto caused a mobile/tablet reflow screenshake).
+          const settledHeight = measureDetailCardHeightForProbe(surface, targetProbe);
+          surface.style.height = `${toHeight}px`;
+          surface.style.transition = "none";
+
+          if (Math.abs(settledHeight - toHeight) > 0.5) {
+            const settleAnimation = surface.animate(
+              [{ height: `${toHeight}px` }, { height: `${settledHeight}px` }],
+              {
+                duration: 120,
+                easing: DETAIL_CARD_RESIZE_EASE,
+                fill: "forwards",
+              },
+            );
+            detailCardResizeAnimationRef.current = settleAnimation;
+            let settleOnce = false;
+            const finishSettle = () => {
+              if (settleOnce) return;
+              settleOnce = true;
+              if (detailCardResizeAnimationRef.current === settleAnimation) {
+                detailCardResizeAnimationRef.current = null;
+              }
+              try {
+                if (typeof settleAnimation.commitStyles === "function") {
+                  settleAnimation.commitStyles();
+                }
+              } catch {
+                // ignore
+              }
               settleAnimation.cancel();
-              detailCardResizeAnimationRef.current = null;
-              // Section scroll unlock is owned by the work-switch reveal timer / tab settle.
-            })
-            .catch(() => {
+              if (epoch !== detailCardResizeEpochRef.current || isSwitchStale()) return;
+              surface.style.height = `${settledHeight}px`;
+              surface.style.transition = "none";
+              endDetailCardHeightTransition(null);
+              onSettled?.();
+            };
+            settleAnimation.onfinish = finishSettle;
+            settleAnimation.finished.then(finishSettle).catch(() => {
               // Cancelled by a newer thumbnail or tab selection.
             });
-          return;
-        }
+            return;
+          }
 
-        detailCardResizeAnimationRef.current = null;
+          endDetailCardHeightTransition(null);
+          onSettled?.();
+        };
+
+        resizeAnimation.onfinish = finishResize;
+        resizeAnimation.finished.then(finishResize).catch(() => {
+          if (detailCardResizeAnimationRef.current === resizeAnimation) {
+            detailCardResizeAnimationRef.current = null;
+          }
+        });
+        window.setTimeout(() => {
+          if (epoch !== detailCardResizeEpochRef.current) return;
+          if (finishOnce) return;
+          finishResize();
+        }, DETAIL_CARD_RESIZE_DUR_MS + 48);
       };
-      resizeAnimation.finished.then(finishResize).catch(() => {
-        // Cancelled by a newer thumbnail or tab selection.
-      });
+
+      if (!snap && delayMs > 0) {
+        pinFromHeight();
+        detailCardResizeDelayTimerRef.current = window.setTimeout(runResize, delayMs);
+      } else {
+        runResize();
+      }
     },
-    [isCompactDrawerViewport, reduceMotion],
+    [
+      beginDetailCardHeightTransition,
+      cancelScheduledDetailCardResize,
+      endDetailCardHeightTransition,
+      isCompactDrawerViewport,
+      reduceMotion,
+      syncDetailCardMaxHeightNow,
+    ],
   );
 
   const animateDetailTitleToMeasuredHeight = useCallback(
-    (nextIndex: number): number => {
-      if (reduceMotion) return 0;
-
+    (nextIndex: number, options?: { snap?: boolean; switchEpoch?: number }): number => {
       const titleArea = detailNowPlayingRef.current;
       const targetProbe = detailTitleMeasureRefs.current[nextIndex];
       if (!titleArea || !targetProbe) return 0;
@@ -1006,33 +1427,54 @@ export function ShowcaseVideoEditingDetail({
       const toHeight = targetProbe.offsetHeight;
       detailTitleResizeAnimationRef.current?.cancel();
       detailTitleResizeAnimationRef.current = null;
-      if (Math.abs(toHeight - fromHeight) <= 0.5) return 0;
+      if (Math.abs(toHeight - fromHeight) <= 0.5) {
+        titleArea.style.height = `${toHeight}px`;
+        syncDetailCardMaxHeightNow();
+        return 0;
+      }
 
+      if (options?.snap || reduceMotion) {
+        titleArea.style.height = `${toHeight}px`;
+        syncDetailCardMaxHeightNow();
+        return 0;
+      }
+
+      const switchEpoch = options?.switchEpoch;
       titleArea.style.height = `${fromHeight}px`;
       const titleResizeAnimation = titleArea.animate(
         [{ height: `${fromHeight}px` }, { height: `${toHeight}px` }],
         {
           duration: DETAIL_TITLE_MOVE_DUR_MS,
           easing: DETAIL_CARD_RESIZE_EASE,
-          fill: "both",
+          fill: "forwards",
         },
       );
       detailTitleResizeAnimationRef.current = titleResizeAnimation;
       titleResizeAnimation.finished
         .then(() => {
           if (detailTitleResizeAnimationRef.current !== titleResizeAnimation) return;
+          if (
+            switchEpoch != null &&
+            switchEpoch !== workSwitchEpochRef.current
+          ) {
+            titleResizeAnimation.cancel();
+            detailTitleResizeAnimationRef.current = null;
+            return;
+          }
+          try {
+            if (typeof titleResizeAnimation.commitStyles === "function") {
+              titleResizeAnimation.commitStyles();
+            }
+          } catch {
+            // ignore
+          }
           titleArea.style.height = `${toHeight}px`;
           titleResizeAnimation.cancel();
           detailTitleResizeAnimationRef.current = null;
-          // Natural drawers: keep explicit height. Clearing to auto reflows the section
-          // and reads as screenshake during thumbnail / arrow switches.
-          if (isNaturalDrawerViewport) return;
-          requestAnimationFrame(() => {
-            if (detailTitleResizeAnimationRef.current) return;
-            if (detailNowPlayingRef.current === titleArea) {
-              titleArea.style.height = "";
-            }
-          });
+          // Title height settled — remeasure player-cap (cardTop moved) and clamp.
+          syncDetailCardMaxHeightNow();
+          // Keep the explicit pixel height after the move. Clearing to auto on
+          // desktop reflowed the player-cap and flickered the info card (RAWBLEM).
         })
         .catch(() => {
           // Cancelled by a newer thumbnail selection.
@@ -1040,7 +1482,7 @@ export function ShowcaseVideoEditingDetail({
 
       return DETAIL_TITLE_MOVE_DUR_MS;
     },
-    [isNaturalDrawerViewport, reduceMotion],
+    [reduceMotion, syncDetailCardMaxHeightNow],
   );
 
   const clearDetailBodySwapTimers = useCallback(() => {
@@ -1054,16 +1496,53 @@ export function ShowcaseVideoEditingDetail({
     }
   }, []);
 
+  /** Hard-abort title/card/body timers so a new switch starts from a clean slate. */
+  const abortWorkSwitchMotion = useCallback(() => {
+    clearDetailBodySwapTimers();
+    cancelScheduledDetailCardResize();
+    detailCardResizeEpochRef.current += 1;
+    detailTitleResizeAnimationRef.current?.cancel();
+    detailTitleResizeAnimationRef.current = null;
+    detailCardHeightTransitioningRef.current = false;
+    setDetailCardHeightTransitioning(false);
+  }, [cancelScheduledDetailCardResize, clearDetailBodySwapTimers]);
+
   useEffect(() => {
-    return () => clearDetailBodySwapTimers();
+    return () => {
+      clearDetailBodySwapTimers();
+      workSwitchEpochRef.current += 1;
+      workSwitchInFlightRef.current = false;
+    };
   }, [clearDetailBodySwapTimers]);
 
+  const finishWorkSwitch = useCallback((epoch: number) => {
+    if (epoch !== workSwitchEpochRef.current) return;
+    workSwitchInFlightRef.current = false;
+  }, []);
+
   const applyActiveWorkIndex = useCallback(
-    (nextIndex: number) => {
-      const drawerDelayMs = reduceMotion ? 0 : animateDetailTitleToMeasuredHeight(nextIndex);
+    (nextIndex: number, epoch: number, options?: { rapid?: boolean }) => {
+      if (epoch !== workSwitchEpochRef.current) return;
+
+      const rapid = Boolean(options?.rapid) || Boolean(reduceMotion);
+      const drawerDelayMs = rapid
+        ? 0
+        : animateDetailTitleToMeasuredHeight(nextIndex, {
+            switchEpoch: epoch,
+          });
+      if (rapid) {
+        animateDetailTitleToMeasuredHeight(nextIndex, {
+          snap: true,
+          switchEpoch: epoch,
+        });
+      }
+
       const targetOverviewProbe = detailVideoOverviewMeasureRefs.current[nextIndex];
       if (targetOverviewProbe) {
-        animateDetailCardToMeasuredBody(targetOverviewProbe, drawerDelayMs);
+        animateDetailCardToMeasuredBody(targetOverviewProbe, drawerDelayMs, {
+          snap: rapid,
+          switchEpoch: epoch,
+        });
       }
 
       setActiveDetailCardTab("overview");
@@ -1073,12 +1552,11 @@ export function ShowcaseVideoEditingDetail({
       activeVideoIndexRef.current = nextIndex;
       setActiveVideoIndex(nextIndex);
       // Body is fully hidden here — safe to drop the mask before the new copy mounts.
-      setDetailTabpanelCutoffFade(false);
+      setDetailTabpanelCutoffFade("none");
 
-      const revealDelay = reduceMotion
-        ? 0
-        : drawerDelayMs + DETAIL_CARD_RESIZE_DUR_MS;
-      detailBodyRevealTimerRef.current = window.setTimeout(() => {
+      const revealDelay = rapid ? 0 : drawerDelayMs + DETAIL_CARD_RESIZE_DUR_MS;
+      const reveal = () => {
+        if (epoch !== workSwitchEpochRef.current) return;
         detailBodyRevealTimerRef.current = null;
         // Arm the cutoff mask before opacity rises so it doesn’t pop in at the end.
         detailBodyVisibleRef.current = true;
@@ -1087,13 +1565,22 @@ export function ShowcaseVideoEditingDetail({
         // Title + card resize window is done — safe to unlock section scroll.
         releaseNaturalDrawerResizeLock();
         requestAnimationFrame(() => {
+          if (epoch !== workSwitchEpochRef.current) return;
           updateDetailTabpanelCutoffFade();
         });
-      }, revealDelay);
+        finishWorkSwitch(epoch);
+      };
+
+      if (revealDelay <= 0) {
+        reveal();
+        return;
+      }
+      detailBodyRevealTimerRef.current = window.setTimeout(reveal, revealDelay);
     },
     [
       animateDetailCardToMeasuredBody,
       animateDetailTitleToMeasuredHeight,
+      finishWorkSwitch,
       reduceMotion,
       releaseNaturalDrawerResizeLock,
       updateDetailTabpanelCutoffFade,
@@ -1101,10 +1588,27 @@ export function ShowcaseVideoEditingDetail({
   );
 
   const commitActiveWorkIndex = useCallback(
-    (nextIndex: number) => {
-      if (nextIndex === activeVideoIndexRef.current && detailBodyVisible) return;
+    (nextIndex: number, opts?: { forceRapid?: boolean }) => {
+      const now = Date.now();
+      const rapidGap =
+        workSwitchLastCommitAtRef.current > 0 &&
+        now - workSwitchLastCommitAtRef.current < WORK_SWITCH_RAPID_IDLE_MS;
+      workSwitchLastCommitAtRef.current = now;
 
-      clearDetailBodySwapTimers();
+      // Same entry already showing and idle — ignore.
+      if (
+        nextIndex === activeVideoIndexRef.current &&
+        detailBodyVisibleRef.current &&
+        !workSwitchInFlightRef.current
+      ) {
+        return;
+      }
+
+      // Coalesce-to-latest + hard abort: cancel residual title/card/timers, then
+      // start fresh for this index (snap under rapid input).
+      const epoch = ++workSwitchEpochRef.current;
+      abortWorkSwitchMotion();
+      workSwitchInFlightRef.current = true;
       activeVideoIndexRef.current = nextIndex;
 
       // Hold page-height reserve + freeze section scroll before fade/resize (thumbnail/arrows).
@@ -1119,18 +1623,22 @@ export function ShowcaseVideoEditingDetail({
           );
         }
         const lockTarget =
-          detailCardSurfaceRef.current ?? detailRootRef.current ?? detailNowPlayingRef.current;
+          detailCardSurfaceRef.current ??
+          detailRootRef.current ??
+          detailNowPlayingRef.current;
         if (lockTarget) armNaturalDrawerResizeLock(lockTarget);
       }
 
-      if (reduceMotion) {
-        detailBodyVisibleRef.current = true;
-        setDetailBodyVisible(true);
-        applyActiveWorkIndex(nextIndex);
+      const rapid =
+        Boolean(opts?.forceRapid) || rapidGap || Boolean(reduceMotion);
+      if (rapid) {
+        detailBodyVisibleRef.current = false;
+        setDetailBodyVisible(false);
+        applyActiveWorkIndex(nextIndex, epoch, { rapid: true });
         return;
       }
 
-      const waitForFadeOut = detailBodyVisible;
+      const waitForFadeOut = detailBodyVisibleRef.current;
       detailBodyVisibleRef.current = false;
       setDetailBodyVisible(false);
       // Keep any active cutoff mask through the body opacity out so both fade together.
@@ -1138,17 +1646,17 @@ export function ShowcaseVideoEditingDetail({
       detailBodySwapTimerRef.current = window.setTimeout(
         () => {
           detailBodySwapTimerRef.current = null;
-          applyActiveWorkIndex(nextIndex);
+          if (epoch !== workSwitchEpochRef.current) return;
+          applyActiveWorkIndex(nextIndex, epoch, { rapid: false });
         },
         waitForFadeOut ? DETAIL_BODY_OUT_MS : 0,
       );
     },
     [
+      abortWorkSwitchMotion,
       applyActiveWorkIndex,
       armNaturalDrawerResizeLock,
       bumpNaturalDrawerReserveForProbe,
-      clearDetailBodySwapTimers,
-      detailBodyVisible,
       isNaturalDrawerViewport,
       isPlayerCappedDrawerViewport,
       reduceMotion,
@@ -1212,26 +1720,6 @@ export function ShowcaseVideoEditingDetail({
     ],
   );
 
-  const syncActiveVideoFromStripScroll = useCallback(() => {
-    if (Date.now() < worksStripNavLockUntilRef.current) return;
-
-    const nextIndex = resolveThumbIndexFromStripScroll();
-    if (nextIndex === null) return;
-
-    const prevIndex = activeVideoIndexRef.current;
-    if (nextIndex === prevIndex) return;
-
-    commitActiveWorkIndex(nextIndex);
-  }, [commitActiveWorkIndex, resolveThumbIndexFromStripScroll]);
-
-  const queueWorksStripScrollSync = useCallback(() => {
-    clearWorksStripScrollSyncTimer();
-    worksStripScrollSyncTimerRef.current = window.setTimeout(() => {
-      worksStripScrollSyncTimerRef.current = null;
-      syncActiveVideoFromStripScroll();
-    }, WORKS_STRIP_SCROLL_SYNC_MS);
-  }, [clearWorksStripScrollSyncTimer, syncActiveVideoFromStripScroll]);
-
   const handleWorksArrowPointerDown = useCallback(
     (side: "prev" | "next") => () => {
       triggerWorksArrowFeedback(side, { fromFinePointerArrow: true });
@@ -1266,8 +1754,6 @@ export function ShowcaseVideoEditingDetail({
     const strip = thumbStripRef.current;
     if (!strip || videos.length <= 1) return;
 
-    worksStripSupportsScrollEndRef.current = "onscrollend" in window;
-
     let activeTouchId: number | null = null;
     let pointerArrowTracking = false;
     let activePointerId: number | null = null;
@@ -1279,16 +1765,9 @@ export function ShowcaseVideoEditingDetail({
       return null;
     };
 
-    const onScroll = () => {
-      if (Date.now() < worksStripNavLockUntilRef.current) return;
-      if (!worksStripSupportsScrollEndRef.current) {
-        queueWorksStripScrollSync();
-      }
-    };
-
+    // Strip may still scroll/snap freely; do not commit a new work from settle position.
     const onScrollEnd = () => {
       stripProgrammaticScrollRef.current = false;
-      queueWorksStripScrollSync();
     };
 
     const runMotionFromPointerEvent = (event: PointerEvent) => {
@@ -1342,7 +1821,6 @@ export function ShowcaseVideoEditingDetail({
       activePointerId = null;
     };
 
-    strip.addEventListener("scroll", onScroll, { passive: true });
     strip.addEventListener("scrollend", onScrollEnd, { passive: true });
     strip.addEventListener("touchstart", onStripTouchStart, { passive: true });
     strip.addEventListener("touchmove", handleTouchMotion, { passive: true });
@@ -1355,7 +1833,6 @@ export function ShowcaseVideoEditingDetail({
     window.addEventListener("touchcancel", onWindowTouchEnd, { passive: true });
 
     return () => {
-      strip.removeEventListener("scroll", onScroll);
       strip.removeEventListener("scrollend", onScrollEnd);
       strip.removeEventListener("touchstart", onStripTouchStart);
       strip.removeEventListener("touchmove", handleTouchMotion);
@@ -1367,19 +1844,7 @@ export function ShowcaseVideoEditingDetail({
       window.removeEventListener("touchend", onWindowTouchEnd);
       window.removeEventListener("touchcancel", onWindowTouchEnd);
     };
-  }, [
-    queueWorksStripScrollSync,
-    resetStripSwipeArrowGesture,
-    tryFireStripSwipeArrowFromMotion,
-    videos.length,
-  ]);
-
-  useEffect(() => {
-    return () => {
-      clearWorksArrowReleaseTimer();
-      clearWorksStripScrollSyncTimer();
-    };
-  }, [clearWorksArrowReleaseTimer, clearWorksStripScrollSyncTimer]);
+  }, [resetStripSwipeArrowGesture, tryFireStripSwipeArrowFromMotion, videos.length]);
 
   useEffect(() => {
     activeVideoIndexRef.current = 0;
@@ -1596,147 +2061,51 @@ export function ShowcaseVideoEditingDetail({
           setDetailTabpanelScrollFrozen(true);
         });
       }
-      const maxHeight = detailCardMaxHeightPxRef.current;
 
       if (isCompactDrawerViewport && !reduceMotion) {
         const cardSurface = detailCardSurfaceRef.current;
-        const activeNatural = detailTabActiveNaturalRef.current;
         const targetProbe = detailTabHiddenMeasureRefs.current[nextTabId];
         // Lock section scroll for the whole FLIP + resize window on natural drawers.
         if (isNaturalDrawerViewport && cardSurface) {
           armNaturalDrawerResizeLock(cardSurface);
         }
-        if (cardSurface && activeNatural && targetProbe) {
-          const fromHeightRaw = cardSurface.offsetHeight;
-          const naturalToHeight = measureDetailCardHeightForProbe(
-            cardSurface,
-            targetProbe,
-          );
-          detailCardChromeHeightRef.current =
-            naturalToHeight - targetProbe.offsetHeight;
-          const toHeight =
-            maxHeight != null ? Math.min(naturalToHeight, maxHeight) : naturalToHeight;
-          const fromHeight =
-            maxHeight != null ? Math.min(fromHeightRaw, maxHeight) : fromHeightRaw;
-          const nextClamped =
-            maxHeight != null && naturalToHeight >= maxHeight - 0.5;
 
-          const settleMaskAfterResize = () => {
-            const panel = detailTabpanelScrollRef.current;
-            if (panel) panel.scrollTop = 0;
-            // Apply clamp only after the out-fade so we don’t tear off overflow/mask mid-copy.
+        const settleMaskAfterResize = () => {
+          const panel = detailTabpanelScrollRef.current;
+          if (panel) panel.scrollTop = 0;
+          // Unfreeze scrollport after the out-fade so we don’t tear mid-copy.
+          if (isPlayerCappedDrawerViewport) {
             flushSync(() => {
-              setDetailCardContentIsClamped(nextClamped);
-              if (isPlayerCappedDrawerViewport) {
-                setDetailTabpanelScrollFrozen(false);
-              }
+              setDetailTabpanelScrollFrozen(false);
             });
-            detailTabMaskLockRef.current = false;
-            if (!nextClamped) {
-              setDetailTabpanelCutoffFade(false);
-              return;
-            }
-            // Measure with the post-clamp DOM; don’t use the stale callback closure.
-            const content = detailTabActiveNaturalRef.current;
-            if (!panel || !content) {
-              setDetailTabpanelCutoffFade(false);
-              return;
-            }
-            const panelRect = panel.getBoundingClientRect();
-            const contentRect = content.getBoundingClientRect();
-            const contentPastFold = contentRect.bottom > panelRect.bottom + 1;
-            const canScroll = panel.scrollHeight - panel.clientHeight > 1;
-            const atBottom =
-              panel.scrollTop + panel.clientHeight >= panel.scrollHeight - 4;
-            setDetailTabpanelCutoffFade(canScroll && contentPastFold && !atBottom);
-          };
-
-          detailCardResizeAnimationRef.current?.cancel();
-          detailCardResizeAnimationRef.current = null;
-          if (Math.abs(toHeight - fromHeight) > 0.5) {
-            // Seed React height to `from` so cancel never snaps to a stale prior tab size.
-            if (maxHeight != null) {
-              setDetailCardHeightPx(fromHeight);
-              cardSurface.style.height = `${fromHeight}px`;
-            } else {
-              // Natural drawer (phone + tablet portrait): kill CSS transitions that fight WAAPI height.
-              cardSurface.style.transition = "none";
-              cardSurface.style.height = `${fromHeight}px`;
-            }
-
-            // Once copy is fully gone, drop the old mask + reset scroll (invisible).
-            detailTabMaskSettleTimerRef.current = window.setTimeout(() => {
-              detailTabMaskSettleTimerRef.current = null;
-              if (detailTabMaskLockRef.current) {
-                const panel = detailTabpanelScrollRef.current;
-                if (panel) panel.scrollTop = 0;
-                setDetailTabpanelCutoffFade(false);
-              }
-            }, DETAIL_BODY_OUT_MS);
-
-            const resizeDelayMs = isNaturalDrawerViewport
-              ? DETAIL_NATURAL_HEIGHT_DELAY_MS
-              : DETAIL_BODY_OUT_MS;
-
-            const resizeAnimation = cardSurface.animate(
-              [
-                { height: `${fromHeight}px` },
-                { height: `${toHeight}px` },
-              ],
-              {
-                duration: DETAIL_CARD_RESIZE_DUR_MS,
-                // Desktop: after body out. Natural: after tab FLIP settles (keeps reorder, less shake).
-                delay: resizeDelayMs,
-                easing: DETAIL_CARD_RESIZE_EASE,
-                fill: "both",
-              },
-            );
-            detailCardResizeAnimationRef.current = resizeAnimation;
-            const finishResize = () => {
-              if (detailCardResizeAnimationRef.current !== resizeAnimation) return;
-              // Persist end height in React + DOM before canceling WAAPI so the
-              // prior tab height cannot flash for a frame.
-              if (maxHeight != null) {
-                flushSync(() => {
-                  setDetailCardHeightPx(toHeight);
-                });
-                cardSurface.style.height = `${toHeight}px`;
-              } else if (typeof resizeAnimation.commitStyles === "function") {
-                resizeAnimation.commitStyles();
-              } else {
-                cardSurface.style.height = `${toHeight}px`;
-              }
-              resizeAnimation.cancel();
-              detailCardResizeAnimationRef.current = null;
-              if (maxHeight == null) {
-                // Keep the explicit pixel height on natural drawers. Clearing to
-                // auto after WAAPI caused a mobile/tablet reflow screenshake.
-                cardSurface.style.height = `${toHeight}px`;
-                cardSurface.style.transition = "none";
-                releaseNaturalDrawerResizeLock();
-              }
-              // Enter fade is delayed +32ms past resize end — settle while still opacity 0.
-              settleMaskAfterResize();
-            };
-            resizeAnimation.finished.then(finishResize).catch(() => {
-              // Cancelled by a newer tab swap — leave the replacement animation in charge.
-            });
-          } else if (maxHeight != null) {
-            cardSurface.style.height = `${toHeight}px`;
-            setDetailCardHeightPx(toHeight);
-            detailTabMaskSettleTimerRef.current = window.setTimeout(() => {
-              detailTabMaskSettleTimerRef.current = null;
-              settleMaskAfterResize();
-            }, DETAIL_BODY_OUT_MS);
-          } else {
-            detailTabMaskSettleTimerRef.current = window.setTimeout(() => {
-              detailTabMaskSettleTimerRef.current = null;
-              settleMaskAfterResize();
-              if (isNaturalDrawerViewport) {
-                releaseNaturalDrawerResizeLock();
-              }
-            }, DETAIL_NATURAL_HEIGHT_DELAY_MS);
           }
+          detailTabMaskLockRef.current = false;
+          // Remeasure fade after unlock; below-max cards clear the mask entirely.
+          updateDetailTabpanelCutoffFade();
+          if (isNaturalDrawerViewport) {
+            releaseNaturalDrawerResizeLock();
+          }
+        };
+
+        if (cardSurface && targetProbe && targetProbe.offsetHeight > 0) {
+          // Once copy is fully gone, drop the old mask + reset scroll (invisible).
+          detailTabMaskSettleTimerRef.current = window.setTimeout(() => {
+            detailTabMaskSettleTimerRef.current = null;
+            if (detailTabMaskLockRef.current) {
+              const panel = detailTabpanelScrollRef.current;
+              if (panel) panel.scrollTop = 0;
+              setDetailTabpanelCutoffFade("none");
+            }
+          }, DETAIL_BODY_OUT_MS);
+
+          const resizeDelayMs = isNaturalDrawerViewport
+            ? DETAIL_NATURAL_HEIGHT_DELAY_MS
+            : DETAIL_BODY_OUT_MS;
+
+          // Measure target when resize starts (after delay), not at click time.
+          animateDetailCardToMeasuredBody(targetProbe, resizeDelayMs, {
+            onSettled: settleMaskAfterResize,
+          });
         } else {
           detailTabMaskLockRef.current = false;
           setDetailTabpanelScrollFrozen(false);
@@ -1745,17 +2114,6 @@ export function ShowcaseVideoEditingDetail({
           }
         }
       } else {
-        if (maxHeight != null) {
-          const targetProbe = detailTabHiddenMeasureRefs.current[nextTabId];
-          const cardSurface = detailCardSurfaceRef.current;
-          if (cardSurface && targetProbe) {
-            const naturalToHeight = measureDetailCardHeightForProbe(
-              cardSurface,
-              targetProbe,
-            );
-            setDetailCardContentIsClamped(naturalToHeight >= maxHeight - 0.5);
-          }
-        }
         detailTabMaskLockRef.current = false;
         setDetailTabpanelScrollFrozen(false);
         updateDetailTabpanelCutoffFade();
@@ -1766,6 +2124,7 @@ export function ShowcaseVideoEditingDetail({
     },
     [
       activeDetailCardTab,
+      animateDetailCardToMeasuredBody,
       armNaturalDrawerResizeLock,
       isCompactDrawerViewport,
       isNaturalDrawerViewport,
@@ -1953,44 +2312,116 @@ export function ShowcaseVideoEditingDetail({
     detailCardMaxHeightPx,
   ]);
 
-  /** Initial / cap-change height only — tab swaps animate height themselves. */
+  /** Initial / cap-change height only — tab/thumb swaps own height via animateDetailCardToMeasuredBody. */
   useLayoutEffect(() => {
     if (!isPlayerCappedDrawerViewport || detailCardMaxHeightPx == null) {
       return;
     }
+    // Never stomp an in-flight delayed measure or WAAPI resize (wrong target / flicker).
+    if (detailCardHeightTransitioningRef.current) return;
     if (detailCardResizeAnimationRef.current) return;
+    if (detailCardResizeDelayTimerRef.current != null) return;
+    // Wait until the entry body is showing — same window as the visible grow the user sees.
+    if (!detailBodyVisible) return;
 
-    let nextHeight = detailCardHeightPx;
-    if (nextHeight != null) {
-      nextHeight = Math.min(nextHeight, detailCardMaxHeightPx);
-    } else {
-      const cardSurface = detailCardSurfaceRef.current;
-      const activeNatural = detailTabActiveNaturalRef.current;
-      if (!cardSurface || !activeNatural) {
-        nextHeight = detailCardMaxHeightPx;
-      } else {
+    const cardSurface = detailCardSurfaceRef.current;
+    const activeNatural = detailTabActiveNaturalRef.current;
+
+    if (detailCardHeightPx == null) {
+      let nextHeight = detailCardMaxHeightPx;
+      if (cardSurface && activeNatural && activeNatural.offsetHeight > 0) {
         const chrome =
           detailCardChromeHeightRef.current ??
           measureDetailCardChromeHeight(cardSurface, activeNatural);
         detailCardChromeHeightRef.current = chrome;
         nextHeight = Math.min(
-          Math.ceil(chrome + activeNatural.offsetHeight),
+          Math.ceil(chrome + Math.max(activeNatural.offsetHeight, activeNatural.scrollHeight)),
           detailCardMaxHeightPx,
         );
       }
+      setDetailCardHeightPx(nextHeight);
+      return;
     }
-    setDetailCardHeightPx(nextHeight);
-    setDetailCardContentIsClamped(nextHeight >= detailCardMaxHeightPx - 1);
+
+    if (!cardSurface || !activeNatural) return;
+
+    const overviewProbe =
+      activeDetailCardTab === "overview"
+        ? detailVideoOverviewMeasureRefs.current[activeVideoIndex]
+        : null;
+    const probe =
+      overviewProbe ??
+      detailTabHiddenMeasureRefs.current[activeDetailCardTab] ??
+      activeNatural;
+
+    const settleCutoff = () => {
+      updateDetailTabpanelCutoffFade();
+      requestAnimationFrame(updateDetailTabpanelCutoffFade);
+    };
+
+    // Player cap shrank under the card (title grew / layout moved).
+    if (detailCardHeightPx > detailCardMaxHeightPx + 0.5) {
+      animateDetailCardToMeasuredBody(probe, 0, {
+        toHeightPx: detailCardMaxHeightPx,
+        onSettled: settleCutoff,
+      });
+      return;
+    }
+
+    // Size to content (clamped by the player cap) — grow OR shrink. Do not force max
+    // just because the panel reports a 1px overflow; that left short entries (e.g.
+    // FugitiveFilms) stuck at the full ceiling.
+    let naturalHeight = 0;
+    if (probe && (probe.offsetHeight > 0 || probe.scrollHeight > 0)) {
+      naturalHeight = measureDetailCardHeightForProbe(cardSurface, probe);
+    } else {
+      const bodyH = Math.max(activeNatural.offsetHeight, activeNatural.scrollHeight);
+      if (bodyH <= 0) return;
+      const chrome =
+        detailCardChromeHeightRef.current ??
+        measureDetailCardChromeHeight(cardSurface, activeNatural);
+      detailCardChromeHeightRef.current = chrome;
+      naturalHeight = Math.ceil(chrome + bodyH);
+    }
+
+    const panel = detailTabpanelScrollRef.current;
+    const panelOverflows =
+      Boolean(panel) && panel!.scrollHeight - panel!.clientHeight > 1;
+    if (panelOverflows) {
+      // Probe can under-read while live copy still clips — take the larger need,
+      // still capped at max (so short copy never jumps to the ceiling).
+      const liveHeight = measureDetailCardHeightForProbe(cardSurface, activeNatural);
+      naturalHeight = Math.max(naturalHeight, liveHeight);
+    }
+
+    const nextHeight = Math.min(naturalHeight, detailCardMaxHeightPx);
+    if (Math.abs(nextHeight - detailCardHeightPx) <= 0.5) return;
+
+    animateDetailCardToMeasuredBody(probe, 0, {
+      toHeightPx: nextHeight,
+      onSettled: settleCutoff,
+    });
   }, [
+    animateDetailCardToMeasuredBody,
     isPlayerCappedDrawerViewport,
     detailCardMaxHeightPx,
     detailCardHeightPx,
+    activeDetailCardTab,
+    activeVideoIndex,
+    detailBodyVisible,
+    updateDetailTabpanelCutoffFade,
   ]);
 
   useEffect(() => {
     return () => {
+      detailCardResizeEpochRef.current += 1;
+      if (detailCardResizeDelayTimerRef.current != null) {
+        window.clearTimeout(detailCardResizeDelayTimerRef.current);
+        detailCardResizeDelayTimerRef.current = null;
+      }
       detailCardResizeAnimationRef.current?.cancel();
       detailCardResizeAnimationRef.current = null;
+      detailCardHeightTransitioningRef.current = false;
       detailTitleResizeAnimationRef.current?.cancel();
       detailTitleResizeAnimationRef.current = null;
       const cardSurface = detailCardSurfaceRef.current;
@@ -2285,16 +2716,24 @@ export function ShowcaseVideoEditingDetail({
                     detailCardMaxHeightPx != null
                       ? {
                           maxHeight: `${detailCardMaxHeightPx}px`,
-                          ...(detailCardHeightPx != null
-                            ? { height: `${detailCardHeightPx}px` }
-                            : {}),
+                          // Always keep a height painted. During WAAPI, pin the from-height
+                          // in React so omitting `height` cannot flash to auto (RAWBLEM).
+                          ...(() => {
+                            const heightPx = detailCardHeightTransitioning
+                              ? (detailCardTransitionHeightRef.current ??
+                                detailCardHeightPx)
+                              : detailCardHeightPx;
+                            return heightPx != null
+                              ? { height: `${heightPx}px` }
+                              : {};
+                          })(),
                         }
                       : undefined
                   }
                 >
                   <div
                     className={`video-editing-detail-overview w-full min-w-0${
-                      detailCardIsAtMaxHeight ? " flex min-h-0 flex-1 flex-col" : ""
+                      detailCardUsesInnerScroll ? " flex min-h-0 flex-1 flex-col" : ""
                     }`}
                   >
                     <AnimatePresence mode="wait" initial={false}>
@@ -2302,7 +2741,7 @@ export function ShowcaseVideoEditingDetail({
                         key={activeVideo.id}
                         initial={false}
                         className={`video-editing-detail-cards-tabs flex w-full min-w-0 flex-col gap-2.5${
-                          detailCardIsAtMaxHeight ? " min-h-0 flex-1" : ""
+                          detailCardUsesInnerScroll ? " min-h-0 flex-1" : ""
                         }`}
                       >
                         {renderDetailCardTabList()}
@@ -2312,14 +2751,15 @@ export function ShowcaseVideoEditingDetail({
                           id={`video-detail-panel-${activeDetailCardTab}`}
                           aria-labelledby={`video-detail-tab-${activeDetailCardTab}`}
                           className={`video-editing-detail-card-tabpanel min-w-0 [overflow-anchor:none]${
-                            detailCardIsAtMaxHeight
+                            detailCardUsesInnerScroll
                               ? detailTabpanelScrollFrozen
                                 ? " min-h-0 flex-1 overflow-hidden"
                                 : " min-h-0 flex-1 overflow-y-auto no-scrollbar"
                               : ""
                           }${
-                            detailCardIsAtMaxHeight && detailTabpanelCutoffFade
-                              ? " content-cutoff-fade"
+                            detailCardUsesInnerScroll &&
+                            detailTabpanelCutoffFade !== "none"
+                              ? ` content-cutoff-fade content-cutoff-fade--${detailTabpanelCutoffFade}`
                               : ""
                           }`}
                           style={{
@@ -2338,7 +2778,7 @@ export function ShowcaseVideoEditingDetail({
                               {renderDetailCardTabBody(activeDetailCardTab, "portrait")}
                             </div>
                             {isCompactDrawerViewport ? (
-                              <div className="pointer-events-none absolute left-0 top-1 -z-10 h-0 w-full overflow-hidden opacity-0" aria-hidden>
+                              <div className="pointer-events-none absolute left-0 top-1 -z-10 w-full overflow-hidden opacity-0 [height:0]" aria-hidden>
                                 {DETAIL_CARD_TAB_IDS.map((tabId) => (
                                   <div
                                     key={`measure-${tabId}`}
