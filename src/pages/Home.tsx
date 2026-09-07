@@ -3150,6 +3150,10 @@ const Hero = ({
   const heroVideoRef = useRef<HTMLVideoElement>(null);
   /** True once open starts — keeps the reel playing through open/hold/rise. */
   const [heroVideoShouldPlay, setHeroVideoShouldPlay] = useState(false);
+  /** Mirrors shouldPlay for gesture handlers (avoids stale closures / missed early taps). */
+  const heroVideoPlaybackArmedRef = useRef(false);
+  /** User gestured — LPM / Safari may only allow play() in that trusted stack. */
+  const heroVideoGestureUnlockRef = useRef(false);
   /** Computed final translateY after rise (mobile ROT nudge, else 0). */
   const videoFinalYRef = useRef(0);
   const videoEntranceGenRef = useRef(0);
@@ -3179,18 +3183,38 @@ const Hero = ({
       video.pause();
       return;
     }
-    /* Explicit props before play() — Low Power Mode / Safari often ignore attribute-only muted. */
+    /*
+     * Explicit props before play() — Low Power Mode / Safari often ignore
+     * attribute-only muted and block autoplay until a trusted user gesture.
+     * Invoke play() synchronously from gesture handlers (no await before call).
+     */
     video.muted = true;
     video.defaultMuted = true;
+    video.volume = 0;
     video.playsInline = true;
+    video.setAttribute("muted", "");
     video.setAttribute("playsinline", "");
     video.setAttribute("webkit-playsinline", "");
-    void video.play().catch(() => undefined);
+    video.setAttribute("autoplay", "");
+    const playAttempt = video.play();
+    if (playAttempt !== undefined) {
+      void playAttempt.then(
+        () => {
+          heroVideoGestureUnlockRef.current = true;
+        },
+        () => {
+          /* NotAllowedError under LPM — wait for gesture unlock. */
+        },
+      );
+    }
   }, []);
 
   const startHeroVideoPlayback = useCallback(() => {
+    heroVideoPlaybackArmedRef.current = true;
     setHeroVideoShouldPlay(true);
     kickHeroVideoPlay();
+    /* Early tap during load — replay now that we are armed. */
+    if (heroVideoGestureUnlockRef.current) kickHeroVideoPlay();
   }, [kickHeroVideoPlay]);
   const markHeroMediaReadyIfBuffered = useCallback(() => {
     const video = heroVideoRef.current;
@@ -3429,6 +3453,14 @@ const Hero = ({
   useEffect(() => {
     const video = heroVideoRef.current;
     if (!video) return;
+
+    video.muted = true;
+    video.defaultMuted = true;
+    video.volume = 0;
+    video.playsInline = true;
+    video.setAttribute("muted", "");
+    video.setAttribute("playsinline", "");
+    video.setAttribute("webkit-playsinline", "");
 
     const markReady = () => markHeroMediaReadyIfBuffered();
     const failOpen = () => setHeroMediaReady(true);
@@ -3781,6 +3813,7 @@ const Hero = ({
     if (!videoRevealActive) {
       videoOpenPinnedRef.current = false;
       videoEntranceSettledRef.current = false;
+      heroVideoPlaybackArmedRef.current = false;
       setHeroVideoShouldPlay(false);
       videoScaleX.set(0);
       videoEntranceY.set(0);
@@ -4008,23 +4041,39 @@ const Hero = ({
     snapVideoEntranceToRest();
   }, [isMobileHeroLayout, sliderAnimDone, snapVideoEntranceToRest, videoEntranceY]);
 
-  /** Keep the reel running once armed — retry when LPM / Safari blocks or pauses autoplay. */
+  /**
+   * Keep the reel running once armed — retry when LPM / Safari blocks or pauses
+   * autoplay. Gesture unlock is installed while the hero is active (not only after
+   * arm) so an early tap is remembered and play() runs in a trusted event stack.
+   */
   useEffect(() => {
-    if (!heroVideoShouldPlay) return;
+    if (!active) return;
     const video = heroVideoRef.current;
     if (!video) return;
 
     const ensurePlaying = () => {
+      if (!heroVideoPlaybackArmedRef.current && !heroVideoShouldPlay) return;
       if (video.paused || video.ended) kickHeroVideoPlay();
     };
 
-    ensurePlaying();
+    const onTrustedGesture = () => {
+      heroVideoGestureUnlockRef.current = true;
+      if (!heroVideoPlaybackArmedRef.current && !heroVideoShouldPlay) return;
+      /* Must call play() synchronously inside the user-gesture call stack. */
+      kickHeroVideoPlay();
+    };
+
+    if (heroVideoShouldPlay || heroVideoPlaybackArmedRef.current) {
+      ensurePlaying();
+    }
+
     video.addEventListener("canplay", ensurePlaying);
     video.addEventListener("loadeddata", ensurePlaying);
     video.addEventListener("loadedmetadata", ensurePlaying);
     video.addEventListener("stalled", ensurePlaying);
     video.addEventListener("suspend", ensurePlaying);
     video.addEventListener("waiting", ensurePlaying);
+    video.addEventListener("pause", ensurePlaying);
 
     const onVisibility = () => {
       if (document.visibilityState === "visible") ensurePlaying();
@@ -4033,11 +4082,17 @@ const Hero = ({
     window.addEventListener("pageshow", ensurePlaying);
     window.addEventListener("focus", ensurePlaying);
 
-    /* First user gesture unlocks autoplay under Low Power Mode policies. */
+    /*
+     * Capture-phase on document — catches the first tap/click anywhere, including
+     * before the entrance arms playback (Low Power Mode / Safari).
+     */
     const unlockOpts: AddEventListenerOptions = { capture: true, passive: true };
-    window.addEventListener("pointerdown", ensurePlaying, unlockOpts);
-    window.addEventListener("touchstart", ensurePlaying, unlockOpts);
-    window.addEventListener("keydown", ensurePlaying, unlockOpts);
+    document.addEventListener("pointerdown", onTrustedGesture, unlockOpts);
+    document.addEventListener("touchstart", onTrustedGesture, unlockOpts);
+    document.addEventListener("touchend", onTrustedGesture, unlockOpts);
+    document.addEventListener("mousedown", onTrustedGesture, unlockOpts);
+    document.addEventListener("keydown", onTrustedGesture, unlockOpts);
+    document.addEventListener("click", onTrustedGesture, unlockOpts);
 
     const poll = window.setInterval(ensurePlaying, 900);
 
@@ -4049,14 +4104,18 @@ const Hero = ({
       video.removeEventListener("stalled", ensurePlaying);
       video.removeEventListener("suspend", ensurePlaying);
       video.removeEventListener("waiting", ensurePlaying);
+      video.removeEventListener("pause", ensurePlaying);
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("pageshow", ensurePlaying);
       window.removeEventListener("focus", ensurePlaying);
-      window.removeEventListener("pointerdown", ensurePlaying, unlockOpts);
-      window.removeEventListener("touchstart", ensurePlaying, unlockOpts);
-      window.removeEventListener("keydown", ensurePlaying, unlockOpts);
+      document.removeEventListener("pointerdown", onTrustedGesture, unlockOpts);
+      document.removeEventListener("touchstart", onTrustedGesture, unlockOpts);
+      document.removeEventListener("touchend", onTrustedGesture, unlockOpts);
+      document.removeEventListener("mousedown", onTrustedGesture, unlockOpts);
+      document.removeEventListener("keydown", onTrustedGesture, unlockOpts);
+      document.removeEventListener("click", onTrustedGesture, unlockOpts);
     };
-  }, [heroVideoShouldPlay, kickHeroVideoPlay]);
+  }, [active, heroVideoShouldPlay, kickHeroVideoPlay]);
 
   useEffect(() => {
     const vv = window.visualViewport;
@@ -4296,6 +4355,7 @@ const Hero = ({
           ref={heroVideoRef}
           src={heroVideoSrc}
           muted
+          defaultMuted
           playsInline
           loop
           autoPlay={heroVideoShouldPlay}
@@ -4307,6 +4367,12 @@ const Hero = ({
           onProgress={markHeroMediaReadyIfBuffered}
           onCanPlayThrough={markHeroMediaReadyIfBuffered}
           onError={() => setHeroMediaReady(true)}
+          onPointerDown={() => {
+            heroVideoGestureUnlockRef.current = true;
+            if (heroVideoPlaybackArmedRef.current || heroVideoShouldPlay) {
+              kickHeroVideoPlay();
+            }
+          }}
         />
       </div>
     </motion.div>
@@ -8174,15 +8240,16 @@ const ShowcaseIllustrationLightbox = ({
     activeSlide?.artistStatement?.trim() ||
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.";
 
-  // Collapsed height in px (~2 lines of text-xs leading-relaxed).
-  const COLLAPSED_DESC_H = 60;
+  /** Peek height — snapped to whole line boxes so glyphs aren’t mid-clipped. */
+  const COLLAPSED_DESC_LINES = 3;
+  const EXPANDED_DESC_MAX_H = 240;
   const descContentRef = useRef<HTMLDivElement>(null);
   const descViewportRef = useRef<HTMLDivElement>(null);
   const [descOverflows, setDescOverflows] = useState(false);
+  const [collapsedDescH, setCollapsedDescH] = useState(40);
   const [descContentH, setDescContentH] = useState(0);
   const [descExpanded, setDescExpanded] = useState(false);
 
-  // Reset expand state and re-measure whenever the slide changes.
   useEffect(() => {
     setDescExpanded(false);
   }, [activeIndex]);
@@ -8206,10 +8273,19 @@ const ShowcaseIllustrationLightbox = ({
       setDescContentH(0);
       return;
     }
-    const h = el.scrollHeight;
-    setDescContentH(Math.min(h, 240));
-    setDescOverflows(h > COLLAPSED_DESC_H + 6);
-  }, [artistStatement]);
+    const fullH = el.scrollHeight;
+    const cs = getComputedStyle(el);
+    const fontSize = parseFloat(cs.fontSize) || 12;
+    const lineHeightRaw = cs.lineHeight;
+    const lineHeight =
+      lineHeightRaw === "normal" || !lineHeightRaw
+        ? fontSize * 1.625
+        : parseFloat(lineHeightRaw) || fontSize * 1.625;
+    const peekH = Math.round(lineHeight * COLLAPSED_DESC_LINES);
+    setCollapsedDescH(peekH);
+    setDescContentH(Math.min(fullH, EXPANDED_DESC_MAX_H));
+    setDescOverflows(fullH > peekH + 4);
+  }, [artistStatement, activeIndex]);
 
   const handleShowPrev = useCallback(() => {
     if (!emblaApi) return;
@@ -8408,7 +8484,7 @@ const ShowcaseIllustrationLightbox = ({
         </div>
 
         <section
-          className={`group relative shrink-0 border-t border-white/[0.1] bg-black/90 px-4 py-3 pr-16 pb-8 sm:px-6 sm:py-4 sm:pr-28 sm:pb-9${descOverflows ? " cursor-pointer" : ""}`}
+          className={`group relative shrink-0 border-t border-white/[0.1] bg-black/90 px-4 pt-3 pr-16 pb-2 sm:px-6 sm:pt-4 sm:pr-28 sm:pb-2${descOverflows ? " cursor-pointer" : ""}`}
           onClick={descOverflows ? () => setDescExpanded((v) => !v) : undefined}
         >
           {descOverflows ? (
@@ -8436,18 +8512,23 @@ const ShowcaseIllustrationLightbox = ({
             <div className="h-[1.15rem] sm:hidden" aria-hidden />
           )}
           {artistStatement ? (
-            <div className="mt-1 pr-2 sm:mt-1.5 sm:pr-4">
+            <div className="mt-1 min-w-0 sm:mt-1.5">
               <motion.div
-                animate={{ height: descExpanded ? descContentH || "auto" : COLLAPSED_DESC_H }}
+                animate={{
+                  height: descExpanded ? descContentH || "auto" : collapsedDescH,
+                }}
                 transition={{ duration: reduceMotion ? 0 : 0.3, ease: EASE.out }}
-                className={`relative ${
+                className={`relative min-w-0 ${
                   descExpanded
                     ? "no-scrollbar overflow-x-hidden overflow-y-auto overscroll-y-contain touch-pan-y"
                     : "overflow-hidden"
                 }`}
                 ref={descViewportRef}
               >
-                <div ref={descContentRef} className="max-sm:-mr-1 space-y-2 font-body text-xs leading-relaxed text-mono-2/70 sm:text-sm">
+                <div
+                  ref={descContentRef}
+                  className="space-y-2 font-body text-xs leading-relaxed text-mono-2/70 sm:text-sm"
+                >
                   {artistStatement.split(/\n\n+/).map((paragraph, paragraphIndex) => {
                     const text = paragraph.trim();
                     const toolsMatch = text.match(/^(Tools|Subtools):(.*)/is);
@@ -8476,14 +8557,14 @@ const ShowcaseIllustrationLightbox = ({
                     aria-hidden
                     animate={{ opacity: descExpanded ? 0 : 1 }}
                     transition={{ duration: reduceMotion ? 0 : 0.2, ease: EASE.out }}
-                    className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-black to-transparent"
+                    className="pointer-events-none absolute bottom-0 left-0 right-0 h-3.5 bg-gradient-to-t from-black to-transparent"
                   />
                 ) : null}
               </motion.div>
             </div>
           ) : null}
           {openableIndices.length > 1 ? (
-            <p className="pointer-events-none absolute bottom-3 right-4 font-heading text-[0.6875rem] uppercase tracking-eyebrow-tight text-mono-2/80 sm:bottom-4 sm:right-6 sm:text-[0.7rem]">
+            <p className="pointer-events-none absolute bottom-1.5 right-4 font-heading text-[0.6875rem] uppercase tracking-eyebrow-tight text-mono-2/80 sm:bottom-2 sm:right-6 sm:text-[0.7rem]">
               {activeOpenablePos + 1} / {openableIndices.length}
             </p>
           ) : null}

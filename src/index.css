@@ -6996,6 +6996,14 @@
   box-shadow: none !important;
 }
 
+/* Mobile only: hide L/R nav. `.pdf-viewer-chrome-btn` forces inline-flex and
+   overrides Tailwind `hidden` below md. Desktop/tablet keep the arrows. */
+@media (max-width: 767.98px) {
+  .pdf-viewer-chrome-btn.illustration-lightbox-nav-btn {
+    display: none;
+  }
+}
+
 @media (min-width: 640px) {
   .illustration-lightbox-nav-btn {
     top: calc(50% + 1.75rem);
@@ -7349,6 +7357,15 @@
   }
 
   /*
+   * Name / tagline SVG only — lift toward tablet-landscape video→ROBBIE gap
+   * (~30px tighter). PORTFOLIO + video stay put (`translate` composes with
+   * inline align `transform: translateX(...)`).
+   */
+  #hero [data-hero-stage="true"]:not([data-hero-crop="true"]) [data-hero-svg-align="true"] {
+    translate: 0 -1.875rem;
+  }
+
+  /*
    * Name sizing â€” modest bump so lockup + PORTFOLIO still span the video card.
    * Aggressive vw growth widened the auto column and broke right-edge CTA align.
    */
@@ -7357,7 +7374,7 @@
     font-size: clamp(2.45rem, 9.35vw, 5.95rem) !important;
   }
 
-  /* PORTFOLIO CTA â€” type/padding only (no transform scale; preserves video-edge pin). */
+  /* PORTFOLIO CTA — type/padding only (no transform scale; preserves video-edge pin). */
   #hero [data-hero-stage="true"]:not([data-hero-crop="true"]) .playstore-button--primary {
     font-size: 0.8rem;
     min-height: 2.95rem;
@@ -7367,6 +7384,19 @@
   #hero [data-hero-stage="true"]:not([data-hero-crop="true"]) .playstore-button--primary .texts {
     font-size: 0.8rem;
     letter-spacing: 0.07em;
+  }
+}
+
+/*
+ * Hero — phone landscape: uniform shrink from viewport center so
+ * video + lockup + PORTFOLIO keep relative scale while gaining edge room.
+ * Slightly stronger than tablet (0.93) — phone landscape height is tighter.
+ * Coarse pointer only — desktop crop / fine-pointer windows stay untouched.
+ */
+@media (max-width: 767.98px) and (orientation: landscape) and (any-pointer: coarse) {
+  #hero [data-hero-stage="true"]:not([data-hero-crop="true"]) {
+    transform: scale(0.93);
+    transform-origin: center center;
   }
 }
 
