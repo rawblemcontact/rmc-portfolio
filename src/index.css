@@ -6481,13 +6481,17 @@
   .video-editing-works-arrow-glyph {
     transition: transform var(--works-arrow-motion-dur, 0.34s) var(--works-arrow-motion-ease, cubic-bezier(0.22, 1, 0.36, 1));
   }
-  /* Phone: horizontal swipes on thumb tiles must scroll the strip, not trap on buttons. */
+  /*
+   * Coarse: strip + page both pan. Section must also allow pan-x when detail is open
+   * (ancestor pan-y alone intersects to block horizontal slide).
+   */
   @media (pointer: coarse) {
     .video-editing-works-strip {
       -webkit-overflow-scrolling: touch;
+      touch-action: pan-x pan-y;
     }
     .video-editing-works-strip .video-editing-works-strip-thumb {
-      touch-action: pan-x pinch-zoom;
+      touch-action: pan-x pan-y pinch-zoom;
       -webkit-tap-highlight-color: transparent;
     }
     .video-editing-works-strip .video-editing-works-strip-thumb:focus-visible {

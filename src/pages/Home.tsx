@@ -9638,9 +9638,14 @@ const PalaceProjects = ({
       ref={projectsSectionRef}
       onPointerUp={handleProjectsTabletGridPointerUp}
       style={
-        projectsTabletPortraitViewport
-          ? { touchAction: "pan-y pinch-zoom" }
-          : undefined
+        /* Detail media strip needs pan-x; ancestor pan-y alone blocks horizontal slide (incl. wind-down). */
+        videoEditingProjectDetailInFlow ||
+        interactiveMediaDetailInFlow ||
+        slaywireDetailInFlow
+          ? { touchAction: "pan-x pan-y pinch-zoom" }
+          : projectsTabletPortraitViewport
+            ? { touchAction: "pan-y pinch-zoom" }
+            : undefined
       }
       className={`relative flex w-full min-w-0 max-w-full flex-col justify-start lg:pb-[max(1.25rem,calc(var(--slide-gap)*1.5),env(safe-area-inset-bottom,0px))] text-white scroll-mt-6 [--slide-gap:0.875rem] sm:[--slide-gap:1.25rem] lg:[--slide-gap:1rem] xl:[--slide-gap:1.125rem] ${
         projectDetailInFlow

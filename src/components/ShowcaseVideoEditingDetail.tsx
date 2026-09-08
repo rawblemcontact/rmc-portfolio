@@ -1858,6 +1858,106 @@ export function ShowcaseVideoEditingDetail({
     let activeTouchId: number | null = null;
     let pointerArrowTracking = false;
     let activePointerId: number | null = null;
+    /** Section still coasting — JS-assist horizontal strip pans (native often ignores them). */
+    let outerHotUntil = 0;
+    let windDownAssist = false;
+    let axisLock: "undecided" | "x" | "y" = "undecided";
+    let axisStartX = 0;
+    let axisStartY = 0;
+    let axisLastX = 0;
+    let axisLastMoveTime = 0;
+    /** px/ms — positive scrolls content left (finger moving left). */
+    let velocityX = 0;
+    let momentumRaf = 0;
+    const AXIS_LOCK_PX = 4;
+
+    const sectionScroller =
+      strip.closest<HTMLElement>('[aria-label^="Section:"]') ??
+      (() => {
+        let current = strip.parentElement;
+        while (current) {
+          const style = window.getComputedStyle(current);
+          if (/(auto|scroll|overlay)/.test(style.overflowY)) return current;
+          current = current.parentElement;
+        }
+        return null;
+      })();
+
+    const markOuterHot = () => {
+      // Keep arming for the whole coast (scroll events keep firing while winding down).
+      outerHotUntil = performance.now() + 900;
+    };
+
+    const maxScrollLeft = () =>
+      Math.max(0, strip.scrollWidth - strip.clientWidth);
+
+    const applyScrollLeft = (next: number) => {
+      const clamped = Math.max(0, Math.min(maxScrollLeft(), next));
+      strip.scrollLeft = clamped;
+      return clamped;
+    };
+
+    const stopMomentum = () => {
+      if (momentumRaf) {
+        window.cancelAnimationFrame(momentumRaf);
+        momentumRaf = 0;
+      }
+    };
+
+    /** Nearest snap-start thumb — same settle language as idle native snap-x. */
+    const settleSnap = () => {
+      strip.style.scrollSnapType = "";
+      const thumbs = strip.querySelectorAll<HTMLElement>(".video-editing-works-strip-thumb");
+      if (!thumbs.length) return;
+      const stripRect = strip.getBoundingClientRect();
+      let best = strip.scrollLeft;
+      let bestDist = Number.POSITIVE_INFINITY;
+      thumbs.forEach((thumb) => {
+        const target =
+          strip.scrollLeft + (thumb.getBoundingClientRect().left - stripRect.left);
+        const dist = Math.abs(target - strip.scrollLeft);
+        if (dist < bestDist) {
+          bestDist = dist;
+          best = target;
+        }
+      });
+      if (typeof strip.scrollTo === "function") {
+        strip.scrollTo({ left: best, behavior: "smooth" });
+      } else {
+        strip.scrollLeft = best;
+      }
+    };
+
+    const startMomentum = () => {
+      stopMomentum();
+      let v = Math.max(-2.8, Math.min(2.8, velocityX));
+      if (Math.abs(v) < 0.045) {
+        settleSnap();
+        return;
+      }
+
+      let prev = performance.now();
+      const step = (now: number) => {
+        const dt = Math.min(34, Math.max(0, now - prev));
+        prev = now;
+        // Match PROJECT DETAILS body coast damping so the fling reads the same.
+        v *= Math.exp(-0.0032 * dt);
+        if (Math.abs(v) < 0.02) {
+          momentumRaf = 0;
+          settleSnap();
+          return;
+        }
+        const before = strip.scrollLeft;
+        const after = applyScrollLeft(before + v * dt);
+        if (after === before || after <= 0 || after >= maxScrollLeft() - 0.5) {
+          momentumRaf = 0;
+          settleSnap();
+          return;
+        }
+        momentumRaf = window.requestAnimationFrame(step);
+      };
+      momentumRaf = window.requestAnimationFrame(step);
+    };
 
     const findTouchById = (list: TouchList, id: number) => {
       for (let index = 0; index < list.length; index += 1) {
@@ -1879,7 +1979,18 @@ export function ShowcaseVideoEditingDetail({
       }
     };
 
-    const handleTouchMotion = (event: TouchEvent) => {
+    const endStripTouch = (wasHorizontalAssist: boolean) => {
+      activeTouchId = null;
+      windDownAssist = false;
+      axisLock = "undecided";
+      if (wasHorizontalAssist) {
+        startMomentum();
+      } else {
+        strip.style.scrollSnapType = "";
+      }
+    };
+
+    const handleWindowTouchMotion = (event: TouchEvent) => {
       if (activeTouchId === null) return;
       const touch = findTouchById(event.touches, activeTouchId);
       if (!touch) return;
@@ -1889,8 +2000,49 @@ export function ShowcaseVideoEditingDetail({
     const onStripTouchStart = (event: TouchEvent) => {
       const touch = event.touches[0];
       if (!touch) return;
+      stopMomentum();
       activeTouchId = touch.identifier;
+      windDownAssist = performance.now() < outerHotUntil;
+      axisLock = "undecided";
+      axisStartX = touch.clientX;
+      axisStartY = touch.clientY;
+      axisLastX = touch.clientX;
+      axisLastMoveTime = performance.now();
+      velocityX = 0;
       resetStripSwipeArrowGesture(touch.clientX, touch.clientY);
+    };
+
+    const onStripTouchMove = (event: TouchEvent) => {
+      if (activeTouchId === null) return;
+      const touch = findTouchById(event.touches, activeTouchId);
+      if (!touch) return;
+      tryFireStripSwipeArrowFromMotion(touch.clientX, touch.clientY);
+
+      // Idle: leave fully native pan-x pan-y. Only assist while section is winding down.
+      if (!windDownAssist) return;
+
+      if (axisLock === "undecided") {
+        const dx = touch.clientX - axisStartX;
+        const dy = touch.clientY - axisStartY;
+        if (Math.abs(dx) < AXIS_LOCK_PX && Math.abs(dy) < AXIS_LOCK_PX) return;
+        axisLock = Math.abs(dx) >= Math.abs(dy) ? "x" : "y";
+        if (axisLock === "x") {
+          strip.style.scrollSnapType = "none";
+        }
+      }
+
+      if (axisLock !== "x") return;
+
+      const now = performance.now();
+      const delta = axisLastX - touch.clientX;
+      const dt = Math.max(8, now - axisLastMoveTime);
+      const instant = delta / dt;
+      velocityX = velocityX * 0.65 + instant * 0.35;
+      axisLastX = touch.clientX;
+      axisLastMoveTime = now;
+      applyScrollLeft(strip.scrollLeft + delta);
+      // Claim this gesture's default so the strip moves; do not touch section overflow/momentum.
+      if (event.cancelable) event.preventDefault();
     };
 
     const onWindowTouchEnd = (event: TouchEvent) => {
@@ -1898,7 +2050,8 @@ export function ShowcaseVideoEditingDetail({
       const touch = findTouchById(event.changedTouches, activeTouchId);
       if (!touch) return;
       tryFireStripSwipeArrowFromMotion(touch.clientX, touch.clientY);
-      activeTouchId = null;
+      const wasHorizontalAssist = windDownAssist && axisLock === "x";
+      endStripTouch(wasHorizontalAssist);
     };
 
     const onPointerDown = (event: PointerEvent) => {
@@ -1922,26 +2075,30 @@ export function ShowcaseVideoEditingDetail({
       activePointerId = null;
     };
 
+    sectionScroller?.addEventListener("scroll", markOuterHot, { passive: true });
     strip.addEventListener("scrollend", onScrollEnd, { passive: true });
     strip.addEventListener("touchstart", onStripTouchStart, { passive: true });
-    strip.addEventListener("touchmove", handleTouchMotion, { passive: true });
+    strip.addEventListener("touchmove", onStripTouchMove, { passive: false });
     strip.addEventListener("pointerdown", onPointerDown, { passive: true });
     strip.addEventListener("pointermove", onPointerMove, { passive: true });
     strip.addEventListener("pointerup", onPointerUp, { passive: true });
     strip.addEventListener("pointercancel", onPointerUp, { passive: true });
-    window.addEventListener("touchmove", handleTouchMotion, { passive: true });
+    window.addEventListener("touchmove", handleWindowTouchMotion, { passive: true });
     window.addEventListener("touchend", onWindowTouchEnd, { passive: true });
     window.addEventListener("touchcancel", onWindowTouchEnd, { passive: true });
 
     return () => {
+      stopMomentum();
+      strip.style.scrollSnapType = "";
+      sectionScroller?.removeEventListener("scroll", markOuterHot);
       strip.removeEventListener("scrollend", onScrollEnd);
       strip.removeEventListener("touchstart", onStripTouchStart);
-      strip.removeEventListener("touchmove", handleTouchMotion);
+      strip.removeEventListener("touchmove", onStripTouchMove);
       strip.removeEventListener("pointerdown", onPointerDown);
       strip.removeEventListener("pointermove", onPointerMove);
       strip.removeEventListener("pointerup", onPointerUp);
       strip.removeEventListener("pointercancel", onPointerUp);
-      window.removeEventListener("touchmove", handleTouchMotion);
+      window.removeEventListener("touchmove", handleWindowTouchMotion);
       window.removeEventListener("touchend", onWindowTouchEnd);
       window.removeEventListener("touchcancel", onWindowTouchEnd);
     };
@@ -2662,7 +2819,7 @@ export function ShowcaseVideoEditingDetail({
                   ) : null}
                   <div
                     ref={thumbStripRef}
-                    className={`video-editing-works-strip no-scrollbar flex min-w-0 snap-x snap-mandatory gap-2 overflow-x-auto pb-0.5 sm:gap-2.5 touch-pan-x ${worksStripClass}`}
+                    className={`video-editing-works-strip no-scrollbar flex min-w-0 snap-x snap-mandatory gap-2 overflow-x-auto pb-0.5 sm:gap-2.5 [touch-action:pan-x_pan-y] ${worksStripClass}`}
                   >
                     {videos.map((video, index) => {
                       const active = index === safeIndex;
@@ -2678,7 +2835,7 @@ export function ShowcaseVideoEditingDetail({
                           }}
                           role="button"
                           tabIndex={0}
-                          className={`video-editing-works-strip-thumb group relative flex shrink-0 snap-start flex-col text-left touch-pan-x cursor-pointer ${worksStripThumbBasisClass} ${
+                          className={`video-editing-works-strip-thumb group relative flex shrink-0 snap-start flex-col text-left [touch-action:pan-x_pan-y] cursor-pointer ${worksStripThumbBasisClass} ${
                             active ? "text-white" : "text-mono-2"
                           }`}
                           aria-label={`Select ${isSlaywire ? "media" : "edit"} thumbnail ${index + 1}`}
