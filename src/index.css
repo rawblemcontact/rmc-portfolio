@@ -1689,6 +1689,22 @@
     /* Let WAAPI height keyframes drive the info card without CSS transition fights. */
     #projects .video-editing-detail-meta-card {
       transition-property: none;
+      min-height: 0;
+    }
+
+    /*
+     * Outgoing tab copy still takes layout space during the drawer tween.
+     * Without min-height: 0 on inner flex, the card cannot shrink until the
+     * new body mounts — the height change reads as a snap.
+     */
+    #projects .video-editing-detail-meta-card--tweening {
+      overflow: hidden !important;
+    }
+
+    #projects .video-editing-detail-meta-card--tweening > * {
+      min-height: 0 !important;
+      max-height: 100% !important;
+      overflow: hidden !important;
     }
   }
 
@@ -6265,37 +6281,61 @@
       margin-top: 0.1rem;
     }
 
+    /*
+     * Player-width tiles (100cqw = media column), with a 2px scrollport bleed so
+     * 1px borders / subpixel radius aren't clipped by overflow-x.
+     */
+    #projects.projects-interactive-media-detail-open
+      .video-editing-detail--interactive-media
+      .video-editing-works-strip,
+    #projects.projects-video-editing-detail-open
+      .video-editing-detail:not(.video-editing-detail--interactive-media)
+      .video-editing-works-strip,
+    #projects.projects-slaywire-detail-open
+      .video-editing-detail:not(.video-editing-detail--interactive-media)
+      .video-editing-works-strip {
+      display: block;
+      gap: 0;
+      width: calc(100% + 4px);
+      margin-inline: -2px;
+      padding-inline: 0;
+      scroll-padding-inline: 2px;
+    }
+
+    #projects.projects-interactive-media-detail-open
+      .video-editing-detail--interactive-media
+      .video-editing-works-strip-track,
+    #projects.projects-video-editing-detail-open
+      .video-editing-detail:not(.video-editing-detail--interactive-media)
+      .video-editing-works-strip-track,
+    #projects.projects-slaywire-detail-open
+      .video-editing-detail:not(.video-editing-detail--interactive-media)
+      .video-editing-works-strip-track {
+      display: flex;
+      width: max-content;
+      min-width: 100%;
+      margin-inline: 2px;
+      gap: 0.625rem;
+    }
+
     #projects.projects-interactive-media-detail-open
       .video-editing-detail--interactive-media
       .video-editing-works-strip
-      .video-editing-works-strip-thumb {
-      /* -1px slack: exact (100% − gaps) / n subpixel-rounds and clips the last thumb’s right edge */
-      flex-basis: calc((100% - 1.25rem) / 3 - 1px) !important;
-      max-width: calc((100% - 1.25rem) / 3 - 1px);
-    }
-
-    #projects.projects-video-editing-detail-open
-      .video-editing-detail:not(.video-editing-detail--interactive-media)
-      .video-editing-works-strip {
-      /* End pad so max scrollLeft can clear the last thumb’s right edge (subpixel). */
-      padding-inline-end: 2px;
-    }
-
+      .video-editing-works-strip-thumb,
     #projects.projects-video-editing-detail-open
       .video-editing-detail:not(.video-editing-detail--interactive-media)
       .video-editing-works-strip
       .video-editing-works-strip-thumb {
-      /* -2px: 6-thumb strip still clipped ~0.4px at scroll end with only -1px. */
-      flex-basis: calc((100% - 1.25rem) / 3 - 2px) !important;
-      max-width: calc((100% - 1.25rem) / 3 - 2px);
+      flex-basis: calc((100cqw - 1.25rem) / 3) !important;
+      max-width: calc((100cqw - 1.25rem) / 3);
     }
 
     #projects.projects-slaywire-detail-open
       .video-editing-detail:not(.video-editing-detail--interactive-media)
       .video-editing-works-strip
       .video-editing-works-strip-thumb {
-      flex-basis: calc((100% - 1.875rem) / 4 - 1px) !important;
-      max-width: calc((100% - 1.875rem) / 4 - 1px);
+      flex-basis: calc((100cqw - 1.875rem) / 4) !important;
+      max-width: calc((100cqw - 1.875rem) / 4);
     }
   }
 
@@ -6999,6 +7039,22 @@
 
 .pdf-viewer-download-btn {
   background-color: transparent;
+}
+
+/* Non-desktop: download lives in the header next to pop-out. */
+.pdf-viewer-download-btn--docked {
+  display: none;
+}
+
+/* Desktop (xl / 1280px+): floating corner control; hide the header twin. */
+@media (min-width: 1280px) {
+  .pdf-viewer-chrome-btn.pdf-viewer-download-btn--docked {
+    display: inline-flex;
+  }
+
+  .pdf-viewer-chrome-btn.pdf-viewer-download-btn--header {
+    display: none;
+  }
 }
 
 .pdf-viewer-download-btn:hover,

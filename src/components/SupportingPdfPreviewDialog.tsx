@@ -192,6 +192,16 @@ export function SupportingPdfPreviewDialog({
                   <>
                     <motion.a
                       href={pdfSrc}
+                      download
+                      aria-label="Download PDF"
+                      className="pdf-viewer-chrome-btn pdf-viewer-control-btn pdf-viewer-download-btn pdf-viewer-download-btn--header origin-center"
+                      whileTap={reduceMotion ? undefined : PORTFOLIO_BOUNCE.tap}
+                      transition={reduceMotion ? undefined : PORTFOLIO_BOUNCE.tapSpring}
+                    >
+                      <Download aria-hidden />
+                    </motion.a>
+                    <motion.a
+                      href={pdfSrc}
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label="Open PDF in new tab"
@@ -221,7 +231,7 @@ export function SupportingPdfPreviewDialog({
                 href={pdfSrc}
                 download
                 aria-label="Download PDF"
-                className="pdf-viewer-chrome-btn pdf-viewer-control-btn pdf-viewer-download-btn absolute bottom-5 right-5 z-20 origin-center"
+                className="pdf-viewer-chrome-btn pdf-viewer-control-btn pdf-viewer-download-btn pdf-viewer-download-btn--docked absolute bottom-5 right-5 z-20 origin-center"
                 whileTap={reduceMotion ? undefined : PORTFOLIO_BOUNCE.tap}
                 transition={reduceMotion ? undefined : PORTFOLIO_BOUNCE.tapSpring}
               >
