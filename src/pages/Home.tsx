@@ -1474,12 +1474,11 @@ function measureViewportCenterYPx(): number {
 }
 
 /** iPad / tablet portrait layout — width × orientation only (works in desktop device mode). */
+const HERO_IPAD_PORTRAIT_LAYOUT_MQ =
+  "(min-width: 768px) and (max-width: 1366px) and (orientation: portrait)";
 function matchesHeroIpadPortraitLayout(): boolean {
   return (
-    typeof window !== "undefined" &&
-    window.matchMedia(
-      "(min-width: 768px) and (max-width: 1366px) and (orientation: portrait)",
-    ).matches
+    typeof window !== "undefined" && window.matchMedia(HERO_IPAD_PORTRAIT_LAYOUT_MQ).matches
   );
 }
 
@@ -3267,6 +3266,12 @@ const Hero = ({
   const [heroTabletLandscapeViewport, setHeroTabletLandscapeViewport] = useState(
     matchesHeroTabletLandscapeViewport,
   );
+  const [heroPortraitDesktopBand, setHeroPortraitDesktopBand] = useState(() =>
+    typeof window !== "undefined" &&
+    window.matchMedia(
+      "(min-width: 1024px) and (max-width: 1366px) and (orientation: portrait)",
+    ).matches,
+  );
   const [desktopAnimPerf, setDesktopAnimPerf] = useState(matchesDesktopHeroPerfViewport);
   const portfolioNavPendingRef = useRef(false);
   const portfolioPressStartedAtRef = useRef<number | null>(null);
@@ -3314,6 +3319,16 @@ const Hero = ({
 
   useEffect(() => {
     const mq = window.matchMedia(
+      "(min-width: 1024px) and (max-width: 1366px) and (orientation: portrait)",
+    );
+    const onChange = unlessPinched(() => setHeroPortraitDesktopBand(mq.matches));
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  useEffect(() => {
+    const mq = window.matchMedia(
       `(min-width: ${HERO_DESKTOP_DEBUG_MIN_PX}px) and (hover: hover) and (pointer: fine)`,
     );
     const onChange = unlessPinched(() => setDesktopAnimPerf(mq.matches));
@@ -3332,11 +3347,14 @@ const Hero = ({
   const heroDesktopOnlyViewport = heroDesktopViewport && !heroTabletViewport;
   const heroDesktopLikeViewport = heroDesktopOnlyViewport || heroTabletLandscapeViewport;
   /**
-   * Desktop hard-crop at every window size (composition clips, does not reflow).
-   * Off for mobile and real tablet devices only — not when a desktop window is
-   * merely resized into the 768–1366 width band.
+   * Desktop hard-crop: phones and Air/11 portrait stay fluid. 12.9 portrait
+   * (1024–1366) uses the same crop as a desktop at that width. iPad landscape
+   * stays the fluid tablet-H path.
    */
-  const isHeroCropLayout = !isMobileHeroLayout && !heroTabletViewport;
+  const isHeroCropLayout =
+    !isMobileHeroLayout &&
+    !heroTabletLandscapeViewport &&
+    (!heroTabletViewport || heroPortraitDesktopBand);
   const heroControlledViewportActive =
     heroControlledViewport === "desktop+ipad"
       ? heroDesktopOnlyViewport || heroTabletLandscapeViewport

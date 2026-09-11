@@ -809,7 +809,7 @@
     pointer-events: none;
   }
 
-  /* Tablet portrait: PROFILE header aligns with PROJECTS (768â€“1023). */
+  /* Tablet portrait: PROFILE header aligns with PROJECTS (768–1023). */
   @media (min-width: 768px) and (max-width: 1023.98px) {
     #profile .profile-section-tablet-shell {
       align-items: flex-start !important;
@@ -2069,16 +2069,6 @@
     }
   }
 
-  @media (min-width: 1024px) and (max-width: 1366px) and (orientation: portrait) {
-    #hero .hero-portfolio-animated .hero-portfolio-arrow--1 {
-      right: calc(0.72rem + 1px);
-    }
-
-    #hero .hero-portfolio-animated .hero-portfolio-arrow--2 {
-      left: calc(0.48rem + 1px);
-    }
-  }
-
   @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) {
     #hero .hero-portfolio-animated .hero-portfolio-arrow--1 {
       /* Tablet H rest: pull toward the right edge so [text][gap][→][gap] matches. */
@@ -2180,16 +2170,6 @@
   @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
     #hero .hero-portfolio-animated .hero-portfolio-arrow--2 {
       left: calc(0.46rem + 1px);
-    }
-  }
-
-  @media (min-width: 1024px) and (max-width: 1366px) and (orientation: portrait) {
-    #hero .hero-portfolio-animated .hero-portfolio-arrow--1 {
-      right: calc(0.72rem + 1px);
-    }
-
-    #hero .hero-portfolio-animated .hero-portfolio-arrow--2 {
-      left: calc(0.48rem + 1px);
     }
   }
 
@@ -7449,11 +7429,11 @@
 
   /*
    * PORTFOLIO CTA — Y: button top meets ROBBIE baseline.
-   * X: keep the fluid -translate-x-1.5 plus a hair more so the CTA
-   * right edge stays on the video card (this `translate` replaces Tailwind's).
+   * X: fluid -translate-x-1.5 so the CTA right edge meets the video card
+   * (this `translate` replaces Tailwind's). Extra left shift undershot the edge.
    */
   #hero [data-hero-stage="true"]:not([data-hero-crop="true"]) [data-hero-name-lockup="true"] + div {
-    translate: -0.55rem -1.5rem;
+    translate: -0.375rem -1.5rem;
   }
 
   #hero [data-hero-stage="true"]:not([data-hero-crop="true"]) .playstore-button--primary {
