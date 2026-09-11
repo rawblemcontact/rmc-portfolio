@@ -7447,7 +7447,15 @@
     font-size: clamp(2.45rem, 9.35vw, 5.95rem) !important;
   }
 
-  /* PORTFOLIO CTA — type/padding only (no transform scale; preserves video-edge pin). */
+  /*
+   * PORTFOLIO CTA — Y: button top meets ROBBIE baseline.
+   * X: keep the fluid -translate-x-1.5 plus a hair more so the CTA
+   * right edge stays on the video card (this `translate` replaces Tailwind's).
+   */
+  #hero [data-hero-stage="true"]:not([data-hero-crop="true"]) [data-hero-name-lockup="true"] + div {
+    translate: -0.55rem -1.5rem;
+  }
+
   #hero [data-hero-stage="true"]:not([data-hero-crop="true"]) .playstore-button--primary {
     font-size: 0.8rem;
     min-height: 2.95rem;
@@ -7458,6 +7466,15 @@
     font-size: 0.8rem;
     letter-spacing: 0.07em;
   }
+}
+
+/*
+ * Hero — desktop hard-crop PORTFOLIO Y: same ROBBIE-baseline start as
+ * tablet portrait. Keeps the crop slot's -7.93px and adds a fixed 23px lift
+ * (px, not rem — html rem grows on large desktops). X stays 0 for video-edge.
+ */
+#hero [data-hero-stage="true"][data-hero-crop="true"] [data-hero-name-lockup="true"] + div {
+  translate: 0 calc(-7.93px - 23px);
 }
 
 /*
