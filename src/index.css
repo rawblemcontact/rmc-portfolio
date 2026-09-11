@@ -1661,9 +1661,24 @@
      * `overflow-x: hidden` computes `overflow-y: auto`, creating a second,
      * 1px-range vertical scroller that steals touch/wheel input from the panel.
      */
-    #projects {
+    #projects:not([class*="detail-open"]) {
       overflow-x: clip !important;
       overflow-y: visible !important;
+    }
+
+    #projects[class*="detail-open"] {
+      overflow: visible !important;
+      height: auto !important;
+      max-height: none !important;
+      padding-bottom: max(2.75rem, calc(1.5rem + env(safe-area-inset-bottom, 0px))) !important;
+    }
+
+    #projects[class*="detail-open"] .projects-detail-bottom-spacer {
+      display: block;
+      flex-shrink: 0;
+      width: 100%;
+      pointer-events: none;
+      min-height: max(2.5rem, calc(1.5rem + env(safe-area-inset-bottom, 0px)));
     }
 
     #projects .featured-writing-body-card,
@@ -7522,14 +7537,26 @@
     max-height: none !important;
   }
 
+  /*
+   * PROJECT DETAILS — same nested-scroller / iOS scrollHeight trap as the list.
+   * Do not reuse list padding-top (detail chrome uses SECTION_MAIN_HEADER_INSET).
+   */
+  #projects[class*="detail-open"] {
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    padding-bottom: max(2.75rem, calc(1.5rem + env(safe-area-inset-bottom, 0px))) !important;
+  }
+
   #projects .projects-showcase-flow > .section-tablet-bottom-spacer {
     display: block;
     min-height: max(2.5rem, calc(1.5rem + env(safe-area-inset-bottom, 0px)));
   }
 
-  /* Phone only: lift main showcase content 1px (header + cards + FEATURED WRITING).
-   * Persistent layer — do not toggle transform/will-change on this node during entrance. */
-  #projects .projects-showcase-stage {
+  /* Phone list only: lift main showcase content 1px (header + cards + FEATURED WRITING).
+   * Persistent layer — do not toggle transform/will-change on this node during entrance.
+   * Keep this off PROJECT DETAILS so translateZ does not clip the last card. */
+  #projects:not([class*="detail-open"]) .projects-showcase-stage {
     margin-top: -1px;
     transform: translateZ(0);
     -webkit-transform: translateZ(0);
@@ -7547,6 +7574,14 @@
    */
   #projects:not([class*="detail-open"]) [data-carousel-card] {
     height: 264px !important;
+  }
+
+  #projects[class*="detail-open"] .projects-detail-bottom-spacer {
+    display: block;
+    flex-shrink: 0;
+    width: 100%;
+    pointer-events: none;
+    min-height: max(2.5rem, calc(1.5rem + env(safe-area-inset-bottom, 0px)));
   }
 }
 

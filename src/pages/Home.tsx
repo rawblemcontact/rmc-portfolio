@@ -10106,6 +10106,9 @@ const PalaceProjects = ({
               </div>
           </div>
         ) : null}
+        {projectDetailInFlow ? (
+          <div className="projects-detail-bottom-spacer" aria-hidden />
+        ) : null}
         </div>
 
         {/*
