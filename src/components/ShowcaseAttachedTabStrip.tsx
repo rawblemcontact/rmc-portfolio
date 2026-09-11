@@ -124,7 +124,9 @@ export function ShowcaseAttachedTabStrip({
   const mobileFolderChromeHeightRef = useRef<number | null>(null);
   const [tabGeom, setTabGeom] = useState({ ml: 0, w: 0 });
   const [bodyContentWidth, setBodyContentWidth] = useState(0);
-  const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(() =>
+    typeof window !== "undefined" ? window.matchMedia(FEATURED_COMPACT_PORTRAIT_MQ).matches : false,
+  );
   const [mobileSwitchDir, setMobileSwitchDir] = useState<1 | -1>(1);
   const mobileSwipeStartRef = useRef<{ x: number; y: number } | null>(null);
   const [pressedNavArrow, setPressedNavArrow] = useState<"prev" | "next" | null>(null);

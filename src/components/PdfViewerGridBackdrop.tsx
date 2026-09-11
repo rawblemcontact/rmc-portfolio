@@ -10,13 +10,24 @@ const gridOverlayStyle: React.CSSProperties = {
   WebkitBackgroundSize: `${GRID_CELL_SIZE}px ${GRID_CELL_SIZE}px`,
 };
 
-/** Full-viewport grid for PDF viewer — always opaque; never tied to dialog fade motion. */
-export function PdfViewerGridBackdrop({ className = "" }: { className?: string }) {
+/** Full-viewport grid for PDF viewer, phase-aligned with the underlying section grid. */
+export function PdfViewerGridBackdrop({
+  className = "",
+  scrollOffsetY = 0,
+}: {
+  className?: string;
+  scrollOffsetY?: number;
+}) {
   const [delay] = useState(() => `-${(performance.now() / 1000) % GRID_DRIFT_DURATION}s`);
+  const wrappedOffsetY = -(((scrollOffsetY % GRID_CELL_SIZE) + GRID_CELL_SIZE) % GRID_CELL_SIZE);
   return (
     <div
-      className={`pointer-events-none absolute inset-0 z-0 grid-drift-bg portfolio-grid-overlay ${className}`.trim()}
-      style={{ ...gridOverlayStyle, animationDelay: delay }}
+      className={`pdf-viewer-grid-backdrop pointer-events-none absolute inset-0 z-0 grid-drift-bg portfolio-grid-overlay ${className}`.trim()}
+      style={{
+        ...gridOverlayStyle,
+        animationDelay: delay,
+        ["--pdf-grid-offset-y" as string]: `${wrappedOffsetY}px`,
+      }}
       aria-hidden
     />
   );

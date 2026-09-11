@@ -11,6 +11,8 @@ type Props = {
   className?: string;
   exiting?: boolean;
   onExitComplete?: () => void;
+  /** Parent already fades the surface — keep the fold/label at full opacity on enter. */
+  enterWithParent?: boolean;
 };
 
 /** Loader + single-line Satoshi label; fades in on mount, out after one fold cycle. */
@@ -18,11 +20,13 @@ export function PdfLoadingIndicator({
   className = "",
   exiting = false,
   onExitComplete,
+  enterWithParent = false,
 }: Props) {
   useNavLayoutFreeze(true);
   const reduceMotion = useReducedMotion();
+  const skipEnterFade = Boolean(reduceMotion || enterWithParent);
   const fadeTransition = {
-    duration: reduceMotion ? 0 : exiting ? PDF_LOADING_FADE_OUT_S : PDF_LOADING_FADE_IN_S,
+    duration: reduceMotion ? 0 : exiting ? PDF_LOADING_FADE_OUT_S : skipEnterFade ? 0 : PDF_LOADING_FADE_IN_S,
     ease: EASE.out,
   };
 
@@ -35,7 +39,7 @@ export function PdfLoadingIndicator({
     >
       <motion.div
         className="pdf-loading-indicator__loader-wrap"
-        initial={{ opacity: reduceMotion ? 1 : 0 }}
+        initial={{ opacity: skipEnterFade ? 1 : 0 }}
         animate={{ opacity: exiting ? 0 : 1 }}
         transition={fadeTransition}
       >
@@ -43,7 +47,7 @@ export function PdfLoadingIndicator({
       </motion.div>
       <motion.p
         className="pdf-loading-indicator__label font-display"
-        initial={{ opacity: reduceMotion ? 1 : 0 }}
+        initial={{ opacity: skipEnterFade ? 0.9 : reduceMotion ? 1 : 0 }}
         animate={
           exiting
             ? { opacity: 0 }

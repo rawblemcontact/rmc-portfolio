@@ -585,6 +585,16 @@
     }
   }
 
+  /* PDF grid keeps the scrolled PROJECTS grid's visible Y origin during crossfade. */
+  @keyframes pdfGridDriftSmooth {
+    from {
+      background-position: 0 var(--pdf-grid-offset-y, 0px);
+    }
+    to {
+      background-position: 48px calc(48px + var(--pdf-grid-offset-y, 0px));
+    }
+  }
+
   /*
    * Same 48px / 12s loop as gridDriftSmooth, via transform (compositor) instead
    * of background-position (paints the full overlay every frame).
@@ -609,6 +619,10 @@
     animation: gridDriftSmooth 12s linear infinite;
     animation-delay: var(--portfolio-grid-drift-delay, 0s);
     isolation: isolate;
+  }
+
+  .pdf-viewer-grid-backdrop.grid-drift-bg {
+    animation-name: pdfGridDriftSmooth;
   }
 
   /**
@@ -7481,19 +7495,58 @@
 
 /* PROJECTS mobile â€” small scroll-end gap below FEATURED WRITING */
 @media (max-width: 767.98px) {
-  #projects .projects-showcase-flow > .section-tablet-bottom-spacer {
-    display: block;
-    min-height: max(0.75rem, calc(0.875rem + env(safe-area-inset-bottom, 0px) * 0.25));
+  [aria-label="Section: projects"],
+  #projects {
+    overflow-anchor: none;
   }
 
-  /* Phone only: lift main showcase content 1px (header + cards + FEATURED WRITING). */
+  /*
+   * iPhone Safari: bind to the layout viewport (`h-screen` root), not `fixed` + visualViewport.
+   * After the wipe, drop leftover translateX(0) — a transform on the scroller makes
+   * WebKit under-report scrollHeight so FEATURED WRITING cannot be reached.
+   * `#projects` must not become a nested overflow-y:auto (overflow-x:hidden + visible-y).
+   */
+  [aria-label="Section: projects"] {
+    position: absolute !important;
+    inset: 0 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+  }
+
+  #projects:not([class*="detail-open"]) {
+    padding-top: max(6.125rem, calc(env(safe-area-inset-top, 0px) + 0.625rem)) !important;
+    padding-bottom: max(2.75rem, calc(1.5rem + env(safe-area-inset-bottom, 0px))) !important;
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  #projects .projects-showcase-flow > .section-tablet-bottom-spacer {
+    display: block;
+    min-height: max(2.5rem, calc(1.5rem + env(safe-area-inset-bottom, 0px)));
+  }
+
+  /* Phone only: lift main showcase content 1px (header + cards + FEATURED WRITING).
+   * Persistent layer — do not toggle transform/will-change on this node during entrance. */
   #projects .projects-showcase-stage {
     margin-top: -1px;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    justify-content: flex-start !important;
   }
 
   /* Phone only: nudge four cards down 1px (transform — does not shift header / FEATURED WRITING). */
   #projects .projects-showcase-carousel-block {
     transform: translateY(1px);
+  }
+
+  /*
+   * Lock list-card height to the existing phone cap (`SHOWCASE_CAROUSEL_CARD_H`).
+   * `min(264px, 36svh)` can be 0px on first iOS paint, then jump as svh resolves.
+   */
+  #projects:not([class*="detail-open"]) [data-carousel-card] {
+    height: 264px !important;
   }
 }
 

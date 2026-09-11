@@ -5,7 +5,7 @@ import { useNavLayoutFreeze } from "@/lib/navLayoutFreeze";
 import { createPortal } from "react-dom";
 import { PdfJsDocumentView } from "./PdfJsDocumentView";
 import { PDF_FOLD_LOADER_CYCLE_MS } from "./PdfFoldLoader";
-import { PdfLoadingIndicator, PDF_LOADING_FADE_IN_S } from "./PdfLoadingIndicator";
+import { PdfLoadingIndicator } from "./PdfLoadingIndicator";
 import { PdfViewerGridBackdrop } from "./PdfViewerGridBackdrop";
 import { EASE, PORTFOLIO_BOUNCE } from "@/lib/motion";
 
@@ -25,16 +25,19 @@ type Props = {
   /** True once PDF pages are ready — then the card mounts/fades in. */
   showFrame: boolean;
   onFrameReady: () => void;
-  /** Card fade on dismiss (grid stays visible). */
+  /** Vertical scroll offset of the underlying section grid, for crossfade alignment. */
+  gridOffsetY?: number;
+  /** Whole-surface fade on dismiss (grid + loader/card together). */
   closeFadeS: number;
-  /** Card fade when appearing after load. */
+  /** Whole-surface fade on appear (matches dismiss). */
   openFadeS: number;
   onCloseAnimationComplete?: () => void;
 };
 
 /**
  * Full-screen in-app PDF preview (Supporting archive + FEATURED WRITING on PROJECTS).
- * Grid backdrop does not participate in open/close opacity — only the card animates.
+ * The complete reader surface crossfades on open/close so its grid, loader, and
+ * card never appear as separate transition steps.
  */
 export function SupportingPdfPreviewDialog({
   item,
@@ -44,6 +47,7 @@ export function SupportingPdfPreviewDialog({
   reduceMotion,
   showFrame,
   onFrameReady,
+  gridOffsetY = 0,
   closeFadeS,
   openFadeS,
   onCloseAnimationComplete,
@@ -68,8 +72,8 @@ export function SupportingPdfPreviewDialog({
     setPdfLoaded(false);
     setLoaderExiting(false);
     cycleAnchorMsRef.current =
-      performance.now() + (reduceMotion ? 0 : PDF_LOADING_FADE_IN_S * 1000);
-  }, [pdfSrc, reduceMotion, showGridLoader]);
+      performance.now() + (reduceMotion ? 0 : openFadeS * 1000);
+  }, [openFadeS, pdfSrc, reduceMotion, showGridLoader]);
 
   useEffect(() => {
     if (!showGridLoader || !pdfLoaded || exitScheduledRef.current) return;
@@ -97,7 +101,7 @@ export function SupportingPdfPreviewDialog({
 
   if (typeof document === "undefined") return null;
 
-  const shellFadeS = reduceMotion ? 0 : isClosing ? closeFadeS : 0;
+  const shellFadeS = reduceMotion ? 0 : isClosing ? closeFadeS : openFadeS;
 
   return createPortal(
     <motion.div
@@ -105,11 +109,11 @@ export function SupportingPdfPreviewDialog({
       aria-modal="true"
       aria-labelledby="supporting-pdf-preview-title"
       className="fixed inset-0 z-[80] bg-black"
-      initial={false}
+      initial={reduceMotion ? false : { opacity: 0 }}
       animate={{ opacity: reduceMotion ? 1 : isClosing ? 0 : 1 }}
       transition={{ duration: shellFadeS, ease: EASE.out }}
     >
-      <PdfViewerGridBackdrop />
+      <PdfViewerGridBackdrop scrollOffsetY={gridOffsetY} />
 
       {showGridLoader && (
         <motion.div
@@ -117,7 +121,11 @@ export function SupportingPdfPreviewDialog({
           className="pointer-events-none absolute inset-0 z-[5] flex items-center justify-center p-4 max-lg:p-8 max-lg:sm:p-12 sm:p-6 md:p-8"
           initial={false}
         >
-          <PdfLoadingIndicator exiting={loaderExiting} onExitComplete={handleLoaderExitComplete} />
+          <PdfLoadingIndicator
+            enterWithParent
+            exiting={loaderExiting}
+            onExitComplete={handleLoaderExitComplete}
+          />
         </motion.div>
       )}
 

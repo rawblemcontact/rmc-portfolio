@@ -6876,9 +6876,9 @@ function ShowcaseStackedTitle({
 const SHOWCASE_EASE = [0.16, 1, 0.3, 1] as const;
 /** Fade when swapping SHOWCASE carousel ? Supporting & archive in place */
 const SHOWCASE_SUBROUTE_FADE_S = DUR.fast;
-/** FEATURED WRITING PDF dismiss on PROJECTS — matches side-nav overlay. */
-const SHOWCASE_PDF_OVERLAY_CLOSE_S = SIDE_NAV_OVERLAY_FADE_S;
-const SHOWCASE_PDF_OVERLAY_OPEN_S = 0.175;
+/** FEATURED WRITING PDF ↔ PROJECTS crossfade — one shared duration in both directions. */
+const SHOWCASE_PDF_OVERLAY_CLOSE_S = SHOWCASE_PDF_PROJECTS_FADE_OUT_S;
+const SHOWCASE_PDF_OVERLAY_OPEN_S = SHOWCASE_PDF_PROJECTS_FADE_OUT_S;
 /** FLIP morph: carousel card ? detail hero (ease matches SHOWCASE_EASE for one continuous feel). */
 const SHOWCASE_CARD_MORPH_DUR_S = 0.36 / SHOWCASE_TIME_DIV;
 /** Carousel chrome fades while the flying card moves ? slightly shorter than morph so the handoff reads clean. */
@@ -6912,7 +6912,7 @@ const DETAIL_CARD_H =
   "h-[min(220px,36svh)] sm:h-[min(244px,40svh)] md:h-[min(260px,42svh)] lg:h-[min(276px,44svh)] xl:h-[min(290px,46svh)] 2xl:h-[min(304px,48svh)]";
 /** Four-up carousel — +1.25rem vs DETAIL_CARD_H + --showcase-subhead-reclaim (subhead removed; cards grow upward). */
 const SHOWCASE_CAROUSEL_CARD_H =
-  "h-[min(264px,36svh)] sm:h-[min(288px,40svh)] md:h-[min(304px,42svh)] lg:h-[min(380px,49svh)] xl:h-[min(400px,51svh)] 2xl:h-[min(420px,53svh)]";
+  "h-[264px] sm:h-[min(288px,40svh)] md:h-[min(304px,42svh)] lg:h-[min(380px,49svh)] xl:h-[min(400px,51svh)] 2xl:h-[min(420px,53svh)]";
 /** DESCRIPTION SECTION — black panel + title/tagline (bottom third of each showcase card). */
 const PROJECT_CARD_DESCRIPTION_SECTION =
   "project-card-description-section absolute inset-x-0 bottom-0 z-[1] flex h-1/3 min-h-0 flex-col overflow-hidden bg-black";
@@ -7428,10 +7428,19 @@ const PROJECTS_MOBILE_PANEL_MQ = "(max-width: 767px)";
 function sectionGridOverlayHeightPx(
   section: HTMLElement,
   cssVar: "--projects-grid-overlay-height" | "--skills-grid-overlay-height",
+  collapsePrior = false,
 ): number {
+  const skipCollapseForPhoneProjects =
+    cssVar === "--projects-grid-overlay-height" &&
+    section.id === "projects" &&
+    window.matchMedia?.(PROJECTS_MOBILE_VIEWPORT_MQ).matches === true;
   // Drop prior synced min-height so orientation changes can shrink (avoids scrollHeight ratchet).
-  section.style.setProperty(cssVar, "0px");
-  void section.offsetHeight;
+  // Never collapse on phone, and never on routine ResizeObserver ticks — zeroing
+  // min-height during PROJECTS entrance reflows the stack.
+  if (collapsePrior && !skipCollapseForPhoneProjects) {
+    section.style.setProperty(cssVar, "0px");
+    void section.offsetHeight;
+  }
 
   // PROJECTS showcase: measure to the bottom of the content stack, not flex-stretched shells.
   if (
@@ -7445,10 +7454,9 @@ function sectionGridOverlayHeightPx(
       section.querySelector<HTMLElement>(".projects-showcase-featured-block") ??
       section.querySelector<HTMLElement>(".projects-showcase-cards-cluster");
     if (stackBottom) {
-      const sectionBox = section.getBoundingClientRect();
-      const bottomBox = stackBottom.getBoundingClientRect();
-      const padBottom = parseFloat(getComputedStyle(section).paddingBottom) || 0;
-      return Math.max(0, Math.ceil(bottomBox.bottom - sectionBox.top + padBottom));
+      /* Layout sizes only — getBoundingClientRect follows FEATURED WRITING y and
+       * shrinks the overlay mid-entrance (whole stack jumps up on iPhone). */
+      return Math.max(0, Math.ceil(section.scrollHeight));
     }
   }
 
@@ -7482,18 +7490,26 @@ function bindSectionGridOverlayHeightSync(
 ) {
   const panel = section.closest<HTMLElement>(SECTION_PANEL_GRID_SELECTOR);
 
-  const sync = () => {
+  const sync = (collapsePrior = false) => {
     /* Always size the grid — skipping while pinched left PROJECTS on a black field. */
-    let h = sectionGridOverlayHeightPx(section, cssVar);
+    let h = sectionGridOverlayHeightPx(section, cssVar, collapsePrior);
     const isProjectsShowcaseList =
       cssVar === "--projects-grid-overlay-height" &&
       section.id === "projects" &&
       section.classList.contains("projects-showcase-tablet-pad");
+    const isPhoneShowcase =
+      isProjectsShowcaseList &&
+      window.matchMedia?.(PROJECTS_MOBILE_VIEWPORT_MQ).matches === true;
+    /* Phone entrance: skip overlay writes — RO + scrollHeight chatter shifts the stack. */
+    if (isPhoneShowcase && !section.classList.contains("projects-entrance-settled")) {
+      return;
+    }
     /*
      * Showcase list only: floor to panel / viewport so Safari chrome changes
      * don’t leave a black field. Do not apply in PROJECT DETAILS (no tablet-pad).
+     * Phone: do not floor to visualViewport — URL-bar resize would reflow the stack.
      */
-    if (isProjectsShowcaseList) {
+    if (isProjectsShowcaseList && !isPhoneShowcase) {
       const panelH = panel?.clientHeight ?? 0;
       const vvH = Math.ceil(window.visualViewport?.height ?? 0);
       const winH = window.innerHeight || 0;
@@ -7506,13 +7522,13 @@ function bindSectionGridOverlayHeightSync(
 
   const syncAfterOrientation = () => {
     if (panel) panel.scrollTop = 0;
-    sync();
+    sync(true);
     window.requestAnimationFrame(() => {
-      sync();
-      window.requestAnimationFrame(sync);
+      sync(true);
+      window.requestAnimationFrame(() => sync(true));
     });
-    window.setTimeout(sync, 120);
-    window.setTimeout(sync, 320);
+    window.setTimeout(() => sync(true), 120);
+    window.setTimeout(() => sync(true), 320);
   };
 
   sync();
@@ -7524,8 +7540,18 @@ function bindSectionGridOverlayHeightSync(
 
   window.addEventListener("resize", sync);
   window.addEventListener("orientationchange", syncAfterOrientation);
-  window.visualViewport?.addEventListener("resize", sync);
-  window.visualViewport?.addEventListener("scroll", sync);
+  const classMo = new MutationObserver(() => sync());
+  classMo.observe(section, { attributes: true, attributeFilter: ["class"] });
+  const listenToVisualViewport =
+    !(
+      cssVar === "--projects-grid-overlay-height" &&
+      section.id === "projects" &&
+      window.matchMedia?.(PROJECTS_MOBILE_VIEWPORT_MQ).matches === true
+    );
+  if (listenToVisualViewport) {
+    window.visualViewport?.addEventListener("resize", sync);
+    window.visualViewport?.addEventListener("scroll", sync);
+  }
   const orientationMq =
     typeof window.matchMedia === "function"
       ? window.matchMedia("(orientation: portrait)")
@@ -7540,11 +7566,14 @@ function bindSectionGridOverlayHeightSync(
   }
 
   return () => {
+    classMo.disconnect();
     ro.disconnect();
     window.removeEventListener("resize", sync);
     window.removeEventListener("orientationchange", syncAfterOrientation);
-    window.visualViewport?.removeEventListener("resize", sync);
-    window.visualViewport?.removeEventListener("scroll", sync);
+    if (listenToVisualViewport) {
+      window.visualViewport?.removeEventListener("resize", sync);
+      window.visualViewport?.removeEventListener("scroll", sync);
+    }
     if (orientationMq) {
       if (typeof orientationMq.removeEventListener === "function") {
         orientationMq.removeEventListener("change", onOrientationMq);
@@ -8830,6 +8859,7 @@ const PalaceProjects = ({
   entranceArmed = false,
   forceContentHidden = false,
   featuredPdfViewerActive = false,
+  onEntranceSettled,
 }: {
   onSelectProject: (id: string) => void;
   onOpenSupporting: () => void;
@@ -8840,6 +8870,7 @@ const PalaceProjects = ({
   forceContentHidden?: boolean;
   /** FEATURED WRITING VIEW ? fade carousel/tabs/header while grid PDF loader is up. */
   featuredPdfViewerActive?: boolean;
+  onEntranceSettled?: () => void;
 }) => {
   const reduceMotion = useReducedMotion();
   const portfolioDebugEnabled = usePortfolioDebugEnabled();
@@ -8909,12 +8940,11 @@ const PalaceProjects = ({
   ]);
   const activeCardNoMorph = Boolean(activeCard && noMorphProjectIds.has(activeCard.id));
   const showcaseObscured = Boolean(activeCard || featuredPdfViewerActive);
+  const showcaseDetailObscured = Boolean(activeCard);
   const showcaseFadeDuration = reduceMotion
     ? 0
-    : showcaseObscured
-      ? featuredPdfViewerActive && !activeCard
-        ? SHOWCASE_PDF_PROJECTS_FADE_OUT_S
-        : 0.14
+    : showcaseDetailObscured
+      ? 0.14
       : SIDE_NAV_OVERLAY_FADE_S;
 
   useEffect(() => {
@@ -9152,7 +9182,10 @@ const PalaceProjects = ({
       ? featuredStartMs + PROJECTS_FEATURED_ENTRANCE_DUR_S * 1000
       : tabActivateMs + PROJECTS_THUMBNAILS_FADE_AFTER_TAB_MS;
 
-    setProjectsEntranceLive(true);
+    // Phone: skip will-change promote/demote — toggling it mid-land shifts the stack.
+    if (!projectsMobileViewport) {
+      setProjectsEntranceLive(true);
+    }
     const cardsId = window.setTimeout(() => {
       setProjectsCardsRevealed(true);
       setProjectsThumbnailsMountArmed(true);
@@ -9171,18 +9204,24 @@ const PalaceProjects = ({
       () => setProjectsEntranceSettled(true),
       Math.max(0, thumbnailsFadeMs),
     );
-    const clearId = window.setTimeout(
-      () => setProjectsEntranceLive(false),
-      Math.max(0, layerClearMs),
-    );
+    const clearId = projectsMobileViewport
+      ? null
+      : window.setTimeout(
+          () => setProjectsEntranceLive(false),
+          Math.max(0, layerClearMs),
+        );
     return () => {
       window.clearTimeout(cardsId);
       window.clearTimeout(featuredId);
       if (tabId != null) window.clearTimeout(tabId);
       window.clearTimeout(thumbsId);
-      window.clearTimeout(clearId);
+      if (clearId != null) window.clearTimeout(clearId);
     };
-  }, [projectsEntered, reduceMotion, skipProjectsFeaturedTabEntrance]);
+  }, [projectsEntered, projectsMobileViewport, reduceMotion, skipProjectsFeaturedTabEntrance]);
+
+  useEffect(() => {
+    if (projectsEntranceSettled) onEntranceSettled?.();
+  }, [projectsEntranceSettled, onEntranceSettled]);
 
   useEffect(() => {
     if (reduceMotion) {
@@ -9374,13 +9413,7 @@ const PalaceProjects = ({
       return;
     }
     return bindSectionGridOverlayHeightSync(section, "--projects-grid-overlay-height");
-  }, [
-    projectDetailInFlow,
-    visualDesignDetailInFlow,
-    activeProjectId,
-    projectsFeaturedRevealed,
-    entranceArmed,
-  ]);
+  }, [projectDetailInFlow, visualDesignDetailInFlow, activeProjectId]);
 
   /** Mobile / iPad landscape VISUAL DESIGN: panel scroller retains scroll across detail open/close — reset to top. */
   useLayoutEffect(() => {
@@ -9661,7 +9694,9 @@ const PalaceProjects = ({
               projectDetailAllowsOverflowX ? "overflow-x-visible" : "overflow-x-hidden"
             }`
           : `max-2xl:min-h-min 2xl:min-h-full overflow-x-hidden ${PROJECTS_SHOWCASE_TABLET_PAD} ${SECTION_MAIN_HEADER_INSET}`
-      }${projectsEntranceLive ? " projects-entrance-live" : ""}`}
+      }${projectsEntranceLive ? " projects-entrance-live" : ""}${
+        projectsEntranceSettled ? " projects-entrance-settled" : ""
+      }`}
     >
       <SectionGridOverlay key={projectDetailInFlow ? "projects-detail-grid" : "projects-list-grid"} />
       {allowDebugPanels &&
@@ -9712,10 +9747,16 @@ const PalaceProjects = ({
           />,
           document.body,
         )}
-      <div
+      <motion.div
         className={`${PROFILE_SECTION_CONTAINER} relative z-10 flex min-w-0 w-full flex-col ${
           projectDetailInFlow ? "min-h-min shrink-0" : "max-2xl:min-h-min max-2xl:flex-none 2xl:min-h-0 2xl:flex-1"
         }${forceContentHidden ? " opacity-0 pointer-events-none select-none" : ""}`}
+        initial={false}
+        animate={{ opacity: featuredPdfViewerActive ? 0 : 1 }}
+        transition={{
+          duration: reduceMotion ? 0 : SHOWCASE_PDF_PROJECTS_FADE_OUT_S,
+          ease: EASE.out,
+        }}
         aria-hidden={forceContentHidden || undefined}
       >
         <div className={EXPERIENCE_GUTTER_SHELL_OUTER}>
@@ -9805,7 +9846,7 @@ const PalaceProjects = ({
             <motion.div
               className="projects-showcase-carousel-inner shrink-0"
               initial={false}
-              animate={{ opacity: reduceMotion ? 1 : showcaseObscured ? 0 : 1 }}
+              animate={{ opacity: reduceMotion ? 1 : showcaseDetailObscured ? 0 : 1 }}
               transition={{ duration: showcaseFadeDuration, ease: SHOWCASE_EASE }}
             >
               <ProjectsStack
@@ -9845,7 +9886,7 @@ const PalaceProjects = ({
             animate={
               reduceMotion || projectsFeaturedRevealed
                 ? {
-                    opacity: reduceMotion ? 1 : showcaseObscured ? 0 : 1,
+                    opacity: reduceMotion ? 1 : showcaseDetailObscured ? 0 : 1,
                     y: 0,
                   }
                 : {
@@ -10090,7 +10131,7 @@ const PalaceProjects = ({
         </div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/*
        * FLYING CARD ? portalled into document.body so it is completely outside
@@ -13521,6 +13562,10 @@ export default function Home() {
       ? "overflow-x-visible"
       : "overflow-x-hidden";
   const [projectsEntranceArmed, setProjectsEntranceArmed] = useState(false);
+  const [projectsListEntranceSettled, setProjectsListEntranceSettled] = useState(false);
+  const onProjectsListEntranceSettled = useCallback(() => {
+    setProjectsListEntranceSettled(true);
+  }, []);
   /**
    * AnimatePresence opacity exit is only for projects ↔ projects-supporting.
    * Leaving SHOWCASE for another section must not fade (that fade under a closing
@@ -13536,6 +13581,8 @@ export default function Home() {
   const [showcasePdfObscuring, setShowcasePdfObscuring] = useState(false);
   const [showcasePdfClosing, setShowcasePdfClosing] = useState(false);
   const [showcasePdfFrame, setShowcasePdfFrame] = useState(false);
+  /** Align the fixed PDF grid to the scrolled PROJECTS grid (most visible on mobile). */
+  const [showcasePdfGridOffsetY, setShowcasePdfGridOffsetY] = useState(0);
   const showcasePdfCloseFinishRef = useRef(false);
   const showcasePdfCloseTimerRef = useRef<number | null>(null);
   const showcasePdfObscureTimerRef = useRef<number | null>(null);
@@ -13547,7 +13594,9 @@ export default function Home() {
   const topNavFadeDistanceRef = useRef(0);
   const [topNavForceOpaque, setTopNavForceOpaque] = useState(false);
   const navButtonsFaded =
-    archivePdfNavActive || Boolean(showcasePdfOverlay) || showcasePdfClosing || showcasePdfObscuring;
+    archivePdfNavActive ||
+    showcasePdfObscuring ||
+    (Boolean(showcasePdfOverlay) && !showcasePdfClosing);
   const topNavChromeOpacity = navButtonsFaded
     ? 0
     : topNavForceOpaque
@@ -13560,7 +13609,7 @@ export default function Home() {
     setTopNavForceOpaque(true);
   }, []);
   const showcasePdfViewerActive =
-    showcasePdfObscuring || Boolean(showcasePdfOverlay) || showcasePdfClosing;
+    showcasePdfObscuring || (Boolean(showcasePdfOverlay) && !showcasePdfClosing);
   const [projectDetailMotionBusy, setProjectDetailMotionBusy] = useState(false);
   const projectDetailFreezeReadyRef = useRef(false);
   useEffect(() => {
@@ -13633,6 +13682,7 @@ export default function Home() {
   useEffect(() => {
     if (currentSection !== "projects") {
       setActiveShowcaseProjectId(null);
+      setProjectsListEntranceSettled(false);
     }
   }, [currentSection]);
 
@@ -14004,13 +14054,10 @@ export default function Home() {
       window.clearTimeout(showcasePdfObscureTimerRef.current);
       showcasePdfObscureTimerRef.current = null;
     }
-    setShowcasePdfObscuring(true);
-    const revealDelayMs = reduceMotion ? 0 : Math.round(SHOWCASE_PDF_PROJECTS_FADE_OUT_S * 1000);
-    showcasePdfObscureTimerRef.current = window.setTimeout(() => {
-      setShowcasePdfOverlay(item);
-      setShowcasePdfObscuring(false);
-      showcasePdfObscureTimerRef.current = null;
-    }, revealDelayMs);
+    // Mount immediately so the PDF loader and PROJECTS content crossfade as one handoff.
+    setShowcasePdfGridOffsetY(sectionPanelRef.current?.scrollTop ?? 0);
+    setShowcasePdfObscuring(false);
+    setShowcasePdfOverlay(item);
   };
 
   useEffect(() => {
@@ -14190,7 +14237,7 @@ export default function Home() {
   return (
     <div
       className={`selection:bg-portfolio-blue selection:text-white transition-colors duration-500 ${
-        isResumeMode ? "min-h-screen overflow-x-hidden bg-white" : "h-screen w-screen overflow-hidden"
+        isResumeMode ? "min-h-screen overflow-x-hidden bg-white" : "relative h-screen w-screen overflow-hidden"
       }`}
       style={{
         ...(!isResumeMode ? { backgroundColor: "#0a0a0a", backgroundImage: "none" } : {}),
@@ -14206,9 +14253,13 @@ export default function Home() {
           opacity: topNavChromeOpacity,
           pointerEvents: topNavChromeOpacity < 0.05 ? "none" : "auto",
           transition:
-            reduceMotion || topNavForceOpaque || topNavChromeOpacity >= 0.995
+            reduceMotion
               ? "none"
-              : `opacity ${DUR.micro}s ease-out`,
+              : showcasePdfObscuring || Boolean(showcasePdfOverlay) || showcasePdfClosing
+                ? `opacity ${SHOWCASE_PDF_PROJECTS_FADE_OUT_S}s ease-out`
+                : topNavForceOpaque || topNavChromeOpacity >= 0.995
+                  ? "none"
+                  : `opacity ${DUR.micro}s ease-out`,
         }}
         aria-hidden={topNavChromeOpacity < 0.05}
       >
@@ -14479,7 +14530,7 @@ export default function Home() {
                     ? "overflow-x-hidden overflow-y-hidden"
                     : currentSection === "experience"
                       ? "overflow-x-hidden overflow-y-auto overscroll-y-contain no-scrollbar [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0"
-                    : "overflow-x-hidden overflow-y-auto overscroll-y-contain [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0"
+                      : "overflow-x-hidden overflow-y-auto overscroll-y-contain [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0"
               }`}
               style={{
                 backgroundColor: "#000",
@@ -14603,6 +14654,7 @@ export default function Home() {
                           entranceArmed={projectsEntranceArmed}
                           forceContentHidden={projectsSideNavLeaveHidden}
                           featuredPdfViewerActive={showcasePdfViewerActive}
+                          onEntranceSettled={onProjectsListEntranceSettled}
                         />
                       </div>
                     )}
@@ -14637,6 +14689,7 @@ export default function Home() {
                           entranceArmed={projectsEntranceArmed}
                           forceContentHidden={projectsSideNavLeaveHidden}
                           featuredPdfViewerActive={showcasePdfViewerActive}
+                          onEntranceSettled={onProjectsListEntranceSettled}
                         />
                       </motion.div>
                     )}
@@ -14707,6 +14760,7 @@ export default function Home() {
               reduceMotion={reduceMotion}
               showFrame={showcasePdfFrame}
               onFrameReady={() => setShowcasePdfFrame(true)}
+              gridOffsetY={showcasePdfGridOffsetY}
               closeFadeS={SHOWCASE_PDF_OVERLAY_CLOSE_S}
               openFadeS={SHOWCASE_PDF_OVERLAY_OPEN_S}
               onCloseAnimationComplete={finishShowcasePdfClose}
