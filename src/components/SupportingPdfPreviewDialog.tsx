@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Download, ExternalLink, X } from "lucide-react";
+import { Download, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavLayoutFreeze } from "@/lib/navLayoutFreeze";
 import { createPortal } from "react-dom";
@@ -189,31 +189,18 @@ export function SupportingPdfPreviewDialog({
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 {pdfSrc ? (
-                  <>
-                    <motion.a
-                      href={pdfSrc}
-                      download
-                      aria-label="Download PDF"
-                      className="pdf-viewer-chrome-btn pdf-viewer-control-btn pdf-viewer-download-btn pdf-viewer-download-btn--header origin-center"
-                      whileTap={reduceMotion ? undefined : PORTFOLIO_BOUNCE.tap}
-                      transition={reduceMotion ? undefined : PORTFOLIO_BOUNCE.tapSpring}
-                    >
-                      <Download aria-hidden />
-                    </motion.a>
-                    <motion.a
-                      href={pdfSrc}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label="Open PDF in new tab"
-                      className="pdf-viewer-chrome-btn pdf-viewer-control-btn origin-center"
-                      whileTap={reduceMotion ? undefined : PORTFOLIO_BOUNCE.tap}
-                      transition={reduceMotion ? undefined : PORTFOLIO_BOUNCE.tapSpring}
-                    >
-                      <ExternalLink aria-hidden />
-                    </motion.a>
-                  </>
+                  <motion.a
+                    href={pdfSrc}
+                    download
+                    aria-label="Download PDF"
+                    className="pdf-viewer-chrome-btn pdf-viewer-control-btn pdf-viewer-download-btn origin-center"
+                    whileTap={reduceMotion ? undefined : PORTFOLIO_BOUNCE.tap}
+                    transition={reduceMotion ? undefined : PORTFOLIO_BOUNCE.tapSpring}
+                  >
+                    <Download aria-hidden />
+                  </motion.a>
                 ) : (
-                  <span className="inline-block h-10 w-[5.5rem] shrink-0" aria-hidden />
+                  <span className="inline-block h-10 w-10 shrink-0" aria-hidden />
                 )}
               </div>
             </header>
@@ -226,18 +213,6 @@ export function SupportingPdfPreviewDialog({
                 suppressLoadingOverlay
               />
             </div>
-            {pdfSrc ? (
-              <motion.a
-                href={pdfSrc}
-                download
-                aria-label="Download PDF"
-                className="pdf-viewer-chrome-btn pdf-viewer-control-btn pdf-viewer-download-btn pdf-viewer-download-btn--docked absolute bottom-5 right-5 z-20 origin-center"
-                whileTap={reduceMotion ? undefined : PORTFOLIO_BOUNCE.tap}
-                transition={reduceMotion ? undefined : PORTFOLIO_BOUNCE.tapSpring}
-              >
-                <Download aria-hidden />
-              </motion.a>
-            ) : null}
         </motion.div>
       </motion.div>
     </motion.div>,

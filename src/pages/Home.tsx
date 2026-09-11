@@ -8522,7 +8522,7 @@ const ShowcaseIllustrationLightbox = ({
               onClick={(e) => e.stopPropagation()}
               aria-label={descExpanded ? "Show less" : "Show more"}
               tabIndex={-1}
-              className="pointer-events-none absolute right-4 top-3 z-10 flex select-none items-center border-0 bg-transparent p-0 font-heading text-[0.7rem] uppercase tracking-eyebrow-tight text-mono-2/80 sm:right-6 sm:top-4 sm:text-[0.76rem]"
+              className="pointer-events-none absolute right-3 top-3 z-10 flex h-[2.125rem] w-[2.125rem] select-none items-center justify-center border-0 bg-transparent p-0 font-heading text-[0.7rem] uppercase tracking-eyebrow-tight text-mono-2/80 sm:right-5 sm:top-4 sm:text-[0.76rem]"
             >
               <motion.span
                 animate={{ rotate: descExpanded ? 0 : 180 }}

@@ -7041,22 +7041,6 @@
   background-color: transparent;
 }
 
-/* Non-desktop: download lives in the header next to pop-out. */
-.pdf-viewer-download-btn--docked {
-  display: none;
-}
-
-/* Desktop (xl / 1280px+): floating corner control; hide the header twin. */
-@media (min-width: 1280px) {
-  .pdf-viewer-chrome-btn.pdf-viewer-download-btn--docked {
-    display: inline-flex;
-  }
-
-  .pdf-viewer-chrome-btn.pdf-viewer-download-btn--header {
-    display: none;
-  }
-}
-
 .pdf-viewer-download-btn:hover,
 .pdf-viewer-download-btn:active,
 .pdf-viewer-download-btn:focus-visible {
