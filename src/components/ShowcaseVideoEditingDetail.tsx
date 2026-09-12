@@ -309,15 +309,23 @@ const WORK_SWITCH_RAPID_IDLE_MS = 180;
  * Natural (phone/tablet portrait) also keeps an anti-jump height reserve.
  * Player-cap viewports also clamp max-height.
  */
+/** iPad / tablet landscape (coarse) — flush 3-up works strip; do not center-scroll. */
+const DETAIL_TABLET_LANDSCAPE_MQ =
+  "(min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse)";
+
 const DETAIL_COMPACT_DRAWER_MQ = [
   DETAIL_NATURAL_DRAWER_MQ,
   "((min-width: 1024px) and (pointer: fine))",
   "(min-width: 1367px)",
-  "((min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse))",
+  `(${DETAIL_TABLET_LANDSCAPE_MQ})`,
 ].join(", ");
 
 function matchesDetailPlayerCapViewport() {
   return typeof window !== "undefined" && window.matchMedia(DETAIL_PLAYER_CAP_MQ).matches;
+}
+
+function matchesDetailTabletLandscapeViewport() {
+  return typeof window !== "undefined" && window.matchMedia(DETAIL_TABLET_LANDSCAPE_MQ).matches;
 }
 
 function matchesDetailNaturalDrawerViewport() {
@@ -417,6 +425,9 @@ export function ShowcaseVideoEditingDetail({
   const [isPlayerCappedDrawerViewport, setIsPlayerCappedDrawerViewport] = useState(
     matchesDetailPlayerCapViewport,
   );
+  const [isTabletLandscapeViewport, setIsTabletLandscapeViewport] = useState(
+    matchesDetailTabletLandscapeViewport,
+  );
   /** Phone + tablet portrait — natural drawer + anti-jump reserve (no player cap). */
   const [isNaturalDrawerViewport, setIsNaturalDrawerViewport] = useState(
     matchesDetailNaturalDrawerViewport,
@@ -515,6 +526,7 @@ export function ShowcaseVideoEditingDetail({
   const [pressedWorksArrow, setPressedWorksArrow] = useState<"prev" | "next" | null>(null);
   const thumbRefs = useRef<Array<HTMLElement | null>>([]);
   const thumbStripRef = useRef<HTMLDivElement | null>(null);
+  const worksStripTrackRef = useRef<HTMLDivElement | null>(null);
   const activeVideoIndexRef = useRef(0);
   /**
    * Whole entry-switch generation. Title/card/reveal completions no-op when stale.
@@ -551,6 +563,18 @@ export function ShowcaseVideoEditingDetail({
     onChange();
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  useEffect(() => {
+    const mq = window.matchMedia(DETAIL_TABLET_LANDSCAPE_MQ);
+    const onChange = () => setIsTabletLandscapeViewport(mq.matches);
+    onChange();
+    if (typeof mq.addEventListener === "function") {
+      mq.addEventListener("change", onChange);
+      return () => mq.removeEventListener("change", onChange);
+    }
+    mq.addListener(onChange);
+    return () => mq.removeListener(onChange);
   }, []);
 
   useEffect(() => {
@@ -1926,19 +1950,59 @@ export function ShowcaseVideoEditingDetail({
     ],
   );
 
-  /** Center a works-strip thumb without scrollIntoView (avoids scrolling the section on mobile). */
+  /**
+   * Place a works-strip thumb without scrollIntoView (avoids section yank).
+   * Tablet landscape: native overflow/snap only drifts one way on iPad — page
+   * the track with translateX and keep scrollLeft at 0.
+   * Other two-column: page by tile steps (never center).
+   * Stacked / mobile: center the thumb.
+   */
   const centerWorksStripThumb = useCallback(
     (index: number, options?: { instant?: boolean }) => {
       const strip = thumbStripRef.current;
       const thumb = thumbRefs.current[index];
       if (!strip || !thumb) return;
-      const stripRect = strip.getBoundingClientRect();
-      const thumbRect = thumb.getBoundingClientRect();
-      const delta =
-        thumbRect.left +
-        thumbRect.width / 2 -
-        (stripRect.left + stripRect.width / 2);
-      const nextLeft = strip.scrollLeft + delta;
+
+      const track = worksStripTrackRef.current;
+      const thumbs = strip.querySelectorAll<HTMLElement>(".video-editing-works-strip-thumb");
+      const first = thumbs[0];
+      const second = thumbs[1];
+      const step =
+        first && second
+          ? second.offsetLeft - first.offsetLeft
+          : thumb.offsetWidth + 10;
+      const pageSize = card.id === "project-slaywire" ? 4 : 3;
+      const pageOffset =
+        index < pageSize || step <= 0 ? 0 : (index - pageSize + 1) * step;
+
+      if (matchesDetailTabletLandscapeViewport()) {
+        strip.scrollLeft = 0;
+        strip.style.scrollSnapType = "none";
+        if (track) {
+          track.style.transform = pageOffset > 0 ? `translate3d(${-pageOffset}px, 0, 0)` : "";
+        }
+        return;
+      }
+
+      if (track) track.style.transform = "";
+
+      const maxLeft = Math.max(0, strip.scrollWidth - strip.clientWidth);
+      let nextLeft: number;
+
+      if (matchesDetailPlayerCapViewport()) {
+        strip.style.scrollSnapType = "none";
+        nextLeft = Math.max(0, Math.min(maxLeft, pageOffset));
+        if (Math.abs(nextLeft - strip.scrollLeft) < 0.5) return;
+      } else {
+        const stripRect = strip.getBoundingClientRect();
+        const thumbRect = thumb.getBoundingClientRect();
+        const delta =
+          thumbRect.left +
+          thumbRect.width / 2 -
+          (stripRect.left + stripRect.width / 2);
+        nextLeft = strip.scrollLeft + delta;
+      }
+
       // Instant on touch: nested smooth scrollTo yanks the section scroller on iOS.
       if (options?.instant || reduceMotion || typeof strip.scrollTo !== "function") {
         strip.scrollLeft = nextLeft;
@@ -1946,7 +2010,7 @@ export function ShowcaseVideoEditingDetail({
       }
       strip.scrollTo({ left: nextLeft, behavior: "smooth" });
     },
-    [reduceMotion],
+    [card.id, reduceMotion],
   );
 
   const navigateToWorkIndex = useCallback(
@@ -1973,7 +2037,10 @@ export function ShowcaseVideoEditingDetail({
       if (options?.scrollStrip === false) return;
 
       lockWorksStripScrollSync();
-      centerWorksStripThumb(nextIndex, { instant: !usesFinePointerHover() });
+      // Flush strip: always instant — smooth center/scroll races snap and one-way-drift.
+      centerWorksStripThumb(nextIndex, {
+        instant: !usesFinePointerHover() || matchesDetailPlayerCapViewport(),
+      });
     },
     [
       centerWorksStripThumb,
@@ -2018,6 +2085,12 @@ export function ShowcaseVideoEditingDetail({
   useEffect(() => {
     const strip = thumbStripRef.current;
     if (!strip || videos.length <= 1) return;
+    // iPad landscape: native pan/snap is what drifts the flush row one way.
+    if (matchesDetailTabletLandscapeViewport()) {
+      strip.scrollLeft = 0;
+      strip.style.scrollSnapType = "none";
+      return;
+    }
 
     let activeTouchId: number | null = null;
     let pointerArrowTracking = false;
@@ -2266,19 +2339,34 @@ export function ShowcaseVideoEditingDetail({
       window.removeEventListener("touchend", onWindowTouchEnd);
       window.removeEventListener("touchcancel", onWindowTouchEnd);
     };
-  }, [resetStripSwipeArrowGesture, tryFireStripSwipeArrowFromMotion, videos.length]);
+  }, [
+    isTabletLandscapeViewport,
+    resetStripSwipeArrowGesture,
+    tryFireStripSwipeArrowFromMotion,
+    videos.length,
+  ]);
 
   useEffect(() => {
     activeVideoIndexRef.current = 0;
     setActiveVideoIndex(0);
     lockWorksStripScrollSync();
     requestAnimationFrame(() => {
-      thumbStripRef.current?.scrollTo({ left: 0, behavior: "auto" });
+      const strip = thumbStripRef.current;
+      if (strip) {
+        strip.scrollLeft = 0;
+        strip.style.scrollSnapType = matchesDetailTabletLandscapeViewport() ? "none" : "";
+      }
+      const track = worksStripTrackRef.current;
+      if (track) track.style.transform = "";
     });
   }, [card.title, lockWorksStripScrollSync]);
 
   const handleSelectVideo = useCallback((index: number) => {
-    navigateToWorkIndex(index, { scrollStrip: false });
+    // Flush two-column strip: run origin/heal scroll (no-op when already aligned).
+    // Stacked strip: leave scroll alone on tap (arrows still center).
+    navigateToWorkIndex(index, {
+      scrollStrip: matchesDetailPlayerCapViewport(),
+    });
   }, [navigateToWorkIndex]);
 
   const handleThumbSelect = useCallback(
@@ -2331,8 +2419,8 @@ export function ShowcaseVideoEditingDetail({
     ["--directional-arrow-idle-delay" as string]: worksArrowIdleDelay,
   };
   const worksStripThumbBasisClass = matchInteractiveMediaChrome
-    ? "basis-[calc((100%-0.5rem)/2)] sm:basis-[calc((100%-0.625rem)/2)] md:basis-[calc((100%-1.25rem)/3)] lg:basis-[calc((100%-1.25rem)/3)]"
-    : "basis-[calc((100%-0.5rem)/2)] sm:basis-[calc((100%-0.625rem)/2)] md:basis-[calc((100%-1.25rem)/3)] lg:basis-[calc((100%-1.875rem)/4)]";
+    ? "basis-[calc((100%-0.5rem-1px)/2)] sm:basis-[calc((100%-0.625rem-1px)/2)] md:basis-[calc((100%-1.25rem-1px)/3)] lg:basis-[calc((100%-1.25rem-1px)/3)]"
+    : "basis-[calc((100%-0.5rem-1px)/2)] sm:basis-[calc((100%-0.625rem-1px)/2)] md:basis-[calc((100%-1.25rem-1px)/3)] lg:basis-[calc((100%-1.875rem-1px)/4)]";
   const worksStripOuterClass =
     videos.length > 1
       ? matchInteractiveMediaChrome
@@ -2345,7 +2433,7 @@ export function ShowcaseVideoEditingDetail({
         ? "mx-5 sm:mx-7"
         : "mx-4 sm:mx-6"
       : "w-full";
-  const worksStripShellClass = `video-editing-works-strip-shell min-w-0 ${worksStripClass}`;
+  const worksStripShellClass = `video-editing-works-strip-shell min-w-0 overflow-x-visible ${worksStripClass}`;
   const worksArrowPrevOffsetClass = matchInteractiveMediaChrome
     ? "left-[-6px] sm:left-0"
     : "-left-[14px] sm:-left-2";
@@ -3015,9 +3103,16 @@ export function ShowcaseVideoEditingDetail({
                   <div className={worksStripShellClass}>
                   <div
                     ref={thumbStripRef}
-                    className="video-editing-works-strip no-scrollbar flex min-w-0 snap-x snap-mandatory gap-2 overflow-x-auto pb-0.5 sm:gap-2.5 [touch-action:pan-x_pan-y] [overflow-anchor:none] [overscroll-behavior-x:contain] w-full"
+                    className={`video-editing-works-strip no-scrollbar flex min-w-0 gap-2 overflow-x-auto pb-0.5 sm:gap-2.5 [overflow-anchor:none] [overscroll-behavior-x:contain] w-full${
+                      isTabletLandscapeViewport
+                        ? " [touch-action:pan-y]"
+                        : " snap-x snap-mandatory [touch-action:pan-x_pan-y]"
+                    }`}
                   >
-                    <div className="video-editing-works-strip-track contents">
+                    <div
+                      ref={worksStripTrackRef}
+                      className="video-editing-works-strip-track contents"
+                    >
                     {videos.map((video, index) => {
                       const active = index === safeIndex;
                       const selectorTitle = video.selectorTitle?.trim() || (isSlaywire ? "" : `Edit ${index + 1}`);
@@ -3032,7 +3127,9 @@ export function ShowcaseVideoEditingDetail({
                           }}
                           role="button"
                           tabIndex={0}
-                          className={`video-editing-works-strip-thumb group relative flex shrink-0 snap-start flex-col text-left [touch-action:pan-x_pan-y] cursor-pointer ${worksStripThumbBasisClass} ${
+                          className={`video-editing-works-strip-thumb group relative flex shrink-0 flex-col text-left cursor-pointer ${worksStripThumbBasisClass} ${
+                            isTabletLandscapeViewport ? "[touch-action:pan-y]" : "snap-start [touch-action:pan-x_pan-y]"
+                          } ${
                             active ? "text-white" : "text-mono-2"
                           }`}
                           aria-label={`Select ${isSlaywire ? "media" : "edit"} thumbnail ${index + 1}`}

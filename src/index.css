@@ -6283,8 +6283,8 @@
     }
 
     /*
-     * Player-width tiles (100cqw = media column), with a 2px scrollport bleed so
-     * 1px borders / subpixel radius aren't clipped by overflow-x.
+     * Player-width tiles (100cqw = media column). Bleed the scrollport so the
+     * last tile’s 1px border isn’t clipped — extra 2px on the right (subpixel).
      */
     #projects.projects-interactive-media-detail-open
       .video-editing-detail--interactive-media
@@ -6297,10 +6297,13 @@
       .video-editing-works-strip {
       display: block;
       gap: 0;
-      width: calc(100% + 4px);
-      margin-inline: -2px;
+      width: calc(100% + 6px);
+      margin-inline-start: -2px;
+      margin-inline-end: -4px;
       padding-inline: 0;
       scroll-padding-inline: 2px;
+      /* Snap-mandatory + arrow centering shifted the flush 3-up row one-way right. */
+      scroll-snap-type: none;
     }
 
     #projects.projects-interactive-media-detail-open
@@ -6327,16 +6330,17 @@
       .video-editing-detail:not(.video-editing-detail--interactive-media)
       .video-editing-works-strip
       .video-editing-works-strip-thumb {
-      flex-basis: calc((100cqw - 1.25rem) / 3) !important;
-      max-width: calc((100cqw - 1.25rem) / 3);
+      /* −1px so the rightmost 1px border sits inside the clip, not on it. */
+      flex-basis: calc((100cqw - 1.25rem - 1px) / 3) !important;
+      max-width: calc((100cqw - 1.25rem - 1px) / 3);
     }
 
     #projects.projects-slaywire-detail-open
       .video-editing-detail:not(.video-editing-detail--interactive-media)
       .video-editing-works-strip
       .video-editing-works-strip-thumb {
-      flex-basis: calc((100cqw - 1.875rem) / 4) !important;
-      max-width: calc((100cqw - 1.875rem) / 4);
+      flex-basis: calc((100cqw - 1.875rem - 1px) / 4) !important;
+      max-width: calc((100cqw - 1.875rem - 1px) / 4);
     }
   }
 
@@ -8191,6 +8195,35 @@
     top: 2.5rem !important;
   }
 
+  /*
+   * Flush 3/4-up selector — kill native overflow/snap. iPad only drifts that
+   * row on next; prev cannot unwind scrollLeft. Transform paging is used instead.
+   */
+  #projects.projects-interactive-media-detail-open
+    .video-editing-works-strip,
+  #projects.projects-video-editing-detail-open
+    .video-editing-works-strip,
+  #projects.projects-slaywire-detail-open
+    .video-editing-works-strip {
+    /* clip = no scroll container (keeps the one-way iPad lock). Extra right
+     * bleed lets the last thumb’s 1px border paint past 100cqw. */
+    overflow-x: clip !important;
+    scroll-snap-type: none !important;
+    touch-action: pan-y;
+    width: calc(100% + 6px);
+    margin-inline-start: -2px;
+    margin-inline-end: -4px;
+  }
+
+  #projects.projects-interactive-media-detail-open
+    .video-editing-works-strip-thumb,
+  #projects.projects-video-editing-detail-open
+    .video-editing-works-strip-thumb,
+  #projects.projects-slaywire-detail-open
+    .video-editing-works-strip-thumb {
+    scroll-snap-align: none;
+    touch-action: pan-y;
+  }
 
   /* iPad landscape: match main showcase column width; kill desktop zoom/offset on stage. */
   #projects.projects-visual-design-detail-open .projects-visual-design-detail-stage {
