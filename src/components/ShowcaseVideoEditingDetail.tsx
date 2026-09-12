@@ -99,54 +99,71 @@ function VideoEditingPlyrPlayer({
     const host = hostRef.current;
     if (!host || !source) return;
 
-    host.replaceChildren();
+    let cancelled = false;
+    let element: HTMLVideoElement | HTMLDivElement | null = null;
+    let raf1 = 0;
+    let raf2 = 0;
 
-    let element: HTMLVideoElement | HTMLDivElement;
-    if (source.kind === "youtube") {
-      const youtubeHost = document.createElement("div");
-      youtubeHost.setAttribute("data-plyr-provider", "youtube");
-      youtubeHost.setAttribute("data-plyr-embed-id", source.id);
-      youtubeHost.setAttribute("aria-label", video.label);
-      element = youtubeHost;
-    } else {
-      const videoEl = document.createElement("video");
-      videoEl.controls = true;
-      videoEl.playsInline = true;
-      videoEl.preload = "metadata";
-      videoEl.setAttribute("aria-label", video.label);
-      const sourceEl = document.createElement("source");
-      sourceEl.src = source.url;
-      sourceEl.type = source.mime;
-      videoEl.appendChild(sourceEl);
-      element = videoEl;
-    }
-    host.appendChild(element);
-
-    if (playerRef.current) {
-      try {
-        playerRef.current.destroy();
-      } catch {
-        // Ignore teardown races from rapid tab / detail transitions.
-      } finally {
-        playerRef.current = null;
-      }
-    }
-
-    const nextPlayer = new Plyr(element, PLRY_OPTIONS);
-    playerRef.current = nextPlayer;
-
-    return () => {
-      if (playerRef.current !== nextPlayer) return;
-      try {
-        nextPlayer.destroy();
-      } catch {
-        // Ignore teardown races from rapid tab / detail transitions.
-      } finally {
-        playerRef.current = null;
-        if (host.contains(element)) {
-          host.removeChild(element);
+    const teardown = (player: Plyr | null, node: HTMLElement | null) => {
+      if (player) {
+        try {
+          player.destroy();
+        } catch {
+          // Ignore teardown races from rapid tab / detail transitions.
         }
       }
+      if (playerRef.current === player) playerRef.current = null;
+      if (node && host.contains(node)) {
+        host.removeChild(node);
+      }
+    };
+
+    // Defer Plyr until the open/back frame has settled — rapid remounts
+    // otherwise construct and tear down players in the same tick and lock the tab.
+    raf1 = window.requestAnimationFrame(() => {
+      raf2 = window.requestAnimationFrame(() => {
+        if (cancelled || !hostRef.current) return;
+        host.replaceChildren();
+
+        if (source.kind === "youtube") {
+          const youtubeHost = document.createElement("div");
+          youtubeHost.setAttribute("data-plyr-provider", "youtube");
+          youtubeHost.setAttribute("data-plyr-embed-id", source.id);
+          youtubeHost.setAttribute("aria-label", video.label);
+          element = youtubeHost;
+        } else {
+          const videoEl = document.createElement("video");
+          videoEl.controls = true;
+          videoEl.playsInline = true;
+          videoEl.preload = "metadata";
+          videoEl.setAttribute("aria-label", video.label);
+          const sourceEl = document.createElement("source");
+          sourceEl.src = source.url;
+          sourceEl.type = source.mime;
+          videoEl.appendChild(sourceEl);
+          element = videoEl;
+        }
+        host.appendChild(element);
+
+        if (playerRef.current) {
+          try {
+            playerRef.current.destroy();
+          } catch {
+            // Ignore teardown races from rapid tab / detail transitions.
+          }
+          playerRef.current = null;
+        }
+
+        const nextPlayer = new Plyr(element, PLRY_OPTIONS);
+        playerRef.current = nextPlayer;
+      });
+    });
+
+    return () => {
+      cancelled = true;
+      window.cancelAnimationFrame(raf1);
+      window.cancelAnimationFrame(raf2);
+      teardown(playerRef.current, element);
     };
   }, [source, video.id]);
 
@@ -405,7 +422,11 @@ export function ShowcaseVideoEditingDetail({
     matchesDetailNaturalDrawerViewport,
   );
   /** Phone + tablet + desktop — expanding/shrinking description drawer with keyframes. */
-  const [isCompactDrawerViewport, setIsCompactDrawerViewport] = useState(false);
+  const [isCompactDrawerViewport, setIsCompactDrawerViewport] = useState(() =>
+    typeof window !== "undefined"
+      ? window.matchMedia(DETAIL_COMPACT_DRAWER_MQ).matches
+      : false,
+  );
   /** Natural drawer: never shrink the page-height reserve below the tallest tab seen. */
   const detailPanelTallestBodyRef = useRef(0);
   const [activeDetailCardTab, setActiveDetailCardTab] = useState<DetailCardTabId>("overview");
@@ -1161,6 +1182,8 @@ export function ShowcaseVideoEditingDetail({
 
   useEffect(() => {
     if (!isPlayerCappedDrawerViewport) {
+      const cardEl = detailCardSurfaceRef.current;
+      if (cardEl) cardEl.style.maxHeight = "";
       setDetailCardMaxHeightPx(null);
       detailCardMaxHeightPxRef.current = null;
       setDetailCardHeightPx(null);
@@ -1180,9 +1203,16 @@ export function ShowcaseVideoEditingDetail({
     const raf = window.requestAnimationFrame(syncDetailCardMaxHeightToPlayer);
     const player = root.querySelector(".video-editing-player");
     const titleArea = detailNowPlayingRef.current;
+    let capRaf = 0;
     const resizeObserver =
       typeof ResizeObserver !== "undefined"
-        ? new ResizeObserver(() => syncDetailCardMaxHeightToPlayer())
+        ? new ResizeObserver(() => {
+            if (capRaf) return;
+            capRaf = window.requestAnimationFrame(() => {
+              capRaf = 0;
+              syncDetailCardMaxHeightToPlayer();
+            });
+          })
         : null;
     if (player && resizeObserver) resizeObserver.observe(player);
     if (detailCardSurfaceRef.current && resizeObserver) {
@@ -1195,6 +1225,7 @@ export function ShowcaseVideoEditingDetail({
 
     return () => {
       window.cancelAnimationFrame(raf);
+      if (capRaf) window.cancelAnimationFrame(capRaf);
       resizeObserver?.disconnect();
       window.removeEventListener("resize", syncDetailCardMaxHeightToPlayer);
       window.removeEventListener("orientationchange", syncDetailCardMaxHeightToPlayer);
@@ -1267,12 +1298,15 @@ export function ShowcaseVideoEditingDetail({
       };
 
       const commitHeight = (surface: HTMLElement, nextHeight: number, maxHeight: number | null) => {
-        detailCardTransitionHeightRef.current = nextHeight;
-        surface.style.height = `${nextHeight}px`;
+        const pinned =
+          maxHeight != null ? Math.min(nextHeight, maxHeight) : nextHeight;
+        detailCardTransitionHeightRef.current = pinned;
+        if (maxHeight != null) surface.style.maxHeight = `${maxHeight}px`;
+        surface.style.height = `${pinned}px`;
         if (maxHeight == null) {
           surface.style.transition = "none";
         }
-        endDetailCardHeightTransition(maxHeight != null ? nextHeight : null);
+        endDetailCardHeightTransition(maxHeight != null ? pinned : null);
       };
 
       const runResize = () => {
@@ -1303,6 +1337,9 @@ export function ShowcaseVideoEditingDetail({
         }
         const toHeight =
           maxHeight != null ? Math.min(naturalToHeight, maxHeight) : naturalToHeight;
+        if (maxHeight != null) {
+          surface.style.maxHeight = `${maxHeight}px`;
+        }
         const fromHeightRaw = surface.offsetHeight;
         const fromHeight =
           maxHeight != null ? Math.min(fromHeightRaw, maxHeight) : fromHeightRaw;
@@ -1348,7 +1385,11 @@ export function ShowcaseVideoEditingDetail({
             if (epoch !== detailCardResizeEpochRef.current) return;
             const t = Math.min(1, (now - start) / DETAIL_CARD_RESIZE_DUR_MS);
             const k = 1 - (1 - t) ** 3;
-            const h = fromHeight + (toHeight - fromHeight) * k;
+            const cap = detailCardMaxHeightPxRef.current;
+            const h = Math.min(
+              fromHeight + (toHeight - fromHeight) * k,
+              cap ?? Number.POSITIVE_INFINITY,
+            );
             surface.style.height = `${h}px`;
             if (maxHeight != null) {
               detailCardTransitionHeightRef.current = h;
@@ -1450,9 +1491,6 @@ export function ShowcaseVideoEditingDetail({
               latestMax != null ? Math.min(toHeight, latestMax) : toHeight;
             commitHeight(surface, settledTo, latestMax);
             onSettled?.();
-            if (switchEpoch != null) {
-              scheduleFitDetailCardToLiveBodyRef.current();
-            }
             return;
           }
 
@@ -3141,7 +3179,13 @@ export function ShowcaseVideoEditingDetail({
                                 detailCardHeightPx)
                               : detailCardHeightPx;
                             return heightPx != null
-                              ? { height: `${heightPx}px` }
+                              ? {
+                                  height: `${
+                                    detailCardMaxHeightPx != null
+                                      ? Math.min(heightPx, detailCardMaxHeightPx)
+                                      : heightPx
+                                  }px`,
+                                }
                               : {};
                           })(),
                         }
@@ -3221,41 +3265,44 @@ export function ShowcaseVideoEditingDetail({
                                 <div ref={detailTabActiveNaturalRef} className="min-w-0">
                                   {renderDetailCardTabBody(activeDetailCardTab, "portrait")}
                                 </div>
-                                {isCompactDrawerViewport ? (
-                                  <div className="pointer-events-none invisible absolute left-0 top-1 -z-10 w-full overflow-visible" aria-hidden>
-                                    {DETAIL_CARD_TAB_IDS.map((tabId) => (
-                                      <div
-                                        key={`measure-${tabId}`}
-                                        ref={(el) => {
-                                          detailTabHiddenMeasureRefs.current[tabId] = el;
-                                        }}
-                                        className="absolute left-0 top-0 w-full min-w-0"
-                                      >
-                                        {renderPortraitDetailTabBody(tabId)}
-                                      </div>
-                                    ))}
-                                    {videos.map((video, index) => (
-                                      <div
-                                        key={`measure-video-overview-${video.id}`}
-                                        ref={(el) => {
-                                          detailVideoOverviewMeasureRefs.current[index] = el;
-                                        }}
-                                        className="absolute left-0 top-0 w-full min-w-0"
-                                      >
-                                        <p className="m-0 whitespace-pre-line font-body text-sm leading-snug text-mono-2 sm:text-base">
-                                          {renderDetailInlineEm(
-                                            video.detailOverview?.trim() ||
-                                              card.detailOverview?.trim() ||
-                                              "?",
-                                          )}
-                                        </p>
-                                      </div>
-                                    ))}
-                                  </div>
-                                ) : null}
                               </div>
                             </div>
                           </div>
+                          {isCompactDrawerViewport ? (
+                            <div
+                              className="pointer-events-none invisible absolute left-0 top-0 -z-10 h-0 w-full overflow-hidden"
+                              aria-hidden
+                            >
+                              {DETAIL_CARD_TAB_IDS.map((tabId) => (
+                                <div
+                                  key={`measure-${tabId}`}
+                                  ref={(el) => {
+                                    detailTabHiddenMeasureRefs.current[tabId] = el;
+                                  }}
+                                  className="absolute left-0 top-0 w-full min-w-0"
+                                >
+                                  {renderPortraitDetailTabBody(tabId)}
+                                </div>
+                              ))}
+                              {videos.map((video, index) => (
+                                <div
+                                  key={`measure-video-overview-${video.id}`}
+                                  ref={(el) => {
+                                    detailVideoOverviewMeasureRefs.current[index] = el;
+                                  }}
+                                  className="absolute left-0 top-0 w-full min-w-0"
+                                >
+                                  <p className="m-0 whitespace-pre-line font-body text-sm leading-snug text-mono-2 sm:text-base">
+                                    {renderDetailInlineEm(
+                                      video.detailOverview?.trim() ||
+                                        card.detailOverview?.trim() ||
+                                        "?",
+                                    )}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          ) : null}
                         </div>
                       </motion.div>
                     </AnimatePresence>

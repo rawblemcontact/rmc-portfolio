@@ -1456,13 +1456,24 @@
     filter: none;
   }
 
-  /* PROJECTS carousel cards â€” solid fill, no glass blur */
+  /* PROJECTS carousel cards — solid fill, no glass blur */
   #projects .project-card-surface {
     background: #000;
     background-image: none;
     filter: none;
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* Brave: native img/video drag after press-drag freezes hit-testing (grid CSS still runs). */
+  #projects .project-card-surface img,
+  #projects .project-card-surface video {
+    -webkit-user-drag: none;
+    user-select: none;
+    pointer-events: none;
   }
 
   /* Let PORTFOLIO-style tap scale paint outside the grid cell. */
@@ -1490,6 +1501,7 @@
   /* FLIP measure: kill Framer tap transform for one frame. */
   #projects .project-card-tap-shell.is-flip-measure {
     transform: none !important;
+    transition: none !important;
   }
 
   /* PROFILE parity: same glass tokens as `.profile-card-surface` */
@@ -7658,12 +7670,27 @@
     align-self: stretch;
   }
 
-  /* Compensate FW height trim — keep panel bottom edge; open air above. */
-  #projects .projects-showcase-stage {
+  /* Compensate FW height trim — keep panel bottom edge; open air above.
+   * List only: % translateY is relative to stage height, so it would creep
+   * VISUAL DESIGN upward as masonry tiles resolve. */
+  #projects.projects-showcase-tablet-pad .projects-showcase-stage {
     transform: translateY(calc(-2% + 0.5rem));
   }
 
-  /* FIXED_H thumbnail is 216px â€” pull bottom in slightly (does not change header/line). */
+  #projects.projects-visual-design-detail-open .projects-showcase-stage,
+  #projects.projects-visual-design-detail-open .projects-visual-design-detail-stage {
+    transform: none !important;
+  }
+
+  /* Hold masonry out of flow until ratios land — avoids a short stack then tile shove. */
+  #projects.projects-visual-design-detail-open .showcase-illustrations-grid[aria-busy="true"] {
+    height: 0 !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    visibility: hidden;
+  }
+
+  /* FIXED_H thumbnail is 216px — pull bottom in slightly (does not change header/line). */
   #projects.projects-showcase-tablet-pad .featured-writing-raised {
     height: calc(216px - var(--projects-fw-height-trim)) !important;
   }
@@ -7814,11 +7841,6 @@
     font-size: 1.125rem !important;
     line-height: 1.375 !important;
     letter-spacing: -0.015em !important;
-  }
-
-  /* VISUAL DESIGN detail â€” portrait: align header start with VIDEO EDITING. */
-  #projects.projects-visual-design-detail-open .projects-visual-design-detail-inner {
-    margin-top: 23px !important;
   }
 }
 

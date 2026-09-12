@@ -94,7 +94,7 @@ import { BriefcaseIcon } from "../components/icons/BriefcaseIcon";
 import { BriefcaseFilledIcon } from "../components/icons/BriefcaseFilledIcon";
 import { UserIcon } from "../components/icons/UserIcon";
 import { DUR, EASE, HOVER, NAV_ICON_TAP, NAV_ICON_TAP_RELEASE, PORTFOLIO_BOUNCE, PORTFOLIO_SPEED, SHOWCASE_PDF_PROJECTS_FADE_OUT_S, SIDE_NAV_OVERLAY_FADE_S, SPRING, TAP } from "../lib/motion";
-import { useMasonryImageRatios } from "../lib/useMasonryImageRatios";
+import { prefetchMasonryImageRatios, useMasonryImageRatios } from "../lib/useMasonryImageRatios";
 import { 
   Instagram, 
   Linkedin, 
@@ -7171,6 +7171,13 @@ const ProjectsStack = ({
   const selectPendingRef = useRef(false);
   const selectTimerRef = useRef<number | null>(null);
   const pressLockTimerRef = useRef<number | null>(null);
+  const pressGestureRef = useRef<{
+    cardId: string | null;
+    pointerId: number | null;
+    startX: number;
+    startY: number;
+    cancelled: boolean;
+  }>({ cardId: null, pointerId: null, startX: 0, startY: 0, cancelled: false });
   const [loadedMediaCount, setLoadedMediaCount] = useState(0);
   /** Press / settle window (yellow accent + release target = hover size). */
   const [pressLockId, setPressLockId] = useState<string | null>(null);
@@ -7217,21 +7224,115 @@ const ProjectsStack = ({
     pressLockTimerRef.current = null;
   }, []);
 
-  const handleCardPointerDown = useCallback((cardId: string) => {
+  /** Cancel native media drag (Brave can lock hit-testing after press-drag). */
+  const suppressCardNativeDrag = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+  }, []);
+
+  const resetPressGesture = useCallback(() => {
+    pressGestureRef.current = {
+      cardId: null,
+      pointerId: null,
+      startX: 0,
+      startY: 0,
+      cancelled: false,
+    };
+  }, []);
+
+  const cancelCardPress = useCallback((cardId: string | null) => {
+    const gesture = pressGestureRef.current;
+    if (cardId && gesture.cardId === cardId) {
+      gesture.cancelled = true;
+      gesture.pointerId = null;
+    } else if (!cardId) {
+      gesture.cancelled = true;
+      gesture.pointerId = null;
+    }
+    setPressLockId((id) => (cardId == null || id === cardId ? null : id));
+  }, []);
+
+  const handleCardPointerDown = useCallback((cardId: string, event: React.PointerEvent<HTMLElement>) => {
+    pressGestureRef.current = {
+      cardId,
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      cancelled: false,
+    };
     setPressLockId(cardId);
   }, []);
 
   const handleCardPointerUpOrCancel = useCallback((cardId: string) => {
-    // Click fires after pointerup — keep lock if activate is about to run / pending.
+    const gesture = pressGestureRef.current;
+    if (gesture.cardId === cardId) {
+      pressGestureRef.current.pointerId = null;
+    }
+    // Defer past `click` so activate can claim selectPending and keep press accent.
     queueMicrotask(() => {
-      if (selectPendingRef.current) return;
-      setPressLockId((id) => (id === cardId ? null : id));
+      queueMicrotask(() => {
+        if (selectPendingRef.current) return;
+        setPressLockId((id) => (id === cardId ? null : id));
+      });
     });
   }, []);
+
+  /** Window move — element pointermove dies after leave; Brave often skips pointerleave. */
+  useEffect(() => {
+    if (!pressLockId) return;
+    const onWindowPointerMove = (event: PointerEvent) => {
+      const gesture = pressGestureRef.current;
+      if (
+        gesture.cardId !== pressLockId ||
+        gesture.cancelled ||
+        (gesture.pointerId != null && event.pointerId !== gesture.pointerId)
+      ) {
+        return;
+      }
+      const drift = Math.hypot(event.clientX - gesture.startX, event.clientY - gesture.startY);
+      if (drift <= 8) return;
+      cancelCardPress(pressLockId);
+    };
+    const onWindowPointerEnd = () => {
+      // Same double-microtask as card pointerup — stay behind `click` / selectPending.
+      queueMicrotask(() => {
+        queueMicrotask(() => {
+          if (!selectPendingRef.current) {
+            setPressLockId(null);
+            pressGestureRef.current.pointerId = null;
+          }
+        });
+      });
+    };
+    const onWindowDragEnd = () => {
+      cancelCardPress(null);
+      setPressLockId(null);
+      resetPressGesture();
+    };
+    window.addEventListener("pointermove", onWindowPointerMove);
+    window.addEventListener("pointerup", onWindowPointerEnd);
+    window.addEventListener("pointercancel", onWindowPointerEnd);
+    window.addEventListener("dragend", onWindowDragEnd);
+    window.addEventListener("drop", onWindowDragEnd);
+    window.addEventListener("blur", onWindowPointerEnd);
+    return () => {
+      window.removeEventListener("pointermove", onWindowPointerMove);
+      window.removeEventListener("pointerup", onWindowPointerEnd);
+      window.removeEventListener("pointercancel", onWindowPointerEnd);
+      window.removeEventListener("dragend", onWindowDragEnd);
+      window.removeEventListener("drop", onWindowDragEnd);
+      window.removeEventListener("blur", onWindowPointerEnd);
+    };
+  }, [pressLockId, cancelCardPress, resetPressGesture]);
 
   /** Snappy press, then open detail slightly before settle ends; keep press lock through full settle. */
   const handleCardActivate = useCallback(
     (cardId: string, el: HTMLElement) => {
+      const gesture = pressGestureRef.current;
+      if (gesture.cardId === cardId && gesture.cancelled) {
+        resetPressGesture();
+        setPressLockId(null);
+        return;
+      }
       if (selectPendingRef.current) return;
       setPressLockId(cardId);
       const feedbackMs = reduceMotion ? 0 : PROJECT_CARD_TAP_FEEDBACK_MS;
@@ -7260,7 +7361,7 @@ const ProjectsStack = ({
         setPressLockId(null);
       }, feedbackMs);
     },
-    [clearPressLockTimer, clearSelectTimer, onSelect, reduceMotion],
+    [clearPressLockTimer, clearSelectTimer, onSelect, reduceMotion, resetPressGesture],
   );
 
   useEffect(() => {
@@ -7269,8 +7370,16 @@ const ProjectsStack = ({
 
   useEffect(
     () => () => {
+      selectPendingRef.current = false;
       clearSelectTimer();
       clearPressLockTimer();
+      pressGestureRef.current = {
+        cardId: null,
+        pointerId: null,
+        startX: 0,
+        startY: 0,
+        cancelled: false,
+      };
     },
     [clearPressLockTimer, clearSelectTimer],
   );
@@ -7315,7 +7424,7 @@ const ProjectsStack = ({
             {PROJECT_CARDS.map((card, index) => {
               const isPressing = pressLockId === card.id;
               const isHovered = hoverCardId === card.id;
-              /** Click settle always returns to rest; plain hover still uses the hover scale. */
+              /** Click settle returns to rest; plain hover still uses hover scale. whileTap owns press-in. */
               const restScale =
                 reduceMotion || isPressing || !isHovered
                   ? 1
@@ -7326,7 +7435,7 @@ const ProjectsStack = ({
                 className="projects-main-card-entrance-slot min-w-0 overflow-visible transform-gpu"
                 variants={projectsCardItemEntrance}
               >
-                {/* PORTFOLIO SPEED: tap → hover size; hover off only after settle if pointer left. */}
+                {/* PORTFOLIO SPEED bounce — native media drag blocked separately (Brave hit-test freeze). */}
                 <motion.div
                   className="project-card-tap-shell w-full origin-center"
                   initial={false}
@@ -7343,7 +7452,9 @@ const ProjectsStack = ({
                   <button
                     type="button"
                     data-carousel-card
-                    onPointerDown={() => handleCardPointerDown(card.id)}
+                    draggable={false}
+                    onDragStart={suppressCardNativeDrag}
+                    onPointerDown={(e) => handleCardPointerDown(card.id, e)}
                     onPointerUp={() => handleCardPointerUpOrCancel(card.id)}
                     onPointerCancel={() => handleCardPointerUpOrCancel(card.id)}
                     onClick={(e) => handleCardActivate(card.id, e.currentTarget)}
@@ -7384,6 +7495,8 @@ const ProjectsStack = ({
                                 loop
                                 playsInline
                                 preload="metadata"
+                                draggable={false}
+                                onDragStart={suppressCardNativeDrag}
                                 aria-label={`${showcaseProjectDisplayTitle(card)} preview`}
                                 className={`block h-full w-full ${
                                   (tabletThumbnailValues?.[
@@ -7427,6 +7540,8 @@ const ProjectsStack = ({
                                   loading="eager"
                                   decoding="async"
                                   fetchPriority="high"
+                                  draggable={false}
+                                  onDragStart={suppressCardNativeDrag}
                                   className={`h-full w-full ${
                                     (tabletThumbnailValues?.[
                                       card.id as ProjectsTabletThumbnailId
@@ -9126,14 +9241,15 @@ const PalaceProjects = ({
     };
   }, []);
 
+  /** Desktop list cluster: never use CSS zoom (Brave hit-test freeze on press-drag). */
+  const projectsShowcaseClusterStyleMode = "transform";
+
   /** Mobile + tablet portrait: FEATURED WRITING lands with Content Writing already active. */
   const skipProjectsFeaturedTabEntrance =
     projectsMobileViewport || projectsTabletPortraitViewport;
 
   const projectsShowcaseClusterStyleActive =
     projectsDesktopViewport || projectsTabletLandscapeViewport;
-  const projectsShowcaseDesktopCrispCluster =
-    projectsDesktopViewport && !projectsTabletLandscapeViewport;
 
   const projectsDesktopDebugActive = portfolioDebugEnabled && projectsDesktopViewport;
 
@@ -9192,7 +9308,7 @@ const PalaceProjects = ({
     ? buildProjectsShowcaseDesktopClusterStyle(
         projectsShowcaseLayoutValues,
         "left",
-        projectsShowcaseDesktopCrispCluster ? "crisp" : "transform",
+        projectsShowcaseClusterStyleMode,
       )
     : undefined;
 
@@ -9200,7 +9316,7 @@ const PalaceProjects = ({
     ? buildProjectsShowcaseDesktopClusterStyle(
         projectsShowcaseLayoutValues,
         "right",
-        projectsShowcaseDesktopCrispCluster ? "crisp" : "transform",
+        projectsShowcaseClusterStyleMode,
       )
     : undefined;
 
@@ -9545,16 +9661,19 @@ const PalaceProjects = ({
     return bindSectionGridOverlayHeightSync(section, "--projects-grid-overlay-height");
   }, [projectDetailInFlow, visualDesignDetailInFlow, activeProjectId]);
 
-  /** Mobile / iPad landscape VISUAL DESIGN: panel scroller retains scroll across detail open/close — reset to top. */
+  /** Mobile / iPad landscape/portrait VISUAL DESIGN: panel scroller retains scroll across detail open/close — reset to top. */
   useLayoutEffect(() => {
     if (typeof window === "undefined") return;
     const isMobile = window.matchMedia(PROJECTS_MOBILE_PANEL_MQ).matches;
     const isVisualDesignTabletLandscape =
       activeProjectId === "project-visual-design" &&
       window.matchMedia(PROJECTS_TABLET_LANDSCAPE_MQ).matches;
+    const isVisualDesignTabletPortrait =
+      activeProjectId === "project-visual-design" &&
+      window.matchMedia(PROJECTS_TABLET_PORTRAIT_MQ).matches;
     const enteringDetail = Boolean(activeProjectId && projectDetailInFlow);
     if (enteringDetail) {
-      if (!isMobile && !isVisualDesignTabletLandscape) return;
+      if (!isMobile && !isVisualDesignTabletLandscape && !isVisualDesignTabletPortrait) return;
     } else if (!isMobile) {
       // Back to PROJECTS list — mobile only (detail scroll was applied to the list).
       return;
@@ -13807,6 +13926,9 @@ export default function Home() {
       });
 
       projectMediaWarmupRef.current = handles;
+      prefetchMasonryImageRatios(
+        PROJECT_CARDS.flatMap((card) => card.detailGallery ?? []),
+      );
     }, PROJECT_MEDIA_WARMUP_DELAY_MS);
 
     return () => window.clearTimeout(timer);
