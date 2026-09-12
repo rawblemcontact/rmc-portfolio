@@ -9308,6 +9308,12 @@
     box-shadow: none !important;
   }
 
+  /* Glyph only — keep the 28px hit target and selector chrome unchanged. */
+  .featured-tabs-mobile-arrow-clock .featured-tabs-scroll-hint {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+
   .featured-writing-inner-rule-body-top > .profile-card-surface {
     border: 0 !important;
   }
