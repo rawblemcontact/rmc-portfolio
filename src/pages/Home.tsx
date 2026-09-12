@@ -1603,6 +1603,8 @@ const HERO_VIDEO_REVEAL_DELAY_MOBILE_EXTRA_S = 0;
 const HERO_SETTLE_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 /** scaleX reveal — no overshoot (y2 ≤ 1) so the card does not pop past full width at the end. */
 const HERO_VIDEO_SCALE_EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
+/** LPM / autoplay-block prompt — fade in before a tap may start entrance. */
+const HERO_TAP_TO_ENTER_FADE_MS = 450;
 /** Rise from viewport center → final layout Y. */
 const HERO_VIDEO_RISE_DUR_S = 0.55;
 /** Hold at viewport center after open before rising (reel keeps looping under text). */
@@ -3153,6 +3155,12 @@ const Hero = ({
   const heroVideoPlaybackArmedRef = useRef(false);
   /** User gestured — LPM / Safari may only allow play() in that trusted stack. */
   const heroVideoGestureUnlockRef = useRef(false);
+  /** Starts open + play after TAP TO ENTER (LPM / autoplay blocked only). */
+  const heroLpmBeginOpenRef = useRef<(() => void) | null>(null);
+  const [heroTapToEnterVisible, setHeroTapToEnterVisible] = useState(false);
+  const [heroTapToEnterInteractive, setHeroTapToEnterInteractive] = useState(false);
+  const heroTapToEnterInteractiveRef = useRef(false);
+  heroTapToEnterInteractiveRef.current = heroTapToEnterInteractive;
   /** Computed final translateY after rise (mobile ROT nudge, else 0). */
   const videoFinalYRef = useRef(0);
   const videoEntranceGenRef = useRef(0);
@@ -3175,12 +3183,12 @@ const Hero = ({
   /** Stable gate — avoid restarting entrance when mobile width px jitters. */
   const heroEntranceMobileWidthReady = !isMobileHeroLayout || mobileLockupWidthPx != null;
 
-  const kickHeroVideoPlay = useCallback(() => {
+  const prepareAndPlayHeroVideo = useCallback((): Promise<boolean> => {
     const video = heroVideoRef.current;
-    if (!video) return;
+    if (!video) return Promise.resolve(true);
     if (isHeroPinchZoomed()) {
       video.pause();
-      return;
+      return Promise.resolve(true);
     }
     /*
      * Explicit props before play() — Low Power Mode / Safari often ignore
@@ -3196,17 +3204,29 @@ const Hero = ({
     video.setAttribute("webkit-playsinline", "");
     video.setAttribute("autoplay", "");
     const playAttempt = video.play();
-    if (playAttempt !== undefined) {
-      void playAttempt.then(
-        () => {
-          heroVideoGestureUnlockRef.current = true;
-        },
-        () => {
-          /* NotAllowedError under LPM — wait for gesture unlock. */
-        },
-      );
+    if (playAttempt === undefined) {
+      heroVideoGestureUnlockRef.current = true;
+      return Promise.resolve(true);
     }
+    return playAttempt.then(
+      () => {
+        heroVideoGestureUnlockRef.current = true;
+        return true;
+      },
+      (err: unknown) => {
+        const name =
+          err && typeof err === "object" && "name" in err
+            ? String((err as { name: string }).name)
+            : "";
+        /* NotAllowedError under LPM — hold entrance until TAP TO ENTER. */
+        return name !== "NotAllowedError";
+      },
+    );
   }, []);
+
+  const kickHeroVideoPlay = useCallback(() => {
+    void prepareAndPlayHeroVideo();
+  }, [prepareAndPlayHeroVideo]);
 
   const startHeroVideoPlayback = useCallback(() => {
     heroVideoPlaybackArmedRef.current = true;
@@ -3832,7 +3852,10 @@ const Hero = ({
       videoOpenPinnedRef.current = false;
       videoEntranceSettledRef.current = false;
       heroVideoPlaybackArmedRef.current = false;
+      heroLpmBeginOpenRef.current = null;
       setHeroVideoShouldPlay(false);
+      setHeroTapToEnterVisible(false);
+      setHeroTapToEnterInteractive(false);
       videoScaleX.set(0);
       videoEntranceY.set(0);
       setLockupFadeReady(false);
@@ -3844,13 +3867,30 @@ const Hero = ({
 
     if (reduceMotion) {
       videoOpenPinnedRef.current = true;
-      videoEntranceSettledRef.current = true;
-      videoScaleX.set(1);
-      videoEntranceY.set(videoFinalYRef.current);
-      startHeroVideoPlayback();
-      setLockupFadeReady(true);
-      setSliderAnimDone(true);
-      return;
+      let cancelled = false;
+      const snapOpen = () => {
+        if (cancelled) return;
+        videoEntranceSettledRef.current = true;
+        videoScaleX.set(1);
+        videoEntranceY.set(videoFinalYRef.current);
+        startHeroVideoPlayback();
+        setHeroTapToEnterVisible(false);
+        setHeroTapToEnterInteractive(false);
+        setLockupFadeReady(true);
+        setSliderAnimDone(true);
+      };
+      heroLpmBeginOpenRef.current = snapOpen;
+      void prepareAndPlayHeroVideo().then((allowed) => {
+        if (cancelled) return;
+        if (allowed) snapOpen();
+        else setHeroTapToEnterVisible(true);
+      });
+      return () => {
+        cancelled = true;
+        if (heroLpmBeginOpenRef.current === snapOpen) {
+          heroLpmBeginOpenRef.current = null;
+        }
+      };
     }
 
     if (videoOpenPinnedRef.current) return;
@@ -3884,6 +3924,7 @@ const Hero = ({
     mobileLockupWidthPx,
     reduceMotion,
     startHeroVideoPlayback,
+    prepareAndPlayHeroVideo,
     videoEntranceY,
     videoScaleX,
   ]);
@@ -3894,6 +3935,9 @@ const Hero = ({
     if (!videoOpenPinnedRef.current || videoEntranceSettledRef.current) return;
 
     const gen = ++videoEntranceGenRef.current;
+    let cancelled = false;
+    let began = false;
+    let scaleControl: { stop: () => void } | null = null;
     let riseControl: { stop: () => void } | null = null;
     let fallbackTimer: number | null = null;
     let centerHoldTimer: number | null = null;
@@ -3954,9 +3998,6 @@ const Hero = ({
       }, HERO_VIDEO_CENTER_HOLD_MS);
     };
 
-    /* Start the reel as the card begins opening — don't wait for open to finish. */
-    startHeroVideoPlayback();
-
     const video = heroVideoRef.current;
     const markVideoPastTextGate = () => {
       if (gen !== videoEntranceGenRef.current || videoPastTextGate) return;
@@ -3989,29 +4030,49 @@ const Hero = ({
     /* Paused under pinch — currentTime never advances; don't trap ROBBIE. */
     if (isHeroPinchZoomed()) markVideoPastTextGate();
 
-    /* If LPM freezes currentTime, don't trap name/PORTFOLIO forever. */
-    textGateFallbackTimer = window.setTimeout(() => {
-      markVideoPastTextGate();
-    }, HERO_TEXT_MIN_VIDEO_TIME_S * 1000 + 8000);
+    const beginOpenAnims = () => {
+      if (cancelled || began || gen !== videoEntranceGenRef.current) return;
+      began = true;
+      setHeroTapToEnterVisible(false);
+      setHeroTapToEnterInteractive(false);
+      /* Start the reel as the card begins opening — don't wait for open to finish. */
+      startHeroVideoPlayback();
 
-    /* Safety — never leave the card centered forever if open never completes. */
-    fallbackTimer = window.setTimeout(() => {
-      openComplete = true;
-      beginRise();
-    }, HERO_VIDEO_RISE_FALLBACK_MS);
+      /* If LPM freezes currentTime, don't trap name/PORTFOLIO forever. */
+      textGateFallbackTimer = window.setTimeout(() => {
+        markVideoPastTextGate();
+      }, HERO_TEXT_MIN_VIDEO_TIME_S * 1000 + 8000);
 
-    const scaleControl = animate(videoScaleX, 1, {
-      duration: HERO_NAME_SETTLE_DUR_S,
-      ease: HERO_VIDEO_SCALE_EASE,
-      onComplete: () => {
-        if (gen !== videoEntranceGenRef.current) return;
+      /* Safety — never leave the card centered forever if open never completes. */
+      fallbackTimer = window.setTimeout(() => {
         openComplete = true;
-        scheduleRiseAfterCenterHold();
-      },
+        beginRise();
+      }, HERO_VIDEO_RISE_FALLBACK_MS);
+
+      scaleControl = animate(videoScaleX, 1, {
+        duration: HERO_NAME_SETTLE_DUR_S,
+        ease: HERO_VIDEO_SCALE_EASE,
+        onComplete: () => {
+          if (gen !== videoEntranceGenRef.current) return;
+          openComplete = true;
+          scheduleRiseAfterCenterHold();
+        },
+      });
+    };
+
+    heroLpmBeginOpenRef.current = beginOpenAnims;
+    void prepareAndPlayHeroVideo().then((allowed) => {
+      if (cancelled || gen !== videoEntranceGenRef.current) return;
+      if (allowed) beginOpenAnims();
+      else setHeroTapToEnterVisible(true);
     });
 
     return () => {
-      scaleControl.stop();
+      cancelled = true;
+      if (heroLpmBeginOpenRef.current === beginOpenAnims) {
+        heroLpmBeginOpenRef.current = null;
+      }
+      scaleControl?.stop();
       if (fallbackTimer != null) window.clearTimeout(fallbackTimer);
       if (centerHoldTimer != null) window.clearTimeout(centerHoldTimer);
       if (textBeatTimer != null) window.clearTimeout(textBeatTimer);
@@ -4024,7 +4085,7 @@ const Hero = ({
        * completed — early Strict Mode remounts can restart; late breakpoint
        * interrupts must not leave a stranded center-open offset.
        */
-      if (!videoEntranceSettledRef.current && videoOpenPinnedRef.current) {
+      if (began && !videoEntranceSettledRef.current && videoOpenPinnedRef.current) {
         const finalY = isMobileHeroLayoutRef.current ? videoFinalYRef.current : 0;
         videoScaleX.set(1);
         videoEntranceY.set(finalY);
@@ -4042,9 +4103,31 @@ const Hero = ({
     heroEntranceMobileWidthReady,
     reduceMotion,
     startHeroVideoPlayback,
+    prepareAndPlayHeroVideo,
     videoEntranceY,
     videoScaleX,
   ]);
+
+  useEffect(() => {
+    if (!heroTapToEnterVisible) {
+      setHeroTapToEnterInteractive(false);
+      return;
+    }
+    if (reduceMotion) {
+      setHeroTapToEnterInteractive(true);
+      return;
+    }
+    const t = window.setTimeout(() => {
+      setHeroTapToEnterInteractive(true);
+    }, HERO_TAP_TO_ENTER_FADE_MS);
+    return () => window.clearTimeout(t);
+  }, [heroTapToEnterVisible, reduceMotion]);
+
+  const onHeroTapToEnter = useCallback(() => {
+    if (!heroTapToEnterInteractiveRef.current) return;
+    heroVideoGestureUnlockRef.current = true;
+    heroLpmBeginOpenRef.current?.();
+  }, []);
 
   /**
    * Keep video Y correct across mobile ↔ crop. If the breakpoint flips mid-entrance,
@@ -4403,6 +4486,35 @@ const Hero = ({
       className={`relative h-[100svh] w-full overflow-hidden bg-black text-white ${SLIDE_NO_Y_SCROLL}`}
     >
       <SlideGridOverlay />
+      {heroTapToEnterVisible && (
+        <motion.div
+          role="button"
+          tabIndex={0}
+          aria-label="Tap to enter"
+          data-hero-tap-to-enter="true"
+          className={`absolute inset-0 z-[80] flex items-center justify-center ${
+            heroTapToEnterInteractive ? "pointer-events-auto cursor-pointer" : "pointer-events-none"
+          }`}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{
+            duration: reduceMotion ? 0 : HERO_TAP_TO_ENTER_FADE_MS / 1000,
+            ease: HERO_VIDEO_SCALE_EASE,
+          }}
+          onPointerDown={onHeroTapToEnter}
+          onClick={onHeroTapToEnter}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              onHeroTapToEnter();
+            }
+          }}
+        >
+          <span className="font-mono text-sm uppercase tracking-[0.22em] text-white/90">
+            TAP TO ENTER
+          </span>
+        </motion.div>
+      )}
       {heroStageMounted && (
       <motion.div
         initial={false}
