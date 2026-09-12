@@ -9053,10 +9053,12 @@ const PalaceProjects = ({
   const [projectsEntranceLive, setProjectsEntranceLive] = useState(false);
   /** True after full PROJECTS entrance — gates card thumbnail *fade* (mount is earlier). */
   const [projectsEntranceSettled, setProjectsEntranceSettled] = useState(!!reduceMotion);
-  /** Mount thumbs under opacity 0 once cards start (decode early; no late DOM insert nudge). */
-  const [projectsThumbnailsMountArmed, setProjectsThumbnailsMountArmed] = useState(
-    !!reduceMotion,
-  );
+  /**
+   * Mount thumbs under opacity 0 while cards are still hidden so decode can run
+   * before the land. Do not alter image sources, loading strategy, card timing,
+   * fade timing, or entrance choreography — only this flag is armed earlier.
+   */
+  const projectsThumbnailsMountArmed = true;
   const [carouselAutoAdvanceReady, setCarouselAutoAdvanceReady] = useState(!!reduceMotion);
   const activeCard = activeProjectId ? PROJECT_CARDS.find((c) => c.id === activeProjectId) ?? null : null;
   const illustrationsDetailNoHero = Boolean(activeCard?.detailGallery?.length);
@@ -9279,7 +9281,6 @@ const PalaceProjects = ({
       setProjectsFeaturedTabActive(true);
       setProjectsEntranceLive(false);
       setProjectsEntranceSettled(true);
-      setProjectsThumbnailsMountArmed(true);
       return;
     }
     // Arm only — never collapse staged visuals when entrance disarms on leave.
@@ -9307,7 +9308,7 @@ const PalaceProjects = ({
           1000;
     /** Drop card will-change before tab lights — avoids compositor nudge on clear. */
     const layerClearMs = Math.max(0, tabActivateMs - PROJECTS_WILL_CHANGE_CLEAR_LEAD_MS);
-    /** Fade thumbs after tab chrome lands (media already mounted during card stagger). */
+    /** Fade thumbs after tab chrome lands (media already mounted while cards were hidden). */
     const thumbnailsFadeMs = skipProjectsFeaturedTabEntrance
       ? featuredStartMs + PROJECTS_FEATURED_ENTRANCE_DUR_S * 1000
       : tabActivateMs + PROJECTS_THUMBNAILS_FADE_AFTER_TAB_MS;
@@ -9318,7 +9319,6 @@ const PalaceProjects = ({
     }
     const cardsId = window.setTimeout(() => {
       setProjectsCardsRevealed(true);
-      setProjectsThumbnailsMountArmed(true);
     }, cardsStartMs);
     const featuredId = window.setTimeout(() => {
       setProjectsFeaturedRevealed(true);
