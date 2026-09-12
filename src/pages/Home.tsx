@@ -665,7 +665,7 @@ function SideNavGridBackdrop() {
   const style = useSyncedGridOverlayStyle();
   return (
     <div
-      className="pointer-events-none absolute inset-0 z-0 grid-drift-bg portfolio-grid-overlay"
+      className="side-nav-grid-backdrop pointer-events-none absolute inset-0 z-0 grid-drift-bg portfolio-grid-overlay"
       style={style}
       aria-hidden
     />
@@ -1605,6 +1605,8 @@ const HERO_SETTLE_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 const HERO_VIDEO_SCALE_EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 /** LPM / autoplay-block prompt — fade in before a tap may start entrance. */
 const HERO_TAP_TO_ENTER_FADE_MS = 450;
+/** Settle buffer after play() before open or TAP TO ENTER — does not delay play(). */
+const HERO_TRANSITION_BUFFER_MS = 500;
 /** Rise from viewport center → final layout Y. */
 const HERO_VIDEO_RISE_DUR_S = 0.55;
 /** Hold at viewport center after open before rising (reel keeps looping under text). */
@@ -3880,13 +3882,18 @@ const Hero = ({
         setSliderAnimDone(true);
       };
       heroLpmBeginOpenRef.current = snapOpen;
+      let transitionBufferTimer: number | null = null;
       void prepareAndPlayHeroVideo().then((allowed) => {
         if (cancelled) return;
-        if (allowed) snapOpen();
-        else setHeroTapToEnterVisible(true);
+        transitionBufferTimer = window.setTimeout(() => {
+          if (cancelled) return;
+          if (allowed) snapOpen();
+          else setHeroTapToEnterVisible(true);
+        }, HERO_TRANSITION_BUFFER_MS);
       });
       return () => {
         cancelled = true;
+        if (transitionBufferTimer != null) window.clearTimeout(transitionBufferTimer);
         if (heroLpmBeginOpenRef.current === snapOpen) {
           heroLpmBeginOpenRef.current = null;
         }
@@ -4061,14 +4068,19 @@ const Hero = ({
     };
 
     heroLpmBeginOpenRef.current = beginOpenAnims;
+    let transitionBufferTimer: number | null = null;
     void prepareAndPlayHeroVideo().then((allowed) => {
       if (cancelled || gen !== videoEntranceGenRef.current) return;
-      if (allowed) beginOpenAnims();
-      else setHeroTapToEnterVisible(true);
+      transitionBufferTimer = window.setTimeout(() => {
+        if (cancelled || gen !== videoEntranceGenRef.current) return;
+        if (allowed) beginOpenAnims();
+        else setHeroTapToEnterVisible(true);
+      }, HERO_TRANSITION_BUFFER_MS);
     });
 
     return () => {
       cancelled = true;
+      if (transitionBufferTimer != null) window.clearTimeout(transitionBufferTimer);
       if (heroLpmBeginOpenRef.current === beginOpenAnims) {
         heroLpmBeginOpenRef.current = null;
       }
@@ -5218,7 +5230,7 @@ const SideNavOverlay = ({
           key="sidenav-overlay"
           type="button"
           aria-label="Close navigation"
-          className="fixed inset-0 z-[50] bg-black"
+          className="fixed inset-0 z-[50] overflow-hidden bg-black"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -6951,11 +6963,11 @@ const projectsMainCardRowEntrance = (rm: boolean): Variants => ({
 });
 
 /** Opacity snaps; y + scale ease — matches SkillArsenal card land. */
-const projectsMainCardItemEntrance = (rm: boolean): Variants => ({
+const projectsMainCardItemEntrance = (rm: boolean, skipScale = false): Variants => ({
   hidden: {
     opacity: rm ? 1 : 0,
     y: rm ? 0 : PROJECTS_MAIN_CARD_ENTRANCE_Y,
-    scale: rm ? 1 : PROJECTS_MAIN_CARD_ENTRANCE_SCALE,
+    scale: rm || skipScale ? 1 : PROJECTS_MAIN_CARD_ENTRANCE_SCALE,
   },
   visible: {
     opacity: 1,
@@ -6969,7 +6981,7 @@ const projectsMainCardItemEntrance = (rm: boolean): Variants => ({
         ease: EASE.out,
       },
       scale: {
-        duration: rm ? 0 : PROJECTS_MAIN_CARD_ENTRANCE_DUR_S,
+        duration: rm || skipScale ? 0 : PROJECTS_MAIN_CARD_ENTRANCE_DUR_S,
         ease: EASE.out,
       },
     },
@@ -7153,6 +7165,10 @@ const ProjectsStack = ({
   thumbnailsMountArmed = true,
   /** Fade media in after entrance sequence. */
   thumbnailsFadeArmed = true,
+  /** Phone entrance: skip inner tap-shell scale until PROJECTS settle. */
+  freezeTapShellScale = false,
+  /** Phone entrance: no 0.965→1 scale tween; y land unchanged. */
+  skipEntranceScale = false,
 }: {
   onSelect: (id: string, el: HTMLElement) => void;
   focusProjectId?: string | null;
@@ -7164,6 +7180,8 @@ const ProjectsStack = ({
   cardsEntranceArmed?: boolean;
   thumbnailsMountArmed?: boolean;
   thumbnailsFadeArmed?: boolean;
+  freezeTapShellScale?: boolean;
+  skipEntranceScale?: boolean;
 }) => {
   const reduceMotion = useReducedMotion();
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
@@ -7186,7 +7204,10 @@ const ProjectsStack = ({
   const rm = !!reduceMotion;
   const cardsEntranceLive = rm || cardsEntranceArmed;
   const projectsCardRowEntrance = useMemo(() => projectsMainCardRowEntrance(rm), [rm]);
-  const projectsCardItemEntrance = useMemo(() => projectsMainCardItemEntrance(rm), [rm]);
+  const projectsCardItemEntrance = useMemo(
+    () => projectsMainCardItemEntrance(rm, skipEntranceScale),
+    [rm, skipEntranceScale],
+  );
   const mediaMountAllowed = rm || thumbnailsMountArmed;
 
   const requiredMediaCount = useMemo(
@@ -7439,7 +7460,11 @@ const ProjectsStack = ({
                 <motion.div
                   className="project-card-tap-shell w-full origin-center"
                   initial={false}
-                  animate={reduceMotion ? undefined : { scale: restScale }}
+                  animate={
+                    reduceMotion || freezeTapShellScale
+                      ? undefined
+                      : { scale: restScale }
+                  }
                   whileTap={reduceMotion ? undefined : PROJECT_CARD_TAP}
                   transition={
                     isPressing ? PROJECT_CARD_TAP_SPRING : PROJECT_CARD_HOVER.transition
@@ -10106,6 +10131,8 @@ const PalaceProjects = ({
                 cardsEntranceArmed={!!projectsCardsRevealed}
                 thumbnailsMountArmed={projectsThumbnailsMountArmed}
                 thumbnailsFadeArmed={projectsEntranceSettled}
+                freezeTapShellScale={projectsMobileViewport && !projectsEntranceSettled}
+                skipEntranceScale={projectsMobileViewport}
               />
             </motion.div>
           </motion.div>

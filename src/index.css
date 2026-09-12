@@ -669,6 +669,15 @@
     }
   }
 
+  @media (max-width: 767.98px) {
+    #hero > .grid-drift-bg.portfolio-grid-overlay,
+    #menu > .grid-drift-bg.portfolio-grid-overlay,
+    .side-nav-grid-backdrop.grid-drift-bg.portfolio-grid-overlay {
+      inset: -48px;
+      animation-name: gridDriftSmoothCompositor;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .grid-drift-bg {
       animation: none;

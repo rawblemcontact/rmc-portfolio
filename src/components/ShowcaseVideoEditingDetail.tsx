@@ -1353,24 +1353,20 @@ export function ShowcaseVideoEditingDetail({
             endDetailCardHeightTransition(null);
           }
           onSettled?.();
-          if (switchEpoch != null) {
-            scheduleFitDetailCardToLiveBodyRef.current();
-          }
           return;
         }
 
         if (Math.abs(toHeight - fromHeight) <= 0.5) {
           commitHeight(surface, toHeight, maxHeight);
           onSettled?.();
-          if (switchEpoch != null) {
-            scheduleFitDetailCardToLiveBodyRef.current();
-          }
           return;
         }
 
-        // Tab swaps: drive height on rAF. WAAPI/CSS height on this flex card does
-        // not update used height until commit while outgoing copy is still mounted.
-        if (switchEpoch == null) {
+        // Tab swaps + natural (phone) work switches: drive height on rAF.
+        // WAAPI/CSS height on this flex card does not update used height until
+        // commit while outgoing copy is still mounted. Live-body fit after
+        // work-switch reveal eases any probe mismatch — never snap.
+        if (switchEpoch == null || maxHeight == null) {
           if (detailCardResizeRafRef.current != null) {
             window.cancelAnimationFrame(detailCardResizeRafRef.current);
             detailCardResizeRafRef.current = null;
@@ -1383,6 +1379,12 @@ export function ShowcaseVideoEditingDetail({
           const start = performance.now();
           const tick = (now: number) => {
             if (epoch !== detailCardResizeEpochRef.current) return;
+            if (isSwitchStale()) {
+              detailCardResizeRafRef.current = null;
+              surface.classList.remove("video-editing-detail-meta-card--tweening");
+              endDetailCardHeightTransition(null);
+              return;
+            }
             const t = Math.min(1, (now - start) / DETAIL_CARD_RESIZE_DUR_MS);
             const k = 1 - (1 - t) ** 3;
             const cap = detailCardMaxHeightPxRef.current;
@@ -1494,15 +1496,13 @@ export function ShowcaseVideoEditingDetail({
             return;
           }
 
-          // Natural drawers: keep the probe height we tweened to. Re-measuring the
-          // live body here (tab swaps) reads outgoing copy and reverse-tweens.
+          // Natural drawers: keep the probe height we tweened to. Live-body
+          // correction runs after copy is visible (revealAfterHeightSettle) and
+          // eases — do not snap here.
           surface.style.height = `${toHeight}px`;
           surface.style.transition = "none";
           endDetailCardHeightTransition(null);
           onSettled?.();
-          if (switchEpoch != null) {
-            scheduleFitDetailCardToLiveBodyRef.current();
-          }
         };
 
         resizeAnimation.onfinish = finishResize;
@@ -1535,7 +1535,10 @@ export function ShowcaseVideoEditingDetail({
     ],
   );
 
-  /** After copy is painted, size the drawer to the live body — hidden probes can wrap short. */
+  /**
+   * After copy is painted, ease the drawer to the live body — hidden probes can
+   * wrap short. Tween (same rAF ease as tab swaps); never snap height at the end.
+   */
   const fitDetailCardToLiveBody = useCallback((opts?: { force?: boolean }) => {
     const force = Boolean(opts?.force);
     if (
@@ -1558,15 +1561,57 @@ export function ShowcaseVideoEditingDetail({
     const next = measureDetailCardHeightForProbe(surface, live);
     if (next <= 0) return;
     const maxHeight = detailCardMaxHeightPxRef.current;
-    const clamped = maxHeight != null ? Math.min(next, maxHeight) : next;
-    if (Math.abs(surface.offsetHeight - clamped) <= 1) return;
-    surface.style.height = `${clamped}px`;
-    surface.style.transition = "none";
-    if (maxHeight != null) {
-      detailCardTransitionHeightRef.current = clamped;
-      setDetailCardHeightPx((prev) => (prev === clamped ? prev : clamped));
+    const toHeight = maxHeight != null ? Math.min(next, maxHeight) : next;
+    const fromHeightRaw = surface.offsetHeight;
+    const fromHeight =
+      maxHeight != null ? Math.min(fromHeightRaw, maxHeight) : fromHeightRaw;
+    if (Math.abs(fromHeight - toHeight) <= 1) return;
+
+    if (detailCardResizeRafRef.current != null) {
+      window.cancelAnimationFrame(detailCardResizeRafRef.current);
+      detailCardResizeRafRef.current = null;
     }
-  }, []);
+
+    const epoch = ++detailCardResizeEpochRef.current;
+    beginDetailCardHeightTransition();
+    surface.classList.add("video-editing-detail-meta-card--tweening");
+    surface.style.minHeight = "0px";
+    surface.style.transition = "none";
+    surface.style.height = `${fromHeight}px`;
+    detailCardTransitionHeightRef.current = fromHeight;
+    if (maxHeight != null) surface.style.maxHeight = `${maxHeight}px`;
+
+    const start = performance.now();
+    const tick = (now: number) => {
+      if (epoch !== detailCardResizeEpochRef.current) return;
+      const t = Math.min(1, (now - start) / DETAIL_CARD_RESIZE_DUR_MS);
+      const k = 1 - (1 - t) ** 3;
+      const cap = detailCardMaxHeightPxRef.current;
+      const h = Math.min(
+        fromHeight + (toHeight - fromHeight) * k,
+        cap ?? Number.POSITIVE_INFINITY,
+      );
+      surface.style.height = `${h}px`;
+      detailCardTransitionHeightRef.current = h;
+      if (t < 1) {
+        detailCardResizeRafRef.current = window.requestAnimationFrame(tick);
+        return;
+      }
+      detailCardResizeRafRef.current = null;
+      surface.classList.remove("video-editing-detail-meta-card--tweening");
+      const settled =
+        cap != null ? Math.min(toHeight, cap) : toHeight;
+      surface.style.height = `${settled}px`;
+      if (maxHeight != null) {
+        detailCardTransitionHeightRef.current = settled;
+        setDetailCardHeightPx((prev) => (prev === settled ? prev : settled));
+        endDetailCardHeightTransition(settled);
+      } else {
+        endDetailCardHeightTransition(null);
+      }
+    };
+    detailCardResizeRafRef.current = window.requestAnimationFrame(tick);
+  }, [beginDetailCardHeightTransition, endDetailCardHeightTransition]);
 
   const scheduleFitDetailCardToLiveBody = useCallback(() => {
     for (const id of detailCardLiveFitTimersRef.current) window.clearTimeout(id);
