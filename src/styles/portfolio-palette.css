@@ -12,8 +12,8 @@
   /* Main menu / section accents (exact). `orange` = CONTACT (indigo). */
   --palette-red: #ef3a2c;
   --palette-orange: #583eb7;
-  /* Lemon, full sat, lifted so the 2px bar doesn’t go dim on black. */
-  --palette-yellow: #ffec42;
+  /* Lemon — same hex as the hero lockup yellow square. */
+  --palette-yellow: #ffe73a;
   /** Must stay identical to menu yellow — do not give PROJECTS a second hex. */
   --palette-yellow-projects: var(--palette-yellow);
   --palette-green: #0fb93c;
