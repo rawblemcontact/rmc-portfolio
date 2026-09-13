@@ -5,11 +5,20 @@ import { isNavLayoutFrozen } from "../lib/navLayoutFreeze";
 const MOBILE_LANDSCAPE_MQ =
   "(orientation: landscape) and (max-height: 500px) and (max-width: 960px)";
 
+const GRID_DRIFT_DURATION = 12;
+const GRID_CELL_SIZE = 48;
+const GRID_OVERLAY_STYLE: React.CSSProperties = {
+  backgroundColor: "#121212",
+  backgroundImage: `repeating-linear-gradient(90deg, rgba(255,255,255,0.38) 0, rgba(255,255,255,0.38) 1px, rgba(255,255,255,0) 1px, rgba(255,255,255,0) ${GRID_CELL_SIZE}px), repeating-linear-gradient(0deg, rgba(255,255,255,0.38) 0, rgba(255,255,255,0.38) 1px, rgba(255,255,255,0) 1px, rgba(255,255,255,0) ${GRID_CELL_SIZE}px)`,
+  backgroundSize: `${GRID_CELL_SIZE}px ${GRID_CELL_SIZE}px`,
+  WebkitBackgroundSize: `${GRID_CELL_SIZE}px ${GRID_CELL_SIZE}px`,
+};
+
 /**
- * Phone-only landscape gate. Covers the SPA and asks the user to rotate back
- * to portrait. Tablet / desktop are untouched (short landscape height + width
- * cap excludes iPad landscape and normal desktop). True Screen Orientation
- * lock is not used — unreliable on iOS Safari.
+ * Phone-only landscape gate. Covers the SPA with the site grid on black.
+ * Tablet / desktop are untouched (short landscape height + width cap excludes
+ * iPad landscape and normal desktop). True Screen Orientation lock is not used
+ * — unreliable on iOS Safari.
  *
  * Note: `(max-width: 767px) and (orientation: landscape)` does not work for
  * real phones — in landscape the CSS width is the long edge (~667–932px).
@@ -19,6 +28,12 @@ export function MobileLandscapeGate() {
     if (typeof window === "undefined") return false;
     return window.matchMedia(MOBILE_LANDSCAPE_MQ).matches;
   });
+  const [delay] = useState(
+    () =>
+      typeof performance === "undefined"
+        ? "0s"
+        : `-${(performance.now() / 1000) % GRID_DRIFT_DURATION}s`,
+  );
 
   useEffect(() => {
     const mq = window.matchMedia(MOBILE_LANDSCAPE_MQ);
@@ -44,59 +59,20 @@ export function MobileLandscapeGate() {
 
   return (
     <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Rotate device to portrait"
-      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-5 bg-black px-6 text-white"
+      aria-hidden
+      className="fixed inset-0 z-[9999] overflow-hidden bg-black"
       style={{ touchAction: "none" }}
       onTouchMove={(e) => e.preventDefault()}
       onWheel={(e) => e.preventDefault()}
     >
       <div
-        className="pointer-events-none absolute inset-0 portfolio-grid-overlay opacity-40"
-        aria-hidden
+        className="mobile-landscape-gate-grid pointer-events-none absolute inset-0 z-0 grid-drift-bg portfolio-grid-overlay"
+        style={{
+          ...GRID_OVERLAY_STYLE,
+          ["--portfolio-grid-drift-delay" as string]: delay,
+          animationDelay: delay,
+        }}
       />
-      <svg
-        width="48"
-        height="48"
-        viewBox="0 0 48 48"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className="relative z-[1] text-white motion-safe:animate-pulse"
-        aria-hidden
-      >
-        <rect
-          x="14"
-          y="6"
-          width="20"
-          height="36"
-          rx="3"
-          stroke="currentColor"
-          strokeWidth="2"
-        />
-        <path
-          d="M38 18c3.5 2.5 5 6.5 5 10.5S41.5 36 38 38.5"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-        <path
-          d="M36 36.5l2 3.5 3.5-2"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-      <p className="relative z-[1] m-0 font-mono text-[0.7rem] uppercase tracking-[0.2em] text-zinc-400">
-        SYSTEM // ORIENTATION
-      </p>
-      <p className="relative z-[1] m-0 max-w-[18rem] text-center font-display text-[1.05rem] font-bold uppercase tracking-[0.08em]">
-        Rotate to portrait
-      </p>
-      <p className="relative z-[1] m-0 max-w-[20rem] text-center font-display text-[0.75rem] font-medium uppercase tracking-[0.06em] text-zinc-500">
-        This portfolio is designed for portrait phones only
-      </p>
     </div>
   );
 }

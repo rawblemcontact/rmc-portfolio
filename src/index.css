@@ -657,6 +657,20 @@
   }
 
   /*
+   * Phone landscape gate: CSS width is the long edge (often 744+), so it would
+   * inherit the iPad 0.153 bump. Keep #hero / #menu phone-coarse opacity.
+   */
+  .mobile-landscape-gate-grid.portfolio-grid-overlay {
+    opacity: 0.07;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .mobile-landscape-gate-grid.portfolio-grid-overlay {
+      opacity: 0.095;
+    }
+  }
+
+  /*
    * Desktop hero (and adjacent menu slide): shift a 48px-oversized layer instead
    * of animating background-position. Overflow on #hero / #menu clips the extra;
    * the visible 48px cell pattern and 12s period are unchanged.
@@ -676,6 +690,11 @@
       inset: -48px;
       animation-name: gridDriftSmoothCompositor;
     }
+  }
+
+  .mobile-landscape-gate-grid.grid-drift-bg.portfolio-grid-overlay {
+    inset: -48px;
+    animation-name: gridDriftSmoothCompositor;
   }
 
   @media (prefers-reduced-motion: reduce) {
