@@ -336,7 +336,7 @@ function matchesDetailNaturalDrawerViewport() {
 
 /** Phone band (includes 640–767, which natural-drawer MQ skips). */
 function matchesDetailPhoneStripViewport() {
-  return typeof window !== "undefined" && window.matchMedia("(max-width: 767.98px)").matches;
+  return typeof window !== "undefined" && window.innerWidth < 768;
 }
 
 /** Desktop + iPad landscape + phone + iPad portrait — JS translateX strip (no native snap). */
@@ -354,6 +354,44 @@ function worksStripPageSize(cardId: string) {
     return typeof window !== "undefined" && window.innerWidth < 1024 ? 3 : 4;
   }
   return 3;
+}
+
+/** Phone 2-up: page from each thumb’s real offsetLeft (uniform step + round drifts). */
+function worksStripFlushThumbOffset(
+  strip: HTMLElement,
+  index: number,
+  pageSize: number,
+) {
+  const thumbs = strip.querySelectorAll<HTMLElement>(".video-editing-works-strip-thumb");
+  const first = thumbs[0];
+  if (!first || thumbs.length === 0) return 0;
+  const lastStart = Math.max(0, thumbs.length - pageSize);
+  const start = index < pageSize ? 0 : Math.min(index - pageSize + 1, lastStart);
+  const target = thumbs[start];
+  if (!target) return 0;
+  return Math.max(0, target.offsetLeft - first.offsetLeft);
+}
+
+function worksStripNearestThumbOffset(
+  strip: HTMLElement,
+  logicalX: number,
+  pageSize: number,
+) {
+  const thumbs = strip.querySelectorAll<HTMLElement>(".video-editing-works-strip-thumb");
+  const first = thumbs[0];
+  if (!first) return 0;
+  const lastStart = Math.max(0, thumbs.length - pageSize);
+  let best = 0;
+  let bestDist = Infinity;
+  for (let i = 0; i <= lastStart; i++) {
+    const pos = thumbs[i].offsetLeft - first.offsetLeft;
+    const dist = Math.abs(pos - logicalX);
+    if (dist < bestDist) {
+      bestDist = dist;
+      best = pos;
+    }
+  }
+  return Math.max(0, best);
 }
 
 function measureDetailCardChromeHeight(cardSurface: HTMLElement): number {
@@ -598,6 +636,7 @@ export function ShowcaseVideoEditingDetail({
   const worksStripProgrammaticUnlockTimerRef = useRef<number | null>(null);
   const worksStripArrowTweenRafRef = useRef<number | null>(null);
   const stopWorksStripMotionRef = useRef<(() => void) | null>(null);
+  const syncWorksStripLogicalXRef = useRef<(x: number) => void>(() => {});
   const worksStripNavLockUntilRef = useRef(0);
   const stripProgrammaticScrollRef = useRef(false);
   const worksArrowSwipePulseRef = useRef(0);
@@ -2038,20 +2077,27 @@ export function ShowcaseVideoEditingDetail({
   const centerWorksStripThumb = useCallback(
     (index: number, options?: { instant?: boolean }) => {
       const strip = thumbStripRef.current;
-      const thumb = thumbRefs.current[index];
-      if (!strip || !thumb) return;
+      if (!strip) return;
+      const thumbs = strip.querySelectorAll<HTMLElement>(".video-editing-works-strip-thumb");
+      const thumb = thumbRefs.current[index] ?? thumbs[index] ?? null;
+      if (!thumb && !worksStripUsesTranslatePaging()) return;
 
       const track = worksStripTrackRef.current;
-      const thumbs = strip.querySelectorAll<HTMLElement>(".video-editing-works-strip-thumb");
       const first = thumbs[0];
       const second = thumbs[1];
       const step =
         first && second
           ? second.offsetLeft - first.offsetLeft
-          : thumb.offsetWidth + 10;
+          : thumb
+            ? thumb.offsetWidth + 10
+            : 0;
       const pageSize = worksStripPageSize(card.id);
-      let pageOffset =
-        index < pageSize || step <= 0 ? 0 : (index - pageSize + 1) * step;
+      const phoneStrip = typeof window !== "undefined" && window.innerWidth < 768;
+      let pageOffset = phoneStrip
+        ? worksStripFlushThumbOffset(strip, index, pageSize)
+        : index < pageSize || step <= 0
+          ? 0
+          : (index - pageSize + 1) * step;
 
       if (worksStripUsesTranslatePaging()) {
         strip.scrollLeft = 0;
@@ -2065,9 +2111,12 @@ export function ShowcaseVideoEditingDetail({
           }
           const match = /translate3d\((-?[\d.]+)px/.exec(track.style.transform);
           const from = match?.[1] ? Math.max(0, -parseFloat(match[1])) : 0;
-          const to = Math.max(0, Math.round(pageOffset));
+          const to = phoneStrip
+            ? Math.max(0, pageOffset)
+            : Math.max(0, Math.round(pageOffset));
           if (options?.instant || reduceMotion || Math.abs(to - from) <= 0.5) {
             track.style.transform = to > 0 ? `translate3d(${-to}px, 0, 0)` : "";
+            if (phoneStrip) syncWorksStripLogicalXRef.current(to);
             return;
           }
           const start = performance.now();
@@ -2077,12 +2126,14 @@ export function ShowcaseVideoEditingDetail({
             const k = 1 - (1 - t) ** 3;
             const x = from + (to - from) * k;
             track.style.transform = x > 0.5 ? `translate3d(${-x}px, 0, 0)` : "";
+            if (phoneStrip) syncWorksStripLogicalXRef.current(x);
             if (t < 1) {
               worksStripArrowTweenRafRef.current = window.requestAnimationFrame(tick);
               return;
             }
             worksStripArrowTweenRafRef.current = null;
             track.style.transform = to > 0.5 ? `translate3d(${-to}px, 0, 0)` : "";
+            if (phoneStrip) syncWorksStripLogicalXRef.current(to);
           };
           worksStripArrowTweenRafRef.current = window.requestAnimationFrame(tick);
         }
@@ -2090,6 +2141,7 @@ export function ShowcaseVideoEditingDetail({
       }
 
       if (track) track.style.transform = "";
+      if (!thumb) return;
 
       const stripRect = strip.getBoundingClientRect();
       const thumbRect = thumb.getBoundingClientRect();
@@ -2245,6 +2297,7 @@ export function ShowcaseVideoEditingDetail({
       let momentumRaf = 0;
       const AXIS_LOCK_PX = 2;
       const pageSize = worksStripPageSize(card.id);
+      const phoneStrip = matchesDetailPhoneStripViewport();
 
       const sectionScroller =
         strip.closest<HTMLElement>('[aria-label^="Section:"]') ??
@@ -2298,8 +2351,12 @@ export function ShowcaseVideoEditingDetail({
 
       const maxOffset = () => {
         const count = strip.querySelectorAll(".video-editing-works-strip-thumb").length;
+        if (count <= pageSize) return 0;
+        if (phoneStrip) {
+          return worksStripFlushThumbOffset(strip, count - 1, pageSize);
+        }
         const step = tileStep();
-        if (step <= 0 || count <= pageSize) return 0;
+        if (step <= 0) return 0;
         return (count - pageSize) * step;
       };
 
@@ -2333,8 +2390,13 @@ export function ShowcaseVideoEditingDetail({
       };
 
       const snapOffset = () => {
-        const step = tileStep();
         const max = maxOffset();
+        if (phoneStrip) {
+          logicalX = worksStripNearestThumbOffset(strip, logicalX, pageSize);
+          paintOffset();
+          return;
+        }
+        const step = tileStep();
         if (step <= 0) {
           logicalX = Math.max(0, Math.min(max, logicalX));
           paintOffset();
@@ -2501,15 +2563,21 @@ export function ShowcaseVideoEditingDetail({
       const stopForThumbTap = () => {
         stopMomentum();
         logicalX = readOffset();
-        paintOffset();
+        // Phone: don't paint here — the thumb/arrow tween owns the track.
+        // paintOffset() was rewriting mid-tween and leaving a 1–2px nudge.
+        if (!phoneStrip) paintOffset();
       };
       stopWorksStripMotionRef.current = stopForThumbTap;
+      syncWorksStripLogicalXRef.current = (x) => {
+        logicalX = Math.max(0, x);
+      };
 
       return () => {
         stopMomentum();
         if (stopWorksStripMotionRef.current === stopForThumbTap) {
           stopWorksStripMotionRef.current = null;
         }
+        syncWorksStripLogicalXRef.current = () => {};
         strip.removeEventListener("scroll", pinScrollLeft);
         strip.removeEventListener("touchstart", onTouchStart);
         strip.removeEventListener("touchmove", onTouchMove);

@@ -6675,8 +6675,8 @@
       .video-editing-works-strip-thumb {
       scroll-snap-align: none;
       touch-action: none;
-      flex-basis: calc((100cqw - 0.5rem - 1px) / 2) !important;
-      max-width: calc((100cqw - 0.5rem - 1px) / 2);
+      flex-basis: calc((100cqw - 0.5rem) / 2) !important;
+      max-width: calc((100cqw - 0.5rem) / 2);
     }
 
     @media (min-width: 640px) {
@@ -6695,8 +6695,8 @@
         .video-editing-works-strip-thumb,
       #projects.projects-slaywire-detail-open
         .video-editing-works-strip-thumb {
-        flex-basis: calc((100cqw - 0.625rem - 1px) / 2) !important;
-        max-width: calc((100cqw - 0.625rem - 1px) / 2);
+        flex-basis: calc((100cqw - 0.625rem) / 2) !important;
+        max-width: calc((100cqw - 0.625rem) / 2);
       }
     }
 
