@@ -1292,6 +1292,39 @@
     }
   }
 
+  @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse) {
+    [aria-label="Section: profile"],
+    #profile,
+    #profile .profile-summary-card,
+    #profile .profile-summary-card-scroll-shell,
+    #profile .profile-summary-card-scroll {
+      overflow-anchor: none;
+    }
+
+    #profile .profile-summary-card.profile-card-height-locked .profile-summary-card-scroll-shell,
+    #profile .profile-summary-card.profile-card-height-locked .profile-summary-card-scroll {
+      touch-action: none;
+      overflow-y: hidden !important;
+      overscroll-behavior: none;
+    }
+
+    #profile .profile-summary-card.profile-card-height-locked .profile-summary-card-scroll-shell {
+      -webkit-mask-image: none !important;
+      mask-image: none !important;
+    }
+
+    #profile .profile-summary-card.profile-card-height-locked .profile-summary-card-scroll-shell::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 1.75rem;
+      pointer-events: none;
+      background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.55));
+    }
+  }
+
   /* Soft cutoff mask — slightly gentler than before; toggled off at scroll end via JS. */
   .content-cutoff-fade {
     -webkit-mask-image: linear-gradient(
@@ -1373,6 +1406,25 @@
     display: none;
     width: 0;
     height: 0;
+  }
+
+  /* PROFILE summary card — mask stays on; --profile-cutoff 0→1 (no class toggle / scroll jump). */
+  #profile .profile-summary-card.profile-card-height-locked .profile-summary-card-scroll-shell {
+    --profile-cutoff: 0;
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 calc(100% - 1.75rem * var(--profile-cutoff)),
+      rgba(0, 0, 0, 0.55) calc(100% - 0.55rem * var(--profile-cutoff)),
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 calc(100% - 1.75rem * var(--profile-cutoff)),
+      rgba(0, 0, 0, 0.55) calc(100% - 0.55rem * var(--profile-cutoff)),
+      transparent 100%
+    );
   }
 
   /* PROFILE summary card — short bottom dissolve; most copy stays solid. */
@@ -6302,8 +6354,9 @@
       margin-inline-end: -4px;
       padding-inline: 0;
       scroll-padding-inline: 2px;
-      /* Snap-mandatory + arrow centering shifted the flush 3-up row one-way right. */
-      scroll-snap-type: none;
+      /* Same as iPad landscape: no native overflow/snap (one-way right drift). */
+      overflow-x: clip !important;
+      scroll-snap-type: none !important;
     }
 
     #projects.projects-interactive-media-detail-open
@@ -6562,10 +6615,10 @@
   @media (pointer: coarse) {
     .video-editing-works-strip {
       -webkit-overflow-scrolling: touch;
-      touch-action: pan-x pan-y;
+      touch-action: none;
     }
     .video-editing-works-strip .video-editing-works-strip-thumb {
-      touch-action: pan-x pan-y pinch-zoom;
+      touch-action: none;
       -webkit-tap-highlight-color: transparent;
     }
     .video-editing-works-strip .video-editing-works-strip-thumb:focus-visible {
@@ -6573,6 +6626,105 @@
       box-shadow: 0 0 0 1px var(--palette-yellow-projects);
     }
   }
+
+  /*
+   * Phone + iPad portrait: same JS translateX strip as desktop / iPad landscape
+   * (no native overflow-x + snap — that ate the next tap after a swipe).
+   */
+  @media (max-width: 767.98px),
+    (min-width: 768px) and (max-width: 1366px) and (orientation: portrait) {
+    #projects.projects-interactive-media-detail-open
+      .video-editing-works-strip-shell,
+    #projects.projects-video-editing-detail-open
+      .video-editing-works-strip-shell,
+    #projects.projects-slaywire-detail-open
+      .video-editing-works-strip-shell {
+      container-type: inline-size;
+    }
+
+    #projects.projects-interactive-media-detail-open
+      .video-editing-works-strip,
+    #projects.projects-video-editing-detail-open
+      .video-editing-works-strip,
+    #projects.projects-slaywire-detail-open
+      .video-editing-works-strip {
+      display: block;
+      gap: 0;
+      overflow-x: clip !important;
+      scroll-snap-type: none !important;
+      touch-action: none;
+    }
+
+    #projects.projects-interactive-media-detail-open
+      .video-editing-works-strip-track,
+    #projects.projects-video-editing-detail-open
+      .video-editing-works-strip-track,
+    #projects.projects-slaywire-detail-open
+      .video-editing-works-strip-track {
+      display: flex;
+      width: max-content;
+      min-width: 100%;
+      gap: 0.5rem;
+    }
+
+    #projects.projects-interactive-media-detail-open
+      .video-editing-works-strip-thumb,
+    #projects.projects-video-editing-detail-open
+      .video-editing-works-strip-thumb,
+    #projects.projects-slaywire-detail-open
+      .video-editing-works-strip-thumb {
+      scroll-snap-align: none;
+      touch-action: none;
+      flex-basis: calc((100cqw - 0.5rem - 1px) / 2) !important;
+      max-width: calc((100cqw - 0.5rem - 1px) / 2);
+    }
+
+    @media (min-width: 640px) {
+      #projects.projects-interactive-media-detail-open
+        .video-editing-works-strip-track,
+      #projects.projects-video-editing-detail-open
+        .video-editing-works-strip-track,
+      #projects.projects-slaywire-detail-open
+        .video-editing-works-strip-track {
+        gap: 0.625rem;
+      }
+
+      #projects.projects-interactive-media-detail-open
+        .video-editing-works-strip-thumb,
+      #projects.projects-video-editing-detail-open
+        .video-editing-works-strip-thumb,
+      #projects.projects-slaywire-detail-open
+        .video-editing-works-strip-thumb {
+        flex-basis: calc((100cqw - 0.625rem - 1px) / 2) !important;
+        max-width: calc((100cqw - 0.625rem - 1px) / 2);
+      }
+    }
+
+    @media (min-width: 768px) {
+      #projects.projects-interactive-media-detail-open
+        .video-editing-works-strip-thumb,
+      #projects.projects-video-editing-detail-open
+        .video-editing-works-strip-thumb {
+        flex-basis: calc((100cqw - 1.25rem - 1px) / 3) !important;
+        max-width: calc((100cqw - 1.25rem - 1px) / 3);
+      }
+
+      #projects.projects-slaywire-detail-open
+        .video-editing-works-strip-thumb {
+        flex-basis: calc((100cqw - 1.25rem - 1px) / 3) !important;
+        max-width: calc((100cqw - 1.25rem - 1px) / 3);
+      }
+    }
+
+    @media (min-width: 1024px) {
+      #projects.projects-slaywire-detail-open
+        .video-editing-works-strip-thumb {
+        flex-basis: calc((100cqw - 1.875rem - 1px) / 4) !important;
+        max-width: calc((100cqw - 1.875rem - 1px) / 4);
+      }
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .video-editing-works-arrow {
       animation: none;
@@ -7276,7 +7428,7 @@
   #projects.projects-slaywire-detail-open
     .video-editing-detail-meta-card {
     border-radius: 4px !important;
-    padding: 0.75rem !important;
+    padding: 0.75rem 0.75rem 0.625rem !important;
     min-width: 0 !important;
     /* Height comes from JS (animated drawer + player-bottom cap). */
     min-height: 0 !important;
@@ -7321,7 +7473,8 @@
   #projects.projects-slaywire-detail-open
     .video-editing-detail-meta-card
     .video-editing-detail-card-tab-surface {
-    padding: 0.25rem 0 0.75rem 0.125rem !important;
+    /* Hug short copy — keep a hair of inset under the last line. */
+    padding: 0.25rem 0 0.125rem 0.125rem !important;
     min-width: 0 !important;
   }
 
@@ -8048,6 +8201,52 @@
     grid-template-columns: minmax(0, 0.6fr) minmax(0, 0.4fr);
   }
 
+  /*
+   * Grow the desc-body hit surface into the card padding and the empty
+   * strip under the tabs. Copy inset stays the same; only the pan target
+   * gets bigger. Only when the drawer is player-capped — extra shell pad
+   * on short boxes fights height measure and loops the tween.
+   */
+  #projects.projects-interactive-media-detail-open
+    .video-editing-detail-meta-card--capped
+    .video-editing-detail-card-tabpanel-shell,
+  #projects.projects-video-editing-detail-open
+    .video-editing-detail-meta-card--capped
+    .video-editing-detail-card-tabpanel-shell,
+  #projects.projects-slaywire-detail-open
+    .video-editing-detail-meta-card--capped
+    .video-editing-detail-card-tabpanel-shell {
+    margin-inline: -0.75rem;
+    padding-inline: 0.75rem;
+    margin-top: -0.75rem;
+    padding-top: 0.75rem;
+    margin-bottom: -0.75rem;
+    padding-bottom: 0.75rem;
+    touch-action: none;
+  }
+
+  #projects.projects-interactive-media-detail-open
+    .video-editing-detail-meta-card--capped
+    .video-editing-detail-card-tabpanel,
+  #projects.projects-video-editing-detail-open
+    .video-editing-detail-meta-card--capped
+    .video-editing-detail-card-tabpanel,
+  #projects.projects-slaywire-detail-open
+    .video-editing-detail-meta-card--capped
+    .video-editing-detail-card-tabpanel {
+    touch-action: none;
+  }
+
+  #projects.projects-interactive-media-detail-open
+    .video-editing-detail-card-tablist,
+  #projects.projects-video-editing-detail-open
+    .video-editing-detail-card-tablist,
+  #projects.projects-slaywire-detail-open
+    .video-editing-detail-card-tablist {
+    position: relative;
+    z-index: 2;
+  }
+
   #projects.projects-interactive-media-detail-open .project-detail-main-title,
   #projects.projects-video-editing-detail-open .project-detail-main-title,
   #projects.projects-slaywire-detail-open .project-detail-main-title,
@@ -8088,7 +8287,7 @@
   #projects.projects-slaywire-detail-open
     .video-editing-detail-meta-card {
     border-radius: 4px !important;
-    padding: 0.75rem !important;
+    padding: 0.75rem 0.75rem 0.625rem !important;
     min-width: 0 !important;
     /* Height comes from JS (animated drawer + player-bottom cap). */
     min-height: 0 !important;
@@ -8133,7 +8332,8 @@
   #projects.projects-slaywire-detail-open
     .video-editing-detail-meta-card
     .video-editing-detail-card-tab-surface {
-    padding: 0.25rem 0 0.75rem 0.125rem !important;
+    /* Hug short copy — keep a hair of inset under the last line. */
+    padding: 0.25rem 0 0.125rem 0.125rem !important;
     min-width: 0 !important;
   }
 
@@ -8209,7 +8409,7 @@
      * bleed lets the last thumb’s 1px border paint past 100cqw. */
     overflow-x: clip !important;
     scroll-snap-type: none !important;
-    touch-action: pan-y;
+    touch-action: none;
     width: calc(100% + 6px);
     margin-inline-start: -2px;
     margin-inline-end: -4px;
@@ -8222,7 +8422,7 @@
   #projects.projects-slaywire-detail-open
     .video-editing-works-strip-thumb {
     scroll-snap-align: none;
-    touch-action: pan-y;
+    touch-action: none;
   }
 
   /* iPad landscape: match main showcase column width; kill desktop zoom/offset on stage. */

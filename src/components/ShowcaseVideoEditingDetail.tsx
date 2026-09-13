@@ -246,7 +246,7 @@ function swapDetailTabToFront(
   nextTabId: DetailCardTabId,
 ): DetailCardTabId[] {
   const fromIdx = order.indexOf(nextTabId);
-  if (fromIdx <= 0) return [...order];
+  if (fromIdx <= 0) return order as DetailCardTabId[];
   const next = [...order];
   const displaced = next[0]!;
   next[0] = nextTabId;
@@ -283,6 +283,8 @@ const DETAIL_TAB_UNDERLINE_CLOSE_DUR_S = 0.08;
 const DETAIL_TAB_UNDERLINE_EASE = EASE.out;
 /** Description-card height keyframes stay synchronized with the tab swap. */
 const DETAIL_CARD_RESIZE_DUR_MS = Math.round(DETAIL_TAB_SWAP_DUR_S * 1000);
+/** Inset leftover after the main drawer tween — pin, do not play a second ease. */
+const DETAIL_CARD_PAD_SNAP_PX = 16;
 const DETAIL_CARD_RESIZE_EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
 /**
  * New tab copy waits until height resize finishes + one paint so clamp/mask
@@ -332,20 +334,63 @@ function matchesDetailNaturalDrawerViewport() {
   return typeof window !== "undefined" && window.matchMedia(DETAIL_NATURAL_DRAWER_MQ).matches;
 }
 
-function measureDetailCardChromeHeight(
-  cardSurface: HTMLElement,
-  activeNatural: HTMLElement,
-): number {
-  const visualBeforeBody =
-    activeNatural.getBoundingClientRect().top - cardSurface.getBoundingClientRect().top;
-  const layoutBeforeBody = visualPxToLayoutPx(cardSurface, visualBeforeBody);
-  const paddingBottom = parseFloat(getComputedStyle(cardSurface).paddingBottom) || 0;
+/** Phone band (includes 640–767, which natural-drawer MQ skips). */
+function matchesDetailPhoneStripViewport() {
+  return typeof window !== "undefined" && window.matchMedia("(max-width: 767.98px)").matches;
+}
+
+/** Desktop + iPad landscape + phone + iPad portrait — JS translateX strip (no native snap). */
+function worksStripUsesTranslatePaging() {
+  return (
+    matchesDetailPlayerCapViewport() ||
+    matchesDetailNaturalDrawerViewport() ||
+    matchesDetailPhoneStripViewport()
+  );
+}
+
+function worksStripPageSize(cardId: string) {
+  if (typeof window !== "undefined" && window.innerWidth < 768) return 2;
+  if (cardId === "project-slaywire") {
+    return typeof window !== "undefined" && window.innerWidth < 1024 ? 3 : 4;
+  }
+  return 3;
+}
+
+function measureDetailCardChromeHeight(cardSurface: HTMLElement): number {
   const tabSurface = cardSurface.querySelector(".video-editing-detail-card-tab-surface");
+  const paddingBottom = parseFloat(getComputedStyle(cardSurface).paddingBottom) || 0;
   const tabSurfacePadBottom =
     tabSurface instanceof HTMLElement
       ? parseFloat(getComputedStyle(tabSurface).paddingBottom) || 0
       : 0;
+  if (!(tabSurface instanceof HTMLElement)) {
+    return Math.max(0, Math.ceil(paddingBottom));
+  }
+  // Hidden probes sit in a stacked layer — never use their top for chrome.
+  // Tab-surface content box is the same on every tab/work switch.
+  const visualBefore =
+    tabSurface.getBoundingClientRect().top - cardSurface.getBoundingClientRect().top;
+  const padTop = parseFloat(getComputedStyle(tabSurface).paddingTop) || 0;
+  const layoutBeforeBody = visualPxToLayoutPx(cardSurface, visualBefore) + padTop;
   return Math.max(0, Math.ceil(layoutBeforeBody + paddingBottom + tabSurfacePadBottom));
+}
+
+/** WebKit-style rubber-band: overshoot in px → resisted visual offset. */
+function rubberBandOffset(overshoot: number, dimension: number) {
+  const dim = Math.max(1, dimension);
+  const over = Math.max(0, overshoot);
+  return (1 - 1 / ((over * 0.64) / dim + 1)) * dim;
+}
+
+/** Map a logical scroll (may be past 0..max) to clamped position + bounce translation. */
+function rubberBandRange(logical: number, max: number, dimension: number) {
+  if (logical < 0) {
+    return { pos: 0, visual: rubberBandOffset(-logical, dimension) };
+  }
+  if (logical > max) {
+    return { pos: max, visual: -rubberBandOffset(logical - max, dimension) };
+  }
+  return { pos: logical, visual: 0 };
 }
 
 /** Convert visual px (getBoundingClientRect) → layout px (style/offset), accounting for CSS zoom. */
@@ -360,20 +405,9 @@ function measureDetailCardHeightForProbe(
   cardSurface: HTMLElement,
   targetProbe: HTMLElement,
 ): number {
-  const visualBeforeBody =
-    targetProbe.getBoundingClientRect().top - cardSurface.getBoundingClientRect().top;
-  const layoutBeforeBody = visualPxToLayoutPx(cardSurface, visualBeforeBody);
-  const paddingBottom = parseFloat(getComputedStyle(cardSurface).paddingBottom) || 0;
-  // Tab-surface bottom padding sits below the natural body but inside the card —
-  // omit it and short tabs (e.g. TOOLS) settle a few px short with a false fade.
-  const tabSurface = cardSurface.querySelector(".video-editing-detail-card-tab-surface");
-  const tabSurfacePadBottom =
-    tabSurface instanceof HTMLElement
-      ? parseFloat(getComputedStyle(tabSurface).paddingBottom) || 0
-      : 0;
   // scrollHeight catches cases where offsetHeight under-reports (stacked measure layer).
   const bodyH = Math.max(targetProbe.offsetHeight, targetProbe.scrollHeight);
-  return Math.ceil(layoutBeforeBody + bodyH + paddingBottom + tabSurfacePadBottom);
+  return Math.ceil(measureDetailCardChromeHeight(cardSurface) + bodyH);
 }
 
 function liveDetailCardBodyEl(container: HTMLElement | null): HTMLElement | null {
@@ -419,6 +453,7 @@ export function ShowcaseVideoEditingDetail({
   const WORKS_STRIP_PROGRAMMATIC_LOCK_MS = 750;
   const STRIP_SWIPE_ARROW_THRESHOLD_PX = 3;
   const STRIP_SWIPE_TAP_CANCEL_PX = 10;
+  const TOUCH_CLICK_GUARD_MS = 400;
   const videos = useMemo(() => card.detailVideos ?? [], [card.detailVideos]);
   const [activeVideoIndex, setActiveVideoIndex] = useState(0);
   /** Desktop + tablet landscape — expand/shrink drawer clamped to player bottom. */
@@ -455,6 +490,8 @@ export function ShowcaseVideoEditingDetail({
   const detailCardMaxHeightPxRef = useRef<number | null>(null);
   /** Player-capped drawer: explicit height so tall tabs fill to the video bottom. */
   const [detailCardHeightPx, setDetailCardHeightPx] = useState<number | null>(null);
+  const detailCardHeightPxRef = useRef<number | null>(null);
+  detailCardHeightPxRef.current = detailCardHeightPx;
   /**
    * While WAAPI owns height, keep React from re-applying a stale `height` style on
    * unrelated re-renders (that snapped TOOLS→OVERVIEW back to the old target).
@@ -466,15 +503,19 @@ export function ShowcaseVideoEditingDetail({
   /** Height React should keep applied while transitioning (pinned from-height). */
   const detailCardTransitionHeightRef = useRef<number | null>(null);
   /**
-   * Player-capped drawers always pin an explicit height under the video. Inner scroll +
-   * cutoff fade must arm whenever that height is active — not only when height == max.
-   * Otherwise a stale short height (below the player cap) hard-clips tall OVERVIEW copy
-   * with overflow:hidden and no scroll/fade.
+   * Inner scroll + cutoff fade only when the drawer is actually at the player
+   * ceiling. Short boxes size to content — a scrollport there flips overflow
+   * and fights the height tween.
    */
+  const detailCardPaintedHeightPx = detailCardHeightTransitioning
+    ? (detailCardTransitionHeightRef.current ?? detailCardHeightPx)
+    : detailCardHeightPx;
+  const detailCardAtPlayerCap = detailCardIsAtPlayerCap(
+    detailCardPaintedHeightPx,
+    detailCardMaxHeightPx,
+  );
   const detailCardUsesInnerScroll =
-    isPlayerCappedDrawerViewport &&
-    detailCardMaxHeightPx != null &&
-    detailCardHeightPx != null;
+    isPlayerCappedDrawerViewport && detailCardAtPlayerCap;
   const detailTabpanelScrollRef = useRef<HTMLElement | null>(null);
   const [detailTabpanelCutoffFade, setDetailTabpanelCutoffFade] = useState<
     "none" | "top" | "bottom" | "both"
@@ -512,8 +553,24 @@ export function ShowcaseVideoEditingDetail({
   /** Delay timer before card resize — target height is measured when this fires, not when scheduled. */
   const detailCardResizeDelayTimerRef = useRef<number | null>(null);
   const detailCardLiveFitTimersRef = useRef<number[]>([]);
-  const fitDetailCardToLiveBodyRef = useRef<(opts?: { force?: boolean }) => void>(() => {});
+  const fitDetailCardToLiveBodyRef = useRef<(opts?: { force?: boolean; allowShrink?: boolean }) => void>(
+    () => {},
+  );
   const scheduleFitDetailCardToLiveBodyRef = useRef<() => void>(() => {});
+  const animateDetailCardToMeasuredBodyRef = useRef<
+    (
+      targetProbe: HTMLElement,
+      delayMs?: number,
+      options?: {
+        onSettled?: () => void;
+        snap?: boolean;
+        switchEpoch?: number;
+        toHeightPx?: number;
+      },
+    ) => void
+  >(() => {});
+  const updateDetailTabpanelCutoffFadeRef = useRef<() => void>(() => {});
+  const detailCardIdleFitKeyRef = useRef("");
   const detailTitleResizeAnimationRef = useRef<Animation | null>(null);
   const afterTitleResizeRef = useRef<(() => void) | null>(null);
   const afterTitleResizeTimerRef = useRef<number | null>(null);
@@ -539,9 +596,23 @@ export function ShowcaseVideoEditingDetail({
   const workSwitchLastCommitAtRef = useRef(0);
   const worksArrowReleaseTimerRef = useRef<number | null>(null);
   const worksStripProgrammaticUnlockTimerRef = useRef<number | null>(null);
+  const worksStripArrowTweenRafRef = useRef<number | null>(null);
+  const stopWorksStripMotionRef = useRef<(() => void) | null>(null);
   const worksStripNavLockUntilRef = useRef(0);
   const stripProgrammaticScrollRef = useRef(false);
   const worksArrowSwipePulseRef = useRef(0);
+  const worksArrowTouchRef = useRef<{
+    side: "prev" | "next";
+    x: number;
+    y: number;
+  } | null>(null);
+  const worksArrowTouchCommitAtRef = useRef(0);
+  const detailTabTouchRef = useRef<{
+    tabId: DetailCardTabId;
+    x: number;
+    y: number;
+  } | null>(null);
+  const detailTabTouchCommitAtRef = useRef(0);
   const stripSwipeArrowRef = useRef({
     gestureId: 0,
     arrowFiredForGestureId: -1,
@@ -628,9 +699,7 @@ export function ShowcaseVideoEditingDetail({
 
   useEffect(() => {
     setActiveDetailCardTab("overview");
-    setDetailCardTabOrder([...DETAIL_CARD_TAB_IDS]);
-    setUnderlineTabId("overview");
-    underlineActiveTabRef.current = "overview";
+    setDetailCardTabOrder((prev) => swapDetailTabToFront(prev, "overview"));
   }, [activeVideoIndex, card.id]);
 
   const updateDetailTabpanelCutoffFade = useCallback(() => {
@@ -763,6 +832,8 @@ export function ShowcaseVideoEditingDetail({
 
     const panel = detailTabpanelScrollRef.current;
     if (!panel) return;
+    const tabletLandscape = matchesDetailTabletLandscapeViewport();
+    const livePanel = () => detailTabpanelScrollRef.current ?? panel;
 
     const sectionScroller =
       panel.closest<HTMLElement>('[aria-label^="Section:"]') ??
@@ -778,10 +849,11 @@ export function ShowcaseVideoEditingDetail({
         return null;
       })();
 
-    /** Outer scroll is "hot" briefly after it moves — next inner gesture may need JS claim. */
+    /** Outer scroll is "hot" after it moves — next inner gesture may need JS claim.
+     * iPad bounce/wind-down lasts longer than a short 380ms window. */
     let outerHotUntil = 0;
     const markOuterHot = () => {
-      outerHotUntil = performance.now() + 380;
+      outerHotUntil = performance.now() + 900;
     };
     sectionScroller?.addEventListener("scroll", markOuterHot, { passive: true });
 
@@ -798,13 +870,38 @@ export function ShowcaseVideoEditingDetail({
     /** undecided | native (rubber-band) | js (dual-scroll claim) | ignore */
     let mode: "undecided" | "native" | "js" | "ignore" = "undecided";
 
-    const maxScrollTop = () =>
-      Math.max(0, panel.scrollHeight - panel.clientHeight);
+    const maxScrollTop = () => {
+      const current = livePanel();
+      return Math.max(0, current.scrollHeight - current.clientHeight);
+    };
+
+    const bounceElOf = (node: HTMLElement) =>
+      node.querySelector<HTMLElement>(".video-editing-detail-card-tab-surface") ??
+      node;
+    let bounceEl = bounceElOf(panel);
+    let logicalTop = 0;
+
+    const paintDescScroll = () => {
+      const current = livePanel();
+      bounceEl = bounceElOf(current);
+      const max = Math.max(0, current.scrollHeight - current.clientHeight);
+      if (!tabletLandscape) {
+        const clamped = Math.max(0, Math.min(max, logicalTop));
+        current.scrollTop = clamped;
+        bounceEl.style.transform = "";
+        return clamped;
+      }
+      const { pos, visual } = rubberBandRange(logicalTop, max, current.clientHeight);
+      current.scrollTop = pos;
+      bounceEl.style.transform = visual
+        ? `translate3d(0, ${visual}px, 0)`
+        : "";
+      return pos;
+    };
 
     const applyScrollTop = (next: number) => {
-      const clamped = Math.max(0, Math.min(maxScrollTop(), next));
-      panel.scrollTop = clamped;
-      return clamped;
+      logicalTop = tabletLandscape ? next : Math.max(0, Math.min(maxScrollTop(), next));
+      return paintDescScroll();
     };
 
     const stopMomentum = () => {
@@ -814,8 +911,40 @@ export function ShowcaseVideoEditingDetail({
       }
     };
 
+    const springDescToRange = () => {
+      const max = maxScrollTop();
+      const from = logicalTop;
+      const target = Math.max(0, Math.min(max, from));
+      if (Math.abs(from - target) < 0.5) {
+        logicalTop = target;
+        paintDescScroll();
+        return;
+      }
+      stopMomentum();
+      const start = performance.now();
+      const step = (now: number) => {
+        const t = Math.min(1, (now - start) / 280);
+        const k = 1 - (1 - t) ** 3;
+        logicalTop = from + (target - from) * k;
+        paintDescScroll();
+        if (t < 1) {
+          momentumRaf = window.requestAnimationFrame(step);
+          return;
+        }
+        momentumRaf = 0;
+        logicalTop = target;
+        paintDescScroll();
+      };
+      momentumRaf = window.requestAnimationFrame(step);
+    };
+
     const startMomentum = () => {
       stopMomentum();
+      const max = maxScrollTop();
+      if (tabletLandscape && (logicalTop < 0 || logicalTop > max)) {
+        springDescToRange();
+        return;
+      }
       let v = Math.max(-2.8, Math.min(2.8, velocityY));
       if (Math.abs(v) < 0.045) return;
 
@@ -826,17 +955,17 @@ export function ShowcaseVideoEditingDetail({
         v *= Math.exp(-0.0032 * dt);
         if (Math.abs(v) < 0.02) {
           momentumRaf = 0;
+          if (tabletLandscape) springDescToRange();
           return;
         }
-        const before = panel.scrollTop;
-        const after = applyScrollTop(before + v * dt);
-        if (
-          after === before ||
-          after <= 0 ||
-          after >= maxScrollTop() - 0.5
-        ) {
-          momentumRaf = 0;
-          return;
+        applyScrollTop(logicalTop + v * dt);
+        if (tabletLandscape && (logicalTop < 0 || logicalTop > max)) {
+          v *= 0.55;
+          if (Math.abs(v) < 0.08) {
+            momentumRaf = 0;
+            springDescToRange();
+            return;
+          }
         }
         momentumRaf = window.requestAnimationFrame(step);
       };
@@ -859,7 +988,16 @@ export function ShowcaseVideoEditingDetail({
 
     const onTouchStart = (event: TouchEvent) => {
       if (detailTabpanelScrollFrozen) return;
-      if (panel.scrollHeight - panel.clientHeight <= 1) return;
+      const from = event.target;
+      if (
+        from instanceof Element &&
+        from.closest(".video-editing-detail-card-tablist")
+      ) {
+        return;
+      }
+      const current = livePanel();
+      bounceEl = bounceElOf(current);
+      if (current.scrollHeight - current.clientHeight <= 1) return;
       const touch = event.changedTouches[0];
       if (!touch) return;
       stopMomentum();
@@ -869,10 +1007,16 @@ export function ShowcaseVideoEditingDetail({
       startX = touch.clientX;
       startY = touch.clientY;
       startOuterTop = sectionScroller?.scrollTop ?? 0;
-      startInnerTop = panel.scrollTop;
+      startInnerTop = current.scrollTop;
+      logicalTop = current.scrollTop;
+      bounceEl.style.transform = "";
       velocityY = 0;
-      // Prefer native rubber-band unless the page is still coasting.
-      mode = performance.now() < outerHotUntil ? "js" : "undecided";
+      // iPad landscape: always JS-drive. Native vs page negotiation needs
+      // several tries. Other touch viewports keep rubber-band unless coasting.
+      mode =
+        tabletLandscape || performance.now() < outerHotUntil
+          ? "js"
+          : "undecided";
     };
 
     const onTouchMove = (event: TouchEvent) => {
@@ -912,8 +1056,8 @@ export function ShowcaseVideoEditingDetail({
         const outerMoved =
           sectionScroller != null &&
           Math.abs(sectionScroller.scrollTop - startOuterTop) > 1.5;
-        const innerMoved = Math.abs(panel.scrollTop - startInnerTop) > 1.5;
-        if (outerMoved && !innerMoved && Math.abs(touch.clientY - startY) > 10) {
+        const innerMoved = Math.abs(livePanel().scrollTop - startInnerTop) > 1.5;
+        if (outerMoved && !innerMoved && Math.abs(touch.clientY - startY) > 6) {
           // Page ate the gesture — claim for the rest of this touch.
           mode = "js";
         } else {
@@ -921,27 +1065,36 @@ export function ShowcaseVideoEditingDetail({
         }
       }
 
-      applyScrollTop(panel.scrollTop + delta);
+      applyScrollTop((tabletLandscape ? logicalTop : livePanel().scrollTop) + delta);
       if (event.cancelable) event.preventDefault();
     };
 
-    panel.addEventListener("touchstart", onTouchStart, { passive: true });
-    panel.addEventListener("touchmove", onTouchMove, { passive: false });
-    panel.addEventListener("touchend", endTouch, { passive: true });
-    panel.addEventListener("touchcancel", endTouch, { passive: true });
+    // Bind the stable card (tabs remount per work). Do not use capture.
+    const hit =
+      panel.closest<HTMLElement>(".video-editing-detail-meta-card") ??
+      panel.closest<HTMLElement>(".video-editing-detail-card-tabpanel-shell") ??
+      panel;
+    hit.addEventListener("touchstart", onTouchStart, { passive: true });
+    hit.addEventListener("touchmove", onTouchMove, { passive: false });
+    hit.addEventListener("touchend", endTouch, { passive: true });
+    hit.addEventListener("touchcancel", endTouch, { passive: true });
 
     return () => {
       stopMomentum();
+      bounceEl.style.transform = "";
       sectionScroller?.removeEventListener("scroll", markOuterHot);
-      panel.removeEventListener("touchstart", onTouchStart);
-      panel.removeEventListener("touchmove", onTouchMove);
-      panel.removeEventListener("touchend", endTouch);
-      panel.removeEventListener("touchcancel", endTouch);
+      hit.removeEventListener("touchstart", onTouchStart);
+      hit.removeEventListener("touchmove", onTouchMove);
+      hit.removeEventListener("touchend", endTouch);
+      hit.removeEventListener("touchcancel", endTouch);
     };
   }, [
     detailCardUsesInnerScroll,
     detailTabpanelScrollFrozen,
     isPlayerCappedDrawerViewport,
+    isTabletLandscapeViewport,
+    activeVideoIndex,
+    card.id,
     usesFinePointerHover,
   ]);
 
@@ -1017,6 +1170,11 @@ export function ShowcaseVideoEditingDetail({
     return () => {
       clearWorksArrowReleaseTimer();
       clearWorksStripProgrammaticUnlockTimer();
+      if (worksStripArrowTweenRafRef.current != null) {
+        window.cancelAnimationFrame(worksStripArrowTweenRafRef.current);
+        worksStripArrowTweenRafRef.current = null;
+      }
+      stopWorksStripMotionRef.current = null;
     };
   }, [clearWorksArrowReleaseTimer, clearWorksStripProgrammaticUnlockTimer]);
 
@@ -1082,12 +1240,9 @@ export function ShowcaseVideoEditingDetail({
         detailPanelTallestBodyRef.current,
         nextBody,
       );
-      const activeNatural = detailTabActiveNaturalRef.current;
       const chrome =
         detailCardChromeHeightRef.current ??
-        (activeNatural
-          ? measureDetailCardChromeHeight(cardSurface, activeNatural)
-          : Math.max(0, cardSurface.offsetHeight - nextBody));
+        measureDetailCardChromeHeight(cardSurface);
       detailCardChromeHeightRef.current = chrome;
       const naturalReserve = Math.ceil(chrome + detailPanelTallestBodyRef.current);
       const currentMin = parseFloat(reserve.style.minHeight) || 0;
@@ -1140,7 +1295,7 @@ export function ShowcaseVideoEditingDetail({
     const current =
       surface && surface.offsetHeight > 0
         ? surface.offsetHeight
-        : detailCardHeightPx;
+        : detailCardHeightPxRef.current;
     if (current != null && current > 0) {
       const pinned =
         maxHeight != null ? Math.min(current, maxHeight) : current;
@@ -1149,7 +1304,7 @@ export function ShowcaseVideoEditingDetail({
     }
     detailCardHeightTransitioningRef.current = true;
     setDetailCardHeightTransitioning(true);
-  }, [detailCardHeightPx]);
+  }, []);
 
   const endDetailCardHeightTransition = useCallback((nextHeight: number | null) => {
     detailCardHeightTransitioningRef.current = false;
@@ -1176,9 +1331,16 @@ export function ShowcaseVideoEditingDetail({
     const playerBottom = player.getBoundingClientRect().bottom;
     const cardTop = cardEl.getBoundingClientRect().top;
     const visualCap = Math.max(0, playerBottom - cardTop);
-    const next = visualPxToLayoutPx(cardEl, visualCap);
+    // Floor so a rounded-up cap cannot tween the drawer 1–2px past the player
+    // (then snap back when a later remasure corrects it).
+    const next = Math.max(0, Math.floor(visualPxToLayoutPx(cardEl, visualCap)));
     detailCardMaxHeightPxRef.current = next;
+    // Always publish — a stale (taller) React maxHeight lets the drawer paint
+    // past the player, then the next remasure snaps it back.
     setDetailCardMaxHeightPx((prev) => (prev === next ? prev : next));
+    if (cardEl && next > 0) {
+      cardEl.style.maxHeight = `${next}px`;
+    }
 
     // When the title grows, cardTop drops and the ceiling shrinks. Do not snap the
     // drawer here while title/card height is tweening — that skips the desc anim
@@ -1196,7 +1358,8 @@ export function ShowcaseVideoEditingDetail({
     }
     const liveHeight =
       detailCardTransitionHeightRef.current ?? cardEl.offsetHeight;
-    if (liveHeight > next) {
+    // Ignore 1–3px cap noise so the drawer does not pop off the player after a switch.
+    if (liveHeight > next + 3) {
       detailCardTransitionHeightRef.current = next;
       cardEl.style.height = `${next}px`;
       setDetailCardHeightPx((prev) => (prev === next ? prev : next));
@@ -1239,10 +1402,8 @@ export function ShowcaseVideoEditingDetail({
           })
         : null;
     if (player && resizeObserver) resizeObserver.observe(player);
-    if (detailCardSurfaceRef.current && resizeObserver) {
-      resizeObserver.observe(detailCardSurfaceRef.current);
-    }
     // Title height changes move cardTop; observe so the player-cap ceiling tracks.
+    // Do not observe the card — its own height tween retriggers cap remasure.
     if (titleArea && resizeObserver) resizeObserver.observe(titleArea);
     window.addEventListener("resize", syncDetailCardMaxHeightToPlayer);
     window.addEventListener("orientationchange", syncDetailCardMaxHeightToPlayer);
@@ -1355,10 +1516,7 @@ export function ShowcaseVideoEditingDetail({
           forcedToHeightPx != null
             ? forcedToHeightPx
             : measureDetailCardHeightForProbe(surface, targetProbe);
-        const probeBodyH = Math.max(targetProbe.offsetHeight, targetProbe.scrollHeight);
-        if (forcedToHeightPx == null && probeBodyH > 0) {
-          detailCardChromeHeightRef.current = Math.max(0, naturalToHeight - probeBodyH);
-        }
+        detailCardChromeHeightRef.current = measureDetailCardChromeHeight(surface);
         const toHeight =
           maxHeight != null ? Math.min(naturalToHeight, maxHeight) : naturalToHeight;
         if (maxHeight != null) {
@@ -1380,166 +1538,59 @@ export function ShowcaseVideoEditingDetail({
           return;
         }
 
-        if (Math.abs(toHeight - fromHeight) <= 0.5) {
+        if (Math.abs(toHeight - fromHeight) <= DETAIL_CARD_PAD_SNAP_PX) {
           commitHeight(surface, toHeight, maxHeight);
           onSettled?.();
           return;
         }
 
-        // Tab swaps + natural (phone) work switches: drive height on rAF.
-        // WAAPI/CSS height on this flex card does not update used height until
-        // commit while outgoing copy is still mounted. Live-body fit after
-        // work-switch reveal eases any probe mismatch — never snap.
-        if (switchEpoch == null || maxHeight == null) {
-          if (detailCardResizeRafRef.current != null) {
-            window.cancelAnimationFrame(detailCardResizeRafRef.current);
-            detailCardResizeRafRef.current = null;
-          }
-          surface.classList.add("video-editing-detail-meta-card--tweening");
-          surface.style.minHeight = "0px";
-          surface.style.transition = "none";
-          surface.style.height = `${fromHeight}px`;
-          detailCardTransitionHeightRef.current = fromHeight;
-          const start = performance.now();
-          const tick = (now: number) => {
-            if (epoch !== detailCardResizeEpochRef.current) return;
-            if (isSwitchStale()) {
-              detailCardResizeRafRef.current = null;
-              surface.classList.remove("video-editing-detail-meta-card--tweening");
-              endDetailCardHeightTransition(null);
-              return;
-            }
-            const t = Math.min(1, (now - start) / DETAIL_CARD_RESIZE_DUR_MS);
-            const k = 1 - (1 - t) ** 3;
-            const cap = detailCardMaxHeightPxRef.current;
-            const h = Math.min(
-              fromHeight + (toHeight - fromHeight) * k,
-              cap ?? Number.POSITIVE_INFINITY,
-            );
-            surface.style.height = `${h}px`;
-            if (maxHeight != null) {
-              detailCardTransitionHeightRef.current = h;
-            }
-            if (t < 1) {
-              detailCardResizeRafRef.current = window.requestAnimationFrame(tick);
-              return;
-            }
-            detailCardResizeRafRef.current = null;
-            surface.classList.remove("video-editing-detail-meta-card--tweening");
-            surface.style.height = `${toHeight}px`;
-            if (maxHeight != null) {
-              commitHeight(surface, toHeight, maxHeight);
-            } else {
-              endDetailCardHeightTransition(null);
-            }
-            onSettled?.();
-          };
-          detailCardResizeRafRef.current = window.requestAnimationFrame(tick);
-          return;
+        // rAF so we can clamp to the live published cap every frame. WAAPI
+        // ignores maxHeight and overshoots; a dest-cap pin does the same.
+        if (detailCardResizeRafRef.current != null) {
+          window.cancelAnimationFrame(detailCardResizeRafRef.current);
+          detailCardResizeRafRef.current = null;
         }
-
+        surface.classList.add("video-editing-detail-meta-card--tweening");
         surface.style.minHeight = "0px";
+        surface.style.transition = "none";
         surface.style.height = `${fromHeight}px`;
         detailCardTransitionHeightRef.current = fromHeight;
-        if (maxHeight == null) {
-          surface.style.transition = "none";
-        }
-
-        const resizeAnimation = surface.animate(
-          [{ height: `${fromHeight}px` }, { height: `${toHeight}px` }],
-          {
-            duration: DETAIL_CARD_RESIZE_DUR_MS,
-            easing: DETAIL_CARD_RESIZE_EASE,
-            // forwards (not both): avoid a finished fill fighting React after settle.
-            fill: "forwards",
-          },
-        );
-        detailCardResizeAnimationRef.current = resizeAnimation;
-        let finishOnce = false;
-
-        const clearThisAnimation = () => {
-          if (detailCardResizeAnimationRef.current === resizeAnimation) {
-            detailCardResizeAnimationRef.current = null;
-          }
-          try {
-            if (typeof resizeAnimation.commitStyles === "function") {
-              resizeAnimation.commitStyles();
-            }
-          } catch {
-            // commitStyles can throw if the animation already canceled.
-          }
-          try {
-            resizeAnimation.cancel();
-          } catch {
-            // ignore
-          }
-          // Scrub leftover finished height animations (fill artifacts in some engines).
-          try {
-            for (const anim of surface.getAnimations()) {
-              const effect = anim.effect;
-              const keyframes =
-                effect && "getKeyframes" in effect
-                  ? (effect as KeyframeEffect).getKeyframes()
-                  : null;
-              const touchesHeight = Array.isArray(keyframes)
-                ? keyframes.some((frame) => frame.height != null)
-                : false;
-              if (!touchesHeight) continue;
-              try {
-                if (typeof anim.commitStyles === "function") anim.commitStyles();
-              } catch {
-                // ignore
-              }
-              anim.cancel();
-            }
-          } catch {
-            // ignore
-          }
-        };
-
-        const finishResize = () => {
-          if (finishOnce) return;
-          finishOnce = true;
-
-          if (epoch !== detailCardResizeEpochRef.current || isSwitchStale()) {
-            clearThisAnimation();
+        const start = performance.now();
+        const tick = (now: number) => {
+          if (epoch !== detailCardResizeEpochRef.current) return;
+          if (isSwitchStale()) {
+            detailCardResizeRafRef.current = null;
+            surface.classList.remove("video-editing-detail-meta-card--tweening");
+            endDetailCardHeightTransition(null);
             return;
           }
-
-          clearThisAnimation();
-
-          if (maxHeight != null) {
-            // Commit the height we actually animated to. Re-probing here caused a
-            // visible end flicker (RAWBLEM) when the settle measure disagreed by a few px.
-            syncDetailCardMaxHeightNow();
-            const latestMax = detailCardMaxHeightPxRef.current;
-            const settledTo =
-              latestMax != null ? Math.min(toHeight, latestMax) : toHeight;
-            commitHeight(surface, settledTo, latestMax);
-            onSettled?.();
+          const t = Math.min(1, (now - start) / DETAIL_CARD_RESIZE_DUR_MS);
+          const k = 1 - (1 - t) ** 3;
+          const cap = detailCardMaxHeightPxRef.current;
+          const dest =
+            cap != null ? Math.min(toHeight, cap) : toHeight;
+          const h = Math.min(
+            fromHeight + (dest - fromHeight) * k,
+            cap ?? Number.POSITIVE_INFINITY,
+          );
+          surface.style.height = `${h}px`;
+          if (cap != null) surface.style.maxHeight = `${cap}px`;
+          detailCardTransitionHeightRef.current = h;
+          if (t < 1) {
+            detailCardResizeRafRef.current = window.requestAnimationFrame(tick);
             return;
           }
-
-          // Natural drawers: keep the probe height we tweened to. Live-body
-          // correction runs after copy is visible (revealAfterHeightSettle) and
-          // eases — do not snap here.
-          surface.style.height = `${toHeight}px`;
-          surface.style.transition = "none";
-          endDetailCardHeightTransition(null);
+          detailCardResizeRafRef.current = null;
+          surface.classList.remove("video-editing-detail-meta-card--tweening");
+          if (maxHeight != null || cap != null) {
+            commitHeight(surface, dest, cap ?? maxHeight);
+          } else {
+            surface.style.height = `${dest}px`;
+            endDetailCardHeightTransition(null);
+          }
           onSettled?.();
         };
-
-        resizeAnimation.onfinish = finishResize;
-        resizeAnimation.finished.then(finishResize).catch(() => {
-          if (detailCardResizeAnimationRef.current === resizeAnimation) {
-            detailCardResizeAnimationRef.current = null;
-          }
-        });
-        window.setTimeout(() => {
-          if (epoch !== detailCardResizeEpochRef.current) return;
-          if (finishOnce) return;
-          finishResize();
-        }, DETAIL_CARD_RESIZE_DUR_MS + 48);
+        detailCardResizeRafRef.current = window.requestAnimationFrame(tick);
       };
 
       if (!snap && delayMs > 0) {
@@ -1563,8 +1614,9 @@ export function ShowcaseVideoEditingDetail({
    * After copy is painted, ease the drawer to the live body — hidden probes can
    * wrap short. Tween (same rAF ease as tab swaps); never snap height at the end.
    */
-  const fitDetailCardToLiveBody = useCallback((opts?: { force?: boolean }) => {
+  const fitDetailCardToLiveBody = useCallback((opts?: { force?: boolean; allowShrink?: boolean }) => {
     const force = Boolean(opts?.force);
+    const allowShrink = opts?.allowShrink !== false;
     if (
       detailTitleResizeAnimationRef.current ||
       detailCardHeightTransitioningRef.current ||
@@ -1589,7 +1641,28 @@ export function ShowcaseVideoEditingDetail({
     const fromHeightRaw = surface.offsetHeight;
     const fromHeight =
       maxHeight != null ? Math.min(fromHeightRaw, maxHeight) : fromHeightRaw;
-    if (Math.abs(fromHeight - toHeight) <= 1) return;
+    if (Math.abs(fromHeight - toHeight) <= 2.5) return;
+    // Pad/chrome slop after the main resize — pin instantly, no second tween.
+    if (Math.abs(fromHeight - toHeight) <= DETAIL_CARD_PAD_SNAP_PX) {
+      surface.style.height = `${toHeight}px`;
+      if (maxHeight != null) surface.style.maxHeight = `${maxHeight}px`;
+      detailCardTransitionHeightRef.current = toHeight;
+      if (maxHeight != null) {
+        setDetailCardHeightPx((prev) => (prev === toHeight ? prev : toHeight));
+      }
+      return;
+    }
+    // Work-switch probes can over-read to the cap; refuse a tiny cap-shrink
+    // (that pop). Real short destinations must still hug so bottom pad matches.
+    if (!allowShrink && toHeight < fromHeight) return;
+    if (
+      maxHeight != null &&
+      toHeight < fromHeight &&
+      detailCardIsAtPlayerCap(fromHeight, maxHeight) &&
+      toHeight >= maxHeight - 8
+    ) {
+      return;
+    }
 
     if (detailCardResizeRafRef.current != null) {
       window.cancelAnimationFrame(detailCardResizeRafRef.current);
@@ -1640,7 +1713,7 @@ export function ShowcaseVideoEditingDetail({
   const scheduleFitDetailCardToLiveBody = useCallback(() => {
     for (const id of detailCardLiveFitTimersRef.current) window.clearTimeout(id);
     detailCardLiveFitTimersRef.current = [];
-    const run = () => fitDetailCardToLiveBody({ force: true });
+    const run = () => fitDetailCardToLiveBody({ force: true, allowShrink: true });
     requestAnimationFrame(() => {
       run();
       requestAnimationFrame(run);
@@ -1653,6 +1726,8 @@ export function ShowcaseVideoEditingDetail({
 
   fitDetailCardToLiveBodyRef.current = fitDetailCardToLiveBody;
   scheduleFitDetailCardToLiveBodyRef.current = scheduleFitDetailCardToLiveBody;
+  animateDetailCardToMeasuredBodyRef.current = animateDetailCardToMeasuredBody;
+  updateDetailTabpanelCutoffFadeRef.current = updateDetailTabpanelCutoffFade;
 
   const animateDetailTitleToMeasuredHeight = useCallback(
     (nextIndex: number, options?: { snap?: boolean; switchEpoch?: number }): number => {
@@ -1795,9 +1870,7 @@ export function ShowcaseVideoEditingDetail({
       setDetailTabpanelCutoffFade("none");
 
       setActiveDetailCardTab("overview");
-      setDetailCardTabOrder([...DETAIL_CARD_TAB_IDS]);
-      setUnderlineTabId("overview");
-      underlineActiveTabRef.current = "overview";
+      setDetailCardTabOrder((prev) => swapDetailTabToFront(prev, "overview"));
       activeVideoIndexRef.current = nextIndex;
       setActiveVideoIndex(nextIndex);
 
@@ -1822,7 +1895,10 @@ export function ShowcaseVideoEditingDetail({
               setDetailBodyVisible(true);
               releaseNaturalDrawerResizeLock();
               finishWorkSwitch(epoch);
-              scheduleFitDetailCardToLiveBody();
+              // Player-cap: one drawer tween only. Live-fit was a second motion.
+              if (!isPlayerCappedDrawerViewport) {
+                scheduleFitDetailCardToLiveBody();
+              }
             };
             // Rapid / reduced-motion: no lead. Otherwise let dissolve start first.
             const leadMs = rapid ? 0 : DETAIL_CUTOFF_LEAD_MS;
@@ -1859,17 +1935,21 @@ export function ShowcaseVideoEditingDetail({
         afterTitleResizeTimerRef.current = null;
         const pending = afterTitleResizeRef.current;
         afterTitleResizeRef.current = null;
-        pending?.();
+        // Two frames so title wrap/subtitle can settle before the cap is sampled.
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => pending?.());
+        });
       }, titleMoveMs + 64);
     },
     [
       animateDetailCardToMeasuredBody,
       animateDetailTitleToMeasuredHeight,
       finishWorkSwitch,
+      isPlayerCappedDrawerViewport,
       reduceMotion,
       releaseNaturalDrawerResizeLock,
-      updateDetailTabpanelCutoffFade,
       scheduleFitDetailCardToLiveBody,
+      updateDetailTabpanelCutoffFade,
     ],
   );
 
@@ -1952,10 +2032,8 @@ export function ShowcaseVideoEditingDetail({
 
   /**
    * Place a works-strip thumb without scrollIntoView (avoids section yank).
-   * Tablet landscape: native overflow/snap only drifts one way on iPad — page
-   * the track with translateX and keep scrollLeft at 0.
-   * Other two-column: page by tile steps (never center).
-   * Stacked / mobile: center the thumb.
+   * Flush two-column and stacked phone / iPad portrait: page the track with
+   * translateX and keep scrollLeft at 0 — native overflow/snap drifts right.
    */
   const centerWorksStripThumb = useCallback(
     (index: number, options?: { instant?: boolean }) => {
@@ -1971,37 +2049,55 @@ export function ShowcaseVideoEditingDetail({
         first && second
           ? second.offsetLeft - first.offsetLeft
           : thumb.offsetWidth + 10;
-      const pageSize = card.id === "project-slaywire" ? 4 : 3;
-      const pageOffset =
+      const pageSize = worksStripPageSize(card.id);
+      let pageOffset =
         index < pageSize || step <= 0 ? 0 : (index - pageSize + 1) * step;
 
-      if (matchesDetailTabletLandscapeViewport()) {
+      if (worksStripUsesTranslatePaging()) {
         strip.scrollLeft = 0;
         strip.style.scrollSnapType = "none";
         if (track) {
-          track.style.transform = pageOffset > 0 ? `translate3d(${-pageOffset}px, 0, 0)` : "";
+          // Arrow navigation owns the track motion; stop mouse momentum first.
+          stopWorksStripMotionRef.current?.();
+          if (worksStripArrowTweenRafRef.current != null) {
+            window.cancelAnimationFrame(worksStripArrowTweenRafRef.current);
+            worksStripArrowTweenRafRef.current = null;
+          }
+          const match = /translate3d\((-?[\d.]+)px/.exec(track.style.transform);
+          const from = match?.[1] ? Math.max(0, -parseFloat(match[1])) : 0;
+          const to = Math.max(0, Math.round(pageOffset));
+          if (options?.instant || reduceMotion || Math.abs(to - from) <= 0.5) {
+            track.style.transform = to > 0 ? `translate3d(${-to}px, 0, 0)` : "";
+            return;
+          }
+          const start = performance.now();
+          const duration = 320;
+          const tick = (now: number) => {
+            const t = Math.min(1, (now - start) / duration);
+            const k = 1 - (1 - t) ** 3;
+            const x = from + (to - from) * k;
+            track.style.transform = x > 0.5 ? `translate3d(${-x}px, 0, 0)` : "";
+            if (t < 1) {
+              worksStripArrowTweenRafRef.current = window.requestAnimationFrame(tick);
+              return;
+            }
+            worksStripArrowTweenRafRef.current = null;
+            track.style.transform = to > 0.5 ? `translate3d(${-to}px, 0, 0)` : "";
+          };
+          worksStripArrowTweenRafRef.current = window.requestAnimationFrame(tick);
         }
         return;
       }
 
       if (track) track.style.transform = "";
 
-      const maxLeft = Math.max(0, strip.scrollWidth - strip.clientWidth);
-      let nextLeft: number;
-
-      if (matchesDetailPlayerCapViewport()) {
-        strip.style.scrollSnapType = "none";
-        nextLeft = Math.max(0, Math.min(maxLeft, pageOffset));
-        if (Math.abs(nextLeft - strip.scrollLeft) < 0.5) return;
-      } else {
-        const stripRect = strip.getBoundingClientRect();
-        const thumbRect = thumb.getBoundingClientRect();
-        const delta =
-          thumbRect.left +
+      const stripRect = strip.getBoundingClientRect();
+      const thumbRect = thumb.getBoundingClientRect();
+      const nextLeft =
+        strip.scrollLeft +
+        (thumbRect.left +
           thumbRect.width / 2 -
-          (stripRect.left + stripRect.width / 2);
-        nextLeft = strip.scrollLeft + delta;
-      }
+          (stripRect.left + stripRect.width / 2));
 
       // Instant on touch: nested smooth scrollTo yanks the section scroller on iOS.
       if (options?.instant || reduceMotion || typeof strip.scrollTo !== "function") {
@@ -2010,7 +2106,7 @@ export function ShowcaseVideoEditingDetail({
       }
       strip.scrollTo({ left: nextLeft, behavior: "smooth" });
     },
-    [card.id, reduceMotion],
+    [card.id, reduceMotion, usesFinePointerHover],
   );
 
   const navigateToWorkIndex = useCallback(
@@ -2037,10 +2133,9 @@ export function ShowcaseVideoEditingDetail({
       if (options?.scrollStrip === false) return;
 
       lockWorksStripScrollSync();
-      // Flush strip: always instant — smooth center/scroll races snap and one-way-drift.
-      centerWorksStripThumb(nextIndex, {
-        instant: !usesFinePointerHover() || matchesDetailPlayerCapViewport(),
-      });
+      // Use one animated settle path for strip paging across breakpoints.
+      // (Reduced motion / unsupported smooth-scroll still falls back inside.)
+      centerWorksStripThumb(nextIndex);
     },
     [
       centerWorksStripThumb,
@@ -2054,12 +2149,18 @@ export function ShowcaseVideoEditingDetail({
   const handleWorksArrowPointerDown = useCallback(
     (side: "prev" | "next") => (event: React.PointerEvent<HTMLButtonElement>) => {
       event.preventDefault();
+      if (!usesFinePointerHover()) {
+        worksArrowTouchRef.current = { side, x: event.clientX, y: event.clientY };
+      } else {
+        worksArrowTouchRef.current = null;
+      }
       triggerWorksArrowFeedback(side, { fromFinePointerArrow: true });
     },
-    [triggerWorksArrowFeedback],
+    [triggerWorksArrowFeedback, usesFinePointerHover],
   );
 
   const handleWorksArrowPointerRelease = useCallback(() => {
+    worksArrowTouchRef.current = null;
     if (usesFinePointerHover()) return;
     scheduleWorksArrowRelease();
   }, [scheduleWorksArrowRelease, usesFinePointerHover]);
@@ -2078,6 +2179,39 @@ export function ShowcaseVideoEditingDetail({
     [navigateToWorkIndex, usesFinePointerHover, videos.length],
   );
 
+  const handleWorksArrowPointerUp = useCallback(
+    (side: "prev" | "next") => (event: React.PointerEvent<HTMLButtonElement>) => {
+      if (usesFinePointerHover()) return;
+      const start = worksArrowTouchRef.current;
+      worksArrowTouchRef.current = null;
+      if (
+        start &&
+        start.side === side &&
+        Math.abs(event.clientX - start.x) < STRIP_SWIPE_TAP_CANCEL_PX &&
+        Math.abs(event.clientY - start.y) < STRIP_SWIPE_TAP_CANCEL_PX
+      ) {
+        worksArrowTouchCommitAtRef.current = performance.now();
+        handleSelectAdjacentWork(side === "prev" ? -1 : 1, event.currentTarget);
+      }
+      scheduleWorksArrowRelease();
+    },
+    [handleSelectAdjacentWork, scheduleWorksArrowRelease, usesFinePointerHover],
+  );
+
+  const handleWorksArrowClick = useCallback(
+    (direction: -1 | 1) => (event: React.MouseEvent<HTMLButtonElement>) => {
+      if (
+        !usesFinePointerHover() &&
+        performance.now() - worksArrowTouchCommitAtRef.current < TOUCH_CLICK_GUARD_MS
+      ) {
+        event.preventDefault();
+        return;
+      }
+      handleSelectAdjacentWork(direction, event.currentTarget);
+    },
+    [handleSelectAdjacentWork, usesFinePointerHover],
+  );
+
   useEffect(() => {
     activeVideoIndexRef.current = activeVideoIndex;
   }, [activeVideoIndex]);
@@ -2085,11 +2219,303 @@ export function ShowcaseVideoEditingDetail({
   useEffect(() => {
     const strip = thumbStripRef.current;
     if (!strip || videos.length <= 1) return;
-    // iPad landscape: native pan/snap is what drifts the flush row one way.
-    if (matchesDetailTabletLandscapeViewport()) {
+    // iPad landscape + phone / iPad portrait: same JS translateX strip as desktop
+    // player-cap (no native overflow/snap — that eats the next tap).
+    if (
+      matchesDetailTabletLandscapeViewport() ||
+      matchesDetailNaturalDrawerViewport() ||
+      matchesDetailPhoneStripViewport()
+    ) {
+      const track = worksStripTrackRef.current;
       strip.scrollLeft = 0;
       strip.style.scrollSnapType = "none";
-      return;
+      if (!track) return;
+
+      let activeTouchId: number | null = null;
+      let axisLock: "undecided" | "x" | "y" = "undecided";
+      let axisStartX = 0;
+      let axisStartY = 0;
+      let axisLastX = 0;
+      let axisLastY = 0;
+      let axisLastMoveTime = 0;
+      let startOffset = 0;
+      let startOuterTop = 0;
+      let velocityX = 0;
+      let velocityY = 0;
+      let momentumRaf = 0;
+      const AXIS_LOCK_PX = 2;
+      const pageSize = worksStripPageSize(card.id);
+
+      const sectionScroller =
+        strip.closest<HTMLElement>('[aria-label^="Section:"]') ??
+        (() => {
+          let current = strip.parentElement;
+          while (current) {
+            const style = window.getComputedStyle(current);
+            if (/(auto|scroll|overlay)/.test(style.overflowY)) return current;
+            current = current.parentElement;
+          }
+          return null;
+        })();
+
+      const applySectionTop = (next: number) => {
+        if (!sectionScroller) return;
+        const max = Math.max(0, sectionScroller.scrollHeight - sectionScroller.clientHeight);
+        sectionScroller.scrollTop = Math.max(0, Math.min(max, next));
+      };
+
+      const startSectionMomentum = () => {
+        stopMomentum();
+        let v = Math.max(-2.8, Math.min(2.8, velocityY));
+        if (Math.abs(v) < 0.045 || !sectionScroller) return;
+        let prev = performance.now();
+        const step = (now: number) => {
+          const dt = Math.min(34, Math.max(0, now - prev));
+          prev = now;
+          v *= Math.exp(-0.0032 * dt);
+          if (Math.abs(v) < 0.02) {
+            momentumRaf = 0;
+            return;
+          }
+          const before = sectionScroller.scrollTop;
+          applySectionTop(before + v * dt);
+          if (Math.abs(sectionScroller.scrollTop - before) < 0.2) {
+            momentumRaf = 0;
+            return;
+          }
+          momentumRaf = window.requestAnimationFrame(step);
+        };
+        momentumRaf = window.requestAnimationFrame(step);
+      };
+
+      const tileStep = () => {
+        const thumbs = strip.querySelectorAll<HTMLElement>(".video-editing-works-strip-thumb");
+        const first = thumbs[0];
+        const second = thumbs[1];
+        if (first && second) return second.offsetLeft - first.offsetLeft;
+        return first ? first.offsetWidth + 10 : 0;
+      };
+
+      const maxOffset = () => {
+        const count = strip.querySelectorAll(".video-editing-works-strip-thumb").length;
+        const step = tileStep();
+        if (step <= 0 || count <= pageSize) return 0;
+        return (count - pageSize) * step;
+      };
+
+      const readOffset = () => {
+        const match = /translate3d\((-?[\d.]+)px/.exec(track.style.transform);
+        if (!match?.[1]) return 0;
+        return Math.max(0, -parseFloat(match[1]));
+      };
+
+      let logicalX = 0;
+
+      const paintOffset = () => {
+        const max = maxOffset();
+        const { pos, visual } = rubberBandRange(logicalX, max, strip.clientWidth);
+        strip.scrollLeft = 0;
+        const x = -pos + visual;
+        track.style.transform = Math.abs(x) > 0.5 ? `translate3d(${x}px, 0, 0)` : "";
+        return pos;
+      };
+
+      const applyOffset = (next: number) => {
+        logicalX = next;
+        return paintOffset();
+      };
+
+      const stopMomentum = () => {
+        if (momentumRaf) {
+          window.cancelAnimationFrame(momentumRaf);
+          momentumRaf = 0;
+        }
+      };
+
+      const snapOffset = () => {
+        const step = tileStep();
+        const max = maxOffset();
+        if (step <= 0) {
+          logicalX = Math.max(0, Math.min(max, logicalX));
+          paintOffset();
+          return;
+        }
+        const clamped = Math.max(0, Math.min(max, logicalX));
+        logicalX = Math.round(clamped / step) * step;
+        paintOffset();
+      };
+
+      const springStripToRange = (then?: () => void) => {
+        const max = maxOffset();
+        const from = logicalX;
+        const target = Math.max(0, Math.min(max, from));
+        if (Math.abs(from - target) < 0.5) {
+          then ? then() : snapOffset();
+          return;
+        }
+        stopMomentum();
+        const start = performance.now();
+        const step = (now: number) => {
+          const t = Math.min(1, (now - start) / 280);
+          const k = 1 - (1 - t) ** 3;
+          logicalX = from + (target - from) * k;
+          paintOffset();
+          if (t < 1) {
+            momentumRaf = window.requestAnimationFrame(step);
+            return;
+          }
+          momentumRaf = 0;
+          logicalX = target;
+          then ? then() : snapOffset();
+        };
+        momentumRaf = window.requestAnimationFrame(step);
+      };
+
+      const startMomentum = () => {
+        stopMomentum();
+        const max = maxOffset();
+        if (logicalX < 0 || logicalX > max) {
+          springStripToRange();
+          return;
+        }
+        let v = Math.max(-2.8, Math.min(2.8, velocityX));
+        if (Math.abs(v) < 0.045) {
+          snapOffset();
+          return;
+        }
+        let prev = performance.now();
+        const step = (now: number) => {
+          const dt = Math.min(34, Math.max(0, now - prev));
+          prev = now;
+          v *= Math.exp(-0.0032 * dt);
+          if (Math.abs(v) < 0.02) {
+            momentumRaf = 0;
+            snapOffset();
+            return;
+          }
+          applyOffset(logicalX + v * dt);
+          if (logicalX < 0 || logicalX > max) {
+            v *= 0.55;
+            if (Math.abs(v) < 0.08) {
+              momentumRaf = 0;
+              springStripToRange();
+              return;
+            }
+          }
+          momentumRaf = window.requestAnimationFrame(step);
+        };
+        momentumRaf = window.requestAnimationFrame(step);
+      };
+
+      const findTouchById = (list: TouchList, id: number) => {
+        for (let i = 0; i < list.length; i++) {
+          if (list[i]?.identifier === id) return list[i];
+        }
+        return null;
+      };
+
+      const onTouchStart = (event: TouchEvent) => {
+        const touch = event.changedTouches[0];
+        if (!touch) return;
+        stopMomentum();
+        activeTouchId = touch.identifier;
+        axisLock = "undecided";
+        axisStartX = touch.clientX;
+        axisStartY = touch.clientY;
+        axisLastX = touch.clientX;
+        axisLastY = touch.clientY;
+        axisLastMoveTime = performance.now();
+        const maxX = maxOffset();
+        const fromPaint = readOffset();
+        if (logicalX < 0 || logicalX > maxX) {
+          logicalX = Math.max(0, Math.min(maxX, logicalX));
+        } else if (Math.abs(fromPaint - logicalX) > 2) {
+          logicalX = Math.max(0, Math.min(maxX, fromPaint));
+        }
+        paintOffset();
+        startOffset = logicalX;
+        startOuterTop = sectionScroller?.scrollTop ?? 0;
+        velocityX = 0;
+        velocityY = 0;
+        resetStripSwipeArrowGesture(touch.clientX, touch.clientY);
+      };
+
+      const onTouchMove = (event: TouchEvent) => {
+        if (activeTouchId == null) return;
+        const touch = findTouchById(event.touches, activeTouchId);
+        if (!touch) return;
+        tryFireStripSwipeArrowFromMotion(touch.clientX, touch.clientY);
+
+        if (axisLock === "undecided") {
+          const dx = touch.clientX - axisStartX;
+          const dy = touch.clientY - axisStartY;
+          if (Math.abs(dx) < AXIS_LOCK_PX && Math.abs(dy) < AXIS_LOCK_PX) return;
+          axisLock = Math.abs(dx) >= Math.abs(dy) ? "x" : "y";
+        }
+
+        const now = performance.now();
+        const dt = Math.max(8, now - axisLastMoveTime);
+        if (axisLock === "x") {
+          const delta = axisLastX - touch.clientX;
+          velocityX = velocityX * 0.65 + (delta / dt) * 0.35;
+          applyOffset(startOffset + (axisStartX - touch.clientX));
+        } else {
+          const delta = axisLastY - touch.clientY;
+          velocityY = velocityY * 0.65 + (delta / dt) * 0.35;
+          applySectionTop(startOuterTop + (axisStartY - touch.clientY));
+        }
+        axisLastX = touch.clientX;
+        axisLastY = touch.clientY;
+        axisLastMoveTime = now;
+        if (event.cancelable) event.preventDefault();
+      };
+
+      const onTouchEnd = (event: TouchEvent) => {
+        if (activeTouchId == null) return;
+        const touch = findTouchById(event.changedTouches, activeTouchId);
+        if (!touch) return;
+        const isTap =
+          Math.abs(touch.clientX - axisStartX) < STRIP_SWIPE_TAP_CANCEL_PX &&
+          Math.abs(touch.clientY - axisStartY) < STRIP_SWIPE_TAP_CANCEL_PX;
+        const locked = axisLock;
+        activeTouchId = null;
+        axisLock = "undecided";
+        if (isTap) {
+          stopMomentum();
+          return;
+        }
+        if (locked === "x") startMomentum();
+        else if (locked === "y") startSectionMomentum();
+      };
+
+      const pinScrollLeft = () => {
+        if (strip.scrollLeft !== 0) strip.scrollLeft = 0;
+      };
+
+      strip.addEventListener("scroll", pinScrollLeft, { passive: true });
+      strip.addEventListener("touchstart", onTouchStart, { passive: true });
+      strip.addEventListener("touchmove", onTouchMove, { passive: false });
+      strip.addEventListener("touchend", onTouchEnd, { passive: true });
+      strip.addEventListener("touchcancel", onTouchEnd, { passive: true });
+
+      const stopForThumbTap = () => {
+        stopMomentum();
+        logicalX = readOffset();
+        paintOffset();
+      };
+      stopWorksStripMotionRef.current = stopForThumbTap;
+
+      return () => {
+        stopMomentum();
+        if (stopWorksStripMotionRef.current === stopForThumbTap) {
+          stopWorksStripMotionRef.current = null;
+        }
+        strip.removeEventListener("scroll", pinScrollLeft);
+        strip.removeEventListener("touchstart", onTouchStart);
+        strip.removeEventListener("touchmove", onTouchMove);
+        strip.removeEventListener("touchend", onTouchEnd);
+        strip.removeEventListener("touchcancel", onTouchEnd);
+      };
     }
 
     let activeTouchId: number | null = null;
@@ -2324,8 +2750,20 @@ export function ShowcaseVideoEditingDetail({
     window.addEventListener("touchend", onWindowTouchEnd, { passive: true });
     window.addEventListener("touchcancel", onWindowTouchEnd, { passive: true });
 
+    const stopForThumbTap = () => {
+      stopMomentum();
+      strip.style.scrollSnapType = "";
+      const x = strip.scrollLeft;
+      strip.scrollLeft = x;
+      stripProgrammaticScrollRef.current = false;
+    };
+    stopWorksStripMotionRef.current = stopForThumbTap;
+
     return () => {
       stopMomentum();
+      if (stopWorksStripMotionRef.current === stopForThumbTap) {
+        stopWorksStripMotionRef.current = null;
+      }
       strip.style.scrollSnapType = "";
       sectionScroller?.removeEventListener("scroll", markOuterHot);
       strip.removeEventListener("scrollend", onScrollEnd);
@@ -2340,11 +2778,227 @@ export function ShowcaseVideoEditingDetail({
       window.removeEventListener("touchcancel", onWindowTouchEnd);
     };
   }, [
+    card.id,
+    isNaturalDrawerViewport,
     isTabletLandscapeViewport,
     resetStripSwipeArrowGesture,
     tryFireStripSwipeArrowFromMotion,
     videos.length,
   ]);
+
+  useEffect(() => {
+    const strip = thumbStripRef.current;
+    const track = worksStripTrackRef.current;
+    if (!strip || !track || videos.length <= 1) return;
+    if (matchesDetailTabletLandscapeViewport()) return;
+    if (!matchesDetailPlayerCapViewport() || !usesFinePointerHover()) return;
+
+    const pageSize = worksStripPageSize(card.id);
+    let logicalX = 0;
+    let momentumRaf = 0;
+    let wheelSnapTimer = 0;
+    let dragId: number | null = null;
+    let dragStartX = 0;
+    let dragStartOffset = 0;
+    let lastX = 0;
+    let lastMoveTime = 0;
+    let velocityX = 0;
+
+    const tileStep = () => {
+      const thumbs = strip.querySelectorAll<HTMLElement>(".video-editing-works-strip-thumb");
+      const first = thumbs[0];
+      const second = thumbs[1];
+      if (first && second) return second.offsetLeft - first.offsetLeft;
+      return first ? first.offsetWidth + 10 : 0;
+    };
+
+    const maxOffset = () => {
+      const count = strip.querySelectorAll(".video-editing-works-strip-thumb").length;
+      const step = tileStep();
+      if (step <= 0 || count <= pageSize) return 0;
+      return (count - pageSize) * step;
+    };
+
+    const readOffset = () => {
+      const match = /translate3d\((-?[\d.]+)px/.exec(track.style.transform);
+      if (!match?.[1]) return 0;
+      return Math.max(0, -parseFloat(match[1]));
+    };
+
+    const paintOffset = () => {
+      const max = maxOffset();
+      const dim = Math.max(1, strip.clientWidth);
+      let pos = logicalX;
+      let visual = 0;
+      if (logicalX < 0) {
+        pos = 0;
+        visual = (1 - 1 / ((-logicalX * 0.22) / dim + 1)) * dim;
+      } else if (logicalX > max) {
+        pos = max;
+        visual = -(1 - 1 / (((logicalX - max) * 0.22) / dim + 1)) * dim;
+      }
+      strip.scrollLeft = 0;
+      const x = -pos + visual;
+      track.style.transform = Math.abs(x) > 0.5 ? `translate3d(${x}px, 0, 0)` : "";
+      return pos;
+    };
+
+    const stopMomentum = () => {
+      if (momentumRaf) {
+        window.cancelAnimationFrame(momentumRaf);
+        momentumRaf = 0;
+      }
+      if (wheelSnapTimer) {
+        window.clearTimeout(wheelSnapTimer);
+        wheelSnapTimer = 0;
+      }
+    };
+
+    const springToRange = () => {
+      const max = maxOffset();
+      const from = logicalX;
+      const target = Math.max(0, Math.min(max, from));
+      if (Math.abs(from - target) < 0.5) {
+        logicalX = target;
+        paintOffset();
+        return;
+      }
+      stopMomentum();
+      const start = performance.now();
+      const step = (now: number) => {
+        const t = Math.min(1, (now - start) / 420);
+        const k = 1 - (1 - t) ** 4;
+        logicalX = from + (target - from) * k;
+        paintOffset();
+        if (t < 1) {
+          momentumRaf = window.requestAnimationFrame(step);
+          return;
+        }
+        momentumRaf = 0;
+        logicalX = target;
+        paintOffset();
+      };
+      momentumRaf = window.requestAnimationFrame(step);
+    };
+
+    const startMomentum = () => {
+      stopMomentum();
+      const max = maxOffset();
+      if (logicalX < 0 || logicalX > max) {
+        springToRange();
+        return;
+      }
+      let v = Math.max(-2.8, Math.min(2.8, velocityX));
+      if (Math.abs(v) < 0.045) return;
+      let prev = performance.now();
+      const step = (now: number) => {
+        const dt = Math.min(34, Math.max(0, now - prev));
+        prev = now;
+        v *= Math.exp(-0.0032 * dt);
+        if (Math.abs(v) < 0.02) {
+          momentumRaf = 0;
+          if (logicalX < 0 || logicalX > max) springToRange();
+          return;
+        }
+        logicalX += v * dt;
+        paintOffset();
+        if (logicalX < 0 || logicalX > max) {
+          v *= 0.45;
+          if (Math.abs(v) < 0.08) {
+            momentumRaf = 0;
+            springToRange();
+            return;
+          }
+        }
+        momentumRaf = window.requestAnimationFrame(step);
+      };
+      momentumRaf = window.requestAnimationFrame(step);
+    };
+
+    const onWheel = (event: WheelEvent) => {
+      if (stripProgrammaticScrollRef.current) return;
+      const absX = Math.abs(event.deltaX);
+      const absY = Math.abs(event.deltaY);
+      const dx = absX > absY || event.shiftKey ? (absX > absY ? event.deltaX : event.deltaY) : 0;
+      if (dx === 0) return;
+      event.preventDefault();
+      stopMomentum();
+      logicalX = readOffset() + dx;
+      paintOffset();
+      wheelSnapTimer = window.setTimeout(() => {
+        wheelSnapTimer = 0;
+        springToRange();
+      }, 80);
+    };
+
+    let dragArmed = false;
+
+    const onPointerDown = (event: PointerEvent) => {
+      if (event.pointerType !== "mouse") return;
+      if (stripProgrammaticScrollRef.current) return;
+      if ((event.target as Element | null)?.closest(".video-editing-works-arrow")) return;
+      stripSwipeArrowRef.current.suppressTap = false;
+      dragId = event.pointerId;
+      dragArmed = false;
+      dragStartX = event.clientX;
+      lastX = event.clientX;
+      lastMoveTime = performance.now();
+      velocityX = 0;
+      logicalX = readOffset();
+      dragStartOffset = logicalX;
+    };
+
+    const onPointerMove = (event: PointerEvent) => {
+      if (dragId == null || event.pointerId !== dragId) return;
+      const pulled = Math.abs(event.clientX - dragStartX);
+      if (!dragArmed) {
+        if (pulled < STRIP_SWIPE_TAP_CANCEL_PX) return;
+        dragArmed = true;
+        stripSwipeArrowRef.current.suppressTap = true;
+        strip.setPointerCapture?.(event.pointerId);
+        stopMomentum();
+      }
+      const now = performance.now();
+      const dt = Math.max(8, now - lastMoveTime);
+      const delta = lastX - event.clientX;
+      velocityX = velocityX * 0.65 + (delta / dt) * 0.35;
+      lastX = event.clientX;
+      lastMoveTime = now;
+      logicalX = dragStartOffset + (dragStartX - event.clientX);
+      paintOffset();
+    };
+
+    const onPointerUp = (event: PointerEvent) => {
+      if (dragId == null || event.pointerId !== dragId) return;
+      const wasDrag = dragArmed;
+      dragId = null;
+      dragArmed = false;
+      if (wasDrag) startMomentum();
+    };
+
+    strip.addEventListener("wheel", onWheel, { passive: false });
+    strip.addEventListener("pointerdown", onPointerDown);
+    strip.addEventListener("pointermove", onPointerMove);
+    strip.addEventListener("pointerup", onPointerUp);
+    strip.addEventListener("pointercancel", onPointerUp);
+    const stopMotionForArrowNav = () => {
+      stopMomentum();
+      logicalX = readOffset();
+    };
+    stopWorksStripMotionRef.current = stopMotionForArrowNav;
+
+    return () => {
+      stopMomentum();
+      if (stopWorksStripMotionRef.current === stopMotionForArrowNav) {
+        stopWorksStripMotionRef.current = null;
+      }
+      strip.removeEventListener("wheel", onWheel);
+      strip.removeEventListener("pointerdown", onPointerDown);
+      strip.removeEventListener("pointermove", onPointerMove);
+      strip.removeEventListener("pointerup", onPointerUp);
+      strip.removeEventListener("pointercancel", onPointerUp);
+    };
+  }, [card.id, usesFinePointerHover, videos.length]);
 
   useEffect(() => {
     activeVideoIndexRef.current = 0;
@@ -2354,7 +3008,7 @@ export function ShowcaseVideoEditingDetail({
       const strip = thumbStripRef.current;
       if (strip) {
         strip.scrollLeft = 0;
-        strip.style.scrollSnapType = matchesDetailTabletLandscapeViewport() ? "none" : "";
+        strip.style.scrollSnapType = worksStripUsesTranslatePaging() ? "none" : "";
       }
       const track = worksStripTrackRef.current;
       if (track) track.style.transform = "";
@@ -2362,10 +3016,9 @@ export function ShowcaseVideoEditingDetail({
   }, [card.title, lockWorksStripScrollSync]);
 
   const handleSelectVideo = useCallback((index: number) => {
-    // Flush two-column strip: run origin/heal scroll (no-op when already aligned).
-    // Stacked strip: leave scroll alone on tap (arrows still center).
+    stopWorksStripMotionRef.current?.();
     navigateToWorkIndex(index, {
-      scrollStrip: matchesDetailPlayerCapViewport(),
+      scrollStrip: true,
     });
   }, [navigateToWorkIndex]);
 
@@ -2597,7 +3250,6 @@ export function ShowcaseVideoEditingDetail({
           flushSync(() => {
             setDetailTabCutoffInstant(false);
           });
-          // Next frame: ease strength 0→1 (same host already painted at 0).
           requestAnimationFrame(() => {
             updateDetailTabpanelCutoffFade();
           });
@@ -2667,6 +3319,61 @@ export function ShowcaseVideoEditingDetail({
     [isNaturalDrawerViewport, usesFinePointerHover],
   );
 
+  const activateDetailCardTab = useCallback(
+    (tabId: DetailCardTabId) => {
+      handleDetailCardTabChange(tabId);
+      focusDetailCardTab(tabId);
+    },
+    [focusDetailCardTab, handleDetailCardTabChange],
+  );
+
+  const handleDetailCardTabPointerDown = useCallback(
+    (tabId: DetailCardTabId) => (event: React.PointerEvent<HTMLButtonElement>) => {
+      if (usesFinePointerHover()) return;
+      detailTabTouchRef.current = { tabId, x: event.clientX, y: event.clientY };
+    },
+    [usesFinePointerHover],
+  );
+
+  const handleDetailCardTabPointerUp = useCallback(
+    (tabId: DetailCardTabId) => (event: React.PointerEvent<HTMLButtonElement>) => {
+      if (usesFinePointerHover()) return;
+      const start = detailTabTouchRef.current;
+      detailTabTouchRef.current = null;
+      if (
+        !start ||
+        start.tabId !== tabId ||
+        Math.abs(event.clientX - start.x) >= STRIP_SWIPE_TAP_CANCEL_PX ||
+        Math.abs(event.clientY - start.y) >= STRIP_SWIPE_TAP_CANCEL_PX
+      ) {
+        return;
+      }
+      detailTabTouchCommitAtRef.current = performance.now();
+      // After the pointer gesture — FLIP/underline skip if we swap tabs on pointerup.
+      window.setTimeout(() => {
+        activateDetailCardTab(tabId);
+      }, 0);
+    },
+    [activateDetailCardTab, usesFinePointerHover],
+  );
+
+  const handleDetailCardTabPointerCancel = useCallback(() => {
+    detailTabTouchRef.current = null;
+  }, []);
+
+  const handleDetailCardTabClick = useCallback(
+    (tabId: DetailCardTabId) => () => {
+      if (
+        !usesFinePointerHover() &&
+        performance.now() - detailTabTouchCommitAtRef.current < TOUCH_CLICK_GUARD_MS
+      ) {
+        return;
+      }
+      activateDetailCardTab(tabId);
+    },
+    [activateDetailCardTab, usesFinePointerHover],
+  );
+
   const renderDetailCardTabList = () => (
     // layoutRoot: keep tab FLIP projections from dirtying the section scroller (mobile shake).
     <motion.div layoutRoot className="w-full min-w-0">
@@ -2731,10 +3438,10 @@ export function ShowcaseVideoEditingDetail({
                   // Prevent focus scroll jump on press; focus runs with preventScroll on click.
                   event.preventDefault();
                 }}
-                onClick={() => {
-                  handleDetailCardTabChange(tabId);
-                  focusDetailCardTab(tabId);
-                }}
+                onPointerDown={handleDetailCardTabPointerDown(tabId)}
+                onPointerUp={handleDetailCardTabPointerUp(tabId)}
+                onPointerCancel={handleDetailCardTabPointerCancel}
+                onClick={handleDetailCardTabClick(tabId)}
               >
                 <span className="relative inline-block w-max pb-2">
                   {detailCardTabLabel(tabId, isSlaywire)}
@@ -2802,7 +3509,7 @@ export function ShowcaseVideoEditingDetail({
     if (activeNaturalH > 0) {
       tallest = Math.max(tallest, activeNaturalH);
     }
-    const measuredChromeHeight = measureDetailCardChromeHeight(cardSurface, activeNatural);
+    const measuredChromeHeight = measureDetailCardChromeHeight(cardSurface);
     if (!detailCardResizeAnimationRef.current) {
       detailCardChromeHeightRef.current = measuredChromeHeight;
     }
@@ -2851,11 +3558,15 @@ export function ShowcaseVideoEditingDetail({
     detailCardMaxHeightPx,
   ]);
 
-  /** Initial / cap-change height only — tab/thumb swaps own height via animateDetailCardToMeasuredBody. */
+  /**
+   * Initial height + one content fit per tab/work/visibility. Do not depend on
+   * painted height, cap ticks, or callback identity — those retriggered a
+   * probe-vs-live tween loop (e.g. SLAYWIRE OVERVIEW).
+   */
   useLayoutEffect(() => {
-    if (!isPlayerCappedDrawerViewport || detailCardMaxHeightPx == null) {
-      return;
-    }
+    if (!isPlayerCappedDrawerViewport) return;
+    const maxHeight = detailCardMaxHeightPxRef.current;
+    if (maxHeight == null) return;
     // Never stomp an in-flight delayed measure or WAAPI resize (wrong target / flicker).
     if (detailCardHeightTransitioningRef.current) return;
     if (detailCardResizeAnimationRef.current) return;
@@ -2865,92 +3576,56 @@ export function ShowcaseVideoEditingDetail({
 
     const cardSurface = detailCardSurfaceRef.current;
     const activeNatural = detailTabActiveNaturalRef.current;
+    const paintedHeight = detailCardHeightPxRef.current;
+    const fitKey = `${card.id}:${activeDetailCardTab}:${activeVideoIndex}:${detailBodyVisible}`;
 
-    if (detailCardHeightPx == null) {
-      let nextHeight = detailCardMaxHeightPx;
-      if (cardSurface && activeNatural && activeNatural.offsetHeight > 0) {
-        const chrome =
-          detailCardChromeHeightRef.current ??
-          measureDetailCardChromeHeight(cardSurface, activeNatural);
-        detailCardChromeHeightRef.current = chrome;
-        nextHeight = Math.min(
-          Math.ceil(chrome + Math.max(activeNatural.offsetHeight, activeNatural.scrollHeight)),
-          detailCardMaxHeightPx,
-        );
+    if (paintedHeight == null) {
+      // Wait for live copy — defaulting to the player cap leaves empty
+      // slack on short tabs and stamps the fit key so we never hug.
+      if (!cardSurface || !activeNatural || activeNatural.offsetHeight <= 0) {
+        return;
       }
+      const chrome =
+        detailCardChromeHeightRef.current ??
+        measureDetailCardChromeHeight(cardSurface);
+      detailCardChromeHeightRef.current = chrome;
+      const nextHeight = Math.min(
+        Math.ceil(chrome + Math.max(activeNatural.offsetHeight, activeNatural.scrollHeight)),
+        maxHeight,
+      );
+      detailCardIdleFitKeyRef.current = fitKey;
       setDetailCardHeightPx(nextHeight);
       return;
     }
 
     if (!cardSurface || !activeNatural) return;
 
-    const overviewProbe =
-      activeDetailCardTab === "overview"
-        ? detailVideoOverviewMeasureRefs.current[activeVideoIndex]
-        : null;
-    const probe =
-      overviewProbe ??
-      detailTabHiddenMeasureRefs.current[activeDetailCardTab] ??
-      activeNatural;
-
     const settleCutoff = () => {
-      // Apply once after height is idle — avoid thrashing mask classes during settle.
       requestAnimationFrame(() => {
-        updateDetailTabpanelCutoffFade();
+        updateDetailTabpanelCutoffFadeRef.current();
       });
     };
 
     // Player cap shrank under the card (title grew / layout moved).
-    if (detailCardHeightPx > detailCardMaxHeightPx + 0.5) {
-      animateDetailCardToMeasuredBody(probe, 0, {
-        toHeightPx: detailCardMaxHeightPx,
+    // Ignore 1–3px remasure noise — that was snapping the bottom off the player.
+    if (paintedHeight > maxHeight + 3) {
+      animateDetailCardToMeasuredBodyRef.current(activeNatural, 0, {
+        toHeightPx: maxHeight,
         onSettled: settleCutoff,
       });
       return;
     }
 
-    // Size to content (clamped by the player cap) — grow OR shrink. Do not force max
-    // just because the panel reports a 1px overflow; that left short entries (e.g.
-    // FugitiveFilms) stuck at the full ceiling.
-    let naturalHeight = 0;
-    if (probe && (probe.offsetHeight > 0 || probe.scrollHeight > 0)) {
-      naturalHeight = measureDetailCardHeightForProbe(cardSurface, probe);
-    } else {
-      const bodyH = Math.max(activeNatural.offsetHeight, activeNatural.scrollHeight);
-      if (bodyH <= 0) return;
-      const chrome =
-        detailCardChromeHeightRef.current ??
-        measureDetailCardChromeHeight(cardSurface, activeNatural);
-      detailCardChromeHeightRef.current = chrome;
-      naturalHeight = Math.ceil(chrome + bodyH);
-    }
-
-    const panel = detailTabpanelScrollRef.current;
-    const panelOverflows =
-      Boolean(panel) && panel!.scrollHeight - panel!.clientHeight > 1;
-    if (panelOverflows) {
-      // Probe can under-read while live copy still clips — take the larger need,
-      // still capped at max (so short copy never jumps to the ceiling).
-      const liveHeight = measureDetailCardHeightForProbe(cardSurface, activeNatural);
-      naturalHeight = Math.max(naturalHeight, liveHeight);
-    }
-
-    const nextHeight = Math.min(naturalHeight, detailCardMaxHeightPx);
-    if (Math.abs(nextHeight - detailCardHeightPx) <= 0.5) return;
-
-    animateDetailCardToMeasuredBody(probe, 0, {
-      toHeightPx: nextHeight,
-      onSettled: settleCutoff,
-    });
+    // Tab/work height is one tween. Do not remasure here — that was the
+    // second drawer motion after the main resize.
+    detailCardIdleFitKeyRef.current = fitKey;
   }, [
-    animateDetailCardToMeasuredBody,
     isPlayerCappedDrawerViewport,
     detailCardMaxHeightPx,
-    detailCardHeightPx,
     activeDetailCardTab,
     activeVideoIndex,
     detailBodyVisible,
-    updateDetailTabpanelCutoffFade,
+    card.id,
   ]);
 
   useEffect(() => {
@@ -2958,6 +3633,7 @@ export function ShowcaseVideoEditingDetail({
     const live = detailTabActiveNaturalRef.current;
     if (!live || typeof ResizeObserver === "undefined") return;
     const ro = new ResizeObserver(() => {
+      if (isPlayerCappedDrawerViewport) return;
       if (detailTabMaskLockRef.current) return;
       if (!workSwitchInFlightRef.current) return;
       if (
@@ -2980,6 +3656,7 @@ export function ShowcaseVideoEditingDetail({
     detailBodyVisible,
     fitDetailCardToLiveBody,
     isCompactDrawerViewport,
+    isPlayerCappedDrawerViewport,
   ]);
 
   useEffect(() => {
@@ -3092,10 +3769,10 @@ export function ShowcaseVideoEditingDetail({
                       aria-label="Previous selected work"
                       onPointerDown={handleWorksArrowPointerDown("prev")}
                       onMouseDown={(event) => event.preventDefault()}
-                      onPointerUp={handleWorksArrowPointerRelease}
+                      onPointerUp={handleWorksArrowPointerUp("prev")}
                       onPointerCancel={handleWorksArrowPointerRelease}
                       onPointerLeave={handleWorksArrowPointerRelease}
-                      onClick={(event) => handleSelectAdjacentWork(-1, event.currentTarget)}
+                      onClick={handleWorksArrowClick(-1)}
                     >
                       <ChevronLeft className="video-editing-works-arrow-glyph h-[0.9625rem] w-[0.9625rem] sm:h-[1.1rem] sm:w-[1.1rem]" strokeWidth={2.25} aria-hidden />
                     </button>
@@ -3103,11 +3780,7 @@ export function ShowcaseVideoEditingDetail({
                   <div className={worksStripShellClass}>
                   <div
                     ref={thumbStripRef}
-                    className={`video-editing-works-strip no-scrollbar flex min-w-0 gap-2 overflow-x-auto pb-0.5 sm:gap-2.5 [overflow-anchor:none] [overscroll-behavior-x:contain] w-full${
-                      isTabletLandscapeViewport
-                        ? " [touch-action:pan-y]"
-                        : " snap-x snap-mandatory [touch-action:pan-x_pan-y]"
-                    }`}
+                    className="video-editing-works-strip no-scrollbar flex min-w-0 gap-2 overflow-x-auto pb-0.5 sm:gap-2.5 [overflow-anchor:none] [overscroll-behavior-x:contain] w-full [touch-action:none]"
                   >
                     <div
                       ref={worksStripTrackRef}
@@ -3127,14 +3800,14 @@ export function ShowcaseVideoEditingDetail({
                           }}
                           role="button"
                           tabIndex={0}
-                          className={`video-editing-works-strip-thumb group relative flex shrink-0 flex-col text-left cursor-pointer ${worksStripThumbBasisClass} ${
-                            isTabletLandscapeViewport ? "[touch-action:pan-y]" : "snap-start [touch-action:pan-x_pan-y]"
-                          } ${
+                          className={`video-editing-works-strip-thumb group relative flex shrink-0 flex-col text-left cursor-pointer ${worksStripThumbBasisClass} [touch-action:none] ${
                             active ? "text-white" : "text-mono-2"
                           }`}
                           aria-label={`Select ${isSlaywire ? "media" : "edit"} thumbnail ${index + 1}`}
                           aria-pressed={active}
-                          onMouseDown={(event) => event.preventDefault()}
+                          onMouseDown={(event) => {
+                            if (usesFinePointerHover()) event.preventDefault();
+                          }}
                           onClick={(event) => {
                             handleThumbSelect(index);
                             event.currentTarget.blur();
@@ -3204,10 +3877,10 @@ export function ShowcaseVideoEditingDetail({
                       aria-label="Next selected work"
                       onPointerDown={handleWorksArrowPointerDown("next")}
                       onMouseDown={(event) => event.preventDefault()}
-                      onPointerUp={handleWorksArrowPointerRelease}
+                      onPointerUp={handleWorksArrowPointerUp("next")}
                       onPointerCancel={handleWorksArrowPointerRelease}
                       onPointerLeave={handleWorksArrowPointerRelease}
-                      onClick={(event) => handleSelectAdjacentWork(1, event.currentTarget)}
+                      onClick={handleWorksArrowClick(1)}
                     >
                       <ChevronRight className="video-editing-works-arrow-glyph h-[0.9625rem] w-[0.9625rem] sm:h-[1.1rem] sm:w-[1.1rem]" strokeWidth={2.25} aria-hidden />
                     </button>
@@ -3308,7 +3981,11 @@ export function ShowcaseVideoEditingDetail({
               >
                 <section
                   ref={detailCardSurfaceRef}
-                  className={`${showcaseDetailCardClass} video-editing-detail-meta-card mt-3.5 flex w-full min-h-0 min-w-0 flex-col overflow-hidden [overflow-anchor:none] sm:mt-4`}
+                  className={`${showcaseDetailCardClass} video-editing-detail-meta-card mt-3.5 flex w-full min-h-0 min-w-0 flex-col overflow-hidden [overflow-anchor:none] sm:mt-4${
+                    detailCardAtPlayerCap
+                      ? " video-editing-detail-meta-card--capped"
+                      : ""
+                  }`}
                   style={
                     detailCardMaxHeightPx != null
                       ? {
@@ -3339,15 +4016,20 @@ export function ShowcaseVideoEditingDetail({
                       detailCardUsesInnerScroll ? " flex min-h-0 flex-1 flex-col" : ""
                     }`}
                   >
-                    <AnimatePresence mode="wait" initial={false}>
-                      <motion.div
-                        key={activeVideo.id}
-                        initial={false}
-                        className={`video-editing-detail-cards-tabs flex w-full min-w-0 flex-col gap-2.5${
-                          detailCardUsesInnerScroll ? " min-h-0 flex-1" : ""
-                        }`}
-                      >
-                        {renderDetailCardTabList()}
+                    <div
+                      className={`video-editing-detail-cards-tabs flex w-full min-w-0 flex-col gap-2.5${
+                        detailCardUsesInnerScroll ? " min-h-0 flex-1" : ""
+                      }`}
+                    >
+                      {renderDetailCardTabList()}
+                      <AnimatePresence mode="wait" initial={false}>
+                        <motion.div
+                          key={activeVideo.id}
+                          initial={false}
+                          className={`w-full min-w-0${
+                            detailCardUsesInnerScroll ? " flex min-h-0 flex-1 flex-col" : ""
+                          }`}
+                        >
                         <div
                           className={`video-editing-detail-card-tabpanel-shell relative min-w-0${
                             detailCardUsesInnerScroll ? " flex min-h-0 flex-1 flex-col" : ""
@@ -3446,8 +4128,9 @@ export function ShowcaseVideoEditingDetail({
                             </div>
                           ) : null}
                         </div>
-                      </motion.div>
-                    </AnimatePresence>
+                        </motion.div>
+                      </AnimatePresence>
+                    </div>
                   </div>
                 </section>
               </div>

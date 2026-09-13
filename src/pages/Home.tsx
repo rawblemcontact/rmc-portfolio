@@ -26,6 +26,7 @@ import React, {
 } from "react";
 import { createPortal, flushSync } from "react-dom";
 import { useCutoffScrollFade } from "../lib/useCutoffScrollFade";
+import { useTabletLandscapeInnerScroll } from "../lib/useTabletLandscapeInnerScroll";
 import { afterOrientationSettle, isDocumentPinchZoomed, isRecentOrientationChange, unlessPinched } from "../lib/visualViewport";
 import { useNavLayoutFreeze } from "../lib/navLayoutFreeze";
 import { Button } from "../components/ui/button";
@@ -5731,9 +5732,12 @@ const PhantomProfile = ({
   const profileSummaryBaselineRef = useRef<HTMLDivElement>(null);
   const {
     scrollRef: profileSummaryScrollRef,
-    showFade: profileSummaryCutoffFade,
     updateFade: updateProfileSummaryCutoffFade,
   } = useCutoffScrollFade(profileSummaryCardMaxH != null);
+  useTabletLandscapeInnerScroll(profileSummaryScrollRef, profileSummaryCardMaxH != null, {
+    hitSelector: ".profile-summary-card",
+    bounceSelector: ".profile-summary-card-scroll-bounce",
+  });
   const [profileDesktopLayoutDebugValues, setProfileDesktopLayoutDebugValues] =
     useState<ProfileDesktopLayoutDebugValues>(() => readSectionDesktopLayoutDebugValues("profile"));
   const [profileRedLineDebugValues, setProfileRedLineDebugValues] =
@@ -6180,10 +6184,9 @@ const PhantomProfile = ({
                 <div className="profile-summary-card-scroll-shell relative min-h-0 min-w-0 flex-1">
                 <div
                   ref={profileSummaryScrollRef as React.RefObject<HTMLDivElement | null>}
-                  className={`profile-summary-card-scroll no-scrollbar min-h-0 min-w-0${
-                    profileSummaryCutoffFade ? " content-cutoff-fade" : ""
-                  }`}
+                  className="profile-summary-card-scroll no-scrollbar min-h-0 min-w-0"
                 >
+                <div className="profile-summary-card-scroll-bounce">
                 <p className={`${PROFILE_CARD_SECTION_LABEL_CLASS} mb-1.5`} style={{ color: PROFILE_ACCENT_SOFT }}>SUMMARY</p>
                 <p className="font-body text-mono-2 leading-relaxed mb-4">
                 Writer, editor, and digital media producer specialized in narrative-driven web content and coordinating social
@@ -6207,6 +6210,7 @@ const PhantomProfile = ({
                   <li>Full-Time Content, Communications, or Social Media roles.</li>
                   <li>On-site, Remote, or Hybrid.</li>
                 </ul>
+                </div>
                 </div>
                 </div>
               </motion.div>
