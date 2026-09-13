@@ -32,6 +32,42 @@ disable-model-invocation: true
 
 | Date | Note |
 |------|------|
+| 2026-09-13 | **Palette yellow undo** — Desktop back to `#ffe100` (undid `#ffe400` and `#ffe800`). iOS P3 unchanged. `--palette-yellow-projects` aliases `--palette-yellow`. |
+| 2026-09-13 | **Palette yellow set match 3** — Desktop `#ffe400` (one lift from `#ffe100`). iOS P3 unchanged. `--palette-yellow-projects` aliases `--palette-yellow`. |
+| 2026-09-13 | **Palette yellow set match 2** — Desktop `#ffe100` (one lift from `#ffdc00`, still set-weight). iOS P3 unchanged. `--palette-yellow-projects` aliases `--palette-yellow`. |
+| 2026-09-13 | **Palette yellow set match** — Desktop `#ffdc00` so it sits with red/green/blue/violet without going acid or mustard. iOS P3 unchanged. `--palette-yellow-projects` aliases `--palette-yellow`. |
+| 2026-09-13 | **Palette yellow banana** — Desktop `#ffea00` (backed off acid `#fff000`). iOS P3 unchanged. `--palette-yellow-projects` aliases `--palette-yellow`. |
+| 2026-09-13 | **Palette yellow pop** — Desktop `#fff000` to match iPhone/iPad P3 punch. iOS P3 unchanged. `--palette-yellow-projects` aliases `--palette-yellow`. |
+| 2026-09-13 | **Palette yellow same look** — Desktop `#ffee00` (sRGB stand-in for iPhone banana). iPhone/iPad keep P3 `color(display-p3 0.989 0.904 0.196)`. `--palette-yellow-projects` aliases `--palette-yellow`. |
+| 2026-09-13 | **Palette yellow unified** — One token: P3 `color(display-p3 0.989 0.904 0.196)` + sRGB `#ffe600`. No desktop/iPhone split. `--palette-yellow-projects` aliases `--palette-yellow`. |
+| 2026-09-13 | **Palette yellow more neon** — Desktop/sRGB `#ffee00` (more neon than `#ffec10`). iPhone P3 unchanged. `--palette-yellow-projects` aliases `--palette-yellow`. |
+| 2026-09-13 | **Palette yellow slightly neon** — Desktop/sRGB `#ffec10` (slightly more neon than `#ffe91c`). iPhone P3 unchanged. `--palette-yellow-projects` aliases `--palette-yellow`. |
+| 2026-09-13 | **Palette yellow slightly more** — Desktop/sRGB `#ffe91c` (slightly more yellow than `#ffe924`). iPhone P3 unchanged. `--palette-yellow-projects` aliases `--palette-yellow`. |
+| 2026-09-13 | **Palette yellow less pale** — Desktop/sRGB `#ffe924` (a little less pale than `#ffe92a`). iPhone P3 unchanged. `--palette-yellow-projects` aliases `--palette-yellow`. |
+| 2026-09-13 | **Palette yellow lil paler 2** — Desktop/sRGB `#ffe92a` (a little paler than `#ffe922`). iPhone P3 unchanged. `--palette-yellow-projects` aliases `--palette-yellow`. |
+| 2026-09-13 | **Palette yellow lil paler** — Desktop/sRGB `#ffe922` (a little paler than `#ffe914`). iPhone P3 unchanged. `--palette-yellow-projects` aliases `--palette-yellow`. |
+| 2026-09-13 | **Palette yellow slightly paler** — Desktop/sRGB `#ffe914` (whisper of blue vs `#ffe900`). iPhone P3 unchanged. `--palette-yellow-projects` aliases `--palette-yellow`. |
+| 2026-09-13 | **Palette yellow slightest more** — Desktop/sRGB `#ffe900` (slightest more yellow than `#ffe800`). iPhone P3 unchanged. `--palette-yellow-projects` aliases `--palette-yellow`. |
+| 2026-09-13 | **Palette yellow a little more** — Desktop/sRGB `#ffe800` (more yellow than `#ffe500`). iPhone P3 unchanged. `--palette-yellow-projects` aliases `--palette-yellow`. |
+| 2026-09-13 | **Palette yellow lock** — Desktop/sRGB `#ffe500` (one hair more gold than `#ffe600`). iPhone P3 unchanged. `--palette-yellow-projects` aliases `--palette-yellow`. |
+| 2026-09-13 | **Palette yellow lemon hair light** — Desktop/sRGB `#ffe600` (one hair lighter than `#ffe500`). iPhone P3 unchanged. `--palette-yellow-projects` aliases `--palette-yellow`. |
+| 2026-09-13 | **Palette yellow lemon gold hair 2** — Desktop/sRGB `#ffe500` (one hair less gold than `#ffe400`). iPhone P3 unchanged. `--palette-yellow-projects` aliases `--palette-yellow`. |
+| 2026-09-13 | **Palette yellow lemon gold hair** — Desktop/sRGB `#ffe400` (slightest gold from `#ffe600`). iPhone P3 unchanged. `--palette-yellow-projects` aliases `--palette-yellow`. |
+| 2026-09-13 | **Palette yellow lemon chroma 3** — Desktop/sRGB `#ffe600` (blue channel gone). iPhone P3 unchanged. `--palette-yellow-projects` aliases `--palette-yellow`. |
+| 2026-09-13 | **Palette yellow lemon chroma 2** — Desktop/sRGB `#ffe818` (less wash than `#ffe830`). iPhone P3 unchanged. `--palette-yellow-projects` aliases `--palette-yellow`. |
+| 2026-09-13 | **Palette yellow lemon chroma** — Desktop/sRGB `#ffe830` (less faded than `#ffec42`). iPhone P3 unchanged. `--palette-yellow-projects` aliases `--palette-yellow`. |
+| 2026-09-13 | **Palette yellow desktop lift** — Desktop/sRGB `#ffec42`; iPhone P3 unchanged (`color-gamut: p3` + `pointer: coarse`). Removed 2px glow. `--palette-yellow-projects` aliases `--palette-yellow`. |
+| 2026-09-13 | **Palette yellow P3-on-sRGB** — P3 token only in `@media (color-gamut: p3)`. sRGB desktop keeps `#ffe600` plus a 5px glow on 2px yellow bars (menu / PROJECTS header). `--palette-yellow-projects` aliases `--palette-yellow`. |
+| 2026-09-13 | **Palette yellow P3** — `--palette-yellow` stays `#ffe600` on sRGB; wide-gamut gets `color(display-p3 0.989 0.904 0.196)`. Hero square fill is `var(--palette-yellow)`. `--palette-yellow-projects` aliases `--palette-yellow`. |
+| 2026-09-13 | **Palette yellow banana 4** — `#ffe600` (one notch up from `#ffe000`). `--palette-yellow-projects` aliases `--palette-yellow`. |
+| 2026-09-13 | **Palette yellow banana 3** — `#ffe000` (one notch up from `#ffda00`). `--palette-yellow-projects` aliases `--palette-yellow`. |
+| 2026-09-13 | **Palette yellow banana 2** — `#ffda00` (one notch up from `#ffd400`). `--palette-yellow-projects` aliases `--palette-yellow`. |
+| 2026-09-13 | **Palette yellow banana** — `#ffd400` (lift from `#ffcc00` dark-banana). Still one token. `--palette-yellow-projects` aliases `--palette-yellow`. |
+| 2026-09-13 | **Palette yellow ink 3** — `#ffcc00` (same-size darken from `#ffd200`). PROJECTS header rule taken off the title-stack `translateY` so the 2px bar is not subpixel-mixed. `--palette-yellow-projects` aliases `--palette-yellow`. |
+| 2026-09-13 | **Palette yellow ink 2** — `#ffd200` (same-size darken from `#ffd800`). No underline width change. `--palette-yellow-projects` aliases `--palette-yellow`. |
+| 2026-09-13 | **Palette yellow ink** — `#ffd800` (slight darken from `#ffde00`, still one token). No underline width change. `--palette-yellow-projects` aliases `--palette-yellow`. |
+| 2026-09-13 | **Palette yellow gold** — `#ffde00` (slight gold from `#ffe700`). No underline width change. `--palette-yellow-projects` aliases `--palette-yellow`. |
+| 2026-09-13 | **Palette yellow chroma** — `#ffe700` (same L as `#ffe73a`, blue channel dropped). No underline width change. `--palette-yellow-projects` aliases `--palette-yellow`. |
 | 2026-09-13 | **Palette yellow nudge** — `#ffe73a` (~15% toward hero square `#FFC90F`). `--palette-yellow-projects` aliases `--palette-yellow`. |
 | 2026-09-13 | **Palette yellow lock** — `#ffec42` lemon, lifted so the 2px menu bar doesn’t read dark. `--palette-yellow-projects` aliases `--palette-yellow`. |
 | 2026-09-12 | **Brave PROJECTS press-drag freeze** — Symptom: after press+drag-off a main PROJECTS card in Brave, hit-testing dies while grid CSS keeps animating; Chrome OK. Root cause: **native thumbnail `img`/`video` drag**, not Framer `whileTap` or cluster CSS `zoom`. Fix: `draggable={false}` + `onDragStart` preventDefault on card button/media; CSS `-webkit-user-drag: none` + `pointer-events: none` on card media. Keep PORTFOLIO_BOUNCE `whileTap`. Do not “fix” by stripping bounce or chasing zoom/Framer again. |

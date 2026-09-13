@@ -12,12 +12,21 @@
   /* Main menu / section accents (exact). `orange` = CONTACT (indigo). */
   --palette-red: #ef3a2c;
   --palette-orange: #583eb7;
-  /* Lemon — same hex as the hero lockup yellow square. */
-  --palette-yellow: #ffe73a;
+  /* Desktop — banana with the same ink weight as red/green/blue/violet. */
+  --palette-yellow: #ffe100;
   /** Must stay identical to menu yellow — do not give PROJECTS a second hex. */
   --palette-yellow-projects: var(--palette-yellow);
   --palette-green: #0fb93c;
   --palette-green-bright: #0fb93c;
   --palette-blue: #0a88f7;
   --palette-blue-bright: #0a88f7;
+}
+
+/* iPhone + iPad only — the banana that already looks right. */
+@supports (-webkit-touch-callout: none) {
+  @media (color-gamut: p3) {
+    :root {
+      --palette-yellow: color(display-p3 0.989 0.904 0.196);
+    }
+  }
 }

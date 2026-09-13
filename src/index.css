@@ -3290,7 +3290,6 @@
     width: fit-content;
     max-width: 100%;
     gap: var(--showcase-header-line-gap);
-    transform: translateY(2px);
   }
 
   #projects .showcase-header-title-rule > .section-main-header-title {
@@ -3300,10 +3299,14 @@
     max-width: 100%;
     text-align: left;
     text-wrap: balance;
-    transform: translateY(-0.125rem);
+    /* Keep the word where it was (old stack was 2px + -0.125rem). Do not
+       translate the yellow rule — a transformed 2px bar mixes olive. */
+    transform: translateY(calc(2px - 0.125rem));
   }
 
   #projects .showcase-header-title-rule .showcase-main-accent-line {
+    position: relative;
+    top: 2px;
     margin-top: 0;
     width: 100%;
     min-width: 0;
@@ -7968,7 +7971,7 @@
   }
 
   #projects .showcase-header-title-rule > .section-main-header-title {
-    transform: translateY(-0.125rem) !important;
+    transform: translateY(calc(2px - 0.125rem)) !important;
   }
 
   /* Yellow rule — spans PROJECTS title width; color/height = MAIN MENU PROJECTS. */
