@@ -5036,18 +5036,25 @@ const RainbowMenuSlide = ({
               </div>
               <motion.span
                 aria-hidden
-                className="absolute bottom-0 left-0 right-0 h-px origin-left bg-white/10"
+                className="absolute bottom-0 left-0 right-0 z-0 h-px origin-left bg-white/10"
                 initial={false}
-                animate={{ scaleX: menuTimelineActive ? 1 : 0 }}
+                animate={{
+                  scaleX: menuTimelineActive ? 1 : 0,
+                  opacity:
+                    hoveredId === item.id || pendingNavId === item.id ? 0 : 1,
+                }}
                 transition={{
-                  duration: mainMenuDividerDurS,
-                  delay: mainMenuDividerDelayS,
-                  ease: SKILLS_SECTION_HEADER_SLIDE_EASE,
+                  scaleX: {
+                    duration: mainMenuDividerDurS,
+                    delay: mainMenuDividerDelayS,
+                    ease: SKILLS_SECTION_HEADER_SLIDE_EASE,
+                  },
+                  opacity: { duration: 0 },
                 }}
               />
               <motion.span
                 aria-hidden
-                className={`absolute bottom-0 left-0 right-0 origin-left ${item.id === "profile" || item.id === "skills" ? "h-[2px] md:h-[2.5px]" : "h-[2px]"} ${item.color}`}
+                className={`pointer-events-none absolute bottom-0 left-0 right-0 z-10 origin-left ${item.id === "profile" || item.id === "skills" ? "h-[2px] md:h-[2.5px]" : "h-[2px]"} ${item.color}`}
                 initial={false}
                 animate={{
                   scaleX: hoveredId === item.id || pendingNavId === item.id ? 1 : 0,
@@ -10098,9 +10105,8 @@ const PalaceProjects = ({
                     aria-hidden
                   >
                     <motion.span
-                      className="absolute bottom-0 left-0 right-0 h-[2px]"
+                      className="absolute bottom-0 left-0 right-0 h-[2px] [background-color:var(--palette-yellow-projects)]"
                       style={{
-                        backgroundColor: PROJECTS_ACCENT_SOFT,
                         transformOrigin: "center center",
                       }}
                       initial={false}

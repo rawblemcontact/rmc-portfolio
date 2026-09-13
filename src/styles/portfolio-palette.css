@@ -12,9 +12,10 @@
   /* Main menu / section accents (exact). `orange` = CONTACT (indigo). */
   --palette-red: #ef3a2c;
   --palette-orange: #583eb7;
-  --palette-yellow: #efc53a;
-  /** Showcase / projects motif — matches main-menu yellow */
-  --palette-yellow-projects: #efc53a;
+  /* Lemon, full sat, lifted so the 2px bar doesn’t go dim on black. */
+  --palette-yellow: #ffec42;
+  /** Must stay identical to menu yellow — do not give PROJECTS a second hex. */
+  --palette-yellow-projects: var(--palette-yellow);
   --palette-green: #0fb93c;
   --palette-green-bright: #0fb93c;
   --palette-blue: #0a88f7;

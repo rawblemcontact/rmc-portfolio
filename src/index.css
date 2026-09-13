@@ -6378,6 +6378,16 @@
       scroll-snap-type: none !important;
     }
 
+    /* Last 3-up tile sits 1px shy of the clip — pull next in so arrow–thumb air matches prev. */
+    #projects.projects-interactive-media-detail-open
+      .video-editing-works-arrow--next,
+    #projects.projects-video-editing-detail-open
+      .video-editing-works-arrow--next,
+    #projects.projects-slaywire-detail-open
+      .video-editing-works-arrow--next {
+      margin-inline-end: 1px;
+    }
+
     #projects.projects-interactive-media-detail-open
       .video-editing-detail--interactive-media
       .video-editing-works-strip-track,
@@ -7734,6 +7744,18 @@
   --projects-section-nudge-y: -4px;
 }
 
+/* MAIN MENU is source of truth — PROJECTS header rule = menu PROJECTS underline. */
+#projects .showcase-header-title-rule .showcase-main-accent-line {
+  min-height: 2px;
+  height: 2px;
+}
+
+#projects .showcase-header-title-rule .showcase-main-accent-line > span {
+  height: 2px !important;
+  min-height: 2px;
+  background-color: var(--palette-yellow-projects);
+}
+
 #projects > .container {
   margin-top: var(--projects-section-nudge-y);
 }
@@ -7949,10 +7971,12 @@
     transform: translateY(-0.125rem) !important;
   }
 
-  /* Yellow rule â€” spans PROJECTS title width (title-rule w-fit) */
+  /* Yellow rule — spans PROJECTS title width; color/height = MAIN MENU PROJECTS. */
   #projects .showcase-header-title-rule .showcase-main-accent-line > span {
     left: 0 !important;
     right: 0 !important;
+    height: 2px !important;
+    background-color: var(--palette-yellow-projects);
   }
 
   /* Strip carousel wrapper spacing so cluster gap is the only space above cards */
@@ -8434,6 +8458,16 @@
     margin-inline-end: -4px;
   }
 
+  /* Last 3-up tile sits 1px shy of the clip — pull next in so arrow–thumb air matches prev. */
+  #projects.projects-interactive-media-detail-open
+    .video-editing-works-arrow--next,
+  #projects.projects-video-editing-detail-open
+    .video-editing-works-arrow--next,
+  #projects.projects-slaywire-detail-open
+    .video-editing-works-arrow--next {
+    margin-inline-end: 1px;
+  }
+
   #projects.projects-interactive-media-detail-open
     .video-editing-works-strip-thumb,
   #projects.projects-video-editing-detail-open
@@ -8566,12 +8600,13 @@
   }
 
   /*
-   * Desktop card stroke â€” keep grey/yellow border above media + black header panel.
+   * Desktop card stroke — keep grey/yellow border above media + black header panel.
    * Absolute fill was painting over the inner stroke just above the title on hover.
    */
   #projects [data-carousel-card].project-card-surface {
     border-color: transparent !important;
     isolation: isolate;
+    outline: none;
   }
 
   #projects [data-carousel-card].project-card-surface::after {
@@ -8581,14 +8616,16 @@
     z-index: 20;
     border-radius: inherit;
     pointer-events: none;
-    box-shadow: inset 0 0 0 1px var(--portfolio-glass-stroke);
-    transition: box-shadow 0.3s ease-out;
+    border: 1px solid var(--portfolio-glass-stroke);
+    background: transparent;
+    box-shadow: none;
+    transition: border-color 0.3s ease-out;
   }
 
   #projects [data-carousel-card].project-card-surface:hover::after,
   #projects [data-carousel-card].project-card-surface:focus-visible::after,
   #projects [data-carousel-card].project-card-surface.is-press-accent::after {
-    box-shadow: inset 0 0 0 1px var(--palette-yellow-projects);
+    border-color: var(--palette-yellow-projects);
   }
 
   /* Keep yellow title / tagline while click feedback runs (even if pointer leaves). */
@@ -8602,7 +8639,7 @@
 
   /*
    * Keep black header + media inside the stroke. Do not inset `bottom` on the
-   * description panel â€” that overlaps the media and covers the grey inner edge
+   * description panel — that overlaps the media and covers the grey inner edge
    * in the band right above the title on hover.
    */
   #projects [data-carousel-card] .project-card-description-section {
