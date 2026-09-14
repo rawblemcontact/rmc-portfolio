@@ -5200,7 +5200,7 @@ const RainbowMenuSlide = ({
               </div>
               <motion.span
                 aria-hidden
-                className="absolute bottom-0 left-0 right-0 z-0 h-px origin-left bg-white/10"
+                className="menu-nav-hairline absolute bottom-0 left-0 right-0 z-0 origin-left bg-white/10"
                 initial={false}
                 animate={{
                   scaleX: menuTimelineActive ? 1 : 0,
@@ -5218,7 +5218,7 @@ const RainbowMenuSlide = ({
               />
               <motion.span
                 aria-hidden
-                className="pointer-events-none absolute bottom-0 left-0 right-0 z-10 origin-left h-[2px]"
+                className="menu-nav-accent-line pointer-events-none absolute bottom-0 left-0 right-0 z-10 origin-left"
                 style={{ backgroundColor: SECTION_ACCENT_COLOR[item.id] }}
                 initial={false}
                 animate={{

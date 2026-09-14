@@ -18,6 +18,7 @@ export function buildMainMenuGlobalLayoutStyle(control: MainMenuGlobalLayoutCont
     transform: `translate(${control.offsetX}px, ${control.offsetY}px)`,
     transformOrigin: "left top",
     zoom: control.scale,
+    ["--menu-layout-zoom" as string]: String(control.scale),
   };
 }
 
