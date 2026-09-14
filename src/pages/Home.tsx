@@ -5218,7 +5218,8 @@ const RainbowMenuSlide = ({
               />
               <motion.span
                 aria-hidden
-                className={`pointer-events-none absolute bottom-0 left-0 right-0 z-10 origin-left ${item.id === "profile" || item.id === "skills" ? "h-[2px] md:h-[2.5px]" : "h-[2px]"}${item.id === "profile" ? " menu-nav-underline--profile" : ""} ${item.color}`}
+                className="pointer-events-none absolute bottom-0 left-0 right-0 z-10 origin-left h-[2px]"
+                style={{ backgroundColor: SECTION_ACCENT_COLOR[item.id] }}
                 initial={false}
                 animate={{
                   scaleX: hoveredId === item.id || pendingNavId === item.id ? 1 : 0,
@@ -5525,7 +5526,8 @@ const SideNavOverlay = ({
                   </div>
                   <motion.span
                     aria-hidden
-                    className={`absolute bottom-0 left-0 right-0 origin-left h-[2px] ${item.color}`}
+                    className="absolute bottom-0 left-0 right-0 origin-left h-[2px]"
+                    style={{ backgroundColor: SECTION_ACCENT_COLOR[item.id] }}
                     initial={false}
                     animate={{ scaleX: hoveredId === item.id || pendingNavId === item.id ? 1 : 0 }}
                     transition={CMD_HOVER}

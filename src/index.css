@@ -1,8 +1,13 @@
 @import "./styles/fonts.css";
 @import "./styles/portfolio-palette.css";
 @import "tailwindcss";
-/* Menu SKILLS row underline â€” force utility emit (NAV_ITEMS only interpolates class names). */
+/* Menu row underlines — force utility emit (NAV_ITEMS only interpolates class names). */
 @source inline("bg-portfolio-green");
+@source inline("[background-color:var(--palette-orange)]");
+@source inline("[background-color:var(--palette-red)]");
+@source inline("[background-color:var(--palette-yellow-projects)]");
+@source inline("[background-color:var(--palette-blue)]");
+@source inline("[background-color:var(--palette-green)]");
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
@@ -1277,12 +1282,8 @@
     border-radius: 4px;
   }
 
-  /* Tablet landscape — PROFILE menu red rule was md:2.5px; other rows are 2px. */
+  /* Tablet landscape — PROFILE section red rule matches 2px menu rows. */
   @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse) {
-    #menu .menu-nav-underline--profile {
-      height: 2px !important;
-    }
-
     #profile .profile-main-accent-line {
       height: 2px !important;
       min-height: 2px !important;
