@@ -31,6 +31,7 @@ import { afterOrientationSettle, isDocumentPinchZoomed, isRecentOrientationChang
 import { useNavLayoutFreeze } from "../lib/navLayoutFreeze";
 import { Button } from "../components/ui/button";
 import { FillIcon } from "../components/FillIcon";
+import { isMobileLandscapePhone, MOBILE_LANDSCAPE_MQ } from "../components/MobileLandscapeGate";
 import { ProfileDesktopLayoutDebugPanel } from "../components/ProfileDesktopLayoutDebugPanel";
 import {
   ProjectsTabletThumbnailDebugPanel,
@@ -3164,6 +3165,12 @@ const Hero = ({
   const [heroTapToEnterInteractive, setHeroTapToEnterInteractive] = useState(false);
   const heroTapToEnterInteractiveRef = useRef(false);
   heroTapToEnterInteractiveRef.current = heroTapToEnterInteractive;
+  /** LPM / autoplay-block — stay on TAP TO ENTER until a real tap (survives orientation). */
+  const heroGestureEnterPendingRef = useRef(false);
+  const [heroRequiresTapEnter, setHeroRequiresTapEnter] = useState(false);
+  const heroRequiresTapEnterRef = useRef(false);
+  /** User tapped while the open sequencer was torn down for a remount. */
+  const heroTapQueuedRef = useRef(false);
   /** Computed final translateY after rise (mobile ROT nudge, else 0). */
   const videoFinalYRef = useRef(0);
   const videoEntranceGenRef = useRef(0);
@@ -3174,14 +3181,42 @@ const Hero = ({
   const isMobileHeroLayoutRef = useRef(isMobileHeroLayout);
   isMobileHeroLayoutRef.current = isMobileHeroLayout;
 
+  const holdHeroClosedForTapEnter = useCallback(() => {
+    heroVideoPlaybackArmedRef.current = false;
+    setHeroVideoShouldPlay(false);
+    videoEntranceSettledRef.current = false;
+    setSliderAnimDone(false);
+    setLockupFadeReady(false);
+    videoScaleX.set(0);
+    const node = videoStackRef.current;
+    if (node && !isHeroPinchZoomed()) {
+      videoEntranceY.set(measureHeroVideoCenterOpenOffsetPx(node));
+    } else {
+      videoEntranceY.set(0);
+    }
+    const video = heroVideoRef.current;
+    if (video) {
+      video.pause();
+      try {
+        video.currentTime = 0;
+      } catch {
+        /* ignore unseekable */
+      }
+    }
+  }, [videoEntranceY, videoScaleX]);
+
   const snapVideoEntranceToRest = useCallback(() => {
+    if (heroGestureEnterPendingRef.current) {
+      holdHeroClosedForTapEnter();
+      return;
+    }
     const finalY = isMobileHeroLayoutRef.current ? videoFinalYRef.current : 0;
     videoScaleX.set(1);
     videoEntranceY.set(finalY);
     videoEntranceSettledRef.current = true;
     setSliderAnimDone(true);
     setLockupFadeReady(true);
-  }, [videoEntranceY, videoScaleX]);
+  }, [holdHeroClosedForTapEnter, videoEntranceY, videoScaleX]);
 
   /** Stable gate — avoid restarting entrance when mobile width px jitters. */
   const heroEntranceMobileWidthReady = !isMobileHeroLayout || mobileLockupWidthPx != null;
@@ -3857,8 +3892,10 @@ const Hero = ({
       heroVideoPlaybackArmedRef.current = false;
       heroLpmBeginOpenRef.current = null;
       setHeroVideoShouldPlay(false);
-      setHeroTapToEnterVisible(false);
-      setHeroTapToEnterInteractive(false);
+      if (!heroRequiresTapEnterRef.current && !heroGestureEnterPendingRef.current) {
+        setHeroTapToEnterVisible(false);
+        setHeroTapToEnterInteractive(false);
+      }
       videoScaleX.set(0);
       videoEntranceY.set(0);
       setLockupFadeReady(false);
@@ -3873,6 +3910,13 @@ const Hero = ({
       let cancelled = false;
       const snapOpen = () => {
         if (cancelled) return;
+        if (isMobileLandscapePhone()) {
+          heroTapQueuedRef.current = false;
+          return;
+        }
+        heroGestureEnterPendingRef.current = false;
+        heroRequiresTapEnterRef.current = false;
+        setHeroRequiresTapEnter(false);
         videoEntranceSettledRef.current = true;
         videoScaleX.set(1);
         videoEntranceY.set(videoFinalYRef.current);
@@ -3888,8 +3932,20 @@ const Hero = ({
         if (cancelled) return;
         transitionBufferTimer = window.setTimeout(() => {
           if (cancelled) return;
-          if (allowed) snapOpen();
-          else setHeroTapToEnterVisible(true);
+          if (
+            allowed &&
+            !heroRequiresTapEnterRef.current &&
+            !heroGestureEnterPendingRef.current &&
+            !isMobileLandscapePhone()
+          ) {
+            snapOpen();
+          } else {
+            heroGestureEnterPendingRef.current = true;
+            heroRequiresTapEnterRef.current = true;
+            setHeroRequiresTapEnter(true);
+            holdHeroClosedForTapEnter();
+            setHeroTapToEnterVisible(true);
+          }
         }, HERO_TRANSITION_BUFFER_MS);
       });
       return () => {
@@ -3933,6 +3989,7 @@ const Hero = ({
     reduceMotion,
     startHeroVideoPlayback,
     prepareAndPlayHeroVideo,
+    holdHeroClosedForTapEnter,
     videoEntranceY,
     videoScaleX,
   ]);
@@ -3940,7 +3997,14 @@ const Hero = ({
   useEffect(() => {
     if (!videoRevealActive || reduceMotion) return;
     if (!heroPhase1LayoutReady || !heroEntranceMobileWidthReady) return;
-    if (!videoOpenPinnedRef.current || videoEntranceSettledRef.current) return;
+    if (!videoOpenPinnedRef.current) return;
+    if (
+      videoEntranceSettledRef.current &&
+      !heroGestureEnterPendingRef.current &&
+      !heroRequiresTapEnterRef.current
+    ) {
+      return;
+    }
 
     const gen = ++videoEntranceGenRef.current;
     let cancelled = false;
@@ -4026,23 +4090,51 @@ const Hero = ({
       beginRise();
     };
 
+    const waitingForTap =
+      heroRequiresTapEnterRef.current || heroGestureEnterPendingRef.current;
     if (video) {
-      if (video.currentTime >= HERO_TEXT_MIN_VIDEO_TIME_S) {
+      if (!waitingForTap && video.currentTime >= HERO_TEXT_MIN_VIDEO_TIME_S) {
         markVideoPastTextGate();
       }
       video.addEventListener("timeupdate", onTimeUpdate);
       video.addEventListener("error", onError);
-    } else {
+    } else if (!waitingForTap) {
       markVideoPastTextGate();
     }
     /* Paused under pinch — currentTime never advances; don't trap ROBBIE. */
-    if (isHeroPinchZoomed()) markVideoPastTextGate();
+    if (!waitingForTap && isHeroPinchZoomed()) markVideoPastTextGate();
 
     const beginOpenAnims = () => {
       if (cancelled || began || gen !== videoEntranceGenRef.current) return;
+      if (isMobileLandscapePhone()) {
+        heroTapQueuedRef.current = false;
+        return;
+      }
       began = true;
+      heroTapQueuedRef.current = false;
+      heroGestureEnterPendingRef.current = false;
+      heroRequiresTapEnterRef.current = false;
+      setHeroRequiresTapEnter(false);
       setHeroTapToEnterVisible(false);
       setHeroTapToEnterInteractive(false);
+      videoEntranceSettledRef.current = false;
+      videoScaleX.set(0);
+      {
+        const node = videoStackRef.current;
+        if (node && !isHeroPinchZoomed()) {
+          videoEntranceY.set(measureHeroVideoCenterOpenOffsetPx(node));
+        } else {
+          videoEntranceY.set(0);
+        }
+      }
+      const openVideo = heroVideoRef.current;
+      if (openVideo) {
+        try {
+          openVideo.currentTime = 0;
+        } catch {
+          /* ignore unseekable */
+        }
+      }
       /* Start the reel as the card begins opening — don't wait for open to finish. */
       startHeroVideoPlayback();
 
@@ -4069,15 +4161,38 @@ const Hero = ({
     };
 
     heroLpmBeginOpenRef.current = beginOpenAnims;
+    if (heroTapQueuedRef.current) {
+      heroTapQueuedRef.current = false;
+      if (!isMobileLandscapePhone()) beginOpenAnims();
+    }
     let transitionBufferTimer: number | null = null;
-    void prepareAndPlayHeroVideo().then((allowed) => {
-      if (cancelled || gen !== videoEntranceGenRef.current) return;
-      transitionBufferTimer = window.setTimeout(() => {
+    const skipAutoOpen =
+      heroRequiresTapEnterRef.current || heroGestureEnterPendingRef.current;
+    if (skipAutoOpen) {
+      holdHeroClosedForTapEnter();
+      setHeroTapToEnterVisible(true);
+    } else {
+      void prepareAndPlayHeroVideo().then((allowed) => {
         if (cancelled || gen !== videoEntranceGenRef.current) return;
-        if (allowed) beginOpenAnims();
-        else setHeroTapToEnterVisible(true);
-      }, HERO_TRANSITION_BUFFER_MS);
-    });
+        transitionBufferTimer = window.setTimeout(() => {
+          if (cancelled || gen !== videoEntranceGenRef.current) return;
+          if (
+            allowed &&
+            !heroRequiresTapEnterRef.current &&
+            !heroGestureEnterPendingRef.current &&
+            !isMobileLandscapePhone()
+          ) {
+            beginOpenAnims();
+          } else {
+            heroGestureEnterPendingRef.current = true;
+            heroRequiresTapEnterRef.current = true;
+            setHeroRequiresTapEnter(true);
+            holdHeroClosedForTapEnter();
+            setHeroTapToEnterVisible(true);
+          }
+        }, HERO_TRANSITION_BUFFER_MS);
+      });
+    }
 
     return () => {
       cancelled = true;
@@ -4098,7 +4213,12 @@ const Hero = ({
        * completed — early Strict Mode remounts can restart; late breakpoint
        * interrupts must not leave a stranded center-open offset.
        */
-      if (began && !videoEntranceSettledRef.current && videoOpenPinnedRef.current) {
+      if (
+        began &&
+        !heroGestureEnterPendingRef.current &&
+        !videoEntranceSettledRef.current &&
+        videoOpenPinnedRef.current
+      ) {
         const finalY = isMobileHeroLayoutRef.current ? videoFinalYRef.current : 0;
         videoScaleX.set(1);
         videoEntranceY.set(finalY);
@@ -4107,6 +4227,8 @@ const Hero = ({
           setSliderAnimDone(true);
           setLockupFadeReady(true);
         }
+      } else if (heroGestureEnterPendingRef.current) {
+        holdHeroClosedForTapEnter();
       }
       videoEntranceGenRef.current += 1;
     };
@@ -4117,6 +4239,7 @@ const Hero = ({
     reduceMotion,
     startHeroVideoPlayback,
     prepareAndPlayHeroVideo,
+    holdHeroClosedForTapEnter,
     videoEntranceY,
     videoScaleX,
   ]);
@@ -4136,10 +4259,31 @@ const Hero = ({
     return () => window.clearTimeout(t);
   }, [heroTapToEnterVisible, reduceMotion]);
 
+  useEffect(() => {
+    const mq = window.matchMedia(MOBILE_LANDSCAPE_MQ);
+    const dropQueuedTap = () => {
+      if (mq.matches) heroTapQueuedRef.current = false;
+    };
+    dropQueuedTap();
+    mq.addEventListener("change", dropQueuedTap);
+    return () => mq.removeEventListener("change", dropQueuedTap);
+  }, []);
+
   const onHeroTapToEnter = useCallback(() => {
     if (!heroTapToEnterInteractiveRef.current) return;
+    /* Rotate / landscape-gate teardown can synthesize a pointer hit — ignore it. */
+    if (isRecentOrientationChange(500)) return;
+    /* Phone landscape — TAP TO ENTER only starts the intro in portrait. */
+    if (isMobileLandscapePhone()) {
+      heroTapQueuedRef.current = false;
+      return;
+    }
     heroVideoGestureUnlockRef.current = true;
-    heroLpmBeginOpenRef.current?.();
+    if (heroLpmBeginOpenRef.current) {
+      heroLpmBeginOpenRef.current();
+      return;
+    }
+    heroTapQueuedRef.current = true;
   }, []);
 
   /**
@@ -4148,6 +4292,14 @@ const Hero = ({
    */
   useLayoutEffect(() => {
     if (!videoOpenPinnedRef.current) return;
+    if (heroGestureEnterPendingRef.current || heroTapToEnterVisible || heroRequiresTapEnter) {
+      holdHeroClosedForTapEnter();
+    }
+  }, [heroRequiresTapEnter, heroTapToEnterVisible, holdHeroClosedForTapEnter]);
+
+  useLayoutEffect(() => {
+    if (!videoOpenPinnedRef.current) return;
+    if (heroGestureEnterPendingRef.current || heroRequiresTapEnterRef.current) return;
     if (videoEntranceSettledRef.current || sliderAnimDone) {
       videoEntranceY.set(isMobileHeroLayout ? videoFinalYRef.current : 0);
       return;
@@ -4531,7 +4683,9 @@ const Hero = ({
       {heroStageMounted && (
       <motion.div
         initial={false}
-        animate={{ opacity: heroReady ? 1 : 0 }}
+        animate={{
+          opacity: heroReady && !heroTapToEnterVisible && !heroRequiresTapEnter ? 1 : 0,
+        }}
         transition={{ duration: heroReady ? 0.12 : 0, ease: [0.22, 1, 0.36, 1] }}
         data-hero-stage="true"
         data-hero-crop={isHeroCropLayout ? "true" : undefined}

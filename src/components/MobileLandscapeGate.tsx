@@ -2,8 +2,14 @@ import { useEffect, useState } from "react";
 import { isDocumentPinchZoomed } from "../lib/visualViewport";
 import { isNavLayoutFrozen } from "../lib/navLayoutFreeze";
 
-const MOBILE_LANDSCAPE_MQ =
+export const MOBILE_LANDSCAPE_MQ =
   "(orientation: landscape) and (max-height: 500px) and (max-width: 960px)";
+
+/** Phone landscape — intro / TAP TO ENTER must not start here. */
+export function isMobileLandscapePhone(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.matchMedia(MOBILE_LANDSCAPE_MQ).matches;
+}
 
 const GRID_DRIFT_DURATION = 12;
 const GRID_CELL_SIZE = 48;
@@ -62,6 +68,18 @@ export function MobileLandscapeGate() {
       aria-hidden
       className="fixed inset-0 z-[9999] overflow-hidden bg-black"
       style={{ touchAction: "none" }}
+      onPointerDown={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+      onTouchStart={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }}
       onTouchMove={(e) => e.preventDefault()}
       onWheel={(e) => e.preventDefault()}
     >
