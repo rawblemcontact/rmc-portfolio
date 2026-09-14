@@ -1654,9 +1654,15 @@ const HERO_VIDEO_CARD_WIDTH_CLASS =
 /**
  * Fixed layout width for crop-mode video/probe (desktop hard-crop design).
  * Avoids % / MQ / zoom-path drift so hard-crop composition never reflows on resize.
- * Visual shared width = layout × HERO_CROP_VIDEO_ZOOM (980 × 0.9 = 882).
+ * Visual shared width = layout × HERO_CROP_VIDEO_ZOOM (1096 × 0.9 = 986.4).
+ *
+ * Widescreen try: desktop-only — width 1096 (−2.5% from 1124), face thinned.
+ * SVG X scaled with width for ink↔edge parity; type/CTA/zoom unchanged.
+ * Undo width: 1124 / -26. Undo face H: 555 or 579.
+ * Undo +5% 16:9: 1029 / 579 / -23 / fonts+button+gap+pad unchanged below.
+ * Undo 980 base: 980 / 551 / -22 / 107.8 / 16.67 / …
  */
-const HERO_CROP_VIDEO_LAYOUT_WIDTH_PX = 980;
+const HERO_CROP_VIDEO_LAYOUT_WIDTH_PX = 1096;
 /** Crop-mode visual zoom — matches HERO_VIDEO_GLOBAL_LAYOUT_DEFAULTS heightScale. */
 const HERO_CROP_VIDEO_ZOOM = 0.9;
 /** Visual shared bounds width = layout × zoom (video face after center-origin scale). */
@@ -1664,22 +1670,26 @@ const HERO_CROP_SHARED_BOUNDS_WIDTH_PX = HERO_CROP_VIDEO_LAYOUT_WIDTH_PX * HERO_
 /**
  * Crop-mode SVG ink ↔ video-edge X (local px). Hard-coded so resize / breakpoint
  * remasure cannot freeze a mid-cascade or mid-entrance value.
- * Scaled with layout footprint (980/865.6) so ink↔edge parity stays with the larger crop.
+ * Scaled with layout width (1096/1070) so ink↔edge parity stays with the wider crop.
  */
-const HERO_CROP_SVG_ALIGN_X_PX = -22;
-/** Frozen video face height in crop mode — no vh tracking. (~486 × 980/865.6). */
-const HERO_CROP_VIDEO_FACE_HEIGHT_PX = 551;
+const HERO_CROP_SVG_ALIGN_X_PX = -25;
+/**
+ * Frozen video face height — thinned only (width/zoom/lockup unchanged) so the
+ * frame reads slightly more cinematic without shifting L/R ink↔edge align.
+ * Stage justify-center absorbs the freed vertical space equally.
+ */
+const HERO_CROP_VIDEO_FACE_HEIGHT_PX = 530;
 /**
  * Frozen display / chrome sizes at crop design — scaled with layout footprint
- * (980/865.6) so name lockup + PORTFOLIO stay cohesive with the larger video.
+ * so name lockup + PORTFOLIO stay cohesive with the larger video.
  * px so html rem MQ cannot reflow.
  */
-const HERO_CROP_DISPLAY_FONT_CLASS = "text-[107.8px] leading-[0.78]";
-const HERO_CROP_TAGLINE_FONT_CLASS = "text-[16.67px]";
+const HERO_CROP_DISPLAY_FONT_CLASS = "text-[113.2px] leading-[0.78]";
+const HERO_CROP_TAGLINE_FONT_CLASS = "text-[17.5px]";
 const HERO_CROP_PORTFOLIO_BUTTON_CLASS =
-  "!h-[84.07px] max-h-[87.86px] !px-[22.64px] [&_.texts]:!text-[19.02px] [&_.texts]:!tracking-[0.085em]";
+  "!h-[88.27px] max-h-[92.25px] !px-[23.77px] [&_.texts]:!text-[19.97px] [&_.texts]:!tracking-[0.085em]";
 /** Gap between video block and name pack in crop mode (fixed). */
-const HERO_CROP_STACK_GAP_CLASS = "gap-[13.59px]";
+const HERO_CROP_STACK_GAP_CLASS = "gap-[14.27px]";
 /** Fluid tablet/desktop-pre-crop display (vw). Crop uses px constants above. */
 const HERO_FLUID_DISPLAY_FONT_CLASS =
   "text-[clamp(2.28rem,8.85vw,5.95rem)] max-[400px]:text-[clamp(2rem,8.1vw,5.95rem)] leading-[0.8] sm:leading-[0.78]";
@@ -2985,7 +2995,7 @@ const HeroNameReveal = ({
               isMobileHeroLayout
                 ? `pl-[1.16rem] pr-3 py-[0.4rem] sm:mt-0 sm:rounded-xl sm:pl-[1.42rem] sm:pr-4 sm:py-[0.45rem] text-[clamp(0.8rem,2.25vw,0.92rem)] sm:text-[clamp(0.8rem,2.25vw,0.92rem)] ${HERO_NAME_MOBILE_TAGLINE_CLASS}`
                 : isHeroCropLayout
-                  ? `rounded-xl pl-[25.72px] pr-4 py-[8.15px] ${HERO_CROP_TAGLINE_FONT_CLASS}`
+                  ? `rounded-xl pl-[27.01px] pr-4 py-[8.56px] ${HERO_CROP_TAGLINE_FONT_CLASS}`
                   : `pl-[1.16rem] pr-3 py-[0.4rem] sm:mt-0 sm:rounded-xl sm:pl-[1.42rem] sm:pr-4 sm:py-[0.45rem] ${HERO_FLUID_TAGLINE_FONT_CLASS}`
             }`}
             aria-hidden
@@ -4691,7 +4701,7 @@ const Hero = ({
         data-hero-crop={isHeroCropLayout ? "true" : undefined}
         className={
           isHeroCropLayout
-            ? `absolute left-1/2 top-0 z-[5] flex h-full flex-col items-center justify-center px-[32px] pt-[max(32px,env(safe-area-inset-top,0px))] pb-[24px] ${HERO_CROP_STACK_GAP_CLASS}`
+            ? `absolute left-1/2 top-0 z-[5] flex h-full flex-col items-center justify-center px-[32px] pt-[max(40px,env(safe-area-inset-top,0px))] pb-[max(40px,env(safe-area-inset-bottom,0px))] ${HERO_CROP_STACK_GAP_CLASS}`
             : `relative z-[5] mx-auto grid h-full w-full max-w-[1680px] grid-rows-[minmax(0,1.55fr)_minmax(0,1fr)] px-4 max-md:px-5 pt-[max(1rem,env(safe-area-inset-top,0px))] pb-4 max-md:pt-[max(1rem,env(safe-area-inset-top,0px))] max-md:pb-[max(1rem,env(safe-area-inset-bottom,0px))] max-lg:grid-rows-[minmax(0,1.5fr)_minmax(0,1fr)] md:max-lg:grid-rows-[minmax(0,1.38fr)_minmax(0,1fr)] md:px-6 md:pt-[max(1.5rem,env(safe-area-inset-top,0px))] md:pb-5 md:max-lg:px-5 md:max-lg:pt-3 md:max-lg:pb-[max(1.25rem,env(safe-area-inset-bottom,0px))] lg:grid-rows-[minmax(0,2fr)_minmax(0,1fr)] lg:px-8 lg:pt-[max(2rem,env(safe-area-inset-top,0px))] lg:pb-6 [@media(min-width:744px)_and_(max-width:1366px)_and_(orientation:landscape)_and_(any-pointer:coarse)]:pt-[max(1.25rem,env(safe-area-inset-top,0px))] [@media(min-width:744px)_and_(max-width:1366px)_and_(orientation:landscape)_and_(any-pointer:coarse)]:pb-[max(1.25rem,env(safe-area-inset-bottom,0px))]${
                 isMobileHeroLayout && !sliderPhaseActive ? " max-md:grid-rows-1" : ""
               }`
@@ -5208,7 +5218,7 @@ const RainbowMenuSlide = ({
               />
               <motion.span
                 aria-hidden
-                className={`pointer-events-none absolute bottom-0 left-0 right-0 z-10 origin-left ${item.id === "profile" || item.id === "skills" ? "h-[2px] md:h-[2.5px]" : "h-[2px]"} ${item.color}`}
+                className={`pointer-events-none absolute bottom-0 left-0 right-0 z-10 origin-left ${item.id === "profile" || item.id === "skills" ? "h-[2px] md:h-[2.5px]" : "h-[2px]"}${item.id === "profile" ? " menu-nav-underline--profile" : ""} ${item.color}`}
                 initial={false}
                 animate={{
                   scaleX: hoveredId === item.id || pendingNavId === item.id ? 1 : 0,
@@ -5840,6 +5850,9 @@ const PROFILE_HEADER_ENTER_DUR_S = PROFILE_MAIN_MOTION_DUR_S;
 const PROFILE_HEADER_ENTER_Y = 21;
 const PROFILE_ACCENT_LINE_DUR_S = PROFILE_MAIN_MOTION_DUR_S;
 const PROFILE_ACCENT_LINE_EASE = EASE.out;
+/** Wall-clock when header + red rule have finished (hint fades in after this). */
+const PROFILE_ENTRANCE_COMPLETE_MS =
+  PROFILE_CHROME_START_MS + Math.round(PROFILE_HEADER_ENTER_DUR_S * 1000);
 /** Vertical air around metadata pill (red rule → pill → summary card). */
 const PROFILE_METADATA_PILL_GAP = "mt-3";
 /** Shared width + left nudge for PROFILE red rule and card stack (pill + summary). */
@@ -5893,12 +5906,19 @@ const PhantomProfile = ({
   const profileSummaryBaselineRef = useRef<HTMLDivElement>(null);
   const {
     scrollRef: profileSummaryScrollRef,
+    showFade: profileSummaryCutoffFade,
     updateFade: updateProfileSummaryCutoffFade,
   } = useCutoffScrollFade(profileSummaryCardMaxH != null);
   useTabletLandscapeInnerScroll(profileSummaryScrollRef, profileSummaryCardMaxH != null, {
     hitSelector: ".profile-summary-card",
     bounceSelector: ".profile-summary-card-scroll-bounce",
+    onPaint: updateProfileSummaryCutoffFade,
   });
+  const [profileEntranceComplete, setProfileEntranceComplete] = useState(false);
+  const showProfileScrollHint =
+    profileSummaryCardMaxH != null &&
+    profileSummaryCutoffFade &&
+    profileEntranceComplete;
   const [profileDesktopLayoutDebugValues, setProfileDesktopLayoutDebugValues] =
     useState<ProfileDesktopLayoutDebugValues>(() => readSectionDesktopLayoutDebugValues("profile"));
   const [profileRedLineDebugValues, setProfileRedLineDebugValues] =
@@ -6012,6 +6032,13 @@ const PhantomProfile = ({
   const profileRightDebugStyle = profileDesktopLayoutActive
     ? buildDesktopLayoutSideStyle(activeProfileDesktopLayout, "right", "transform")
     : undefined;
+  const profileAccentLineScaleY = profileDesktopLayoutActive
+    ? 1 /
+      Math.max(
+        activeProfileDesktopLayout.leftScale * activeProfileDesktopLayout.leftHeightScale,
+        1e-6,
+      )
+    : 1;
 
   const profileRedLineSpanDebugStyle = allowDebugPanels && portfolioDebugEnabled
     ? buildProfileRedLineSpanDebugStyle(profileRedLineDebugValues)
@@ -6057,6 +6084,7 @@ const PhantomProfile = ({
       setProfileRedLineLocked(false);
       setRawblemEntered(false);
       setRawblemFloatReady(false);
+      setProfileEntranceComplete(false);
       return;
     }
     if (profileHeaderLocked) {
@@ -6080,6 +6108,21 @@ const PhantomProfile = ({
     overlayRevealed,
     reduceMotion,
   ]);
+
+  useEffect(() => {
+    if (!profileEntranceArmed) return;
+    if (reduceMotion) {
+      setProfileEntranceComplete(true);
+      return;
+    }
+    if (!overlayRevealed) return;
+    const hintId = window.setTimeout(() => {
+      setProfileEntranceComplete(true);
+    }, PROFILE_ENTRANCE_COMPLETE_MS);
+    return () => {
+      window.clearTimeout(hintId);
+    };
+  }, [profileEntranceArmed, overlayRevealed, reduceMotion]);
 
   useEffect(() => {
     if (profileMascotInstant) return;
@@ -6268,7 +6311,10 @@ const PhantomProfile = ({
                     : { backgroundColor: PROFILE_ACCENT_SOFT, transformOrigin: "left center" }
                 }
                  initial={false}
-                 animate={{ scaleX: profileRedLineLocked ? 1 : 0 }}
+                 animate={{
+                   scaleX: profileRedLineLocked ? 1 : 0,
+                   scaleY: profileAccentLineScaleY,
+                 }}
                  transition={{
                    duration: PROFILE_ACCENT_LINE_DUR_S,
                    delay: 0,
@@ -6342,12 +6388,16 @@ const PhantomProfile = ({
                 animate={{ opacity: overlayRevealed ? 1 : 0, y: overlayRevealed ? 0 : 14 }}
                 transition={{ duration: SUMMARY_DURATION_S, delay: overlayRevealed ? PROFILE_CARD2_DELAY_S : 0, ease: [0.16, 1, 0.3, 1] }}
               >
-                <div className="profile-summary-card-scroll-shell relative min-h-0 min-w-0 flex-1">
+                <div
+                  className={`profile-summary-card-scroll-shell relative min-h-0 min-w-0 flex-1${
+                    profileSummaryCutoffFade ? " is-cutoff" : ""
+                  }`}
+                >
                 <div
                   ref={profileSummaryScrollRef as React.RefObject<HTMLDivElement | null>}
                   className="profile-summary-card-scroll no-scrollbar min-h-0 min-w-0"
                 >
-                <div className="profile-summary-card-scroll-bounce">
+                <div className="profile-summary-card-scroll-bounce relative">
                 <p className={`${PROFILE_CARD_SECTION_LABEL_CLASS} mb-1.5`} style={{ color: PROFILE_ACCENT_SOFT }}>SUMMARY</p>
                 <p className="font-body text-mono-2 leading-relaxed mb-4">
                 Writer, editor, and digital media producer specialized in narrative-driven web content and coordinating social
@@ -6371,10 +6421,55 @@ const PhantomProfile = ({
                   <li>Full-Time Content, Communications, or Social Media roles.</li>
                   <li>On-site, Remote, or Hybrid.</li>
                 </ul>
+                <div className="profile-summary-card-scroll-end" aria-hidden />
                 </div>
                 </div>
                 </div>
               </motion.div>
+              {profileSummaryCardMaxH != null ? (
+                  <motion.div
+                    className="video-editing-detail-scroll-hint"
+                    aria-hidden
+                    initial={false}
+                    animate={{ opacity: showProfileScrollHint ? 1 : 0 }}
+                    transition={
+                      reduceMotion
+                        ? { duration: 0 }
+                        : { duration: 0.72, ease: EASE.out }
+                    }
+                  >
+                    <div
+                      className={`video-editing-detail-scroll-hint__float${
+                        reduceMotion ? " video-editing-detail-scroll-hint__float--static" : ""
+                      }`}
+                    >
+                      <div
+                        className={`video-editing-detail-scroll-hint__breathe font-display${
+                          reduceMotion ? " video-editing-detail-scroll-hint__breathe--static" : ""
+                        }`}
+                      >
+                        <span>scroll for more</span>
+                        <span className="video-editing-detail-scroll-hint__arrow video-editing-detail-scroll-hint__arrow-clock">
+                          <svg
+                            viewBox="0 0 10 6"
+                            width="8"
+                            height="5"
+                            fill="none"
+                            aria-hidden
+                          >
+                            <path
+                              d="M1 1.25 L5 4.75 L9 1.25"
+                              stroke="currentColor"
+                              strokeWidth="1.25"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </span>
+                      </div>
+                    </div>
+                  </motion.div>
+              ) : null}
             </div>
             </div>
             </div>
@@ -8679,6 +8774,8 @@ const ShowcaseIllustrationLightbox = ({
     return pos >= 0 && pos < openableIndices.length - 1;
   });
   const jumpAlignDoneRef = useRef(false);
+  /* Freeze open snap — if startIndex tracks activeIndex, embla-react reInits and kills the slide. */
+  const emblaStartIndexRef = useRef(activeOpenablePos >= 0 ? activeOpenablePos : 0);
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: "center",
     loop: false,
@@ -8686,7 +8783,7 @@ const ShowcaseIllustrationLightbox = ({
     dragFree: false,
     dragThreshold: 4,
     duration: reduceMotion ? 1 : ILLUSTRATION_LIGHTBOX_SLIDE_DURATION,
-    startIndex: activeOpenablePos >= 0 ? activeOpenablePos : 0,
+    startIndex: emblaStartIndexRef.current,
     /* One-finger horizontal swipe stays with Embla; pinch reaches the browser. */
     watchDrag: (_embla, event) =>
       !("touches" in event && event.touches.length > 1),
@@ -8696,12 +8793,17 @@ const ShowcaseIllustrationLightbox = ({
   const hasPrev = canScrollPrev;
   const hasNext = canScrollNext;
 
+  /** Description tracks switches immediately (local), independent of slide settle. */
+  const [descIndex, setDescIndex] = useState(activeIndex);
+  const draggingRef = useRef(false);
+  const descSlide = slides[descIndex] ?? activeSlide;
+
   const lightboxLabel =
     activeSlide?.alt?.trim() ||
     (activeIndex != null ? `Illustration ${activeIndex + 1}` : "Illustration preview");
-  const caption = activeSlide?.caption?.trim() || activeSlide?.alt?.trim() || null;
+  const caption = descSlide?.caption?.trim() || descSlide?.alt?.trim() || null;
   const artistStatement =
-    activeSlide?.artistStatement?.trim() ||
+    descSlide?.artistStatement?.trim() ||
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.";
 
   /** Peek height — snapped to whole line boxes so glyphs aren’t mid-clipped. */
@@ -8715,8 +8817,12 @@ const ShowcaseIllustrationLightbox = ({
   const [descExpanded, setDescExpanded] = useState(false);
 
   useEffect(() => {
-    setDescExpanded(false);
+    setDescIndex(activeIndex);
   }, [activeIndex]);
+
+  useEffect(() => {
+    setDescExpanded(false);
+  }, [descIndex]);
 
   useEffect(() => {
     if (!descExpanded && descViewportRef.current) {
@@ -8749,17 +8855,37 @@ const ShowcaseIllustrationLightbox = ({
     setCollapsedDescH(peekH);
     setDescContentH(Math.min(fullH, EXPANDED_DESC_MAX_H));
     setDescOverflows(fullH > peekH + 4);
-  }, [artistStatement, activeIndex]);
+  }, [artistStatement, descIndex]);
+
+  const commitDescFromSnap = useCallback(
+    (snap: number) => {
+      const nextIndex = openableIndices[snap];
+      if (nextIndex == null) return;
+      /* Paint description in this turn — don't wait for the next frame / parent re-render. */
+      if (nextIndex !== descIndex) {
+        flushSync(() => {
+          setDescIndex(nextIndex);
+        });
+      }
+      if (nextIndex !== activeIndex) {
+        onActiveIndexChange(nextIndex);
+      }
+    },
+    [activeIndex, descIndex, onActiveIndexChange, openableIndices],
+  );
 
   const handleShowPrev = useCallback(() => {
-    if (!emblaApi) return;
+    if (!emblaApi || !emblaApi.canScrollPrev()) return;
+    /* Register description switch immediately — don't wait for Embla select/settle. */
+    commitDescFromSnap(emblaApi.selectedScrollSnap() - 1);
     emblaApi.scrollPrev(!!reduceMotion);
-  }, [emblaApi, reduceMotion]);
+  }, [commitDescFromSnap, emblaApi, reduceMotion]);
 
   const handleShowNext = useCallback(() => {
-    if (!emblaApi) return;
+    if (!emblaApi || !emblaApi.canScrollNext()) return;
+    commitDescFromSnap(emblaApi.selectedScrollSnap() + 1);
     emblaApi.scrollNext(!!reduceMotion);
-  }, [emblaApi, reduceMotion]);
+  }, [commitDescFromSnap, emblaApi, reduceMotion]);
 
   const renderArtistStatementText = useCallback((text: string) => {
     const parts = text.split(/(<em>[\s\S]*?<\/em>)/g);
@@ -8802,29 +8928,63 @@ const ShowcaseIllustrationLightbox = ({
   useEffect(() => {
     if (!emblaApi) return;
     const syncActiveIndex = () => {
-      const snap = emblaApi.selectedScrollSnap();
-      const nextIndex = openableIndices[snap];
-      if (nextIndex != null && nextIndex !== activeIndex) {
-        onActiveIndexChange(nextIndex);
-      }
+      commitDescFromSnap(emblaApi.selectedScrollSnap());
     };
     const syncScrollButtons = () => {
       setCanScrollPrev(emblaApi.canScrollPrev());
       setCanScrollNext(emblaApi.canScrollNext());
     };
+    const syncDescFromClosestSnap = () => {
+      /* Mid-drag: swap description early (≈20% toward neighbor), not at midpoint. */
+      if (!draggingRef.current) return;
+      const progress = emblaApi.scrollProgress();
+      const snaps = emblaApi.scrollSnapList();
+      const selected = emblaApi.selectedScrollSnap();
+      const SWITCH_AT = 0.2;
+      let targetSnap = selected;
+      if (selected < snaps.length - 1) {
+        const from = snaps[selected]!;
+        const to = snaps[selected + 1]!;
+        if (progress >= from + (to - from) * SWITCH_AT) targetSnap = selected + 1;
+      }
+      if (selected > 0) {
+        const from = snaps[selected]!;
+        const to = snaps[selected - 1]!;
+        if (progress <= from + (to - from) * SWITCH_AT) targetSnap = selected - 1;
+      }
+      const nextIndex = openableIndices[targetSnap];
+      if (nextIndex != null && nextIndex !== descIndex) {
+        flushSync(() => {
+          setDescIndex(nextIndex);
+        });
+      }
+    };
+    const onPointerDown = () => {
+      draggingRef.current = true;
+    };
+    const onPointerUp = () => {
+      draggingRef.current = false;
+      syncActiveIndex();
+    };
     syncActiveIndex();
     syncScrollButtons();
     emblaApi.on("select", syncScrollButtons);
+    emblaApi.on("select", syncActiveIndex);
+    emblaApi.on("scroll", syncDescFromClosestSnap);
+    emblaApi.on("pointerDown", onPointerDown);
+    emblaApi.on("pointerUp", onPointerUp);
     emblaApi.on("reInit", syncScrollButtons);
-    emblaApi.on("settle", syncActiveIndex);
     emblaApi.on("reInit", syncActiveIndex);
     return () => {
       emblaApi.off("select", syncScrollButtons);
+      emblaApi.off("select", syncActiveIndex);
+      emblaApi.off("scroll", syncDescFromClosestSnap);
+      emblaApi.off("pointerDown", onPointerDown);
+      emblaApi.off("pointerUp", onPointerUp);
       emblaApi.off("reInit", syncScrollButtons);
-      emblaApi.off("settle", syncActiveIndex);
       emblaApi.off("reInit", syncActiveIndex);
     };
-  }, [activeIndex, emblaApi, onActiveIndexChange, openableIndices]);
+  }, [commitDescFromSnap, emblaApi, openableIndices]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -9619,8 +9779,11 @@ const PalaceProjects = ({
       ? featuredStartMs + PROJECTS_FEATURED_ENTRANCE_DUR_S * 1000
       : tabActivateMs + PROJECTS_THUMBNAILS_FADE_AFTER_TAB_MS;
 
-    // Phone: skip will-change promote/demote — toggling it mid-land shifts the stack.
-    if (!projectsMobileViewport) {
+    // Phone + iPad landscape: skip will-change promote/demote — toggling it
+    // after the land shifts the PROJECTS header / stack.
+    const skipProjectsLayerToggle =
+      projectsMobileViewport || projectsTabletLandscapeViewport;
+    if (!skipProjectsLayerToggle) {
       setProjectsEntranceLive(true);
     }
     const cardsId = window.setTimeout(() => {
@@ -9640,7 +9803,7 @@ const PalaceProjects = ({
       () => setProjectsEntranceSettled(true),
       Math.max(0, thumbnailsFadeMs),
     );
-    const clearId = projectsMobileViewport
+    const clearId = skipProjectsLayerToggle
       ? null
       : window.setTimeout(
           () => setProjectsEntranceLive(false),
@@ -9653,7 +9816,13 @@ const PalaceProjects = ({
       window.clearTimeout(thumbsId);
       if (clearId != null) window.clearTimeout(clearId);
     };
-  }, [projectsEntered, projectsMobileViewport, reduceMotion, skipProjectsFeaturedTabEntrance]);
+  }, [
+    projectsEntered,
+    projectsMobileViewport,
+    projectsTabletLandscapeViewport,
+    reduceMotion,
+    skipProjectsFeaturedTabEntrance,
+  ]);
 
   useEffect(() => {
     if (projectsEntranceSettled) onEntranceSettled?.();
@@ -10246,6 +10415,33 @@ const PalaceProjects = ({
               delay: reduceMotion ? 0 : PROJECTS_TITLE_DELAY_S,
               ease: [0.16, 1, 0.3, 1],
             }}
+            transformTemplate={
+              projectsTabletLandscapeViewport
+                ? ({ y }, generated) => {
+                    const n =
+                      typeof y === "number"
+                        ? y
+                        : typeof y === "string"
+                          ? parseFloat(y)
+                          : Number.NaN;
+                    if (Number.isFinite(n)) {
+                      return `translate3d(0px, ${n}px, 0px)`;
+                    }
+                    return generated && generated !== "none"
+                      ? generated
+                      : "translate3d(0px, 0px, 0px)";
+                  }
+                : undefined
+            }
+            style={
+              projectsTabletLandscapeViewport
+                ? {
+                    willChange: "transform",
+                    backfaceVisibility: "hidden",
+                    WebkitBackfaceVisibility: "hidden",
+                  }
+                : undefined
+            }
           >
             <div
               className={`showcase-header flex w-full min-w-0 shrink-0 flex-col items-start mb-6 sm:mb-8 md:mb-10 ${SECTION_MAIN_HEADER_TITLE_CLASS}`}
@@ -13360,11 +13556,11 @@ const SkillsMainSectionHeader = ({
           </h2>
         </div>
         <div
-          className="skills-main-accent-line relative mb-6 min-h-[2px] w-full sm:mb-8 md:mb-10"
+          className="skills-main-accent-line relative mb-6 min-h-[2px] w-full sm:mb-8 md:mb-10 md:min-h-[2.5px]"
           aria-hidden
         >
           <motion.span
-            className="absolute bottom-0 left-0 right-0 h-[2px] bg-portfolio-green"
+            className="absolute bottom-0 left-0 right-0 h-[2px] [background-color:var(--palette-green)] md:h-[2.5px]"
             style={{ transformOrigin: "center center" }}
             initial={{ scaleX: rm ? 1 : 0 }}
             animate={{ scaleX: rm || panelSettled ? 1 : 0 }}

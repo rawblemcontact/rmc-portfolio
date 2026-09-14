@@ -233,6 +233,7 @@ export function useTabletLandscapeInnerScroll(
     hit.addEventListener("touchmove", onTouchMove, { passive: true });
     hit.addEventListener("touchend", endTouch, { passive: true });
     hit.addEventListener("touchcancel", endTouch, { passive: true });
+    paint();
 
     return () => {
       stopMomentum();

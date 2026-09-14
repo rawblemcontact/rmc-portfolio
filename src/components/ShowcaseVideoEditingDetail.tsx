@@ -566,6 +566,12 @@ export function ShowcaseVideoEditingDetail({
   /** Hold description copy invisible until box height/title moves finish. */
   const [detailBodyVisible, setDetailBodyVisible] = useState(true);
   const detailBodyVisibleRef = useRef(true);
+  /** Desktop + iPad/tablet landscape — hint below capped desc card when copy still scrolls. */
+  const showDetailScrollHint =
+    (isPlayerCappedDrawerViewport || isTabletLandscapeViewport) &&
+    detailCardUsesInnerScroll &&
+    detailBodyVisible &&
+    (detailTabpanelCutoffFade === "bottom" || detailTabpanelCutoffFade === "both");
   const detailBodySwapTimerRef = useRef<number | null>(null);
   const detailBodyRevealTimerRef = useRef<number | null>(null);
   /** Suppress cutoff remasure while a tab swap resize is in flight. */
@@ -4202,6 +4208,54 @@ export function ShowcaseVideoEditingDetail({
                   </div>
                 </section>
               </div>
+              <AnimatePresence initial={false}>
+                {showDetailScrollHint ? (
+                  <motion.div
+                    key="detail-scroll-hint"
+                    className="video-editing-detail-scroll-hint"
+                    aria-hidden
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={
+                      reduceMotion
+                        ? { duration: 0 }
+                        : { duration: 0.4, ease: EASE.out }
+                    }
+                  >
+                    <div
+                      className={`video-editing-detail-scroll-hint__float${
+                        reduceMotion ? " video-editing-detail-scroll-hint__float--static" : ""
+                      }`}
+                    >
+                      <div
+                        className={`video-editing-detail-scroll-hint__breathe font-display${
+                          reduceMotion ? " video-editing-detail-scroll-hint__breathe--static" : ""
+                        }`}
+                      >
+                        <span>scroll for more</span>
+                        <span className="video-editing-detail-scroll-hint__arrow video-editing-detail-scroll-hint__arrow-clock">
+                          <svg
+                            viewBox="0 0 10 6"
+                            width="8"
+                            height="5"
+                            fill="none"
+                            aria-hidden
+                          >
+                            <path
+                              d="M1 1.25 L5 4.75 L9 1.25"
+                              stroke="currentColor"
+                              strokeWidth="1.25"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </span>
+                      </div>
+                    </div>
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
             </div>
           </div>
         </div>

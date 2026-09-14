@@ -48,6 +48,14 @@
   initial-value: 0;
 }
 
+/* PROFILE summary cutoff — same as --detail-cutoff-*: unregistered vars do not
+ * invalidate mask-image on desktop, so the dissolve never clears at scroll end. */
+@property --profile-cutoff {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
 /* EXPERIENCE mobile tab carousel — animate edge-fade strength instead of
  * swapping mask-image (class toggles always snap). */
 @property --experience-tabs-fade-left {
@@ -71,6 +79,39 @@
   }
   13.6% {
     --featured-tabs-arrow-nudge: 4px;
+  }
+}
+
+/* PROJECT DETAILS scroll hint — arrow nudge locked to float / breathe cycle. */
+@keyframes detail-scroll-hint-arrow-nudge {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, 1.25px, 0);
+  }
+}
+
+/* Keep float (transform) and breathe (opacity) as separate animations —
+ * combining them with a custom-property opacity in one keyframe was choppy. */
+@keyframes detail-scroll-hint-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, 1.5px, 0);
+  }
+}
+
+@keyframes detail-scroll-hint-breathe {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
   }
 }
 
@@ -201,13 +242,13 @@
   transform: translate3d(0, 1px, 0);
 }
 .hero-idle-float {
-  animation: hero-idle-float-y 5.6s linear infinite;
+  animation: hero-idle-float-y 4.6s linear infinite;
 }
 .hero-idle-float--from-bottom {
-  animation: hero-idle-float-y-from-bottom 5.6s linear infinite;
+  animation: hero-idle-float-y-from-bottom 4.6s linear infinite;
 }
 .hero-idle-float--counter {
-  animation: hero-idle-float-y-counter 5.6s linear infinite;
+  animation: hero-idle-float-y-counter 4.6s linear infinite;
 }
 
 /* Pause idle float when slide is off-screen — grid drift keeps running. */
@@ -1236,6 +1277,58 @@
     border-radius: 4px;
   }
 
+  /* Tablet landscape — PROFILE menu red rule was md:2.5px; other rows are 2px. */
+  @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse) {
+    #menu .menu-nav-underline--profile {
+      height: 2px !important;
+    }
+
+    #profile .profile-main-accent-line {
+      height: 2px !important;
+      min-height: 2px !important;
+    }
+
+    #profile .profile-main-accent-line-span {
+      height: 2px !important;
+      min-height: 2px !important;
+    }
+
+    /* Left rail CSS zoom is 0.95 — pre-boost so painted stroke = menu EXPERIENCE 2px. */
+    #experience .career-nav-section-divider {
+      height: calc(2px / 0.95) !important;
+      min-height: calc(2px / 0.95) !important;
+    }
+  }
+
+  /* Desktop — PROFILE red rule = main-menu PROFILE hover underline (2.5px).
+   * Parent left column uses `zoom: 0.9`; scaleY on the span cancels that so
+   * painted thickness matches the unzoomed menu line. Do not clip. */
+  @media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
+    #profile .profile-main-accent-line {
+      height: 2.5px !important;
+      min-height: 2.5px !important;
+      overflow: visible;
+    }
+
+    #profile .profile-main-accent-line-span {
+      height: 2.5px !important;
+      min-height: 2.5px !important;
+    }
+
+    /* Space under the rule only (line size/place unchanged) — same 16px as desktop EXPERIENCE. */
+    #profile .profile-main-accent-line + div > .profile-card-surface:not(.profile-summary-card) {
+      margin-top: 1rem;
+    }
+  }
+
+  /* iPad landscape + portrait — same under-rule gap as desktop PROFILE (line unchanged). */
+  @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse),
+    (min-width: 768px) and (max-width: 1366px) and (orientation: portrait) {
+    #profile .profile-main-accent-line + div > .profile-card-surface:not(.profile-summary-card) {
+      margin-top: 1rem;
+    }
+  }
+
   /* PROFILE card — metadata pill + in-card labels (SUMMARY, etc.) */
   #profile .profile-card-surface > p.profile-card-inline-label,
   #profile .profile-summary-card-scroll > p.profile-card-inline-label {
@@ -1301,6 +1394,39 @@
       flex-direction: column;
     }
 
+    /* Overlay fade — class `is-cutoff` is the on/off switch (not a CSS var). */
+    #profile .profile-summary-card.profile-card-height-locked .profile-summary-card-scroll-shell {
+      -webkit-mask-image: none;
+      mask-image: none;
+    }
+
+    #profile .profile-summary-card.profile-card-height-locked .profile-summary-card-scroll-shell::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 1;
+      height: 1.75rem;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.48s cubic-bezier(0.12, 1, 0.28, 1);
+      background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.55));
+    }
+
+    #profile .profile-summary-card.profile-card-height-locked .profile-summary-card-scroll-shell.is-cutoff::after {
+      opacity: 1;
+    }
+
+    #profile .profile-summary-card-scroll-end {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 1px;
+      pointer-events: none;
+    }
+
     #profile .profile-summary-card-scroll {
       min-height: 0;
       flex: 1 1 auto;
@@ -1340,7 +1466,13 @@
       bottom: 0;
       height: 1.75rem;
       pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.48s cubic-bezier(0.12, 1, 0.28, 1);
       background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.55));
+    }
+
+    #profile .profile-summary-card.profile-card-height-locked .profile-summary-card-scroll-shell.is-cutoff::after {
+      opacity: 1;
     }
   }
 
@@ -1427,24 +1559,122 @@
     height: 0;
   }
 
-  /* PROFILE summary card — mask stays on; --profile-cutoff 0→1 (no class toggle / scroll jump). */
-  #profile .profile-summary-card.profile-card-height-locked .profile-summary-card-scroll-shell {
-    --profile-cutoff: 0;
-    -webkit-mask-image: linear-gradient(
-      to bottom,
-      #000 0%,
-      #000 calc(100% - 1.75rem * var(--profile-cutoff)),
-      rgba(0, 0, 0, 0.55) calc(100% - 0.55rem * var(--profile-cutoff)),
-      transparent 100%
-    );
-    mask-image: linear-gradient(
-      to bottom,
-      #000 0%,
-      #000 calc(100% - 1.75rem * var(--profile-cutoff)),
-      rgba(0, 0, 0, 0.55) calc(100% - 0.55rem * var(--profile-cutoff)),
-      transparent 100%
-    );
+  /* Desc card body copy — −1px vs text-sm / sm:text-base (phone + tablet portrait). */
+  #projects .video-editing-detail-card-tab-surface .font-body {
+    font-size: calc(0.875rem - 1px);
   }
+  @media (min-width: 640px) {
+    #projects .video-editing-detail-card-tab-surface .font-body {
+      font-size: calc(1rem - 1px);
+    }
+  }
+
+  /* PROJECT DETAILS + PROFILE — scroll hint below card (desktop + tablet landscape).
+   * Sibling under the card — never inside height measure. */
+  #projects .video-editing-detail-scroll-hint,
+  #profile .video-editing-detail-scroll-hint {
+    margin: 0.375rem 0 0;
+    width: 100%;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  #projects .video-editing-detail-scroll-hint__float,
+  #profile .video-editing-detail-scroll-hint__float {
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+    transform: translate3d(0, 0, 0);
+    animation: detail-scroll-hint-float 2.1s ease-in-out infinite;
+  }
+
+  #projects .video-editing-detail-scroll-hint__float--static,
+  #profile .video-editing-detail-scroll-hint__float--static {
+    animation: none;
+    transform: none;
+  }
+
+  #projects .video-editing-detail-scroll-hint__breathe,
+  #profile .video-editing-detail-scroll-hint__breathe {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.3rem;
+    font-size: 0.5625rem;
+    font-weight: 700;
+    line-height: 1.12;
+    letter-spacing: 0.12em;
+    text-align: right;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: color-mix(in srgb, rgb(186 186 186) 78%, transparent);
+    animation: detail-scroll-hint-breathe 2.1s ease-in-out infinite;
+  }
+
+  #projects .video-editing-detail-scroll-hint__breathe--static,
+  #profile .video-editing-detail-scroll-hint__breathe--static {
+    animation: none;
+    opacity: 1;
+  }
+
+  #projects .video-editing-detail-scroll-hint__arrow,
+  #profile .video-editing-detail-scroll-hint__arrow {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
+  }
+
+  #projects .video-editing-detail-scroll-hint__arrow-clock,
+  #profile .video-editing-detail-scroll-hint__arrow-clock {
+    animation: detail-scroll-hint-arrow-nudge 2.1s ease-in-out infinite;
+  }
+
+  #projects .video-editing-detail-scroll-hint__arrow svg,
+  #profile .video-editing-detail-scroll-hint__arrow svg {
+    display: block;
+  }
+
+  /* Tablet landscape only — smaller chevron; desktop size unchanged. */
+  @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse) {
+    #projects .video-editing-detail-scroll-hint__arrow svg,
+    #profile .video-editing-detail-scroll-hint__arrow svg {
+      width: 6px;
+      height: 3.75px;
+    }
+  }
+
+  @media (max-width: 639.98px),
+    (min-width: 768px) and (max-width: 1366px) and (orientation: portrait) {
+    #projects .video-editing-detail-scroll-hint,
+    #profile .video-editing-detail-scroll-hint {
+      display: none !important;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #projects .video-editing-detail-scroll-hint__float,
+    #profile .video-editing-detail-scroll-hint__float {
+      animation: none;
+      transform: none;
+    }
+
+    #projects .video-editing-detail-scroll-hint__breathe,
+    #profile .video-editing-detail-scroll-hint__breathe {
+      animation: none;
+      opacity: 1;
+    }
+
+    #projects .video-editing-detail-scroll-hint__arrow-clock,
+    #profile .video-editing-detail-scroll-hint__arrow-clock {
+      animation: none;
+    }
+  }
+
+  /* PROFILE summary card cutoff is the ::after overlay in the height-lock MQ
+   * (desktop + tablet landscape). Do not keep a mask here — it cannot fully
+   * clear at scroll end. */
 
   /* PROFILE summary card — short bottom dissolve; most copy stays solid. */
   #profile .content-cutoff-fade {
@@ -4436,11 +4666,16 @@
     #experience .nav-header {
       display: flex;
       padding: 0;
-      margin: 0 0 14px;
+      margin: 0 0 16px;
+    }
+
+    #experience .experience-rail-chrome .nav-header {
+      padding-bottom: 0 !important;
+      margin-bottom: 16px !important;
     }
 
     #experience .experience-rail-title-block {
-      padding-bottom: 16px;
+      padding-bottom: 14px;
     }
 
     #experience .career-nav-section-divider {
@@ -4669,7 +4904,16 @@
       display: flex;
       order: 1;
       padding: 0 0 12px;
-      margin: 0 0 14px;
+      margin: 0 0 16px;
+    }
+
+    #experience .experience-rail-chrome .nav-header {
+      padding-bottom: 0 !important;
+      margin-bottom: 16px !important;
+    }
+
+    #experience .experience-rail-title-block {
+      padding-bottom: 14px;
     }
 
     #experience .career-nav-section-divider {
@@ -4918,7 +5162,16 @@
       display: flex;
       order: 1;
       padding: 0 0 12px;
-      margin: 0 0 14px;
+      margin: 0 0 16px;
+    }
+
+    #experience .experience-rail-chrome .nav-header {
+      padding-bottom: 0 !important;
+      margin-bottom: 16px !important;
+    }
+
+    #experience .experience-rail-title-block {
+      padding-bottom: 14px;
     }
 
     #experience .career-nav-section-divider {
@@ -7548,7 +7801,7 @@
     .video-editing-detail-meta-card
     .video-editing-detail-card-tab-surface
     .font-body {
-    font-size: 0.9375rem !important;
+    font-size: calc(0.9375rem - 1px) !important;
     line-height: 1.4 !important;
   }
 
@@ -8421,7 +8674,7 @@
     .video-editing-detail-meta-card
     .video-editing-detail-card-tab-surface
     .font-body {
-    font-size: 0.9375rem !important;
+    font-size: calc(0.9375rem - 1px) !important;
     line-height: 1.35 !important;
   }
 
@@ -9158,7 +9411,8 @@
 
   #experience .experience-rail-chrome .nav-header {
     padding: 0 !important;
-    margin: 0 0 calc(12px * var(--experience-scale)) !important;
+    /* iPad landscape below-rule gap; title-block padding (line position) unchanged. */
+    margin: 0 0 calc(16px * var(--experience-scale)) !important;
   }
 
   #experience .experience-rail-title-block {
@@ -9395,6 +9649,11 @@
     line-height: var(--section-main-lh-display) !important;
     letter-spacing: var(--section-main-letter-spacing) !important;
     font-weight: 700 !important;
+  }
+
+  /* Space under the blue rule only — same 16px as desktop EXPERIENCE (line unchanged). */
+  #experience .experience-rail-chrome .nav-header {
+    margin-bottom: 16px !important;
   }
 
   #experience .nav-header .career-nav-section-title {
