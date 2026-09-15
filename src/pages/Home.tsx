@@ -1509,8 +1509,14 @@ function measureHeroVideoCenterOpenOffsetPx(el: HTMLElement): number {
     ? (faceRect.top + faceRect.bottom) / 2
     : faceRect.top + (layoutH || visualH) / 2;
   const naturalCenterY = visualCenterY - currentY;
-  /* innerHeight/2 = full window mid. Do not use visualViewport or the nav ruler band. */
-  return window.innerHeight / 2 - naturalCenterY;
+  /*
+   * Optical mid for 16:9 on tall portrait — ~4% above geometric mid so the open
+   * hold does not read sunk (chrome / nav already bias perceived center up).
+   * Desktop + landscape keep pure geometric mid.
+   */
+  const opticalCenterY =
+    window.innerHeight / 2 - Math.min(56, Math.max(32, window.innerHeight * 0.04));
+  return opticalCenterY - naturalCenterY;
 }
 
 /**
@@ -1654,15 +1660,13 @@ const HERO_VIDEO_CARD_WIDTH_CLASS =
 /**
  * Fixed layout width for crop-mode video/probe (desktop hard-crop design).
  * Avoids % / MQ / zoom-path drift so hard-crop composition never reflows on resize.
- * Visual shared width = layout × HERO_CROP_VIDEO_ZOOM (1096 × 0.9 = 986.4).
+ * Visual shared width = layout × HERO_CROP_VIDEO_ZOOM (1140 × 0.9 = 1026).
  *
- * Widescreen try: desktop-only — width 1096 (−2.5% from 1124), face thinned.
- * SVG X scaled with width for ink↔edge parity; type/CTA/zoom unchanged.
- * Undo width: 1124 / -26. Undo face H: 555 or 579.
- * Undo +5% 16:9: 1029 / 579 / -23 / fonts+button+gap+pad unchanged below.
- * Undo 980 base: 980 / 551 / -22 / 107.8 / 16.67 / …
+ * Slight widen: 1140 (~+2% from 1118). SVG X scaled for ink↔edge parity.
+ * Face H / type / CTA / zoom unchanged (cinematic thin stay).
+ * Undo width: 1118 / -26.
  */
-const HERO_CROP_VIDEO_LAYOUT_WIDTH_PX = 1096;
+const HERO_CROP_VIDEO_LAYOUT_WIDTH_PX = 1140;
 /** Crop-mode visual zoom — matches HERO_VIDEO_GLOBAL_LAYOUT_DEFAULTS heightScale. */
 const HERO_CROP_VIDEO_ZOOM = 0.9;
 /** Visual shared bounds width = layout × zoom (video face after center-origin scale). */
@@ -1670,24 +1674,30 @@ const HERO_CROP_SHARED_BOUNDS_WIDTH_PX = HERO_CROP_VIDEO_LAYOUT_WIDTH_PX * HERO_
 /**
  * Crop-mode SVG ink ↔ video-edge X (local px). Hard-coded so resize / breakpoint
  * remasure cannot freeze a mid-cascade or mid-entrance value.
- * Scaled with layout width (1096/1070) so ink↔edge parity stays with the wider crop.
+ * Scaled with layout width (1140/1118) and name meet box; -25 after 102px
+ * name bump (measured ink was ~1.2px past face at -26).
  */
 const HERO_CROP_SVG_ALIGN_X_PX = -25;
+/** Crop SVG Y — lift visible name toward PORTFOLIO baseline (left-top origin; X frozen). Undo: -44 shared default. */
+const HERO_CROP_SVG_LOCKUP_OFFSET_Y_PX = -52;
 /**
- * Frozen video face height — thinned only (width/zoom/lockup unchanged) so the
- * frame reads slightly more cinematic without shifting L/R ink↔edge align.
- * Stage justify-center absorbs the freed vertical space equally.
+ * Frozen video face height — thinned for cinematic read; width/zoom/lockup unchanged
+ * so L/R ink↔edge align stays fixed. Stage justify-center absorbs vertical delta.
+ * Undo height: 530.
  */
-const HERO_CROP_VIDEO_FACE_HEIGHT_PX = 530;
+const HERO_CROP_VIDEO_FACE_HEIGHT_PX = 538;
 /**
- * Frozen display / chrome sizes at crop design — scaled with layout footprint
- * so name lockup + PORTFOLIO stay cohesive with the larger video.
+ * Frozen display / chrome sizes at crop design — slightly under video footprint
+ * so type/CTA read lighter while shared bounds keep L/R edge parity.
  * px so html rem MQ cannot reflow.
+ * Undo name: 100 / 15.6 / -25. PORTFOLIO unchanged.
  */
-const HERO_CROP_DISPLAY_FONT_CLASS = "text-[113.2px] leading-[0.78]";
-const HERO_CROP_TAGLINE_FONT_CLASS = "text-[17.5px]";
+const HERO_CROP_NAME_DISPLAY_FONT_CLASS = "text-[102px] leading-[0.78]";
+/** @deprecated alias — crop name uses HERO_CROP_NAME_DISPLAY_FONT_CLASS; PORTFOLIO is separate. */
+const HERO_CROP_DISPLAY_FONT_CLASS = HERO_CROP_NAME_DISPLAY_FONT_CLASS;
+const HERO_CROP_TAGLINE_FONT_CLASS = "text-[15.9px]";
 const HERO_CROP_PORTFOLIO_BUTTON_CLASS =
-  "!h-[88.27px] max-h-[92.25px] !px-[23.77px] [&_.texts]:!text-[19.97px] [&_.texts]:!tracking-[0.085em]";
+  "!h-[83px] max-h-[86.7px] !px-[22.3px] [&_.texts]:!text-[18.8px] [&_.texts]:!tracking-[0.085em]";
 /** Gap between video block and name pack in crop mode (fixed). */
 const HERO_CROP_STACK_GAP_CLASS = "gap-[14.27px]";
 /** Fluid tablet/desktop-pre-crop display (vw). Crop uses px constants above. */
@@ -2732,7 +2742,9 @@ const HeroNameReveal = ({
       {
         ...activeSvgLockupLayout,
         offsetX: Math.round(heroSvgAlignX + activeSvgLockupLayout.offsetX),
-        offsetY: Math.round(activeSvgLockupLayout.offsetY),
+        offsetY: Math.round(
+          isHeroCropLayout ? HERO_CROP_SVG_LOCKUP_OFFSET_Y_PX : activeSvgLockupLayout.offsetY,
+        ),
       },
       "left top",
     );
@@ -2891,7 +2903,7 @@ const HeroNameReveal = ({
                     isMobileHeroLayout
                       ? `text-[clamp(2.28rem,8.85vw,5.95rem)] max-[400px]:text-[clamp(2rem,8.1vw,5.95rem)] leading-[0.8] sm:leading-[0.78] ${HERO_NAME_MOBILE_DISPLAY_FONT_CLASS}`
                       : isHeroCropLayout
-                        ? HERO_CROP_DISPLAY_FONT_CLASS
+                        ? HERO_CROP_NAME_DISPLAY_FONT_CLASS
                         : HERO_FLUID_DISPLAY_FONT_CLASS
                   }`}
                 >
@@ -3344,8 +3356,11 @@ const Hero = ({
   const portfolioNavPendingRef = useRef(false);
   const portfolioPressStartedAtRef = useRef<number | null>(null);
   const portfolioNavTimerRef = useRef<number | null>(null);
+  /** Controlled viewport targeting for hero debug transforms. */
+  const heroDesktopOnlyViewport = heroDesktopViewport && !heroTabletViewport;
+  const heroDesktopLikeViewport = heroDesktopOnlyViewport || heroTabletLandscapeViewport;
   /*
-   * Tablet landscape: restore iPad horizontal layout defaults.
+   * Tablet landscape: iPad horizontal layout defaults.
    * Desktop crop keeps frozen desktop defaults (no MQ path flips).
    */
   const viewportSvgLockupDefaults = heroTabletLandscapeViewport
@@ -3411,9 +3426,6 @@ const Hero = ({
     setPortfolioButtonGlobalDebugControls({ ...controlledPortfolioDefaults });
   }, [controlledVideoDefaults, controlledMainDefaults, controlledPortfolioDefaults]);
 
-  /** Controlled viewport targeting for hero debug transforms. */
-  const heroDesktopOnlyViewport = heroDesktopViewport && !heroTabletViewport;
-  const heroDesktopLikeViewport = heroDesktopOnlyViewport || heroTabletLandscapeViewport;
   /**
    * Desktop hard-crop: phones and Air/11 portrait stay fluid. 12.9 portrait
    * (1024–1366) uses the same crop as a desktop at that width. iPad landscape
@@ -3736,10 +3748,6 @@ const Hero = ({
     desktopNameY.set(isHeroCropLayout ? 0 : heroDesktopSettleOffsetPx());
   }, [desktopNameY, heroPhase1LayoutReady, isMobileHeroLayout, isHeroCropLayout, heroDesktopViewport]);
 
-  /** Mobile + tablet (portrait/landscape): finish hover morph before MENU scroll. */
-  const shouldDeferPortfolioNavForHover =
-    (isMobileHeroLayout || heroTabletViewport) && !reduceMotion;
-
   const clearPortfolioNavTimer = useCallback(() => {
     if (portfolioNavTimerRef.current !== null) {
       window.clearTimeout(portfolioNavTimerRef.current);
@@ -3770,12 +3778,15 @@ const Hero = ({
 
   const handlePortfolioPointerDown = useCallback(
     (event: React.PointerEvent<HTMLButtonElement>) => {
-      if (!shouldDeferPortfolioNavForHover) return;
+      if (event.button !== 0) return;
       if (portfolioNavPendingRef.current) return;
+      portfolioNavPendingRef.current = true;
       portfolioPressStartedAtRef.current = performance.now();
       event.currentTarget.classList.add("hero-portfolio-animated--pressed");
+      clearPortfolioNavTimer();
+      onStart();
     },
-    [shouldDeferPortfolioNavForHover],
+    [clearPortfolioNavTimer, onStart],
   );
 
   const handlePortfolioPointerCancel = useCallback(
@@ -3787,44 +3798,17 @@ const Hero = ({
     [],
   );
 
+  /** Keyboard / non-pointer activation — pointerdown already started the slide on hit. */
   const onStartClick = useCallback(
     (event: React.MouseEvent<HTMLButtonElement>) => {
       if (portfolioNavPendingRef.current) return;
-
-      const tapFeedbackMs = reduceMotion ? 0 : HERO_PORTFOLIO_TAP_FEEDBACK_MS;
-      let delayMs = tapFeedbackMs;
-
-      if (shouldDeferPortfolioNavForHover) {
-        const btn = event.currentTarget;
-        btn.classList.add("hero-portfolio-animated--pressed");
-
-        const startedAt = portfolioPressStartedAtRef.current ?? performance.now();
-        const elapsed = performance.now() - startedAt;
-        /** Wipe scaleX ≈ 1 — morph already finished (e.g. settled trackpad hover). */
-        const wipeMatrix = getComputedStyle(btn, "::before").transform;
-        const wipeScaleX =
-          wipeMatrix.startsWith("matrix(")
-            ? Number.parseFloat(wipeMatrix.slice(7))
-            : wipeMatrix === "none"
-              ? 0
-              : 0;
-        const alreadyComplete = Number.isFinite(wipeScaleX) && wipeScaleX >= 0.99;
-        const morphRemaining = alreadyComplete
-          ? 0
-          : Math.max(0, HERO_PORTFOLIO_HOVER_COMPLETE_MS - elapsed);
-        delayMs = Math.max(tapFeedbackMs, morphRemaining);
-      }
-
       portfolioNavPendingRef.current = true;
+      event.currentTarget.classList.add("hero-portfolio-animated--pressed");
       clearPortfolioNavTimer();
-      portfolioNavTimerRef.current = window.setTimeout(() => {
-        portfolioNavTimerRef.current = null;
-        portfolioNavPendingRef.current = false;
-        portfolioPressStartedAtRef.current = null;
-        onStart();
-      }, delayMs);
+      portfolioPressStartedAtRef.current = null;
+      onStart();
     },
-    [clearPortfolioNavTimer, onStart, reduceMotion, shouldDeferPortfolioNavForHover],
+    [clearPortfolioNavTimer, onStart],
   );
 
   /** Closed stage (incl. real <video>) mounts immediately; entrance still waits on fonts + buffer. */
@@ -4685,7 +4669,7 @@ const Hero = ({
             }
           }}
         >
-          <span className="font-mono text-sm uppercase tracking-[0.22em] text-white/90">
+          <span className="hero-tap-to-enter-label font-display text-[1.06rem] uppercase tracking-[0.16em] text-white/95 sm:text-[1.12rem]">
             TAP TO ENTER
           </span>
         </motion.div>
@@ -4759,7 +4743,7 @@ const Hero = ({
               <div
                 className={
                   heroVideoGlobalDebugStyle &&
-                  (isHeroCropLayout || heroTabletLandscapeViewport)
+                  (isHeroCropLayout || heroDesktopLikeViewport)
                     ? "mx-auto w-fit min-w-0 max-w-full"
                     : "mx-auto w-full max-w-full"
                 }
@@ -4898,12 +4882,14 @@ const RainbowMenuSlide = ({
   sectionPanelClosed,
   onNavigate,
   lockedFillId,
+  onEntranceSettled,
 }: {
   active: boolean;
   introReady: boolean;
   sectionPanelClosed: boolean;
   onNavigate: (id: string) => void;
   lockedFillId: string | null;
+  onEntranceSettled?: (settled: boolean) => void;
 }) => {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [pendingNavId, setPendingNavId] = useState<string | null>(null);
@@ -4916,6 +4902,7 @@ const RainbowMenuSlide = ({
   const [mainMenuGlobalDebugControls, setMainMenuGlobalDebugControls] =
     useState<MainMenuGlobalLayoutControl>(() => ({ ...MAIN_MENU_GLOBAL_LAYOUT_DEFAULTS }));
   const [mainMenuDesktopViewport, setMainMenuDesktopViewport] = useState(matchesHeroDesktopDebugViewport);
+  const [menuTabletViewport, setMenuTabletViewport] = useState(matchesHeroTabletViewport);
   const mainMenuDividerDelayS = PROFILE_TITLE_DELAY_S;
   const mainMenuDividerDurS = SKILLS_SECTION_HEADER_SLIDE_DUR_S * 1.15;
   const mainMenuDividerHoldS = SKILLS_STAGGER * 2;
@@ -4927,6 +4914,33 @@ const RainbowMenuSlide = ({
   const mainMenuIndexDelayBaseS = mainMenuItemsStartDelayS + SKILLS_STAGGER * 2;
   const mainMenuLabelDelayBaseS = mainMenuIndexDelayBaseS + NAV_ITEMS.length * SKILLS_STAGGER;
   const menuTimelineActive = active && introReady;
+  const reduceMotion = useReducedMotion();
+  const [menuEntranceSettled, setMenuEntranceSettled] = useState(false);
+  const menuEntranceSettleMs = reduceMotion
+    ? 0
+    : Math.round(
+        (mainMenuLabelDelayBaseS +
+          (NAV_ITEMS.length - 1) * SKILLS_STAGGER +
+          SKILLS_SECTION_HEADER_SLIDE_DUR_S) *
+          1000,
+      );
+
+  useEffect(() => {
+    if (!menuTimelineActive) {
+      setMenuEntranceSettled(false);
+      return;
+    }
+    if (menuEntranceSettleMs === 0) {
+      setMenuEntranceSettled(true);
+      return;
+    }
+    const id = window.setTimeout(() => setMenuEntranceSettled(true), menuEntranceSettleMs);
+    return () => window.clearTimeout(id);
+  }, [menuTimelineActive, menuEntranceSettleMs]);
+
+  useEffect(() => {
+    onEntranceSettled?.(menuEntranceSettled);
+  }, [menuEntranceSettled, onEntranceSettled]);
 
   const clearNavTimer = useCallback(() => {
     if (navTimerRef.current !== null) {
@@ -4942,7 +4956,7 @@ const RainbowMenuSlide = ({
 
   const handleNavClick = useCallback(
     (id: string) => {
-      if (pendingNavId !== null) return;
+      if (!menuEntranceSettled || pendingNavId !== null) return;
 
       const lineFullyOut = isCmdNavLineFullyOut(id, hoveredId, lineHoverSinceRef);
       const remaining = cmdNavLineRemainingMs(id, hoveredId, lineHoverSinceRef);
@@ -4970,7 +4984,7 @@ const RainbowMenuSlide = ({
       }
       navTimerRef.current = window.setTimeout(finishNav, remaining);
     },
-    [clearNavTimer, hoveredId, onNavigate, pendingNavId],
+    [clearNavTimer, hoveredId, menuEntranceSettled, onNavigate, pendingNavId],
   );
 
   const handleMainMenuGlobalDebugChange = useCallback((patch: Partial<MainMenuGlobalLayoutControl>) => {
@@ -4996,6 +5010,14 @@ const RainbowMenuSlide = ({
   useEffect(() => {
     const mq = window.matchMedia(`(min-width: ${HERO_DESKTOP_DEBUG_MIN_PX}px)`);
     const onChange = unlessPinched(() => setMainMenuDesktopViewport(mq.matches));
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  useEffect(() => {
+    const mq = window.matchMedia(HERO_TABLET_DEVICE_MQ);
+    const onChange = unlessPinched(() => setMenuTabletViewport(mq.matches));
     onChange();
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
@@ -5053,7 +5075,9 @@ const RainbowMenuSlide = ({
   return (
     <section
       id="menu"
-      className={`relative h-screen bg-black text-white flex items-center justify-center p-6 md:p-10 overflow-hidden ${SLIDE}`}
+      className={`relative h-screen bg-black text-white flex items-center justify-center p-6 md:p-10 overflow-hidden ${
+        menuTabletViewport ? SLIDE : SLIDE_NO_Y_SCROLL
+      }`}
       aria-label="Menu"
     >
       <SlideGridOverlay />
@@ -5101,24 +5125,34 @@ const RainbowMenuSlide = ({
           </div>
         </div>
 
-        <div className="flex flex-col">
+        <div
+          className={`flex flex-col${menuEntranceSettled ? "" : " pointer-events-none"}`}
+          aria-busy={!menuEntranceSettled}
+        >
           {NAV_ITEMS.map((item, idx) => (
             <motion.button
               key={item.id}
               type="button"
+              tabIndex={menuEntranceSettled ? undefined : -1}
               onClick={() => handleNavClick(item.id)}
-              onHoverStart={() => markHoverStart(item.id)}
+              onHoverStart={() => {
+                if (!menuEntranceSettled) return;
+                markHoverStart(item.id);
+              }}
               onHoverEnd={() => {
                 if (pendingNavId === item.id) return;
                 setHoveredId(null);
               }}
-              onFocus={() => markHoverStart(item.id)}
+              onFocus={() => {
+                if (!menuEntranceSettled) return;
+                markHoverStart(item.id);
+              }}
               onBlur={() => {
                 if (pendingNavId === item.id) return;
                 setHoveredId(null);
               }}
               className="group relative w-full text-left py-4 md:py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black focus-visible:ring-inset"
-              whileTap={{ opacity: 0.92 }}
+              whileTap={menuEntranceSettled ? { opacity: 0.92 } : undefined}
               transition={SPRING.ui}
             >
               <div className="flex items-center justify-between w-full">
@@ -11253,6 +11287,24 @@ const ConfidantExperience = ({
     };
   }, [isMobileExperienceLayout]);
 
+  /** Mobile: on select, smooth-slide active tab to the left edge — skip when ≤2 tabs would remain (empty right). */
+  useEffect(() => {
+    if (!isMobileExperienceLayout) return;
+    const idx = EXPERIENCE_TAB_IDS.indexOf(activeExperienceTabId);
+    if (idx < 0 || EXPERIENCE_TAB_IDS.length - idx <= 2) return;
+    const nav = tabsRootRef.current?.querySelector<HTMLElement>(".tabs-nav");
+    if (!nav) return;
+    const btn = nav.querySelector<HTMLElement>(`[data-tab="${activeExperienceTabId}"]`);
+    const shell = btn?.closest<HTMLElement>(".experience-tab-btn-shell");
+    if (!shell) return;
+    const delta =
+      shell.getBoundingClientRect().left - nav.getBoundingClientRect().left;
+    const maxScroll = Math.max(0, nav.scrollWidth - nav.clientWidth);
+    const target = Math.max(0, Math.min(nav.scrollLeft + delta, maxScroll));
+    if (Math.abs(target - nav.scrollLeft) < 1) return;
+    nav.scrollTo({ left: target, behavior: rm ? "auto" : "smooth" });
+  }, [activeExperienceTabId, isMobileExperienceLayout, rm]);
+
   useEffect(() => {
     const mq = window.matchMedia(EXPERIENCE_TABLET_LANDSCAPE_MQ);
     const onChange = unlessPinched(() => setExperienceTabletLandscapeViewport(mq.matches));
@@ -14167,6 +14219,9 @@ export default function Home() {
   const [heroExitScroll, setHeroExitScroll] = useState(false);
   const [sideNavMotionBusy, setSideNavMotionBusy] = useState(false);
   const heroExitScrollRef = useRef(false);
+  const heroExitInputUnlockRef = useRef<(() => void) | null>(null);
+  const heroExitSettleUnlockRef = useRef<(() => void) | null>(null);
+  const [heroExitSettled, setHeroExitSettled] = useState(false);
 
   /** Section overlay scroller — shared across pages; must reset on section change. */
   const sectionPanelRef = useRef<HTMLDivElement | null>(null);
@@ -14176,6 +14231,10 @@ export default function Home() {
   );
   const [currentSlideId, setCurrentSlideId] = useState<string>("hero");
   const [menuIntroReady, setMenuIntroReady] = useState(false);
+  const [menuEntranceSettled, setMenuEntranceSettled] = useState(false);
+  const onMenuEntranceSettled = useCallback((settled: boolean) => {
+    setMenuEntranceSettled(settled);
+  }, []);
 
   const sideNavOpenReadyRef = useRef(false);
   useEffect(() => {
@@ -14266,7 +14325,7 @@ export default function Home() {
   useNavLayoutFreeze(
     isTransitioning ||
       heroExitScroll ||
-      (heroDismissed && !menuIntroReady) ||
+      (heroDismissed && !menuEntranceSettled) ||
       sideNavMotionBusy ||
       archivePdfNavActive ||
       showcasePdfViewerActive ||
@@ -14474,14 +14533,171 @@ export default function Home() {
     const root = slidesRef.current;
     const menuEl = document.getElementById("menu");
     heroExitScrollRef.current = true;
+    setHeroExitSettled(false);
     setHeroExitScroll(true);
     if (root && menuEl) {
-      // Unlock overflow in the same frame before scrolling (state may lag one paint).
-      root.style.overflowX = "auto";
-      root.scrollTo({ left: menuEl.offsetLeft, behavior: reduceMotion ? "auto" : "smooth" });
+      // Freeze scroll (finger cannot nudge scrollLeft). Slide via translate3d instead.
+      heroExitInputUnlockRef.current?.();
+      const blockUserPan = (e: Event) => {
+        e.preventDefault();
+      };
+      const blockOpts: AddEventListenerOptions = { capture: true, passive: false };
+      document.addEventListener("wheel", blockUserPan, blockOpts);
+      document.addEventListener("touchmove", blockUserPan, blockOpts);
+      const html = document.documentElement;
+      const body = document.body;
+      const prevHtmlTouchAction = html.style.touchAction;
+      const prevBodyTouchAction = body.style.touchAction;
+      const prevHtmlOverscroll = html.style.overscrollBehavior;
+      const prevBodyOverscroll = body.style.overscrollBehavior;
+      html.style.touchAction = "none";
+      body.style.touchAction = "none";
+      html.style.overscrollBehavior = "none";
+      body.style.overscrollBehavior = "none";
+      const shield = document.createElement("div");
+      shield.setAttribute("aria-hidden", "true");
+      shield.style.cssText =
+        "position:fixed;inset:0;z-index:2147483646;touch-action:none;-webkit-user-select:none;user-select:none;";
+      document.body.appendChild(shield);
+      shield.addEventListener("wheel", blockUserPan, blockOpts);
+      shield.addEventListener("touchmove", blockUserPan, blockOpts);
+      const prevOverflowX = root.style.overflowX;
+      const prevTouchAction = root.style.touchAction;
+      const prevPointerEvents = root.style.pointerEvents;
+      root.style.overflowX = "hidden";
+      root.style.touchAction = "none";
+      root.style.pointerEvents = "none";
+      root.style.scrollSnapType = "none";
+      const slides = Array.from(root.children) as HTMLElement[];
+      const heroSlide = slides.find((s) => s.id === "hero") ?? slides[0];
+      const menuSlide = slides.find((s) => s.id === "menu") ?? slides[slides.length - 1];
+      const heroGrid = heroSlide.querySelector(":scope > .grid-drift-bg") as HTMLElement | null;
+      const menuGrid = menuSlide.querySelector(":scope > .grid-drift-bg") as HTMLElement | null;
+      // One shared dark drifting grid under the whoosh (phase-synced clone — not frozen).
+      // Slide grids hidden + transparent shells → gap and slides share one aligned layer.
+      const gapFill = document.createElement("div");
+      gapFill.setAttribute("aria-hidden", "true");
+      gapFill.style.cssText =
+        "position:absolute;inset:0;z-index:0;background-color:#000;pointer-events:none;";
+      if (heroGrid) {
+        const gridClone = heroGrid.cloneNode(true) as HTMLElement;
+        const delay = `${gridDriftPhaseDelaySec()}s`;
+        gridClone.style.setProperty("--portfolio-grid-drift-delay", delay);
+        gridClone.style.animationDelay = delay;
+        gridClone.style.inset = "0";
+        gridClone.style.removeProperty("opacity");
+        gapFill.appendChild(gridClone);
+      }
+      const prevRootPosition = root.style.position;
+      root.style.position = "relative";
+      heroSlide.style.zIndex = "1";
+      menuSlide.style.zIndex = "1";
+      heroSlide.style.setProperty("background-color", "transparent", "important");
+      menuSlide.style.setProperty("background-color", "transparent", "important");
+      if (heroGrid) heroGrid.style.setProperty("opacity", "0", "important");
+      if (menuGrid) menuGrid.style.setProperty("opacity", "0", "important");
+      root.insertBefore(gapFill, root.firstChild);
+      const restoreSlideShells = () => {
+        heroSlide.style.removeProperty("background-color");
+        menuSlide.style.removeProperty("background-color");
+        if (heroGrid) heroGrid.style.removeProperty("opacity");
+        if (menuGrid) menuGrid.style.removeProperty("opacity");
+      };
+      const clearSlideTransforms = () => {
+        slides.forEach((slide) => {
+          slide.style.transform = "";
+          slide.style.willChange = "";
+          slide.style.zIndex = "";
+        });
+      };
+      const removeGapFill = () => {
+        gapFill.remove();
+        root.style.position = prevRootPosition;
+      };
+      heroExitInputUnlockRef.current = () => {
+        document.removeEventListener("wheel", blockUserPan, true);
+        document.removeEventListener("touchmove", blockUserPan, true);
+        html.style.touchAction = prevHtmlTouchAction;
+        body.style.touchAction = prevBodyTouchAction;
+        html.style.overscrollBehavior = prevHtmlOverscroll;
+        body.style.overscrollBehavior = prevBodyOverscroll;
+        shield.remove();
+        restoreSlideShells();
+        removeGapFill();
+        clearSlideTransforms();
+        root.style.overflowX = prevOverflowX;
+        root.style.touchAction = prevTouchAction;
+        root.style.pointerEvents = prevPointerEvents;
+        root.style.scrollSnapType = "";
+        heroExitInputUnlockRef.current = null;
+      };
+
+      heroExitSettleUnlockRef.current?.();
+      const from = root.scrollLeft;
+      const to = menuEl.offsetLeft;
+      const distance = to - from;
+      root.scrollLeft = from;
+      let settled = false;
+      const finishSettle = () => {
+        if (settled) return;
+        settled = true;
+        heroExitSettleUnlockRef.current?.();
+        flushSync(() => {
+          heroExitScrollRef.current = false;
+          setCurrentSlideId("menu");
+          setHeroExitSettled(true);
+          setHeroExitScroll(false);
+          setHeroDismissed(true);
+        });
+        restoreSlideShells();
+        removeGapFill();
+        const liveSlides = Array.from(root.children) as HTMLElement[];
+        liveSlides.forEach((slide) => {
+          slide.style.transform = "";
+          slide.style.willChange = "";
+          slide.style.zIndex = "";
+        });
+        root.scrollLeft = 0;
+      };
+      if (reduceMotion || Math.abs(distance) < 1) {
+        finishSettle();
+        return;
+      }
+      const dir = distance < 0 ? 1 : -1;
+      const absD = Math.abs(distance);
+      // Quint whoosh; time bias skips the sluggish head; slight speed bump to shoot forward.
+      const speedPxPerMs = Math.max(0.55, absD / 780) * 1.07;
+      const extraMs = 580;
+      const overshoot = speedPxPerMs * extraMs * 1.12;
+      const durationMs = Math.round(absD / speedPxPerMs + extraMs);
+      const easeInOutQuint = (t: number) =>
+        t < 0.5 ? 16 * t * t * t * t * t : 1 - (-2 * t + 2) ** 5 / 2;
+      for (const slide of slides) slide.style.willChange = "transform";
+      const startedAt = performance.now();
+      const raf = { id: 0 };
+      const tick = (now: number) => {
+        const t = Math.min(1, (now - startedAt) / durationMs);
+        // Advance through quint's slow head a bit faster, then stay on the curve.
+        const tFastStart = 1 - (1 - t) ** 1.4;
+        const e = easeInOutQuint(tFastStart);
+        heroSlide.style.transform = `translate3d(${dir * (absD + overshoot) * e}px,0,0)`;
+        menuSlide.style.transform = `translate3d(${dir * absD * e}px,0,0)`;
+        if (root.scrollLeft !== from) root.scrollLeft = from;
+        if (t < 1) {
+          raf.id = requestAnimationFrame(tick);
+          return;
+        }
+        finishSettle();
+      };
+      raf.id = requestAnimationFrame(tick);
+      heroExitSettleUnlockRef.current = () => {
+        cancelAnimationFrame(raf.id);
+        heroExitSettleUnlockRef.current = null;
+      };
       return;
     }
     scrollToId("menu", reduceMotion ? "auto" : "smooth");
+    setHeroExitSettled(true);
   };
 
   const navigateTo = (id: string) => {
@@ -14772,25 +14988,38 @@ export default function Home() {
     prevSlideIdRef.current = currentSlideId;
   }, [currentSlideId]);
 
-  /** PORTFOLIO exit landed on menu — dismiss hero for this session (refresh restores). */
+  /** PORTFOLIO exit landed on menu — dismiss hero only after the slide settles. */
   useEffect(() => {
     if (heroDismissed) return;
     if (currentSlideId !== "menu") return;
     if (!heroExitScrollRef.current && !heroExitScroll) return;
+    if (!heroExitSettled) return;
     heroExitScrollRef.current = false;
     setHeroExitScroll(false);
+    setHeroExitSettled(false);
     setHeroDismissed(true);
     setCurrentSlideId("menu");
-  }, [currentSlideId, heroDismissed, heroExitScroll]);
+  }, [currentSlideId, heroDismissed, heroExitScroll, heroExitSettled]);
 
   /** After hero unmounts, pin menu at scrollLeft 0 (flex track no longer has #hero). */
   useLayoutEffect(() => {
     if (!heroDismissed) return;
     const root = slidesRef.current;
     if (!root) return;
-    root.style.overflowX = "";
+    heroExitSettleUnlockRef.current?.();
+    Array.from(root.children).forEach((node) => {
+      const slide = node as HTMLElement;
+      slide.style.transform = "";
+      slide.style.willChange = "";
+    });
     root.scrollLeft = 0;
   }, [heroDismissed]);
+
+  /** Keep the exit input shield until menu entrance settles (avoids viewport jump). */
+  useEffect(() => {
+    if (!heroDismissed || !menuEntranceSettled) return;
+    heroExitInputUnlockRef.current?.();
+  }, [heroDismissed, menuEntranceSettled]);
 
   /** While hero is locked, clamp any accidental horizontal scroll. */
   useEffect(() => {
@@ -14804,23 +15033,6 @@ export default function Home() {
     root.addEventListener("scroll", clamp, { passive: true });
     return () => root.removeEventListener("scroll", clamp);
   }, [heroScrollLocked]);
-
-  /** During PORTFOLIO exit, allow scroll toward menu only — no swipe back to hero. */
-  useEffect(() => {
-    if (!heroExitScroll || heroDismissed) return;
-    const root = slidesRef.current;
-    if (!root) return;
-    let maxSeen = root.scrollLeft;
-    const onScroll = () => {
-      if (root.scrollLeft < maxSeen) {
-        root.scrollLeft = maxSeen;
-        return;
-      }
-      maxSeen = root.scrollLeft;
-    };
-    root.addEventListener("scroll", onScroll, { passive: true });
-    return () => root.removeEventListener("scroll", onScroll);
-  }, [heroExitScroll, heroDismissed]);
 
   useEffect(() => {
     if (currentSection === null) setMenuLockedFillId(null);
@@ -15106,14 +15318,16 @@ export default function Home() {
               ease: PANEL_TRANSITION.ease,
             }}
           >
-            {/* Grid backdrop: fills any gaps between slides (e.g. 100svh hero vs 100vh container on iOS) */}
-            <SectionGridOverlay />
+            {/* Hide during exit — gap uses slide-matched black+grid fill instead. */}
+            {!heroExitScroll && <SectionGridOverlay />}
             <div
               ref={slidesRef}
               tabIndex={0}
               aria-label="Portfolio slideshow"
               className={`no-scrollbar flex h-screen w-screen overflow-y-hidden snap-x snap-mandatory scroll-smooth focus:outline-none ${
-                heroScrollLocked || heroDismissed ? "overflow-x-hidden" : "overflow-x-auto"
+                heroScrollLocked || heroDismissed || heroExitScroll
+                  ? "overflow-x-hidden"
+                  : "overflow-x-auto"
               }`}
               style={{ backgroundColor: "transparent", backgroundImage: "none" }}
               onKeyDown={(e) => {
@@ -15121,12 +15335,13 @@ export default function Home() {
               if (e.key === "ArrowRight") {
                 e.preventDefault();
                 // Hero: PORTFOLIO only. After dismiss: single slide — no-op.
-                if (heroScrollLocked || heroDismissed) return;
+                // Exit transition: block user X keys; programmatic scroll owns the move.
+                if (heroScrollLocked || heroDismissed || heroExitScroll) return;
                 slidesRef.current.scrollBy({ left: window.innerWidth, behavior: "smooth" });
               }
               if (e.key === "ArrowLeft") {
                 e.preventDefault();
-                if (heroScrollLocked || heroDismissed) return;
+                if (heroScrollLocked || heroDismissed || heroExitScroll) return;
                 slidesRef.current.scrollBy({ left: -window.innerWidth, behavior: "smooth" });
               }
               if (e.key === "Home") {
@@ -15136,7 +15351,7 @@ export default function Home() {
               }
               if (e.key === "End") {
                 e.preventDefault();
-                if (heroScrollLocked) return;
+                if (heroScrollLocked || heroExitScroll) return;
                 if (currentSection) navigateTo("menu");
                 else scrollToId("menu");
               }
@@ -15158,6 +15373,7 @@ export default function Home() {
               sectionPanelClosed={currentSection === null}
               onNavigate={navigateFromMenu}
               lockedFillId={menuLockedFillId}
+              onEntranceSettled={onMenuEntranceSettled}
             />
           </div>
           </motion.div>
