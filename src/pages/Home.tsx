@@ -14173,6 +14173,9 @@ const ResumeView = () => {
 };
 
 
+/** Flip to true to restore FileText/Zap top-nav, ResumeView, and enter/exit. */
+const RESUME_MODE_ENABLED = false;
+
 export default function Home() {
   const ruleOfThirdsEnabled = useRuleOfThirdsEnabled();
   // Content mask: keeps main content invisible until after first paint so the
@@ -15180,7 +15183,7 @@ export default function Home() {
           className="absolute right-2.5 sm:right-4 flex items-center gap-1.5 sm:gap-2.5"
           data-top-nav-chrome
         >
-          {!(currentSlideId === "hero" && currentSection === null && !isResumeMode) && (
+          {RESUME_MODE_ENABLED && !(currentSlideId === "hero" && currentSection === null && !isResumeMode) && (
             <motion.div
               layoutId={reduceMotion ? undefined : "resume-button"}
               whileTap={reduceMotion ? undefined : NAV_ICON_TAP}
@@ -15362,7 +15365,10 @@ export default function Home() {
                 onStart={handleStart}
                 onQuickProjects={() => navigateTo("projects")}
                 isResumeMode={isResumeMode}
-                toggleResumeMode={() => setIsResumeMode(!isResumeMode)}
+                toggleResumeMode={() => {
+                  if (!RESUME_MODE_ENABLED) return;
+                  setIsResumeMode(!isResumeMode);
+                }}
                 heroInViewRef={heroInViewRef}
                 active={currentSlideId === "hero"}
               />
