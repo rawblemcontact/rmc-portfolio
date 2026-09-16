@@ -7761,8 +7761,8 @@
   #projects.projects-slaywire-detail-open
     .video-editing-detail-meta-card
     .video-editing-detail-card-tab-surface {
-    /* Hug short copy — keep a hair of inset under the last line. */
-    padding: 0.25rem 0 0.125rem 0.125rem !important;
+    /* Hug short copy — small inset under the last line. */
+    padding: 0.25rem 0 0.2rem 0.125rem !important;
     min-width: 0 !important;
   }
 
@@ -8732,8 +8732,8 @@
   #projects.projects-slaywire-detail-open
     .video-editing-detail-meta-card
     .video-editing-detail-card-tab-surface {
-    /* Hug short copy — keep a hair of inset under the last line. */
-    padding: 0.25rem 0 0.125rem 0.125rem !important;
+    /* Hug short copy — small inset under the last line. */
+    padding: 0.25rem 0 0.2rem 0.125rem !important;
     min-width: 0 !important;
   }
 

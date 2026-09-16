@@ -283,8 +283,8 @@ const DETAIL_TAB_UNDERLINE_CLOSE_DUR_S = 0.08;
 const DETAIL_TAB_UNDERLINE_EASE = EASE.out;
 /** Description-card height keyframes stay synchronized with the tab swap. */
 const DETAIL_CARD_RESIZE_DUR_MS = Math.round(DETAIL_TAB_SWAP_DUR_S * 1000);
-/** Inset leftover after the main drawer tween — pin, do not play a second ease. */
-const DETAIL_CARD_PAD_SNAP_PX = 16;
+/** Skip height tween only for subpixel / rounding noise. */
+const DETAIL_CARD_HEIGHT_EPSILON_PX = 2.5;
 const DETAIL_CARD_RESIZE_EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
 /**
  * New tab copy waits until height resize finishes + one paint so clamp/mask
@@ -395,7 +395,9 @@ function worksStripNearestThumbOffset(
 }
 
 function measureDetailCardChromeHeight(cardSurface: HTMLElement): number {
-  const tabSurface = cardSurface.querySelector(".video-editing-detail-card-tab-surface");
+  const tabSurface = cardSurface.querySelector(
+    ".video-editing-detail-card-tab-surface:not(.video-editing-detail-card-tab-measure)",
+  );
   const paddingBottom = parseFloat(getComputedStyle(cardSurface).paddingBottom) || 0;
   const tabSurfacePadBottom =
     tabSurface instanceof HTMLElement
@@ -439,12 +441,20 @@ function visualPxToLayoutPx(el: HTMLElement, visualPx: number): number {
   return Math.round(visualPx * (layoutH / visualH));
 }
 
+/** Copy height only — flex-stretched tab-body wrappers cannot inflate the drawer. */
+function measureCopyBlockHeight(el: HTMLElement): number {
+  const copy = el.matches("p, ul")
+    ? el
+    : el.querySelector(":scope p, :scope ul") ?? el.querySelector("p, ul");
+  const node = copy instanceof HTMLElement ? copy : el;
+  return Math.max(node.offsetHeight, node.scrollHeight);
+}
+
 function measureDetailCardHeightForProbe(
   cardSurface: HTMLElement,
   targetProbe: HTMLElement,
 ): number {
-  // scrollHeight catches cases where offsetHeight under-reports (stacked measure layer).
-  const bodyH = Math.max(targetProbe.offsetHeight, targetProbe.scrollHeight);
+  const bodyH = measureCopyBlockHeight(targetProbe);
   return Math.ceil(measureDetailCardChromeHeight(cardSurface) + bodyH);
 }
 
@@ -921,8 +931,9 @@ export function ShowcaseVideoEditingDetail({
     };
 
     const bounceElOf = (node: HTMLElement) =>
-      node.querySelector<HTMLElement>(".video-editing-detail-card-tab-surface") ??
-      node;
+      node.querySelector<HTMLElement>(
+        ".video-editing-detail-card-tab-surface:not(.video-editing-detail-card-tab-measure)",
+      ) ?? node;
     let bounceEl = bounceElOf(panel);
     let logicalTop = 0;
 
@@ -1533,10 +1544,8 @@ export function ShowcaseVideoEditingDetail({
         detailCardTransitionHeightRef.current = pinned;
         if (maxHeight != null) surface.style.maxHeight = `${maxHeight}px`;
         surface.style.height = `${pinned}px`;
-        if (maxHeight == null) {
-          surface.style.transition = "none";
-        }
-        endDetailCardHeightTransition(maxHeight != null ? pinned : null);
+        surface.style.transition = "none";
+        endDetailCardHeightTransition(pinned);
       };
 
       const runResize = () => {
@@ -1571,19 +1580,13 @@ export function ShowcaseVideoEditingDetail({
         const fromHeight =
           maxHeight != null ? Math.min(fromHeightRaw, maxHeight) : fromHeightRaw;
 
-        if (snap || !isCompactDrawerViewport || reduceMotion) {
-          if (maxHeight != null) {
-            commitHeight(surface, toHeight, maxHeight);
-          } else {
-            surface.style.height = `${toHeight}px`;
-            surface.style.transition = "none";
-            endDetailCardHeightTransition(null);
-          }
+        if (snap || reduceMotion) {
+          commitHeight(surface, toHeight, maxHeight);
           onSettled?.();
           return;
         }
 
-        if (Math.abs(toHeight - fromHeight) <= DETAIL_CARD_PAD_SNAP_PX) {
+        if (Math.abs(toHeight - fromHeight) <= DETAIL_CARD_HEIGHT_EPSILON_PX) {
           commitHeight(surface, toHeight, maxHeight);
           onSettled?.();
           return;
@@ -1627,12 +1630,7 @@ export function ShowcaseVideoEditingDetail({
           }
           detailCardResizeRafRef.current = null;
           surface.classList.remove("video-editing-detail-meta-card--tweening");
-          if (maxHeight != null || cap != null) {
-            commitHeight(surface, dest, cap ?? maxHeight);
-          } else {
-            surface.style.height = `${dest}px`;
-            endDetailCardHeightTransition(null);
-          }
+          commitHeight(surface, dest, cap ?? maxHeight);
           onSettled?.();
         };
         detailCardResizeRafRef.current = window.requestAnimationFrame(tick);
@@ -1642,6 +1640,7 @@ export function ShowcaseVideoEditingDetail({
         pinFromHeight();
         detailCardResizeDelayTimerRef.current = window.setTimeout(runResize, delayMs);
       } else {
+        if (!snap) pinFromHeight();
         runResize();
       }
     },
@@ -1649,7 +1648,6 @@ export function ShowcaseVideoEditingDetail({
       beginDetailCardHeightTransition,
       cancelScheduledDetailCardResize,
       endDetailCardHeightTransition,
-      isCompactDrawerViewport,
       reduceMotion,
       syncDetailCardMaxHeightNow,
     ],
@@ -1677,7 +1675,7 @@ export function ShowcaseVideoEditingDetail({
     // Tab copy enters after the height tween; fitting to the outgoing body
     // snaps the drawer back (OVERVIEW → TOOLS → OVERVIEW).
     if (detailTabMaskLockRef.current) return;
-    const liveH = Math.max(live.offsetHeight, live.scrollHeight);
+    const liveH = measureCopyBlockHeight(live);
     if (liveH <= 0) return;
     const next = measureDetailCardHeightForProbe(surface, live);
     if (next <= 0) return;
@@ -1686,17 +1684,7 @@ export function ShowcaseVideoEditingDetail({
     const fromHeightRaw = surface.offsetHeight;
     const fromHeight =
       maxHeight != null ? Math.min(fromHeightRaw, maxHeight) : fromHeightRaw;
-    if (Math.abs(fromHeight - toHeight) <= 2.5) return;
-    // Pad/chrome slop after the main resize — pin instantly, no second tween.
-    if (Math.abs(fromHeight - toHeight) <= DETAIL_CARD_PAD_SNAP_PX) {
-      surface.style.height = `${toHeight}px`;
-      if (maxHeight != null) surface.style.maxHeight = `${maxHeight}px`;
-      detailCardTransitionHeightRef.current = toHeight;
-      if (maxHeight != null) {
-        setDetailCardHeightPx((prev) => (prev === toHeight ? prev : toHeight));
-      }
-      return;
-    }
+    if (Math.abs(fromHeight - toHeight) <= DETAIL_CARD_HEIGHT_EPSILON_PX) return;
     // Work-switch probes can over-read to the cap; refuse a tiny cap-shrink
     // (that pop). Real short destinations must still hug so bottom pad matches.
     if (!allowShrink && toHeight < fromHeight) return;
@@ -1744,13 +1732,8 @@ export function ShowcaseVideoEditingDetail({
       const settled =
         cap != null ? Math.min(toHeight, cap) : toHeight;
       surface.style.height = `${settled}px`;
-      if (maxHeight != null) {
-        detailCardTransitionHeightRef.current = settled;
-        setDetailCardHeightPx((prev) => (prev === settled ? prev : settled));
-        endDetailCardHeightTransition(settled);
-      } else {
-        endDetailCardHeightTransition(null);
-      }
+      detailCardTransitionHeightRef.current = settled;
+      endDetailCardHeightTransition(settled);
     };
     detailCardResizeRafRef.current = window.requestAnimationFrame(tick);
   }, [beginDetailCardHeightTransition, endDetailCardHeightTransition]);
@@ -1906,6 +1889,8 @@ export function ShowcaseVideoEditingDetail({
         });
       }
 
+      beginDetailCardHeightTransition();
+
       // Hold mask off through the height tween. Snap strength to 0 while hidden
       // so the later arm can ease 0→1 (mask-image class swaps always pop).
       detailTabMaskLockRef.current = true;
@@ -1940,10 +1925,7 @@ export function ShowcaseVideoEditingDetail({
               setDetailBodyVisible(true);
               releaseNaturalDrawerResizeLock();
               finishWorkSwitch(epoch);
-              // Player-cap: one drawer tween only. Live-fit was a second motion.
-              if (!isPlayerCappedDrawerViewport) {
-                scheduleFitDetailCardToLiveBody();
-              }
+              scheduleFitDetailCardToLiveBody();
             };
             // Rapid / reduced-motion: no lead. Otherwise let dissolve start first.
             const leadMs = rapid ? 0 : DETAIL_CUTOFF_LEAD_MS;
@@ -1961,7 +1943,7 @@ export function ShowcaseVideoEditingDetail({
         const targetOverviewProbe = detailVideoOverviewMeasureRefs.current[nextIndex];
         if (targetOverviewProbe) {
           animateDetailCardToMeasuredBody(targetOverviewProbe, 0, {
-            snap: rapid,
+            snap: Boolean(reduceMotion),
             switchEpoch: epoch,
             onSettled: revealAfterHeightSettle,
           });
@@ -1989,6 +1971,7 @@ export function ShowcaseVideoEditingDetail({
     [
       animateDetailCardToMeasuredBody,
       animateDetailTitleToMeasuredHeight,
+      beginDetailCardHeightTransition,
       finishWorkSwitch,
       isPlayerCappedDrawerViewport,
       reduceMotion,
@@ -3330,6 +3313,7 @@ export function ShowcaseVideoEditingDetail({
           if (isNaturalDrawerViewport) {
             releaseNaturalDrawerResizeLock();
           }
+          scheduleFitDetailCardToLiveBody();
         };
 
         if (cardSurface && targetProbe && targetProbe.offsetHeight > 0) {
@@ -3373,6 +3357,7 @@ export function ShowcaseVideoEditingDetail({
       activeDetailCardTab,
       animateDetailCardToMeasuredBody,
       armNaturalDrawerResizeLock,
+      scheduleFitDetailCardToLiveBody,
       isCompactDrawerViewport,
       isNaturalDrawerViewport,
       isPlayerCappedDrawerViewport,
@@ -3659,16 +3644,15 @@ export function ShowcaseVideoEditingDetail({
       if (!cardSurface || !activeNatural || activeNatural.offsetHeight <= 0) {
         return;
       }
-      const chrome =
-        detailCardChromeHeightRef.current ??
-        measureDetailCardChromeHeight(cardSurface);
-      detailCardChromeHeightRef.current = chrome;
+      const live = liveDetailCardBodyEl(activeNatural);
       const nextHeight = Math.min(
-        Math.ceil(chrome + Math.max(activeNatural.offsetHeight, activeNatural.scrollHeight)),
+        measureDetailCardHeightForProbe(cardSurface, live ?? activeNatural),
         maxHeight,
       );
+      detailCardChromeHeightRef.current = measureDetailCardChromeHeight(cardSurface);
       detailCardIdleFitKeyRef.current = fitKey;
       setDetailCardHeightPx(nextHeight);
+      scheduleFitDetailCardToLiveBodyRef.current();
       return;
     }
 
@@ -3690,9 +3674,12 @@ export function ShowcaseVideoEditingDetail({
       return;
     }
 
-    // Tab/work height is one tween. Do not remasure here — that was the
-    // second drawer motion after the main resize.
-    detailCardIdleFitKeyRef.current = fitKey;
+    // Hug copy on first paint of this tab/work. Do not remasure from cap
+    // ticks — that retriggered a probe-vs-live tween loop.
+    if (detailCardIdleFitKeyRef.current !== fitKey) {
+      detailCardIdleFitKeyRef.current = fitKey;
+      scheduleFitDetailCardToLiveBodyRef.current();
+    }
   }, [
     isPlayerCappedDrawerViewport,
     detailCardMaxHeightPx,
@@ -4060,30 +4047,24 @@ export function ShowcaseVideoEditingDetail({
                       ? " video-editing-detail-meta-card--capped"
                       : ""
                   }`}
-                  style={
-                    detailCardMaxHeightPx != null
-                      ? {
-                          maxHeight: `${detailCardMaxHeightPx}px`,
-                          // Always keep a height painted. During WAAPI, pin the from-height
-                          // in React so omitting `height` cannot flash to auto (RAWBLEM).
-                          ...(() => {
-                            const heightPx = detailCardHeightTransitioning
-                              ? (detailCardTransitionHeightRef.current ??
-                                detailCardHeightPx)
-                              : detailCardHeightPx;
-                            return heightPx != null
-                              ? {
-                                  height: `${
-                                    detailCardMaxHeightPx != null
-                                      ? Math.min(heightPx, detailCardMaxHeightPx)
-                                      : heightPx
-                                  }px`,
-                                }
-                              : {};
-                          })(),
-                        }
-                      : undefined
-                  }
+                  style={(() => {
+                    const heightPx = detailCardHeightTransitioning
+                      ? (detailCardTransitionHeightRef.current ??
+                        detailCardHeightPx)
+                      : detailCardHeightPx;
+                    const next: CSSProperties = {};
+                    if (detailCardMaxHeightPx != null) {
+                      next.maxHeight = `${detailCardMaxHeightPx}px`;
+                    }
+                    if (heightPx != null) {
+                      next.height = `${
+                        detailCardMaxHeightPx != null
+                          ? Math.min(heightPx, detailCardMaxHeightPx)
+                          : heightPx
+                      }px`;
+                    }
+                    return Object.keys(next).length ? next : undefined;
+                  })()}
                 >
                   <div
                     className={`video-editing-detail-overview w-full min-w-0${
@@ -4168,7 +4149,7 @@ export function ShowcaseVideoEditingDetail({
                           </div>
                           {isCompactDrawerViewport ? (
                             <div
-                              className="pointer-events-none invisible absolute left-0 top-0 -z-10 h-0 w-full overflow-hidden"
+                              className="video-editing-detail-card-tab-surface video-editing-detail-card-tab-measure pointer-events-none invisible absolute left-0 top-0 -z-10 h-0 w-full overflow-hidden"
                               aria-hidden
                             >
                               {DETAIL_CARD_TAB_IDS.map((tabId) => (
@@ -4177,7 +4158,7 @@ export function ShowcaseVideoEditingDetail({
                                   ref={(el) => {
                                     detailTabHiddenMeasureRefs.current[tabId] = el;
                                   }}
-                                  className="absolute left-0 top-0 w-full min-w-0"
+                                  className="relative w-full min-w-0"
                                 >
                                   {renderPortraitDetailTabBody(tabId)}
                                 </div>
@@ -4188,7 +4169,7 @@ export function ShowcaseVideoEditingDetail({
                                   ref={(el) => {
                                     detailVideoOverviewMeasureRefs.current[index] = el;
                                   }}
-                                  className="absolute left-0 top-0 w-full min-w-0"
+                                  className="relative w-full min-w-0"
                                 >
                                   <p className="m-0 whitespace-pre-line font-body text-sm leading-snug text-mono-2 sm:text-base">
                                     {renderDetailInlineEm(
