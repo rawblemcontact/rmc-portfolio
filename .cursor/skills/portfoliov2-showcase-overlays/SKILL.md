@@ -44,6 +44,10 @@ Prefer **small, focused components** in `src/components/` when extracting from `
 - Use **one horizontal padding wrapper** around both the **dot row** and the **Embla viewport** (`px-2 sm:px-4 lg:px-2 xl:px-3` — match FEATURED WRITING insets). Do not duplicate different horizontal padding on dots vs. carousel.
 - Dots are **`justify-end`**. If the cluster still sits slightly past the **card border**, nudge the dot group **left** with a small **`-translate-x-*`** on the dot flex (responsive values as needed). Align optically to the **bordered** cards, not an arbitrary screen edge.
 
+## SHOWCASE YouTube (native embed)
+
+Adding another YouTube clip is a **data change**: set that item’s `detailVideos[].url` to the YouTube URL in `Home.tsx`. `ShowcaseVideoEditingDetail` already maps YouTube URLs to a native `youtube-nocookie.com/embed/{id}` iframe that fills the existing player card (YouTube’s own UI). Do **not** wrap YouTube in Plyr, add a new player library, or restyle the iframe. Keep `thumbnailSrc` for the works-strip thumb. Plyr is only for local file videos.
+
 ## FEATURED WRITING
 
 - Tabs map to PDFs and copy via the data structures next to **`ShowcaseWritingFeaturedPanel`** in `Home.tsx`.

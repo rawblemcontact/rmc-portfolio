@@ -29,13 +29,6 @@ const IMAGE_EXT_RE = /\.(png|jpe?g|webp|gif|svg)(?:[?#].*)?$/i;
 const PLRY_OPTIONS: PlyrOptions = {
   ratio: "16:9",
   fullscreen: { enabled: true },
-  youtube: {
-    noCookie: true,
-    rel: 0,
-    showinfo: 0,
-    iv_load_policy: 3,
-    modestbranding: 1,
-  },
 };
 
 function youtubeVideoId(url: string): string | null {
@@ -97,10 +90,10 @@ function VideoEditingPlyrPlayer({
 
   useEffect(() => {
     const host = hostRef.current;
-    if (!host || !source) return;
+    if (!host || !source || source.kind === "youtube") return;
 
     let cancelled = false;
-    let element: HTMLVideoElement | HTMLDivElement | null = null;
+    let element: HTMLVideoElement | null = null;
     let raf1 = 0;
     let raf2 = 0;
 
@@ -122,27 +115,19 @@ function VideoEditingPlyrPlayer({
     // otherwise construct and tear down players in the same tick and lock the tab.
     raf1 = window.requestAnimationFrame(() => {
       raf2 = window.requestAnimationFrame(() => {
-        if (cancelled || !hostRef.current) return;
+        if (cancelled || !hostRef.current || source.kind !== "file") return;
         host.replaceChildren();
 
-        if (source.kind === "youtube") {
-          const youtubeHost = document.createElement("div");
-          youtubeHost.setAttribute("data-plyr-provider", "youtube");
-          youtubeHost.setAttribute("data-plyr-embed-id", source.id);
-          youtubeHost.setAttribute("aria-label", video.label);
-          element = youtubeHost;
-        } else {
-          const videoEl = document.createElement("video");
-          videoEl.controls = true;
-          videoEl.playsInline = true;
-          videoEl.preload = "metadata";
-          videoEl.setAttribute("aria-label", video.label);
-          const sourceEl = document.createElement("source");
-          sourceEl.src = source.url;
-          sourceEl.type = source.mime;
-          videoEl.appendChild(sourceEl);
-          element = videoEl;
-        }
+        const videoEl = document.createElement("video");
+        videoEl.controls = true;
+        videoEl.playsInline = true;
+        videoEl.preload = "metadata";
+        videoEl.setAttribute("aria-label", video.label);
+        const sourceEl = document.createElement("source");
+        sourceEl.src = source.url;
+        sourceEl.type = source.mime;
+        videoEl.appendChild(sourceEl);
+        element = videoEl;
         host.appendChild(element);
 
         if (playerRef.current) {
@@ -165,9 +150,22 @@ function VideoEditingPlyrPlayer({
       window.cancelAnimationFrame(raf2);
       teardown(playerRef.current, element);
     };
-  }, [source, video.id]);
+  }, [source, video.id, video.label]);
 
   if (!source) return null;
+  if (source.kind === "youtube") {
+    return (
+      <div className={`relative h-full w-full min-w-0 ${className}`.trim()}>
+        <iframe
+          src={`https://www.youtube-nocookie.com/embed/${source.id}?rel=0`}
+          title={video.selectorTitle?.trim() || video.label}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+          className="absolute inset-0 h-full w-full border-0"
+        />
+      </div>
+    );
+  }
   return <div ref={hostRef} className={`w-full min-w-0 ${className}`.trim()} />;
 }
 
@@ -3812,12 +3810,14 @@ export function ShowcaseVideoEditingDetail({
                 ) : (
                   <VideoEditingPlyrPlayer video={activeVideo} />
                 )}
-                <div className="pointer-events-none absolute inset-x-0 top-0 z-10 bg-gradient-to-b from-black/70 via-black/30 to-transparent px-3 pt-2 pb-8 opacity-0 transition-opacity duration-200 ease-out group-hover:opacity-100 group-focus-within:opacity-100 sm:px-3.5 sm:pt-2.5">
-                  <p className="truncate font-body text-[12px] leading-none text-white sm:text-[13px]">
-                    <span className="font-display tracking-[-0.01em]">{activeSelectorTitle}</span>
-                    {activeSelectorSubtitle ? <span className="text-mono-2"> · {activeSelectorSubtitle}</span> : null}
-                  </p>
-                </div>
+                {youtubeVideoId(activeVideo.url) ? null : (
+                  <div className="pointer-events-none absolute inset-x-0 top-0 z-10 bg-gradient-to-b from-black/70 via-black/30 to-transparent px-3 pt-2 pb-8 opacity-0 transition-opacity duration-200 ease-out group-hover:opacity-100 group-focus-within:opacity-100 sm:px-3.5 sm:pt-2.5">
+                    <p className="truncate font-body text-[12px] leading-none text-white sm:text-[13px]">
+                      <span className="font-display tracking-[-0.01em]">{activeSelectorTitle}</span>
+                      {activeSelectorSubtitle ? <span className="text-mono-2"> · {activeSelectorSubtitle}</span> : null}
+                    </p>
+                  </div>
+                )}
               </div>
               <div className="video-editing-detail-works mt-3 w-full min-w-0 overflow-x-visible">
                 <div className={worksStripOuterClass} style={worksArrowIdleStyle}>

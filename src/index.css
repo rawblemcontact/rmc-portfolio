@@ -6747,15 +6747,21 @@
   /* INTERACTIVE MEDIA in shared video-detail layout:
      fill the player frame to avoid pillarbox gutters that make the border feel heavier. */
   .video-editing-player--interactive-media .plyr video,
-  .video-editing-player--interactive-media .plyr iframe,
-  .video-editing-player--interactive-media .plyr__video-wrapper video,
-  .video-editing-player--interactive-media .plyr__video-wrapper iframe {
+  .video-editing-player--interactive-media .plyr__video-wrapper video {
     width: 100%;
     height: 100%;
     object-fit: cover !important;
     object-position: center;
     transform: scale(1.45);
     transform-origin: center;
+  }
+
+  /* Native YouTube embed fills the existing player frame. */
+  .video-editing-player--plyr iframe {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 0;
   }
   .video-editing-player--interactive-media .plyr__poster {
     background-size: cover !important;

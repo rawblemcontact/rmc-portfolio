@@ -6814,7 +6814,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     detailVideos: [
       {
         id: "interactive-media-1",
-        url: "/portfolio-website-thumbnail-v2-poster.jpg",
+        url: "https://youtu.be/_YiB0_TS2U0",
         label: "UNDERTALE FHE",
         thumbnailSrc: "/portfolio-website-thumbnail-v2-poster.jpg",
         selectorTitle: "UNDERTALE: FOREVER HOME EDITION (2025)",

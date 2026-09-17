@@ -32,6 +32,7 @@ disable-model-invocation: true
 
 | Date | Note |
 |------|------|
+| 2026-09-17 | **SHOWCASE native YouTube** — Future YouTube clips: set `detailVideos[].url` to the YouTube URL. Player is a native `youtube-nocookie` iframe in `ShowcaseVideoEditingDetail` (same card, YouTube’s controls). Do not reintroduce Plyr around YouTube. Strip thumbs can keep `thumbnailSrc`. Plyr remains for local files only. |
 | 2026-09-13 | **Palette yellow undo** — Desktop back to `#ffe100` (undid `#ffe400` and `#ffe800`). iOS P3 unchanged. `--palette-yellow-projects` aliases `--palette-yellow`. |
 | 2026-09-13 | **Palette yellow set match 3** — Desktop `#ffe400` (one lift from `#ffe100`). iOS P3 unchanged. `--palette-yellow-projects` aliases `--palette-yellow`. |
 | 2026-09-13 | **Palette yellow set match 2** — Desktop `#ffe100` (one lift from `#ffdc00`, still set-weight). iOS P3 unchanged. `--palette-yellow-projects` aliases `--palette-yellow`. |
