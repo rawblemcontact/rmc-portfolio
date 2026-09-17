@@ -155,9 +155,9 @@ function VideoEditingPlyrPlayer({
   if (!source) return null;
   if (source.kind === "youtube") {
     return (
-      <div className={`relative h-full w-full min-w-0 ${className}`.trim()}>
+      <div className={`video-editing-youtube-embed relative h-full w-full min-w-0 ${className}`.trim()}>
         <iframe
-          src={`https://www.youtube-nocookie.com/embed/${source.id}?rel=0`}
+          src={`https://www.youtube-nocookie.com/embed/${source.id}?rel=0&playsinline=1`}
           title={video.selectorTitle?.trim() || video.label}
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen

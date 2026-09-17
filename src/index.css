@@ -6327,6 +6327,9 @@
     #projects.projects-interactive-media-detail-open .video-editing-player > .aspect-video,
     #projects.projects-video-editing-detail-open .video-editing-player > .aspect-video,
     #projects.projects-slaywire-detail-open .video-editing-player > .aspect-video,
+    #projects.projects-interactive-media-detail-open .video-editing-player > .video-editing-youtube-embed,
+    #projects.projects-video-editing-detail-open .video-editing-player > .video-editing-youtube-embed,
+    #projects.projects-slaywire-detail-open .video-editing-player > .video-editing-youtube-embed,
     #projects.projects-interactive-media-detail-open .video-editing-player .plyr,
     #projects.projects-video-editing-detail-open .video-editing-player .plyr,
     #projects.projects-slaywire-detail-open .video-editing-player .plyr {
@@ -6756,12 +6759,45 @@
     transform-origin: center;
   }
 
-  /* Native YouTube embed fills the existing player frame. */
+  /* Native YouTube embed fills the existing player frame.
+     Stacked phone/tablet: 16:9 from the embed (absolute iframe cannot size the card).
+     Two-column desktop/iPad landscape: parent already has a height; fill it. */
   .video-editing-player--plyr iframe {
     display: block;
     width: 100%;
     height: 100%;
     border: 0;
+    pointer-events: auto;
+  }
+
+  #projects.projects-interactive-media-detail-open
+    .video-editing-player
+    > .video-editing-youtube-embed,
+  #projects.projects-video-editing-detail-open
+    .video-editing-player
+    > .video-editing-youtube-embed,
+  #projects.projects-slaywire-detail-open
+    .video-editing-player
+    > .video-editing-youtube-embed {
+    aspect-ratio: 16 / 9;
+    height: auto !important;
+  }
+
+  @media (min-width: 1024px) and (pointer: fine),
+    (min-width: 1367px),
+    ((min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse)) {
+    #projects.projects-interactive-media-detail-open
+      .video-editing-player
+      > .video-editing-youtube-embed,
+    #projects.projects-video-editing-detail-open
+      .video-editing-player
+      > .video-editing-youtube-embed,
+    #projects.projects-slaywire-detail-open
+      .video-editing-player
+      > .video-editing-youtube-embed {
+      aspect-ratio: auto !important;
+      height: 100% !important;
+    }
   }
   .video-editing-player--interactive-media .plyr__poster {
     background-size: cover !important;
