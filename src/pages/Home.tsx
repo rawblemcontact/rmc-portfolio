@@ -626,13 +626,6 @@ const PANEL_TRANSITION = {
   ease: [0.65, 0, 0.35, 1] as const, // slightly smoother cubic-bezier
 };
 const CONTENT_SETTLE_DELAY = 0.06; // 60ms after panel settles
-/** Non-desktop enter wipe: keep the accent edge mounted briefly past panel settle so it can leave left. */
-const PANEL_WIPE_EDGE_LEAVE_EXTRA_S = 0.5;
-/** Non-desktop enter wipe: translate past the left edge after the panel seats. */
-const PANEL_WIPE_EDGE_LEAVE_PX = -600;
-const PANEL_WIPE_EDGE_LEAVE_DURATION_S = 0.18;
-/** Flatter than PANEL_TRANSITION — less deceleration as the edge leaves the page. */
-const PANEL_WIPE_EDGE_LEAVE_EASE = [0.65, 0, 0.45, 1] as const;
 
 /** Drift duration (seconds) — must match `.grid-drift-bg` in `index.css`. */
 const GRID_DRIFT_DURATION = 6.5;
@@ -14879,17 +14872,7 @@ export default function Home() {
         window.setTimeout(() => {
           setIsTransitioning(false);
           setTransitionTarget(null);
-          const clearWipeEdge = () => setShowPanelWipeEdge(false);
-          if (willShowWipeEdge && !matchesDesktopHeroPerfViewport()) {
-            transitionTimeoutsRef.current.push(
-              window.setTimeout(
-                clearWipeEdge,
-                Math.round(PANEL_WIPE_EDGE_LEAVE_EXTRA_S * 1000),
-              ),
-            );
-          } else {
-            clearWipeEdge();
-          }
+          setShowPanelWipeEdge(false);
           startTransition(() => {
             if (id !== "projects") setPanelSettled(true);
           });
@@ -15423,28 +15406,12 @@ export default function Home() {
               ref={sectionPanelRef}
               className={`fixed inset-0 flex min-h-0 flex-col no-scrollbar ${
                 currentSection === "projects"
-                  ? `${
-                      showPanelWipeEdge && !matchesDesktopHeroPerfViewport()
-                        ? "overflow-x-visible"
-                        : projectsPanelOverflowX
-                    } overflow-y-auto overscroll-y-contain [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0`
+                  ? `${projectsPanelOverflowX} overflow-y-auto overscroll-y-contain [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0`
                   : currentSection === "projects-supporting"
-                    ? `${
-                        showPanelWipeEdge && !matchesDesktopHeroPerfViewport()
-                          ? "overflow-x-visible"
-                          : "overflow-x-hidden"
-                      } overflow-y-hidden`
+                    ? "overflow-x-hidden overflow-y-hidden"
                     : currentSection === "experience"
-                      ? `${
-                          showPanelWipeEdge && !matchesDesktopHeroPerfViewport()
-                            ? "overflow-x-visible"
-                            : "overflow-x-hidden"
-                        } overflow-y-auto overscroll-y-contain no-scrollbar [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0`
-                      : `${
-                          showPanelWipeEdge && !matchesDesktopHeroPerfViewport()
-                            ? "overflow-x-visible"
-                            : "overflow-x-hidden"
-                        } overflow-y-auto overscroll-y-contain [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0`
+                      ? "overflow-x-hidden overflow-y-auto overscroll-y-contain no-scrollbar [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0"
+                      : "overflow-x-hidden overflow-y-auto overscroll-y-contain [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0"
               }`}
               style={{
                 backgroundColor: "#000",
@@ -15486,35 +15453,14 @@ export default function Home() {
                   (worse with showcase compositor drift) especially on PROJECT DETAILS. */}
               {currentSection !== "projects" ? <SectionGridOverlay /> : null}
               {!reduceMotion && showPanelWipeEdge && transitionTarget !== "menu" && transitionTarget === currentSection && (
-                matchesDesktopHeroPerfViewport() ? (
-                  <div
-                    className="absolute left-0 top-0 bottom-0 z-20 w-[2px] pointer-events-none"
-                    style={{
-                      backgroundColor: sectionPanelEdgeAccent(currentSection),
-                      boxShadow: accentGlowShadow(sectionPanelEdgeAccent(currentSection), true),
-                    }}
-                    aria-hidden
-                  />
-                ) : (
-                  /* Non-desktop: stay on the leading edge through the wipe, then continue
-                     past the left so the line leaves the page (panel overflow is visible
-                     only while this edge is mounted). */
-                  <motion.div
-                    className="absolute left-0 top-0 bottom-0 z-20 w-[2px] pointer-events-none"
-                    style={{
-                      backgroundColor: sectionPanelEdgeAccent(currentSection),
-                      boxShadow: accentGlowShadow(sectionPanelEdgeAccent(currentSection), true),
-                    }}
-                    aria-hidden
-                    initial={{ x: 0 }}
-                    animate={{ x: PANEL_WIPE_EDGE_LEAVE_PX }}
-                    transition={{
-                      duration: PANEL_WIPE_EDGE_LEAVE_DURATION_S,
-                      delay: PANEL_TRANSITION.duration,
-                      ease: PANEL_WIPE_EDGE_LEAVE_EASE,
-                    }}
-                  />
-                )
+                <div
+                  className="absolute left-0 top-0 bottom-0 z-20 w-[2px] pointer-events-none"
+                  style={{
+                    backgroundColor: sectionPanelEdgeAccent(currentSection),
+                    boxShadow: accentGlowShadow(sectionPanelEdgeAccent(currentSection), true),
+                  }}
+                  aria-hidden
+                />
               )}
               {!reduceMotion && transitionTarget === "menu" && (
                 <motion.div
