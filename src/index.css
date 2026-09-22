@@ -717,11 +717,34 @@
   }
 
   /*
-   * Desktop hero (and adjacent menu slide): shift a 48px-oversized layer instead
-   * of animating background-position. Overflow on #hero / #menu clips the extra;
-   * the visible 48px cell pattern and 12s period are unchanged.
+   * Desktop fine-pointer: near-black grid paint + 6.5s drift (mobile/tablet keep
+   * inline #121212 / 1px white / 12s). Hero/menu still use compositor translate
+   * with a 48px-oversized layer; overflow on #hero / #menu clips the extra.
    */
   @media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
+    .portfolio-grid-overlay.grid-drift-bg:not(.mobile-landscape-gate-grid) {
+      background-color: #020202 !important;
+      background-image:
+        repeating-linear-gradient(
+          90deg,
+          #080808 0,
+          #080808 2px,
+          transparent 2px,
+          transparent 48px
+        ),
+        repeating-linear-gradient(
+          0deg,
+          #080808 0,
+          #080808 2px,
+          transparent 2px,
+          transparent 48px
+        ) !important;
+      background-size: 48px 48px !important;
+      -webkit-background-size: 48px 48px !important;
+      opacity: 1;
+      animation-duration: 6.5s;
+    }
+
     #hero > .grid-drift-bg.portfolio-grid-overlay,
     #menu > .grid-drift-bg.portfolio-grid-overlay {
       inset: -48px;

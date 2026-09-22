@@ -627,16 +627,29 @@ const PANEL_TRANSITION = {
 };
 const CONTENT_SETTLE_DELAY = 0.06; // 60ms after panel settles
 
-/** Drift duration (seconds) — must match `gridDriftSmooth` in `index.css`. */
+/** Drift duration (seconds) — must match `.grid-drift-bg` in `index.css`. */
 const GRID_DRIFT_DURATION = 12;
+/** Desktop fine-pointer override — must match `animation-duration: 6.5s` in `index.css`. */
+const GRID_DRIFT_DURATION_DESKTOP = 6.5;
 const GRID_CELL_SIZE = 48;
+
+const GRID_DRIFT_DESKTOP_MQ = "(min-width: 1024px) and (hover: hover) and (pointer: fine)";
+
+function gridDriftDurationSec(): number {
+  if (typeof window !== "undefined" && window.matchMedia(GRID_DRIFT_DESKTOP_MQ).matches) {
+    return GRID_DRIFT_DURATION_DESKTOP;
+  }
+  return GRID_DRIFT_DURATION;
+}
 
 /**
  * Negative animation-delay so newly mounted overlays join the same wall-clock
  * phase without a perpetual root `setProperty` rAF (that starved hero letter CSS).
+ * Period must match the active CSS animation-duration or remounts / whoosh clones jump.
  */
 function gridDriftPhaseDelaySec(): number {
-  return -((performance.now() % (GRID_DRIFT_DURATION * 1000)) / 1000);
+  const duration = gridDriftDurationSec();
+  return -((performance.now() % (duration * 1000)) / 1000);
 }
 
 /** WebKit/iOS: thin 1px dual-gradient grids can composite away at ~4% opacity; repeating + webkit size is more reliable. */

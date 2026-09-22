@@ -1,7 +1,17 @@
 import { useState } from "react";
 
 const GRID_DRIFT_DURATION = 12;
+/** Desktop fine-pointer override — must match `animation-duration: 6.5s` in `index.css`. */
+const GRID_DRIFT_DURATION_DESKTOP = 6.5;
+const GRID_DRIFT_DESKTOP_MQ = "(min-width: 1024px) and (hover: hover) and (pointer: fine)";
 const GRID_CELL_SIZE = 48;
+
+function gridDriftDurationSec(): number {
+  if (typeof window !== "undefined" && window.matchMedia(GRID_DRIFT_DESKTOP_MQ).matches) {
+    return GRID_DRIFT_DURATION_DESKTOP;
+  }
+  return GRID_DRIFT_DURATION;
+}
 
 const gridOverlayStyle: React.CSSProperties = {
   backgroundColor: "#121212",
@@ -18,7 +28,7 @@ export function PdfViewerGridBackdrop({
   className?: string;
   scrollOffsetY?: number;
 }) {
-  const [delay] = useState(() => `-${(performance.now() / 1000) % GRID_DRIFT_DURATION}s`);
+  const [delay] = useState(() => `-${(performance.now() / 1000) % gridDriftDurationSec()}s`);
   const wrappedOffsetY = -(((scrollOffsetY % GRID_CELL_SIZE) + GRID_CELL_SIZE) % GRID_CELL_SIZE);
   return (
     <div
