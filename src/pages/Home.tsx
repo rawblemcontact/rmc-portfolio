@@ -626,21 +626,17 @@ const PANEL_TRANSITION = {
   ease: [0.65, 0, 0.35, 1] as const, // slightly smoother cubic-bezier
 };
 const CONTENT_SETTLE_DELAY = 0.06; // 60ms after panel settles
+/** Non-desktop enter wipe: keep the accent edge mounted briefly past panel settle so it can leave left. */
+const PANEL_WIPE_EDGE_LEAVE_EXTRA_S = 0.5;
+/** Non-desktop enter wipe: translate past the left edge after the panel seats. */
+const PANEL_WIPE_EDGE_LEAVE_PX = -600;
+const PANEL_WIPE_EDGE_LEAVE_DURATION_S = 0.18;
+/** Flatter than PANEL_TRANSITION — less deceleration as the edge leaves the page. */
+const PANEL_WIPE_EDGE_LEAVE_EASE = [0.65, 0, 0.45, 1] as const;
 
 /** Drift duration (seconds) — must match `.grid-drift-bg` in `index.css`. */
-const GRID_DRIFT_DURATION = 12;
-/** Desktop fine-pointer override — must match `animation-duration: 6.5s` in `index.css`. */
-const GRID_DRIFT_DURATION_DESKTOP = 6.5;
+const GRID_DRIFT_DURATION = 6.5;
 const GRID_CELL_SIZE = 48;
-
-const GRID_DRIFT_DESKTOP_MQ = "(min-width: 1024px) and (hover: hover) and (pointer: fine)";
-
-function gridDriftDurationSec(): number {
-  if (typeof window !== "undefined" && window.matchMedia(GRID_DRIFT_DESKTOP_MQ).matches) {
-    return GRID_DRIFT_DURATION_DESKTOP;
-  }
-  return GRID_DRIFT_DURATION;
-}
 
 /**
  * Negative animation-delay so newly mounted overlays join the same wall-clock
@@ -648,14 +644,13 @@ function gridDriftDurationSec(): number {
  * Period must match the active CSS animation-duration or remounts / whoosh clones jump.
  */
 function gridDriftPhaseDelaySec(): number {
-  const duration = gridDriftDurationSec();
-  return -((performance.now() % (duration * 1000)) / 1000);
+  return -((performance.now() % (GRID_DRIFT_DURATION * 1000)) / 1000);
 }
 
-/** WebKit/iOS: thin 1px dual-gradient grids can composite away at ~4% opacity; repeating + webkit size is more reliable. */
+/** Near-black 2px grid — paint also enforced in `index.css` for all breakpoints. */
 const GRID_OVERLAY_STYLE_BASE: React.CSSProperties = {
-  backgroundColor: "#121212",
-  backgroundImage: `repeating-linear-gradient(90deg, rgba(255,255,255,0.38) 0, rgba(255,255,255,0.38) 1px, rgba(255,255,255,0) 1px, rgba(255,255,255,0) ${GRID_CELL_SIZE}px), repeating-linear-gradient(0deg, rgba(255,255,255,0.38) 0, rgba(255,255,255,0.38) 1px, rgba(255,255,255,0) 1px, rgba(255,255,255,0) ${GRID_CELL_SIZE}px)`,
+  backgroundColor: "#020202",
+  backgroundImage: `repeating-linear-gradient(90deg, #080808 0, #080808 2px, transparent 2px, transparent ${GRID_CELL_SIZE}px), repeating-linear-gradient(0deg, #080808 0, #080808 2px, transparent 2px, transparent ${GRID_CELL_SIZE}px)`,
   backgroundSize: `${GRID_CELL_SIZE}px ${GRID_CELL_SIZE}px`,
   WebkitBackgroundSize: `${GRID_CELL_SIZE}px ${GRID_CELL_SIZE}px`,
 };
@@ -11205,6 +11200,8 @@ const ConfidantExperience = ({
   /** Mobile tab carousel edge fades (CSS vars ease in/out; left while scrolling past start or a tab straddles at rest; right until Barista is fully in view). */
   const [experienceTabsFadeLeft, setExperienceTabsFadeLeft] = useState(false);
   const [experienceTabsFadeRight, setExperienceTabsFadeRight] = useState(true);
+  /** True during select-driven Social Media scroll — freeze edge fades (no ease); manual slide still animates. */
+  const experienceTabsSelectScrollingRef = useRef(false);
   const rm = !!reduceMotion;
 
   useEffect(() => {
@@ -11248,6 +11245,10 @@ const ConfidantExperience = ({
     };
 
     const updateTabsEdgeFade = () => {
+      // Select Social Media drives a smooth scroll — keep fade vars frozen so the mask
+      // does not ease in/out; manual slide updates continue to animate via CSS.
+      if (experienceTabsSelectScrollingRef.current) return;
+
       const scrollLeft = nav.scrollLeft;
       const navRect = nav.getBoundingClientRect();
       const lastBtn = nav.querySelector<HTMLElement>('[data-tab="starbucks"]');
@@ -11269,20 +11270,25 @@ const ConfidantExperience = ({
       setExperienceTabsFadeRight((prev) => (prev === fadeRight ? prev : fadeRight));
     };
 
+    const settleAfterScroll = () => {
+      scrolling = false;
+      if (experienceTabsSelectScrollingRef.current) {
+        experienceTabsSelectScrollingRef.current = false;
+        nav.removeAttribute("data-experience-tabs-select-scroll");
+      }
+      updateTabsEdgeFade();
+    };
+
     const onScroll = () => {
       scrolling = true;
       updateTabsEdgeFade();
       window.clearTimeout(scrollEndTimer);
-      scrollEndTimer = window.setTimeout(() => {
-        scrolling = false;
-        updateTabsEdgeFade();
-      }, 140);
+      scrollEndTimer = window.setTimeout(settleAfterScroll, 140);
     };
 
     const onScrollEnd = () => {
       window.clearTimeout(scrollEndTimer);
-      scrolling = false;
-      updateTabsEdgeFade();
+      settleAfterScroll();
     };
 
     updateTabsEdgeFade();
@@ -11315,6 +11321,9 @@ const ConfidantExperience = ({
     const maxScroll = Math.max(0, nav.scrollWidth - nav.clientWidth);
     const target = Math.max(0, Math.min(nav.scrollLeft + delta, maxScroll));
     if (Math.abs(target - nav.scrollLeft) < 1) return;
+    // Only Social Media (uvic-esports) reaches here — freeze edge-fade animation for select scroll.
+    experienceTabsSelectScrollingRef.current = true;
+    nav.setAttribute("data-experience-tabs-select-scroll", "");
     nav.scrollTo({ left: target, behavior: rm ? "auto" : "smooth" });
   }, [activeExperienceTabId, isMobileExperienceLayout, rm]);
 
@@ -14870,7 +14879,17 @@ export default function Home() {
         window.setTimeout(() => {
           setIsTransitioning(false);
           setTransitionTarget(null);
-          setShowPanelWipeEdge(false);
+          const clearWipeEdge = () => setShowPanelWipeEdge(false);
+          if (willShowWipeEdge && !matchesDesktopHeroPerfViewport()) {
+            transitionTimeoutsRef.current.push(
+              window.setTimeout(
+                clearWipeEdge,
+                Math.round(PANEL_WIPE_EDGE_LEAVE_EXTRA_S * 1000),
+              ),
+            );
+          } else {
+            clearWipeEdge();
+          }
           startTransition(() => {
             if (id !== "projects") setPanelSettled(true);
           });
@@ -15404,12 +15423,28 @@ export default function Home() {
               ref={sectionPanelRef}
               className={`fixed inset-0 flex min-h-0 flex-col no-scrollbar ${
                 currentSection === "projects"
-                  ? `${projectsPanelOverflowX} overflow-y-auto overscroll-y-contain [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0`
+                  ? `${
+                      showPanelWipeEdge && !matchesDesktopHeroPerfViewport()
+                        ? "overflow-x-visible"
+                        : projectsPanelOverflowX
+                    } overflow-y-auto overscroll-y-contain [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0`
                   : currentSection === "projects-supporting"
-                    ? "overflow-x-hidden overflow-y-hidden"
+                    ? `${
+                        showPanelWipeEdge && !matchesDesktopHeroPerfViewport()
+                          ? "overflow-x-visible"
+                          : "overflow-x-hidden"
+                      } overflow-y-hidden`
                     : currentSection === "experience"
-                      ? "overflow-x-hidden overflow-y-auto overscroll-y-contain no-scrollbar [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0"
-                      : "overflow-x-hidden overflow-y-auto overscroll-y-contain [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0"
+                      ? `${
+                          showPanelWipeEdge && !matchesDesktopHeroPerfViewport()
+                            ? "overflow-x-visible"
+                            : "overflow-x-hidden"
+                        } overflow-y-auto overscroll-y-contain no-scrollbar [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0`
+                      : `${
+                          showPanelWipeEdge && !matchesDesktopHeroPerfViewport()
+                            ? "overflow-x-visible"
+                            : "overflow-x-hidden"
+                        } overflow-y-auto overscroll-y-contain [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0`
               }`}
               style={{
                 backgroundColor: "#000",
@@ -15451,14 +15486,35 @@ export default function Home() {
                   (worse with showcase compositor drift) especially on PROJECT DETAILS. */}
               {currentSection !== "projects" ? <SectionGridOverlay /> : null}
               {!reduceMotion && showPanelWipeEdge && transitionTarget !== "menu" && transitionTarget === currentSection && (
-                <div
-                  className="absolute left-0 top-0 bottom-0 z-20 w-[2px] pointer-events-none"
-                  style={{
-                    backgroundColor: sectionPanelEdgeAccent(currentSection),
-                    boxShadow: accentGlowShadow(sectionPanelEdgeAccent(currentSection), true),
-                  }}
-                  aria-hidden
-                />
+                matchesDesktopHeroPerfViewport() ? (
+                  <div
+                    className="absolute left-0 top-0 bottom-0 z-20 w-[2px] pointer-events-none"
+                    style={{
+                      backgroundColor: sectionPanelEdgeAccent(currentSection),
+                      boxShadow: accentGlowShadow(sectionPanelEdgeAccent(currentSection), true),
+                    }}
+                    aria-hidden
+                  />
+                ) : (
+                  /* Non-desktop: stay on the leading edge through the wipe, then continue
+                     past the left so the line leaves the page (panel overflow is visible
+                     only while this edge is mounted). */
+                  <motion.div
+                    className="absolute left-0 top-0 bottom-0 z-20 w-[2px] pointer-events-none"
+                    style={{
+                      backgroundColor: sectionPanelEdgeAccent(currentSection),
+                      boxShadow: accentGlowShadow(sectionPanelEdgeAccent(currentSection), true),
+                    }}
+                    aria-hidden
+                    initial={{ x: 0 }}
+                    animate={{ x: PANEL_WIPE_EDGE_LEAVE_PX }}
+                    transition={{
+                      duration: PANEL_WIPE_EDGE_LEAVE_DURATION_S,
+                      delay: PANEL_TRANSITION.duration,
+                      ease: PANEL_WIPE_EDGE_LEAVE_EASE,
+                    }}
+                  />
+                )
               )}
               {!reduceMotion && transitionTarget === "menu" && (
                 <motion.div

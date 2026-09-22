@@ -642,7 +642,7 @@
   }
 
   /*
-   * Same 48px / 12s loop as gridDriftSmooth, via transform (compositor) instead
+   * Same 48px / 6.5s loop as gridDriftSmooth, via transform (compositor) instead
    * of background-position (paints the full overlay every frame).
    */
   @keyframes gridDriftSmoothCompositor {
@@ -662,7 +662,7 @@
    * Hero / menu on desktop fine-pointer use the compositor keyframes below.
    */
   .grid-drift-bg {
-    animation: gridDriftSmooth 12s linear infinite;
+    animation: gridDriftSmooth 6.5s linear infinite;
     animation-delay: var(--portfolio-grid-drift-delay, 0s);
     isolation: isolate;
   }
@@ -672,79 +672,47 @@
   }
 
   /**
-   * Hero / section grid overlays: iPadOS WebKit + Brave can drop ultra-faint 1px gradients.
-   * - Slightly higher base opacity + stronger bump on coarse pointers
-   * - Promote compositing layer (translateZ) so the grid actually paints
-   * - Disable will-change on touch (can prevent background paint on some WebKit builds)
+   * Hero / section grid overlays: promote compositing layer (translateZ) so the
+   * grid paints reliably on iPadOS WebKit + Brave.
    */
-  /* Fine pointer (typical PC + mouse): slightly dimmer than touch so desktop reads calmer */
   .portfolio-grid-overlay {
-    opacity: 0.095;
     transform: translateZ(0);
     -webkit-transform: translateZ(0);
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
   }
 
-  @media (pointer: coarse) {
-    .portfolio-grid-overlay {
-      opacity: 0.07;
-    }
-  }
-
   /*
-   * iPad / tablet viewports (744px+ includes iPad mini width): grid a touch brighter than phone coarse.
-   * `any-pointer: coarse` (not `pointer: coarse`) so iPad + trackpad / mouse still counts as touch-capable.
+   * Near-black drifting grid — all breakpoints (paint beats shared inline styles).
+   * Opacity stays 1 so device dimming does not wash out #080808 on #020202.
    */
-  @media (min-width: 744px) and (max-width: 1366px) and (any-pointer: coarse) {
-    .portfolio-grid-overlay {
-      opacity: 0.153;
-    }
+  .portfolio-grid-overlay.grid-drift-bg {
+    background-color: #020202 !important;
+    background-image:
+      repeating-linear-gradient(
+        90deg,
+        #080808 0,
+        #080808 2px,
+        transparent 2px,
+        transparent 48px
+      ),
+      repeating-linear-gradient(
+        0deg,
+        #080808 0,
+        #080808 2px,
+        transparent 2px,
+        transparent 48px
+      ) !important;
+    background-size: 48px 48px !important;
+    -webkit-background-size: 48px 48px !important;
+    opacity: 1;
   }
 
   /*
-   * Phone landscape gate: CSS width is the long edge (often 744+), so it would
-   * inherit the iPad 0.153 bump. Keep #hero / #menu phone-coarse opacity.
-   */
-  .mobile-landscape-gate-grid.portfolio-grid-overlay {
-    opacity: 0.07;
-  }
-
-  @media (hover: hover) and (pointer: fine) {
-    .mobile-landscape-gate-grid.portfolio-grid-overlay {
-      opacity: 0.095;
-    }
-  }
-
-  /*
-   * Desktop fine-pointer: near-black grid paint + 6.5s drift (mobile/tablet keep
-   * inline #121212 / 1px white / 12s). Hero/menu still use compositor translate
-   * with a 48px-oversized layer; overflow on #hero / #menu clips the extra.
+   * Desktop hero (and adjacent menu slide): shift a 48px-oversized layer instead
+   * of animating background-position. Overflow on #hero / #menu clips the extra.
    */
   @media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
-    .portfolio-grid-overlay.grid-drift-bg:not(.mobile-landscape-gate-grid) {
-      background-color: #020202 !important;
-      background-image:
-        repeating-linear-gradient(
-          90deg,
-          #080808 0,
-          #080808 2px,
-          transparent 2px,
-          transparent 48px
-        ),
-        repeating-linear-gradient(
-          0deg,
-          #080808 0,
-          #080808 2px,
-          transparent 2px,
-          transparent 48px
-        ) !important;
-      background-size: 48px 48px !important;
-      -webkit-background-size: 48px 48px !important;
-      opacity: 1;
-      animation-duration: 6.5s;
-    }
-
     #hero > .grid-drift-bg.portfolio-grid-overlay,
     #menu > .grid-drift-bg.portfolio-grid-overlay {
       inset: -48px;
@@ -5013,6 +4981,11 @@
           calc(100% - var(--experience-tabs-fade-width) * 0.28 * var(--experience-tabs-fade-right)),
         rgba(0, 0, 0, calc(1 - var(--experience-tabs-fade-right))) 100%
       );
+    }
+
+    /* Select Social Media: freeze edge-fade ease only — strip slide is unchanged. */
+    #experience .tabs-nav[data-experience-tabs-select-scroll] {
+      transition: none;
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -10045,15 +10018,19 @@
  */
 @media (max-width: 639.98px),
   (min-width: 744px) and (max-width: 1366px) and (max-aspect-ratio: 1/1) {
-  .featured-writing-folder > div:first-child > div.featured-writing-panel {
+  #projects .featured-writing-folder > div:first-child > div.featured-writing-panel,
+  #projects.projects-showcase-tablet-pad .featured-writing-folder > div:first-child > div.featured-writing-panel {
     border-radius: 0 !important;
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
     filter: none !important;
-    background: color-mix(in srgb, var(--portfolio-section-card) 62%, transparent) !important;
+    background: var(--portfolio-glass-fill) !important;
     background-image: none !important;
     border: 0 !important;
     box-shadow: none !important;
+    /* Glass fill removed the dense band — sit chrome lower so header↔PDF matches side insets. */
+    align-items: flex-end !important;
+    padding-bottom: 0.35rem !important;
   }
 
   /* Glyph only — keep the 28px hit target and selector chrome unchanged. */
@@ -10084,9 +10061,24 @@
     border-radius: 11px !important;
   }
 
-  /* Same as tablet portrait: cards → FEATURED WRITING = grid `--slide-gap` (global bump subtract was 0). */
+  /*
+   * Bottom row (INTERACTIVE MEDIA + SLAYWIRE) sits optically low vs the column gap.
+   * Tighten row gap; FEATURED WRITING rides up with the grid by the same amount (margin unchanged).
+   */
+  #projects {
+    --projects-mobile-bottom-row-nudge: 0.34375rem;
+  }
+
+  #projects:not([class*="detail-open"]) .projects-carousel-grid {
+    column-gap: var(--slide-gap);
+    row-gap: calc(var(--slide-gap) - var(--projects-mobile-bottom-row-nudge));
+  }
+
+  /* Match tightened row gap between the four cards, plus a hair more toward the cards. */
   #projects .projects-showcase-featured-block {
-    margin-top: var(--slide-gap) !important;
+    margin-top: calc(
+      var(--slide-gap) - var(--projects-mobile-bottom-row-nudge) - 0.140625rem
+    ) !important;
   }
 
   #projects .featured-writing-body-card .profile-card-surface {
@@ -10105,8 +10097,10 @@
   /*
    * Mobile tab row is shown on portrait, but Tailwind sm:h-16 / sm:pt-4 still apply
    * and blow out the gap below the four carousel cards â€” collapse to mobile height.
+   * Beat `.projects-showcase-tablet-pad` 2.6875rem lock so phone chrome + header nudge apply.
    */
-  #projects .featured-writing-folder > div:first-child {
+  #projects .featured-writing-folder > div:first-child,
+  #projects.projects-showcase-tablet-pad .featured-writing-folder > div:first-child {
     height: auto !important;
     min-height: 0 !important;
     padding-top: 0 !important;
@@ -10117,8 +10111,11 @@
   }
 
   /* Show the mobile prev/next selector (Tailwind 'hidden' on sm+) */
-  #projects .featured-writing-folder > div:first-child > div.featured-writing-panel {
+  #projects .featured-writing-folder > div:first-child > div.featured-writing-panel,
+  #projects.projects-showcase-tablet-pad .featured-writing-folder > div:first-child > div.featured-writing-panel {
     display: flex !important;
+    height: 3.2rem !important;
+    min-height: 3.2rem !important;
   }
 
   /* Hide the desktop folder tab row (Tailwind 'flex' on sm+) */

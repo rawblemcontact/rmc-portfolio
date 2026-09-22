@@ -13,6 +13,11 @@
     overflow: hidden !important;
   }
 
+  /* PDF preview square — match outer folder radius (Tailwind rounded-[10px] is too round). */
+  #projects .featured-writing-raised {
+    border-radius: 4px !important;
+  }
+
   #projects .video-editing-detail-meta-card {
     border-radius: 4px !important;
   }
@@ -42,6 +47,11 @@
   #projects .project-card-surface:not([data-carousel-card]) {
     border-radius: 4px !important;
     overflow: hidden !important;
+  }
+
+  /* PDF preview square — match outer folder radius (Tailwind rounded-[10px] is too round). */
+  #projects .featured-writing-raised {
+    border-radius: 4px !important;
   }
 
   /* Meta card already clips; overflow:hidden + fixed height traps iPad page pans. */

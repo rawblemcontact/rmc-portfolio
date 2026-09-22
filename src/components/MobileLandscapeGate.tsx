@@ -11,11 +11,11 @@ export function isMobileLandscapePhone(): boolean {
   return window.matchMedia(MOBILE_LANDSCAPE_MQ).matches;
 }
 
-const GRID_DRIFT_DURATION = 12;
+const GRID_DRIFT_DURATION = 6.5;
 const GRID_CELL_SIZE = 48;
 const GRID_OVERLAY_STYLE: React.CSSProperties = {
-  backgroundColor: "#121212",
-  backgroundImage: `repeating-linear-gradient(90deg, rgba(255,255,255,0.38) 0, rgba(255,255,255,0.38) 1px, rgba(255,255,255,0) 1px, rgba(255,255,255,0) ${GRID_CELL_SIZE}px), repeating-linear-gradient(0deg, rgba(255,255,255,0.38) 0, rgba(255,255,255,0.38) 1px, rgba(255,255,255,0) 1px, rgba(255,255,255,0) ${GRID_CELL_SIZE}px)`,
+  backgroundColor: "#020202",
+  backgroundImage: `repeating-linear-gradient(90deg, #080808 0, #080808 2px, transparent 2px, transparent ${GRID_CELL_SIZE}px), repeating-linear-gradient(0deg, #080808 0, #080808 2px, transparent 2px, transparent ${GRID_CELL_SIZE}px)`,
   backgroundSize: `${GRID_CELL_SIZE}px ${GRID_CELL_SIZE}px`,
   WebkitBackgroundSize: `${GRID_CELL_SIZE}px ${GRID_CELL_SIZE}px`,
 };
