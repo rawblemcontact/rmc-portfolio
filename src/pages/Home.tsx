@@ -900,6 +900,8 @@ const SECTION_ACCENT_COLOR: Record<string, string> = {
 
 const CMD_HOVER = { duration: 0.25, ease: [0.16, 1, 0.3, 1] as const };
 const CMD_HOVER_MS = CMD_HOVER.duration * 1000;
+/** Mouse / trackpad main-menu click: brief hold (much shorter than full accent fill). */
+const CMD_NAV_MOUSE_CLICK_HOLD_MS = 30;
 
 /** Accent underline wait before section nav; 0 when hover line is already fully extended. */
 function cmdNavLineRemainingMs(
@@ -4922,6 +4924,8 @@ const RainbowMenuSlide = ({
   const pressedNavClearTimerRef = useRef<number | null>(null);
   const lineHoverSinceRef = useRef<Partial<Record<string, number>>>({});
   const navTimerRef = useRef<number | null>(null);
+  /** Last pointerType on the menu row — mouse clicks use a short hold (hover usually already filled the line). */
+  const lastNavPointerTypeRef = useRef<string>("touch");
   const mainMenuDebugEnabled = useMainMenuDebugEnabled();
   const allowDebugPanels = useAllowDebugPanels();
   const [mainMenuGlobalDebugControls, setMainMenuGlobalDebugControls] =
@@ -4983,8 +4987,16 @@ const RainbowMenuSlide = ({
     (id: string) => {
       if (!menuEntranceSettled || pendingNavId !== null) return;
 
+      /*
+       * Mouse / trackpad: slight hold only (hover usually already filled the line).
+       * Touch: wait out the remaining accent-line fill (up to CMD_HOVER_MS).
+       */
+      const fromMousePointer = lastNavPointerTypeRef.current === "mouse";
+
       const lineFullyOut = isCmdNavLineFullyOut(id, hoveredId, lineHoverSinceRef);
-      const remaining = cmdNavLineRemainingMs(id, hoveredId, lineHoverSinceRef);
+      const remaining = fromMousePointer
+        ? CMD_NAV_MOUSE_CLICK_HOLD_MS
+        : cmdNavLineRemainingMs(id, hoveredId, lineHoverSinceRef);
 
       const finishNav = () => {
         navTimerRef.current = null;
@@ -4993,7 +5005,8 @@ const RainbowMenuSlide = ({
         onNavigate(id);
       };
 
-      if (lineFullyOut) {
+      /* Touch only: if the line is already fully out, navigate immediately. */
+      if (!fromMousePointer && lineFullyOut) {
         clearNavTimer();
         setPressedNavId(id);
         onNavigate(id);
@@ -5159,6 +5172,9 @@ const RainbowMenuSlide = ({
               key={item.id}
               type="button"
               tabIndex={menuEntranceSettled ? undefined : -1}
+              onPointerDown={(e) => {
+                lastNavPointerTypeRef.current = e.pointerType || "touch";
+              }}
               onClick={() => handleNavClick(item.id)}
               onHoverStart={() => {
                 if (!menuEntranceSettled) return;
