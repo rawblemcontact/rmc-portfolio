@@ -1865,6 +1865,12 @@
 
   /* PROJECTS entrance — promote cards only; never will-change FEATURED WRITING
    * (dropping will-change mid-sequence causes a 1px compositor nudge). */
+  /* Section wipe accent fade — CSS only (Framer opacity on the edge reflowed mobile/tablet portrait). */
+  @keyframes featured-wipe-edge-fade {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+
   #projects.projects-entrance-live .projects-main-card-entrance-slot {
     will-change: transform, opacity;
     -webkit-backface-visibility: hidden;

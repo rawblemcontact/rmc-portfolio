@@ -6,6 +6,8 @@ import workerUrl from "pdfjs-dist/legacy/build/pdf.worker.min.mjs?url";
 /** Default height is fixed; width can grow (e.g. to match active tab). */
 const DEFAULT_W = 120;
 const FIXED_H = 216;
+/** When false, skip PDF.js raster and show the FileText placeholder on all viewports. */
+const FEATURED_WRITING_PDF_PREVIEW_ENABLED = false;
 
 const dataUrlByKey = new Map<string, string>();
 
@@ -48,9 +50,9 @@ export function FeaturedWritingPdfThumbnail({
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    if (!pdfSrc.trim()) {
+    if (!FEATURED_WRITING_PDF_PREVIEW_ENABLED || !pdfSrc.trim()) {
       setDataUrl(null);
-      setError(false);
+      setError(!FEATURED_WRITING_PDF_PREVIEW_ENABLED && Boolean(pdfSrc.trim()));
       return;
     }
 
@@ -124,8 +126,14 @@ export function FeaturedWritingPdfThumbnail({
   }, [pdfSrc, key, layoutW, layoutH, dpr]);
 
   const isBlank = !pdfSrc.trim();
-  const showImg = Boolean(!isBlank && dataUrl && !error);
-  const showLoadingShell = !isBlank && !error && !showImg;
+  const forcePlaceholder =
+    !FEATURED_WRITING_PDF_PREVIEW_ENABLED && !isBlank;
+  const showImg = Boolean(
+    !forcePlaceholder && !isBlank && dataUrl && !error,
+  );
+  const showLoadingShell =
+    !forcePlaceholder && !isBlank && !error && !showImg;
+  const showPlaceholder = forcePlaceholder || error;
 
   const interactive = typeof onActivate === "function";
 
@@ -183,7 +191,7 @@ export function FeaturedWritingPdfThumbnail({
         />
       ) : null}
 
-      {error ? (
+      {showPlaceholder ? (
         <div className="absolute inset-0 z-[3] flex flex-col items-center justify-center gap-1.5 bg-black/50 px-2 text-center">
           <FileText className="h-7 w-7 text-white/25" strokeWidth={1.25} aria-hidden />
           <span className="font-mono text-[8px] uppercase tracking-[0.14em] text-white/35">

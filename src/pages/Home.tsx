@@ -623,9 +623,33 @@ const staggerContainer: Variants = {
 // Stacked panel: 380?420ms, decisive, no bounce (anime-tech / Persona-adjacent)
 const PANEL_TRANSITION = {
   duration: 0.4,
-  ease: [0.65, 0, 0.35, 1] as const, // slightly smoother cubic-bezier
+  // Keep original ease-in (0.65, 0); softer ease-out so the edge settles gently.
+  ease: [0.65, 0, 0.18, 1] as const,
 };
 const CONTENT_SETTLE_DELAY = 0.06; // 60ms after panel settles
+
+/** Keep the accent edge mounted past settle so hold + fade can finish. */
+const PANEL_WIPE_EDGE_LEAVE_EXTRA_S = 0.4;
+/** Start accent fade this many seconds before the panel fully seats (enter left / exit right). */
+const PANEL_WIPE_EDGE_FADE_LEAD_S = 0.15;
+/** Fade duration once the pre-seat lead begins. */
+const PANEL_WIPE_EDGE_FADE_DURATION_S = 0.25;
+/** Ease-in cubic-bezier — stays solid longer, then softens away. */
+const PANEL_WIPE_EDGE_FADE_EASE = [0.55, 0, 1, 1] as const;
+/** Fade begins just before the wipe eases into the edge. */
+const PANEL_WIPE_EDGE_FADE_START_S = Math.max(
+  0,
+  PANEL_TRANSITION.duration - PANEL_WIPE_EDGE_FADE_LEAD_S,
+);
+/** Brief pause after the accent line finishes fading before follow-on anims (not used on menu exit). */
+const PANEL_WIPE_EDGE_POST_FADE_HOLD_S = 0.1;
+/** Color-line wipe fully done + post-fade hold. Top nav / content anims wait for this on enter. */
+const PANEL_WIPE_EDGE_DONE_S =
+  PANEL_WIPE_EDGE_FADE_START_S +
+  PANEL_WIPE_EDGE_FADE_DURATION_S +
+  PANEL_WIPE_EDGE_POST_FADE_HOLD_S;
+/** Top nav button fade-in after the color-line wipe finishes. */
+const TOP_NAV_POST_WIPE_FADE_S = 0.2;
 
 /** Drift duration (seconds) — must match `.grid-drift-bg` in `index.css`. */
 const GRID_DRIFT_DURATION = 6.5;
@@ -9816,8 +9840,8 @@ const PalaceProjects = ({
       ? featuredStartMs + PROJECTS_FEATURED_ENTRANCE_DUR_S * 1000
       : tabActivateMs + PROJECTS_THUMBNAILS_FADE_AFTER_TAB_MS;
 
-    // Phone + iPad landscape: skip will-change promote/demote — toggling it
-    // after the land shifts the PROJECTS header / stack.
+    // Phone + tablet portrait + iPad landscape: skip will-change promote/demote —
+    // dropping it after the land nudges the PROJECTS stack / FEATURED WRITING.
     const skipProjectsLayerToggle =
       projectsMobileViewport || projectsTabletLandscapeViewport;
     if (!skipProjectsLayerToggle) {
@@ -14215,6 +14239,10 @@ export default function Home() {
   const [transitionTarget, setTransitionTarget] = useState<string | "menu" | null>(null);
   /** Leading wipe edge only for menu→section enter (side-nav swaps stay at x:0 — edge would flash left). */
   const [showPanelWipeEdge, setShowPanelWipeEdge] = useState(false);
+  /** False during menu→section color wipe; true after wipe done so top nav can fade in. */
+  const [topNavAfterWipeReady, setTopNavAfterWipeReady] = useState(true);
+  /** True only for Back→main-menu so top nav fades out (enter wipe still snaps hidden). */
+  const [topNavFadeOutToMenu, setTopNavFadeOutToMenu] = useState(false);
   const [menuPanelAtRight, setMenuPanelAtRight] = useState(false);
   const [panelSettled, setPanelSettled] = useState(false);
   /** Side-nav SKILLS re-click: snap hidden, then fade in only (no animated fade-out). */
@@ -14315,11 +14343,13 @@ export default function Home() {
     archivePdfNavActive ||
     showcasePdfObscuring ||
     (Boolean(showcasePdfOverlay) && !showcasePdfClosing);
-  const topNavChromeOpacity = navButtonsFaded
-    ? 0
-    : topNavForceOpaque
-      ? 1
-      : topNavScrollOpacity;
+  const topNavChromeOpacity = (
+    navButtonsFaded
+      ? 0
+      : topNavForceOpaque
+        ? 1
+        : topNavScrollOpacity
+  ) * (topNavAfterWipeReady ? 1 : 0);
   const resetTopNavScrollFade = useCallback(() => {
     topNavFadeDistanceRef.current = 0;
     topNavScrollOpacityRef.current = 1;
@@ -14820,6 +14850,8 @@ export default function Home() {
 
     if (reduceMotion) {
       setShowPanelWipeEdge(false);
+      setTopNavFadeOutToMenu(false);
+      setTopNavAfterWipeReady(true);
       setProjectsEntranceArmed(id === "projects");
       setCurrentSection(id === "menu" ? null : id);
       if (id === "menu") setMenuLockedFillId(null);
@@ -14849,17 +14881,24 @@ export default function Home() {
               setCurrentSection(null);
               setIsTransitioning(false);
               setTransitionTarget(null);
-            }, panelMs),
+              setTopNavFadeOutToMenu(false);
+            }, panelMs + Math.round(PANEL_WIPE_EDGE_LEAVE_EXTRA_S * 1000)),
           );
         });
       });
     } else {
       // SHOWCASE (projects): settle immediately so carousel + tabs reserve height and fade with the panel — delayed settle caused a second layout/opacity beat after the slide.
+      setTopNavFadeOutToMenu(false);
+      setTopNavAfterWipeReady(!willShowWipeEdge);
       setShowPanelWipeEdge(willShowWipeEdge);
+      // Projects: settle immediately so carousel + tabs reserve height during the wipe
+      // (delayed settle caused a second layout beat). Other sections wait for post-fade hold.
       setPanelSettled(id === "projects");
       setCurrentSection(id);
       setTransitionTarget(id);
       setIsTransitioning(true);
+      // Projects entrance: same mid-wipe lead as last good commit (avoids late mobile/tablet
+      // portrait layout beat). Top nav still waits until wipe fade + post-fade hold.
       if (id === "projects") {
         transitionTimeoutsRef.current.push(
           window.setTimeout(
@@ -14868,14 +14907,30 @@ export default function Home() {
           ),
         );
       }
+      if (willShowWipeEdge) {
+        transitionTimeoutsRef.current.push(
+          window.setTimeout(() => {
+            setTopNavAfterWipeReady(true);
+            startTransition(() => {
+              if (id !== "projects") setPanelSettled(true);
+            });
+          }, Math.round(PANEL_WIPE_EDGE_DONE_S * 1000)),
+        );
+      } else {
+        setTopNavAfterWipeReady(true);
+      }
       transitionTimeoutsRef.current.push(
         window.setTimeout(() => {
           setIsTransitioning(false);
           setTransitionTarget(null);
+          // Match last commit: drop wipe-edge flag at settle (no delayed overflow/class flip).
+          // Accent fade may already be finished; unmounting a faded line is fine.
           setShowPanelWipeEdge(false);
-          startTransition(() => {
-            if (id !== "projects") setPanelSettled(true);
-          });
+          if (!willShowWipeEdge) {
+            startTransition(() => {
+              if (id !== "projects") setPanelSettled(true);
+            });
+          }
         }, PANEL_TRANSITION.duration * 1000 + CONTENT_SETTLE_DELAY * 1000)
       );
     }
@@ -15122,7 +15177,7 @@ export default function Home() {
     >
       {/* Top nav chrome — back (left) + resume/menu (right) share one opacity shell */}
       <div
-        className={`fixed ${TOP_NAV_FIXED_TOP} inset-x-0 z-50${topNavForceOpaque && !navButtonsFaded ? " top-nav-chrome-hold" : ""}`}
+        className={`fixed ${TOP_NAV_FIXED_TOP} inset-x-0 z-50${topNavForceOpaque && !navButtonsFaded && topNavAfterWipeReady && !topNavFadeOutToMenu ? " top-nav-chrome-hold" : ""}`}
         style={{
           opacity: topNavChromeOpacity,
           pointerEvents: topNavChromeOpacity < 0.05 ? "none" : "auto",
@@ -15131,9 +15186,9 @@ export default function Home() {
               ? "none"
               : showcasePdfObscuring || Boolean(showcasePdfOverlay) || showcasePdfClosing
                 ? `opacity ${SHOWCASE_PDF_PROJECTS_FADE_OUT_S}s ease-out`
-                : topNavForceOpaque || topNavChromeOpacity >= 0.995
+                : !topNavAfterWipeReady && !topNavFadeOutToMenu
                   ? "none"
-                  : `opacity ${DUR.micro}s ease-out`,
+                  : `opacity ${TOP_NAV_POST_WIPE_FADE_S}s ease-out`,
         }}
         aria-hidden={topNavChromeOpacity < 0.05}
       >
@@ -15174,6 +15229,8 @@ export default function Home() {
                     navigateTo("projects");
                     return;
                   }
+                  setTopNavFadeOutToMenu(true);
+                  setTopNavAfterWipeReady(false);
                   navigateTo("menu");
                 }}
                 size="icon"
@@ -15452,31 +15509,19 @@ export default function Home() {
                   SectionGridOverlay — stacking both caused double/offset grid lines
                   (worse with showcase compositor drift) especially on PROJECT DETAILS. */}
               {currentSection !== "projects" ? <SectionGridOverlay /> : null}
-              {!reduceMotion && showPanelWipeEdge && transitionTarget !== "menu" && transitionTarget === currentSection && (
+              {!reduceMotion && showPanelWipeEdge && transitionTarget !== "menu" && (
+                /* Static accent like last commit — Framer opacity on this edge was nudging
+                   mobile/tablet portrait layout at wipe end. Exit wipe keeps its fade. */
                 <div
-                  className="absolute left-0 top-0 bottom-0 z-20 w-[2px] pointer-events-none"
+                  className="pointer-events-none absolute bottom-0 left-0 top-0 z-20 w-[2px]"
                   style={{
                     backgroundColor: sectionPanelEdgeAccent(currentSection),
                     boxShadow: accentGlowShadow(sectionPanelEdgeAccent(currentSection), true),
+                    animation: reduceMotion
+                      ? undefined
+                      : `featured-wipe-edge-fade ${PANEL_WIPE_EDGE_FADE_DURATION_S}s cubic-bezier(0.55, 0, 1, 1) ${PANEL_WIPE_EDGE_FADE_START_S}s forwards`,
                   }}
                   aria-hidden
-                />
-              )}
-              {!reduceMotion && transitionTarget === "menu" && (
-                <motion.div
-                  className="absolute top-0 bottom-0 z-20 w-[2px] pointer-events-none"
-                  style={{
-                    backgroundColor: sectionPanelEdgeAccent(currentSection),
-                    transform: "translateX(-2px)",
-                    boxShadow: accentGlowShadow(sectionPanelEdgeAccent(currentSection), true),
-                  }}
-                  aria-hidden
-                  initial={{ left: "0%" }}
-                  animate={{ left: "100%" }}
-                  transition={{
-                    duration: PANEL_TRANSITION.duration,
-                    ease: PANEL_TRANSITION.ease,
-                  }}
                 />
               )}
               {/* Plain wrapper: nested Framer x/opacity here put every section (incl. experience) under an extra
@@ -15630,6 +15675,31 @@ export default function Home() {
                   ))}
               </div>
             </motion.div>
+          )}
+
+          {!reduceMotion && transitionTarget === "menu" && currentSection && (
+            /* Viewport-fixed exit edge: same ease as the panel wipe; fade begins just before seating at the right. */
+            <motion.div
+              className="pointer-events-none fixed top-0 bottom-0 z-[45] w-[2px]"
+              style={{
+                backgroundColor: sectionPanelEdgeAccent(currentSection),
+                boxShadow: accentGlowShadow(sectionPanelEdgeAccent(currentSection), true),
+              }}
+              aria-hidden
+              initial={{ left: 0, opacity: 1 }}
+              animate={{ left: "calc(100% - 2px)", opacity: 0 }}
+              transition={{
+                left: {
+                  duration: PANEL_TRANSITION.duration,
+                  ease: PANEL_TRANSITION.ease,
+                },
+                opacity: {
+                  duration: PANEL_WIPE_EDGE_FADE_DURATION_S,
+                  delay: PANEL_WIPE_EDGE_FADE_START_S,
+                  ease: PANEL_WIPE_EDGE_FADE_EASE,
+                },
+              }}
+            />
           )}
 
           {showcasePdfOverlay && (
