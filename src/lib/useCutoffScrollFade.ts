@@ -8,6 +8,8 @@ export function useCutoffScrollFade(active: boolean) {
   const scrollRef = useRef<HTMLElement | null>(null);
   const sentinelVisibleRef = useRef(false);
   const [showFade, setShowFade] = useState(false);
+  /** True while scrollTop is at/near the top — for SCROLL FOR MORE arrow opacity. */
+  const [atTop, setAtTop] = useState(true);
 
   const updateFade = useCallback((scrollTopOverride?: number) => {
     const el = scrollRef.current;
@@ -23,6 +25,7 @@ export function useCutoffScrollFade(active: boolean) {
     if (!el || !active) {
       setCutoff(false);
       setShowFade(false);
+      setAtTop(true);
       return;
     }
     const bounce = el.querySelector<HTMLElement>(".profile-summary-card-scroll-bounce");
@@ -33,10 +36,12 @@ export function useCutoffScrollFade(active: boolean) {
     const max = nativeMax > 1 ? nativeMax : jsMax;
     const canScroll = max > 1;
     const top = scrollTopOverride ?? el.scrollTop;
+    const nearTop = top <= 1;
     const atBottom = sentinelVisibleRef.current || top >= max - 1;
     const next = canScroll && !atBottom;
     setCutoff(next);
     setShowFade((prev) => (prev === next ? prev : next));
+    setAtTop((prev) => (prev === nearTop ? prev : nearTop));
   }, [active]);
 
   useLayoutEffect(() => {
@@ -72,5 +77,5 @@ export function useCutoffScrollFade(active: boolean) {
     };
   }, [active, updateFade]);
 
-  return { scrollRef, showFade, updateFade };
+  return { scrollRef, showFade, updateFade, atTop };
 }

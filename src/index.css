@@ -53,6 +53,13 @@
   initial-value: 0;
 }
 
+/* Animate bottom dissolve height (tall under scroll-hint at top; short while scrolled). */
+@property --detail-body-bottom-fade {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0.85rem;
+}
+
 /* PROFILE summary cutoff — same as --detail-cutoff-*: unregistered vars do not
  * invalidate mask-image on desktop, so the dissolve never clears at scroll end. */
 @property --profile-cutoff {
@@ -1491,12 +1498,14 @@
    * --detail-cutoff-* are set inline from React; @property makes them ease. */
   #projects .video-editing-detail-card-tabpanel-fade-host--scroll {
     --detail-body-top-fade: 0.5rem;
+    /* Short while scrolled; tall via .is-bottom-fade-tall (class > inline for reliable grow). */
     --detail-body-bottom-fade: 0.85rem;
     --detail-cutoff-top: 0;
     --detail-cutoff-bottom: 0;
     transition:
       --detail-cutoff-top 0.48s cubic-bezier(0.12, 1, 0.28, 1),
-      --detail-cutoff-bottom 0.48s cubic-bezier(0.12, 1, 0.28, 1);
+      --detail-cutoff-bottom 0.48s cubic-bezier(0.12, 1, 0.28, 1),
+      --detail-body-bottom-fade 0.5s cubic-bezier(0.12, 1, 0.28, 1);
     -webkit-mask-image: linear-gradient(
       to bottom,
       rgba(0, 0, 0, calc(1 - var(--detail-cutoff-top))) 0%,
@@ -1506,10 +1515,12 @@
         calc(var(--detail-body-top-fade) * 0.7 * var(--detail-cutoff-top)),
       #000 calc(var(--detail-body-top-fade) * var(--detail-cutoff-top)),
       #000 calc(100% - var(--detail-body-bottom-fade) * var(--detail-cutoff-bottom)),
-      rgba(0, 0, 0, calc(1 - 0.38 * var(--detail-cutoff-bottom)))
-        calc(100% - 0.4rem * var(--detail-cutoff-bottom)),
-      rgba(0, 0, 0, calc(1 - 0.72 * var(--detail-cutoff-bottom)))
-        calc(100% - 0.15rem * var(--detail-cutoff-bottom)),
+      rgba(0, 0, 0, calc(1 - 0.58 * var(--detail-cutoff-bottom)))
+        calc(100% - var(--detail-body-bottom-fade) * 0.72 * var(--detail-cutoff-bottom)),
+      rgba(0, 0, 0, calc(1 - 0.94 * var(--detail-cutoff-bottom)))
+        calc(100% - var(--detail-body-bottom-fade) * 0.5 * var(--detail-cutoff-bottom)),
+      rgba(0, 0, 0, calc(1 - var(--detail-cutoff-bottom)))
+        calc(100% - var(--detail-body-bottom-fade) * 0.22 * var(--detail-cutoff-bottom)),
       rgba(0, 0, 0, calc(1 - var(--detail-cutoff-bottom))) 100%
     );
     mask-image: linear-gradient(
@@ -1521,12 +1532,29 @@
         calc(var(--detail-body-top-fade) * 0.7 * var(--detail-cutoff-top)),
       #000 calc(var(--detail-body-top-fade) * var(--detail-cutoff-top)),
       #000 calc(100% - var(--detail-body-bottom-fade) * var(--detail-cutoff-bottom)),
-      rgba(0, 0, 0, calc(1 - 0.38 * var(--detail-cutoff-bottom)))
-        calc(100% - 0.4rem * var(--detail-cutoff-bottom)),
-      rgba(0, 0, 0, calc(1 - 0.72 * var(--detail-cutoff-bottom)))
-        calc(100% - 0.15rem * var(--detail-cutoff-bottom)),
+      rgba(0, 0, 0, calc(1 - 0.58 * var(--detail-cutoff-bottom)))
+        calc(100% - var(--detail-body-bottom-fade) * 0.72 * var(--detail-cutoff-bottom)),
+      rgba(0, 0, 0, calc(1 - 0.94 * var(--detail-cutoff-bottom)))
+        calc(100% - var(--detail-body-bottom-fade) * 0.5 * var(--detail-cutoff-bottom)),
+      rgba(0, 0, 0, calc(1 - var(--detail-cutoff-bottom)))
+        calc(100% - var(--detail-body-bottom-fade) * 0.22 * var(--detail-cutoff-bottom)),
       rgba(0, 0, 0, calc(1 - var(--detail-cutoff-bottom))) 100%
     );
+  }
+
+  /* Tall bottom dissolve at scroll-top — class toggle so grow eases (inline rem flips can snap). */
+  #projects .video-editing-detail-card-tabpanel-fade-host--scroll.is-bottom-fade-tall {
+    --detail-body-bottom-fade: 2.35rem;
+  }
+
+  @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse) {
+    #projects .video-editing-detail-card-tabpanel-fade-host--scroll {
+      --detail-body-bottom-fade: 1.2rem;
+    }
+
+    #projects .video-editing-detail-card-tabpanel-fade-host--scroll.is-bottom-fade-tall {
+      --detail-body-bottom-fade: 1.82rem;
+    }
   }
 
   #projects .video-editing-detail-card-tabpanel-fade-host--scroll.is-cutoff-instant {
@@ -1561,12 +1589,31 @@
     }
   }
 
-  /* PROJECT DETAILS + PROFILE — scroll hint below card (desktop + tablet landscape).
-   * Sibling under the card — never inside height measure. */
-  #projects .video-editing-detail-scroll-hint,
+
+  /* PROJECT DETAILS — scroll hint inside card, bottom-center; absolute so card/content size unchanged. */
+  #projects .video-editing-detail-scroll-hint {
+    position: absolute;
+    left: 50%;
+    right: auto;
+    bottom: 0.55rem;
+    z-index: 5;
+    margin: 0;
+    width: auto;
+    transform: translateX(-50%);
+    pointer-events: none;
+    user-select: none;
+  }
+
+  /* PROFILE — scroll hint inside card, bottom-center (arrow only); absolute so card/content size unchanged. */
   #profile .video-editing-detail-scroll-hint {
-    margin: 0.375rem 0 0;
-    width: 100%;
+    position: absolute;
+    left: 50%;
+    right: auto;
+    bottom: 0.75rem;
+    z-index: 5;
+    margin: 0;
+    width: auto;
+    transform: translateX(-50%);
     pointer-events: none;
     user-select: none;
   }
@@ -1574,10 +1621,17 @@
   #projects .video-editing-detail-scroll-hint__float,
   #profile .video-editing-detail-scroll-hint__float {
     display: flex;
-    justify-content: flex-end;
     width: 100%;
     transform: translate3d(0, 0, 0);
     animation: detail-scroll-hint-float 2.1s ease-in-out infinite;
+  }
+
+  #projects .video-editing-detail-scroll-hint__float {
+    justify-content: center;
+  }
+
+  #profile .video-editing-detail-scroll-hint__float {
+    justify-content: center;
   }
 
   #projects .video-editing-detail-scroll-hint__float--static,
@@ -1590,17 +1644,27 @@
   #profile .video-editing-detail-scroll-hint__breathe {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
     gap: 0.3rem;
     font-size: 0.5625rem;
     font-weight: 700;
     line-height: 1.12;
     letter-spacing: 0.12em;
-    text-align: right;
     text-transform: uppercase;
     white-space: nowrap;
     color: color-mix(in srgb, rgb(186 186 186) 78%, transparent);
     animation: detail-scroll-hint-breathe 2.1s ease-in-out infinite;
+  }
+
+  #projects .video-editing-detail-scroll-hint__breathe {
+    justify-content: center;
+    text-align: center;
+    /* Below body (text-sm / ~0.875rem) so the hint stays tertiary in hierarchy. */
+    font-size: 0.5rem;
+  }
+
+  #profile .video-editing-detail-scroll-hint__breathe {
+    justify-content: center;
+    text-align: center;
   }
 
   #projects .video-editing-detail-scroll-hint__breathe--static,
@@ -1628,12 +1692,31 @@
     display: block;
   }
 
-  /* Tablet landscape only — smaller chevron; desktop size unchanged. */
+  #projects .video-editing-detail-scroll-hint__arrow svg {
+    width: 12px;
+    height: 8px;
+  }
+
+  #profile .video-editing-detail-scroll-hint__arrow svg {
+    width: 12px;
+    height: 8px;
+  }
+
+  /* Tablet landscape — PROFILE arrow-only size; PROJECTS matches enlarged hint arrow. */
   @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse) {
-    #projects .video-editing-detail-scroll-hint__arrow svg,
     #profile .video-editing-detail-scroll-hint__arrow svg {
-      width: 6px;
-      height: 3.75px;
+      width: 10px;
+      height: 6px;
+    }
+
+    #projects .video-editing-detail-scroll-hint__arrow svg {
+      width: 8px;
+      height: 5px;
+    }
+
+    /* Sit hint a hair higher in the card (iPad landscape). */
+    #projects .video-editing-detail-scroll-hint {
+      bottom: 0.68rem;
     }
   }
 
@@ -1643,6 +1726,8 @@
     #profile .video-editing-detail-scroll-hint {
       display: none !important;
     }
+
+
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -6396,7 +6481,7 @@
     #projects.projects-slaywire-detail-open
       .video-editing-detail:not(.video-editing-detail--interactive-media)
       .video-editing-detail-now-playing .flex.w-full {
-      gap: 0.35rem;
+      gap: 0.3rem;
     }
 
     #projects.projects-interactive-media-detail-open
@@ -6431,7 +6516,7 @@
     #projects.projects-slaywire-detail-open
       .video-editing-detail:not(.video-editing-detail--interactive-media)
       .video-editing-detail-now-playing .font-body.sm\:text-base {
-      font-size: 0.8125rem;
+      font-size: 0.7rem;
       line-height: 1.35;
       transform: translateY(1px);
     }
@@ -6459,8 +6544,8 @@
       #projects.projects-slaywire-detail-open
         .video-editing-detail:not(.video-editing-detail--interactive-media)
         .video-editing-detail-overview {
-        /* Small air between now-playing subhead and the tab card. */
-        margin-top: 0.5rem !important;
+        /* Air above/below now-playing subhead (below = into tab card). */
+        margin-top: 0.75rem !important;
       }
 
       #projects.projects-interactive-media-detail-open
@@ -6475,7 +6560,7 @@
         .video-editing-detail:not(.video-editing-detail--interactive-media)
         .video-editing-detail-now-playing
         .flex.w-full {
-        gap: 0.25rem !important;
+        gap: 0.28rem !important;
       }
 
       #projects.projects-interactive-media-detail-open
@@ -6568,9 +6653,9 @@
     }
 
     /*
-     * Selector thumbnail captions â€” sit below now-playing title (1.25rem),
-     * above now-playing subtitle (0.76875rem) and card body (0.875rem).
-     */
+     * Selector thumbnail captions — same sizes as preview title (1.035rem)
+       * and preview subhead (0.7rem).
+       */
     #projects.projects-interactive-media-detail-open
       .video-editing-detail--interactive-media
       .video-editing-works-strip-thumb-caption
@@ -6583,7 +6668,8 @@
       .video-editing-detail:not(.video-editing-detail--interactive-media)
       .video-editing-works-strip-thumb-caption
       .font-heading {
-      font-size: 0.9375rem;
+      /* Below preview header (1.035rem); thumb subhead stays 0.7rem. */
+      font-size: 0.875rem;
       line-height: 1.25;
       transform: none;
     }
@@ -6600,7 +6686,8 @@
       .video-editing-detail:not(.video-editing-detail--interactive-media)
       .video-editing-works-strip-thumb-caption
       .font-body {
-      font-size: 0.8125rem;
+      /* Match preview subhead (0.7rem). */
+      font-size: 0.7rem;
       line-height: 1.3;
       padding-left: 1px;
     }
@@ -7709,6 +7796,30 @@
 }
 
 @media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
+  /*
+   * Desktop / tablet-landscape: free one line for in-card SCROLL FOR MORE by
+   * growing the desc card upward only (player-bottom cap unchanged). Shrink the
+   * preview title slightly and tighten the title→card gap so header/video stay aligned.
+   */
+  #projects.projects-interactive-media-detail-open
+    .video-editing-detail-now-playing h3.font-display,
+  #projects.projects-video-editing-detail-open
+    .video-editing-detail-now-playing h3.font-display,
+  #projects.projects-slaywire-detail-open
+    .video-editing-detail-now-playing h3.font-display {
+    font-size: 1.035rem !important;
+    line-height: 1.08 !important;
+  }
+
+  #projects.projects-interactive-media-detail-open
+    .video-editing-detail-meta-card,
+  #projects.projects-video-editing-detail-open
+    .video-editing-detail-meta-card,
+  #projects.projects-slaywire-detail-open
+    .video-editing-detail-meta-card {
+    margin-top: 0.7rem !important;
+  }
+
   #projects.projects-interactive-media-detail-open
     .video-editing-detail-now-playing,
   #projects.projects-video-editing-detail-open
@@ -7832,7 +7943,7 @@
   #projects.projects-slaywire-detail-open
     .video-editing-detail-meta-card
     .video-editing-detail-card-tab {
-    font-size: 0.65625rem !important;
+    font-size: 0.6rem !important;
     line-height: 1 !important;
   }
 
@@ -7848,7 +7959,7 @@
     .video-editing-detail-meta-card
     .video-editing-detail-card-tab-surface
     .font-body {
-    font-size: calc(0.9375rem - 1px) !important;
+    font-size: 0.8125rem !important; /* under thumb header 0.875; above sub 0.7 */
     line-height: 1.4 !important;
   }
 
@@ -8466,6 +8577,30 @@
   #projects {
     --projects-ipad-landscape-detail-col: min(100%, 80.64%);
   }
+  /*
+   * Desktop / tablet-landscape: free one line for in-card SCROLL FOR MORE by
+   * growing the desc card upward only (player-bottom cap unchanged). Shrink the
+   * preview title slightly and tighten the title→card gap so header/video stay aligned.
+   */
+  #projects.projects-interactive-media-detail-open
+    .video-editing-detail-now-playing h3.font-display,
+  #projects.projects-video-editing-detail-open
+    .video-editing-detail-now-playing h3.font-display,
+  #projects.projects-slaywire-detail-open
+    .video-editing-detail-now-playing h3.font-display {
+    font-size: 1.035rem !important;
+    line-height: 1.08 !important;
+  }
+
+  #projects.projects-interactive-media-detail-open
+    .video-editing-detail-meta-card,
+  #projects.projects-video-editing-detail-open
+    .video-editing-detail-meta-card,
+  #projects.projects-slaywire-detail-open
+    .video-editing-detail-meta-card {
+    margin-top: 0.7rem !important;
+  }
+
 
   #projects.projects-showcase-tablet-pad .projects-showcase-stage {
     transform: translateY(-3.5svh);
@@ -8618,9 +8753,20 @@
     margin-left: 0 !important;
     padding-left: 0 !important;
     padding-right: 0 !important;
-    /* Narrow meta column: bleed title a little past the card toward the right edge. */
-    width: calc(100% + 0.625rem);
+    /* Narrow meta column: bleed title past the card so long labels (e.g. Undertale) stay one line. */
+    width: calc(100% + 2.25rem);
     max-width: none;
+  }
+
+  /* Keep preview title on one line on iPad landscape without changing font-size. */
+  #projects.projects-interactive-media-detail-open
+    .video-editing-detail-now-playing h3.font-display,
+  #projects.projects-video-editing-detail-open
+    .video-editing-detail-now-playing h3.font-display,
+  #projects.projects-slaywire-detail-open
+    .video-editing-detail-now-playing h3.font-display {
+    white-space: nowrap;
+    letter-spacing: -0.03em;
   }
 
   #projects.projects-interactive-media-detail-open .video-editing-detail-meta-col,
@@ -8668,6 +8814,7 @@
     padding-bottom: 0.75rem;
     touch-action: none;
   }
+
 
   #projects.projects-interactive-media-detail-open
     .video-editing-detail-meta-card--capped
@@ -8731,7 +8878,8 @@
   #projects.projects-slaywire-detail-open
     .video-editing-detail-meta-card {
     border-radius: 4px !important;
-    padding: 0.75rem 0.75rem 0.625rem !important;
+    /* Hint clearance — keep above-gap close to below-gap (bottom 0.5rem). */
+    padding: 0.75rem 0.75rem calc(0.5rem + 0.25rem) !important;
     min-width: 0 !important;
     /* Height comes from JS (animated drawer + player-bottom cap). */
     min-height: 0 !important;
@@ -8803,7 +8951,7 @@
   #projects.projects-slaywire-detail-open
     .video-editing-detail-meta-card
     .video-editing-detail-card-tab {
-    font-size: 0.65625rem !important;
+    font-size: 0.6rem !important;
     line-height: 1 !important;
   }
 
@@ -8819,7 +8967,7 @@
     .video-editing-detail-meta-card
     .video-editing-detail-card-tab-surface
     .font-body {
-    font-size: calc(0.9375rem - 1px) !important;
+    font-size: 0.8125rem !important; /* under thumb header 0.875; above sub 0.7 */
     line-height: 1.35 !important;
   }
 

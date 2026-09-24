@@ -629,7 +629,7 @@ const PANEL_TRANSITION = {
 const CONTENT_SETTLE_DELAY = 0.06; // 60ms after panel settles
 
 /** Keep the accent edge mounted past settle so hold + fade can finish. */
-const PANEL_WIPE_EDGE_LEAVE_EXTRA_S = 0.4;
+const PANEL_WIPE_EDGE_LEAVE_EXTRA_S = 0.1;
 /** Start accent fade this many seconds before the panel fully seats (enter left / exit right). */
 const PANEL_WIPE_EDGE_FADE_LEAD_S = 0.15;
 /** Fade duration once the pre-seat lead begins. */
@@ -1708,11 +1708,11 @@ const HERO_CROP_SVG_ALIGN_X_PX = -25;
 /** Crop SVG Y — lift visible name toward PORTFOLIO baseline (left-top origin; X frozen). Undo: -44 shared default. */
 const HERO_CROP_SVG_LOCKUP_OFFSET_Y_PX = -52;
 /**
- * Frozen video face height — thinned for cinematic read; width/zoom/lockup unchanged
+ * Frozen video face height — pure 16:9 vs layout width (1140×641); width/zoom/lockup unchanged
  * so L/R ink↔edge align stays fixed. Stage justify-center absorbs vertical delta.
  * Undo height: 530.
  */
-const HERO_CROP_VIDEO_FACE_HEIGHT_PX = 538;
+const HERO_CROP_VIDEO_FACE_HEIGHT_PX = 641;
 /**
  * Frozen display / chrome sizes at crop design — slightly under video footprint
  * so type/CTA read lighter while shared bounds keep L/R edge parity.
@@ -2052,14 +2052,16 @@ const HERO_IPAD_HORIZONTAL_VIDEO_GLOBAL_LAYOUT_DEFAULTS: HeroGlobalLayoutControl
 };
 const HERO_IPAD_HORIZONTAL_MAIN_GLOBAL_LAYOUT_DEFAULTS: HeroGlobalLayoutControl = {
   offsetX: 55,
-  offsetY: 0,
+  /* Sit below taller 16:9 video face (aspect-video); undo: 0. */
+  offsetY: 40,
   scale: 0.95,
   widthScale: 1,
   heightScale: 1,
 };
 const HERO_IPAD_HORIZONTAL_PORTFOLIO_BUTTON_GLOBAL_LAYOUT_DEFAULTS: HeroGlobalLayoutControl = {
   offsetX: 41,
-  offsetY: -20,
+  /* Balance gap above/below after 16:9 face + name sit; undo: -20. */
+  offsetY: -36,
   scale: 0.94,
   widthScale: 0.78,
   heightScale: 0.91,
@@ -4631,7 +4633,7 @@ const Hero = ({
             ? "relative z-[1] mx-auto w-full h-[clamp(150px,min(40vh,calc(100svh-11rem-max(1rem,env(safe-area-inset-top,0px)))),430px)] max-md:aspect-video max-md:h-auto md:max-lg:h-[clamp(200px,min(44vh,calc(100svh-14rem-max(1rem,env(safe-area-inset-top,0px)))),500px)] lg:h-[clamp(240px,min(54vh,calc(100svh-11.5rem-max(1.5rem,env(safe-area-inset-top,0px)))),680px)] xl:h-[clamp(260px,min(56vh,calc(100svh-12rem-max(2rem,env(safe-area-inset-top,0px)))),760px)] overflow-hidden rounded-xl border border-white bg-black"
             : isHeroCropLayout
               ? "relative z-[1] mx-auto w-full overflow-hidden rounded-xl border border-white bg-black"
-              : "relative z-[1] mx-auto w-full h-[clamp(150px,min(40vh,calc(100svh-11rem-max(1rem,env(safe-area-inset-top,0px)))),430px)] max-md:aspect-video max-md:h-auto md:max-lg:h-[clamp(200px,min(44vh,calc(100svh-14rem-max(1rem,env(safe-area-inset-top,0px)))),500px)] lg:h-[clamp(240px,min(54vh,calc(100svh-11.5rem-max(1.5rem,env(safe-area-inset-top,0px)))),680px)] xl:h-[clamp(260px,min(56vh,calc(100svh-12rem-max(2rem,env(safe-area-inset-top,0px)))),760px)] overflow-hidden rounded-xl border border-white bg-black"
+              : "relative z-[1] mx-auto aspect-video h-auto w-full overflow-hidden rounded-xl border border-white bg-black"
         }
         style={{
           boxShadow: "none",
@@ -5985,6 +5987,7 @@ const PhantomProfile = ({
     scrollRef: profileSummaryScrollRef,
     showFade: profileSummaryCutoffFade,
     updateFade: updateProfileSummaryCutoffFade,
+    atTop: profileSummaryScrollAtTop,
   } = useCutoffScrollFade(profileSummaryCardMaxH != null);
   useTabletLandscapeInnerScroll(profileSummaryScrollRef, profileSummaryCardMaxH != null, {
     hitSelector: ".profile-summary-card",
@@ -5992,9 +5995,11 @@ const PhantomProfile = ({
     onPaint: updateProfileSummaryCutoffFade,
   });
   const [profileEntranceComplete, setProfileEntranceComplete] = useState(false);
+  // Same idea as PROJECTS: arrow only while overflow exists and scroll is at top.
   const showProfileScrollHint =
     profileSummaryCardMaxH != null &&
     profileSummaryCutoffFade &&
+    profileSummaryScrollAtTop &&
     profileEntranceComplete;
   const [profileDesktopLayoutDebugValues, setProfileDesktopLayoutDebugValues] =
     useState<ProfileDesktopLayoutDebugValues>(() => readSectionDesktopLayoutDebugValues("profile"));
@@ -6502,7 +6507,6 @@ const PhantomProfile = ({
                 </div>
                 </div>
                 </div>
-              </motion.div>
               {profileSummaryCardMaxH != null ? (
                   <motion.div
                     className="video-editing-detail-scroll-hint"
@@ -6525,12 +6529,11 @@ const PhantomProfile = ({
                           reduceMotion ? " video-editing-detail-scroll-hint__breathe--static" : ""
                         }`}
                       >
-                        <span>scroll for more</span>
                         <span className="video-editing-detail-scroll-hint__arrow video-editing-detail-scroll-hint__arrow-clock">
                           <svg
                             viewBox="0 0 10 6"
-                            width="8"
-                            height="5"
+                            width="12"
+                            height="8"
                             fill="none"
                             aria-hidden
                           >
@@ -6547,6 +6550,7 @@ const PhantomProfile = ({
                     </div>
                   </motion.div>
               ) : null}
+              </motion.div>
             </div>
             </div>
             </div>
@@ -6784,7 +6788,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "/portfolio-website-thumbnail-v2-poster.jpg",
         label: "3",
         thumbnailSrc: "/portfolio-website-thumbnail-v2-poster.jpg",
-        selectorTitle: "GUILT TRIP",
+        selectorTitle: "Guilt Trip",
         selectorSubtitle: "Comedy/Horror Short Film",
         selectorDuration: "0:45",
         detailOverview:
@@ -6799,7 +6803,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "/8bit-festival-thumbnail.jpg",
         label: "4",
         thumbnailSrc: "/8bit-festival-thumbnail.jpg",
-        selectorTitle: "ANIMATION BREAKDOWN - SHINING RING",
+        selectorTitle: "Animation Breakdown - Shining Ring",
         selectorSubtitle: "Tutorial-style content",
         selectorDuration: "0:38",
         detailOverview:
@@ -6814,7 +6818,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "/undertale-fhe-thumbnail.png",
         label: "5",
         thumbnailSrc: "/undertale-fhe-thumbnail.png",
-        selectorTitle: "EDIT 05",
+        selectorTitle: "Edit 05",
         selectorSubtitle: "Pacing Variant",
         selectorDuration: "0:32",
         detailOverview:
@@ -6828,7 +6832,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "/slaywire-thumbnail.png",
         label: "6",
         thumbnailSrc: "/slaywire-thumbnail.png",
-        selectorTitle: "EDIT 06",
+        selectorTitle: "Edit 06",
         selectorSubtitle: "Branding Variant",
         selectorDuration: "0:27",
         detailOverview:
@@ -6858,7 +6862,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "https://youtu.be/_YiB0_TS2U0",
         label: "UNDERTALE FHE",
         thumbnailSrc: "/portfolio-website-thumbnail-v2-poster.jpg",
-        selectorTitle: "UNDERTALE: FOREVER HOME EDITION (2025)",
+        selectorTitle: "UNDERTALE: Forever Home Edition (2025)",
         selectorSubtitle: "Video Game",
         detailOverview:
           "UNDERTALE - FOREVER HOME EDITION (UTFHE) is a narrative-driven game based on UNDERTALE by Toby Fox.\nThis was created to propose to my girlfriend and was completed over a one-year development period. She said YES!\n\nSince UNDERTALE is a game about choice-based outcomes, and happens to be my fiancé's favourite, it proved the perfect candidate for this project.\n\n<em>When the Underground is overhauled by an unknown entity, a lone girl faces one of the most important decisions of her life.</em>\n\nFeatures:\n- Heavy rewriting of the original game\n- Handcrafted pixel animations\n- Heavily edited visual assets\n- Brand new characters\n- Brand new cutscenes\n- Brand new explorable areas\n- Narrative driven mechanics (e.g. Multiple endings, choices matter, etc.)\n- Multiple endings\n- Social media promotional campaign\n- Full playability on PC (Windows)\n- Full video playthrough and YouTube release.\n\n<em>This is a noncommercial, transformative project created for educational and entertainment purposes.\nIt is not affiliated with, endorsed by, or sponsored by Toby Fox or any other rights holders.\nSome third-party assets have been modified or adapted for use in this project.\nNo copyright infringement is intended.</em>\n\n<em>Full credits available in the YouTube video description.</em>",
@@ -6901,7 +6905,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "/portfolio-website-thumbnail-v2-poster.jpg",
         label: "RAWBLEM.COM",
         thumbnailSrc: "/portfolio-website-thumbnail-v2-poster.jpg",
-        selectorTitle: "RAWBLEM.COM (2026)",
+        selectorTitle: "RAWBLEM.com (2026)",
         selectorSubtitle: "Portfolio Website",
         detailOverview:
           "Portfolio website showcasing selected works and career highlights across multiple disciplines, including writing, content production, and social media.\nThis project was completed over a six-month development period.\n\nCombined my existing knowledge of coding and design with agentic AI-assisted tools to create a fully-realized portfolio experience.\n\nDisplays a minimalist and modern editorial motif featuring a 5-color design theme (red, yellow, blue, green, violet)\n\nFeatures:\n- Single-page application with fluid client-side navigation (eliminates full page-reloads to enhance user experience)\n- Modern, minimalist editorial motif featuring a 5-color design theme (red, yellow, blue, green, violet).\n- Fully navigable Main Menu and Side Menu with 5 explorable sections.\n- Responsive viewport-specific designs for desktop, mobile, and tablet.\n- 60fps interactive web elements using Framer Motion (page transitions, CTA buttons, text, etc.)\n- Featured Writing Showcase: Tab System\n- Built-in Lightbox Gallery\n- Built-in Media Player\n- Built-in PDF Reader",
