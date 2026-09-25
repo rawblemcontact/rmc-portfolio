@@ -301,7 +301,7 @@ const DETAIL_CARD_RESIZE_DUR_MS = Math.round(DETAIL_TAB_SWAP_DUR_S * 1000);
  * Tab swaps: one measure + one height tween. Flip false (or revert commit) to
  * restore probe→live double beat. Work-switch paths ignore this flag.
  */
-const DETAIL_CARD_TAB_SINGLE_HEIGHT_BEAT = true;
+const DETAIL_CARD_TAB_SINGLE_HEIGHT_BEAT = false;
 /** Skip height tween only for subpixel / rounding noise. */
 const DETAIL_CARD_HEIGHT_EPSILON_PX = 2.5;
 const DETAIL_CARD_RESIZE_EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
