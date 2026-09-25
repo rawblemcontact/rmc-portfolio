@@ -82,6 +82,8 @@ function VideoEditingImagePlayer({
         alt={video.selectorTitle?.trim() || video.label}
         className="absolute inset-0 h-full w-full object-cover"
         style={{ objectPosition: focalPoint }}
+        loading="eager"
+        fetchPriority="high"
         decoding="async"
       />
     </div>
@@ -2453,7 +2455,11 @@ export function ShowcaseVideoEditingDetail({
                 if (isNaturalDrawerViewport) {
                   skipWorkSwitchLiveFitRef.current = false;
                 }
-                // Player face led the switch; iframe commits after FLIP / before title.
+                // YouTube iframe last: mount only after title/card motion has settled
+                // so the embed cannot fight FLIP / crossfade / height tweens.
+                if (nextIsYouTube) {
+                  commitPlayer();
+                }
                 setDetailBodyVisible(true);
                 releaseNaturalDrawerResizeLock();
                 finishWorkSwitch(epoch);
@@ -2651,9 +2657,11 @@ export function ShowcaseVideoEditingDetail({
 
       const startTitleFadeThenHeight = () => {
         if (epoch !== workSwitchEpochRef.current) return;
-        // After any tab FLIP wait: mount real player, then title. Keeps video ahead of
-        // title/card without stacking YouTube with FLIP (Undertale mobile lag).
-        commitPlayer();
+        // After any tab FLIP wait: start title/card. Non-YouTube players are cheap
+        // and can commit now; YouTube iframe waits until continueShowBody (last).
+        if (!nextIsYouTube) {
+          commitPlayer();
+        }
         const beginTitle = () => {
           if (epoch !== workSwitchEpochRef.current) return;
           commitTitleText();
@@ -2664,13 +2672,6 @@ export function ShowcaseVideoEditingDetail({
           // Crossfade alone, then height, then card.
           runAfterDelay(DETAIL_TITLE_CROSSFADE_MS, startTitleHeightThenCard);
         };
-        // Give the iframe one paint head-start before title React work stacks on it.
-        if (nextIsYouTube && !rapid) {
-          requestAnimationFrame(() => {
-            requestAnimationFrame(beginTitle);
-          });
-          return;
-        }
         beginTitle();
       };
 
@@ -2691,8 +2692,8 @@ export function ShowcaseVideoEditingDetail({
       }
 
       // Video card first (visual): face/poster immediately. Real YouTube iframe waits
-      // until after tab FLIP (or a double-rAF head start) so it does not fight FLIP /
-      // early title frames — historically the Undertale switch lag.
+      // until after title/card settle (continueShowBody) so it does not fight FLIP /
+      // crossfade / height tweens — historically the Undertale switch lag.
       commitPlayerFace();
       if (!nextIsYouTube) {
         // Images / file players are cheap — swap the real player with the face.
@@ -4684,7 +4685,8 @@ export function ShowcaseVideoEditingDetail({
                                 src={video.thumbnailSrc}
                                 className="absolute inset-0 h-full w-full object-cover"
                                 alt=""
-                                loading="lazy"
+                                loading={active ? "eager" : "lazy"}
+                                fetchPriority={active ? "high" : "low"}
                                 decoding="async"
                                 aria-hidden
                               />
