@@ -6861,7 +6861,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         id: "interactive-media-1",
         url: "https://youtu.be/_YiB0_TS2U0",
         label: "UNDERTALE FHE",
-        thumbnailSrc: "/portfolio-website-thumbnail-v2-poster.jpg",
+        thumbnailSrc: "/undertale-fhe-thumbnail.png",
         selectorTitle: "UNDERTALE: Forever Home Edition (2025)",
         selectorSubtitle: "Video Game",
         detailOverview:

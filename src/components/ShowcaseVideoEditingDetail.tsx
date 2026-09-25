@@ -330,6 +330,17 @@ const DETAIL_TAB_BODY_IN_DELAY_NATURAL_S =
 const DETAIL_TITLE_MOVE_DUR_MS = DETAIL_CARD_RESIZE_DUR_MS;
 /** Now-playing title AnimatePresence crossfade (keep in sync with JSX transition). */
 const DETAIL_TITLE_CROSSFADE_MS = 220;
+/** Phone / tablet-portrait work-switch: same path, tighter clock (keeps eases). */
+const DETAIL_NATURAL_SPEED = 0.72;
+const DETAIL_NATURAL_TITLE_CROSSFADE_MS = Math.round(
+  DETAIL_TITLE_CROSSFADE_MS * DETAIL_NATURAL_SPEED,
+);
+const DETAIL_NATURAL_CUTOFF_LEAD_MS = Math.round(
+  DETAIL_CUTOFF_LEAD_MS * DETAIL_NATURAL_SPEED,
+);
+const DETAIL_NATURAL_CARD_RESIZE_DUR_MS = Math.round(
+  DETAIL_CARD_RESIZE_DUR_MS * DETAIL_NATURAL_SPEED,
+);
 /**
  * Clicks closer than this are "rapid": abort/coalesce and snap instead of stacking
  * the full title→card→reveal choreography.
@@ -690,6 +701,10 @@ export function ShowcaseVideoEditingDetail({
    */
   const [youtubeFaceCoverHold, setYoutubeFaceCoverHold] = useState(false);
   const youtubeFaceCoverHoldTimerRef = useRef<number | null>(null);
+  /** True while work-switch motion is still running — poster must stay up. */
+  const youtubeAwaitingMotionSettleRef = useRef(false);
+  /** Iframe painted during the covered wait (safe to lift once settle clears). */
+  const youtubePaintedUnderCoverRef = useRef(false);
   /** Desktop + tablet landscape — expand/shrink drawer clamped to player bottom. */
   const [isPlayerCappedDrawerViewport, setIsPlayerCappedDrawerViewport] = useState(
     matchesDetailPlayerCapViewport,
@@ -1732,6 +1747,10 @@ export function ShowcaseVideoEditingDetail({
         toHeightPx?: number;
         /** Override rAF duration (natural work-switch couples title + card). */
         durationMs?: number;
+        /** 0-1 multiplier after duration pick (natural phone speed-up). */
+        speedScale?: number;
+        /** Natural: bump reserve once, skip per-frame reserve writes (cut layout thrash). */
+        freezeReserve?: boolean;
       },
     ) => {
       const onSettled = options?.onSettled;
@@ -1846,16 +1865,42 @@ export function ShowcaseVideoEditingDetail({
         const heightDelta = Math.abs(toHeight - fromHeight);
         // Forced short duration is for small tab-scale moves. Tall overviews
         // (Undertale) jammed into 420ms thrash layout every frame on mobile.
-        const resizeDurMs =
+        let resizeDurMs =
           forcedDurationMs != null &&
           forcedDurationMs > 0 &&
           heightDelta <= 160
             ? forcedDurationMs
             : detailCardResizeDurationMs(heightDelta);
+        // Only speed small moves - compressing tall Undertale tweens reads as chop.
+        if (
+          heightDelta <= 160 &&
+          options?.speedScale != null &&
+          options.speedScale > 0 &&
+          options.speedScale < 1
+        ) {
+          resizeDurMs = Math.max(
+            180,
+            Math.round(resizeDurMs * options.speedScale),
+          );
+        }
         // Tall overviews: don't write reserve every frame (double layout on mobile).
         const throttleReserve = heightDelta > 160;
+        const freezeReserve = Boolean(options?.freezeReserve);
         let reserveFrame = 0;
         let lastReserveWritten = -1;
+        // Natural: pre-bump page reserve to the destination once so the shell can
+        // animate without fighting minHeight writes every frame.
+        if (freezeReserve) {
+          const reserveEl = detailPanelReserveRef.current;
+          if (reserveEl) {
+            const destReserve = Math.ceil(Math.max(fromHeight, toHeight));
+            const cur = parseFloat(reserveEl.style.minHeight) || 0;
+            if (destReserve > cur) {
+              reserveEl.style.minHeight = `${destReserve}px`;
+              lastReserveWritten = destReserve;
+            }
+          }
+        }
         surface.style.willChange = "height";
         const tick = (now: number) => {
           if (epoch !== detailCardResizeEpochRef.current) return;
@@ -1881,9 +1926,14 @@ export function ShowcaseVideoEditingDetail({
           // Keep page reserve in lockstep with the card so a post-settle
           // tallest bump isn't a second Undertale jump (esp. tab+work reset).
           // Tall tweens: update reserve every other frame to cut layout thrash.
+          // Natural freezeReserve: skip - already pre-bumped above.
           const reserveEl = detailPanelReserveRef.current;
           reserveFrame += 1;
-          if (reserveEl && (t >= 1 || !throttleReserve || reserveFrame % 2 === 0)) {
+          if (
+            reserveEl &&
+            !freezeReserve &&
+            (t >= 1 || !throttleReserve || reserveFrame % 2 === 0)
+          ) {
             const nextReserve = Math.ceil(h);
             if (nextReserve > lastReserveWritten) {
               const cur = parseFloat(reserveEl.style.minHeight) || 0;
@@ -2355,6 +2405,9 @@ export function ShowcaseVideoEditingDetail({
         }
         return animateDetailTitleToMeasuredHeight(nextIndex, {
           switchEpoch: epoch,
+          ...(isNaturalDrawerViewport
+            ? { durationMs: DETAIL_NATURAL_CARD_RESIZE_DUR_MS }
+            : {}),
         });
       };
 
@@ -2455,10 +2508,25 @@ export function ShowcaseVideoEditingDetail({
                 if (isNaturalDrawerViewport) {
                   skipWorkSwitchLiveFitRef.current = false;
                 }
-                // YouTube iframe last: mount only after title/card motion has settled
-                // so the embed cannot fight FLIP / crossfade / height tweens.
+                // Desktop: YouTube may already be warm under the poster.
+                // Natural: mount only now so the expand is not fighting iframe init.
                 if (nextIsYouTube) {
-                  commitPlayer();
+                  if (isNaturalDrawerViewport) {
+                    youtubeAwaitingMotionSettleRef.current = false;
+                    youtubePaintedUnderCoverRef.current = false;
+                    setPlayerVideoIndex(nextIndex);
+                    setPlayerFaceIndex(nextIndex);
+                    armYoutubeFaceCoverHold();
+                    releaseYoutubeFaceCoverHoldSoon();
+                  } else {
+                    youtubeAwaitingMotionSettleRef.current = false;
+                    if (youtubePaintedUnderCoverRef.current) {
+                      clearYoutubeFaceCoverHoldTimer();
+                      setYoutubeFaceCoverHold(false);
+                    } else {
+                      releaseYoutubeFaceCoverHoldSoon();
+                    }
+                  }
                 }
                 setDetailBodyVisible(true);
                 releaseNaturalDrawerResizeLock();
@@ -2533,10 +2601,13 @@ export function ShowcaseVideoEditingDetail({
                   // Keep this correction short so it doesn't stack into a second
                   // Undertale-tall beat after the primary probe tween — slightly
                   // longer + softer ease-out so the shell shrink feels smoother.
-                  const hugDurMs = Math.min(
-                    300,
-                    Math.max(200, Math.round(overshoot * 1.35)),
-                  );
+                  // Natural: same correction, tighter clock.
+                  const hugDurMs = isNaturalDrawerViewport
+                    ? Math.min(160, Math.max(100, Math.round(overshoot * 0.9)))
+                    : Math.min(
+                        300,
+                        Math.max(200, Math.round(overshoot * 1.35)),
+                      );
                   const hugEpoch = ++detailCardResizeEpochRef.current;
                   beginDetailCardHeightTransition();
                   surfaceEl.classList.add("video-editing-detail-meta-card--tweening");
@@ -2585,7 +2656,11 @@ export function ShowcaseVideoEditingDetail({
               continueShowBody();
             };
             // Rapid / reduced-motion: no lead. Otherwise let dissolve start first.
-            const leadMs = rapid ? 0 : DETAIL_CUTOFF_LEAD_MS;
+            const leadMs = rapid
+              ? 0
+              : isNaturalDrawerViewport
+                ? DETAIL_NATURAL_CUTOFF_LEAD_MS
+                : DETAIL_CUTOFF_LEAD_MS;
             if (leadMs <= 0) {
               showBody();
               return;
@@ -2620,7 +2695,17 @@ export function ShowcaseVideoEditingDetail({
             ...((isNaturalDrawerViewport ||
               isTabletLandscapeViewport ||
               tabAlsoResets)
-              ? { durationMs: DETAIL_CARD_RESIZE_DUR_MS }
+              ? {
+                  durationMs: isNaturalDrawerViewport
+                    ? DETAIL_NATURAL_CARD_RESIZE_DUR_MS
+                    : DETAIL_CARD_RESIZE_DUR_MS,
+                  ...(isNaturalDrawerViewport
+                    ? {
+                        speedScale: DETAIL_NATURAL_SPEED,
+                        freezeReserve: true,
+                      }
+                    : {}),
+                }
               : {}),
           });
           return;
@@ -2658,7 +2743,7 @@ export function ShowcaseVideoEditingDetail({
       const startTitleFadeThenHeight = () => {
         if (epoch !== workSwitchEpochRef.current) return;
         // After any tab FLIP wait: start title/card. Non-YouTube players are cheap
-        // and can commit now; YouTube iframe waits until continueShowBody (last).
+        // and commit now. YouTube is already mounting under the face poster.
         if (!nextIsYouTube) {
           commitPlayer();
         }
@@ -2670,9 +2755,24 @@ export function ShowcaseVideoEditingDetail({
             return;
           }
           // Crossfade alone, then height, then card.
-          runAfterDelay(DETAIL_TITLE_CROSSFADE_MS, startTitleHeightThenCard);
+          runAfterDelay(
+            isNaturalDrawerViewport
+              ? DETAIL_NATURAL_TITLE_CROSSFADE_MS
+              : DETAIL_TITLE_CROSSFADE_MS,
+            startTitleHeightThenCard,
+          );
         };
         beginTitle();
+      };
+
+      /** Mount iframe under the face poster (cover stays until settle + paint). */
+      const mountYoutubeUnderPoster = () => {
+        if (epoch !== workSwitchEpochRef.current) return;
+        youtubeAwaitingMotionSettleRef.current = true;
+        youtubePaintedUnderCoverRef.current = false;
+        setPlayerVideoIndex(nextIndex);
+        setPlayerFaceIndex(nextIndex);
+        armYoutubeFaceCoverHold();
       };
 
       // Prefetch while earlier beats run (not during first FLIP frames).
@@ -2691,9 +2791,10 @@ export function ShowcaseVideoEditingDetail({
         return;
       }
 
-      // Video card first (visual): face/poster immediately. Real YouTube iframe waits
-      // until after title/card settle (continueShowBody) so it does not fight FLIP /
-      // crossfade / height tweens — historically the Undertale switch lag.
+      // Video card first (visual): face/poster immediately. YouTube iframe mounts
+      // under that poster after one paint (and after tab FLIP when tabs reset) so
+      // load overlaps title/card motion without a visible fight; cover lifts only
+      // after settle + iframe paint.
       commitPlayerFace();
       if (!nextIsYouTube) {
         // Images / file players are cheap — swap the real player with the face.
@@ -2701,15 +2802,24 @@ export function ShowcaseVideoEditingDetail({
       }
 
       if (deferWorkForTabs) {
-        runAfterDelay(tabFlipWaitMs, startTitleFadeThenHeight);
+        runAfterDelay(tabFlipWaitMs, () => {
+          // Desktop/tablet-landscape: warm YouTube under poster during title/card.
+          // Natural: wait until expand settles to avoid jank.
+          if (nextIsYouTube && !isNaturalDrawerViewport) {
+            mountYoutubeUnderPoster();
+          }
+          startTitleFadeThenHeight();
+        });
         return;
       }
 
       if (nextIsYouTube) {
-        // Let the poster paint before mounting the iframe + starting title.
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             if (epoch !== workSwitchEpochRef.current) return;
+            if (!isNaturalDrawerViewport) {
+              mountYoutubeUnderPoster();
+            }
             startTitleFadeThenHeight();
           });
         });
@@ -4586,6 +4696,11 @@ export function ShowcaseVideoEditingDetail({
                   <VideoEditingPlyrPlayer
                     video={playerVideo}
                     onYouTubeLoad={() => {
+                      youtubePaintedUnderCoverRef.current = true;
+                      if (youtubeAwaitingMotionSettleRef.current) {
+                        // Motion still running — keep poster; settle path will lift.
+                        return;
+                      }
                       if (youtubeFaceCoverHoldTimerRef.current != null) {
                         window.clearTimeout(youtubeFaceCoverHoldTimerRef.current);
                         youtubeFaceCoverHoldTimerRef.current = null;
@@ -4646,7 +4761,8 @@ export function ShowcaseVideoEditingDetail({
                       className="video-editing-works-strip-track contents"
                     >
                     {videos.map((video, index) => {
-                      const active = index === safeIndex;
+                      // Face index leads the work switch; keep strip highlight in sync with poster.
+                      const active = index === safeFaceIndex;
                       const selectorTitle = video.selectorTitle?.trim() || (isSlaywire ? "" : `Edit ${index + 1}`);
                       const selectorSubtitle =
                         video.selectorSubtitle?.trim() || (isSlaywire ? "" : "Video edit");
