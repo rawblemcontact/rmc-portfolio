@@ -8,7 +8,6 @@ import {
   useMotionValue,
   useTransform,
   animate,
-  motionValue,
 } from "framer-motion";
 import useEmblaCarousel from "embla-carousel-react";
 import React, {
