@@ -4748,7 +4748,7 @@ const Hero = ({
               TAP TO ENTER
             </span>
             <span className="hero-tap-to-enter-lpm-note -mt-1.5 text-white/55">
-              (For the best experience, turn off Low Power Mode.)
+              For the best experience, turn off Low Power Mode.
             </span>
           </div>
         </motion.div>
