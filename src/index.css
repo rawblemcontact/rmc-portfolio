@@ -9816,16 +9816,6 @@
     overflow: visible !important;
   }
 
-  /*
-   * iPad-H only (within this 1280+ scale block): flush right pad clips the tab
-   * right stroke by ~1px. Exactly 1px paint room — do not use on desktop fine.
-   */
-  @media (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse) {
-    #experience .tabs-nav {
-      padding-right: 1px !important;
-    }
-  }
-
   #experience .tabs-nav .tab-btn {
     width: 100%;
     box-sizing: border-box;
@@ -10031,13 +10021,6 @@
   #experience .tabs-content,
   #experience .tabs-content:has(#education.active) {
     padding-bottom: 19px !important;
-  }
-
-  #experience .experience-tab-btn-shell,
-  #experience .experience-rail-chrome,
-  #experience .career-overview-rail,
-  #experience .tabs-nav {
-    overflow: visible !important;
   }
 
   #experience .nav-header .section-main-header-title,
