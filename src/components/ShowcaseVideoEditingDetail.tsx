@@ -271,6 +271,8 @@ function swapDetailTabToFront(
 /** Tab header FLIP travel — slightly longer / softer than DUR.fast. */
 const DETAIL_TAB_SWAP_DUR_S = 0.42;
 const DETAIL_TAB_SWAP_EASE = [0.22, 1, 0.36, 1] as const;
+/** Full 4-tab header settle (FLIP) before drawer height may start. */
+const DETAIL_TAB_HEADER_SETTLE_MS = Math.round(DETAIL_TAB_SWAP_DUR_S * 1000);
 /**
  * Body copy fades out while headers start travelling.
  * Fade-in is delayed (mode="wait" exit + this delay) so copy appears only after headers settle.
@@ -287,7 +289,7 @@ const DETAIL_CUTOFF_LEAD_MS = 200;
  * Wait for tab FLIP to settle before drawing the new underline (avoids scaling
  * while the parent is still translating).
  */
-const DETAIL_TAB_UNDERLINE_DRAW_DELAY_MS = Math.round(DETAIL_TAB_SWAP_DUR_S * 1000);
+const DETAIL_TAB_UNDERLINE_DRAW_DELAY_MS = DETAIL_TAB_HEADER_SETTLE_MS;
 /**
  * Center-out scaleX — same ease family as hero / PROJECTS accent.
  * Close is shorter + fades so the old bar clears before the new one draws.
@@ -312,17 +314,22 @@ function detailCardResizeDurationMs(heightDeltaPx: number): number {
   );
 }
 /**
- * New tab copy waits until height resize finishes + cutoff lead + one paint
- * so the soft edge is already easing when copy fades in (player-capped /
+ * New tab copy waits until tab headers settle + height resize + cutoff lead + one
+ * paint so the soft edge is already easing when copy fades in (player-capped /
  * scrollable cards on desktop + tablet landscape).
  */
 const DETAIL_TAB_BODY_IN_DELAY_S =
-  (DETAIL_CARD_RESIZE_DUR_MS + 32 + DETAIL_CUTOFF_LEAD_MS) / 1000;
+  (DETAIL_TAB_HEADER_SETTLE_MS -
+    DETAIL_BODY_OUT_MS +
+    DETAIL_CARD_RESIZE_DUR_MS +
+    32 +
+    DETAIL_CUTOFF_LEAD_MS) /
+  1000;
 /**
  * Natural drawers: height waits for tab FLIP to finish (avoids layout+resize screenshake),
  * so enter delay spans (FLIP − body-out) + resize + paint.
  */
-const DETAIL_NATURAL_HEIGHT_DELAY_MS = DETAIL_TAB_UNDERLINE_DRAW_DELAY_MS;
+const DETAIL_NATURAL_HEIGHT_DELAY_MS = DETAIL_TAB_HEADER_SETTLE_MS;
 const DETAIL_TAB_BODY_IN_DELAY_NATURAL_S =
   (DETAIL_NATURAL_HEIGHT_DELAY_MS - DETAIL_BODY_OUT_MS + DETAIL_CARD_RESIZE_DUR_MS + 32) /
   1000;
@@ -341,6 +348,8 @@ const DETAIL_NATURAL_CUTOFF_LEAD_MS = Math.round(
 const DETAIL_NATURAL_CARD_RESIZE_DUR_MS = Math.round(
   DETAIL_CARD_RESIZE_DUR_MS * DETAIL_NATURAL_SPEED,
 );
+/** Natural only: pause after title Y (card rides) before the desc-card height tween. */
+const DETAIL_NATURAL_TITLE_TO_CARD_GAP_MS = 50;
 /**
  * Clicks closer than this are "rapid": abort/coalesce and snap instead of stacking
  * the full title→card→reveal choreography.
@@ -735,6 +744,8 @@ export function ShowcaseVideoEditingDetail({
 }: ShowcaseVideoEditingDetailProps) {
   const WORKS_ARROW_TAP_FEEDBACK_MS = 260;
   const WORKS_STRIP_PROGRAMMATIC_LOCK_MS = 750;
+  /** translateX / smooth-scroll settle used by arrow + thumb selection. */
+  const WORKS_STRIP_TWEEN_MS = 320;
   const STRIP_SWIPE_ARROW_THRESHOLD_PX = 3;
   const STRIP_SWIPE_TAP_CANCEL_PX = 10;
   const TOUCH_CLICK_GUARD_MS = 400;
@@ -834,6 +845,12 @@ export function ShowcaseVideoEditingDetail({
   /** Hold description copy invisible until box height/title moves finish. */
   const [detailBodyVisible, setDetailBodyVisible] = useState(true);
   const detailBodyVisibleRef = useRef(true);
+  /**
+   * Now-playing title opacity. Cleared immediately on work select so the current
+   * title fades out without waiting for strip / height choreography; restored
+   * when the incoming title text commits (fade in).
+   */
+  const [detailTitleVisible, setDetailTitleVisible] = useState(true);
   /** Desktop + iPad/tablet landscape — hint inside capped desc card (bottom-right) when copy still scrolls. */
   const detailScrollHintEligible =
     (isPlayerCappedDrawerViewport || isTabletLandscapeViewport) &&
@@ -873,8 +890,8 @@ export function ShowcaseVideoEditingDetail({
   );
   const scheduleFitDetailCardToLiveBodyRef = useRef<() => void>(() => {});
   const centerWorksStripThumbRef = useRef<
-    (index: number, options?: { instant?: boolean }) => void
-  >(() => {});
+    (index: number, options?: { instant?: boolean }) => number
+  >(() => 0);
   const animateDetailCardToMeasuredBodyRef = useRef<
     (
       targetProbe: HTMLElement,
@@ -2357,6 +2374,7 @@ export function ShowcaseVideoEditingDetail({
   const finishWorkSwitch = useCallback((epoch: number) => {
     if (epoch !== workSwitchEpochRef.current) return;
     workSwitchInFlightRef.current = false;
+    setDetailTitleVisible(true);
   }, []);
 
   const applyActiveWorkIndex = useCallback(
@@ -2390,6 +2408,7 @@ export function ShowcaseVideoEditingDetail({
       const commitTitleText = () => {
         activeVideoIndexRef.current = nextIndex;
         setActiveVideoIndex(nextIndex);
+        setDetailTitleVisible(true);
       };
 
       const nextWork = videos[nextIndex];
@@ -2615,7 +2634,7 @@ export function ShowcaseVideoEditingDetail({
       };
 
       const tabFlipWaitMs = deferWorkForTabs
-        ? DETAIL_TAB_UNDERLINE_DRAW_DELAY_MS
+        ? DETAIL_TAB_HEADER_SETTLE_MS
         : 0;
       const runAfterDelay = (ms: number, fn: () => void) => {
         afterTitleResizeTimerRef.current = window.setTimeout(() => {
@@ -2625,22 +2644,37 @@ export function ShowcaseVideoEditingDetail({
         }, ms);
       };
 
-      /** Card height is the only eased resize. Title height snaps so cardTop/cap
-       * cannot drift mid-tween (that read as a big ease + small second adjust). */
+      /**
+       * Natural (no title Y): card height after the title fade.
+       * Natural (title Y): handled in beginTitle — Y first, then fade, gap, card.
+       * Player-capped: snap title, then card (cap drift otherwise reads as a 2nd beat).
+       */
       const startTitleAndCardTogether = () => {
         if (epoch !== workSwitchEpochRef.current) return;
         afterTitleResizeRef.current = null;
+        if (isNaturalDrawerViewport) {
+          const titleDur = animateDetailTitleToMeasuredHeight(nextIndex, {
+            switchEpoch: epoch,
+            durationMs: DETAIL_NATURAL_CARD_RESIZE_DUR_MS,
+          });
+          if (titleDur > 0) {
+            afterTitleResizeRef.current = () => {
+              runAfterDelay(DETAIL_NATURAL_TITLE_TO_CARD_GAP_MS, () => {
+                startCardResize(DETAIL_NATURAL_CARD_RESIZE_DUR_MS);
+              });
+            };
+            return;
+          }
+          startCardResize(DETAIL_NATURAL_CARD_RESIZE_DUR_MS);
+          return;
+        }
         animateDetailTitleToMeasuredHeight(nextIndex, {
           snap: true,
           switchEpoch: epoch,
         });
         // Remeasure cap after title height is final, then one card tween.
         syncDetailCardMaxHeightNow();
-        startCardResize(
-          isNaturalDrawerViewport
-            ? DETAIL_NATURAL_CARD_RESIZE_DUR_MS
-            : DETAIL_CARD_RESIZE_DUR_MS,
-        );
+        startCardResize(DETAIL_CARD_RESIZE_DUR_MS);
       };
 
       const startTitleFadeThenHeight = () => {
@@ -2652,12 +2686,44 @@ export function ShowcaseVideoEditingDetail({
         }
         const beginTitle = () => {
           if (epoch !== workSwitchEpochRef.current) return;
+
+          // Natural + title height change: move the card Y first while the old
+          // title copy stays visible, then fade in the new title, then gap + card.
+          if (isNaturalDrawerViewport && !rapid && !reduceMotion) {
+            const titleArea = detailNowPlayingRef.current;
+            if (titleArea) {
+              const h = titleArea.offsetHeight;
+              if (h > 0) titleArea.style.height = `${h}px`;
+            }
+            const targetProbe = detailTitleMeasureRefs.current[nextIndex];
+            const fromH = titleArea?.offsetHeight ?? 0;
+            const toH = targetProbe
+              ? Math.max(targetProbe.offsetHeight, targetProbe.scrollHeight)
+              : fromH;
+            if (titleArea && targetProbe && Math.abs(toH - fromH) > 0.5) {
+              afterTitleResizeRef.current = () => {
+                if (epoch !== workSwitchEpochRef.current) return;
+                commitTitleText();
+                runAfterDelay(DETAIL_NATURAL_TITLE_CROSSFADE_MS, () => {
+                  runAfterDelay(DETAIL_NATURAL_TITLE_TO_CARD_GAP_MS, () => {
+                    startCardResize(DETAIL_NATURAL_CARD_RESIZE_DUR_MS);
+                  });
+                });
+              };
+              animateDetailTitleToMeasuredHeight(nextIndex, {
+                switchEpoch: epoch,
+                durationMs: DETAIL_NATURAL_CARD_RESIZE_DUR_MS,
+              });
+              return;
+            }
+          }
+
           commitTitleText();
           if (rapid) {
             startTitleAndCardTogether();
             return;
           }
-          // Crossfade alone, then one shared title+card height beat.
+          // Crossfade alone, then title snap/card (or natural no-Y → card).
           runAfterDelay(
             isNaturalDrawerViewport
               ? DETAIL_NATURAL_TITLE_CROSSFADE_MS
@@ -2747,7 +2813,7 @@ export function ShowcaseVideoEditingDetail({
   );
 
   const commitActiveWorkIndex = useCallback(
-    (nextIndex: number, opts?: { forceRapid?: boolean }) => {
+    (nextIndex: number, opts?: { forceRapid?: boolean; stripLeadMs?: number }) => {
       const now = Date.now();
       const rapidGap =
         workSwitchLastCommitAtRef.current > 0 &&
@@ -2793,23 +2859,43 @@ export function ShowcaseVideoEditingDetail({
       if (rapid) {
         detailBodyVisibleRef.current = false;
         setDetailBodyVisible(false);
+        setDetailTitleVisible(true);
         applyActiveWorkIndex(nextIndex, epoch, { rapid: true });
         return;
       }
 
+      // Fade current title out immediately — do not wait for strip / Y / card.
+      setDetailTitleVisible(false);
+
       const waitForFadeOut = detailBodyVisibleRef.current;
-      detailBodyVisibleRef.current = false;
-      setDetailBodyVisible(false);
+      const stripLeadMs = Math.max(0, opts?.stripLeadMs ?? 0);
+      const bodyOutMs = waitForFadeOut ? DETAIL_BODY_OUT_MS : 0;
       // Keep any active cutoff mask through the body opacity out so both fade together.
 
-      detailBodySwapTimerRef.current = window.setTimeout(
-        () => {
-          detailBodySwapTimerRef.current = null;
+      const runApply = () => {
+        detailBodySwapTimerRef.current = null;
+        if (epoch !== workSwitchEpochRef.current) return;
+        applyActiveWorkIndex(nextIndex, epoch, { rapid: false });
+      };
+
+      if (stripLeadMs > 0) {
+        // Works-strip slide first; only then fade body and start title/card box anims.
+        detailBodySwapTimerRef.current = window.setTimeout(() => {
           if (epoch !== workSwitchEpochRef.current) return;
-          applyActiveWorkIndex(nextIndex, epoch, { rapid: false });
-        },
-        waitForFadeOut ? DETAIL_BODY_OUT_MS : 0,
-      );
+          detailBodyVisibleRef.current = false;
+          setDetailBodyVisible(false);
+          if (bodyOutMs <= 0) {
+            runApply();
+            return;
+          }
+          detailBodySwapTimerRef.current = window.setTimeout(runApply, bodyOutMs);
+        }, stripLeadMs);
+        return;
+      }
+
+      detailBodyVisibleRef.current = false;
+      setDetailBodyVisible(false);
+      detailBodySwapTimerRef.current = window.setTimeout(runApply, bodyOutMs);
     },
     [
       abortWorkSwitchMotion,
@@ -2829,12 +2915,12 @@ export function ShowcaseVideoEditingDetail({
    * translateX and keep scrollLeft at 0 — native overflow/snap drifts right.
    */
   const centerWorksStripThumb = useCallback(
-    (index: number, options?: { instant?: boolean }) => {
+    (index: number, options?: { instant?: boolean }): number => {
       const strip = thumbStripRef.current;
-      if (!strip) return;
+      if (!strip) return 0;
       const thumbs = strip.querySelectorAll<HTMLElement>(".video-editing-works-strip-thumb");
       const thumb = thumbRefs.current[index] ?? thumbs[index] ?? null;
-      if (!thumb && !worksStripUsesTranslatePaging()) return;
+      if (!thumb && !worksStripUsesTranslatePaging()) return 0;
 
       const track = worksStripTrackRef.current;
 
@@ -2864,10 +2950,10 @@ export function ShowcaseVideoEditingDetail({
           if (options?.instant || reduceMotion || Math.abs(to - from) <= 0.5) {
             track.style.transform = to > 0 ? `translate3d(${-to}px, 0, 0)` : "";
             syncX(to);
-            return;
+            return 0;
           }
           const start = performance.now();
-          const duration = 320;
+          const duration = WORKS_STRIP_TWEEN_MS;
           const tick = (now: number) => {
             const t = Math.min(1, (now - start) / duration);
             const k = 1 - (1 - t) ** 3;
@@ -2883,12 +2969,13 @@ export function ShowcaseVideoEditingDetail({
             syncX(to);
           };
           worksStripArrowTweenRafRef.current = window.requestAnimationFrame(tick);
+          return duration;
         }
-        return;
+        return 0;
       }
 
       if (track) track.style.transform = "";
-      if (!thumb) return;
+      if (!thumb) return 0;
 
       const stripRect = strip.getBoundingClientRect();
       const thumbRect = thumb.getBoundingClientRect();
@@ -2901,9 +2988,10 @@ export function ShowcaseVideoEditingDetail({
       // Instant on touch: nested smooth scrollTo yanks the section scroller on iOS.
       if (options?.instant || reduceMotion || typeof strip.scrollTo !== "function") {
         strip.scrollLeft = nextLeft;
-        return;
+        return 0;
       }
       strip.scrollTo({ left: nextLeft, behavior: "smooth" });
+      return WORKS_STRIP_TWEEN_MS;
     },
     [card.id, reduceMotion],
   );
@@ -2928,14 +3016,14 @@ export function ShowcaseVideoEditingDetail({
         });
       }
 
-      commitActiveWorkIndex(nextIndex);
+      let stripLeadMs = 0;
+      if (options?.scrollStrip !== false) {
+        lockWorksStripScrollSync();
+        // Start strip first; title/card wait for this duration inside commit.
+        stripLeadMs = centerWorksStripThumb(nextIndex);
+      }
 
-      if (options?.scrollStrip === false) return;
-
-      lockWorksStripScrollSync();
-      // Use one animated settle path for strip paging across breakpoints.
-      // (Reduced motion / unsupported smooth-scroll still falls back inside.)
-      centerWorksStripThumb(nextIndex);
+      commitActiveWorkIndex(nextIndex, { stripLeadMs });
     },
     [
       centerWorksStripThumb,
@@ -3806,8 +3894,9 @@ export function ShowcaseVideoEditingDetail({
     setActiveVideoIndex(0);
     setPlayerVideoIndex(0);
     setPlayerFaceIndex(0);
+    setDetailTitleVisible(true);
     lockWorksStripScrollSync();
-    requestAnimationFrame(() => {
+  requestAnimationFrame(() => {
       const strip = thumbStripRef.current;
       if (strip) {
         strip.scrollLeft = 0;
@@ -4091,11 +4180,12 @@ export function ShowcaseVideoEditingDetail({
             }
           }, DETAIL_BODY_OUT_MS);
 
-          const resizeDelayMs = DETAIL_BODY_OUT_MS;
+          // Body fades during tab FLIP; drawer height waits until the 4 tabs finish.
+          const resizeDelayMs = DETAIL_TAB_HEADER_SETTLE_MS;
 
           skipTabLiveFitRef.current = true;
 
-          // One height beat after out-fade + live-match wait inside animate.
+          // One height beat after tab headers settle + live-match wait inside animate.
           animateDetailCardToMeasuredBody(targetProbe, resizeDelayMs, {
             onSettled: settleMaskAfterResize,
           });
@@ -4804,7 +4894,7 @@ export function ShowcaseVideoEditingDetail({
                       <motion.div
                         key={activeVideo.id}
                         initial={reduceMotion ? false : { opacity: 0 }}
-                        animate={{ opacity: 1 }}
+                        animate={{ opacity: detailTitleVisible ? 1 : 0 }}
                         exit={reduceMotion ? undefined : { opacity: 0 }}
                         transition={
                           reduceMotion

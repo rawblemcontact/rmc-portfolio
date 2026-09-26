@@ -51,6 +51,7 @@ Durable changelog / memory: **`.cursor/skills/portfoliov2-project-memory/SKILL.m
 
 ## Learned User Preferences
 
+- **Do not commit or push unless asked** — leave local changes uncommitted/unpushed until the user explicitly says to commit and/or push.
 - **Default git line is `continue-publish-main`** — PR base, merges, and publishes go there; not `main`.
 - Hero intro must open without a visible static first frame or hitch; prefer buffering the real mounted reel while closed, then `play()` + `scaleX` open in the same tick.
 
