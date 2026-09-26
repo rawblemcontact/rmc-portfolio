@@ -862,6 +862,13 @@ export function ShowcaseVideoEditingDetail({
   const showDetailScrollHint = detailScrollHintEligible;
   const detailBodySwapTimerRef = useRef<number | null>(null);
   const detailBodyRevealTimerRef = useRef<number | null>(null);
+  /**
+   * Tall tab resizes only: hold copy at opacity 0 until height settle, then fade in.
+   * Short switches keep the existing Framer enter delay.
+   */
+  const [detailTabCopyReady, setDetailTabCopyReady] = useState(true);
+  const detailTabCopyRevealTimerRef = useRef<number | null>(null);
+  const detailTabHoldCopyForSettleRef = useRef(false);
   /** Suppress cutoff remasure while a tab swap resize is in flight. */
   const detailTabMaskLockRef = useRef(false);
   const detailTabMaskSettleTimerRef = useRef<number | null>(null);
@@ -2171,6 +2178,10 @@ export function ShowcaseVideoEditingDetail({
       window.clearTimeout(detailBodyRevealTimerRef.current);
       detailBodyRevealTimerRef.current = null;
     }
+    if (detailTabCopyRevealTimerRef.current != null) {
+      window.clearTimeout(detailTabCopyRevealTimerRef.current);
+      detailTabCopyRevealTimerRef.current = null;
+    }
   }, []);
 
   /** Hard-abort title/card/body timers so a new switch starts from a clean slate. */
@@ -2194,6 +2205,8 @@ export function ShowcaseVideoEditingDetail({
     detailCardHeightTransitioningRef.current = false;
     setDetailCardHeightTransitioning(false);
     skipTabLiveFitRef.current = false;
+    detailTabHoldCopyForSettleRef.current = false;
+    setDetailTabCopyReady(true);
   }, [cancelScheduledDetailCardResize, clearDetailBodySwapTimers]);
 
   /**
@@ -4079,7 +4092,7 @@ export function ShowcaseVideoEditingDetail({
       <motion.div
         key={tabId}
         initial={reduceMotion ? false : { opacity: 0 }}
-        animate={{ opacity: 1 }}
+        animate={{ opacity: detailTabCopyReady || reduceMotion ? 1 : 0 }}
         exit={
           reduceMotion
             ? undefined
@@ -4096,9 +4109,13 @@ export function ShowcaseVideoEditingDetail({
             ? { duration: 0 }
             : {
                 duration: DETAIL_TAB_BODY_IN_S,
-                delay: isNaturalDrawerViewport
-                  ? DETAIL_TAB_BODY_IN_DELAY_NATURAL_S
-                  : DETAIL_TAB_BODY_IN_DELAY_S,
+                // Tall hold: fade only after settle (delay 0 once ready flips).
+                // Short switches: keep the existing enter delay.
+                delay: detailTabHoldCopyForSettleRef.current
+                  ? 0
+                  : isNaturalDrawerViewport
+                    ? DETAIL_TAB_BODY_IN_DELAY_NATURAL_S
+                    : DETAIL_TAB_BODY_IN_DELAY_S,
                 ease: DETAIL_TAB_SWAP_EASE,
               }
         }
@@ -4121,6 +4138,10 @@ export function ShowcaseVideoEditingDetail({
         window.clearTimeout(detailTabMaskSettleTimerRef.current);
         detailTabMaskSettleTimerRef.current = null;
       }
+      if (detailTabCopyRevealTimerRef.current != null) {
+        window.clearTimeout(detailTabCopyRevealTimerRef.current);
+        detailTabCopyRevealTimerRef.current = null;
+      }
       // Player-capped only: freeze scrollport before height changes. Natural drawer
       // (phone/tablet portrait) is not a scrollport — flushSync here only caused hitch/shake.
       if (isPlayerCappedDrawerViewport) {
@@ -4129,9 +4150,25 @@ export function ShowcaseVideoEditingDetail({
         });
       }
 
+      // Tall height deltas only: hold body until settle. Short switches keep Framer delay.
+      let holdCopyForTallSettle = false;
+      if (isCompactDrawerViewport && !reduceMotion) {
+        const surface = detailCardSurfaceRef.current;
+        const probe = detailTabHiddenMeasureRefs.current[nextTabId];
+        if (surface && probe && probe.offsetHeight > 0) {
+          const fromH = surface.offsetHeight;
+          const toH = measureDetailCardHeightForProbe(surface, probe);
+          holdCopyForTallSettle =
+            Math.abs(toH - fromH) > 160; /* same band as duration scale-up */
+        }
+      }
+      detailTabHoldCopyForSettleRef.current = holdCopyForTallSettle;
+
       // Commit the incoming tab before scheduling resize so the first switch
       // can measure live wrap (AnimatePresence mounts during BODY_OUT).
       flushSync(() => {
+        if (holdCopyForTallSettle) setDetailTabCopyReady(false);
+        else setDetailTabCopyReady(true);
         setDetailCardTabOrder((prev) => swapDetailTabToFront(prev, nextTabId));
         setActiveDetailCardTab(nextTabId);
       });
@@ -4167,6 +4204,18 @@ export function ShowcaseVideoEditingDetail({
           // No settle pin — card shell is visible; any height write is a 2nd beat.
           detailCardIdleFitKeyRef.current = `${card.id}:${nextTabId}:${activeVideoIndexRef.current}:${detailBodyVisibleRef.current}`;
           skipTabLiveFitRef.current = false;
+          // Very tall cards: fade body in only after height has settled.
+          if (detailTabHoldCopyForSettleRef.current) {
+            const leadMs = isPlayerCappedDrawerViewport ? DETAIL_CUTOFF_LEAD_MS : 0;
+            if (leadMs <= 0) {
+              setDetailTabCopyReady(true);
+            } else {
+              detailTabCopyRevealTimerRef.current = window.setTimeout(() => {
+                detailTabCopyRevealTimerRef.current = null;
+                setDetailTabCopyReady(true);
+              }, leadMs);
+            }
+          }
         };
 
         if (cardSurface && targetProbe && targetProbe.offsetHeight > 0) {
@@ -4197,6 +4246,8 @@ export function ShowcaseVideoEditingDetail({
           if (isNaturalDrawerViewport) {
             releaseNaturalDrawerResizeLock();
           }
+          detailTabHoldCopyForSettleRef.current = false;
+          setDetailTabCopyReady(true);
         }
       } else {
         detailTabMaskLockRef.current = false;
@@ -4204,6 +4255,8 @@ export function ShowcaseVideoEditingDetail({
         setDetailTabCutoffInstant(false);
         setDetailTabpanelScrollFrozen(false);
         updateDetailTabpanelCutoffFade();
+        detailTabHoldCopyForSettleRef.current = false;
+        setDetailTabCopyReady(true);
       }
     },
     [
