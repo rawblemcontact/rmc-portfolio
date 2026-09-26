@@ -11208,6 +11208,7 @@ const ConfidantExperience = ({
   reduceMotion?: boolean | null;
 }) => {
   const tabsRootRef = useRef<HTMLDivElement>(null);
+  const tabsContentRef = useRef<HTMLDivElement>(null);
   const experienceLandscapePanelMinWidthRef = useRef<number | null>(null);
   const portfolioDebugEnabled = usePortfolioDebugEnabled();
   const allowDebugPanels = useAllowDebugPanels();
@@ -11477,12 +11478,15 @@ const ConfidantExperience = ({
   const experienceDrawerGenRef = useRef(0);
   const experienceDrawerHeightStopRef = useRef<(() => void) | null>(null);
   const experienceDrawerTimersRef = useRef<number[]>([]);
+  const experienceDrawerAnimRef = useRef<Animation | null>(null);
 
   const clearExperienceDrawerTimers = useCallback(() => {
     while (experienceDrawerTimersRef.current.length) {
       const id = experienceDrawerTimersRef.current.pop();
       if (id !== undefined) window.clearTimeout(id);
     }
+    experienceDrawerAnimRef.current?.cancel();
+    experienceDrawerAnimRef.current = null;
     experienceDrawerHeightStopRef.current?.();
     experienceDrawerHeightStopRef.current = null;
   }, []);
@@ -11497,6 +11501,8 @@ const ConfidantExperience = ({
     root.querySelectorAll<HTMLElement>(".tab-panel .panel-header").forEach((el) => {
       el.classList.remove("career-tabs-dim");
     });
+    const shell = tabsContentRef.current ?? root.querySelector<HTMLElement>(".tabs-content");
+    shell?.removeAttribute("data-experience-body-hidden");
   }, []);
 
   const runExperiencePanelIntro = useCallback((panel: HTMLElement) => {
@@ -11529,6 +11535,13 @@ const ConfidantExperience = ({
     });
   }, []);
 
+  const measureExperienceCardHeight = useCallback((shell: HTMLElement, panel: HTMLElement) => {
+    const cs = getComputedStyle(shell);
+    const padY = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+    // Panel layout height ignores ancestor overflow clip — no height:auto dance needed.
+    return Math.max(1, Math.round(panel.offsetHeight + padY));
+  }, []);
+
   const selectExperienceTab = useCallback(
     (tabId: ExperienceTabId) => {
       if (tabId === activeExperienceTabId) return;
@@ -11542,27 +11555,17 @@ const ConfidantExperience = ({
       if (experienceDrawerLockRef.current) return;
 
       const root = tabsRootRef.current;
-      const tabsShellEl = root?.querySelector<HTMLElement>(".tabs-content");
+      const tabsShellEl =
+        tabsContentRef.current ?? root?.querySelector<HTMLElement>(".tabs-content");
       const outgoingPanel = root?.querySelector<HTMLElement>(
-        `#${activeExperienceTabId}`,
+        `#${CSS.escape(activeExperienceTabId)}`,
       );
       if (!root || !tabsShellEl || !outgoingPanel) {
         setActiveExperienceTabId(tabId);
         return;
       }
 
-      const outgoingInner = outgoingPanel.querySelector<HTMLElement>(
-        ".career-tabs-content-inner",
-      );
-      const outgoingHeader = outgoingPanel.querySelector<HTMLElement>(".panel-header");
-      if (!outgoingInner) {
-        setActiveExperienceTabId(tabId);
-        return;
-      }
-
-      const shellStyles = getComputedStyle(
-        root.querySelector(".career-overview-shell") ?? root,
-      );
+      const shellStyles = getComputedStyle(root);
       const fadeMs =
         parseFloat(shellStyles.getPropertyValue("--career-card-fade-ms")) || 306;
       const heightMs =
@@ -11572,80 +11575,70 @@ const ConfidantExperience = ({
       experienceDrawerLockRef.current = true;
       const gen = ++experienceDrawerGenRef.current;
 
-      // Pin layout height (offsetHeight — not zoomed getBoundingClientRect).
-      // Drawer class: host becomes the visible card surface (desc-card pattern).
+      // Pin + paint host as the card surface (desc-card: shell visible, body fades).
       tabsShellEl.classList.add("experience-drawer-resizing");
       const fromShellH = Math.max(1, Math.round(tabsShellEl.offsetHeight));
-      tabsShellEl.style.height = `${fromShellH}px`;
-      tabsShellEl.style.transition = "none";
+      tabsShellEl.style.setProperty("height", `${fromShellH}px`, "important");
+      tabsShellEl.style.setProperty("transition", "none", "important");
 
       const endExperienceDrawer = () => {
+        experienceDrawerAnimRef.current?.cancel();
+        experienceDrawerAnimRef.current = null;
         tabsShellEl.style.removeProperty("height");
         tabsShellEl.style.removeProperty("will-change");
         tabsShellEl.style.removeProperty("transition");
         tabsShellEl.classList.remove("experience-drawer-resizing");
+        tabsShellEl.removeAttribute("data-experience-body-hidden");
         experienceDrawerHeightStopRef.current = null;
       };
 
-      // 1) Fade out inner card content (card surface stays).
-      outgoingInner.classList.add("career-tabs-dim");
-      outgoingHeader?.classList.add("career-tabs-dim");
+      // 1) Fade out body (attribute beats tablet opacity:!important overrides).
+      tabsShellEl.setAttribute("data-experience-body-hidden", "");
 
       experienceDrawerTimersRef.current.push(
         window.setTimeout(() => {
           if (gen !== experienceDrawerGenRef.current) return;
 
-          // Swap tab while content stays dimmed, then measure destination height.
           flushSync(() => {
             setActiveExperienceTabId(tabId);
           });
 
-          const incomingPanel = root.querySelector<HTMLElement>(`#${tabId}`);
-          const incomingInner = incomingPanel?.querySelector<HTMLElement>(
-            ".career-tabs-content-inner",
+          const incomingPanel = root.querySelector<HTMLElement>(
+            `#${CSS.escape(tabId)}`,
           );
-          const incomingHeader =
-            incomingPanel?.querySelector<HTMLElement>(".panel-header");
-          if (!incomingPanel || !incomingInner) {
+          if (!incomingPanel) {
             endExperienceDrawer();
             resetExperienceTabFadeLayers();
             experienceDrawerLockRef.current = false;
             return;
           }
 
-          outgoingInner.classList.remove("career-tabs-dim");
-          outgoingHeader?.classList.remove("career-tabs-dim");
-          incomingInner.classList.add("career-tabs-dim");
-          incomingHeader?.classList.add("career-tabs-dim");
-
-          // Measure hug height while body is opacity 0 (same idea as detail live wrap).
-          tabsShellEl.style.height = "auto";
-          void tabsShellEl.offsetHeight;
-          const naturalShellH = Math.max(1, Math.round(tabsShellEl.offsetHeight));
-          tabsShellEl.style.height = `${fromShellH}px`;
+          // Keep body hidden; measure hug from panel layout + shell padding.
+          void incomingPanel.offsetHeight;
+          const naturalShellH = measureExperienceCardHeight(tabsShellEl, incomingPanel);
+          tabsShellEl.style.setProperty("height", `${fromShellH}px`, "important");
           void tabsShellEl.offsetHeight;
 
           const finishUnlock = () => {
-            // Commit destination height, then fade body in (shell stays put).
-            tabsShellEl.style.height = `${naturalShellH}px`;
-            tabsShellEl.style.willChange = "";
+            // Commit destination, then fade body in (no height write after visible).
+            tabsShellEl.style.setProperty("height", `${naturalShellH}px`, "important");
+            tabsShellEl.style.removeProperty("will-change");
+            experienceDrawerAnimRef.current = null;
             experienceDrawerHeightStopRef.current = null;
-            incomingInner.classList.remove("career-tabs-dim");
-            incomingHeader?.classList.remove("career-tabs-dim");
+            tabsShellEl.removeAttribute("data-experience-body-hidden");
             runExperiencePanelIntro(incomingPanel);
             experienceDrawerTimersRef.current.push(
               window.setTimeout(() => {
                 if (gen !== experienceDrawerGenRef.current) return;
-                // Release to auto only after body is visible — no second height beat.
                 endExperienceDrawer();
                 experienceDrawerLockRef.current = false;
               }, fadeMs),
             );
           };
 
-          // 2) One rAF height tween (PROJECT DETAILS desc-card pattern).
+          // 2) One WAAPI height tween (same family as PROJECT DETAILS title/card).
           const dShell = naturalShellH - fromShellH;
-          if (Math.abs(dShell) < 2) {
+          if (Math.abs(dShell) < 2.5) {
             finishUnlock();
             return;
           }
@@ -11656,32 +11649,39 @@ const ConfidantExperience = ({
             Math.max(heightMs, Math.round(heightMs * (heightDelta / 160))),
           );
           tabsShellEl.style.willChange = "height";
-          const start = performance.now();
-          let rafId = 0;
-          const tick = (now: number) => {
-            if (gen !== experienceDrawerGenRef.current) return;
-            const t = Math.min(1, (now - start) / resizeDurMs);
-            const k = 1 - (1 - t) ** 3;
-            tabsShellEl.style.height = `${fromShellH + dShell * k}px`;
-            if (t < 1) {
-              rafId = window.requestAnimationFrame(tick);
-              experienceDrawerHeightStopRef.current = () => {
-                window.cancelAnimationFrame(rafId);
-                endExperienceDrawer();
-                resetExperienceTabFadeLayers();
-                experienceDrawerLockRef.current = false;
-              };
-              return;
-            }
-            finishUnlock();
-          };
-          rafId = window.requestAnimationFrame(tick);
+
+          const anim = tabsShellEl.animate(
+            [
+              { height: `${fromShellH}px` },
+              { height: `${naturalShellH}px` },
+            ],
+            {
+              duration: resizeDurMs,
+              easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+              fill: "forwards",
+            },
+          );
+          experienceDrawerAnimRef.current = anim;
           experienceDrawerHeightStopRef.current = () => {
-            window.cancelAnimationFrame(rafId);
+            anim.cancel();
+            experienceDrawerAnimRef.current = null;
             endExperienceDrawer();
             resetExperienceTabFadeLayers();
             experienceDrawerLockRef.current = false;
           };
+          anim.finished.then(
+            () => {
+              if (gen !== experienceDrawerGenRef.current) return;
+              // Persist WAAPI end state into the style attribute, then cancel the effect.
+              tabsShellEl.style.setProperty("height", `${naturalShellH}px`, "important");
+              anim.cancel();
+              experienceDrawerAnimRef.current = null;
+              finishUnlock();
+            },
+            () => {
+              /* cancelled */
+            },
+          );
         }, fadeMs),
       );
     },
@@ -11692,6 +11692,7 @@ const ConfidantExperience = ({
       clearExperienceDrawerTimers,
       resetExperienceTabFadeLayers,
       runExperiencePanelIntro,
+      measureExperienceCardHeight,
     ],
   );
 
@@ -11700,10 +11701,14 @@ const ConfidantExperience = ({
       experienceDrawerGenRef.current += 1;
       clearExperienceDrawerTimers();
       experienceDrawerLockRef.current = false;
-      const root = tabsRootRef.current;
-      const shell = root?.querySelector<HTMLElement>(".tabs-content");
+      const shell =
+        tabsContentRef.current ??
+        tabsRootRef.current?.querySelector<HTMLElement>(".tabs-content");
       shell?.style.removeProperty("height");
+      shell?.style.removeProperty("will-change");
+      shell?.style.removeProperty("transition");
       shell?.classList.remove("experience-drawer-resizing");
+      shell?.removeAttribute("data-experience-body-hidden");
       resetExperienceTabFadeLayers();
     };
   }, [clearExperienceDrawerTimers, resetExperienceTabFadeLayers]);
@@ -11862,10 +11867,15 @@ const ConfidantExperience = ({
     const root = tabsRootRef.current;
     if (!root) return;
 
+    const tabsContent =
+      tabsContentRef.current ?? root.querySelector<HTMLElement>(".tabs-content");
+    // Never clobber an in-flight drawer surface.
+    if (tabsContent?.classList.contains("experience-drawer-resizing")) return;
+
     resetExperienceTabFadeLayers();
-    const tabsContent = root.querySelector<HTMLElement>(".tabs-content");
     tabsContent?.style.removeProperty("height");
     tabsContent?.classList.remove("experience-drawer-resizing");
+    tabsContent?.removeAttribute("data-experience-body-hidden");
 
     root.querySelectorAll<HTMLElement>(".tab-panel").forEach((panel) => {
       panel.querySelectorAll<HTMLElement>(
@@ -11877,7 +11887,9 @@ const ConfidantExperience = ({
       });
     });
 
-    const panel = root.querySelector<HTMLElement>(`#${activeExperienceTabId}`);
+    const panel = root.querySelector<HTMLElement>(
+      `#${CSS.escape(activeExperienceTabId)}`,
+    );
     if (!panel) return;
 
     void panel.offsetHeight;
@@ -12091,6 +12103,7 @@ const ConfidantExperience = ({
               </motion.div>
             ) : (
               <div
+                ref={tabsContentRef}
                 className="tabs-content experience-card-entrance-host"
                 style={experienceLandscapeEducationWidthLockStyle}
               >
