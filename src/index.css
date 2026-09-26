@@ -7805,8 +7805,6 @@
 .pdf-loading-indicator__loader {
   /* Same base ink as FILE LOADING… (opacity pulse lives on the wrap). */
   color: color-mix(in srgb, rgb(186 186 186) 40.5%, transparent);
-  transform: scale(1.35);
-  transform-origin: center center;
 }
 .pdf-loading-indicator__label {
   margin: 0;
@@ -7839,25 +7837,10 @@
   }
 }
 @media (min-width: 640px) {
-  .pdf-loading-indicator__loader {
-    transform: scale(1.5);
-  }
   .pdf-loading-indicator__label {
     margin-top: 0.75rem;
     font-size: 0.6875rem;
     letter-spacing: 0.13em;
-  }
-}
-
-/* Mobile + tablet: PDF loader 25% smaller than desktop scale. */
-@media (max-width: 1366px) {
-  .pdf-loading-indicator__loader {
-    transform: scale(calc(1.35 * 0.75));
-  }
-}
-@media (min-width: 640px) and (max-width: 1366px) {
-  .pdf-loading-indicator__loader {
-    transform: scale(calc(1.5 * 0.75));
   }
 }
 
