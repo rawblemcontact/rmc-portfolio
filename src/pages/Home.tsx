@@ -98,6 +98,7 @@ import { UserIcon } from "../components/icons/UserIcon";
 import { DUR, EASE, HOVER, NAV_ICON_TAP, NAV_ICON_TAP_RELEASE, PORTFOLIO_BOUNCE, PORTFOLIO_SPEED, SHOWCASE_PDF_PROJECTS_FADE_OUT_S, SIDE_NAV_OVERLAY_FADE_S, SPRING, TAP } from "../lib/motion";
 import {
   DRAWER_BODY_IN_MS,
+  DRAWER_BODY_IN_S,
   DRAWER_BODY_OUT_MS,
   DRAWER_CARD_HEIGHT_EPSILON_PX,
   drawerCardResizeDurationMs,
@@ -11842,6 +11843,22 @@ const ConfidantExperience = ({
       },
     },
   };
+  /**
+   * In-card copy + tags fade in only after the card scale/y entrance finishes —
+   * avoids the 1px settle hitch while keeping chrome entrance unchanged.
+   */
+  const experienceCardBodyFadeDuration = rm ? 0 : DRAWER_BODY_IN_S;
+  const experienceCardBodyEntrance: Variants = {
+    hidden: { opacity: rm ? 1 : 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        delay: rm ? 0 : experienceCardEntranceDuration,
+        duration: experienceCardBodyFadeDuration,
+        ease: experienceCardMotionEase,
+      },
+    },
+  };
   const experienceRailHeaderEntrance: Variants = {
     hidden: {},
     visible: {
@@ -12130,7 +12147,12 @@ const ConfidantExperience = ({
                 initial="hidden"
                 animate={panelSettled ? "visible" : "hidden"}
               >
-                {renderExperienceTabPanels()}
+                <motion.div
+                  className="experience-card-body-fade w-full min-w-0"
+                  variants={experienceCardBodyEntrance}
+                >
+                  {renderExperienceTabPanels()}
+                </motion.div>
               </motion.div>
             ) : (
               <div
@@ -12153,7 +12175,12 @@ const ConfidantExperience = ({
                   initial="hidden"
                   animate={panelSettled ? "visible" : "hidden"}
                 >
-                  {renderExperienceTabPanels()}
+                  <motion.div
+                    className="experience-card-body-fade w-full min-w-0"
+                    variants={experienceCardBodyEntrance}
+                  >
+                    {renderExperienceTabPanels()}
+                  </motion.div>
                 </motion.div>
               </div>
             )}

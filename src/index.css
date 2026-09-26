@@ -9802,8 +9802,9 @@
     min-width: 0 !important;
     max-width: none !important;
     box-sizing: border-box;
-    /* No right pad — tab buttons match blue line width; hover shift uses rail gutter */
-    padding: 0 0 calc(20px * var(--experience-scale)) 0 !important;
+    /* 2px right pad — room for inset + active outer ring (was flush; clipped ~1px).
+     * Hover shift still uses the rail→card gutter. */
+    padding: 0 2px calc(20px * var(--experience-scale)) 0 !important;
     gap: calc(11px * var(--experience-scale)) !important;
     border: 0 !important;
     border-right: 0 !important;
@@ -9813,6 +9814,11 @@
     filter: none !important;
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
+    overflow: visible !important;
+  }
+
+  #experience .experience-rail-chrome,
+  #experience .career-overview-rail {
     overflow: visible !important;
   }
 
