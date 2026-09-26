@@ -1812,6 +1812,10 @@ export function ShowcaseVideoEditingDetail({
         speedScale?: number;
         /** Natural: bump reserve once, skip per-frame reserve writes (cut layout thrash). */
         freezeReserve?: boolean;
+        /** Frozen start height from pin-before-swap (prevents first-switch from≈to snap). */
+        fromHeightPx?: number;
+        /** Work-switch: probe destination immediately — no live-wrap wait. */
+        skipLiveWait?: boolean;
         /**
          * @deprecated Kept for call-site compat; destination is always the probe.
          */
@@ -1823,6 +1827,11 @@ export function ShowcaseVideoEditingDetail({
       const switchEpoch = options?.switchEpoch;
       const forcedToHeightPx = options?.toHeightPx;
       const forcedDurationMs = options?.durationMs;
+      const forcedFromHeightPx =
+        options?.fromHeightPx != null && options.fromHeightPx > 0
+          ? options.fromHeightPx
+          : null;
+      const skipLiveWait = Boolean(options?.skipLiveWait);
       const cardSurface = detailCardSurfaceRef.current;
       const activeNatural = detailTabActiveNaturalRef.current;
       const probeReady =
@@ -1847,7 +1856,10 @@ export function ShowcaseVideoEditingDetail({
         const surface = detailCardSurfaceRef.current;
         if (!surface) return;
         const maxHeight = detailCardMaxHeightPxRef.current;
-        const fromHeightRaw = surface.offsetHeight;
+        const fromHeightRaw =
+          forcedFromHeightPx != null
+            ? forcedFromHeightPx
+            : surface.offsetHeight;
         const fromHeight =
           maxHeight != null ? Math.min(fromHeightRaw, maxHeight) : fromHeightRaw;
         detailCardTransitionHeightRef.current = fromHeight;
@@ -1903,9 +1915,9 @@ export function ShowcaseVideoEditingDetail({
             targetProbe,
             detailTabActiveNaturalRef.current,
           );
-          // First switch: live body often isn't the incoming tab yet within 2 frames.
-          // Wait for a matching live wrap before starting the one tween.
-          if (!measured.usedLive && attemptsLeft > 0) {
+          // Tab swaps: wait for live wrap. Work-switch: probe is enough — waiting
+          // let an unpinned shell expand so from≈to and the tween snapped.
+          if (!skipLiveWait && !measured.usedLive && attemptsLeft > 0) {
             requestAnimationFrame(() => startResize(attemptsLeft - 1));
             return;
           }
@@ -1916,7 +1928,10 @@ export function ShowcaseVideoEditingDetail({
           if (maxHeight != null) {
             surface.style.maxHeight = `${maxHeight}px`;
           }
-          const fromHeightRaw = surface.offsetHeight;
+          const fromHeightRaw =
+            forcedFromHeightPx != null
+              ? forcedFromHeightPx
+              : surface.offsetHeight;
           const fromHeight =
             maxHeight != null ? Math.min(fromHeightRaw, maxHeight) : fromHeightRaw;
 
@@ -1948,16 +1963,14 @@ export function ShowcaseVideoEditingDetail({
           // used to bend the curve into a big ease + small second adjust.
           const frozenTo = toHeight;
           const frozenCap = maxHeight;
-          // Large body deltas (Undertale Forever Home) need more time than a tab swap
-          // or the 420ms tween reads as a snap. Cap so short switches stay snappy.
-          // Natural work-switch may pass durationMs so title WAAPI shares this beat.
+          // Large body deltas need the existing delta scale — a short shared title
+          // beat is a floor, never a cap (else tall first-switches read as a snap).
           const heightDelta = Math.abs(frozenTo - fromHeight);
-          // Explicit duration (shared title+card beat) always wins. Otherwise
-          // scale with delta so tall overviews ease instead of snapping.
+          const scaledDurMs = detailCardResizeDurationMs(heightDelta);
           let resizeDurMs =
             forcedDurationMs != null && forcedDurationMs > 0
-              ? forcedDurationMs
-              : detailCardResizeDurationMs(heightDelta);
+              ? Math.max(forcedDurationMs, scaledDurMs)
+              : scaledDurMs;
           // Only speed small moves - compressing tall Undertale tweens reads as chop.
           if (
             heightDelta <= 160 &&
@@ -2039,9 +2052,13 @@ export function ShowcaseVideoEditingDetail({
 
         // Two frames so AnimatePresence can mount the incoming opacity-0 body
         // before we pick live vs probe (avoids measuring the outgoing tab).
-        requestAnimationFrame(() => {
-          requestAnimationFrame(startResize);
-        });
+        if (skipLiveWait) {
+          requestAnimationFrame(() => startResize(0));
+        } else {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(startResize);
+          });
+        }
       };
 
       if (!snap && delayMs > 0) {
@@ -2484,6 +2501,29 @@ export function ShowcaseVideoEditingDetail({
       detailTabpanelCutoffFadeRef.current = "none";
       setDetailTabpanelCutoffFade("none");
       skipWorkSwitchLiveFitRef.current = true;
+
+      // Natural: pin BEFORE overview/tab content swaps. First section load and
+      // first work-switch often have height:auto — tall copy expands the shell
+      // and the tween no-ops (from === to).
+      let naturalPinnedFromHeight: number | null = null;
+      if (isNaturalDrawerViewport && !rapid) {
+        const surface = detailCardSurfaceRef.current;
+        if (surface) {
+          const h = Math.ceil(surface.offsetHeight);
+          if (h > 0) {
+            surface.style.minHeight = "0px";
+            surface.style.transition = "none";
+            surface.style.height = `${h}px`;
+            detailCardTransitionHeightRef.current = h;
+            detailCardHeightPxRef.current = h;
+            detailCardHeightTransitioningRef.current = true;
+            setDetailCardHeightPx(h);
+            setDetailCardHeightTransitioning(true);
+            naturalPinnedFromHeight = h;
+          }
+        }
+      }
+
       setActiveDetailCardTab("overview");
       setDetailCardTabOrder((prev) => swapDetailTabToFront(prev, "overview"));
       // When deferWorkForTabs: leave title on the old work until FLIP finishes.
@@ -2607,19 +2647,32 @@ export function ShowcaseVideoEditingDetail({
         if (epoch !== workSwitchEpochRef.current) return;
         const targetOverviewProbe = detailVideoOverviewMeasureRefs.current[nextIndex];
         if (targetOverviewProbe) {
-          // Live wrap only — do not freeze a prefetched probe height (that forced
-          // a second hug when wrap disagreed). Remeasure inside the tween start.
           const sharedDur =
             coupledDurationMs != null && coupledDurationMs > 0
               ? coupledDurationMs
               : undefined;
-          // One beat to live-or-probe height (measured after mount frames).
+          if (
+            isNaturalDrawerViewport &&
+            naturalPinnedFromHeight != null &&
+            naturalPinnedFromHeight > 0
+          ) {
+            const surface = detailCardSurfaceRef.current;
+            if (surface) {
+              surface.style.minHeight = "0px";
+              surface.style.transition = "none";
+              surface.style.height = `${naturalPinnedFromHeight}px`;
+              detailCardTransitionHeightRef.current = naturalPinnedFromHeight;
+            }
+          }
           animateDetailCardToMeasuredBody(targetOverviewProbe, 0, {
             snap: Boolean(reduceMotion),
             switchEpoch: epoch,
             onSettled: revealAfterHeightSettle,
-            // Shared clock with title when both move; tall overviews still scale up
-            // inside animateDetailCardToMeasuredBody (see heightDelta <= 160).
+            skipLiveWait: true,
+            ...(naturalPinnedFromHeight != null
+              ? { fromHeightPx: naturalPinnedFromHeight }
+              : {}),
+            // Shared clock floor with title; tall deltas still use existing scale.
             ...((sharedDur != null ||
               isNaturalDrawerViewport ||
               isTabletLandscapeViewport ||
@@ -2630,14 +2683,9 @@ export function ShowcaseVideoEditingDetail({
                     : isNaturalDrawerViewport
                       ? DETAIL_NATURAL_CARD_RESIZE_DUR_MS
                       : DETAIL_CARD_RESIZE_DUR_MS,
-                  ...(isNaturalDrawerViewport && sharedDur == null
-                    ? {
-                        speedScale: DETAIL_NATURAL_SPEED,
-                        freezeReserve: true,
-                      }
-                    : isNaturalDrawerViewport
-                      ? { freezeReserve: true }
-                      : {}),
+                  ...(isNaturalDrawerViewport
+                    ? { speedScale: DETAIL_NATURAL_SPEED }
+                    : {}),
                 }
               : {}),
           });
@@ -2716,6 +2764,16 @@ export function ShowcaseVideoEditingDetail({
             if (titleArea && targetProbe && Math.abs(toH - fromH) > 0.5) {
               afterTitleResizeRef.current = () => {
                 if (epoch !== workSwitchEpochRef.current) return;
+                if (
+                  naturalPinnedFromHeight != null &&
+                  naturalPinnedFromHeight > 0
+                ) {
+                  const surface = detailCardSurfaceRef.current;
+                  if (surface) {
+                    surface.style.height = `${naturalPinnedFromHeight}px`;
+                    detailCardTransitionHeightRef.current = naturalPinnedFromHeight;
+                  }
+                }
                 commitTitleText();
                 runAfterDelay(DETAIL_NATURAL_TITLE_CROSSFADE_MS, () => {
                   runAfterDelay(DETAIL_NATURAL_TITLE_TO_CARD_GAP_MS, () => {
@@ -2731,6 +2789,17 @@ export function ShowcaseVideoEditingDetail({
             }
           }
 
+          if (
+            isNaturalDrawerViewport &&
+            naturalPinnedFromHeight != null &&
+            naturalPinnedFromHeight > 0
+          ) {
+            const surface = detailCardSurfaceRef.current;
+            if (surface) {
+              surface.style.height = `${naturalPinnedFromHeight}px`;
+              detailCardTransitionHeightRef.current = naturalPinnedFromHeight;
+            }
+          }
           commitTitleText();
           if (rapid) {
             startTitleAndCardTogether();
@@ -4572,6 +4641,36 @@ export function ShowcaseVideoEditingDetail({
     isCompactDrawerViewport,
     isNaturalDrawerViewport,
     detailCardMaxHeightPx,
+  ]);
+
+  /**
+   * Natural drawers: pin painted height once on first section reveal so the card
+   * is not height:auto. Prevents first work-switch / tall overview from expanding
+   * the shell before the tween.
+   */
+  useLayoutEffect(() => {
+    if (!isNaturalDrawerViewport) return;
+    if (!detailPlayerReveal) return;
+    if (detailCardHeightPxRef.current != null) return;
+    if (workSwitchInFlightRef.current) return;
+    if (detailCardHeightTransitioningRef.current) return;
+    if (!detailBodyVisible) return;
+    const surface = detailCardSurfaceRef.current;
+    if (!surface) return;
+    const h = Math.ceil(surface.offsetHeight);
+    if (h <= 0) return;
+    surface.style.minHeight = "0px";
+    surface.style.transition = "none";
+    surface.style.height = `${h}px`;
+    detailCardTransitionHeightRef.current = h;
+    detailCardHeightPxRef.current = h;
+    setDetailCardHeightPx(h);
+  }, [
+    isNaturalDrawerViewport,
+    detailPlayerReveal,
+    detailBodyVisible,
+    card.id,
+    activeVideo.id,
   ]);
 
   /**
