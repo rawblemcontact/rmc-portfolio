@@ -1811,10 +1811,10 @@
       overflow: visible !important;
     }
 
-    /* Nudge FEATURED WRITING card down 2px (relative top — no Framer transform fight). */
+    /* Nudge FEATURED WRITING card down 3px (relative top — no Framer transform fight). */
     #projects:not([class*="detail-open"]) .projects-showcase-featured-block {
       position: relative;
-      top: 2px;
+      top: 3px;
     }
   }
 
@@ -3749,6 +3749,16 @@
       overflow: visible;
       padding: 0;
       margin: 0;
+    }
+  }
+
+  /* Mobile: flush tab chrome to blue-line ends (base 1px L/R pad insets both sides ~2px). */
+  @media (max-width: 767.98px) {
+    #experience .experience-tab-btn-shell {
+      padding-left: 0;
+      padding-right: 0;
+      margin-left: 0;
+      margin-right: 0;
     }
   }
 
