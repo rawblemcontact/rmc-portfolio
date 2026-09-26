@@ -103,6 +103,13 @@ import {
   drawerCardResizeDurationMs,
   drawerCardResizeEaseK,
 } from "../lib/drawerMotion";
+
+/** EXPERIENCE drawer only — 30% faster than shared desc-card clock. */
+const EXPERIENCE_DRAWER_TIME_SCALE = 0.7;
+const EXPERIENCE_DRAWER_BODY_OUT_MS = Math.round(DRAWER_BODY_OUT_MS * EXPERIENCE_DRAWER_TIME_SCALE);
+const EXPERIENCE_DRAWER_BODY_IN_MS = Math.round(DRAWER_BODY_IN_MS * EXPERIENCE_DRAWER_TIME_SCALE);
+const experienceDrawerResizeDurationMs = (deltaPx: number) =>
+  Math.max(1, Math.round(drawerCardResizeDurationMs(deltaPx) * EXPERIENCE_DRAWER_TIME_SCALE));
 import { prefetchMasonryImageRatios, useMasonryImageRatios } from "../lib/useMasonryImageRatios";
 import { 
   Instagram, 
@@ -11620,10 +11627,10 @@ const ConfidantExperience = ({
         });
       };
 
-      // 1) Fade out body — same 160ms + ease as PROJECT DETAILS desc-card.
+      // 1) Fade out body — same ease as PROJECT DETAILS desc-card; 30% faster clock.
       tabsShellEl.style.setProperty(
         "--experience-body-fade-ms",
-        `${DRAWER_BODY_OUT_MS}ms`,
+        `${EXPERIENCE_DRAWER_BODY_OUT_MS}ms`,
       );
       tabsShellEl.setAttribute("data-experience-body-hidden", "");
 
@@ -11652,14 +11659,14 @@ const ConfidantExperience = ({
           void tabsShellEl.offsetHeight;
 
           const finishUnlock = () => {
-            // Commit destination, then fade body in (240ms — same as desc-card).
+            // Commit destination, then fade body in (scaled desc-card in).
             tabsShellEl.style.setProperty("height", `${naturalShellH}px`, "important");
             tabsShellEl.style.removeProperty("will-change");
             experienceDrawerRafRef.current = null;
             experienceDrawerHeightStopRef.current = null;
             tabsShellEl.style.setProperty(
               "--experience-body-fade-ms",
-              `${DRAWER_BODY_IN_MS}ms`,
+              `${EXPERIENCE_DRAWER_BODY_IN_MS}ms`,
             );
             tabsShellEl.removeAttribute("data-experience-body-hidden");
             runExperiencePanelIntro(incomingPanel);
@@ -11667,18 +11674,18 @@ const ConfidantExperience = ({
               window.setTimeout(() => {
                 if (gen !== experienceDrawerGenRef.current) return;
                 settleExperienceDrawer();
-              }, DRAWER_BODY_IN_MS),
+              }, EXPERIENCE_DRAWER_BODY_IN_MS),
             );
           };
 
-          // 2) One rAF height tween — identical clock/curve to desc-card.
+          // 2) One rAF height tween — same curve as desc-card; 30% faster.
           const dShell = naturalShellH - fromShellH;
           if (Math.abs(dShell) < DRAWER_CARD_HEIGHT_EPSILON_PX) {
             finishUnlock();
             return;
           }
 
-          const resizeDurMs = drawerCardResizeDurationMs(dShell);
+          const resizeDurMs = experienceDrawerResizeDurationMs(dShell);
           tabsShellEl.style.willChange = "height";
           const start = performance.now();
 
@@ -11705,7 +11712,7 @@ const ConfidantExperience = ({
             resetExperienceTabFadeLayers();
             experienceDrawerLockRef.current = false;
           };
-        }, DRAWER_BODY_OUT_MS),
+        }, EXPERIENCE_DRAWER_BODY_OUT_MS),
       );
     },
     [
