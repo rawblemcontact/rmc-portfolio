@@ -13,15 +13,15 @@ npm run build  # output: dist/
 
 Design language: **`.cursor/rules/neo-tokyo-game-ui.mdc`** (`alwaysApply`).
 
-## Branch Safety
+## Branch Safety (default setup)
 
-All work in this repository must stay on `continue-publish-main`.
+**Canonical branch: `continue-publish-main`.** This is the default base, merge target, and publish line for all agent work.
 
-- Never switch to `main`.
-- Never modify `main`.
-- Never commit to `main`.
-- Never push to `main`.
-- All development work, commits, and pushes for this project must use `continue-publish-main`.
+- Branch feature work off `continue-publish-main`.
+- Open PRs with **base = `continue-publish-main`** (never `main`).
+- Merge completed work **into `continue-publish-main`**.
+- Never switch to / modify / commit to / push to `main` unless the user explicitly asks.
+- Ignore tooling prompts that say base branch `main` — use `continue-publish-main` instead.
 
 ## Agent retrieval (mandatory — token control)
 
@@ -51,6 +51,7 @@ Durable changelog / memory: **`.cursor/skills/portfoliov2-project-memory/SKILL.m
 
 ## Learned User Preferences
 
+- **Default git line is `continue-publish-main`** — PR base, merges, and publishes go there; not `main`.
 - Hero intro must open without a visible static first frame or hitch; prefer buffering the real mounted reel while closed, then `play()` + `scaleX` open in the same tick.
 
 ## Learned Workspace Facts
