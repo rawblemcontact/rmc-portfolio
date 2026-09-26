@@ -10426,7 +10426,7 @@
 @media (min-width: 640px) and (max-width: 1023px) {
   #profile .profile-card-surface > p.profile-card-inline-label.profile-card-section-label,
   #profile .profile-summary-card-scroll p.profile-card-inline-label.profile-card-section-label {
-    font-size: calc(clamp(0.82rem, calc(0.2vw + 0.77rem), 0.9rem) + 1px);
+    font-size: calc(clamp(0.82rem, calc(0.2vw + 0.77rem), 0.9rem) + 1.5px);
   }
 }
 
