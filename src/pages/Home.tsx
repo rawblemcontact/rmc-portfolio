@@ -11573,11 +11573,17 @@ const ConfidantExperience = ({
       experienceDrawerLockRef.current = true;
       const gen = ++experienceDrawerGenRef.current;
 
-      const fromShellH = Math.max(
-        1,
-        Math.round(tabsShellEl.getBoundingClientRect().height),
-      );
+      // Pin layout height (offsetHeight — not zoomed getBoundingClientRect).
+      // Drawer class: min-height:0 so grow can pin below content; shell tracks host.
+      tabsShellEl.classList.add("experience-drawer-resizing");
+      const fromShellH = Math.max(1, Math.round(tabsShellEl.offsetHeight));
       tabsShellEl.style.height = `${fromShellH}px`;
+
+      const endExperienceDrawer = () => {
+        tabsShellEl.style.removeProperty("height");
+        tabsShellEl.classList.remove("experience-drawer-resizing");
+        experienceDrawerHeightStopRef.current = null;
+      };
 
       // 1) Fade out inner card content (glass shell stays).
       requestAnimationFrame(() => {
@@ -11602,7 +11608,7 @@ const ConfidantExperience = ({
           const incomingHeader =
             incomingPanel?.querySelector<HTMLElement>(".panel-header");
           if (!incomingPanel || !incomingInner) {
-            tabsShellEl.style.removeProperty("height");
+            endExperienceDrawer();
             resetExperienceTabFadeLayers();
             experienceDrawerLockRef.current = false;
             return;
@@ -11614,16 +11620,14 @@ const ConfidantExperience = ({
           incomingHeader?.classList.add("career-tabs-dim");
 
           tabsShellEl.style.height = "auto";
-          const naturalShellH = Math.max(
-            1,
-            Math.round(tabsShellEl.getBoundingClientRect().height),
-          );
+          // Force layout after panel swap before sampling hug height.
+          void tabsShellEl.offsetHeight;
+          const naturalShellH = Math.max(1, Math.round(tabsShellEl.offsetHeight));
           tabsShellEl.style.height = `${fromShellH}px`;
           void tabsShellEl.offsetHeight;
 
           const finishUnlock = () => {
-            tabsShellEl.style.removeProperty("height");
-            experienceDrawerHeightStopRef.current = null;
+            endExperienceDrawer();
             // 3) Fade new card content back in.
             incomingInner.classList.remove("career-tabs-dim");
             incomingHeader?.classList.remove("career-tabs-dim");
@@ -11658,7 +11662,7 @@ const ConfidantExperience = ({
           experienceDrawerHeightStopRef.current = () => {
             anim.stop();
             unsub();
-            tabsShellEl.style.removeProperty("height");
+            endExperienceDrawer();
             resetExperienceTabFadeLayers();
             experienceDrawerLockRef.current = false;
           };
@@ -11681,7 +11685,9 @@ const ConfidantExperience = ({
       clearExperienceDrawerTimers();
       experienceDrawerLockRef.current = false;
       const root = tabsRootRef.current;
-      root?.querySelector<HTMLElement>(".tabs-content")?.style.removeProperty("height");
+      const shell = root?.querySelector<HTMLElement>(".tabs-content");
+      shell?.style.removeProperty("height");
+      shell?.classList.remove("experience-drawer-resizing");
       resetExperienceTabFadeLayers();
     };
   }, [clearExperienceDrawerTimers, resetExperienceTabFadeLayers]);
@@ -11841,7 +11847,9 @@ const ConfidantExperience = ({
     if (!root) return;
 
     resetExperienceTabFadeLayers();
-    root.querySelector<HTMLElement>(".tabs-content")?.style.removeProperty("height");
+    const tabsContent = root.querySelector<HTMLElement>(".tabs-content");
+    tabsContent?.style.removeProperty("height");
+    tabsContent?.classList.remove("experience-drawer-resizing");
 
     root.querySelectorAll<HTMLElement>(".tab-panel").forEach((panel) => {
       panel.querySelectorAll<HTMLElement>(
