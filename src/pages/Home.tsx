@@ -5990,7 +5990,7 @@ const PROFILE_CARD_COLUMN =
 /** Metadata pill + in-card section labels (SUMMARY, etc.) — paired with `#profile` CSS. */
 const PROFILE_CARD_INLINE_LABEL_CLASS =
   "profile-card-inline-label font-heading w-full min-w-0 max-w-full text-balance leading-snug uppercase";
-/** Slightly stronger hierarchy for red in-card labels (SUMMARY/CURRENT WORK/AREAS OF INTEREST/AVAILABILITY). */
+/** Slightly stronger hierarchy for red in-card labels (SUMMARY/CURRENT WORK/AREAS OF FOCUS/AVAILABILITY). */
 const PROFILE_CARD_SECTION_LABEL_CLASS = `${PROFILE_CARD_INLINE_LABEL_CLASS} profile-card-section-label`;
 /** Tablet band (768–1366px) — mascot must be in-layout before panel open; no whileInView entrance. */
 const PROFILE_TABLET_MIN_PX = 768;
@@ -6542,7 +6542,7 @@ const PhantomProfile = ({
                   <em>SLAYWIRE</em> - Self-produced original narrative IP.
                   </li>
                 </ul>
-                <p className={`${PROFILE_CARD_SECTION_LABEL_CLASS} mb-1.5`} style={{ color: PROFILE_ACCENT_SOFT }}>AREAS OF INTEREST</p>
+                <p className={`${PROFILE_CARD_SECTION_LABEL_CLASS} mb-1.5`} style={{ color: PROFILE_ACCENT_SOFT }}>AREAS OF FOCUS</p>
                 <ul className="font-body text-mono-2 leading-relaxed mb-4 ml-3 list-disc list-outside space-y-2 pl-6 sm:pl-7 marker:text-mono-2/50">
                   <li>Content Strategy</li>
                   <li>Digital Communications</li>
