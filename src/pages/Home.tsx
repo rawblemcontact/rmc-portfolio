@@ -11830,11 +11830,10 @@ const ConfidantExperience = ({
     visible: {},
   };
   const experienceCardEntrance: Variants = {
-    hidden: { opacity: rm ? 1 : 0, y: rm ? 0 : experienceCardEntranceY, scale: rm ? 1 : 0.965 },
+    hidden: { opacity: rm ? 1 : 0, y: rm ? 0 : experienceCardEntranceY },
     visible: {
       opacity: 1,
       y: 0,
-      scale: 1,
       transition: {
         delay: 0,
         type: "tween",
@@ -11844,8 +11843,7 @@ const ConfidantExperience = ({
     },
   };
   /**
-   * In-card copy + tags fade in only after the card scale/y entrance finishes —
-   * avoids the 1px settle hitch while keeping chrome entrance unchanged.
+   * In-card copy + tags fade in only after the card slide/fade entrance finishes.
    */
   const experienceCardBodyFadeDuration = rm ? 0 : DRAWER_BODY_IN_S;
   const experienceCardBodyEntrance: Variants = {
