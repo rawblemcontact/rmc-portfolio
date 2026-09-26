@@ -348,8 +348,6 @@ const DETAIL_NATURAL_CUTOFF_LEAD_MS = Math.round(
 const DETAIL_NATURAL_CARD_RESIZE_DUR_MS = Math.round(
   DETAIL_CARD_RESIZE_DUR_MS * DETAIL_NATURAL_SPEED,
 );
-/** Natural only: pause after title Y (card rides) before the desc-card height tween. */
-const DETAIL_NATURAL_TITLE_TO_CARD_GAP_MS = 50;
 /**
  * Clicks closer than this are "rapid": abort/coalesce and snap instead of stacking
  * the full title→card→reveal choreography.
@@ -2593,7 +2591,10 @@ export function ShowcaseVideoEditingDetail({
         return prefetchedCardToHeight;
       };
 
-      const startCardResize = (coupledDurationMs?: number) => {
+      const startCardResize = (
+        coupledDurationMs?: number,
+        opts?: { commitTitleOnSettle?: boolean },
+      ) => {
         if (epoch !== workSwitchEpochRef.current) return;
         const targetOverviewProbe = detailVideoOverviewMeasureRefs.current[nextIndex];
         if (targetOverviewProbe) {
@@ -2603,11 +2604,16 @@ export function ShowcaseVideoEditingDetail({
             coupledDurationMs != null && coupledDurationMs > 0
               ? coupledDurationMs
               : undefined;
+          const onSettled = () => {
+            // Incoming title fades in only after the one size beat (title Y + card).
+            if (opts?.commitTitleOnSettle) commitTitleText();
+            revealAfterHeightSettle();
+          };
           // One beat to live-or-probe height (measured after mount frames).
           animateDetailCardToMeasuredBody(targetOverviewProbe, 0, {
             snap: Boolean(reduceMotion),
             switchEpoch: epoch,
-            onSettled: revealAfterHeightSettle,
+            onSettled,
             // Shared clock with title when both move; tall overviews scale up
             // inside animateDetailCardToMeasuredBody (forced duration is a floor).
             ...((sharedDur != null ||
@@ -2628,6 +2634,7 @@ export function ShowcaseVideoEditingDetail({
           });
           return;
         }
+        if (opts?.commitTitleOnSettle) commitTitleText();
         revealAfterHeightSettle();
       };
 
@@ -2643,8 +2650,9 @@ export function ShowcaseVideoEditingDetail({
       };
 
       /**
-       * Natural (no title Y): card height after the title fade.
-       * Natural (title Y): handled in beginTitle — Y first, then fade, gap, card.
+       * Natural: one size beat — title height + card height in parallel when both
+       * move (sequential title-Y-then-card jumped the shell while title was already
+       * faded out — first leave from Undertale read as a snap).
        * Player-capped: snap title, then card (cap drift otherwise reads as a 2nd beat).
        */
       const startTitleAndCardTogether = () => {
@@ -2655,15 +2663,9 @@ export function ShowcaseVideoEditingDetail({
             switchEpoch: epoch,
             durationMs: DETAIL_NATURAL_CARD_RESIZE_DUR_MS,
           });
-          if (titleDur > 0) {
-            afterTitleResizeRef.current = () => {
-              runAfterDelay(DETAIL_NATURAL_TITLE_TO_CARD_GAP_MS, () => {
-                startCardResize(DETAIL_NATURAL_CARD_RESIZE_DUR_MS);
-              });
-            };
-            return;
-          }
-          startCardResize(DETAIL_NATURAL_CARD_RESIZE_DUR_MS);
+          startCardResize(
+            titleDur > 0 ? titleDur : DETAIL_NATURAL_CARD_RESIZE_DUR_MS,
+          );
           return;
         }
         animateDetailTitleToMeasuredHeight(nextIndex, {
@@ -2685,8 +2687,8 @@ export function ShowcaseVideoEditingDetail({
         const beginTitle = () => {
           if (epoch !== workSwitchEpochRef.current) return;
 
-          // Natural + title height change: move the card Y first while the old
-          // title copy stays visible, then fade in the new title, then gap + card.
+          // Natural + title height change: title already faded out — ease title
+          // height with the card in one beat, then fade in the new title.
           if (isNaturalDrawerViewport && !rapid && !reduceMotion) {
             const titleArea = detailNowPlayingRef.current;
             if (titleArea) {
@@ -2699,19 +2701,15 @@ export function ShowcaseVideoEditingDetail({
               ? Math.max(targetProbe.offsetHeight, targetProbe.scrollHeight)
               : fromH;
             if (titleArea && targetProbe && Math.abs(toH - fromH) > 0.5) {
-              afterTitleResizeRef.current = () => {
-                if (epoch !== workSwitchEpochRef.current) return;
-                commitTitleText();
-                runAfterDelay(DETAIL_NATURAL_TITLE_CROSSFADE_MS, () => {
-                  runAfterDelay(DETAIL_NATURAL_TITLE_TO_CARD_GAP_MS, () => {
-                    startCardResize(DETAIL_NATURAL_CARD_RESIZE_DUR_MS);
-                  });
-                });
-              };
-              animateDetailTitleToMeasuredHeight(nextIndex, {
+              afterTitleResizeRef.current = null;
+              const titleDur = animateDetailTitleToMeasuredHeight(nextIndex, {
                 switchEpoch: epoch,
                 durationMs: DETAIL_NATURAL_CARD_RESIZE_DUR_MS,
               });
+              startCardResize(
+                titleDur > 0 ? titleDur : DETAIL_NATURAL_CARD_RESIZE_DUR_MS,
+                { commitTitleOnSettle: true },
+              );
               return;
             }
           }
