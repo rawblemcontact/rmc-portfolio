@@ -499,7 +499,7 @@ function worksStripNearestThumbOffset(
 /** Cache width-matched clone heights — Undertale's long overview is expensive to re-clone. */
 const copyBlockMeasureCache = new WeakMap<
   HTMLElement,
-  { width: number; textLen: number; height: number }
+  { width: number; textLen: number; height: number; fontSize: string }
 >();
 
 function measureDetailCardChromeHeight(cardSurface: HTMLElement): number {
@@ -550,7 +550,7 @@ function visualPxToLayoutPx(el: HTMLElement, visualPx: number): number {
 }
 
 /** Copy height only — flex-stretched tab-body wrappers cannot inflate the drawer. */
-function measureCopyBlockHeight(el: HTMLElement): number {
+function measureCopyBlockHeight(el: HTMLElement, cardSurface?: HTMLElement | null): number {
   const copy = el.matches("p, ul")
     ? el
     : el.querySelector(":scope p, :scope ul") ?? el.querySelector("p, ul");
@@ -574,22 +574,24 @@ function measureCopyBlockHeight(el: HTMLElement): number {
       shelf.getBoundingClientRect().width;
     if (width > 0) {
       const textLen = (node.textContent ?? "").length;
+      // Prefer live meta-card typography — shelf computed styles are cold on first switch.
+      const liveSample = cardSurface?.querySelector(
+        ".video-editing-detail-card-tab-surface:not(.video-editing-detail-card-tab-measure) .font-body, .video-editing-detail-card-tab-surface:not(.video-editing-detail-card-tab-measure) li, .video-editing-detail-card-tab-surface:not(.video-editing-detail-card-tab-measure) p",
+      );
+      const cs = getComputedStyle(
+        liveSample instanceof HTMLElement ? liveSample : node,
+      );
+      const fontSize = cs.fontSize;
       const cached = copyBlockMeasureCache.get(node);
       if (
         cached &&
         Math.abs(cached.width - width) < 0.5 &&
-        cached.textLen === textLen
+        cached.textLen === textLen &&
+        cached.fontSize === fontSize
       ) {
         return Math.max(1, cached.height);
       }
       const clone = node.cloneNode(true) as HTMLElement;
-      // Live meta-card copy is forced to 0.8125rem via
-      // `#projects.projects-*-detail-open .video-editing-detail-meta-card
-      // .video-editing-detail-card-tab-surface .font-body`. A body clone
-      // loses that ancestor chain and falls back to Tailwind `text-sm` /
-      // `sm:text-base`, so wrap height is wrong unless we copy computed
-      // typography from the in-shelf node before measuring.
-      const cs = getComputedStyle(node);
       clone.style.cssText = [
         "position:absolute",
         "visibility:hidden",
@@ -622,6 +624,7 @@ function measureCopyBlockHeight(el: HTMLElement): number {
         width,
         textLen,
         height: clonedH,
+        fontSize,
       });
       return Math.max(1, clonedH);
     }
@@ -634,7 +637,7 @@ function measureDetailCardHeightForProbe(
   cardSurface: HTMLElement,
   targetProbe: HTMLElement,
 ): number {
-  const bodyH = measureCopyBlockHeight(targetProbe);
+  const bodyH = measureCopyBlockHeight(targetProbe, cardSurface);
   return Math.ceil(measureDetailCardChromeHeight(cardSurface) + bodyH);
 }
 
@@ -660,6 +663,15 @@ function normalizeDetailCopyText(text: string) {
   return text.replace(/\s+/g, " ").trim();
 }
 
+function detailCopyTextsMatch(a: string, b: string) {
+  const left = normalizeDetailCopyText(a);
+  const right = normalizeDetailCopyText(b);
+  if (!left || !right) return false;
+  if (left === right) return true;
+  const n = Math.min(32, left.length, right.length);
+  return left.startsWith(right.slice(0, n)) || right.startsWith(left.slice(0, n));
+}
+
 /**
  * Single-beat destination: prefer live wrap when it matches the probe tab
  * (avoids measuring the outgoing AnimatePresence body). Else probe clone.
@@ -668,22 +680,18 @@ function measureDetailCardTweenHeight(
   cardSurface: HTMLElement,
   probe: HTMLElement,
   liveContainer: HTMLElement | null,
-): number {
+): { height: number; usedLive: boolean } {
   const probeH = measureDetailCardHeightForProbe(cardSurface, probe);
   const live = liveDetailCardBodyElForMeasure(liveContainer);
-  if (!live) return probeH;
+  if (!live) return { height: probeH, usedLive: false };
   const liveH = measureDetailCardHeightForProbe(cardSurface, live);
-  if (liveH <= DETAIL_CARD_HEIGHT_EPSILON_PX) return probeH;
-  const liveText = normalizeDetailCopyText(live.textContent ?? "");
-  const probeText = normalizeDetailCopyText(probe.textContent ?? "");
-  if (!liveText || !probeText) return probeH;
-  // Same tab when texts match (or share a stable prefix for long overviews).
-  const sameTab =
-    liveText === probeText ||
-    liveText.startsWith(probeText.slice(0, Math.min(32, probeText.length))) ||
-    probeText.startsWith(liveText.slice(0, Math.min(32, liveText.length)));
-  if (!sameTab) return probeH;
-  return liveH;
+  if (liveH <= DETAIL_CARD_HEIGHT_EPSILON_PX) {
+    return { height: probeH, usedLive: false };
+  }
+  if (!detailCopyTextsMatch(live.textContent ?? "", probe.textContent ?? "")) {
+    return { height: probeH, usedLive: false };
+  }
+  return { height: liveH, usedLive: true };
 }
 
 function liveDetailCardBodyEl(container: HTMLElement | null): HTMLElement | null {
@@ -1844,7 +1852,7 @@ export function ShowcaseVideoEditingDetail({
           return;
         }
 
-        const startResize = () => {
+        const startResize = (attemptsLeft = 10) => {
           if (epoch !== detailCardResizeEpochRef.current) return;
           if (isSwitchStale()) {
             endDetailCardHeightTransition(null);
@@ -1866,12 +1874,18 @@ export function ShowcaseVideoEditingDetail({
           // Remeasure after title / layout delay so the player-cap matches the card’s new top.
           syncDetailCardMaxHeightNow();
           const maxHeight = detailCardMaxHeightPxRef.current;
-          // Live wrap when it matches this tab; else probe clone. Never settle-pin after.
-          const naturalToHeight = measureDetailCardTweenHeight(
+          const measured = measureDetailCardTweenHeight(
             surface,
             targetProbe,
             detailTabActiveNaturalRef.current,
           );
+          // First switch: live body often isn't the incoming tab yet within 2 frames.
+          // Wait for a matching live wrap before starting the one tween.
+          if (!measured.usedLive && attemptsLeft > 0) {
+            requestAnimationFrame(() => startResize(attemptsLeft - 1));
+            return;
+          }
+          const naturalToHeight = measured.height;
           detailCardChromeHeightRef.current = measureDetailCardChromeHeight(surface);
           const toHeight =
             maxHeight != null ? Math.min(naturalToHeight, maxHeight) : naturalToHeight;
@@ -4026,6 +4040,13 @@ export function ShowcaseVideoEditingDetail({
         });
       }
 
+      // Commit the incoming tab before scheduling resize so the first switch
+      // can measure live wrap (AnimatePresence mounts during BODY_OUT).
+      flushSync(() => {
+        setDetailCardTabOrder((prev) => swapDetailTabToFront(prev, nextTabId));
+        setActiveDetailCardTab(nextTabId);
+      });
+
       if (isCompactDrawerViewport && !reduceMotion) {
         const cardSurface = detailCardSurfaceRef.current;
         const targetProbe = detailTabHiddenMeasureRefs.current[nextTabId];
@@ -4074,7 +4095,7 @@ export function ShowcaseVideoEditingDetail({
 
           skipTabLiveFitRef.current = true;
 
-          // One probe-height beat only — no live remasure / settle pin after.
+          // One height beat after out-fade + live-match wait inside animate.
           animateDetailCardToMeasuredBody(targetProbe, resizeDelayMs, {
             onSettled: settleMaskAfterResize,
           });
@@ -4094,9 +4115,6 @@ export function ShowcaseVideoEditingDetail({
         setDetailTabpanelScrollFrozen(false);
         updateDetailTabpanelCutoffFade();
       }
-
-      setDetailCardTabOrder((prev) => swapDetailTabToFront(prev, nextTabId));
-      setActiveDetailCardTab(nextTabId);
     },
     [
       activeDetailCardTab,
@@ -4290,6 +4308,21 @@ export function ShowcaseVideoEditingDetail({
       </LayoutGroup>
     </motion.div>
   );
+
+  useLayoutEffect(() => {
+    if (!isCompactDrawerViewport) return;
+    const surface = detailCardSurfaceRef.current;
+    if (!surface) return;
+    // Warm probe clones with live typography so the first switch isn't cold.
+    for (const tabId of DETAIL_CARD_TAB_IDS) {
+      const probe = detailTabHiddenMeasureRefs.current[tabId];
+      if (probe) measureDetailCardHeightForProbe(surface, probe);
+    }
+    for (let i = 0; i < videos.length; i++) {
+      const probe = detailVideoOverviewMeasureRefs.current[i];
+      if (probe) measureDetailCardHeightForProbe(surface, probe);
+    }
+  }, [isCompactDrawerViewport, card.id, activeVideo.id, detailPlayerReveal, videos.length]);
 
   useLayoutEffect(() => {
     const reserve = detailPanelReserveRef.current;
