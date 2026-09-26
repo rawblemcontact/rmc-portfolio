@@ -1365,7 +1365,7 @@
   @media (max-width: 639px) {
     #profile .profile-card-surface > p.profile-card-inline-label.profile-card-section-label,
     #profile .profile-summary-card-scroll > p.profile-card-inline-label.profile-card-section-label {
-      font-size: clamp(0.68rem, calc(0.16vw + 0.64rem), 0.75rem);
+      font-size: 0.6875rem;
       line-height: 1.18;
     }
 
@@ -1373,7 +1373,7 @@
     #profile .profile-card-surface > ul.font-body,
     #profile .profile-summary-card-scroll > p.font-body,
     #profile .profile-summary-card-scroll > ul.font-body {
-      font-size: clamp(0.75rem, calc(0.28vw + 0.665rem), 0.84rem);
+      font-size: 0.75rem;
       line-height: 1.42;
     }
   }
