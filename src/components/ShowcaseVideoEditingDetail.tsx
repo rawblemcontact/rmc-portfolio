@@ -838,6 +838,12 @@ export function ShowcaseVideoEditingDetail({
   /** Hold description copy invisible until box height/title moves finish. */
   const [detailBodyVisible, setDetailBodyVisible] = useState(true);
   const detailBodyVisibleRef = useRef(true);
+  /**
+   * Now-playing title opacity. Cleared immediately on work select so the current
+   * title fades out without waiting for strip / height choreography; restored
+   * when the incoming title text commits (fade in).
+   */
+  const [detailTitleVisible, setDetailTitleVisible] = useState(true);
   /** Desktop + iPad/tablet landscape — hint inside capped desc card (bottom-right) when copy still scrolls. */
   const detailScrollHintEligible =
     (isPlayerCappedDrawerViewport || isTabletLandscapeViewport) &&
@@ -2394,6 +2400,7 @@ export function ShowcaseVideoEditingDetail({
       const commitTitleText = () => {
         activeVideoIndexRef.current = nextIndex;
         setActiveVideoIndex(nextIndex);
+        setDetailTitleVisible(true);
       };
 
       const nextWork = videos[nextIndex];
@@ -2844,9 +2851,13 @@ export function ShowcaseVideoEditingDetail({
       if (rapid) {
         detailBodyVisibleRef.current = false;
         setDetailBodyVisible(false);
+        setDetailTitleVisible(true);
         applyActiveWorkIndex(nextIndex, epoch, { rapid: true });
         return;
       }
+
+      // Fade current title out immediately — do not wait for strip / Y / card.
+      setDetailTitleVisible(false);
 
       const waitForFadeOut = detailBodyVisibleRef.current;
       const stripLeadMs = Math.max(0, opts?.stripLeadMs ?? 0);
@@ -3875,8 +3886,9 @@ export function ShowcaseVideoEditingDetail({
     setActiveVideoIndex(0);
     setPlayerVideoIndex(0);
     setPlayerFaceIndex(0);
+    setDetailTitleVisible(true);
     lockWorksStripScrollSync();
-    requestAnimationFrame(() => {
+  requestAnimationFrame(() => {
       const strip = thumbStripRef.current;
       if (strip) {
         strip.scrollLeft = 0;
@@ -4873,7 +4885,7 @@ export function ShowcaseVideoEditingDetail({
                       <motion.div
                         key={activeVideo.id}
                         initial={reduceMotion ? false : { opacity: 0 }}
-                        animate={{ opacity: 1 }}
+                        animate={{ opacity: detailTitleVisible ? 1 : 0 }}
                         exit={reduceMotion ? undefined : { opacity: 0 }}
                         transition={
                           reduceMotion
