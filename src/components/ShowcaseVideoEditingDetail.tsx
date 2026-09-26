@@ -2625,22 +2625,32 @@ export function ShowcaseVideoEditingDetail({
         }, ms);
       };
 
-      /** Card height is the only eased resize. Title height snaps so cardTop/cap
-       * cannot drift mid-tween (that read as a big ease + small second adjust). */
+      /**
+       * Natural (phone / tablet portrait): ease title height with the card so the
+       * desc card rides up/down instead of snapping when the now-playing title
+       * grows/shrinks. Player-capped: still snap title — easing both shifted
+       * cardTop / player-cap mid-tween and read as a second adjust.
+       */
       const startTitleAndCardTogether = () => {
         if (epoch !== workSwitchEpochRef.current) return;
         afterTitleResizeRef.current = null;
+        if (isNaturalDrawerViewport) {
+          const titleDur = animateDetailTitleToMeasuredHeight(nextIndex, {
+            switchEpoch: epoch,
+            durationMs: DETAIL_NATURAL_CARD_RESIZE_DUR_MS,
+          });
+          startCardResize(
+            titleDur > 0 ? titleDur : DETAIL_NATURAL_CARD_RESIZE_DUR_MS,
+          );
+          return;
+        }
         animateDetailTitleToMeasuredHeight(nextIndex, {
           snap: true,
           switchEpoch: epoch,
         });
         // Remeasure cap after title height is final, then one card tween.
         syncDetailCardMaxHeightNow();
-        startCardResize(
-          isNaturalDrawerViewport
-            ? DETAIL_NATURAL_CARD_RESIZE_DUR_MS
-            : DETAIL_CARD_RESIZE_DUR_MS,
-        );
+        startCardResize(DETAIL_CARD_RESIZE_DUR_MS);
       };
 
       const startTitleFadeThenHeight = () => {
