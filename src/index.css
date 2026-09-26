@@ -7807,16 +7807,16 @@
   color: color-mix(in srgb, rgb(186 186 186) 40.5%, transparent);
   line-height: 0;
 }
-/* Phone / tablet default — visibly above prior 13–16px. */
+/* Match LoaderIcon size prop (48); phone/tablet a hair smaller. */
 .pdf-loading-indicator__loader svg {
-  width: 20px;
-  height: 20px;
+  width: 40px;
+  height: 40px;
 }
 /* True desktop (fine pointer ≥1024, or any viewport ≥1367). */
 @media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
   .pdf-loading-indicator__loader svg {
-    width: 24px;
-    height: 24px;
+    width: 48px;
+    height: 48px;
   }
 }
 .pdf-loading-indicator__label {
