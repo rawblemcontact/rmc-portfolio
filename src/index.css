@@ -10430,7 +10430,19 @@
   }
 }
 
-@media (min-width: 640px) {
+@media (min-width: 640px) and (max-width: 1023px) {
+  #profile .profile-card-surface > p.font-body,
+  #profile .profile-card-surface > ul.font-body,
+  #profile .profile-summary-card-scroll p.font-body,
+  #profile .profile-summary-card-scroll ul.font-body {
+    font-size: clamp(0.9375rem, calc(0.42vw + 0.8rem), 1.0625rem);
+    line-height: 1.5;
+    transform: scale(0.9375);
+    transform-origin: left top;
+  }
+}
+
+@media (min-width: 1024px) {
   #profile .profile-card-surface > p.font-body,
   #profile .profile-card-surface > ul.font-body,
   #profile .profile-summary-card-scroll p.font-body,
