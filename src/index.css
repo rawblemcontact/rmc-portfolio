@@ -3723,21 +3723,26 @@
       background-color var(--career-tab-hover-duration) cubic-bezier(0.4, 0, 0.2, 1),
       box-shadow var(--career-tab-hover-duration) cubic-bezier(0.4, 0, 0.2, 1),
       transform var(--career-tab-hover-duration) cubic-bezier(0.4, 0, 0.2, 1);
-    overflow: hidden;
+    /* Visible so inset + active outer ring are not clipped (same class of bug as card shell). */
+    overflow: visible;
     text-align: left;
   }
 
   #experience .experience-tab-btn-shell {
     width: 100%;
     min-width: 0;
-    /* Contain inner whileTap scale so horizontal tabs-nav scrollWidth stays stable. */
+    /* Contain whileTap scale on horizontal strips; 1px pad keeps active outer ring visible. */
     overflow: hidden;
+    padding: 1px;
+    margin: -1px;
   }
 
-  /* Desktop vertical rail — room for hover translateX; mobile/tablet strips keep overflow:hidden. */
+  /* Desktop vertical rail — room for hover translateX + full ring; mobile/tablet strips keep pad. */
   @media (min-width: 1024px) {
     #experience .experience-tab-btn-shell {
       overflow: visible;
+      padding: 0;
+      margin: 0;
     }
   }
 
@@ -9852,6 +9857,14 @@
     backdrop-filter: blur(2px) !important;
     border: 1px solid var(--career-overview-content-edge) !important;
     border-radius: 4px !important;
+  }
+
+  /*
+   * EDUCATION desktop — match body↔bottom gap to header↔body gap
+   * (panel-header margin-bottom) so “Awarded Distinction.” sits balanced.
+   */
+  #experience .tabs-content:has(#education.active) {
+    padding-bottom: calc(10px * var(--experience-scale)) !important;
   }
 
   #experience .tabs-content::before {
