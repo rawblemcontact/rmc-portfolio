@@ -3822,8 +3822,8 @@
     --career-overview-content-max: 680px;
     flex: 1;
     min-width: 0;
-    /* Slightly tighter bottom inset (matches desc-card bottom-gap trim). */
-    padding: 28px 28px 24px;
+    /* Slightly tighter bottom inset — body copy → card edge gap. */
+    padding: 28px 28px 20px;
     position: relative;
     overflow: hidden;
     isolation: isolate;
@@ -3850,7 +3850,7 @@
   #experience .tabs-content.experience-card-entrance-host > .experience-card-entrance-shell,
   #experience .experience-card-entrance-shell {
     position: absolute !important;
-    /* Idle: inset stretch fills auto-sized host. During drawer, height:100% override. */
+    /* Always inset-stretch — same chrome idle and during drawer (no settle pop). */
     inset: 0 !important;
     z-index: 0 !important;
     width: auto !important;
@@ -3878,24 +3878,20 @@
 
   /*
    * EXPERIENCE drawer — host height is the ONLY geometric change (bottom edge).
-   * Keep entrance-shell frost painted; force height:100% so absolute chrome
-   * tracks the pinned host (height:auto !important otherwise ignores stretch).
-   * No host chrome swap — that caused pre/post hair size jumps.
+   * Entrance-shell frost stays painted via inset:0 (no height:100% / chrome swap).
+   * Do NOT set overflow:hidden on the host — it clips the shell border/backdrop
+   * and the edge “pops” sharper when the class clears after settle.
    */
   #experience .tabs-content.experience-drawer-resizing {
     min-height: 0 !important;
-    overflow: hidden !important;
   }
 
+  /* Clip body only while the host height tweens (shell chrome stays unclipped). */
   #experience
     .tabs-content.experience-card-entrance-host.experience-drawer-resizing
-    > .experience-card-entrance-shell {
-    top: 0 !important;
-    right: 0 !important;
-    bottom: auto !important;
-    left: 0 !important;
-    width: auto !important;
-    height: 100% !important;
+    > .experience-card-entrance-motion {
+    overflow: hidden !important;
+    min-height: 0 !important;
   }
 
   /* Body hide — higher specificity than tablet active opacity:!important rules.
@@ -4888,8 +4884,8 @@
       min-width: 0 !important;
       min-height: min-content !important;
       /* Padding keeps content away from rounded edges so nothing clips.
-       * Bottom inset trimmed slightly (same idea as desc-card bottom gap). */
-      padding: 20px 20px 20px !important;
+       * Bottom inset = body copy → card edge gap. */
+      padding: 20px 20px 16px !important;
       border: 1px solid var(--career-overview-content-edge) !important;
       border-radius: 4px !important;
       background: color-mix(in srgb, var(--portfolio-section-card) 6%, transparent) !important;
@@ -9846,7 +9842,7 @@
     margin-left: var(--experience-rail-gap) !important;
     padding: calc(36px * var(--experience-scale))
       calc(36px * var(--experience-scale))
-      calc(30px * var(--experience-scale)) !important;
+      calc(26px * var(--experience-scale)) !important;
     overflow: visible !important;
     /* Same single-layer frost as tablet-portrait resume card */
     background: color-mix(in srgb, var(--portfolio-section-card) 6%, transparent) !important;
