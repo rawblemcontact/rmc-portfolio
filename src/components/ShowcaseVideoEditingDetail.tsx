@@ -1805,6 +1805,13 @@ export function ShowcaseVideoEditingDetail({
         speedScale?: number;
         /** Natural: bump reserve once, skip per-frame reserve writes (cut layout thrash). */
         freezeReserve?: boolean;
+        /** Frozen start height — set when pinning before content swap. */
+        fromHeightPx?: number;
+        /**
+         * Work-switch: use probe immediately (no live-wrap wait). Waiting let the
+         * unpinned shell expand so from≈to and the tween no-oped as a snap.
+         */
+        skipLiveWait?: boolean;
         /**
          * @deprecated Kept for call-site compat; destination is always the probe.
          */
@@ -1816,6 +1823,11 @@ export function ShowcaseVideoEditingDetail({
       const switchEpoch = options?.switchEpoch;
       const forcedToHeightPx = options?.toHeightPx;
       const forcedDurationMs = options?.durationMs;
+      const forcedFromHeightPx =
+        options?.fromHeightPx != null && options.fromHeightPx > 0
+          ? options.fromHeightPx
+          : null;
+      const skipLiveWait = Boolean(options?.skipLiveWait);
       const cardSurface = detailCardSurfaceRef.current;
       const activeNatural = detailTabActiveNaturalRef.current;
       const probeReady =
@@ -1840,7 +1852,10 @@ export function ShowcaseVideoEditingDetail({
         const surface = detailCardSurfaceRef.current;
         if (!surface) return;
         const maxHeight = detailCardMaxHeightPxRef.current;
-        const fromHeightRaw = surface.offsetHeight;
+        const fromHeightRaw =
+          forcedFromHeightPx != null
+            ? forcedFromHeightPx
+            : surface.offsetHeight;
         const fromHeight =
           maxHeight != null ? Math.min(fromHeightRaw, maxHeight) : fromHeightRaw;
         detailCardTransitionHeightRef.current = fromHeight;
@@ -1896,9 +1911,9 @@ export function ShowcaseVideoEditingDetail({
             targetProbe,
             detailTabActiveNaturalRef.current,
           );
-          // First switch: live body often isn't the incoming tab yet within 2 frames.
-          // Wait for a matching live wrap before starting the one tween.
-          if (!measured.usedLive && attemptsLeft > 0) {
+          // Tab swaps: wait for live wrap. Work-switch: probe is enough — waiting
+          // let an unpinned shell expand so from≈to and the tween snapped.
+          if (!skipLiveWait && !measured.usedLive && attemptsLeft > 0) {
             requestAnimationFrame(() => startResize(attemptsLeft - 1));
             return;
           }
@@ -1909,7 +1924,12 @@ export function ShowcaseVideoEditingDetail({
           if (maxHeight != null) {
             surface.style.maxHeight = `${maxHeight}px`;
           }
-          const fromHeightRaw = surface.offsetHeight;
+          // Prefer frozen pin — offsetHeight can already match toHeight if the
+          // shell expanded before the tween (classic first-switch / tall snap).
+          const fromHeightRaw =
+            forcedFromHeightPx != null
+              ? forcedFromHeightPx
+              : surface.offsetHeight;
           const fromHeight =
             maxHeight != null ? Math.min(fromHeightRaw, maxHeight) : fromHeightRaw;
 
@@ -2032,9 +2052,14 @@ export function ShowcaseVideoEditingDetail({
 
         // Two frames so AnimatePresence can mount the incoming opacity-0 body
         // before we pick live vs probe (avoids measuring the outgoing tab).
-        requestAnimationFrame(() => {
-          requestAnimationFrame(startResize);
-        });
+        // Work-switch skips the live wait — one frame is enough to pin.
+        if (skipLiveWait) {
+          requestAnimationFrame(() => startResize(0));
+        } else {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(startResize);
+          });
+        }
       };
 
       if (!snap && delayMs > 0) {
@@ -2471,6 +2496,30 @@ export function ShowcaseVideoEditingDetail({
       detailTabpanelCutoffFadeRef.current = "none";
       setDetailTabpanelCutoffFade("none");
       skipWorkSwitchLiveFitRef.current = true;
+
+      // Natural: card often has no fixed height yet (null px) on first section
+      // load / first switch. Pin BEFORE overview content swaps — otherwise tall
+      // copy expands the shell and the tween no-ops (from === to). Duration stays
+      // the normal shared beat; we only preserve a real from→to delta.
+      let naturalPinnedFromHeight: number | null = null;
+      if (isNaturalDrawerViewport && !rapid) {
+        const surface = detailCardSurfaceRef.current;
+        if (surface) {
+          const h = Math.ceil(surface.offsetHeight);
+          if (h > 0) {
+            surface.style.minHeight = "0px";
+            surface.style.transition = "none";
+            surface.style.height = `${h}px`;
+            detailCardTransitionHeightRef.current = h;
+            detailCardHeightPxRef.current = h;
+            detailCardHeightTransitioningRef.current = true;
+            setDetailCardHeightPx(h);
+            setDetailCardHeightTransitioning(true);
+            naturalPinnedFromHeight = h;
+          }
+        }
+      }
+
       setActiveDetailCardTab("overview");
       setDetailCardTabOrder((prev) => swapDetailTabToFront(prev, "overview"));
       // When deferWorkForTabs: leave title on the old work until FLIP finishes.
@@ -2594,19 +2643,34 @@ export function ShowcaseVideoEditingDetail({
         if (epoch !== workSwitchEpochRef.current) return;
         const targetOverviewProbe = detailVideoOverviewMeasureRefs.current[nextIndex];
         if (targetOverviewProbe) {
-          // Live wrap only — do not freeze a prefetched probe height (that forced
-          // a second hug when wrap disagreed). Remeasure inside the tween start.
           const sharedDur =
             coupledDurationMs != null && coupledDurationMs > 0
               ? coupledDurationMs
               : undefined;
-          // One beat to live-or-probe height (measured after mount frames).
+          // Re-assert pin right before tween in case title/layout shifted.
+          if (
+            isNaturalDrawerViewport &&
+            naturalPinnedFromHeight != null &&
+            naturalPinnedFromHeight > 0
+          ) {
+            const surface = detailCardSurfaceRef.current;
+            if (surface) {
+              surface.style.minHeight = "0px";
+              surface.style.transition = "none";
+              surface.style.height = `${naturalPinnedFromHeight}px`;
+              detailCardTransitionHeightRef.current = naturalPinnedFromHeight;
+            }
+          }
           animateDetailCardToMeasuredBody(targetOverviewProbe, 0, {
             snap: Boolean(reduceMotion),
             switchEpoch: epoch,
             onSettled: revealAfterHeightSettle,
-            // Shared clock with title when both move; tall overviews still scale up
-            // inside animateDetailCardToMeasuredBody (see heightDelta <= 160).
+            skipLiveWait: true,
+            ...(naturalPinnedFromHeight != null
+              ? { fromHeightPx: naturalPinnedFromHeight }
+              : {}),
+            // Shared clock with title when both move. Duration unchanged —
+            // pin/fromHeight is what prevents the tall snap, not a longer beat.
             ...((sharedDur != null ||
               isNaturalDrawerViewport ||
               isTabletLandscapeViewport ||
@@ -2703,6 +2767,17 @@ export function ShowcaseVideoEditingDetail({
             if (titleArea && targetProbe && Math.abs(toH - fromH) > 0.5) {
               afterTitleResizeRef.current = () => {
                 if (epoch !== workSwitchEpochRef.current) return;
+                // Keep shell at pinned height while overview text swaps in.
+                if (
+                  naturalPinnedFromHeight != null &&
+                  naturalPinnedFromHeight > 0
+                ) {
+                  const surface = detailCardSurfaceRef.current;
+                  if (surface) {
+                    surface.style.height = `${naturalPinnedFromHeight}px`;
+                    detailCardTransitionHeightRef.current = naturalPinnedFromHeight;
+                  }
+                }
                 commitTitleText();
                 runAfterDelay(DETAIL_NATURAL_TITLE_CROSSFADE_MS, () => {
                   runAfterDelay(DETAIL_NATURAL_TITLE_TO_CARD_GAP_MS, () => {
@@ -2718,6 +2793,18 @@ export function ShowcaseVideoEditingDetail({
             }
           }
 
+          // Re-pin before overview swap (first load / tall cards).
+          if (
+            isNaturalDrawerViewport &&
+            naturalPinnedFromHeight != null &&
+            naturalPinnedFromHeight > 0
+          ) {
+            const surface = detailCardSurfaceRef.current;
+            if (surface) {
+              surface.style.height = `${naturalPinnedFromHeight}px`;
+              detailCardTransitionHeightRef.current = naturalPinnedFromHeight;
+            }
+          }
           commitTitleText();
           if (rapid) {
             startTitleAndCardTogether();
@@ -4519,6 +4606,36 @@ export function ShowcaseVideoEditingDetail({
     isCompactDrawerViewport,
     isNaturalDrawerViewport,
     detailCardMaxHeightPx,
+  ]);
+
+  /**
+   * Natural drawers: pin the painted height once on first section reveal so the
+   * card isn't height:auto. Without this, the first work-switch (or tall overview)
+   * expands the shell before the tween and reads as a snap.
+   */
+  useLayoutEffect(() => {
+    if (!isNaturalDrawerViewport) return;
+    if (!detailPlayerReveal) return;
+    if (detailCardHeightPxRef.current != null) return;
+    if (workSwitchInFlightRef.current) return;
+    if (detailCardHeightTransitioningRef.current) return;
+    if (!detailBodyVisible) return;
+    const surface = detailCardSurfaceRef.current;
+    if (!surface) return;
+    const h = Math.ceil(surface.offsetHeight);
+    if (h <= 0) return;
+    surface.style.minHeight = "0px";
+    surface.style.transition = "none";
+    surface.style.height = `${h}px`;
+    detailCardTransitionHeightRef.current = h;
+    detailCardHeightPxRef.current = h;
+    setDetailCardHeightPx(h);
+  }, [
+    isNaturalDrawerViewport,
+    detailPlayerReveal,
+    detailBodyVisible,
+    card.id,
+    activeVideo.id,
   ]);
 
   /**
