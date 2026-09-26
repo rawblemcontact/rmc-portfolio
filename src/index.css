@@ -10017,6 +10017,12 @@
 
 /* iPad horizontal â€” EXPERIENCE rail header parity with PROFILE section main + subhead. */
 @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse) {
+  /* Beat desktop scaled padding — portrait keeps its own 14px bottom. */
+  #experience .tabs-content,
+  #experience .tabs-content:has(#education.active) {
+    padding-bottom: 19px !important;
+  }
+
   #experience .nav-header .section-main-header-title,
   #experience .nav-header .career-nav-section-subtitle {
     font-size: var(--section-main-font-display) !important;
