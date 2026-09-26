@@ -7808,7 +7808,7 @@
 }
 .pdf-loading-indicator__label {
   margin: 0;
-  margin-top: 2.5rem;
+  margin-top: 0.625rem;
   font-size: 0.6875rem;
   font-weight: 700;
   line-height: 1.12;
@@ -7841,7 +7841,7 @@
     transform: scale(1.5);
   }
   .pdf-loading-indicator__label {
-    margin-top: 2.75rem;
+    margin-top: 0.75rem;
     font-size: 0.6875rem;
     letter-spacing: 0.13em;
   }
@@ -8172,19 +8172,21 @@
 }
 
 /*
- * Hero — TAP TO ENTER on phone portrait (LPM / autoplay-block): lift the label
- * above geometric mid for optical eye-band (Safari chrome biases mid down).
- * Mid between 4svh (read low) and 9svh (read high). Hit target stays full-screen.
- * Coarse + portrait only — desktop / tablet / landscape stay true center.
+ * Hero — TAP TO ENTER: nudge icon+label up so the stack reads optically centered
+ * (taller icon sits above the label). Phone portrait coarse keeps the stronger
+ * eye-band lift + heartbeat (Safari chrome biases mid down).
  */
+#hero [data-hero-tap-to-enter="true"] > .hero-tap-to-enter-stack {
+  translate: 0 -1.75rem;
+}
+
 @media (max-width: 767.98px) and (orientation: portrait) and (any-pointer: coarse) {
-  #hero [data-hero-tap-to-enter="true"] > .hero-tap-to-enter-label {
+  #hero [data-hero-tap-to-enter="true"] > .hero-tap-to-enter-stack {
+    translate: none;
     animation: hero-tap-enter-heartbeat 1.45s cubic-bezier(0.34, 1.35, 0.64, 1) infinite;
     transform-origin: center center;
     will-change: transform, opacity;
     position: relative;
-  }
-  #hero [data-hero-tap-to-enter="true"] > span {
     transform: translateY(calc(-1 * clamp(2.75rem, 6.5svh, 4.75rem)));
   }
 }
