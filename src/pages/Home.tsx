@@ -4747,7 +4747,7 @@ const Hero = ({
             <span className="hero-tap-to-enter-label mt-1.5 font-display text-[1.06rem] uppercase tracking-[0.16em] text-white/95 sm:text-[1.12rem]">
               TAP TO ENTER
             </span>
-            <span className="hero-tap-to-enter-lpm-note -mt-1.5 whitespace-nowrap text-center font-display text-[clamp(0.55rem,2.55vw,0.78rem)] leading-none tracking-[0.02em] text-white/55">
+            <span className="hero-tap-to-enter-lpm-note -mt-1.5 text-white/55">
               (For the best experience, turn off Low Power Mode.)
             </span>
           </div>
