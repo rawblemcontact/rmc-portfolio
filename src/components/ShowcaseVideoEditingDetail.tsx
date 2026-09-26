@@ -306,11 +306,12 @@ const DETAIL_CARD_RESIZE_EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
 /** Scale resize duration with body delta so tall overviews (Undertale) ease, not snap. */
 function detailCardResizeDurationMs(heightDeltaPx: number): number {
   const delta = Math.abs(heightDeltaPx);
+  // Tall first-switches need ~2s — sub-second still reads as a snap on phone.
   return Math.min(
-    Math.round(DETAIL_CARD_RESIZE_DUR_MS * 3.2),
+    2200,
     Math.max(
       DETAIL_CARD_RESIZE_DUR_MS,
-      Math.round(DETAIL_CARD_RESIZE_DUR_MS * (delta / 140)),
+      Math.round(DETAIL_CARD_RESIZE_DUR_MS * (delta / 100)),
     ),
   );
 }
@@ -1797,6 +1798,13 @@ export function ShowcaseVideoEditingDetail({
         durationMs?: number;
         /** 0-1 multiplier after duration pick (natural phone speed-up). */
         speedScale?: number;
+        /** Freeze start height (natural pin before content swap). */
+        fromHeightPx?: number;
+        /**
+         * Work-switch: use probe immediately — do not wait for live wrap.
+         * Waiting left the shell idle then slammed tall overviews.
+         */
+        skipLiveWait?: boolean;
         /**
          * @deprecated Kept for call-site compat; destination is always the probe.
          */
@@ -1808,6 +1816,11 @@ export function ShowcaseVideoEditingDetail({
       const switchEpoch = options?.switchEpoch;
       const forcedToHeightPx = options?.toHeightPx;
       const forcedDurationMs = options?.durationMs;
+      const forcedFromHeightPx =
+        options?.fromHeightPx != null && options.fromHeightPx > 0
+          ? options.fromHeightPx
+          : null;
+      const skipLiveWait = Boolean(options?.skipLiveWait);
       const cardSurface = detailCardSurfaceRef.current;
       const activeNatural = detailTabActiveNaturalRef.current;
       const probeReady =
@@ -1832,7 +1845,10 @@ export function ShowcaseVideoEditingDetail({
         const surface = detailCardSurfaceRef.current;
         if (!surface) return;
         const maxHeight = detailCardMaxHeightPxRef.current;
-        const fromHeightRaw = surface.offsetHeight;
+        const fromHeightRaw =
+          forcedFromHeightPx != null
+            ? forcedFromHeightPx
+            : surface.offsetHeight;
         const fromHeight =
           maxHeight != null ? Math.min(fromHeightRaw, maxHeight) : fromHeightRaw;
         detailCardTransitionHeightRef.current = fromHeight;
@@ -1883,25 +1899,34 @@ export function ShowcaseVideoEditingDetail({
           // Remeasure after title / layout delay so the player-cap matches the card’s new top.
           syncDetailCardMaxHeightNow();
           const maxHeight = detailCardMaxHeightPxRef.current;
-          const measured = measureDetailCardTweenHeight(
-            surface,
-            targetProbe,
-            detailTabActiveNaturalRef.current,
-          );
-          // First switch: live body often isn't the incoming tab yet within 2 frames.
-          // Wait for a matching live wrap before starting the one tween.
-          if (!measured.usedLive && attemptsLeft > 0) {
+          const measured =
+            forcedToHeightPx != null
+              ? { height: forcedToHeightPx, usedLive: true }
+              : measureDetailCardTweenHeight(
+                  surface,
+                  targetProbe,
+                  detailTabActiveNaturalRef.current,
+                );
+          // Tab swaps: wait briefly for live wrap. Work-switch: probe is enough —
+          // waiting left tall first-switches idle then snap-committed.
+          if (!skipLiveWait && !measured.usedLive && attemptsLeft > 0) {
             requestAnimationFrame(() => startResize(attemptsLeft - 1));
             return;
           }
-          const naturalToHeight = measured.height;
+          const naturalToHeight =
+            forcedToHeightPx != null ? forcedToHeightPx : measured.height;
           detailCardChromeHeightRef.current = measureDetailCardChromeHeight(surface);
           const toHeight =
             maxHeight != null ? Math.min(naturalToHeight, maxHeight) : naturalToHeight;
           if (maxHeight != null) {
             surface.style.maxHeight = `${maxHeight}px`;
           }
-          const fromHeightRaw = surface.offsetHeight;
+          // Prefer frozen pin — offsetHeight can already match toHeight if the
+          // shell expanded before the tween (classic first-switch snap).
+          const fromHeightRaw =
+            forcedFromHeightPx != null
+              ? forcedFromHeightPx
+              : surface.offsetHeight;
           const fromHeight =
             maxHeight != null ? Math.min(fromHeightRaw, maxHeight) : fromHeightRaw;
 
@@ -1954,13 +1979,9 @@ export function ShowcaseVideoEditingDetail({
               Math.round(resizeDurMs * options.speedScale),
             );
           }
-          // Tall overviews: don't write reserve every frame (double layout on mobile).
-          const throttleReserve = heightDelta > 160;
-          const reserveEl0 = detailPanelReserveRef.current;
-          let reserveFrame = 0;
-          let lastReserveWritten = reserveEl0
-            ? parseFloat(reserveEl0.style.minHeight) || 0
-            : -1;
+          // Ease-in-out for tall expands — pure ease-out dumps most travel up front
+          // and reads as a snap + crawl on phone.
+          const tallEase = heightDelta > 160;
           surface.style.willChange = "height";
           const tick = (now: number) => {
             if (epoch !== detailCardResizeEpochRef.current) return;
@@ -1972,28 +1993,18 @@ export function ShowcaseVideoEditingDetail({
               return;
             }
             const t = Math.min(1, (now - start) / resizeDurMs);
-            const k = 1 - (1 - t) ** 3;
+            const k = tallEase
+              ? t < 0.5
+                ? 4 * t * t * t
+                : 1 - (-2 * t + 2) ** 3 / 2
+              : 1 - (1 - t) ** 3;
             const h = fromHeight + (frozenTo - fromHeight) * k;
             surface.style.height = `${h}px`;
             if (frozenCap != null) surface.style.maxHeight = `${frozenCap}px`;
             detailCardTransitionHeightRef.current = h;
-            // Grow page reserve with the card. Never pre-expand to dest — that
-            // jumped under the easing shell on tall Undertale expands.
-            const reserveEl = detailPanelReserveRef.current;
-            reserveFrame += 1;
-            if (
-              reserveEl &&
-              (t >= 1 || !throttleReserve || reserveFrame % 2 === 0)
-            ) {
-              const nextReserve = Math.ceil(h);
-              if (nextReserve > lastReserveWritten) {
-                const cur = parseFloat(reserveEl.style.minHeight) || 0;
-                if (nextReserve > cur) {
-                  reserveEl.style.minHeight = `${nextReserve}px`;
-                  lastReserveWritten = nextReserve;
-                }
-              }
-            }
+            // Do not write page reserve during the tween — child height growth
+            // expands the parent; per-frame minHeight was double-layout chop on
+            // tall Undertale expands. Hug reserve in onSettled instead.
             if (t < 1) {
               detailCardResizeRafRef.current = window.requestAnimationFrame(tick);
               return;
@@ -2009,9 +2020,14 @@ export function ShowcaseVideoEditingDetail({
 
         // Two frames so AnimatePresence can mount the incoming opacity-0 body
         // before we pick live vs probe (avoids measuring the outgoing tab).
-        requestAnimationFrame(() => {
-          requestAnimationFrame(startResize);
-        });
+        // Work-switch skips the live wait — one frame is enough to pin.
+        if (skipLiveWait) {
+          requestAnimationFrame(() => startResize(0));
+        } else {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(startResize);
+          });
+        }
       };
 
       if (!snap && delayMs > 0) {
@@ -2480,6 +2496,7 @@ export function ShowcaseVideoEditingDetail({
       // Natural first work-switch: card often has no fixed height yet (null px).
       // Pin BEFORE overview/tab content swaps — otherwise tall copy (Undertale)
       // expands the shell instantly and the later tween no-ops (from === to).
+      let naturalPinnedFromHeight: number | null = null;
       if (isNaturalDrawerViewport && !rapid) {
         const surface = detailCardSurfaceRef.current;
         if (surface) {
@@ -2493,6 +2510,7 @@ export function ShowcaseVideoEditingDetail({
             detailCardHeightTransitioningRef.current = true;
             setDetailCardHeightPx(h);
             setDetailCardHeightTransitioning(true);
+            naturalPinnedFromHeight = h;
           }
         }
       }
@@ -2616,21 +2634,29 @@ export function ShowcaseVideoEditingDetail({
         return prefetchedCardToHeight;
       };
 
-      const startCardResize = (coupledDurationMs?: number) => {
+      const startCardResize = (
+        coupledDurationMs?: number,
+        fromHeightPx?: number | null,
+      ) => {
         if (epoch !== workSwitchEpochRef.current) return;
         const targetOverviewProbe = detailVideoOverviewMeasureRefs.current[nextIndex];
         if (targetOverviewProbe) {
-          // Live wrap only — do not freeze a prefetched probe height (that forced
-          // a second hug when wrap disagreed). Remeasure inside the tween start.
+          // Probe destination + frozen from-height. Do not wait for live wrap —
+          // that delay made tall first-switches idle then snap.
           const sharedDur =
             coupledDurationMs != null && coupledDurationMs > 0
               ? coupledDurationMs
               : undefined;
-          // One beat to live-or-probe height (measured after mount frames).
+          const pinnedFrom =
+            fromHeightPx != null && fromHeightPx > 0
+              ? fromHeightPx
+              : naturalPinnedFromHeight;
           animateDetailCardToMeasuredBody(targetOverviewProbe, 0, {
             snap: Boolean(reduceMotion),
             switchEpoch: epoch,
             onSettled: revealAfterHeightSettle,
+            skipLiveWait: true,
+            ...(pinnedFrom != null ? { fromHeightPx: pinnedFrom } : {}),
             // Shared clock with title when both move; tall overviews scale up
             // inside animateDetailCardToMeasuredBody (forced duration is a floor).
             ...((sharedDur != null ||
@@ -2666,9 +2692,8 @@ export function ShowcaseVideoEditingDetail({
       };
 
       /**
-       * Natural (no title Y): card height after the title fade.
-       * Natural (title Y): handled in beginTitle — Y first, then fade, gap, card.
-       * Player-capped: snap title, then card (cap drift otherwise reads as a 2nd beat).
+       * Natural: title Y + card height as one shared beat (sequential felt like
+       * snap-then-snap on tall first-switches). Player-capped: snap title, then card.
        */
       const startTitleAndCardTogether = () => {
         if (epoch !== workSwitchEpochRef.current) return;
@@ -2678,15 +2703,10 @@ export function ShowcaseVideoEditingDetail({
             switchEpoch: epoch,
             durationMs: DETAIL_NATURAL_CARD_RESIZE_DUR_MS,
           });
-          if (titleDur > 0) {
-            afterTitleResizeRef.current = () => {
-              runAfterDelay(DETAIL_NATURAL_TITLE_TO_CARD_GAP_MS, () => {
-                startCardResize(DETAIL_NATURAL_CARD_RESIZE_DUR_MS);
-              });
-            };
-            return;
-          }
-          startCardResize(DETAIL_NATURAL_CARD_RESIZE_DUR_MS);
+          startCardResize(
+            titleDur > 0 ? titleDur : DETAIL_NATURAL_CARD_RESIZE_DUR_MS,
+            naturalPinnedFromHeight,
+          );
           return;
         }
         animateDetailTitleToMeasuredHeight(nextIndex, {
@@ -2708,35 +2728,36 @@ export function ShowcaseVideoEditingDetail({
         const beginTitle = () => {
           if (epoch !== workSwitchEpochRef.current) return;
 
-          // Natural + title height change: move the card Y first while the old
-          // title copy stays visible, then fade in the new title, then gap + card.
+          // Natural: re-pin, swap overview under the pin (body still hidden), then
+          // run title Y + card height together — one ease, not title-then-card snap.
           if (isNaturalDrawerViewport && !rapid && !reduceMotion) {
             const titleArea = detailNowPlayingRef.current;
             if (titleArea) {
               const h = titleArea.offsetHeight;
               if (h > 0) titleArea.style.height = `${h}px`;
             }
-            const targetProbe = detailTitleMeasureRefs.current[nextIndex];
-            const fromH = titleArea?.offsetHeight ?? 0;
-            const toH = targetProbe
-              ? Math.max(targetProbe.offsetHeight, targetProbe.scrollHeight)
-              : fromH;
-            if (titleArea && targetProbe && Math.abs(toH - fromH) > 0.5) {
-              afterTitleResizeRef.current = () => {
-                if (epoch !== workSwitchEpochRef.current) return;
-                commitTitleText();
-                runAfterDelay(DETAIL_NATURAL_TITLE_CROSSFADE_MS, () => {
-                  runAfterDelay(DETAIL_NATURAL_TITLE_TO_CARD_GAP_MS, () => {
-                    startCardResize(DETAIL_NATURAL_CARD_RESIZE_DUR_MS);
-                  });
-                });
-              };
-              animateDetailTitleToMeasuredHeight(nextIndex, {
-                switchEpoch: epoch,
-                durationMs: DETAIL_NATURAL_CARD_RESIZE_DUR_MS,
-              });
-              return;
+            const surface = detailCardSurfaceRef.current;
+            const pinnedFrom =
+              naturalPinnedFromHeight ??
+              detailCardTransitionHeightRef.current ??
+              (surface ? Math.ceil(surface.offsetHeight) : null);
+            if (surface && pinnedFrom != null && pinnedFrom > 0) {
+              surface.style.minHeight = "0px";
+              surface.style.transition = "none";
+              surface.style.height = `${pinnedFrom}px`;
+              detailCardTransitionHeightRef.current = pinnedFrom;
+              naturalPinnedFromHeight = pinnedFrom;
             }
+            commitTitleText();
+            const titleDur = animateDetailTitleToMeasuredHeight(nextIndex, {
+              switchEpoch: epoch,
+              durationMs: DETAIL_NATURAL_CARD_RESIZE_DUR_MS,
+            });
+            startCardResize(
+              titleDur > 0 ? titleDur : DETAIL_NATURAL_CARD_RESIZE_DUR_MS,
+              pinnedFrom,
+            );
+            return;
           }
 
           commitTitleText();
@@ -2744,7 +2765,7 @@ export function ShowcaseVideoEditingDetail({
             startTitleAndCardTogether();
             return;
           }
-          // Crossfade alone, then title snap/card (or natural no-Y → card).
+          // Crossfade alone, then title snap/card (player-capped path).
           runAfterDelay(
             isNaturalDrawerViewport
               ? DETAIL_NATURAL_TITLE_CROSSFADE_MS
