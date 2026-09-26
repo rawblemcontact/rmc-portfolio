@@ -582,47 +582,7 @@ function measureCopyBlockHeight(el: HTMLElement): number {
       ) {
         height = Math.max(height, cached.height);
       } else {
-        const clone = node.cloneNode(true) as HTMLElement;
-        // Live meta-card copy is forced to 0.8125rem via
-        // `#projects.projects-*-detail-open .video-editing-detail-meta-card
-        // .video-editing-detail-card-tab-surface .font-body`. A body clone
-        // loses that ancestor chain and falls back to Tailwind `text-sm` /
-        // `sm:text-base`, so wrap height is wrong unless we copy computed
-        // typography from the in-shelf node before measuring.
-        const cs = getComputedStyle(node);
-        clone.style.cssText = [
-          "position:absolute",
-          "visibility:hidden",
-          "display:block",
-          "left:-10000px",
-          "top:0",
-          `width:${width}px`,
-          "height:auto",
-          "max-height:none",
-          "overflow:visible",
-          "pointer-events:none",
-          "z-index:-1",
-          `font:${cs.font}`,
-          `font-size:${cs.fontSize}`,
-          `line-height:${cs.lineHeight}`,
-          `letter-spacing:${cs.letterSpacing}`,
-          `word-spacing:${cs.wordSpacing}`,
-          `white-space:${cs.whiteSpace}`,
-          `word-break:${cs.wordBreak}`,
-          `overflow-wrap:${cs.overflowWrap}`,
-          `text-align:${cs.textAlign}`,
-          `padding:${cs.padding}`,
-          `box-sizing:${cs.boxSizing}`,
-          "margin:0",
-        ].join(";");
-        document.body.appendChild(clone);
-        const clonedH = Math.max(clone.offsetHeight, clone.scrollHeight);
-        clone.remove();
-        copyBlockMeasureCache.set(node, {
-          width,
-          textLen,
-          height: clonedH,
-        });
+        const clonedH = measureUnclippedCopyBlock(node, width);
         height = Math.max(height, clonedH);
       }
     }
@@ -636,6 +596,79 @@ function measureDetailCardHeightForProbe(
   targetProbe: HTMLElement,
 ): number {
   const bodyH = measureCopyBlockHeight(targetProbe);
+  return Math.ceil(measureDetailCardChromeHeight(cardSurface) + bodyH);
+}
+
+/**
+ * Off-clip copy height. The hidden measure shelf is `h-0 overflow-hidden` and
+ * can under-report; a width-matched clone on `document.body` does not.
+ */
+function measureUnclippedCopyBlock(node: HTMLElement, width: number): number {
+  const textLen = (node.textContent ?? "").length;
+  const cached = copyBlockMeasureCache.get(node);
+  if (
+    cached &&
+    Math.abs(cached.width - width) < 0.5 &&
+    cached.textLen === textLen
+  ) {
+    return cached.height;
+  }
+  const cs = getComputedStyle(node);
+  const clone = node.cloneNode(true) as HTMLElement;
+  // Live meta-card copy is forced to 0.8125rem via
+  // `#projects.projects-*-detail-open .video-editing-detail-meta-card
+  // .video-editing-detail-card-tab-surface .font-body`. A body clone
+  // loses that ancestor chain and falls back to Tailwind `text-sm` /
+  // `sm:text-base`, so wrap height is wrong unless we copy computed
+  // typography from the source node before measuring.
+  clone.style.cssText = [
+    "position:absolute",
+    "visibility:hidden",
+    "display:block",
+    "left:-10000px",
+    "top:0",
+    `width:${width}px`,
+    "height:auto",
+    "max-height:none",
+    "overflow:visible",
+    "pointer-events:none",
+    "z-index:-1",
+    `font:${cs.font}`,
+    `font-size:${cs.fontSize}`,
+    `line-height:${cs.lineHeight}`,
+    `letter-spacing:${cs.letterSpacing}`,
+    `word-spacing:${cs.wordSpacing}`,
+    `white-space:${cs.whiteSpace}`,
+    `word-break:${cs.wordBreak}`,
+    `overflow-wrap:${cs.overflowWrap}`,
+    `text-align:${cs.textAlign}`,
+    `padding:${cs.padding}`,
+    `box-sizing:${cs.boxSizing}`,
+    "margin:0",
+  ].join(";");
+  document.body.appendChild(clone);
+  const clonedH = Math.max(clone.offsetHeight, clone.scrollHeight);
+  clone.remove();
+  copyBlockMeasureCache.set(node, { width, textLen, height: clonedH });
+  return clonedH;
+}
+
+/**
+ * Card height for the tab mounted in the live surface.
+ * Painted copy height is the destination. The hidden probe is wider on
+ * capped cards, so sizing from it and then fitting the live copy was a
+ * second readjust.
+ */
+function measureIncomingDetailTabCardHeight(
+  cardSurface: HTMLElement,
+  tabId: string,
+): number | null {
+  const host = cardSurface.querySelector(
+    `.video-editing-detail-card-tab-surface:not(.video-editing-detail-card-tab-measure) [data-detail-tab="${tabId}"]`,
+  );
+  if (!(host instanceof HTMLElement) || host.offsetWidth < 1) return null;
+  const bodyH = measureCopyBlockHeight(host);
+  if (bodyH <= 0) return null;
   return Math.ceil(measureDetailCardChromeHeight(cardSurface) + bodyH);
 }
 
@@ -862,6 +895,11 @@ export function ShowcaseVideoEditingDetail({
    * Skip the post-settle / idle live re-fit (Undertale double-jump from other tabs).
    */
   const skipWorkSwitchLiveFitRef = useRef(false);
+  /**
+   * Tab swap measured the live incoming copy (not the hidden probe).
+   * Settle must not schedule a second height tween.
+   */
+  const detailTabIncomingMeasureOkRef = useRef(false);
   const worksArrowReleaseTimerRef = useRef<number | null>(null);
   const worksStripProgrammaticUnlockTimerRef = useRef<number | null>(null);
   const worksStripArrowTweenRafRef = useRef<number | null>(null);
@@ -1751,6 +1789,11 @@ export function ShowcaseVideoEditingDetail({
         speedScale?: number;
         /** Natural: bump reserve once, skip per-frame reserve writes (cut layout thrash). */
         freezeReserve?: boolean;
+        /**
+         * Tab swap: measure this live tab once it is mounted, then tween once.
+         * Skips the hidden-probe destination that later needs a second readjust.
+         */
+        incomingTabId?: DetailCardTabId;
       },
     ) => {
       const onSettled = options?.onSettled;
@@ -1758,6 +1801,8 @@ export function ShowcaseVideoEditingDetail({
       const switchEpoch = options?.switchEpoch;
       const forcedToHeightPx = options?.toHeightPx;
       const forcedDurationMs = options?.durationMs;
+      const incomingTabId = options?.incomingTabId;
+      if (incomingTabId) detailTabIncomingMeasureOkRef.current = false;
       const cardSurface = detailCardSurfaceRef.current;
       const activeNatural = detailTabActiveNaturalRef.current;
       const probeReady =
@@ -1805,6 +1850,7 @@ export function ShowcaseVideoEditingDetail({
 
       const runResize = () => {
         detailCardResizeDelayTimerRef.current = null;
+        const attemptMeasure = (attempt: number) => {
         if (epoch !== detailCardResizeEpochRef.current) return;
         if (isSwitchStale()) {
           endDetailCardHeightTransition(null);
@@ -1812,11 +1858,38 @@ export function ShowcaseVideoEditingDetail({
         }
 
         const surface = detailCardSurfaceRef.current;
-        if (!surface || (!forcedToHeightPx && targetProbe.offsetHeight <= 0 && targetProbe.scrollHeight <= 0)) {
+        if (!surface) {
           endDetailCardHeightTransition(null);
           onSettled?.();
           return;
         }
+
+        // Incoming tab body mounts after the exit fade. Measuring earlier
+        // reads the outgoing copy (or the wider hidden probe) and the drawer
+        // readjusts again once the real wrap lands.
+        let incomingHeight: number | null = null;
+        if (incomingTabId && forcedToHeightPx == null) {
+          incomingHeight = measureIncomingDetailTabCardHeight(surface, incomingTabId);
+          if (incomingHeight == null && attempt < 12) {
+            detailCardResizeRafRef.current = window.requestAnimationFrame(() =>
+              attemptMeasure(attempt + 1),
+            );
+            return;
+          }
+        }
+
+        if (
+          incomingHeight == null &&
+          forcedToHeightPx == null &&
+          targetProbe.offsetHeight <= 0 &&
+          targetProbe.scrollHeight <= 0
+        ) {
+          endDetailCardHeightTransition(null);
+          onSettled?.();
+          return;
+        }
+
+        detailTabIncomingMeasureOkRef.current = incomingHeight != null;
 
         // Remeasure after title / layout delay so the player-cap matches the card’s new top.
         syncDetailCardMaxHeightNow();
@@ -1824,7 +1897,9 @@ export function ShowcaseVideoEditingDetail({
         const naturalToHeight =
           forcedToHeightPx != null
             ? forcedToHeightPx
-            : measureDetailCardHeightForProbe(surface, targetProbe);
+            : incomingHeight != null
+              ? incomingHeight
+              : measureDetailCardHeightForProbe(surface, targetProbe);
         detailCardChromeHeightRef.current = measureDetailCardChromeHeight(surface);
         const toHeight =
           maxHeight != null ? Math.min(naturalToHeight, maxHeight) : naturalToHeight;
@@ -1954,6 +2029,8 @@ export function ShowcaseVideoEditingDetail({
           onSettled?.();
         };
         detailCardResizeRafRef.current = window.requestAnimationFrame(tick);
+        };
+        attemptMeasure(0);
       };
 
       if (!snap && delayMs > 0) {
@@ -4112,6 +4189,7 @@ export function ShowcaseVideoEditingDetail({
                 ease: DETAIL_TAB_SWAP_EASE,
               }
         }
+        data-detail-tab={tabId}
         className="video-editing-detail-card-tab-body min-w-0"
       >
         {renderPortraitDetailTabBody(tabId)}
@@ -4167,7 +4245,14 @@ export function ShowcaseVideoEditingDetail({
           if (isNaturalDrawerViewport) {
             releaseNaturalDrawerResizeLock();
           }
-          scheduleFitDetailCardToLiveBody();
+          // Live incoming copy already supplied this tween's destination.
+          // A post-settle fit is a second readjust (probe width ≠ live wrap).
+          if (detailTabIncomingMeasureOkRef.current) {
+            detailTabIncomingMeasureOkRef.current = false;
+            detailCardIdleFitKeyRef.current = `${card.id}:${nextTabId}:${activeVideoIndexRef.current}:${detailBodyVisibleRef.current}`;
+          } else {
+            scheduleFitDetailCardToLiveBody();
+          }
         };
 
         if (cardSurface && targetProbe && targetProbe.offsetHeight > 0) {
@@ -4183,9 +4268,11 @@ export function ShowcaseVideoEditingDetail({
 
           const resizeDelayMs = DETAIL_BODY_OUT_MS;
 
-          // Measure target when resize starts (after delay), not at click time.
+          // Measure the incoming tab once it has laid out (after the out-fade),
+          // then ease once. Hidden-probe height is only the fallback.
           animateDetailCardToMeasuredBody(targetProbe, resizeDelayMs, {
             onSettled: settleMaskAfterResize,
+            incomingTabId: nextTabId,
           });
         } else {
           detailTabMaskLockRef.current = false;
