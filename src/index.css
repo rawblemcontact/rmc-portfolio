@@ -1544,7 +1544,7 @@
 
   /* Tall bottom dissolve at scroll-top — class toggle so grow eases (inline rem flips can snap). */
   #projects .video-editing-detail-card-tabpanel-fade-host--scroll.is-bottom-fade-tall {
-    --detail-body-bottom-fade: 2.35rem;
+    --detail-body-bottom-fade: 2.6rem;
   }
 
   @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse) {
@@ -1554,7 +1554,7 @@
     }
 
     #projects .video-editing-detail-card-tabpanel-fade-host--scroll.is-bottom-fade-tall {
-      --detail-body-bottom-fade: 1.82rem;
+      --detail-body-bottom-fade: 2.05rem;
     }
   }
 
