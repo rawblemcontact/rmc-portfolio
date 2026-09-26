@@ -271,6 +271,8 @@ function swapDetailTabToFront(
 /** Tab header FLIP travel — slightly longer / softer than DUR.fast. */
 const DETAIL_TAB_SWAP_DUR_S = 0.42;
 const DETAIL_TAB_SWAP_EASE = [0.22, 1, 0.36, 1] as const;
+/** Full 4-tab header settle (FLIP) before drawer height may start. */
+const DETAIL_TAB_HEADER_SETTLE_MS = Math.round(DETAIL_TAB_SWAP_DUR_S * 1000);
 /**
  * Body copy fades out while headers start travelling.
  * Fade-in is delayed (mode="wait" exit + this delay) so copy appears only after headers settle.
@@ -287,7 +289,7 @@ const DETAIL_CUTOFF_LEAD_MS = 200;
  * Wait for tab FLIP to settle before drawing the new underline (avoids scaling
  * while the parent is still translating).
  */
-const DETAIL_TAB_UNDERLINE_DRAW_DELAY_MS = Math.round(DETAIL_TAB_SWAP_DUR_S * 1000);
+const DETAIL_TAB_UNDERLINE_DRAW_DELAY_MS = DETAIL_TAB_HEADER_SETTLE_MS;
 /**
  * Center-out scaleX — same ease family as hero / PROJECTS accent.
  * Close is shorter + fades so the old bar clears before the new one draws.
@@ -312,17 +314,22 @@ function detailCardResizeDurationMs(heightDeltaPx: number): number {
   );
 }
 /**
- * New tab copy waits until height resize finishes + cutoff lead + one paint
- * so the soft edge is already easing when copy fades in (player-capped /
+ * New tab copy waits until tab headers settle + height resize + cutoff lead + one
+ * paint so the soft edge is already easing when copy fades in (player-capped /
  * scrollable cards on desktop + tablet landscape).
  */
 const DETAIL_TAB_BODY_IN_DELAY_S =
-  (DETAIL_CARD_RESIZE_DUR_MS + 32 + DETAIL_CUTOFF_LEAD_MS) / 1000;
+  (DETAIL_TAB_HEADER_SETTLE_MS -
+    DETAIL_BODY_OUT_MS +
+    DETAIL_CARD_RESIZE_DUR_MS +
+    32 +
+    DETAIL_CUTOFF_LEAD_MS) /
+  1000;
 /**
  * Natural drawers: height waits for tab FLIP to finish (avoids layout+resize screenshake),
  * so enter delay spans (FLIP − body-out) + resize + paint.
  */
-const DETAIL_NATURAL_HEIGHT_DELAY_MS = DETAIL_TAB_UNDERLINE_DRAW_DELAY_MS;
+const DETAIL_NATURAL_HEIGHT_DELAY_MS = DETAIL_TAB_HEADER_SETTLE_MS;
 const DETAIL_TAB_BODY_IN_DELAY_NATURAL_S =
   (DETAIL_NATURAL_HEIGHT_DELAY_MS - DETAIL_BODY_OUT_MS + DETAIL_CARD_RESIZE_DUR_MS + 32) /
   1000;
@@ -2626,7 +2633,7 @@ export function ShowcaseVideoEditingDetail({
       };
 
       const tabFlipWaitMs = deferWorkForTabs
-        ? DETAIL_TAB_UNDERLINE_DRAW_DELAY_MS
+        ? DETAIL_TAB_HEADER_SETTLE_MS
         : 0;
       const runAfterDelay = (ms: number, fn: () => void) => {
         afterTitleResizeTimerRef.current = window.setTimeout(() => {
@@ -4172,11 +4179,12 @@ export function ShowcaseVideoEditingDetail({
             }
           }, DETAIL_BODY_OUT_MS);
 
-          const resizeDelayMs = DETAIL_BODY_OUT_MS;
+          // Body fades during tab FLIP; drawer height waits until the 4 tabs finish.
+          const resizeDelayMs = DETAIL_TAB_HEADER_SETTLE_MS;
 
           skipTabLiveFitRef.current = true;
 
-          // One height beat after out-fade + live-match wait inside animate.
+          // One height beat after tab headers settle + live-match wait inside animate.
           animateDetailCardToMeasuredBody(targetProbe, resizeDelayMs, {
             onSettled: settleMaskAfterResize,
           });
