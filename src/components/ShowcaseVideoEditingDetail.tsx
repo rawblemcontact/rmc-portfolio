@@ -639,27 +639,6 @@ function measureDetailCardHeightForProbe(
   return Math.ceil(measureDetailCardChromeHeight(cardSurface) + bodyH);
 }
 
-/**
- * Destination height for a single resize beat.
- * Prefer live wrap when it reports; else hidden probe (clone-accurate).
- * Do NOT take max(live, probe) — that overshoots then needs a shrink beat.
- */
-function measureDetailCardDestHeight(
-  cardSurface: HTMLElement,
-  probe: HTMLElement | null | undefined,
-  live: HTMLElement | null | undefined,
-): number {
-  const liveH =
-    live && (live.offsetHeight > 0 || live.scrollHeight > 0)
-      ? measureDetailCardHeightForProbe(cardSurface, live)
-      : 0;
-  if (liveH > DETAIL_CARD_HEIGHT_EPSILON_PX) return liveH;
-  if (probe && (probe.offsetHeight > 0 || probe.scrollHeight > 0)) {
-    return measureDetailCardHeightForProbe(cardSurface, probe);
-  }
-  return 0;
-}
-
 function liveDetailCardBodyEl(container: HTMLElement | null): HTMLElement | null {
   if (!container) return null;
   const bodies = container.querySelectorAll(".video-editing-detail-card-tab-body");
@@ -671,55 +650,6 @@ function liveDetailCardBodyEl(container: HTMLElement | null): HTMLElement | null
     if (el.offsetHeight > 0 && opacity > 0.5) return el;
   }
   return fallback ?? container;
-}
-
-/**
- * Live tab body for height math — ignores opacity so a single resize beat can
- * measure while copy is still at opacity 0 (out-fade / pre-reveal).
- */
-function liveDetailCardBodyElForMeasure(
-  container: HTMLElement | null,
-): HTMLElement | null {
-  if (!container) return null;
-  const bodies = container.querySelectorAll(".video-editing-detail-card-tab-body");
-  let fallback: HTMLElement | null = null;
-  for (const el of bodies) {
-    if (!(el instanceof HTMLElement)) continue;
-    fallback = el;
-    if (el.offsetHeight > 0 || el.scrollHeight > 0) return el;
-  }
-  return fallback ?? container;
-}
-
-/** Pin drawer height instantly — no second ease after the primary resize beat. */
-function pinDetailCardHeight(surface: HTMLElement, toHeight: number, maxHeight: number | null) {
-  const pinned = maxHeight != null ? Math.min(toHeight, maxHeight) : toHeight;
-  surface.classList.remove("video-editing-detail-meta-card--tweening");
-  surface.style.minHeight = "0px";
-  surface.style.transition = "none";
-  if (maxHeight != null) surface.style.maxHeight = `${maxHeight}px`;
-  surface.style.height = `${pinned}px`;
-  return pinned;
-}
-
-/**
- * Silent height correction (no ease). While copy is hidden, pin exactly.
- * While copy is visible, only grow — never shrink (avoids a second motion).
- */
-function pinDetailCardHeightQuiet(
-  surface: HTMLElement,
-  needHeight: number,
-  maxHeight: number | null,
-  opts?: { allowShrink?: boolean },
-): number | null {
-  if (needHeight <= 0) return null;
-  const cur = surface.offsetHeight;
-  const capped =
-    maxHeight != null ? Math.min(needHeight, maxHeight) : needHeight;
-  const delta = capped - cur;
-  if (Math.abs(delta) <= DETAIL_CARD_HEIGHT_EPSILON_PX) return null;
-  if (delta < 0 && !opts?.allowShrink) return null;
-  return pinDetailCardHeight(surface, capped, maxHeight);
 }
 
 /** True when the drawer is painted at the player-aligned ceiling (tolerance for subpixels). */
