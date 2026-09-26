@@ -326,7 +326,7 @@ const DETAIL_NATURAL_HEIGHT_DELAY_MS = DETAIL_TAB_UNDERLINE_DRAW_DELAY_MS;
 const DETAIL_TAB_BODY_IN_DELAY_NATURAL_S =
   (DETAIL_NATURAL_HEIGHT_DELAY_MS - DETAIL_BODY_OUT_MS + DETAIL_CARD_RESIZE_DUR_MS + 32) /
   1000;
-/** Thumbnail title reflow completes before its description drawer changes size. */
+/** Thumbnail title + description drawer share one resize beat (not title-then-card). */
 const DETAIL_TITLE_MOVE_DUR_MS = DETAIL_CARD_RESIZE_DUR_MS;
 /** Now-playing title AnimatePresence crossfade (keep in sync with JSX transition). */
 const DETAIL_TITLE_CROSSFADE_MS = 220;
@@ -1870,18 +1870,21 @@ export function ShowcaseVideoEditingDetail({
           // Remeasure after title / layout delay so the player-cap matches the card’s new top.
           syncDetailCardMaxHeightNow();
           const maxHeight = detailCardMaxHeightPxRef.current;
-          const liveForMeasure = preferLiveMeasure
-            ? liveDetailCardBodyElForMeasure(detailTabActiveNaturalRef.current)
-            : null;
-          const measureTarget =
-            liveForMeasure &&
-            (liveForMeasure.offsetHeight > 0 || liveForMeasure.scrollHeight > 0)
-              ? liveForMeasure
-              : targetProbe;
-          const naturalToHeight =
-            forcedToHeightPx != null
-              ? forcedToHeightPx
-              : measureDetailCardHeightForProbe(surface, measureTarget);
+          const naturalToHeight = (() => {
+            if (preferLiveMeasure) {
+              const liveForMeasure = liveDetailCardBodyElForMeasure(
+                detailTabActiveNaturalRef.current,
+              );
+              if (
+                liveForMeasure &&
+                (liveForMeasure.offsetHeight > 0 || liveForMeasure.scrollHeight > 0)
+              ) {
+                return measureDetailCardHeightForProbe(surface, liveForMeasure);
+              }
+            }
+            if (forcedToHeightPx != null) return forcedToHeightPx;
+            return measureDetailCardHeightForProbe(surface, targetProbe);
+          })();
           detailCardChromeHeightRef.current = measureDetailCardChromeHeight(surface);
           const toHeight =
             maxHeight != null ? Math.min(naturalToHeight, maxHeight) : naturalToHeight;
@@ -2463,7 +2466,7 @@ export function ShowcaseVideoEditingDetail({
       const rapid = Boolean(options?.rapid) || Boolean(reduceMotion);
 
       // No snaps (except rapid/reduced-motion). When tabs also reset: FLIP first,
-      // THEN title crossfade + height, THEN card — never tab anim + title at once.
+      // THEN title crossfade, THEN one shared title+card height beat.
       const tabAlsoResets = activeDetailCardTabRef.current !== "overview";
       const deferWorkForTabs = !rapid && !reduceMotion && tabAlsoResets;
 
@@ -2683,45 +2686,41 @@ export function ShowcaseVideoEditingDetail({
         return prefetchedCardToHeight;
       };
 
-      const startCardResize = () => {
+      const startCardResize = (coupledDurationMs?: number) => {
         if (epoch !== workSwitchEpochRef.current) return;
         const targetOverviewProbe = detailVideoOverviewMeasureRefs.current[nextIndex];
         if (targetOverviewProbe) {
-          // Prefer live wrap (title/index already committed) over probe so the
-          // primary tween is the only height motion.
-          const surface = detailCardSurfaceRef.current;
-          const liveBody = liveDetailCardBodyElForMeasure(
-            detailTabActiveNaturalRef.current,
-          );
-          const liveToHeight =
-            surface && liveBody
-              ? measureDetailCardHeightForProbe(surface, liveBody)
+          // Live wrap only — do not freeze a prefetched probe height (that forced
+          // a second hug when wrap disagreed). Remeasure inside the tween start.
+          const sharedDur =
+            coupledDurationMs != null && coupledDurationMs > 0
+              ? coupledDurationMs
               : undefined;
-          const toHeightPx =
-            liveToHeight != null && liveToHeight > 0
-              ? liveToHeight
-              : prefetchCardToHeight();
           animateDetailCardToMeasuredBody(targetOverviewProbe, 0, {
             snap: Boolean(reduceMotion),
             switchEpoch: epoch,
             onSettled: revealAfterHeightSettle,
             preferLiveMeasure: true,
-            ...(toHeightPx != null && toHeightPx > 0 ? { toHeightPx } : {}),
-            // Fixed base duration only for small moves; tall overviews scale up
+            // Shared clock with title when both move; tall overviews still scale up
             // inside animateDetailCardToMeasuredBody (see heightDelta <= 160).
-            ...((isNaturalDrawerViewport ||
+            ...((sharedDur != null ||
+              isNaturalDrawerViewport ||
               isTabletLandscapeViewport ||
               tabAlsoResets)
               ? {
-                  durationMs: isNaturalDrawerViewport
-                    ? DETAIL_NATURAL_CARD_RESIZE_DUR_MS
-                    : DETAIL_CARD_RESIZE_DUR_MS,
-                  ...(isNaturalDrawerViewport
+                  durationMs: sharedDur != null
+                    ? sharedDur
+                    : isNaturalDrawerViewport
+                      ? DETAIL_NATURAL_CARD_RESIZE_DUR_MS
+                      : DETAIL_CARD_RESIZE_DUR_MS,
+                  ...(isNaturalDrawerViewport && sharedDur == null
                     ? {
                         speedScale: DETAIL_NATURAL_SPEED,
                         freezeReserve: true,
                       }
-                    : {}),
+                    : isNaturalDrawerViewport
+                      ? { freezeReserve: true }
+                      : {}),
                 }
               : {}),
           });
@@ -2741,20 +2740,57 @@ export function ShowcaseVideoEditingDetail({
         }, ms);
       };
 
-      const startTitleHeightThenCard = () => {
+      /** Title height + desc card height in one beat (not title-then-card). */
+      const startTitleAndCardTogether = () => {
         if (epoch !== workSwitchEpochRef.current) return;
-        const moveMs = startTitleEase();
-        afterTitleResizeRef.current = startCardResize;
-        if (rapid || moveMs <= 0) {
-          afterTitleResizeRef.current = null;
+        // Title finish must not chain a second card resize.
+        afterTitleResizeRef.current = null;
+        if (rapid) {
+          startTitleEase();
           startCardResize();
           return;
         }
-        runAfterDelay(moveMs + 64, () => {
-          const pending = afterTitleResizeRef.current;
-          afterTitleResizeRef.current = null;
-          pending?.();
-        });
+
+        // Shared clock from the larger of title/card deltas so both ease as one.
+        const surface = detailCardSurfaceRef.current;
+        const liveBody = liveDetailCardBodyElForMeasure(
+          detailTabActiveNaturalRef.current,
+        );
+        const overviewProbe = detailVideoOverviewMeasureRefs.current[nextIndex];
+        const measureEl = liveBody ?? overviewProbe;
+        let cardDelta = 0;
+        if (surface && measureEl) {
+          const toH = measureDetailCardHeightForProbe(surface, measureEl);
+          cardDelta = Math.abs(toH - surface.offsetHeight);
+        }
+        const titleArea = detailNowPlayingRef.current;
+        const titleProbe = detailTitleMeasureRefs.current[nextIndex];
+        let titleDelta = 0;
+        if (titleArea && titleProbe) {
+          titleDelta = Math.abs(
+            Math.max(titleProbe.offsetHeight, titleProbe.scrollHeight) -
+              titleArea.offsetHeight,
+          );
+        }
+        const cardDur = detailCardResizeDurationMs(cardDelta);
+        const titleBase = isNaturalDrawerViewport
+          ? DETAIL_NATURAL_CARD_RESIZE_DUR_MS
+          : DETAIL_TITLE_MOVE_DUR_MS;
+        const sharedMs = Math.max(
+          titleDelta > 0.5 ? titleBase : 0,
+          cardDelta > DETAIL_CARD_HEIGHT_EPSILON_PX ? cardDur : 0,
+        );
+
+        if (sharedMs > 0) {
+          animateDetailTitleToMeasuredHeight(nextIndex, {
+            switchEpoch: epoch,
+            durationMs: sharedMs,
+          });
+          startCardResize(sharedMs);
+          return;
+        }
+        startTitleEase();
+        startCardResize();
       };
 
       const startTitleFadeThenHeight = () => {
@@ -2768,15 +2804,15 @@ export function ShowcaseVideoEditingDetail({
           if (epoch !== workSwitchEpochRef.current) return;
           commitTitleText();
           if (rapid) {
-            startTitleHeightThenCard();
+            startTitleAndCardTogether();
             return;
           }
-          // Crossfade alone, then height, then card.
+          // Crossfade alone, then one shared title+card height beat.
           runAfterDelay(
             isNaturalDrawerViewport
               ? DETAIL_NATURAL_TITLE_CROSSFADE_MS
               : DETAIL_TITLE_CROSSFADE_MS,
-            startTitleHeightThenCard,
+            startTitleAndCardTogether,
           );
         };
         beginTitle();
