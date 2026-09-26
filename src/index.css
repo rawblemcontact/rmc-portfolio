@@ -1810,6 +1810,12 @@
       max-height: none !important;
       overflow: visible !important;
     }
+
+    /* Nudge FEATURED WRITING card down 2px (relative top — no Framer transform fight). */
+    #projects:not([class*="detail-open"]) .projects-showcase-featured-block {
+      position: relative;
+      top: 2px;
+    }
   }
 
   /**
