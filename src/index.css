@@ -10458,4 +10458,8 @@
     font-size: calc(clamp(0.9375rem, calc(0.42vw + 0.8rem), 1.0625rem) - 1px);
   }
 }
-
+@media (min-width: 640px) and (max-width: 1023px) {
+  #profile .profile-card-surface p.profile-card-inline-label:not(.profile-card-section-label) {
+    font-size: 0.78125rem;
+  }
+}
