@@ -1942,15 +1942,14 @@ export function ShowcaseVideoEditingDetail({
           const frozenTo = toHeight;
           const frozenCap = maxHeight;
           // Large body deltas (Undertale Forever Home) need more time than a tab swap
-          // or the 420ms tween reads as a snap. Cap so short switches stay snappy.
-          // Natural work-switch may pass durationMs so title WAAPI shares this beat.
+          // or a short shared title beat — that reads as a snap on the first tall
+          // expand. Coupled duration is a floor, never a cap.
           const heightDelta = Math.abs(frozenTo - fromHeight);
-          // Explicit duration (shared title+card beat) always wins. Otherwise
-          // scale with delta so tall overviews ease instead of snapping.
+          const scaledDurMs = detailCardResizeDurationMs(heightDelta);
           let resizeDurMs =
             forcedDurationMs != null && forcedDurationMs > 0
-              ? forcedDurationMs
-              : detailCardResizeDurationMs(heightDelta);
+              ? Math.max(forcedDurationMs, scaledDurMs)
+              : scaledDurMs;
           // Only speed small moves - compressing tall Undertale tweens reads as chop.
           if (
             heightDelta <= 160 &&
@@ -2604,8 +2603,8 @@ export function ShowcaseVideoEditingDetail({
             snap: Boolean(reduceMotion),
             switchEpoch: epoch,
             onSettled: revealAfterHeightSettle,
-            // Shared clock with title when both move; tall overviews still scale up
-            // inside animateDetailCardToMeasuredBody (see heightDelta <= 160).
+            // Shared clock with title when both move; tall overviews scale up
+            // inside animateDetailCardToMeasuredBody (forced duration is a floor).
             ...((sharedDur != null ||
               isNaturalDrawerViewport ||
               isTabletLandscapeViewport ||
