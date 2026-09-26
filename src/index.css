@@ -10418,8 +10418,8 @@
   #profile .profile-card-surface > ul.font-body,
   #profile .profile-summary-card-scroll p.font-body,
   #profile .profile-summary-card-scroll ul.font-body {
-    font-size: 0.90625rem;
-    line-height: 1.49;
+    font-size: 0.6875rem;
+    line-height: 1.4;
   }
 }
 
