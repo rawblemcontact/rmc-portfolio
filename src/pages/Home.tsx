@@ -11545,11 +11545,12 @@ const ConfidantExperience = ({
     });
   }, []);
 
-  const measureExperienceCardHeight = useCallback((shell: HTMLElement, panel: HTMLElement) => {
-    const cs = getComputedStyle(shell);
-    const padY = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
-    // Panel layout height ignores ancestor overflow clip — no height:auto dance needed.
-    return Math.max(1, Math.round(panel.offsetHeight + padY));
+  const measureExperienceCardHug = useCallback((shell: HTMLElement) => {
+    // True host hug — must match what `height:auto` resolves to on release,
+    // or the post-tween clear reads as a 1px hair snap.
+    shell.style.setProperty("height", "auto", "important");
+    void shell.offsetHeight;
+    return Math.max(1, Math.round(shell.offsetHeight));
   }, []);
 
   const selectExperienceTab = useCallback(
@@ -11579,11 +11580,13 @@ const ConfidantExperience = ({
       experienceDrawerLockRef.current = true;
       const gen = ++experienceDrawerGenRef.current;
 
-      // Pin + paint host as the card surface (desc-card: shell visible, body fades).
-      tabsShellEl.classList.add("experience-drawer-resizing");
+      // Pin FIRST at current auto size, THEN swap chrome — avoids the pre-anim
+      // hair shift from overflow/frost class applying on an unlocked height.
       const fromShellH = Math.max(1, Math.round(tabsShellEl.offsetHeight));
       tabsShellEl.style.setProperty("height", `${fromShellH}px`, "important");
       tabsShellEl.style.setProperty("transition", "none", "important");
+      void tabsShellEl.offsetHeight;
+      tabsShellEl.classList.add("experience-drawer-resizing");
 
       const endExperienceDrawer = () => {
         if (experienceDrawerRafRef.current != null) {
@@ -11597,6 +11600,24 @@ const ConfidantExperience = ({
         tabsShellEl.classList.remove("experience-drawer-resizing");
         tabsShellEl.removeAttribute("data-experience-body-hidden");
         experienceDrawerHeightStopRef.current = null;
+      };
+
+      /** Restore entrance chrome while height still locked, then clear height. */
+      const settleExperienceDrawer = () => {
+        tabsShellEl.style.removeProperty("will-change");
+        tabsShellEl.style.removeProperty("--experience-body-fade-ms");
+        tabsShellEl.removeAttribute("data-experience-body-hidden");
+        tabsShellEl.classList.remove("experience-drawer-resizing");
+        void tabsShellEl.offsetHeight;
+        // Next frame: release pin. Committed px was measured as this host's hug,
+        // so auto should land on the same integer (no post-anim hair snap).
+        requestAnimationFrame(() => {
+          if (gen !== experienceDrawerGenRef.current) return;
+          tabsShellEl.style.removeProperty("height");
+          tabsShellEl.style.removeProperty("transition");
+          experienceDrawerHeightStopRef.current = null;
+          experienceDrawerLockRef.current = false;
+        });
       };
 
       // 1) Fade out body — same 160ms + ease as PROJECT DETAILS desc-card.
@@ -11624,9 +11645,9 @@ const ConfidantExperience = ({
             return;
           }
 
-          // Keep body hidden; measure hug from panel layout + shell padding.
+          // Keep body hidden; measure destination as the host's own auto hug.
           void incomingPanel.offsetHeight;
-          const naturalShellH = measureExperienceCardHeight(tabsShellEl, incomingPanel);
+          const naturalShellH = measureExperienceCardHug(tabsShellEl);
           tabsShellEl.style.setProperty("height", `${fromShellH}px`, "important");
           void tabsShellEl.offsetHeight;
 
@@ -11645,8 +11666,7 @@ const ConfidantExperience = ({
             experienceDrawerTimersRef.current.push(
               window.setTimeout(() => {
                 if (gen !== experienceDrawerGenRef.current) return;
-                endExperienceDrawer();
-                experienceDrawerLockRef.current = false;
+                settleExperienceDrawer();
               }, DRAWER_BODY_IN_MS),
             );
           };
@@ -11666,7 +11686,7 @@ const ConfidantExperience = ({
             if (gen !== experienceDrawerGenRef.current) return;
             const t = Math.min(1, (now - start) / resizeDurMs);
             const k = drawerCardResizeEaseK(t);
-            const h = fromShellH + dShell * k;
+            const h = Math.round(fromShellH + dShell * k);
             tabsShellEl.style.setProperty("height", `${h}px`, "important");
             if (t < 1) {
               experienceDrawerRafRef.current = window.requestAnimationFrame(tick);
@@ -11695,7 +11715,7 @@ const ConfidantExperience = ({
       clearExperienceDrawerTimers,
       resetExperienceTabFadeLayers,
       runExperiencePanelIntro,
-      measureExperienceCardHeight,
+      measureExperienceCardHug,
     ],
   );
 

@@ -3896,8 +3896,8 @@
   #experience
     .tabs-content.experience-card-entrance-host.experience-drawer-resizing
     > .experience-card-entrance-shell {
+    /* Opacity only — keep in-flow box unchanged; host is already size-pinned. */
     opacity: 0 !important;
-    visibility: hidden !important;
     pointer-events: none !important;
   }
 
