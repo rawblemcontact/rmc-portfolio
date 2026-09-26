@@ -4742,9 +4742,9 @@ const Hero = ({
             }
           }}
         >
-          <div className="hero-tap-to-enter-stack flex flex-col items-center gap-2">
-            <HeroTapToEnterCursorIcon className="translate-y-1 text-white/95" />
-            <span className="hero-tap-to-enter-label mt-0.5 font-display text-[1.06rem] uppercase tracking-[0.16em] text-white/95 sm:text-[1.12rem]">
+          <div className="hero-tap-to-enter-stack flex flex-col items-center gap-2.5">
+            <HeroTapToEnterCursorIcon className="translate-y-0.5 text-white/95" />
+            <span className="hero-tap-to-enter-label mt-1 font-display text-[1.06rem] uppercase tracking-[0.16em] text-white/95 sm:text-[1.12rem]">
               TAP TO ENTER
             </span>
             <span className="hero-tap-to-enter-lpm-note -mt-1.5 text-white/55">
