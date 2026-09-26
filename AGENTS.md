@@ -56,6 +56,7 @@ Durable changelog / memory: **`.cursor/skills/portfoliov2-project-memory/SKILL.m
 
 ## Learned Workspace Facts
 
+- **PROJECT DETAILS desc-card drawer** — One height tween that hugs copy. Rules: `.cursor/skills/portfoliov2-showcase-overlays/SKILL.md` (“PROJECT DETAILS desc-card drawer height”). Code: `ShowcaseVideoEditingDetail.tsx`. Do not reintroduce post-settle live-fit or settle pins.
 - Replacing `src/assets/hero1.mp4`: re-encode H.264 `yuv420p`, 1920×1080@30fps, `+faststart`, no audio, ~3–6 Mbps / a few MB for ~4s (validated ~3.2MB). Keep the real hero `<video>` mounted while visually closed, preload that same element, gate entrance on `HAVE_ENOUGH_DATA` or fully buffered (error/timeout fail-open), then `play()` and `scaleX` open together. Validated: desktop/mobile opened at `readyState` 4 with advancing `currentTime`.
 - **Brave PROJECTS card press-drag freeze** (grid CSS keeps running, hit-testing dies): caused by **native `img`/`video` drag**, not Framer `whileTap` / CSS `zoom`. Keep `draggable={false}`, `onDragStart` preventDefault, `-webkit-user-drag: none`, and `pointer-events: none` on card media. PORTFOLIO_BOUNCE `whileTap` can stay.
 - **Palette yellow** — Desktop `#ffe100` (set-weight banana). iPhone/iPad: `color(display-p3 0.989 0.904 0.196)`. `--palette-yellow-projects` must stay `var(--palette-yellow)`. Hero yellow square uses `var(--palette-yellow)`.
