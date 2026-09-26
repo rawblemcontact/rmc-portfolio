@@ -652,6 +652,21 @@ function liveDetailCardBodyEl(container: HTMLElement | null): HTMLElement | null
   return fallback ?? container;
 }
 
+/** Live tab body for pre-reveal height math — ignores opacity (copy may still be 0). */
+function liveDetailCardBodyElForMeasure(
+  container: HTMLElement | null,
+): HTMLElement | null {
+  if (!container) return null;
+  const bodies = container.querySelectorAll(".video-editing-detail-card-tab-body");
+  let fallback: HTMLElement | null = null;
+  for (const el of bodies) {
+    if (!(el instanceof HTMLElement)) continue;
+    fallback = el;
+    if (el.offsetHeight > 0 || el.scrollHeight > 0) return el;
+  }
+  return fallback ?? container;
+}
+
 /** True when the drawer is painted at the player-aligned ceiling (tolerance for subpixels). */
 function detailCardIsAtPlayerCap(
   heightPx: number | null | undefined,
@@ -862,6 +877,8 @@ export function ShowcaseVideoEditingDetail({
    * Skip the post-settle / idle live re-fit (Undertale double-jump from other tabs).
    */
   const skipWorkSwitchLiveFitRef = useRef(false);
+  /** Tab swap already measured live once — skip probe→live second beat. */
+  const skipTabLiveFitRef = useRef(false);
   const worksArrowReleaseTimerRef = useRef<number | null>(null);
   const worksStripProgrammaticUnlockTimerRef = useRef<number | null>(null);
   const worksStripArrowTweenRafRef = useRef<number | null>(null);
@@ -1751,6 +1768,8 @@ export function ShowcaseVideoEditingDetail({
         speedScale?: number;
         /** Natural: bump reserve once, skip per-frame reserve writes (cut layout thrash). */
         freezeReserve?: boolean;
+        /** Tab single-beat: prefer live body (opacity-agnostic) over hidden probe. */
+        preferLiveMeasure?: boolean;
       },
     ) => {
       const onSettled = options?.onSettled;
@@ -1758,6 +1777,7 @@ export function ShowcaseVideoEditingDetail({
       const switchEpoch = options?.switchEpoch;
       const forcedToHeightPx = options?.toHeightPx;
       const forcedDurationMs = options?.durationMs;
+      const preferLiveMeasure = Boolean(options?.preferLiveMeasure);
       const cardSurface = detailCardSurfaceRef.current;
       const activeNatural = detailTabActiveNaturalRef.current;
       const probeReady =
@@ -1811,6 +1831,13 @@ export function ShowcaseVideoEditingDetail({
           return;
         }
 
+        const startResize = () => {
+          if (epoch !== detailCardResizeEpochRef.current) return;
+          if (isSwitchStale()) {
+            endDetailCardHeightTransition(null);
+            return;
+          }
+
         const surface = detailCardSurfaceRef.current;
         if (!surface || (!forcedToHeightPx && targetProbe.offsetHeight <= 0 && targetProbe.scrollHeight <= 0)) {
           endDetailCardHeightTransition(null);
@@ -1821,10 +1848,18 @@ export function ShowcaseVideoEditingDetail({
         // Remeasure after title / layout delay so the player-cap matches the card’s new top.
         syncDetailCardMaxHeightNow();
         const maxHeight = detailCardMaxHeightPxRef.current;
+        const liveForMeasure = preferLiveMeasure
+          ? liveDetailCardBodyElForMeasure(detailTabActiveNaturalRef.current)
+          : null;
+        const measureTarget =
+          liveForMeasure &&
+          (liveForMeasure.offsetHeight > 0 || liveForMeasure.scrollHeight > 0)
+            ? liveForMeasure
+            : targetProbe;
         const naturalToHeight =
           forcedToHeightPx != null
             ? forcedToHeightPx
-            : measureDetailCardHeightForProbe(surface, targetProbe);
+            : measureDetailCardHeightForProbe(surface, measureTarget);
         detailCardChromeHeightRef.current = measureDetailCardChromeHeight(surface);
         const toHeight =
           maxHeight != null ? Math.min(naturalToHeight, maxHeight) : naturalToHeight;
@@ -1954,6 +1989,14 @@ export function ShowcaseVideoEditingDetail({
           onSettled?.();
         };
         detailCardResizeRafRef.current = window.requestAnimationFrame(tick);
+        };
+
+        // One extra frame so the incoming opacity-0 body can lay out.
+        if (preferLiveMeasure) {
+          requestAnimationFrame(startResize);
+        } else {
+          startResize();
+        }
       };
 
       if (!snap && delayMs > 0) {
@@ -1981,7 +2024,11 @@ export function ShowcaseVideoEditingDetail({
     const force = Boolean(opts?.force);
     const allowShrink = opts?.allowShrink !== false;
     // Tab+work reset already owns one probe tween — refuse a second live ease.
-    if (skipWorkSwitchLiveFitRef.current || workSwitchInFlightRef.current) {
+    if (
+      skipWorkSwitchLiveFitRef.current ||
+      workSwitchInFlightRef.current ||
+      skipTabLiveFitRef.current
+    ) {
       return;
     }
     if (
@@ -4167,7 +4214,9 @@ export function ShowcaseVideoEditingDetail({
           if (isNaturalDrawerViewport) {
             releaseNaturalDrawerResizeLock();
           }
-          scheduleFitDetailCardToLiveBody();
+          // Single live measure already tweened — stamp idle key so no second fit.
+          detailCardIdleFitKeyRef.current = `${card.id}:${nextTabId}:${activeVideoIndexRef.current}:${detailBodyVisibleRef.current}`;
+          skipTabLiveFitRef.current = false;
         };
 
         if (cardSurface && targetProbe && targetProbe.offsetHeight > 0) {
@@ -4183,9 +4232,12 @@ export function ShowcaseVideoEditingDetail({
 
           const resizeDelayMs = DETAIL_BODY_OUT_MS;
 
-          // Measure target when resize starts (after delay), not at click time.
+          skipTabLiveFitRef.current = true;
+
+          // Measure live body when resize starts (after delay) — one tween only.
           animateDetailCardToMeasuredBody(targetProbe, resizeDelayMs, {
             onSettled: settleMaskAfterResize,
+            preferLiveMeasure: true,
           });
         } else {
           detailTabMaskLockRef.current = false;
@@ -4211,7 +4263,7 @@ export function ShowcaseVideoEditingDetail({
       activeDetailCardTab,
       animateDetailCardToMeasuredBody,
       armNaturalDrawerResizeLock,
-      scheduleFitDetailCardToLiveBody,
+      card.id,
       isCompactDrawerViewport,
       isNaturalDrawerViewport,
       isPlayerCappedDrawerViewport,
@@ -4542,7 +4594,9 @@ export function ShowcaseVideoEditingDetail({
       detailCardChromeHeightRef.current = measureDetailCardChromeHeight(cardSurface);
       detailCardIdleFitKeyRef.current = fitKey;
       setDetailCardHeightPx(nextHeight);
-      if (
+      if (skipTabLiveFitRef.current) {
+        skipTabLiveFitRef.current = false;
+      } else if (
         !isTabletLandscapeViewport &&
         !skipWorkSwitchLiveFitRef.current &&
         !workSwitchInFlightRef.current
@@ -4565,7 +4619,8 @@ export function ShowcaseVideoEditingDetail({
     if (
       paintedHeight > maxHeight + 3 &&
       !skipWorkSwitchLiveFitRef.current &&
-      !workSwitchInFlightRef.current
+      !workSwitchInFlightRef.current &&
+      !skipTabLiveFitRef.current
     ) {
       animateDetailCardToMeasuredBodyRef.current(activeNatural, 0, {
         toHeightPx: maxHeight,
@@ -4581,7 +4636,10 @@ export function ShowcaseVideoEditingDetail({
       // Tablet landscape: work-switch already eased to the overview probe.
       // scheduleFit here is the second Undertale height beat.
       // Same for work-switch that also reset the tab (Undertale from Tools/etc).
-      if (skipWorkSwitchLiveFitRef.current) {
+      // Tab single-beat: one live measure already ran — clear and skip.
+      if (skipTabLiveFitRef.current) {
+        skipTabLiveFitRef.current = false;
+      } else if (skipWorkSwitchLiveFitRef.current) {
         skipWorkSwitchLiveFitRef.current = false;
       } else if (!isTabletLandscapeViewport) {
         scheduleFitDetailCardToLiveBodyRef.current();
