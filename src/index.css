@@ -10459,7 +10459,7 @@
   #profile .profile-card-surface > ul.font-body,
   #profile .profile-summary-card-scroll p.font-body,
   #profile .profile-summary-card-scroll ul.font-body {
-    font-size: calc(var(--section-subhead-font) - 1px);
+    font-size: var(--section-subhead-font);
   }
 }
 
