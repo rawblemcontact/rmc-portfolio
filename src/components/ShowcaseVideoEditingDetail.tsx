@@ -737,6 +737,8 @@ export function ShowcaseVideoEditingDetail({
 }: ShowcaseVideoEditingDetailProps) {
   const WORKS_ARROW_TAP_FEEDBACK_MS = 260;
   const WORKS_STRIP_PROGRAMMATIC_LOCK_MS = 750;
+  /** translateX / smooth-scroll settle used by arrow + thumb selection. */
+  const WORKS_STRIP_TWEEN_MS = 320;
   const STRIP_SWIPE_ARROW_THRESHOLD_PX = 3;
   const STRIP_SWIPE_TAP_CANCEL_PX = 10;
   const TOUCH_CLICK_GUARD_MS = 400;
@@ -875,8 +877,8 @@ export function ShowcaseVideoEditingDetail({
   );
   const scheduleFitDetailCardToLiveBodyRef = useRef<() => void>(() => {});
   const centerWorksStripThumbRef = useRef<
-    (index: number, options?: { instant?: boolean }) => void
-  >(() => {});
+    (index: number, options?: { instant?: boolean }) => number
+  >(() => 0);
   const animateDetailCardToMeasuredBodyRef = useRef<
     (
       targetProbe: HTMLElement,
@@ -2628,11 +2630,9 @@ export function ShowcaseVideoEditingDetail({
       };
 
       /**
-       * Natural (phone / tablet portrait): ease title height so the desc card
-       * rides up/down when the now-playing title grows/shrinks. If that Y move
-       * runs, wait a short beat before the card height tween so the two don't
-       * read as one rushed chain. No title Y → card resize immediately.
-       * Player-capped: still snap title (cap drift otherwise reads as a 2nd beat).
+       * Natural (no title Y): card height after the title fade.
+       * Natural (title Y): handled in beginTitle — Y first, then fade, gap, card.
+       * Player-capped: snap title, then card (cap drift otherwise reads as a 2nd beat).
        */
       const startTitleAndCardTogether = () => {
         if (epoch !== workSwitchEpochRef.current) return;
@@ -2671,22 +2671,44 @@ export function ShowcaseVideoEditingDetail({
         }
         const beginTitle = () => {
           if (epoch !== workSwitchEpochRef.current) return;
-          // Natural: pin current title height BEFORE swapping copy. Without this,
-          // AnimatePresence commits the new title at auto height and the desc
-          // card jumps up/down; the later height tween then no-ops (from === to).
+
+          // Natural + title height change: move the card Y first while the old
+          // title copy stays visible, then fade in the new title, then gap + card.
           if (isNaturalDrawerViewport && !rapid && !reduceMotion) {
             const titleArea = detailNowPlayingRef.current;
             if (titleArea) {
               const h = titleArea.offsetHeight;
               if (h > 0) titleArea.style.height = `${h}px`;
             }
+            const targetProbe = detailTitleMeasureRefs.current[nextIndex];
+            const fromH = titleArea?.offsetHeight ?? 0;
+            const toH = targetProbe
+              ? Math.max(targetProbe.offsetHeight, targetProbe.scrollHeight)
+              : fromH;
+            if (titleArea && targetProbe && Math.abs(toH - fromH) > 0.5) {
+              afterTitleResizeRef.current = () => {
+                if (epoch !== workSwitchEpochRef.current) return;
+                commitTitleText();
+                runAfterDelay(DETAIL_NATURAL_TITLE_CROSSFADE_MS, () => {
+                  runAfterDelay(DETAIL_NATURAL_TITLE_TO_CARD_GAP_MS, () => {
+                    startCardResize(DETAIL_NATURAL_CARD_RESIZE_DUR_MS);
+                  });
+                });
+              };
+              animateDetailTitleToMeasuredHeight(nextIndex, {
+                switchEpoch: epoch,
+                durationMs: DETAIL_NATURAL_CARD_RESIZE_DUR_MS,
+              });
+              return;
+            }
           }
+
           commitTitleText();
           if (rapid) {
             startTitleAndCardTogether();
             return;
           }
-          // Crossfade alone, then one shared title+card height beat.
+          // Crossfade alone, then title snap/card (or natural no-Y → card).
           runAfterDelay(
             isNaturalDrawerViewport
               ? DETAIL_NATURAL_TITLE_CROSSFADE_MS
@@ -2776,7 +2798,7 @@ export function ShowcaseVideoEditingDetail({
   );
 
   const commitActiveWorkIndex = useCallback(
-    (nextIndex: number, opts?: { forceRapid?: boolean }) => {
+    (nextIndex: number, opts?: { forceRapid?: boolean; stripLeadMs?: number }) => {
       const now = Date.now();
       const rapidGap =
         workSwitchLastCommitAtRef.current > 0 &&
@@ -2827,18 +2849,34 @@ export function ShowcaseVideoEditingDetail({
       }
 
       const waitForFadeOut = detailBodyVisibleRef.current;
-      detailBodyVisibleRef.current = false;
-      setDetailBodyVisible(false);
+      const stripLeadMs = Math.max(0, opts?.stripLeadMs ?? 0);
+      const bodyOutMs = waitForFadeOut ? DETAIL_BODY_OUT_MS : 0;
       // Keep any active cutoff mask through the body opacity out so both fade together.
 
-      detailBodySwapTimerRef.current = window.setTimeout(
-        () => {
-          detailBodySwapTimerRef.current = null;
+      const runApply = () => {
+        detailBodySwapTimerRef.current = null;
+        if (epoch !== workSwitchEpochRef.current) return;
+        applyActiveWorkIndex(nextIndex, epoch, { rapid: false });
+      };
+
+      if (stripLeadMs > 0) {
+        // Works-strip slide first; only then fade body and start title/card box anims.
+        detailBodySwapTimerRef.current = window.setTimeout(() => {
           if (epoch !== workSwitchEpochRef.current) return;
-          applyActiveWorkIndex(nextIndex, epoch, { rapid: false });
-        },
-        waitForFadeOut ? DETAIL_BODY_OUT_MS : 0,
-      );
+          detailBodyVisibleRef.current = false;
+          setDetailBodyVisible(false);
+          if (bodyOutMs <= 0) {
+            runApply();
+            return;
+          }
+          detailBodySwapTimerRef.current = window.setTimeout(runApply, bodyOutMs);
+        }, stripLeadMs);
+        return;
+      }
+
+      detailBodyVisibleRef.current = false;
+      setDetailBodyVisible(false);
+      detailBodySwapTimerRef.current = window.setTimeout(runApply, bodyOutMs);
     },
     [
       abortWorkSwitchMotion,
@@ -2858,12 +2896,12 @@ export function ShowcaseVideoEditingDetail({
    * translateX and keep scrollLeft at 0 — native overflow/snap drifts right.
    */
   const centerWorksStripThumb = useCallback(
-    (index: number, options?: { instant?: boolean }) => {
+    (index: number, options?: { instant?: boolean }): number => {
       const strip = thumbStripRef.current;
-      if (!strip) return;
+      if (!strip) return 0;
       const thumbs = strip.querySelectorAll<HTMLElement>(".video-editing-works-strip-thumb");
       const thumb = thumbRefs.current[index] ?? thumbs[index] ?? null;
-      if (!thumb && !worksStripUsesTranslatePaging()) return;
+      if (!thumb && !worksStripUsesTranslatePaging()) return 0;
 
       const track = worksStripTrackRef.current;
 
@@ -2893,10 +2931,10 @@ export function ShowcaseVideoEditingDetail({
           if (options?.instant || reduceMotion || Math.abs(to - from) <= 0.5) {
             track.style.transform = to > 0 ? `translate3d(${-to}px, 0, 0)` : "";
             syncX(to);
-            return;
+            return 0;
           }
           const start = performance.now();
-          const duration = 320;
+          const duration = WORKS_STRIP_TWEEN_MS;
           const tick = (now: number) => {
             const t = Math.min(1, (now - start) / duration);
             const k = 1 - (1 - t) ** 3;
@@ -2912,12 +2950,13 @@ export function ShowcaseVideoEditingDetail({
             syncX(to);
           };
           worksStripArrowTweenRafRef.current = window.requestAnimationFrame(tick);
+          return duration;
         }
-        return;
+        return 0;
       }
 
       if (track) track.style.transform = "";
-      if (!thumb) return;
+      if (!thumb) return 0;
 
       const stripRect = strip.getBoundingClientRect();
       const thumbRect = thumb.getBoundingClientRect();
@@ -2930,9 +2969,10 @@ export function ShowcaseVideoEditingDetail({
       // Instant on touch: nested smooth scrollTo yanks the section scroller on iOS.
       if (options?.instant || reduceMotion || typeof strip.scrollTo !== "function") {
         strip.scrollLeft = nextLeft;
-        return;
+        return 0;
       }
       strip.scrollTo({ left: nextLeft, behavior: "smooth" });
+      return WORKS_STRIP_TWEEN_MS;
     },
     [card.id, reduceMotion],
   );
@@ -2957,14 +2997,14 @@ export function ShowcaseVideoEditingDetail({
         });
       }
 
-      commitActiveWorkIndex(nextIndex);
+      let stripLeadMs = 0;
+      if (options?.scrollStrip !== false) {
+        lockWorksStripScrollSync();
+        // Start strip first; title/card wait for this duration inside commit.
+        stripLeadMs = centerWorksStripThumb(nextIndex);
+      }
 
-      if (options?.scrollStrip === false) return;
-
-      lockWorksStripScrollSync();
-      // Use one animated settle path for strip paging across breakpoints.
-      // (Reduced motion / unsupported smooth-scroll still falls back inside.)
-      centerWorksStripThumb(nextIndex);
+      commitActiveWorkIndex(nextIndex, { stripLeadMs });
     },
     [
       centerWorksStripThumb,
