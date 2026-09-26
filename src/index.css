@@ -4889,8 +4889,8 @@
       min-width: 0 !important;
       min-height: min-content !important;
       /* Padding keeps content away from rounded edges so nothing clips.
-       * Bottom inset = body copy → card edge gap. */
-      padding: 20px 20px 16px !important;
+       * Bottom inset = body copy → card edge gap (iPad: a smidge tighter). */
+      padding: 20px 20px 14px !important;
       border: 1px solid var(--career-overview-content-edge) !important;
       border-radius: 4px !important;
       background: color-mix(in srgb, var(--portfolio-section-card) 6%, transparent) !important;
@@ -9860,11 +9860,11 @@
   }
 
   /*
-   * EDUCATION desktop — match body↔bottom gap to header↔body gap
-   * (panel-header margin-bottom) so “Awarded Distinction.” sits balanced.
+   * EDUCATION desktop — body↔bottom gap a touch above the header↔body gap
+   * so “Awarded Distinction.” still reads balanced with a little more air.
    */
   #experience .tabs-content:has(#education.active) {
-    padding-bottom: calc(10px * var(--experience-scale)) !important;
+    padding-bottom: calc(14px * var(--experience-scale)) !important;
   }
 
   #experience .tabs-content::before {
