@@ -4846,7 +4846,7 @@
       -webkit-backdrop-filter: blur(2px) !important;
       backdrop-filter: blur(2px) !important;
       overflow: visible !important;
-      height: auto !important;
+      /* Allow JS drawer height tween (inline height); default remains auto. */
       transform: none;
       /* Remove desktop layout props */
       isolation: auto !important;
@@ -4869,10 +4869,13 @@
       border-radius: 0;
     }
 
+    /* Tablet portrait: allow career-tabs-dim for drawer fade (phone still disables). */
     #experience .career-tabs-content-inner.career-tabs-dim,
-    #experience .panel-header.career-tabs-dim {
-      opacity: 1 !important;
-      pointer-events: auto !important;
+    #experience .panel-header.career-tabs-dim,
+    #experience .tab-panel.active .career-tabs-content-inner.career-tabs-dim,
+    #experience .tab-panel.active .panel-header.career-tabs-dim {
+      opacity: 0 !important;
+      pointer-events: none !important;
     }
 
     #experience .tab-panel {
@@ -4910,6 +4913,12 @@
       opacity: 1 !important;
       visibility: visible !important;
       transform: none !important;
+    }
+
+    #experience .tab-panel.active .career-tabs-content-inner.career-tabs-dim,
+    #experience .tab-panel.active .panel-header.career-tabs-dim {
+      opacity: 0 !important;
+      pointer-events: none !important;
     }
 
     /* Let panel-header and content flow at natural height */
