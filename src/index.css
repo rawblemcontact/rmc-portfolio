@@ -10427,6 +10427,7 @@
   #profile .profile-card-surface > p.profile-card-inline-label.profile-card-section-label,
   #profile .profile-summary-card-scroll p.profile-card-inline-label.profile-card-section-label {
     font-size: calc(clamp(0.82rem, calc(0.2vw + 0.77rem), 0.9rem) + 1.5px);
+    transform: translateX(-1px);
   }
 
   #profile .profile-summary-card-scroll p.font-body,
