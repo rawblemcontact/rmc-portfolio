@@ -11580,8 +11580,8 @@ const ConfidantExperience = ({
       experienceDrawerLockRef.current = true;
       const gen = ++experienceDrawerGenRef.current;
 
-      // Pin FIRST at current auto size, THEN swap chrome — avoids the pre-anim
-      // hair shift from overflow/frost class applying on an unlocked height.
+      // Pin height first, then mark resizing (overflow only — no chrome swap).
+      // Card geometry stays fixed except the bottom edge during the height tween.
       const fromShellH = Math.max(1, Math.round(tabsShellEl.offsetHeight));
       tabsShellEl.style.setProperty("height", `${fromShellH}px`, "important");
       tabsShellEl.style.setProperty("transition", "none", "important");
@@ -11602,15 +11602,15 @@ const ConfidantExperience = ({
         experienceDrawerHeightStopRef.current = null;
       };
 
-      /** Restore entrance chrome while height still locked, then clear height. */
+      /** Release pin after body fade-in — height stays locked until then. */
       const settleExperienceDrawer = () => {
         tabsShellEl.style.removeProperty("will-change");
         tabsShellEl.style.removeProperty("--experience-body-fade-ms");
         tabsShellEl.removeAttribute("data-experience-body-hidden");
+        // Drop resizing class while still pinned so overflow/shell height:100%
+        // restore cannot shift the committed hug box.
         tabsShellEl.classList.remove("experience-drawer-resizing");
         void tabsShellEl.offsetHeight;
-        // Next frame: release pin. Committed px was measured as this host's hug,
-        // so auto should land on the same integer (no post-anim hair snap).
         requestAnimationFrame(() => {
           if (gen !== experienceDrawerGenRef.current) return;
           tabsShellEl.style.removeProperty("height");
