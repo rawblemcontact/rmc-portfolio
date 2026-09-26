@@ -342,7 +342,7 @@ const DETAIL_NATURAL_CARD_RESIZE_DUR_MS = Math.round(
   DETAIL_CARD_RESIZE_DUR_MS * DETAIL_NATURAL_SPEED,
 );
 /** Natural only: pause after title Y (card rides) before the desc-card height tween. */
-const DETAIL_NATURAL_TITLE_TO_CARD_GAP_MS = 100;
+const DETAIL_NATURAL_TITLE_TO_CARD_GAP_MS = 200;
 /**
  * Clicks closer than this are "rapid": abort/coalesce and snap instead of stacking
  * the full title→card→reveal choreography.
