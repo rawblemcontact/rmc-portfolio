@@ -10423,7 +10423,7 @@
   }
 }
 
-@media (min-width: 640px) and (max-width: 1023px) {
+@media (min-width: 768px) and (max-width: 1366px) {
   #profile .profile-card-surface > p.profile-card-inline-label.profile-card-section-label,
   #profile .profile-summary-card-scroll p.profile-card-inline-label.profile-card-section-label {
     font-size: calc(clamp(0.82rem, calc(0.2vw + 0.77rem), 0.9rem) + 1.5px);
@@ -10434,17 +10434,12 @@
   #profile .profile-summary-card-scroll ul.font-body,
   #profile .profile-card-surface > p.font-body,
   #profile .profile-card-surface > ul.font-body {
-    font-size: calc(clamp(0.9375rem, calc(0.42vw + 0.8rem), 1.0625rem) - 1.5px);
-  }
-}
-
-@media (min-width: 640px) and (max-width: 1023px) {
-  #profile .profile-card-surface > p.font-body,
-  #profile .profile-card-surface > ul.font-body,
-  #profile .profile-summary-card-scroll p.font-body,
-  #profile .profile-summary-card-scroll ul.font-body {
     font-size: calc(clamp(0.9375rem, calc(0.42vw + 0.8rem), 1.0625rem) - 1px);
     line-height: 1.5;
+  }
+
+  #profile .profile-card-surface p.profile-card-inline-label:not(.profile-card-section-label) {
+    font-size: 0.78125rem;
   }
 }
 
