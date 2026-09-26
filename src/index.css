@@ -10435,10 +10435,8 @@
   #profile .profile-card-surface > ul.font-body,
   #profile .profile-summary-card-scroll p.font-body,
   #profile .profile-summary-card-scroll ul.font-body {
-    font-size: clamp(0.9375rem, calc(0.42vw + 0.8rem), 1.0625rem);
+    font-size: calc(clamp(0.9375rem, calc(0.42vw + 0.8rem), 1.0625rem) - 1px);
     line-height: 1.5;
-    transform: scale(0.9375);
-    transform-origin: left top;
   }
 }
 
