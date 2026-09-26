@@ -11847,7 +11847,9 @@ const ConfidantExperience = ({
     if (!root) return;
 
     resetExperienceTabFadeLayers();
-    root.querySelector<HTMLElement>(".tabs-content")?.style.removeProperty("height");
+    const tabsContent = root.querySelector<HTMLElement>(".tabs-content");
+    tabsContent?.style.removeProperty("height");
+    tabsContent?.classList.remove("experience-drawer-resizing");
 
     root.querySelectorAll<HTMLElement>(".tab-panel").forEach((panel) => {
       panel.querySelectorAll<HTMLElement>(
