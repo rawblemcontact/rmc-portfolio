@@ -6500,7 +6500,7 @@ const PhantomProfile = ({
                       ROBBIE MCLAUGHLIN
                     </p>
                     <p className={`${PROFILE_CARD_INLINE_LABEL_CLASS} text-[0.68rem] sm:text-xs tracking-[0.06em]`} style={{ color: NAV_SUBHEAD_GRAY }}>
-                      WRITER, CONTENT PRODUCTION, &amp; SOCIAL MEDIA
+                      WRITER, CONTENT PRODUCTION,<br className="sm:hidden" /> &amp; SOCIAL MEDIA
                     </p>
                     <p className={`${PROFILE_CARD_INLINE_LABEL_CLASS} text-[0.68rem] sm:text-xs tracking-[0.06em]`} style={{ color: NAV_SUBHEAD_GRAY }}>
                       B.A. WRITING
