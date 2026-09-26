@@ -555,7 +555,7 @@ function measureCopyBlockHeight(el: HTMLElement): number {
     ? el
     : el.querySelector(":scope p, :scope ul") ?? el.querySelector("p, ul");
   const node = copy instanceof HTMLElement ? copy : el;
-  let height = Math.max(
+  const laidOut = Math.max(
     node.offsetHeight,
     node.scrollHeight,
     el.offsetHeight,
@@ -563,9 +563,9 @@ function measureCopyBlockHeight(el: HTMLElement): number {
   );
 
   // Hidden measure shelf is `h-0 overflow-hidden`. Long whitespace-pre-line
-  // blocks (e.g. UNDERTALE Forever Home) can under-report scrollHeight there
-  // on WebKit, so the drawer snaps instead of tweening. Width-matched clone
-  // outside the clip gives a trustworthy destination height.
+  // blocks (e.g. UNDERTALE Forever Home) under-report there on WebKit.
+  // Width-matched clone is the source of truth for probes — do not max with
+  // clipped scrollHeight (that overshoots and leaves empty pad on short tabs).
   const shelf = el.closest(".video-editing-detail-card-tab-measure");
   if (shelf instanceof HTMLElement) {
     const width =
@@ -580,55 +580,54 @@ function measureCopyBlockHeight(el: HTMLElement): number {
         Math.abs(cached.width - width) < 0.5 &&
         cached.textLen === textLen
       ) {
-        height = Math.max(height, cached.height);
-      } else {
-        const clone = node.cloneNode(true) as HTMLElement;
-        // Live meta-card copy is forced to 0.8125rem via
-        // `#projects.projects-*-detail-open .video-editing-detail-meta-card
-        // .video-editing-detail-card-tab-surface .font-body`. A body clone
-        // loses that ancestor chain and falls back to Tailwind `text-sm` /
-        // `sm:text-base`, so wrap height is wrong unless we copy computed
-        // typography from the in-shelf node before measuring.
-        const cs = getComputedStyle(node);
-        clone.style.cssText = [
-          "position:absolute",
-          "visibility:hidden",
-          "display:block",
-          "left:-10000px",
-          "top:0",
-          `width:${width}px`,
-          "height:auto",
-          "max-height:none",
-          "overflow:visible",
-          "pointer-events:none",
-          "z-index:-1",
-          `font:${cs.font}`,
-          `font-size:${cs.fontSize}`,
-          `line-height:${cs.lineHeight}`,
-          `letter-spacing:${cs.letterSpacing}`,
-          `word-spacing:${cs.wordSpacing}`,
-          `white-space:${cs.whiteSpace}`,
-          `word-break:${cs.wordBreak}`,
-          `overflow-wrap:${cs.overflowWrap}`,
-          `text-align:${cs.textAlign}`,
-          `padding:${cs.padding}`,
-          `box-sizing:${cs.boxSizing}`,
-          "margin:0",
-        ].join(";");
-        document.body.appendChild(clone);
-        const clonedH = Math.max(clone.offsetHeight, clone.scrollHeight);
-        clone.remove();
-        copyBlockMeasureCache.set(node, {
-          width,
-          textLen,
-          height: clonedH,
-        });
-        height = Math.max(height, clonedH);
+        return Math.max(1, cached.height);
       }
+      const clone = node.cloneNode(true) as HTMLElement;
+      // Live meta-card copy is forced to 0.8125rem via
+      // `#projects.projects-*-detail-open .video-editing-detail-meta-card
+      // .video-editing-detail-card-tab-surface .font-body`. A body clone
+      // loses that ancestor chain and falls back to Tailwind `text-sm` /
+      // `sm:text-base`, so wrap height is wrong unless we copy computed
+      // typography from the in-shelf node before measuring.
+      const cs = getComputedStyle(node);
+      clone.style.cssText = [
+        "position:absolute",
+        "visibility:hidden",
+        "display:block",
+        "left:-10000px",
+        "top:0",
+        `width:${width}px`,
+        "height:auto",
+        "max-height:none",
+        "overflow:visible",
+        "pointer-events:none",
+        "z-index:-1",
+        `font:${cs.font}`,
+        `font-size:${cs.fontSize}`,
+        `line-height:${cs.lineHeight}`,
+        `letter-spacing:${cs.letterSpacing}`,
+        `word-spacing:${cs.wordSpacing}`,
+        `white-space:${cs.whiteSpace}`,
+        `word-break:${cs.wordBreak}`,
+        `overflow-wrap:${cs.overflowWrap}`,
+        `text-align:${cs.textAlign}`,
+        `padding:${cs.padding}`,
+        `box-sizing:${cs.boxSizing}`,
+        "margin:0",
+      ].join(";");
+      document.body.appendChild(clone);
+      const clonedH = Math.max(clone.offsetHeight, clone.scrollHeight);
+      clone.remove();
+      copyBlockMeasureCache.set(node, {
+        width,
+        textLen,
+        height: clonedH,
+      });
+      return Math.max(1, clonedH);
     }
   }
 
-  return height;
+  return laidOut;
 }
 
 function measureDetailCardHeightForProbe(
@@ -637,6 +636,54 @@ function measureDetailCardHeightForProbe(
 ): number {
   const bodyH = measureCopyBlockHeight(targetProbe);
   return Math.ceil(measureDetailCardChromeHeight(cardSurface) + bodyH);
+}
+
+/**
+ * Live tab body for height math — ignores opacity so we can measure the
+ * incoming tab while copy is still at opacity 0.
+ */
+function liveDetailCardBodyElForMeasure(
+  container: HTMLElement | null,
+): HTMLElement | null {
+  if (!container) return null;
+  const bodies = container.querySelectorAll(".video-editing-detail-card-tab-body");
+  let fallback: HTMLElement | null = null;
+  for (const el of bodies) {
+    if (!(el instanceof HTMLElement)) continue;
+    fallback = el;
+    if (el.offsetHeight > 0 || el.scrollHeight > 0) return el;
+  }
+  return fallback ?? container;
+}
+
+function normalizeDetailCopyText(text: string) {
+  return text.replace(/\s+/g, " ").trim();
+}
+
+/**
+ * Single-beat destination: prefer live wrap when it matches the probe tab
+ * (avoids measuring the outgoing AnimatePresence body). Else probe clone.
+ */
+function measureDetailCardTweenHeight(
+  cardSurface: HTMLElement,
+  probe: HTMLElement,
+  liveContainer: HTMLElement | null,
+): number {
+  const probeH = measureDetailCardHeightForProbe(cardSurface, probe);
+  const live = liveDetailCardBodyElForMeasure(liveContainer);
+  if (!live) return probeH;
+  const liveH = measureDetailCardHeightForProbe(cardSurface, live);
+  if (liveH <= DETAIL_CARD_HEIGHT_EPSILON_PX) return probeH;
+  const liveText = normalizeDetailCopyText(live.textContent ?? "");
+  const probeText = normalizeDetailCopyText(probe.textContent ?? "");
+  if (!liveText || !probeText) return probeH;
+  // Same tab when texts match (or share a stable prefix for long overviews).
+  const sameTab =
+    liveText === probeText ||
+    liveText.startsWith(probeText.slice(0, Math.min(32, probeText.length))) ||
+    probeText.startsWith(liveText.slice(0, Math.min(32, liveText.length)));
+  if (!sameTab) return probeH;
+  return liveH;
 }
 
 function liveDetailCardBodyEl(container: HTMLElement | null): HTMLElement | null {
@@ -1819,12 +1866,12 @@ export function ShowcaseVideoEditingDetail({
           // Remeasure after title / layout delay so the player-cap matches the card’s new top.
           syncDetailCardMaxHeightNow();
           const maxHeight = detailCardMaxHeightPxRef.current;
-          // Probe only for the animated destination (clone-accurate). Live wrap
-          // under-reads at opacity 0 and forced a visible settle pin afterward.
-          const naturalToHeight =
-            forcedToHeightPx != null
-              ? forcedToHeightPx
-              : measureDetailCardHeightForProbe(surface, targetProbe);
+          // Live wrap when it matches this tab; else probe clone. Never settle-pin after.
+          const naturalToHeight = measureDetailCardTweenHeight(
+            surface,
+            targetProbe,
+            detailTabActiveNaturalRef.current,
+          );
           detailCardChromeHeightRef.current = measureDetailCardChromeHeight(surface);
           const toHeight =
             maxHeight != null ? Math.min(naturalToHeight, maxHeight) : naturalToHeight;
@@ -1952,7 +1999,11 @@ export function ShowcaseVideoEditingDetail({
           detailCardResizeRafRef.current = window.requestAnimationFrame(tick);
         };
 
-        startResize();
+        // Two frames so AnimatePresence can mount the incoming opacity-0 body
+        // before we pick live vs probe (avoids measuring the outgoing tab).
+        requestAnimationFrame(() => {
+          requestAnimationFrame(startResize);
+        });
       };
 
       if (!snap && delayMs > 0) {
@@ -2516,12 +2567,11 @@ export function ShowcaseVideoEditingDetail({
             coupledDurationMs != null && coupledDurationMs > 0
               ? coupledDurationMs
               : undefined;
-          const toHeightPx = prefetchCardToHeight();
+          // One beat to live-or-probe height (measured after mount frames).
           animateDetailCardToMeasuredBody(targetOverviewProbe, 0, {
             snap: Boolean(reduceMotion),
             switchEpoch: epoch,
             onSettled: revealAfterHeightSettle,
-            ...(toHeightPx != null && toHeightPx > 0 ? { toHeightPx } : {}),
             // Shared clock with title when both move; tall overviews still scale up
             // inside animateDetailCardToMeasuredBody (see heightDelta <= 160).
             ...((sharedDur != null ||
