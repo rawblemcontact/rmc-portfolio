@@ -7880,7 +7880,7 @@
   #projects.projects-slaywire-detail-open
     .video-editing-detail-meta-card {
     border-radius: 4px !important;
-    padding: 0.75rem 0.75rem 0.625rem !important;
+    padding: 0.75rem 0.75rem 0.5rem !important;
     min-width: 0 !important;
     /* Height comes from JS (animated drawer + player-bottom cap). */
     min-height: 0 !important;
@@ -8819,8 +8819,8 @@
     padding-inline: 0.75rem;
     margin-top: -0.75rem;
     padding-top: 0.75rem;
-    margin-bottom: -0.75rem;
-    padding-bottom: 0.75rem;
+    margin-bottom: -0.6rem;
+    padding-bottom: 0.55rem;
     touch-action: none;
   }
 
@@ -8887,8 +8887,8 @@
   #projects.projects-slaywire-detail-open
     .video-editing-detail-meta-card {
     border-radius: 4px !important;
-    /* Hint clearance — keep above-gap close to below-gap (bottom 0.5rem). */
-    padding: 0.75rem 0.75rem calc(0.5rem + 0.25rem) !important;
+    /* Hint clearance — keep above-gap close to below-gap. */
+    padding: 0.75rem 0.75rem 0.6rem !important;
     min-width: 0 !important;
     /* Height comes from JS (animated drawer + player-bottom cap). */
     min-height: 0 !important;
