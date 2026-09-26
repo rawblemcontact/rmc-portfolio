@@ -39,9 +39,21 @@ export function PdfLoadingIndicator({
     >
       <motion.div
         className="pdf-loading-indicator__loader-wrap"
-        initial={{ opacity: skipEnterFade ? 1 : 0 }}
-        animate={{ opacity: exiting ? 0 : 1 }}
-        transition={fadeTransition}
+        initial={{ opacity: skipEnterFade ? 0.9 : reduceMotion ? 1 : 0 }}
+        animate={
+          exiting
+            ? { opacity: 0 }
+            : reduceMotion
+              ? { opacity: 1 }
+              : { opacity: [0.42, 0.9, 0.42] }
+        }
+        transition={
+          exiting
+            ? fadeTransition
+            : reduceMotion
+              ? { duration: 0 }
+              : { duration: 1.8, ease: "easeInOut", repeat: Infinity }
+        }
       >
         <PdfFoldLoader className="pdf-loading-indicator__loader" />
       </motion.div>

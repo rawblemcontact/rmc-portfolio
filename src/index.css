@@ -8173,8 +8173,8 @@
 
 /*
  * Hero — TAP TO ENTER: nudge icon+label up so the stack reads optically centered
- * (taller icon sits above the label). Phone portrait coarse keeps the stronger
- * eye-band lift + heartbeat (Safari chrome biases mid down).
+ * (icon sits above the label). Phone portrait coarse keeps the stronger eye-band
+ * lift (Safari chrome biases mid down). No pulse — static position only.
  */
 #hero [data-hero-tap-to-enter="true"] > .hero-tap-to-enter-stack {
   translate: 0 -1.75rem;
@@ -8182,50 +8182,7 @@
 
 @media (max-width: 767.98px) and (orientation: portrait) and (any-pointer: coarse) {
   #hero [data-hero-tap-to-enter="true"] > .hero-tap-to-enter-stack {
-    translate: none;
-    animation: hero-tap-enter-heartbeat 1.45s cubic-bezier(0.34, 1.35, 0.64, 1) infinite;
-    transform-origin: center center;
-    will-change: transform, opacity;
-    position: relative;
-    transform: translateY(calc(-1 * clamp(2.75rem, 6.5svh, 4.75rem)));
-  }
-}
-
-@keyframes hero-tap-enter-heartbeat {
-  0%,
-  100% {
-    transform: translateY(calc(-1 * clamp(2.75rem, 6.5svh, 4.75rem))) scale(1);
-    opacity: 0.96;
-    text-shadow: 0 0 8px rgba(255, 255, 255, 0.06);
-  }
-  16% {
-    transform: translateY(calc(-1 * clamp(2.75rem, 6.5svh, 4.75rem))) scale(1.05);
-    opacity: 1;
-    text-shadow:
-      0 0 14px rgba(255, 255, 255, 0.38),
-      0 0 32px rgba(255, 255, 255, 0.16);
-  }
-  24% {
-    transform: translateY(calc(-1 * clamp(2.75rem, 6.5svh, 4.75rem))) scale(0.985);
-    opacity: 0.97;
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
-  }
-  34% {
-    transform: translateY(calc(-1 * clamp(2.75rem, 6.5svh, 4.75rem))) scale(1.06);
-    opacity: 1;
-    text-shadow:
-      0 0 16px rgba(255, 255, 255, 0.42),
-      0 0 36px rgba(255, 255, 255, 0.18);
-  }
-  46% {
-    transform: translateY(calc(-1 * clamp(2.75rem, 6.5svh, 4.75rem))) scale(0.99);
-    opacity: 0.97;
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
-  }
-  58% {
-    transform: translateY(calc(-1 * clamp(2.75rem, 6.5svh, 4.75rem))) scale(1);
-    opacity: 0.96;
-    text-shadow: 0 0 8px rgba(255, 255, 255, 0.06);
+    translate: 0 calc(-1 * clamp(2.75rem, 6.5svh, 4.75rem));
   }
 }
 

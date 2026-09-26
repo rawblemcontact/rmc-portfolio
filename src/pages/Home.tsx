@@ -1991,7 +1991,7 @@ function HeroTapToEnterCursorIcon({ className }: { className?: string }) {
       ref={controlsRef}
       aria-hidden
       className={className}
-      size={56}
+      size={42}
     />
   );
 }
@@ -4744,7 +4744,7 @@ const Hero = ({
         >
           <div className="hero-tap-to-enter-stack flex flex-col items-center gap-3">
             <HeroTapToEnterCursorIcon className="text-white/95" />
-            <span className="hero-tap-to-enter-label font-display text-[1.06rem] uppercase tracking-[0.16em] text-white/95 sm:text-[1.12rem]">
+            <span className="hero-tap-to-enter-label mt-1.5 font-display text-[1.06rem] uppercase tracking-[0.16em] text-white/95 sm:text-[1.12rem]">
               TAP TO ENTER
             </span>
           </div>
