@@ -1,0 +1,32 @@
+/**
+ * Portfolio accent palette — edit this file to re-theme the whole site.
+ *
+ * - Tailwind `portfolio-*` utilities and `--color-p3-cyan*` read from these vars.
+ * - `SECTION_ACCENT_COLOR` and webhook accents in Home.tsx use the same names
+ *   (e.g. `var(--palette-red)`) so panel edges stay in sync.
+ *
+ * Optional second palette: set on `<html data-palette="alt">` and duplicate the
+ * `:root` block below as `html[data-palette="alt"] { ... }` with new values.
+ */
+:root {
+  /* Main menu / section accents (exact). `orange` = CONTACT (indigo). */
+  --palette-red: #ef3a2c;
+  --palette-orange: #583eb7;
+  /* Desktop — banana with the same ink weight as red/green/blue/violet. */
+  --palette-yellow: #ffe100;
+  /** Must stay identical to menu yellow — do not give PROJECTS a second hex. */
+  --palette-yellow-projects: var(--palette-yellow);
+  --palette-green: #0fb93c;
+  --palette-green-bright: #0fb93c;
+  --palette-blue: #0a88f7;
+  --palette-blue-bright: #0a88f7;
+}
+
+/* iPhone + iPad only — the banana that already looks right. */
+@supports (-webkit-touch-callout: none) {
+  @media (color-gamut: p3) {
+    :root {
+      --palette-yellow: color(display-p3 0.989 0.904 0.196);
+    }
+  }
+}

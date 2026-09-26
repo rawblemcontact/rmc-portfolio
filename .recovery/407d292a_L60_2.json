@@ -1,0 +1,5 @@
+{
+  "new_string": "} from \"@tabler/icons-react\";\n\ngsap.registerPlugin(SplitText);\n\nfunction AdobeSuiteIcon({\n  size = 18,",
+  "old_string": "} from \"@tabler/icons-react\";\nfunction AdobeSuiteIcon({\n  size = 18,",
+  "path": "c:\\Users\\robbi\\Desktop\\PORTFOLIOV2TRUE\\PortfolioTRUEV2\\src\\pages\\Home.tsx"
+}

@@ -1,0 +1,5 @@
+{
+  "new_string": "  const [step, setStep] = useState<HeroNameRevealStep>(\"hidden\");\n  const [nameStaggerActive, setNameStaggerActive] = useState(false);\n  const [accentDebugControls, setAccentDebugControls] = useState<\n    Record<HeroAccentIconKey, HeroAccentLayoutControl>\n  >(() => ({ ...HERO_ACCENT_LAYOUT }));\n",
+  "old_string": "  const [step, setStep] = useState<HeroNameRevealStep>(\"hidden\");\n  const [accentDebugControls, setAccentDebugControls] = useState<\n    Record<HeroAccentIconKey, HeroAccentLayoutControl>\n  >(() => ({ ...HERO_ACCENT_LAYOUT }));\n",
+  "path": "c:\\Users\\robbi\\Desktop\\PORTFOLIOV2TRUE\\PortfolioTRUEV2\\src\\pages\\Home.tsx"
+}

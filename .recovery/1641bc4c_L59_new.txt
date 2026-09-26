@@ -1,0 +1,172 @@
+  const activeSvgTextLayout = heroDebugEnabled ? svgTextDebugControls : HERO_SVG_TEXT_LAYOUT_DEFAULTS;
+  const heroRobLockupSvg = useMemo(() => {
+    const laidOut = applyHeroSvgTextLayout(HERO_ROB_LOCKUP_SVG_BASE, activeSvgTextLayout);
+    /* Name lives in HTML overlays after stagger — SVG copies stay hidden (no handoff). */
+    return nameStaggerActive ? hideHeroNameSvgGlyphs(laidOut) : laidOut;
+  }, [activeSvgTextLayout, nameStaggerActive]);
+
+  const syncNameOverlayHostToSvg = useCallback(
+    (host: HTMLElement, textEl: SVGTextElement, root: HTMLElement) => {
+      const rootRect = root.getBoundingClientRect();
+      const textRect = textEl.getBoundingClientRect();
+      if (textRect.width < 1 || textRect.height < 1) return;
+
+      /* Pin host ink box to SVG text box (bottom) — locked visual position, no handoff jump. */
+      const hostRect = host.getBoundingClientRect();
+      const left =
+        Number.parseFloat(host.style.left || "0") + (textRect.left - hostRect.left);
+      const top =
+        Number.parseFloat(host.style.top || String(textRect.top - rootRect.top)) +
+        (textRect.bottom - hostRect.bottom);
+      host.style.left = `${left}px`;
+      host.style.top = `${top}px`;
+    },
+    [],
+  );
+
+  /** Keep overlay hosts pinned when debug X/Y rewrites SVG anchors. */
+  useLayoutEffect(() => {
+    if (!nameStaggerActive) return;
+    const root = heroSvgAlignRef.current;
+    if (!root) return;
+    const hosts = nameOverlayHostsRef.current;
+    if (hosts.length === 0) return;
+
+    const svgTexts = [
+      ...root.querySelectorAll<SVGTextElement>(
+        '[data-hero-part="robbie"], [data-hero-part="mclaughlin"]',
+      ),
+    ];
+    hosts.forEach((host) => {
+      const part = host.dataset.heroNameOverlay;
+      const textEl = part
+        ? svgTexts.find((el) => el.getAttribute("data-hero-part") === part)
+        : undefined;
+      if (textEl) syncNameOverlayHostToSvg(host, textEl, root);
+    });
+  }, [activeSvgTextLayout, heroRobLockupSvg, nameStaggerActive, syncNameOverlayHostToSvg]);
+
+  /** Staggered letter entrance — ROBBIE / MCLAUGHLIN. Overlays remain as the live name. */
+  useEffect(() => {
+    if (!nameStaggerActive || reduceMotion) return;
+    const root = heroSvgAlignRef.current;
+    if (!root) return;
+    /* Already mounted (e.g. debug toggle) — do not recreate / jump. */
+    if (nameOverlayHostsRef.current.length > 0) return;
+
+    const hosts: HTMLElement[] = [];
+    const splits: ReturnType<typeof SplitText.create>[] = [];
+    const chars: Element[] = [];
+    const svgTextByHost = new Map<HTMLElement, SVGTextElement>();
+    let tween: gsap.core.Tween | null = null;
+    let finished = false;
+    const prevPosition = root.style.position;
+    if (getComputedStyle(root).position === "static") {
+      root.style.position = "relative";
+    }
+
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      tween?.kill();
+      gsap.set(chars, { y: 0, opacity: 1, clearProps: "transform,opacity" });
+      splits.forEach((split) => split.revert());
+      /* Re-pin after SplitText revert — keep overlays; SVG stays hidden. */
+      hosts.forEach((host) => {
+        const textEl = svgTextByHost.get(host);
+        if (textEl) syncNameOverlayHostToSvg(host, textEl, root);
+      });
+      nameOverlayHostsRef.current = hosts;
+    };
+
+    const raf = window.requestAnimationFrame(() => {
+      const svgTexts = [
+        ...root.querySelectorAll<SVGTextElement>(
+          '[data-hero-part="robbie"], [data-hero-part="mclaughlin"]',
+        ),
+      ];
+      if (svgTexts.length === 0) {
+        finish();
+        return;
+      }
+
+      const rootRect = root.getBoundingClientRect();
+
+      svgTexts.forEach((textEl) => {
+        const content = textEl.textContent ?? "";
+        if (!content) return;
+
+        const textRect = textEl.getBoundingClientRect();
+        const bbox = textEl.getBBox();
+        if (textRect.width < 1 || textRect.height < 1 || bbox.height < 1) return;
+
+        const attrSize = Number.parseFloat(textEl.getAttribute("font-size") || "0");
+        const renderedFontPx =
+          attrSize > 0 ? attrSize * (textRect.height / bbox.height) : textRect.height;
+
+        const host = document.createElement("div");
+        host.className = "text";
+        host.dataset.heroNameOverlay = textEl.getAttribute("data-hero-part") || "";
+        host.setAttribute("aria-hidden", "true");
+        host.textContent = content;
+        host.style.position = "absolute";
+        host.style.left = `${textRect.left - rootRect.left}px`;
+        host.style.top = `${textRect.top - rootRect.top}px`;
+        host.style.zIndex = "3";
+        host.style.display = "inline-block";
+        host.style.visibility = "hidden";
+        host.style.margin = "0";
+        host.style.padding = "0";
+        host.style.border = "0";
+        host.style.lineHeight = "1";
+        host.style.whiteSpace = "nowrap";
+        host.style.pointerEvents = "none";
+        host.style.color = textEl.getAttribute("fill") || "#FFFAEE";
+        host.style.fontFamily = textEl.getAttribute("font-family") || "Satoshi, sans-serif";
+        host.style.fontSize = `${renderedFontPx}px`;
+        host.style.fontWeight = textEl.getAttribute("font-weight") || "700";
+        host.style.letterSpacing = textEl.getAttribute("letter-spacing") || "-0.04em";
+        host.style.textShadow = "0 1px 2px rgba(0,0,0,0.38)";
+
+        root.appendChild(host);
+        hosts.push(host);
+        svgTextByHost.set(host, textEl);
+
+        syncNameOverlayHostToSvg(host, textEl, root);
+        host.style.visibility = "visible";
+
+        const split = SplitText.create(host, { type: "chars" });
+        splits.push(split);
+        chars.push(...split.chars);
+        syncNameOverlayHostToSvg(host, textEl, root);
+      });
+
+      nameOverlayHostsRef.current = hosts;
+
+      if (chars.length === 0) {
+        finish();
+        return;
+      }
+
+      tween = gsap.from(chars, {
+        y: 50,
+        opacity: 0,
+        stagger: 0.03,
+        duration: 0.6,
+        ease: "back.out(1.7)",
+        onComplete: finish,
+      });
+    });
+
+    return () => {
+      window.cancelAnimationFrame(raf);
+      finished = true;
+      tween?.kill();
+      splits.forEach((split) => split.revert());
+      hosts.forEach((host) => host.remove());
+      if (nameOverlayHostsRef.current === hosts || nameOverlayHostsRef.current.length === 0) {
+        nameOverlayHostsRef.current = [];
+      }
+      root.style.position = prevPosition;
+    };
+  }, [nameStaggerActive, reduceMotion, syncNameOverlayHostToSvg]);

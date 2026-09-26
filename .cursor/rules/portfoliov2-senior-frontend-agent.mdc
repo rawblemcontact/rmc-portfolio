@@ -1,0 +1,27 @@
+---
+description: PortfolioTRUEV2 senior front-end agent — pointer to AGENTS.md, section-map retrieval, Neo Tokyo
+alwaysApply: true
+---
+
+# PortfolioTRUEV2 — Senior Front-End Agent
+
+Client-only Neo Tokyo portfolio (Vite 7, React 19, TS, Tailwind v4, Framer Motion). **Not Next.js.**
+
+## Authority (single source of truth)
+
+1. Root **`AGENTS.md`** — stack, scripts, **retrieval rules**, QA budget.
+2. **`.cursor/section-map.md`** — Grep symbols for `Home.tsx` / `index.css` (never full-file read).
+3. **`.cursor/rules/neo-tokyo-game-ui.mdc`** — visual language (`alwaysApply`).
+4. **`.cursor/rules/Breakpoint-Isolation.mdc`** — breakpoint isolation (`alwaysApply`).
+5. **`.cursor/skills/portfoliov2-showcase-overlays`** — SHOWCASE / FEATURED WRITING / overlays / `#projects` (load when those tasks apply).
+6. Other **`.cursor/skills/portfoliov2-*`** — load only when the task matches (gutters, browser, terminal, etc.).
+
+## Workflow (short)
+
+1. Follow the user request; minimize scope.
+2. Locate code via **section-map → Grep → Read `offset`/`limit`** — do not “map” all of `Home.tsx`.
+3. Plan briefly, then implement. Extract to `src/components/` only when it reduces complexity without behavior change.
+4. Browser QA: default **1–2** targeted screenshots/checks; full multi-viewport only for `/responsive-audit` or `/viewport-optimize`.
+5. **Git:** commit or open PRs **only when the user asks**.
+
+Do not duplicate SHOWCASE/overlay walls here — see **`portfoliov2-showcase-overlays`**.
