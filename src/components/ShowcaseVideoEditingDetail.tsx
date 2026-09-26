@@ -640,22 +640,24 @@ function measureDetailCardHeightForProbe(
 }
 
 /**
- * Destination height for a single resize beat. Prefer the taller of live wrap
- * and hidden probe so early/opacity-0 live under-reads cannot clip copy.
+ * Destination height for a single resize beat.
+ * Prefer live wrap when it reports; else hidden probe (clone-accurate).
+ * Do NOT take max(live, probe) — that overshoots then needs a shrink beat.
  */
 function measureDetailCardDestHeight(
   cardSurface: HTMLElement,
   probe: HTMLElement | null | undefined,
   live: HTMLElement | null | undefined,
 ): number {
-  let dest = 0;
-  if (live && (live.offsetHeight > 0 || live.scrollHeight > 0)) {
-    dest = Math.max(dest, measureDetailCardHeightForProbe(cardSurface, live));
-  }
+  const liveH =
+    live && (live.offsetHeight > 0 || live.scrollHeight > 0)
+      ? measureDetailCardHeightForProbe(cardSurface, live)
+      : 0;
+  if (liveH > DETAIL_CARD_HEIGHT_EPSILON_PX) return liveH;
   if (probe && (probe.offsetHeight > 0 || probe.scrollHeight > 0)) {
-    dest = Math.max(dest, measureDetailCardHeightForProbe(cardSurface, probe));
+    return measureDetailCardHeightForProbe(cardSurface, probe);
   }
-  return dest;
+  return 0;
 }
 
 function liveDetailCardBodyEl(container: HTMLElement | null): HTMLElement | null {
@@ -700,17 +702,23 @@ function pinDetailCardHeight(surface: HTMLElement, toHeight: number, maxHeight: 
   return pinned;
 }
 
-/** Grow (never shrink) the card to hold copy — pin only, no motion. */
-function pinDetailCardHeightToHoldText(
+/**
+ * Silent height correction (no ease). While copy is hidden, pin exactly.
+ * While copy is visible, only grow — never shrink (avoids a second motion).
+ */
+function pinDetailCardHeightQuiet(
   surface: HTMLElement,
   needHeight: number,
   maxHeight: number | null,
+  opts?: { allowShrink?: boolean },
 ): number | null {
   if (needHeight <= 0) return null;
   const cur = surface.offsetHeight;
   const capped =
     maxHeight != null ? Math.min(needHeight, maxHeight) : needHeight;
-  if (capped <= cur + DETAIL_CARD_HEIGHT_EPSILON_PX) return null;
+  const delta = capped - cur;
+  if (Math.abs(delta) <= DETAIL_CARD_HEIGHT_EPSILON_PX) return null;
+  if (delta < 0 && !opts?.allowShrink) return null;
   return pinDetailCardHeight(surface, capped, maxHeight);
 }
 
@@ -2075,12 +2083,12 @@ export function ShowcaseVideoEditingDetail({
   );
 
   /**
-   * After copy is painted, ease the drawer to the live body — hidden probes can
-   * wrap short. Tween (same rAF ease as tab swaps); never snap height at the end.
+   * Hug live copy with a pin only — never a second height ease.
+   * Visible copy: grow-only. Hidden copy: may shrink.
    */
   const fitDetailCardToLiveBody = useCallback((opts?: { force?: boolean; allowShrink?: boolean }) => {
     const force = Boolean(opts?.force);
-    const allowShrink = opts?.allowShrink !== false;
+    const allowShrink = Boolean(opts?.allowShrink) && !detailBodyVisibleRef.current;
     // Primary resize already owns one height beat — refuse a second live ease.
     if (
       skipWorkSwitchLiveFitRef.current ||
@@ -2109,76 +2117,20 @@ export function ShowcaseVideoEditingDetail({
     const next = measureDetailCardHeightForProbe(surface, live);
     if (next <= 0) return;
     const maxHeight = detailCardMaxHeightPxRef.current;
-    const toHeight = maxHeight != null ? Math.min(next, maxHeight) : next;
-    const fromHeightRaw = surface.offsetHeight;
-    const fromHeight =
-      maxHeight != null ? Math.min(fromHeightRaw, maxHeight) : fromHeightRaw;
-    if (Math.abs(fromHeight - toHeight) <= DETAIL_CARD_HEIGHT_EPSILON_PX) return;
-    // Work-switch probes can over-read to the cap; refuse a tiny cap-shrink
-    // (that pop). Real short destinations must still hug so bottom pad matches.
-    if (!allowShrink && toHeight < fromHeight) return;
-    if (
-      maxHeight != null &&
-      toHeight < fromHeight &&
-      detailCardIsAtPlayerCap(fromHeight, maxHeight) &&
-      toHeight >= maxHeight - 8
-    ) {
-      return;
-    }
-
-    if (detailCardResizeRafRef.current != null) {
-      window.cancelAnimationFrame(detailCardResizeRafRef.current);
-      detailCardResizeRafRef.current = null;
-    }
-
-    const epoch = ++detailCardResizeEpochRef.current;
-    beginDetailCardHeightTransition();
-    surface.classList.add("video-editing-detail-meta-card--tweening");
-    surface.style.minHeight = "0px";
-    surface.style.transition = "none";
-    surface.style.height = `${fromHeight}px`;
-    detailCardTransitionHeightRef.current = fromHeight;
-    if (maxHeight != null) surface.style.maxHeight = `${maxHeight}px`;
-
-    const start = performance.now();
-    const tick = (now: number) => {
-      if (epoch !== detailCardResizeEpochRef.current) return;
-      const t = Math.min(1, (now - start) / DETAIL_CARD_RESIZE_DUR_MS);
-      const k = 1 - (1 - t) ** 3;
-      const cap = detailCardMaxHeightPxRef.current;
-      const h = Math.min(
-        fromHeight + (toHeight - fromHeight) * k,
-        cap ?? Number.POSITIVE_INFINITY,
-      );
-      surface.style.height = `${h}px`;
-      detailCardTransitionHeightRef.current = h;
-      if (t < 1) {
-        detailCardResizeRafRef.current = window.requestAnimationFrame(tick);
-        return;
-      }
-      detailCardResizeRafRef.current = null;
-      surface.classList.remove("video-editing-detail-meta-card--tweening");
-      const settled =
-        cap != null ? Math.min(toHeight, cap) : toHeight;
-      surface.style.height = `${settled}px`;
-      detailCardTransitionHeightRef.current = settled;
-      endDetailCardHeightTransition(settled);
-    };
-    detailCardResizeRafRef.current = window.requestAnimationFrame(tick);
-  }, [beginDetailCardHeightTransition, endDetailCardHeightTransition]);
+    const pinned = pinDetailCardHeightQuiet(surface, next, maxHeight, {
+      allowShrink,
+    });
+    if (pinned == null) return;
+    detailCardTransitionHeightRef.current = pinned;
+    endDetailCardHeightTransition(pinned);
+  }, [endDetailCardHeightTransition]);
 
   const scheduleFitDetailCardToLiveBody = useCallback(() => {
     for (const id of detailCardLiveFitTimersRef.current) window.clearTimeout(id);
     detailCardLiveFitTimersRef.current = [];
-    const run = () => fitDetailCardToLiveBody({ force: true, allowShrink: true });
-    requestAnimationFrame(() => {
-      run();
-      requestAnimationFrame(run);
-    });
-    detailCardLiveFitTimersRef.current.push(
-      window.setTimeout(run, 80),
-      window.setTimeout(run, 220),
-    );
+    // Pin only (fitDetailCardToLiveBody no longer eases). One rAF is enough.
+    const run = () => fitDetailCardToLiveBody({ force: true, allowShrink: false });
+    requestAnimationFrame(run);
   }, [fitDetailCardToLiveBody]);
 
   fitDetailCardToLiveBodyRef.current = fitDetailCardToLiveBody;
@@ -2637,31 +2589,6 @@ export function ShowcaseVideoEditingDetail({
                 setDetailBodyVisible(true);
                 releaseNaturalDrawerResizeLock();
                 finishWorkSwitch(epoch);
-                // After copy paints, pin-up once if still short (no second ease).
-                requestAnimationFrame(() => {
-                  if (epoch !== workSwitchEpochRef.current) return;
-                  const surfacePainted = detailCardSurfaceRef.current;
-                  const livePainted = liveDetailCardBodyEl(
-                    detailTabActiveNaturalRef.current,
-                  );
-                  const probePainted =
-                    detailVideoOverviewMeasureRefs.current[nextIndex];
-                  if (!surfacePainted) return;
-                  const needPainted = measureDetailCardDestHeight(
-                    surfacePainted,
-                    probePainted,
-                    livePainted,
-                  );
-                  const pinnedPainted = pinDetailCardHeightToHoldText(
-                    surfacePainted,
-                    needPainted,
-                    detailCardMaxHeightPxRef.current,
-                  );
-                  if (pinnedPainted != null) {
-                    detailCardTransitionHeightRef.current = pinnedPainted;
-                    setDetailCardHeightPx(pinnedPainted);
-                  }
-                });
                 // Natural: hug reserve to the settled card. Using session-tallest here
                 // after Tools→Undertale jumped the page a second time on mobile.
                 if (isNaturalDrawerViewport) {
@@ -2700,7 +2627,8 @@ export function ShowcaseVideoEditingDetail({
                 // visible key change) also skips — clearing here let it double-beat.
               };
 
-              // Hold text: pin UP only if the single beat undershot. Never ease.
+              // While copy is still opacity 0: silent exact pin (grow or shrink).
+              // Never ease — keeps one visible motion only.
               const surfaceEl = detailCardSurfaceRef.current;
               const liveBody = liveDetailCardBodyElForMeasure(
                 detailTabActiveNaturalRef.current,
@@ -2713,10 +2641,11 @@ export function ShowcaseVideoEditingDetail({
                   overviewProbe,
                   liveBody,
                 );
-                const pinned = pinDetailCardHeightToHoldText(
+                const pinned = pinDetailCardHeightQuiet(
                   surfaceEl,
                   need,
                   detailCardMaxHeightPxRef.current,
+                  { allowShrink: true },
                 );
                 if (pinned != null) {
                   detailCardTransitionHeightRef.current = pinned;
@@ -4285,7 +4214,7 @@ export function ShowcaseVideoEditingDetail({
           if (isNaturalDrawerViewport) {
             releaseNaturalDrawerResizeLock();
           }
-          // Hold text after the single beat — pin UP only if undershot (no ease).
+          // While tab copy is settling: silent pin only (no second ease).
           const settleSurface = detailCardSurfaceRef.current;
           const settleLive = liveDetailCardBodyElForMeasure(
             detailTabActiveNaturalRef.current,
@@ -4296,17 +4225,18 @@ export function ShowcaseVideoEditingDetail({
               targetProbe,
               settleLive,
             );
-            const pinned = pinDetailCardHeightToHoldText(
+            const pinned = pinDetailCardHeightQuiet(
               settleSurface,
               need,
               detailCardMaxHeightPxRef.current,
+              { allowShrink: true },
             );
             if (pinned != null) {
               detailCardTransitionHeightRef.current = pinned;
               endDetailCardHeightTransition(pinned);
             }
           }
-          // Stamp idle key so cap sync cannot schedule a second height tween.
+          // Stamp idle key so cap sync cannot schedule another height change.
           detailCardIdleFitKeyRef.current = `${card.id}:${nextTabId}:${activeVideoIndexRef.current}:${detailBodyVisibleRef.current}`;
           skipTabLiveFitRef.current = false;
         };
@@ -4707,17 +4637,24 @@ export function ShowcaseVideoEditingDetail({
     };
 
     // Player cap shrank under the card (title grew / layout moved).
-    // Ignore 1–3px remasure noise — that was snapping the bottom off the player.
+    // Pin only — never a second height ease.
     if (
       paintedHeight > maxHeight + 3 &&
       !skipWorkSwitchLiveFitRef.current &&
       !workSwitchInFlightRef.current &&
       !skipTabLiveFitRef.current
     ) {
-      animateDetailCardToMeasuredBodyRef.current(activeNatural, 0, {
-        toHeightPx: maxHeight,
-        onSettled: settleCutoff,
-      });
+      const pinned = pinDetailCardHeightQuiet(
+        cardSurface,
+        maxHeight,
+        maxHeight,
+        { allowShrink: true },
+      );
+      if (pinned != null) {
+        detailCardTransitionHeightRef.current = pinned;
+        setDetailCardHeightPx(pinned);
+      }
+      settleCutoff();
       return;
     }
 
