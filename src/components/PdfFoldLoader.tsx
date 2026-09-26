@@ -29,7 +29,7 @@ export function PdfFoldLoader({ className = "" }: Props) {
     <LoaderIcon
       ref={controlsRef}
       aria-hidden
-      className={`text-[#52525b]/className}`.trim()}
+      className={className}
       size={42}
     />
   );
