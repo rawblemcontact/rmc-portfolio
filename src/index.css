@@ -1331,8 +1331,6 @@
   /* PROFILE card — metadata pill + in-card labels (SUMMARY, etc.) */
   #profile .profile-card-surface > p.profile-card-inline-label,
   #profile .profile-summary-card-scroll > p.profile-card-inline-label {
-    font-size: var(--section-eyebrow-font);
-    line-height: var(--section-eyebrow-lh);
     letter-spacing: var(--section-eyebrow-tracking);
     font-weight: 700;
   }
@@ -1340,52 +1338,6 @@
   #profile .profile-card-surface > p.profile-card-inline-label:first-of-type,
   #profile .profile-summary-card-scroll > p.profile-card-inline-label:first-of-type {
     color: var(--section-eyebrow-muted);
-  }
-
-  #profile .profile-card-surface > p.profile-card-inline-label.profile-card-section-label,
-  #profile .profile-summary-card-scroll > p.profile-card-inline-label.profile-card-section-label {
-    font-size: clamp(0.82rem, calc(0.2vw + 0.77rem), 0.9rem);
-    line-height: 1.24;
-    letter-spacing: 0.07em;
-    font-weight: 700;
-  }
-
-  #profile .profile-card-surface > p.font-body,
-  #profile .profile-summary-card-scroll > p.font-body {
-    font-size: clamp(0.875rem, calc(0.35vw + 0.78rem), 1rem);
-    line-height: 1.45;
-  }
-
-  #profile .profile-card-surface > ul.font-body,
-  #profile .profile-summary-card-scroll > ul.font-body {
-    font-size: clamp(0.875rem, calc(0.35vw + 0.78rem), 1rem);
-    line-height: 1.45;
-  }
-
-  @media (max-width: 639px) {
-    #profile .profile-card-surface > p.profile-card-inline-label.profile-card-section-label,
-    #profile .profile-summary-card-scroll > p.profile-card-inline-label.profile-card-section-label {
-      font-size: 0.375rem;
-      line-height: 1.15;
-    }
-
-    #profile .profile-card-surface > p.font-body,
-    #profile .profile-card-surface > ul.font-body,
-    #profile .profile-summary-card-scroll > p.font-body,
-    #profile .profile-summary-card-scroll > ul.font-body {
-      font-size: 0.375rem;
-      line-height: 1.3;
-    }
-  }
-
-  @media (min-width: 640px) {
-    #profile .profile-card-surface > p.font-body,
-    #profile .profile-card-surface > ul.font-body,
-    #profile .profile-summary-card-scroll > p.font-body,
-    #profile .profile-summary-card-scroll > ul.font-body {
-      font-size: clamp(0.9375rem, calc(0.42vw + 0.8rem), 1.0625rem);
-      line-height: 1.5;
-    }
   }
 
   /*
@@ -10436,3 +10388,48 @@
     overflow: visible !important;
   }
 }
+
+/* PROFILE card typography overrides — intentionally unlayered so Tailwind utility
+ * classes on the card content cannot override these component-specific sizes. */
+#profile .profile-card-surface > p.profile-card-inline-label.profile-card-section-label,
+#profile .profile-summary-card-scroll > p.profile-card-inline-label.profile-card-section-label {
+  font-size: clamp(0.82rem, calc(0.2vw + 0.77rem), 0.9rem);
+  line-height: 1.24;
+  letter-spacing: 0.07em;
+  font-weight: 700;
+}
+
+#profile .profile-card-surface > p.font-body,
+#profile .profile-summary-card-scroll > p.font-body,
+#profile .profile-card-surface > ul.font-body,
+#profile .profile-summary-card-scroll > ul.font-body {
+  font-size: clamp(0.875rem, calc(0.35vw + 0.78rem), 1rem);
+  line-height: 1.45;
+}
+
+@media (max-width: 639px) {
+  #profile .profile-card-surface > p.profile-card-inline-label.profile-card-section-label,
+  #profile .profile-summary-card-scroll > p.profile-card-inline-label.profile-card-section-label {
+    font-size: 0.375rem;
+    line-height: 1.15;
+  }
+
+  #profile .profile-card-surface > p.font-body,
+  #profile .profile-card-surface > ul.font-body,
+  #profile .profile-summary-card-scroll > p.font-body,
+  #profile .profile-summary-card-scroll > ul.font-body {
+    font-size: 0.375rem;
+    line-height: 1.3;
+  }
+}
+
+@media (min-width: 640px) {
+  #profile .profile-card-surface > p.font-body,
+  #profile .profile-card-surface > ul.font-body,
+  #profile .profile-summary-card-scroll > p.font-body,
+  #profile .profile-summary-card-scroll > ul.font-body {
+    font-size: clamp(0.9375rem, calc(0.42vw + 0.8rem), 1.0625rem);
+    line-height: 1.5;
+  }
+}
+
