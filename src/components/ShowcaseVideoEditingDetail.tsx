@@ -341,6 +341,8 @@ const DETAIL_NATURAL_CUTOFF_LEAD_MS = Math.round(
 const DETAIL_NATURAL_CARD_RESIZE_DUR_MS = Math.round(
   DETAIL_CARD_RESIZE_DUR_MS * DETAIL_NATURAL_SPEED,
 );
+/** Natural only: pause after title Y (card rides) before the desc-card height tween. */
+const DETAIL_NATURAL_TITLE_TO_CARD_GAP_MS = 100;
 /**
  * Clicks closer than this are "rapid": abort/coalesce and snap instead of stacking
  * the full title→card→reveal choreography.
@@ -2626,10 +2628,11 @@ export function ShowcaseVideoEditingDetail({
       };
 
       /**
-       * Natural (phone / tablet portrait): ease title height with the card so the
-       * desc card rides up/down instead of snapping when the now-playing title
-       * grows/shrinks. Player-capped: still snap title — easing both shifted
-       * cardTop / player-cap mid-tween and read as a second adjust.
+       * Natural (phone / tablet portrait): ease title height so the desc card
+       * rides up/down when the now-playing title grows/shrinks. If that Y move
+       * runs, wait a short beat before the card height tween so the two don't
+       * read as one rushed chain. No title Y → card resize immediately.
+       * Player-capped: still snap title (cap drift otherwise reads as a 2nd beat).
        */
       const startTitleAndCardTogether = () => {
         if (epoch !== workSwitchEpochRef.current) return;
@@ -2639,9 +2642,15 @@ export function ShowcaseVideoEditingDetail({
             switchEpoch: epoch,
             durationMs: DETAIL_NATURAL_CARD_RESIZE_DUR_MS,
           });
-          startCardResize(
-            titleDur > 0 ? titleDur : DETAIL_NATURAL_CARD_RESIZE_DUR_MS,
-          );
+          if (titleDur > 0) {
+            afterTitleResizeRef.current = () => {
+              runAfterDelay(DETAIL_NATURAL_TITLE_TO_CARD_GAP_MS, () => {
+                startCardResize(DETAIL_NATURAL_CARD_RESIZE_DUR_MS);
+              });
+            };
+            return;
+          }
+          startCardResize(DETAIL_NATURAL_CARD_RESIZE_DUR_MS);
           return;
         }
         animateDetailTitleToMeasuredHeight(nextIndex, {
