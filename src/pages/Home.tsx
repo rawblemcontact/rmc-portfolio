@@ -11842,40 +11842,6 @@ const ConfidantExperience = ({
       },
     },
   };
-  /** Content layer: no scale — avoids 1px right settle when Framer drops scale→none. */
-  const experienceCardContentEntrance: Variants = {
-    hidden: { opacity: rm ? 1 : 0, y: rm ? 0 : experienceCardEntranceY },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        delay: 0,
-        type: "tween",
-        duration: rm ? 0 : experienceCardEntranceDuration,
-        ease: experienceCardMotionEase,
-      },
-    },
-  };
-  /** Keep translate3d after settle — same compositor-nudge guard as section slide fades. */
-  const experienceCardContentTransformTemplate = ({
-    y,
-  }: {
-    y?: string | number;
-  }) => {
-    const yVal = y == null ? "0px" : typeof y === "number" ? `${y}px` : y;
-    return `translate3d(0, ${yVal}, 0)`;
-  };
-  const experienceCardShellTransformTemplate = ({
-    y,
-    scale,
-  }: {
-    y?: string | number;
-    scale?: string | number;
-  }) => {
-    const yVal = y == null ? "0px" : typeof y === "number" ? `${y}px` : y;
-    const s = scale == null ? 1 : scale;
-    return `translate3d(0, ${yVal}, 0) scale(${s})`;
-  };
   const experienceRailHeaderEntrance: Variants = {
     hidden: {},
     visible: {
@@ -12160,8 +12126,7 @@ const ConfidantExperience = ({
               <motion.div
                 className="tabs-content"
                 style={experienceLandscapeEducationWidthLockStyle}
-                variants={experienceCardContentEntrance}
-                transformTemplate={experienceCardContentTransformTemplate}
+                variants={experienceCardEntrance}
                 initial="hidden"
                 animate={panelSettled ? "visible" : "hidden"}
               >
@@ -12177,7 +12142,6 @@ const ConfidantExperience = ({
                   className="experience-card-entrance-shell"
                   style={{ transformOrigin: "0% 0%" }}
                   variants={experienceCardEntrance}
-                  transformTemplate={experienceCardShellTransformTemplate}
                   initial="hidden"
                   animate={panelSettled ? "visible" : "hidden"}
                   aria-hidden
@@ -12185,8 +12149,7 @@ const ConfidantExperience = ({
                 <motion.div
                   className="experience-card-entrance-motion w-full min-w-0"
                   style={{ transformOrigin: "0% 0%" }}
-                  variants={experienceCardContentEntrance}
-                  transformTemplate={experienceCardContentTransformTemplate}
+                  variants={experienceCardEntrance}
                   initial="hidden"
                   animate={panelSettled ? "visible" : "hidden"}
                 >
