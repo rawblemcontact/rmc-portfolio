@@ -8,7 +8,6 @@ import {
   useMotionValue,
   useTransform,
   animate,
-  motionValue,
 } from "framer-motion";
 import useEmblaCarousel from "embla-carousel-react";
 import React, {
@@ -11640,28 +11639,46 @@ const ConfidantExperience = ({
             );
           };
 
-          // 2) Resize card (content still dimmed).
+          // 2) Resize card (content still dimmed) — rAF + cubic ease-out, same
+          // family as PROJECT DETAILS desc-card (Framer bezier was too snappy).
           const dShell = naturalShellH - fromShellH;
           if (Math.abs(dShell) < 2) {
             finishUnlock();
             return;
           }
 
-          const t = motionValue(0);
-          const unsub = t.on("change", (p) => {
-            tabsShellEl.style.height = `${Math.round(fromShellH + dShell * p)}px`;
-          });
-          const anim = animate(t, 1, {
-            duration: heightMs / 1000,
-            ease: [0.16, 1, 0.3, 1],
-            onComplete: () => {
-              unsub();
-              finishUnlock();
-            },
-          });
+          const heightDelta = Math.abs(dShell);
+          const resizeDurMs = Math.min(
+            Math.round(heightMs * 2.4),
+            Math.max(heightMs, Math.round(heightMs * (heightDelta / 160))),
+          );
+          tabsShellEl.style.willChange = "height";
+          const start = performance.now();
+          let rafId = 0;
+          const tick = (now: number) => {
+            if (gen !== experienceDrawerGenRef.current) return;
+            const t = Math.min(1, (now - start) / resizeDurMs);
+            const k = 1 - (1 - t) ** 3;
+            tabsShellEl.style.height = `${Math.round(fromShellH + dShell * k)}px`;
+            if (t < 1) {
+              rafId = window.requestAnimationFrame(tick);
+              experienceDrawerHeightStopRef.current = () => {
+                window.cancelAnimationFrame(rafId);
+                tabsShellEl.style.willChange = "";
+                endExperienceDrawer();
+                resetExperienceTabFadeLayers();
+                experienceDrawerLockRef.current = false;
+              };
+              return;
+            }
+            tabsShellEl.style.willChange = "";
+            experienceDrawerHeightStopRef.current = null;
+            finishUnlock();
+          };
+          rafId = window.requestAnimationFrame(tick);
           experienceDrawerHeightStopRef.current = () => {
-            anim.stop();
-            unsub();
+            window.cancelAnimationFrame(rafId);
+            tabsShellEl.style.willChange = "";
             endExperienceDrawer();
             resetExperienceTabFadeLayers();
             experienceDrawerLockRef.current = false;
