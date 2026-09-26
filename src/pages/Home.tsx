@@ -11580,7 +11580,7 @@ const ConfidantExperience = ({
       experienceDrawerLockRef.current = true;
       const gen = ++experienceDrawerGenRef.current;
 
-      // Pin height first, then mark resizing (overflow only — no chrome swap).
+      // Pin height first, then mark resizing (min-height only — shell chrome untouched).
       // Card geometry stays fixed except the bottom edge during the height tween.
       const fromShellH = Math.max(1, Math.round(tabsShellEl.offsetHeight));
       tabsShellEl.style.setProperty("height", `${fromShellH}px`, "important");
@@ -11607,14 +11607,14 @@ const ConfidantExperience = ({
         tabsShellEl.style.removeProperty("will-change");
         tabsShellEl.style.removeProperty("--experience-body-fade-ms");
         tabsShellEl.removeAttribute("data-experience-body-hidden");
-        // Drop resizing class while still pinned so overflow/shell height:100%
-        // restore cannot shift the committed hug box.
-        tabsShellEl.classList.remove("experience-drawer-resizing");
+        // Keep resizing class until after height→auto so shell inset:0 never
+        // remounts against a pinned box (avoids post-anim border pop).
         void tabsShellEl.offsetHeight;
         requestAnimationFrame(() => {
           if (gen !== experienceDrawerGenRef.current) return;
           tabsShellEl.style.removeProperty("height");
           tabsShellEl.style.removeProperty("transition");
+          tabsShellEl.classList.remove("experience-drawer-resizing");
           experienceDrawerHeightStopRef.current = null;
           experienceDrawerLockRef.current = false;
         });
