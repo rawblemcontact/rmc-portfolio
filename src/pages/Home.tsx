@@ -11627,11 +11627,11 @@ const ConfidantExperience = ({
             // 3) Fade new card content back in.
             incomingInner.classList.remove("career-tabs-dim");
             incomingHeader?.classList.remove("career-tabs-dim");
+            runExperiencePanelIntro(incomingPanel);
             experienceDrawerTimersRef.current.push(
               window.setTimeout(() => {
                 if (gen !== experienceDrawerGenRef.current) return;
                 experienceDrawerLockRef.current = false;
-                runExperiencePanelIntro(incomingPanel);
               }, fadeMs),
             );
           };
