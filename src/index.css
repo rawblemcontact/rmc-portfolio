@@ -7805,17 +7805,17 @@
 .pdf-loading-indicator__loader {
   /* Same base ink as FILE LOADING… (opacity pulse lives on the wrap). */
   color: color-mix(in srgb, rgb(186 186 186) 40.5%, transparent);
-  /* ~label-scale on desktop (14px); a hair smaller on phone/tablet. */
+  /* Desktop ~label-adjacent; phone/tablet a hair smaller. */
   line-height: 0;
 }
 .pdf-loading-indicator__loader svg {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
 }
 @media (max-width: 1366px) {
   .pdf-loading-indicator__loader svg {
-    width: 12px;
-    height: 12px;
+    width: 13px;
+    height: 13px;
   }
 }
 .pdf-loading-indicator__label {
