@@ -8,6 +8,7 @@ import {
   useMotionValue,
   useTransform,
   animate,
+  motionValue,
 } from "framer-motion";
 import useEmblaCarousel from "embla-carousel-react";
 import React, {
@@ -11473,14 +11474,226 @@ const ConfidantExperience = ({
     }
   }, [activeExperienceTabId, experienceTabletLandscapeViewport]);
 
+  const experienceDrawerLockRef = useRef(false);
+  const experienceDrawerGenRef = useRef(0);
+  const experienceDrawerHeightStopRef = useRef<(() => void) | null>(null);
+  const experienceDrawerTimersRef = useRef<number[]>([]);
+
+  const clearExperienceDrawerTimers = useCallback(() => {
+    while (experienceDrawerTimersRef.current.length) {
+      const id = experienceDrawerTimersRef.current.pop();
+      if (id !== undefined) window.clearTimeout(id);
+    }
+    experienceDrawerHeightStopRef.current?.();
+    experienceDrawerHeightStopRef.current = null;
+  }, []);
+
+  const resetExperienceTabFadeLayers = useCallback(() => {
+    const root = tabsRootRef.current;
+    if (!root) return;
+    root.querySelectorAll<HTMLElement>(".career-tabs-content-inner").forEach((el) => {
+      el.classList.remove("career-tabs-dim");
+      el.style.removeProperty("height");
+    });
+    root.querySelectorAll<HTMLElement>(".tab-panel .panel-header").forEach((el) => {
+      el.classList.remove("career-tabs-dim");
+    });
+  }, []);
+
+  const runExperiencePanelIntro = useCallback((panel: HTMLElement) => {
+    panel.querySelectorAll<HTMLElement>(".progress-fill").forEach((bar) => {
+      const width = bar.style.width;
+      bar.style.width = "0%";
+      setTimeout(() => {
+        bar.style.width = width;
+      }, 100);
+    });
+
+    const careerStatEase = "cubic-bezier(0.16, 1, 0.3, 1)";
+    const isEducation = panel.id === "education";
+    const statTargets = isEducation
+      ? panel.querySelectorAll<HTMLElement>(".stats-grid .stat-item")
+      : panel.querySelectorAll<HTMLElement>(".stat-value");
+    statTargets.forEach((stat, index) => {
+      stat.style.opacity = "0";
+      stat.style.transform = isEducation ? "none" : "translateY(20px)";
+      setTimeout(
+        () => {
+          stat.style.transition = isEducation
+            ? `opacity 0.32s ${careerStatEase}`
+            : `opacity 0.5s ${careerStatEase}, transform 0.5s ${careerStatEase}`;
+          stat.style.opacity = "1";
+          stat.style.transform = isEducation ? "none" : "translateY(0)";
+        },
+        isEducation ? 0 : index * 100,
+      );
+    });
+  }, []);
+
+  const selectExperienceTab = useCallback(
+    (tabId: ExperienceTabId) => {
+      if (tabId === activeExperienceTabId) return;
+
+      // Phone: instant swap (unchanged). Drawer is desktop + tablet P/L only.
+      if (isMobileExperienceLayout || rm) {
+        setActiveExperienceTabId(tabId);
+        return;
+      }
+
+      if (experienceDrawerLockRef.current) return;
+
+      const root = tabsRootRef.current;
+      const tabsShellEl = root?.querySelector<HTMLElement>(".tabs-content");
+      const outgoingPanel = root?.querySelector<HTMLElement>(
+        `#${activeExperienceTabId}`,
+      );
+      if (!root || !tabsShellEl || !outgoingPanel) {
+        setActiveExperienceTabId(tabId);
+        return;
+      }
+
+      const outgoingInner = outgoingPanel.querySelector<HTMLElement>(
+        ".career-tabs-content-inner",
+      );
+      const outgoingHeader = outgoingPanel.querySelector<HTMLElement>(".panel-header");
+      if (!outgoingInner) {
+        setActiveExperienceTabId(tabId);
+        return;
+      }
+
+      const shellStyles = getComputedStyle(
+        root.querySelector(".career-overview-shell") ?? root,
+      );
+      const fadeMs =
+        parseFloat(shellStyles.getPropertyValue("--career-card-fade-ms")) || 306;
+      const heightMs =
+        parseFloat(shellStyles.getPropertyValue("--career-card-height-ms")) || 486;
+
+      clearExperienceDrawerTimers();
+      experienceDrawerLockRef.current = true;
+      const gen = ++experienceDrawerGenRef.current;
+
+      const fromShellH = Math.max(
+        1,
+        Math.round(tabsShellEl.getBoundingClientRect().height),
+      );
+      tabsShellEl.style.height = `${fromShellH}px`;
+
+      // 1) Fade out inner card content (glass shell stays).
+      requestAnimationFrame(() => {
+        if (gen !== experienceDrawerGenRef.current) return;
+        outgoingInner.classList.add("career-tabs-dim");
+        outgoingHeader?.classList.add("career-tabs-dim");
+      });
+
+      experienceDrawerTimersRef.current.push(
+        window.setTimeout(() => {
+          if (gen !== experienceDrawerGenRef.current) return;
+
+          // Swap tab while content stays dimmed, then measure destination height.
+          flushSync(() => {
+            setActiveExperienceTabId(tabId);
+          });
+
+          const incomingPanel = root.querySelector<HTMLElement>(`#${tabId}`);
+          const incomingInner = incomingPanel?.querySelector<HTMLElement>(
+            ".career-tabs-content-inner",
+          );
+          const incomingHeader =
+            incomingPanel?.querySelector<HTMLElement>(".panel-header");
+          if (!incomingPanel || !incomingInner) {
+            tabsShellEl.style.removeProperty("height");
+            resetExperienceTabFadeLayers();
+            experienceDrawerLockRef.current = false;
+            return;
+          }
+
+          outgoingInner.classList.remove("career-tabs-dim");
+          outgoingHeader?.classList.remove("career-tabs-dim");
+          incomingInner.classList.add("career-tabs-dim");
+          incomingHeader?.classList.add("career-tabs-dim");
+
+          tabsShellEl.style.height = "auto";
+          const naturalShellH = Math.max(
+            1,
+            Math.round(tabsShellEl.getBoundingClientRect().height),
+          );
+          tabsShellEl.style.height = `${fromShellH}px`;
+          void tabsShellEl.offsetHeight;
+
+          const finishUnlock = () => {
+            tabsShellEl.style.removeProperty("height");
+            experienceDrawerHeightStopRef.current = null;
+            // 3) Fade new card content back in.
+            incomingInner.classList.remove("career-tabs-dim");
+            incomingHeader?.classList.remove("career-tabs-dim");
+            experienceDrawerTimersRef.current.push(
+              window.setTimeout(() => {
+                if (gen !== experienceDrawerGenRef.current) return;
+                experienceDrawerLockRef.current = false;
+                runExperiencePanelIntro(incomingPanel);
+              }, fadeMs),
+            );
+          };
+
+          // 2) Resize card (content still dimmed).
+          const dShell = naturalShellH - fromShellH;
+          if (Math.abs(dShell) < 2) {
+            finishUnlock();
+            return;
+          }
+
+          const t = motionValue(0);
+          const unsub = t.on("change", (p) => {
+            tabsShellEl.style.height = `${Math.round(fromShellH + dShell * p)}px`;
+          });
+          const anim = animate(t, 1, {
+            duration: heightMs / 1000,
+            ease: [0.16, 1, 0.3, 1],
+            onComplete: () => {
+              unsub();
+              finishUnlock();
+            },
+          });
+          experienceDrawerHeightStopRef.current = () => {
+            anim.stop();
+            unsub();
+            tabsShellEl.style.removeProperty("height");
+            resetExperienceTabFadeLayers();
+            experienceDrawerLockRef.current = false;
+          };
+        }, fadeMs),
+      );
+    },
+    [
+      activeExperienceTabId,
+      isMobileExperienceLayout,
+      rm,
+      clearExperienceDrawerTimers,
+      resetExperienceTabFadeLayers,
+      runExperiencePanelIntro,
+    ],
+  );
+
+  useEffect(() => {
+    return () => {
+      experienceDrawerGenRef.current += 1;
+      clearExperienceDrawerTimers();
+      experienceDrawerLockRef.current = false;
+      const root = tabsRootRef.current;
+      root?.querySelector<HTMLElement>(".tabs-content")?.style.removeProperty("height");
+      resetExperienceTabFadeLayers();
+    };
+  }, [clearExperienceDrawerTimers, resetExperienceTabFadeLayers]);
+
   const handleExperienceTabKeyDown = useCallback(
     (tabId: ExperienceTabId, e: React.KeyboardEvent<HTMLButtonElement>) => {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
-        setActiveExperienceTabId(tabId);
+        selectExperienceTab(tabId);
       }
     },
-    [],
+    [selectExperienceTab],
   );
 
   const renderExperienceTabButton = (
@@ -11490,7 +11703,7 @@ const ConfidantExperience = ({
     motionVariants?: Variants,
   ) => {
     const className = experienceTabBtnClass(activeExperienceTabId, tabId);
-    const onClick = () => setActiveExperienceTabId(tabId);
+    const onClick = () => selectExperienceTab(tabId);
     const onKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) =>
       handleExperienceTabKeyDown(tabId, e);
     const label = (
@@ -11622,16 +11835,12 @@ const ConfidantExperience = ({
   };
   useEffect(() => {
     if (isCompactExperienceLayout) return;
+    // Drawer owns fade/height/intro for desktop + tablet tab switches.
+    if (experienceDrawerLockRef.current) return;
     const root = tabsRootRef.current;
     if (!root) return;
 
-    root.querySelectorAll<HTMLElement>(".career-tabs-content-inner").forEach((el) => {
-      el.classList.remove("career-tabs-dim");
-      el.style.removeProperty("height");
-    });
-    root.querySelectorAll<HTMLElement>(".tab-panel .panel-header").forEach((el) => {
-      el.classList.remove("career-tabs-dim");
-    });
+    resetExperienceTabFadeLayers();
     root.querySelector<HTMLElement>(".tabs-content")?.style.removeProperty("height");
 
     root.querySelectorAll<HTMLElement>(".tab-panel").forEach((panel) => {
@@ -11648,37 +11857,13 @@ const ConfidantExperience = ({
     if (!panel) return;
 
     void panel.offsetHeight;
-
-    if (isCompactExperienceLayout) return;
-
-    panel.querySelectorAll<HTMLElement>(".progress-fill").forEach((bar) => {
-      const width = bar.style.width;
-      bar.style.width = "0%";
-      setTimeout(() => {
-        bar.style.width = width;
-      }, 100);
-    });
-
-    const careerStatEase = "cubic-bezier(0.16, 1, 0.3, 1)";
-    const isEducation = panel.id === "education";
-    const statTargets = isEducation
-      ? panel.querySelectorAll<HTMLElement>(".stats-grid .stat-item")
-      : panel.querySelectorAll<HTMLElement>(".stat-value");
-    statTargets.forEach((stat, index) => {
-      stat.style.opacity = "0";
-      stat.style.transform = isEducation ? "none" : "translateY(20px)";
-      setTimeout(
-        () => {
-          stat.style.transition = isEducation
-            ? `opacity 0.32s ${careerStatEase}`
-            : `opacity 0.5s ${careerStatEase}, transform 0.5s ${careerStatEase}`;
-          stat.style.opacity = "1";
-          stat.style.transform = isEducation ? "none" : "translateY(0)";
-        },
-        isEducation ? 0 : index * 100,
-      );
-    });
-  }, [activeExperienceTabId, isCompactExperienceLayout]);
+    runExperiencePanelIntro(panel);
+  }, [
+    activeExperienceTabId,
+    isCompactExperienceLayout,
+    resetExperienceTabFadeLayers,
+    runExperiencePanelIntro,
+  ]);
 
   useEffect(() => {
     const root = tabsRootRef.current;
