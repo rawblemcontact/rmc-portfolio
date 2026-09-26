@@ -7,6 +7,17 @@ import type { Options as PlyrOptions } from "plyr";
 import "plyr/dist/plyr.css";
 import { directionalArrowIdlePhaseDelaySec, EASE } from "@/lib/motion";
 import { afterOrientationSettle } from "@/lib/visualViewport";
+import {
+  DRAWER_BODY_IN_S,
+  DRAWER_BODY_OUT_MS,
+  DRAWER_BODY_OUT_S,
+  DRAWER_CARD_HEIGHT_EPSILON_PX,
+  DRAWER_CARD_RESIZE_DUR_MS,
+  DRAWER_CARD_RESIZE_DUR_S,
+  DRAWER_CARD_RESIZE_EASE,
+  drawerCardResizeDurationMs,
+  drawerCardResizeEaseK,
+} from "@/lib/drawerMotion";
 
 export type ShowcaseDetailVideo = {
   readonly id: string;
@@ -269,7 +280,7 @@ function swapDetailTabToFront(
 }
 
 /** Tab header FLIP travel — slightly longer / softer than DUR.fast. */
-const DETAIL_TAB_SWAP_DUR_S = 0.42;
+const DETAIL_TAB_SWAP_DUR_S = DRAWER_CARD_RESIZE_DUR_S;
 const DETAIL_TAB_SWAP_EASE = [0.22, 1, 0.36, 1] as const;
 /** Full 4-tab header settle (FLIP) before drawer height may start. */
 const DETAIL_TAB_HEADER_SETTLE_MS = Math.round(DETAIL_TAB_SWAP_DUR_S * 1000);
@@ -277,9 +288,9 @@ const DETAIL_TAB_HEADER_SETTLE_MS = Math.round(DETAIL_TAB_SWAP_DUR_S * 1000);
  * Body copy fades out while headers start travelling.
  * Fade-in is delayed (mode="wait" exit + this delay) so copy appears only after headers settle.
  */
-const DETAIL_TAB_BODY_OUT_S = 0.16;
-const DETAIL_TAB_BODY_IN_S = 0.24;
-const DETAIL_BODY_OUT_MS = Math.round(DETAIL_TAB_BODY_OUT_S * 1000);
+const DETAIL_TAB_BODY_OUT_S = DRAWER_BODY_OUT_S;
+const DETAIL_TAB_BODY_IN_S = DRAWER_BODY_IN_S;
+const DETAIL_BODY_OUT_MS = DRAWER_BODY_OUT_MS;
 /**
  * After height settles, arm the cutoff dissolve briefly before body opacity
  * so the soft edge is already easing when copy fades in.
@@ -298,21 +309,12 @@ const DETAIL_TAB_UNDERLINE_DUR_S = 0.28;
 const DETAIL_TAB_UNDERLINE_CLOSE_DUR_S = 0.08;
 const DETAIL_TAB_UNDERLINE_EASE = EASE.out;
 /** Description-card height keyframes stay synchronized with the tab swap. */
-const DETAIL_CARD_RESIZE_DUR_MS = Math.round(DETAIL_TAB_SWAP_DUR_S * 1000);
+const DETAIL_CARD_RESIZE_DUR_MS = DRAWER_CARD_RESIZE_DUR_MS;
 /** Skip height tween only for subpixel / rounding noise. */
-const DETAIL_CARD_HEIGHT_EPSILON_PX = 2.5;
-const DETAIL_CARD_RESIZE_EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
+const DETAIL_CARD_HEIGHT_EPSILON_PX = DRAWER_CARD_HEIGHT_EPSILON_PX;
+const DETAIL_CARD_RESIZE_EASE = DRAWER_CARD_RESIZE_EASE;
 /** Scale resize duration with body delta so tall overviews (Undertale) ease, not snap. */
-function detailCardResizeDurationMs(heightDeltaPx: number): number {
-  const delta = Math.abs(heightDeltaPx);
-  return Math.min(
-    Math.round(DETAIL_CARD_RESIZE_DUR_MS * 2.4),
-    Math.max(
-      DETAIL_CARD_RESIZE_DUR_MS,
-      Math.round(DETAIL_CARD_RESIZE_DUR_MS * (delta / 160)),
-    ),
-  );
-}
+const detailCardResizeDurationMs = drawerCardResizeDurationMs;
 /**
  * New tab copy waits until tab headers settle + height resize + cutoff lead + one
  * paint so the soft edge is already easing when copy fades in (player-capped /
@@ -2012,7 +2014,7 @@ export function ShowcaseVideoEditingDetail({
               return;
             }
             const t = Math.min(1, (now - start) / resizeDurMs);
-            const k = 1 - (1 - t) ** 3;
+            const k = drawerCardResizeEaseK(t);
             const h = fromHeight + (frozenTo - fromHeight) * k;
             surface.style.height = `${h}px`;
             if (frozenCap != null) surface.style.maxHeight = `${frozenCap}px`;
