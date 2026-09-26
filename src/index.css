@@ -10453,3 +10453,13 @@
   }
 }
 
+/* PROFILE tablet body copy must come after the desktop baseline so 1024–1366px tablets are included. */
+@media (min-width: 768px) and (max-width: 1366px) {
+  #profile .profile-card-surface > p.font-body,
+  #profile .profile-card-surface > ul.font-body,
+  #profile .profile-summary-card-scroll p.font-body,
+  #profile .profile-summary-card-scroll ul.font-body {
+    font-size: calc(clamp(0.9375rem, calc(0.42vw + 0.8rem), 1.0625rem) - 4.5px);
+  }
+}
+
