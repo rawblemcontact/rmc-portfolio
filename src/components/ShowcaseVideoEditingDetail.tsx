@@ -639,6 +639,25 @@ function measureDetailCardHeightForProbe(
   return Math.ceil(measureDetailCardChromeHeight(cardSurface) + bodyH);
 }
 
+/**
+ * Destination height for a single resize beat. Prefer the taller of live wrap
+ * and hidden probe so early/opacity-0 live under-reads cannot clip copy.
+ */
+function measureDetailCardDestHeight(
+  cardSurface: HTMLElement,
+  probe: HTMLElement | null | undefined,
+  live: HTMLElement | null | undefined,
+): number {
+  let dest = 0;
+  if (live && (live.offsetHeight > 0 || live.scrollHeight > 0)) {
+    dest = Math.max(dest, measureDetailCardHeightForProbe(cardSurface, live));
+  }
+  if (probe && (probe.offsetHeight > 0 || probe.scrollHeight > 0)) {
+    dest = Math.max(dest, measureDetailCardHeightForProbe(cardSurface, probe));
+  }
+  return dest;
+}
+
 function liveDetailCardBodyEl(container: HTMLElement | null): HTMLElement | null {
   if (!container) return null;
   const bodies = container.querySelectorAll(".video-editing-detail-card-tab-body");
@@ -679,6 +698,20 @@ function pinDetailCardHeight(surface: HTMLElement, toHeight: number, maxHeight: 
   if (maxHeight != null) surface.style.maxHeight = `${maxHeight}px`;
   surface.style.height = `${pinned}px`;
   return pinned;
+}
+
+/** Grow (never shrink) the card to hold copy — pin only, no motion. */
+function pinDetailCardHeightToHoldText(
+  surface: HTMLElement,
+  needHeight: number,
+  maxHeight: number | null,
+): number | null {
+  if (needHeight <= 0) return null;
+  const cur = surface.offsetHeight;
+  const capped =
+    maxHeight != null ? Math.min(needHeight, maxHeight) : needHeight;
+  if (capped <= cur + DETAIL_CARD_HEIGHT_EPSILON_PX) return null;
+  return pinDetailCardHeight(surface, capped, maxHeight);
 }
 
 /** True when the drawer is painted at the player-aligned ceiling (tolerance for subpixels). */
@@ -1875,12 +1908,12 @@ export function ShowcaseVideoEditingDetail({
               const liveForMeasure = liveDetailCardBodyElForMeasure(
                 detailTabActiveNaturalRef.current,
               );
-              if (
-                liveForMeasure &&
-                (liveForMeasure.offsetHeight > 0 || liveForMeasure.scrollHeight > 0)
-              ) {
-                return measureDetailCardHeightForProbe(surface, liveForMeasure);
-              }
+              const dest = measureDetailCardDestHeight(
+                surface,
+                targetProbe,
+                liveForMeasure,
+              );
+              if (dest > 0) return dest;
             }
             if (forcedToHeightPx != null) return forcedToHeightPx;
             return measureDetailCardHeightForProbe(surface, targetProbe);
@@ -2604,6 +2637,31 @@ export function ShowcaseVideoEditingDetail({
                 setDetailBodyVisible(true);
                 releaseNaturalDrawerResizeLock();
                 finishWorkSwitch(epoch);
+                // After copy paints, pin-up once if still short (no second ease).
+                requestAnimationFrame(() => {
+                  if (epoch !== workSwitchEpochRef.current) return;
+                  const surfacePainted = detailCardSurfaceRef.current;
+                  const livePainted = liveDetailCardBodyEl(
+                    detailTabActiveNaturalRef.current,
+                  );
+                  const probePainted =
+                    detailVideoOverviewMeasureRefs.current[nextIndex];
+                  if (!surfacePainted) return;
+                  const needPainted = measureDetailCardDestHeight(
+                    surfacePainted,
+                    probePainted,
+                    livePainted,
+                  );
+                  const pinnedPainted = pinDetailCardHeightToHoldText(
+                    surfacePainted,
+                    needPainted,
+                    detailCardMaxHeightPxRef.current,
+                  );
+                  if (pinnedPainted != null) {
+                    detailCardTransitionHeightRef.current = pinnedPainted;
+                    setDetailCardHeightPx(pinnedPainted);
+                  }
+                });
                 // Natural: hug reserve to the settled card. Using session-tallest here
                 // after Tools→Undertale jumped the page a second time on mobile.
                 if (isNaturalDrawerViewport) {
@@ -2642,17 +2700,25 @@ export function ShowcaseVideoEditingDetail({
                 // visible key change) also skips — clearing here let it double-beat.
               };
 
-              // Residual probe/live mismatch: pin only — never a second height ease.
+              // Hold text: pin UP only if the single beat undershot. Never ease.
               const surfaceEl = detailCardSurfaceRef.current;
               const liveBody = liveDetailCardBodyElForMeasure(
                 detailTabActiveNaturalRef.current,
               );
-              if (surfaceEl && liveBody) {
-                const hug = measureDetailCardHeightForProbe(surfaceEl, liveBody);
-                const curH = surfaceEl.offsetHeight;
-                if (hug > 0 && Math.abs(curH - hug) > DETAIL_CARD_HEIGHT_EPSILON_PX) {
-                  const maxHeight = detailCardMaxHeightPxRef.current;
-                  const pinned = pinDetailCardHeight(surfaceEl, hug, maxHeight);
+              const overviewProbe =
+                detailVideoOverviewMeasureRefs.current[nextIndex];
+              if (surfaceEl) {
+                const need = measureDetailCardDestHeight(
+                  surfaceEl,
+                  overviewProbe,
+                  liveBody,
+                );
+                const pinned = pinDetailCardHeightToHoldText(
+                  surfaceEl,
+                  need,
+                  detailCardMaxHeightPxRef.current,
+                );
+                if (pinned != null) {
                   detailCardTransitionHeightRef.current = pinned;
                   endDetailCardHeightTransition(pinned);
                 }
@@ -2755,11 +2821,14 @@ export function ShowcaseVideoEditingDetail({
           detailTabActiveNaturalRef.current,
         );
         const overviewProbe = detailVideoOverviewMeasureRefs.current[nextIndex];
-        const measureEl = liveBody ?? overviewProbe;
         let cardDelta = 0;
-        if (surface && measureEl) {
-          const toH = measureDetailCardHeightForProbe(surface, measureEl);
-          cardDelta = Math.abs(toH - surface.offsetHeight);
+        if (surface) {
+          const toH = measureDetailCardDestHeight(
+            surface,
+            overviewProbe,
+            liveBody,
+          );
+          if (toH > 0) cardDelta = Math.abs(toH - surface.offsetHeight);
         }
         const titleArea = detailNowPlayingRef.current;
         const titleProbe = detailTitleMeasureRefs.current[nextIndex];
@@ -4216,8 +4285,28 @@ export function ShowcaseVideoEditingDetail({
           if (isNaturalDrawerViewport) {
             releaseNaturalDrawerResizeLock();
           }
-          // Single live measure already ran — stamp idle key so cap sync cannot
-          // schedule a second height tween for this tab.
+          // Hold text after the single beat — pin UP only if undershot (no ease).
+          const settleSurface = detailCardSurfaceRef.current;
+          const settleLive = liveDetailCardBodyElForMeasure(
+            detailTabActiveNaturalRef.current,
+          );
+          if (settleSurface) {
+            const need = measureDetailCardDestHeight(
+              settleSurface,
+              targetProbe,
+              settleLive,
+            );
+            const pinned = pinDetailCardHeightToHoldText(
+              settleSurface,
+              need,
+              detailCardMaxHeightPxRef.current,
+            );
+            if (pinned != null) {
+              detailCardTransitionHeightRef.current = pinned;
+              endDetailCardHeightTransition(pinned);
+            }
+          }
+          // Stamp idle key so cap sync cannot schedule a second height tween.
           detailCardIdleFitKeyRef.current = `${card.id}:${nextTabId}:${activeVideoIndexRef.current}:${detailBodyVisibleRef.current}`;
           skipTabLiveFitRef.current = false;
         };
