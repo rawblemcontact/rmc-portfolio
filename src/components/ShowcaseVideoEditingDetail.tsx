@@ -1923,12 +1923,10 @@ export function ShowcaseVideoEditingDetail({
           // or the 420ms tween reads as a snap. Cap so short switches stay snappy.
           // Natural work-switch may pass durationMs so title WAAPI shares this beat.
           const heightDelta = Math.abs(toHeight - fromHeight);
-          // Forced short duration is for small tab-scale moves. Tall overviews
-          // (Undertale) jammed into 420ms thrash layout every frame on mobile.
+          // Explicit duration (shared title+card beat) always wins. Otherwise
+          // scale with delta so tall overviews ease instead of snapping.
           let resizeDurMs =
-            forcedDurationMs != null &&
-            forcedDurationMs > 0 &&
-            heightDelta <= 160
+            forcedDurationMs != null && forcedDurationMs > 0
               ? forcedDurationMs
               : detailCardResizeDurationMs(heightDelta);
           // Only speed small moves - compressing tall Undertale tweens reads as chop.
