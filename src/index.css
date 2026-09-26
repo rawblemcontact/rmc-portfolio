@@ -3901,6 +3901,24 @@
     pointer-events: none !important;
   }
 
+  /* Body hide — higher specificity than tablet active opacity:!important rules. */
+  #experience
+    .tabs-content.experience-drawer-resizing[data-experience-body-hidden]
+    .panel-header,
+  #experience
+    .tabs-content.experience-drawer-resizing[data-experience-body-hidden]
+    .career-tabs-content-inner,
+  #experience
+    .tabs-content.experience-drawer-resizing[data-experience-body-hidden]
+    .panel-content,
+  #experience
+    .tabs-content.experience-drawer-resizing[data-experience-body-hidden]
+    .content-card {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transition: opacity var(--career-card-fade-ms) var(--career-card-ease) !important;
+  }
+
   /* Mobile never uses the split entrance shell (single tabs-content only). */
   @media (max-width: 767.98px) {
     #experience .experience-card-entrance-shell {
