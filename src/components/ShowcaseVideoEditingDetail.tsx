@@ -652,6 +652,35 @@ function liveDetailCardBodyEl(container: HTMLElement | null): HTMLElement | null
   return fallback ?? container;
 }
 
+/**
+ * Live tab body for height math — ignores opacity so a single resize beat can
+ * measure while copy is still at opacity 0 (out-fade / pre-reveal).
+ */
+function liveDetailCardBodyElForMeasure(
+  container: HTMLElement | null,
+): HTMLElement | null {
+  if (!container) return null;
+  const bodies = container.querySelectorAll(".video-editing-detail-card-tab-body");
+  let fallback: HTMLElement | null = null;
+  for (const el of bodies) {
+    if (!(el instanceof HTMLElement)) continue;
+    fallback = el;
+    if (el.offsetHeight > 0 || el.scrollHeight > 0) return el;
+  }
+  return fallback ?? container;
+}
+
+/** Pin drawer height instantly — no second ease after the primary resize beat. */
+function pinDetailCardHeight(surface: HTMLElement, toHeight: number, maxHeight: number | null) {
+  const pinned = maxHeight != null ? Math.min(toHeight, maxHeight) : toHeight;
+  surface.classList.remove("video-editing-detail-meta-card--tweening");
+  surface.style.minHeight = "0px";
+  surface.style.transition = "none";
+  if (maxHeight != null) surface.style.maxHeight = `${maxHeight}px`;
+  surface.style.height = `${pinned}px`;
+  return pinned;
+}
+
 /** True when the drawer is painted at the player-aligned ceiling (tolerance for subpixels). */
 function detailCardIsAtPlayerCap(
   heightPx: number | null | undefined,
@@ -858,10 +887,12 @@ export function ShowcaseVideoEditingDetail({
   /** Last commit timestamp — gaps under WORK_SWITCH_RAPID_IDLE_MS use the snap path. */
   const workSwitchLastCommitAtRef = useRef(0);
   /**
-   * Work-switch that also forced overview: probe tween is the only height beat.
-   * Skip the post-settle / idle live re-fit (Undertale double-jump from other tabs).
+   * Work-switch / tab resize already ran one height beat. Skip post-settle and
+   * idle live re-fit so the drawer never plays a second motion.
    */
   const skipWorkSwitchLiveFitRef = useRef(false);
+  /** Tab resize used a single live measure — refuse probe→live second tween. */
+  const skipTabLiveFitRef = useRef(false);
   const worksArrowReleaseTimerRef = useRef<number | null>(null);
   const worksStripProgrammaticUnlockTimerRef = useRef<number | null>(null);
   const worksStripArrowTweenRafRef = useRef<number | null>(null);
@@ -1751,6 +1782,11 @@ export function ShowcaseVideoEditingDetail({
         speedScale?: number;
         /** Natural: bump reserve once, skip per-frame reserve writes (cut layout thrash). */
         freezeReserve?: boolean;
+        /**
+         * Prefer live body (opacity-agnostic) over the hidden probe so one tween
+         * lands on the real wrap — avoids a probe→live second beat.
+         */
+        preferLiveMeasure?: boolean;
       },
     ) => {
       const onSettled = options?.onSettled;
@@ -1758,6 +1794,7 @@ export function ShowcaseVideoEditingDetail({
       const switchEpoch = options?.switchEpoch;
       const forcedToHeightPx = options?.toHeightPx;
       const forcedDurationMs = options?.durationMs;
+      const preferLiveMeasure = Boolean(options?.preferLiveMeasure);
       const cardSurface = detailCardSurfaceRef.current;
       const activeNatural = detailTabActiveNaturalRef.current;
       const probeReady =
@@ -1811,149 +1848,179 @@ export function ShowcaseVideoEditingDetail({
           return;
         }
 
-        const surface = detailCardSurfaceRef.current;
-        if (!surface || (!forcedToHeightPx && targetProbe.offsetHeight <= 0 && targetProbe.scrollHeight <= 0)) {
-          endDetailCardHeightTransition(null);
-          onSettled?.();
-          return;
-        }
-
-        // Remeasure after title / layout delay so the player-cap matches the card’s new top.
-        syncDetailCardMaxHeightNow();
-        const maxHeight = detailCardMaxHeightPxRef.current;
-        const naturalToHeight =
-          forcedToHeightPx != null
-            ? forcedToHeightPx
-            : measureDetailCardHeightForProbe(surface, targetProbe);
-        detailCardChromeHeightRef.current = measureDetailCardChromeHeight(surface);
-        const toHeight =
-          maxHeight != null ? Math.min(naturalToHeight, maxHeight) : naturalToHeight;
-        if (maxHeight != null) {
-          surface.style.maxHeight = `${maxHeight}px`;
-        }
-        const fromHeightRaw = surface.offsetHeight;
-        const fromHeight =
-          maxHeight != null ? Math.min(fromHeightRaw, maxHeight) : fromHeightRaw;
-
-        if (snap || reduceMotion) {
-          commitHeight(surface, toHeight, maxHeight);
-          onSettled?.();
-          return;
-        }
-
-        if (Math.abs(toHeight - fromHeight) <= DETAIL_CARD_HEIGHT_EPSILON_PX) {
-          commitHeight(surface, toHeight, maxHeight);
-          onSettled?.();
-          return;
-        }
-
-        // rAF so we can clamp to the live published cap every frame. WAAPI
-        // ignores maxHeight and overshoots; a dest-cap pin does the same.
-        if (detailCardResizeRafRef.current != null) {
-          window.cancelAnimationFrame(detailCardResizeRafRef.current);
-          detailCardResizeRafRef.current = null;
-        }
-        surface.classList.add("video-editing-detail-meta-card--tweening");
-        surface.style.minHeight = "0px";
-        surface.style.transition = "none";
-        surface.style.height = `${fromHeight}px`;
-        detailCardTransitionHeightRef.current = fromHeight;
-        const start = performance.now();
-        // Large body deltas (Undertale Forever Home) need more time than a tab swap
-        // or the 420ms tween reads as a snap. Cap so short switches stay snappy.
-        // Natural work-switch may pass durationMs so title WAAPI shares this beat.
-        const heightDelta = Math.abs(toHeight - fromHeight);
-        // Forced short duration is for small tab-scale moves. Tall overviews
-        // (Undertale) jammed into 420ms thrash layout every frame on mobile.
-        let resizeDurMs =
-          forcedDurationMs != null &&
-          forcedDurationMs > 0 &&
-          heightDelta <= 160
-            ? forcedDurationMs
-            : detailCardResizeDurationMs(heightDelta);
-        // Only speed small moves - compressing tall Undertale tweens reads as chop.
-        if (
-          heightDelta <= 160 &&
-          options?.speedScale != null &&
-          options.speedScale > 0 &&
-          options.speedScale < 1
-        ) {
-          resizeDurMs = Math.max(
-            180,
-            Math.round(resizeDurMs * options.speedScale),
-          );
-        }
-        // Tall overviews: don't write reserve every frame (double layout on mobile).
-        const throttleReserve = heightDelta > 160;
-        const freezeReserve = Boolean(options?.freezeReserve);
-        let reserveFrame = 0;
-        let lastReserveWritten = -1;
-        // Natural: pre-bump page reserve to the destination once so the shell can
-        // animate without fighting minHeight writes every frame.
-        if (freezeReserve) {
-          const reserveEl = detailPanelReserveRef.current;
-          if (reserveEl) {
-            const destReserve = Math.ceil(Math.max(fromHeight, toHeight));
-            const cur = parseFloat(reserveEl.style.minHeight) || 0;
-            if (destReserve > cur) {
-              reserveEl.style.minHeight = `${destReserve}px`;
-              lastReserveWritten = destReserve;
-            }
-          }
-        }
-        surface.style.willChange = "height";
-        const tick = (now: number) => {
+        const startResize = () => {
           if (epoch !== detailCardResizeEpochRef.current) return;
           if (isSwitchStale()) {
-            detailCardResizeRafRef.current = null;
-            surface.style.willChange = "";
-            surface.classList.remove("video-editing-detail-meta-card--tweening");
             endDetailCardHeightTransition(null);
             return;
           }
-          const t = Math.min(1, (now - start) / resizeDurMs);
-          const k = 1 - (1 - t) ** 3;
-          const cap = detailCardMaxHeightPxRef.current;
-          const dest =
-            cap != null ? Math.min(toHeight, cap) : toHeight;
-          const h = Math.min(
-            fromHeight + (dest - fromHeight) * k,
-            cap ?? Number.POSITIVE_INFINITY,
-          );
-          surface.style.height = `${h}px`;
-          if (cap != null) surface.style.maxHeight = `${cap}px`;
-          detailCardTransitionHeightRef.current = h;
-          // Keep page reserve in lockstep with the card so a post-settle
-          // tallest bump isn't a second Undertale jump (esp. tab+work reset).
-          // Tall tweens: update reserve every other frame to cut layout thrash.
-          // Natural freezeReserve: skip - already pre-bumped above.
-          const reserveEl = detailPanelReserveRef.current;
-          reserveFrame += 1;
+
+          const surface = detailCardSurfaceRef.current;
           if (
-            reserveEl &&
-            !freezeReserve &&
-            (t >= 1 || !throttleReserve || reserveFrame % 2 === 0)
+            !surface ||
+            (!forcedToHeightPx &&
+              targetProbe.offsetHeight <= 0 &&
+              targetProbe.scrollHeight <= 0)
           ) {
-            const nextReserve = Math.ceil(h);
-            if (nextReserve > lastReserveWritten) {
+            endDetailCardHeightTransition(null);
+            onSettled?.();
+            return;
+          }
+
+          // Remeasure after title / layout delay so the player-cap matches the card’s new top.
+          syncDetailCardMaxHeightNow();
+          const maxHeight = detailCardMaxHeightPxRef.current;
+          const liveForMeasure = preferLiveMeasure
+            ? liveDetailCardBodyElForMeasure(detailTabActiveNaturalRef.current)
+            : null;
+          const measureTarget =
+            liveForMeasure &&
+            (liveForMeasure.offsetHeight > 0 || liveForMeasure.scrollHeight > 0)
+              ? liveForMeasure
+              : targetProbe;
+          const naturalToHeight =
+            forcedToHeightPx != null
+              ? forcedToHeightPx
+              : measureDetailCardHeightForProbe(surface, measureTarget);
+          detailCardChromeHeightRef.current = measureDetailCardChromeHeight(surface);
+          const toHeight =
+            maxHeight != null ? Math.min(naturalToHeight, maxHeight) : naturalToHeight;
+          if (maxHeight != null) {
+            surface.style.maxHeight = `${maxHeight}px`;
+          }
+          const fromHeightRaw = surface.offsetHeight;
+          const fromHeight =
+            maxHeight != null ? Math.min(fromHeightRaw, maxHeight) : fromHeightRaw;
+
+          if (snap || reduceMotion) {
+            commitHeight(surface, toHeight, maxHeight);
+            onSettled?.();
+            return;
+          }
+
+          if (Math.abs(toHeight - fromHeight) <= DETAIL_CARD_HEIGHT_EPSILON_PX) {
+            commitHeight(surface, toHeight, maxHeight);
+            onSettled?.();
+            return;
+          }
+
+          // rAF so we can clamp to the live published cap every frame. WAAPI
+          // ignores maxHeight and overshoots; a dest-cap pin does the same.
+          if (detailCardResizeRafRef.current != null) {
+            window.cancelAnimationFrame(detailCardResizeRafRef.current);
+            detailCardResizeRafRef.current = null;
+          }
+          surface.classList.add("video-editing-detail-meta-card--tweening");
+          surface.style.minHeight = "0px";
+          surface.style.transition = "none";
+          surface.style.height = `${fromHeight}px`;
+          detailCardTransitionHeightRef.current = fromHeight;
+          const start = performance.now();
+          // Large body deltas (Undertale Forever Home) need more time than a tab swap
+          // or the 420ms tween reads as a snap. Cap so short switches stay snappy.
+          // Natural work-switch may pass durationMs so title WAAPI shares this beat.
+          const heightDelta = Math.abs(toHeight - fromHeight);
+          // Forced short duration is for small tab-scale moves. Tall overviews
+          // (Undertale) jammed into 420ms thrash layout every frame on mobile.
+          let resizeDurMs =
+            forcedDurationMs != null &&
+            forcedDurationMs > 0 &&
+            heightDelta <= 160
+              ? forcedDurationMs
+              : detailCardResizeDurationMs(heightDelta);
+          // Only speed small moves - compressing tall Undertale tweens reads as chop.
+          if (
+            heightDelta <= 160 &&
+            options?.speedScale != null &&
+            options.speedScale > 0 &&
+            options.speedScale < 1
+          ) {
+            resizeDurMs = Math.max(
+              180,
+              Math.round(resizeDurMs * options.speedScale),
+            );
+          }
+          // Tall overviews: don't write reserve every frame (double layout on mobile).
+          const throttleReserve = heightDelta > 160;
+          const freezeReserve = Boolean(options?.freezeReserve);
+          let reserveFrame = 0;
+          let lastReserveWritten = -1;
+          // Natural: pre-bump page reserve to the destination once so the shell can
+          // animate without fighting minHeight writes every frame.
+          if (freezeReserve) {
+            const reserveEl = detailPanelReserveRef.current;
+            if (reserveEl) {
+              const destReserve = Math.ceil(Math.max(fromHeight, toHeight));
               const cur = parseFloat(reserveEl.style.minHeight) || 0;
-              if (nextReserve > cur) {
-                reserveEl.style.minHeight = `${nextReserve}px`;
-                lastReserveWritten = nextReserve;
+              if (destReserve > cur) {
+                reserveEl.style.minHeight = `${destReserve}px`;
+                lastReserveWritten = destReserve;
               }
             }
           }
-          if (t < 1) {
-            detailCardResizeRafRef.current = window.requestAnimationFrame(tick);
-            return;
-          }
-          detailCardResizeRafRef.current = null;
-          surface.style.willChange = "";
-          surface.classList.remove("video-editing-detail-meta-card--tweening");
-          commitHeight(surface, dest, cap ?? maxHeight);
-          onSettled?.();
+          surface.style.willChange = "height";
+          const tick = (now: number) => {
+            if (epoch !== detailCardResizeEpochRef.current) return;
+            if (isSwitchStale()) {
+              detailCardResizeRafRef.current = null;
+              surface.style.willChange = "";
+              surface.classList.remove("video-editing-detail-meta-card--tweening");
+              endDetailCardHeightTransition(null);
+              return;
+            }
+            const t = Math.min(1, (now - start) / resizeDurMs);
+            const k = 1 - (1 - t) ** 3;
+            const cap = detailCardMaxHeightPxRef.current;
+            const dest =
+              cap != null ? Math.min(toHeight, cap) : toHeight;
+            const h = Math.min(
+              fromHeight + (dest - fromHeight) * k,
+              cap ?? Number.POSITIVE_INFINITY,
+            );
+            surface.style.height = `${h}px`;
+            if (cap != null) surface.style.maxHeight = `${cap}px`;
+            detailCardTransitionHeightRef.current = h;
+            // Keep page reserve in lockstep with the card so a post-settle
+            // tallest bump isn't a second Undertale jump (esp. tab+work reset).
+            // Tall tweens: update reserve every other frame to cut layout thrash.
+            // Natural freezeReserve: skip - already pre-bumped above.
+            const reserveEl = detailPanelReserveRef.current;
+            reserveFrame += 1;
+            if (
+              reserveEl &&
+              !freezeReserve &&
+              (t >= 1 || !throttleReserve || reserveFrame % 2 === 0)
+            ) {
+              const nextReserve = Math.ceil(h);
+              if (nextReserve > lastReserveWritten) {
+                const cur = parseFloat(reserveEl.style.minHeight) || 0;
+                if (nextReserve > cur) {
+                  reserveEl.style.minHeight = `${nextReserve}px`;
+                  lastReserveWritten = nextReserve;
+                }
+              }
+            }
+            if (t < 1) {
+              detailCardResizeRafRef.current = window.requestAnimationFrame(tick);
+              return;
+            }
+            detailCardResizeRafRef.current = null;
+            surface.style.willChange = "";
+            surface.classList.remove("video-editing-detail-meta-card--tweening");
+            commitHeight(surface, dest, cap ?? maxHeight);
+            onSettled?.();
+          };
+          detailCardResizeRafRef.current = window.requestAnimationFrame(tick);
         };
-        detailCardResizeRafRef.current = window.requestAnimationFrame(tick);
+
+        // Live measure: two frames so AnimatePresence can mount the opacity-0 body.
+        if (preferLiveMeasure) {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(startResize);
+          });
+        } else {
+          startResize();
+        }
       };
 
       if (!snap && delayMs > 0) {
@@ -1980,8 +2047,12 @@ export function ShowcaseVideoEditingDetail({
   const fitDetailCardToLiveBody = useCallback((opts?: { force?: boolean; allowShrink?: boolean }) => {
     const force = Boolean(opts?.force);
     const allowShrink = opts?.allowShrink !== false;
-    // Tab+work reset already owns one probe tween — refuse a second live ease.
-    if (skipWorkSwitchLiveFitRef.current || workSwitchInFlightRef.current) {
+    // Primary resize already owns one height beat — refuse a second live ease.
+    if (
+      skipWorkSwitchLiveFitRef.current ||
+      skipTabLiveFitRef.current ||
+      workSwitchInFlightRef.current
+    ) {
       return;
     }
     if (
@@ -2202,6 +2273,7 @@ export function ShowcaseVideoEditingDetail({
     detailTitleResizeAnimationRef.current = null;
     detailCardHeightTransitioningRef.current = false;
     setDetailCardHeightTransitioning(false);
+    skipTabLiveFitRef.current = false;
   }, [cancelScheduledDetailCardResize, clearDetailBodySwapTimers]);
 
   /**
@@ -2476,7 +2548,7 @@ export function ShowcaseVideoEditingDetail({
       setDetailTabCutoffInstant(true);
       detailTabpanelCutoffFadeRef.current = "none";
       setDetailTabpanelCutoffFade("none");
-      skipWorkSwitchLiveFitRef.current = tabAlsoResets;
+      skipWorkSwitchLiveFitRef.current = true;
       setActiveDetailCardTab("overview");
       setDetailCardTabOrder((prev) => swapDetailTabToFront(prev, "overview"));
       // When deferWorkForTabs: leave title on the old work until FLIP finishes.
@@ -2562,95 +2634,26 @@ export function ShowcaseVideoEditingDetail({
                     }
                   }
                 }
-                // Natural drawers already tweened to the overview probe. A live
-                // re-fit here double-animates — clone vs painted body (esp. tall
-                // Undertale copy) can disagree by enough to kick a second tween.
-                // Player-capped still needs this for post-title cap drift.
-                // Tablet landscape: probe tween is enough — a live re-fit is the
-                // second Undertale stutter. Desktop fine-pointer still re-fits for cap drift.
+                // Natural drawers already tweened to the live overview wrap. A
+                // live re-fit here double-animates. Player-capped used to re-fit
+                // for cap drift — that was the second height motion; skip it.
                 // Leave skipWorkSwitchLiveFitRef set so the idle-fit effect (body
                 // visible key change) also skips — clearing here let it double-beat.
-                if (
-                  isPlayerCappedDrawerViewport &&
-                  !isTabletLandscapeViewport &&
-                  !skipWorkSwitchLiveFitRef.current
-                ) {
-                  scheduleFitDetailCardToLiveBody();
-                }
               };
 
-              // Clone/prefetch can overshoot live wrap. The card shell stays
-              // visible while body opacity is 0 — an instant height write read
-              // as a desc-card snap. Ease the shell to the live hug first.
+              // Residual probe/live mismatch: pin only — never a second height ease.
               const surfaceEl = detailCardSurfaceRef.current;
-              const liveBody = liveDetailCardBodyEl(detailTabActiveNaturalRef.current);
+              const liveBody = liveDetailCardBodyElForMeasure(
+                detailTabActiveNaturalRef.current,
+              );
               if (surfaceEl && liveBody) {
                 const hug = measureDetailCardHeightForProbe(surfaceEl, liveBody);
                 const curH = surfaceEl.offsetHeight;
-                if (hug > 0 && curH > hug + DETAIL_CARD_HEIGHT_EPSILON_PX) {
-                  if (rapid || reduceMotion) {
-                    surfaceEl.style.height = `${hug}px`;
-                    detailCardTransitionHeightRef.current = hug;
-                    setDetailCardHeightPx(hug);
-                    continueShowBody();
-                    return;
-                  }
-                  const fromH = curH;
-                  const toH = hug;
-                  const overshoot = fromH - toH;
-                  // Keep this correction short so it doesn't stack into a second
-                  // Undertale-tall beat after the primary probe tween — slightly
-                  // longer + softer ease-out so the shell shrink feels smoother.
-                  // Natural: same correction, tighter clock.
-                  const hugDurMs = isNaturalDrawerViewport
-                    ? Math.min(160, Math.max(100, Math.round(overshoot * 0.9)))
-                    : Math.min(
-                        300,
-                        Math.max(200, Math.round(overshoot * 1.35)),
-                      );
-                  const hugEpoch = ++detailCardResizeEpochRef.current;
-                  beginDetailCardHeightTransition();
-                  surfaceEl.classList.add("video-editing-detail-meta-card--tweening");
-                  surfaceEl.style.minHeight = "0px";
-                  surfaceEl.style.transition = "none";
-                  surfaceEl.style.height = `${fromH}px`;
-                  detailCardTransitionHeightRef.current = fromH;
-                  const hugStart = performance.now();
-                  const hugTick = (now: number) => {
-                    if (hugEpoch !== detailCardResizeEpochRef.current) return;
-                    if (epoch !== workSwitchEpochRef.current) {
-                      surfaceEl.classList.remove(
-                        "video-editing-detail-meta-card--tweening",
-                      );
-                      endDetailCardHeightTransition(null);
-                      return;
-                    }
-                    const t = Math.min(1, (now - hugStart) / hugDurMs);
-                    const k = 1 - (1 - t) ** 4;
-                    const h = fromH + (toH - fromH) * k;
-                    surfaceEl.style.height = `${h}px`;
-                    detailCardTransitionHeightRef.current = h;
-                    if (t < 1) {
-                      detailCardResizeRafRef.current =
-                        window.requestAnimationFrame(hugTick);
-                      return;
-                    }
-                    detailCardResizeRafRef.current = null;
-                    surfaceEl.classList.remove(
-                      "video-editing-detail-meta-card--tweening",
-                    );
-                    surfaceEl.style.height = `${toH}px`;
-                    detailCardTransitionHeightRef.current = toH;
-                    endDetailCardHeightTransition(toH);
-                    continueShowBody();
-                  };
-                  if (detailCardResizeRafRef.current != null) {
-                    window.cancelAnimationFrame(detailCardResizeRafRef.current);
-                    detailCardResizeRafRef.current = null;
-                  }
-                  detailCardResizeRafRef.current =
-                    window.requestAnimationFrame(hugTick);
-                  return;
+                if (hug > 0 && Math.abs(curH - hug) > DETAIL_CARD_HEIGHT_EPSILON_PX) {
+                  const maxHeight = detailCardMaxHeightPxRef.current;
+                  const pinned = pinDetailCardHeight(surfaceEl, hug, maxHeight);
+                  detailCardTransitionHeightRef.current = pinned;
+                  endDetailCardHeightTransition(pinned);
                 }
               }
               continueShowBody();
@@ -2684,11 +2687,25 @@ export function ShowcaseVideoEditingDetail({
         if (epoch !== workSwitchEpochRef.current) return;
         const targetOverviewProbe = detailVideoOverviewMeasureRefs.current[nextIndex];
         if (targetOverviewProbe) {
-          const toHeightPx = prefetchCardToHeight();
+          // Prefer live wrap (title/index already committed) over probe so the
+          // primary tween is the only height motion.
+          const surface = detailCardSurfaceRef.current;
+          const liveBody = liveDetailCardBodyElForMeasure(
+            detailTabActiveNaturalRef.current,
+          );
+          const liveToHeight =
+            surface && liveBody
+              ? measureDetailCardHeightForProbe(surface, liveBody)
+              : undefined;
+          const toHeightPx =
+            liveToHeight != null && liveToHeight > 0
+              ? liveToHeight
+              : prefetchCardToHeight();
           animateDetailCardToMeasuredBody(targetOverviewProbe, 0, {
             snap: Boolean(reduceMotion),
             switchEpoch: epoch,
             onSettled: revealAfterHeightSettle,
+            preferLiveMeasure: true,
             ...(toHeightPx != null && toHeightPx > 0 ? { toHeightPx } : {}),
             // Fixed base duration only for small moves; tall overviews scale up
             // inside animateDetailCardToMeasuredBody (see heightDelta <= 160).
@@ -2831,7 +2848,6 @@ export function ShowcaseVideoEditingDetail({
     [
       animateDetailCardToMeasuredBody,
       animateDetailTitleToMeasuredHeight,
-      beginDetailCardHeightTransition,
       endDetailCardHeightTransition,
       finishWorkSwitch,
       isNaturalDrawerViewport,
@@ -2839,7 +2855,6 @@ export function ShowcaseVideoEditingDetail({
       isTabletLandscapeViewport,
       reduceMotion,
       releaseNaturalDrawerResizeLock,
-      scheduleFitDetailCardToLiveBody,
       updateDetailTabpanelCutoffFade,
       videos,
     ],
@@ -4167,7 +4182,10 @@ export function ShowcaseVideoEditingDetail({
           if (isNaturalDrawerViewport) {
             releaseNaturalDrawerResizeLock();
           }
-          scheduleFitDetailCardToLiveBody();
+          // Single live measure already ran — stamp idle key so cap sync cannot
+          // schedule a second height tween for this tab.
+          detailCardIdleFitKeyRef.current = `${card.id}:${nextTabId}:${activeVideoIndexRef.current}:${detailBodyVisibleRef.current}`;
+          skipTabLiveFitRef.current = false;
         };
 
         if (cardSurface && targetProbe && targetProbe.offsetHeight > 0) {
@@ -4183,9 +4201,12 @@ export function ShowcaseVideoEditingDetail({
 
           const resizeDelayMs = DETAIL_BODY_OUT_MS;
 
-          // Measure target when resize starts (after delay), not at click time.
+          skipTabLiveFitRef.current = true;
+
+          // Measure live body when resize starts (after delay) — one height beat.
           animateDetailCardToMeasuredBody(targetProbe, resizeDelayMs, {
             onSettled: settleMaskAfterResize,
+            preferLiveMeasure: true,
           });
         } else {
           detailTabMaskLockRef.current = false;
@@ -4211,7 +4232,7 @@ export function ShowcaseVideoEditingDetail({
       activeDetailCardTab,
       animateDetailCardToMeasuredBody,
       armNaturalDrawerResizeLock,
-      scheduleFitDetailCardToLiveBody,
+      card.id,
       isCompactDrawerViewport,
       isNaturalDrawerViewport,
       isPlayerCappedDrawerViewport,
@@ -4542,7 +4563,9 @@ export function ShowcaseVideoEditingDetail({
       detailCardChromeHeightRef.current = measureDetailCardChromeHeight(cardSurface);
       detailCardIdleFitKeyRef.current = fitKey;
       setDetailCardHeightPx(nextHeight);
-      if (
+      if (skipTabLiveFitRef.current) {
+        skipTabLiveFitRef.current = false;
+      } else if (
         !isTabletLandscapeViewport &&
         !skipWorkSwitchLiveFitRef.current &&
         !workSwitchInFlightRef.current
@@ -4565,7 +4588,8 @@ export function ShowcaseVideoEditingDetail({
     if (
       paintedHeight > maxHeight + 3 &&
       !skipWorkSwitchLiveFitRef.current &&
-      !workSwitchInFlightRef.current
+      !workSwitchInFlightRef.current &&
+      !skipTabLiveFitRef.current
     ) {
       animateDetailCardToMeasuredBodyRef.current(activeNatural, 0, {
         toHeightPx: maxHeight,
@@ -4578,10 +4602,10 @@ export function ShowcaseVideoEditingDetail({
     // ticks — that retriggered a probe-vs-live tween loop.
     if (detailCardIdleFitKeyRef.current !== fitKey) {
       detailCardIdleFitKeyRef.current = fitKey;
-      // Tablet landscape: work-switch already eased to the overview probe.
-      // scheduleFit here is the second Undertale height beat.
-      // Same for work-switch that also reset the tab (Undertale from Tools/etc).
-      if (skipWorkSwitchLiveFitRef.current) {
+      // Work-switch / tab single-beat already eased once — clear and skip.
+      if (skipTabLiveFitRef.current) {
+        skipTabLiveFitRef.current = false;
+      } else if (skipWorkSwitchLiveFitRef.current) {
         skipWorkSwitchLiveFitRef.current = false;
       } else if (!isTabletLandscapeViewport) {
         scheduleFitDetailCardToLiveBodyRef.current();
