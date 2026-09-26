@@ -30,7 +30,7 @@ export function PdfFoldLoader({ className = "" }: Props) {
       ref={controlsRef}
       aria-hidden
       className={`text-[#52525b]/className}`.trim()}
-      size={56}
+      size={42}
     />
   );
 }
