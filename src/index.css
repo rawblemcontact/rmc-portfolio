@@ -4702,10 +4702,12 @@
     }
   }
 
-  /* iPad horizontal only: trim EXPERIENCE card top inner gap by 25%. */
+  /* iPad horizontal only: trim EXPERIENCE card top inner gap by 25%; bottom −1px. */
   @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse) {
     #experience .tabs-content {
       padding-top: calc(17px * 0.98 * 0.99 * 0.99) !important;
+      /* Base bottom is 20px — portrait keeps 14px via its own rule. */
+      padding-bottom: 19px !important;
     }
 
     #experience .tab-panel {
