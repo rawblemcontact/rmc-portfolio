@@ -3874,6 +3874,29 @@
     z-index: 1;
   }
 
+  /*
+   * EXPERIENCE drawer height tween — host is the sizing surface.
+   * - min-height:0 beats tablet-portrait min-content so grow can pin below content
+   * - overflow:hidden clips dimmed content while the card resizes
+   * - shell height:100% so absolute frost tracks the host (height:auto !important
+   *   otherwise prevents inset stretch from reading as a visible resize)
+   */
+  #experience .tabs-content.experience-drawer-resizing {
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  #experience
+    .tabs-content.experience-card-entrance-host.experience-drawer-resizing
+    > .experience-card-entrance-shell {
+    top: 0 !important;
+    right: 0 !important;
+    bottom: auto !important;
+    left: 0 !important;
+    width: auto !important;
+    height: 100% !important;
+  }
+
   /* Mobile never uses the split entrance shell (single tabs-content only). */
   @media (max-width: 767.98px) {
     #experience .experience-card-entrance-shell {
