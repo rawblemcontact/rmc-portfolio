@@ -3875,26 +3875,30 @@
   }
 
   /*
-   * EXPERIENCE drawer height tween — host is the sizing surface.
-   * - min-height:0 beats tablet-portrait min-content so grow can pin below content
-   * - overflow:hidden clips dimmed content while the card resizes
-   * - shell height:100% so absolute frost tracks the host (height:auto !important
-   *   otherwise prevents inset stretch from reading as a visible resize)
+   * EXPERIENCE drawer — same contract as PROJECT DETAILS desc-card:
+   * the CARD SURFACE is the sizing target; body stays opacity 0 during the
+   * one height tween. Entrance-host chrome is normally on the absolute shell;
+   * during resize, paint the host and hide the shell so the tween is visible.
    */
   #experience .tabs-content.experience-drawer-resizing {
     min-height: 0 !important;
     overflow: hidden !important;
+    background: color-mix(in srgb, var(--portfolio-section-card) 6%, transparent) !important;
+    background-image: none !important;
+    border: 1px solid var(--career-overview-content-edge, var(--portfolio-stroke-outer)) !important;
+    border-radius: 4px !important;
+    box-shadow: none !important;
+    filter: none !important;
+    -webkit-backdrop-filter: blur(2px) !important;
+    backdrop-filter: blur(2px) !important;
   }
 
   #experience
     .tabs-content.experience-card-entrance-host.experience-drawer-resizing
     > .experience-card-entrance-shell {
-    top: 0 !important;
-    right: 0 !important;
-    bottom: auto !important;
-    left: 0 !important;
-    width: auto !important;
-    height: 100% !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
   }
 
   /* Mobile never uses the split entrance shell (single tabs-content only). */
