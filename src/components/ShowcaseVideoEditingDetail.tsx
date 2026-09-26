@@ -2355,6 +2355,7 @@ export function ShowcaseVideoEditingDetail({
   const finishWorkSwitch = useCallback((epoch: number) => {
     if (epoch !== workSwitchEpochRef.current) return;
     workSwitchInFlightRef.current = false;
+    setDetailTitleVisible(true);
   }, []);
 
   const applyActiveWorkIndex = useCallback(
@@ -2384,11 +2385,18 @@ export function ShowcaseVideoEditingDetail({
         });
       };
 
-      /** Title text only — starts crossfade; height + YouTube come later. */
-      const commitTitleText = () => {
+      /** Swap now-playing copy without revealing (opacity still held at 0). */
+      const commitTitleIndex = () => {
         activeVideoIndexRef.current = nextIndex;
         setActiveVideoIndex(nextIndex);
+      };
+      const showDetailTitle = () => {
         setDetailTitleVisible(true);
+      };
+      /** Title text + reveal — starts crossfade; height + YouTube come later. */
+      const commitTitleText = () => {
+        commitTitleIndex();
+        showDetailTitle();
       };
 
       const nextWork = videos[nextIndex];
@@ -2479,6 +2487,9 @@ export function ShowcaseVideoEditingDetail({
 
       const revealAfterHeightSettle = () => {
         if (epoch !== workSwitchEpochRef.current) return;
+        // Always restore title opacity — settle can be skipped on abort/stale paths
+        // that previously left some works with an invisible now-playing title.
+        showDetailTitle();
         detailBodyRevealTimerRef.current = null;
         requestAnimationFrame(() => {
           if (epoch !== workSwitchEpochRef.current) return;
@@ -2591,10 +2602,7 @@ export function ShowcaseVideoEditingDetail({
         return prefetchedCardToHeight;
       };
 
-      const startCardResize = (
-        coupledDurationMs?: number,
-        opts?: { commitTitleOnSettle?: boolean },
-      ) => {
+      const startCardResize = (coupledDurationMs?: number) => {
         if (epoch !== workSwitchEpochRef.current) return;
         const targetOverviewProbe = detailVideoOverviewMeasureRefs.current[nextIndex];
         if (targetOverviewProbe) {
@@ -2605,8 +2613,8 @@ export function ShowcaseVideoEditingDetail({
               ? coupledDurationMs
               : undefined;
           const onSettled = () => {
-            // Incoming title fades in only after the one size beat (title Y + card).
-            if (opts?.commitTitleOnSettle) commitTitleText();
+            // Always restore title opacity after the size beat.
+            showDetailTitle();
             revealAfterHeightSettle();
           };
           // One beat to live-or-probe height (measured after mount frames).
@@ -2634,7 +2642,7 @@ export function ShowcaseVideoEditingDetail({
           });
           return;
         }
-        if (opts?.commitTitleOnSettle) commitTitleText();
+        showDetailTitle();
         revealAfterHeightSettle();
       };
 
@@ -2702,13 +2710,14 @@ export function ShowcaseVideoEditingDetail({
               : fromH;
             if (titleArea && targetProbe && Math.abs(toH - fromH) > 0.5) {
               afterTitleResizeRef.current = null;
+              // Swap copy now (still faded out) so card measures the incoming overview.
+              commitTitleIndex();
               const titleDur = animateDetailTitleToMeasuredHeight(nextIndex, {
                 switchEpoch: epoch,
                 durationMs: DETAIL_NATURAL_CARD_RESIZE_DUR_MS,
               });
               startCardResize(
                 titleDur > 0 ? titleDur : DETAIL_NATURAL_CARD_RESIZE_DUR_MS,
-                { commitTitleOnSettle: true },
               );
               return;
             }
