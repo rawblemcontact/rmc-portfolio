@@ -1498,8 +1498,8 @@
    * --detail-cutoff-* are set inline from React; @property makes them ease. */
   #projects .video-editing-detail-card-tabpanel-fade-host--scroll {
     --detail-body-top-fade: 0.5rem;
-    /* Short while scrolled; tall via .is-bottom-fade-tall (class > inline for reliable grow). */
-    --detail-body-bottom-fade: 0.85rem;
+    /* Scrolled short dissolve — match capped shell bottom pad (0.75rem), not larger. */
+    --detail-body-bottom-fade: 0.75rem;
     --detail-cutoff-top: 0;
     --detail-cutoff-bottom: 0;
     transition:
@@ -1549,7 +1549,8 @@
 
   @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse) {
     #projects .video-editing-detail-card-tabpanel-fade-host--scroll {
-      --detail-body-bottom-fade: 1.2rem;
+      /* Same as desktop: scrolled short fade hugs the card bottom gap. */
+      --detail-body-bottom-fade: 0.75rem;
     }
 
     #projects .video-editing-detail-card-tabpanel-fade-host--scroll.is-bottom-fade-tall {
