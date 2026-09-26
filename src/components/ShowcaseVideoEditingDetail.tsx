@@ -275,7 +275,8 @@ const DETAIL_TAB_SWAP_EASE = [0.22, 1, 0.36, 1] as const;
 const DETAIL_TAB_HEADER_SETTLE_MS = Math.round(DETAIL_TAB_SWAP_DUR_S * 1000);
 /**
  * Body copy fades out while headers start travelling.
- * Fade-in is delayed (mode="wait" exit + this delay) so copy appears only after headers settle.
+ * Fade-in waits for drawer height settle (detailTabCopyReady) so tall resizes
+ * cannot reveal copy mid-tween.
  */
 const DETAIL_TAB_BODY_OUT_S = 0.16;
 const DETAIL_TAB_BODY_IN_S = 0.24;
@@ -314,25 +315,11 @@ function detailCardResizeDurationMs(heightDeltaPx: number): number {
   );
 }
 /**
- * New tab copy waits until tab headers settle + height resize + cutoff lead + one
- * paint so the soft edge is already easing when copy fades in (player-capped /
- * scrollable cards on desktop + tablet landscape).
- */
-const DETAIL_TAB_BODY_IN_DELAY_S =
-  (DETAIL_TAB_HEADER_SETTLE_MS -
-    DETAIL_BODY_OUT_MS +
-    DETAIL_CARD_RESIZE_DUR_MS +
-    32 +
-    DETAIL_CUTOFF_LEAD_MS) /
-  1000;
-/**
- * Natural drawers: height waits for tab FLIP to finish (avoids layout+resize screenshake),
- * so enter delay spans (FLIP − body-out) + resize + paint.
+ * Natural drawers: height waits for tab FLIP to finish (avoids layout+resize screenshake).
+ * Tab body fade-in is gated on resize settle (detailTabCopyReady) so tall deltas
+ * — e.g. Undertale OVERVIEW → TOOLS — cannot reveal copy mid-tween.
  */
 const DETAIL_NATURAL_HEIGHT_DELAY_MS = DETAIL_TAB_HEADER_SETTLE_MS;
-const DETAIL_TAB_BODY_IN_DELAY_NATURAL_S =
-  (DETAIL_NATURAL_HEIGHT_DELAY_MS - DETAIL_BODY_OUT_MS + DETAIL_CARD_RESIZE_DUR_MS + 32) /
-  1000;
 /** Thumbnail title + description drawer share one resize beat (not title-then-card). */
 const DETAIL_TITLE_MOVE_DUR_MS = DETAIL_CARD_RESIZE_DUR_MS;
 /** Now-playing title AnimatePresence crossfade (keep in sync with JSX transition). */
@@ -862,6 +849,13 @@ export function ShowcaseVideoEditingDetail({
   const showDetailScrollHint = detailScrollHintEligible;
   const detailBodySwapTimerRef = useRef<number | null>(null);
   const detailBodyRevealTimerRef = useRef<number | null>(null);
+  /**
+   * Tab copy enter gate — false while a compact drawer height tween runs; true
+   * after settle (+ cutoff lead on player-capped). Keeps fade-in after the real
+   * resize duration (Undertale overview deltas scale past the base 420ms beat).
+   */
+  const [detailTabCopyReady, setDetailTabCopyReady] = useState(true);
+  const detailTabCopyRevealTimerRef = useRef<number | null>(null);
   /** Suppress cutoff remasure while a tab swap resize is in flight. */
   const detailTabMaskLockRef = useRef(false);
   const detailTabMaskSettleTimerRef = useRef<number | null>(null);
@@ -2173,9 +2167,34 @@ export function ShowcaseVideoEditingDetail({
     }
   }, []);
 
+  const clearDetailTabCopyRevealTimer = useCallback(() => {
+    if (detailTabCopyRevealTimerRef.current != null) {
+      window.clearTimeout(detailTabCopyRevealTimerRef.current);
+      detailTabCopyRevealTimerRef.current = null;
+    }
+  }, []);
+
+  /** Reveal tab copy after height settle (optional cutoff lead for player-capped). */
+  const armDetailTabCopyReveal = useCallback(
+    (leadMs = 0) => {
+      clearDetailTabCopyRevealTimer();
+      if (leadMs <= 0 || reduceMotion) {
+        setDetailTabCopyReady(true);
+        return;
+      }
+      detailTabCopyRevealTimerRef.current = window.setTimeout(() => {
+        detailTabCopyRevealTimerRef.current = null;
+        setDetailTabCopyReady(true);
+      }, leadMs);
+    },
+    [clearDetailTabCopyRevealTimer, reduceMotion],
+  );
+
   /** Hard-abort title/card/body timers so a new switch starts from a clean slate. */
   const abortWorkSwitchMotion = useCallback(() => {
     clearDetailBodySwapTimers();
+    clearDetailTabCopyRevealTimer();
+    setDetailTabCopyReady(true);
     cancelScheduledDetailCardResize();
     for (const id of detailCardLiveFitTimersRef.current) window.clearTimeout(id);
     detailCardLiveFitTimersRef.current = [];
@@ -2194,7 +2213,11 @@ export function ShowcaseVideoEditingDetail({
     detailCardHeightTransitioningRef.current = false;
     setDetailCardHeightTransitioning(false);
     skipTabLiveFitRef.current = false;
-  }, [cancelScheduledDetailCardResize, clearDetailBodySwapTimers]);
+  }, [
+    cancelScheduledDetailCardResize,
+    clearDetailBodySwapTimers,
+    clearDetailTabCopyRevealTimer,
+  ]);
 
   /**
    * Tablet orientation swaps protected drawer modes (natural portrait vs
@@ -2366,10 +2389,11 @@ export function ShowcaseVideoEditingDetail({
   useEffect(() => {
     return () => {
       clearDetailBodySwapTimers();
+      clearDetailTabCopyRevealTimer();
       workSwitchEpochRef.current += 1;
       workSwitchInFlightRef.current = false;
     };
-  }, [clearDetailBodySwapTimers]);
+  }, [clearDetailBodySwapTimers, clearDetailTabCopyRevealTimer]);
 
   const finishWorkSwitch = useCallback((epoch: number) => {
     if (epoch !== workSwitchEpochRef.current) return;
@@ -4079,7 +4103,7 @@ export function ShowcaseVideoEditingDetail({
       <motion.div
         key={tabId}
         initial={reduceMotion ? false : { opacity: 0 }}
-        animate={{ opacity: 1 }}
+        animate={{ opacity: detailTabCopyReady || reduceMotion ? 1 : 0 }}
         exit={
           reduceMotion
             ? undefined
@@ -4096,9 +4120,8 @@ export function ShowcaseVideoEditingDetail({
             ? { duration: 0 }
             : {
                 duration: DETAIL_TAB_BODY_IN_S,
-                delay: isNaturalDrawerViewport
-                  ? DETAIL_TAB_BODY_IN_DELAY_NATURAL_S
-                  : DETAIL_TAB_BODY_IN_DELAY_S,
+                // Fade-in is gated by detailTabCopyReady (resize settle), not a fixed delay.
+                delay: 0,
                 ease: DETAIL_TAB_SWAP_EASE,
               }
         }
@@ -4121,6 +4144,7 @@ export function ShowcaseVideoEditingDetail({
         window.clearTimeout(detailTabMaskSettleTimerRef.current);
         detailTabMaskSettleTimerRef.current = null;
       }
+      clearDetailTabCopyRevealTimer();
       // Player-capped only: freeze scrollport before height changes. Natural drawer
       // (phone/tablet portrait) is not a scrollport — flushSync here only caused hitch/shake.
       if (isPlayerCappedDrawerViewport) {
@@ -4131,7 +4155,10 @@ export function ShowcaseVideoEditingDetail({
 
       // Commit the incoming tab before scheduling resize so the first switch
       // can measure live wrap (AnimatePresence mounts during BODY_OUT).
+      // Hold copy invisible until height settle — fixed Framer delays undershoot
+      // tall Undertale overview→tools resizes (duration scales with delta).
       flushSync(() => {
+        setDetailTabCopyReady(false);
         setDetailCardTabOrder((prev) => swapDetailTabToFront(prev, nextTabId));
         setActiveDetailCardTab(nextTabId);
       });
@@ -4167,6 +4194,10 @@ export function ShowcaseVideoEditingDetail({
           // No settle pin — card shell is visible; any height write is a 2nd beat.
           detailCardIdleFitKeyRef.current = `${card.id}:${nextTabId}:${activeVideoIndexRef.current}:${detailBodyVisibleRef.current}`;
           skipTabLiveFitRef.current = false;
+          // Player-capped: arm cutoff briefly before copy fades in.
+          armDetailTabCopyReveal(
+            isPlayerCappedDrawerViewport ? DETAIL_CUTOFF_LEAD_MS : 0,
+          );
         };
 
         if (cardSurface && targetProbe && targetProbe.offsetHeight > 0) {
@@ -4181,7 +4212,9 @@ export function ShowcaseVideoEditingDetail({
           }, DETAIL_BODY_OUT_MS);
 
           // Body fades during tab FLIP; drawer height waits until the 4 tabs finish.
-          const resizeDelayMs = DETAIL_TAB_HEADER_SETTLE_MS;
+          const resizeDelayMs = isNaturalDrawerViewport
+            ? DETAIL_NATURAL_HEIGHT_DELAY_MS
+            : DETAIL_TAB_HEADER_SETTLE_MS;
 
           skipTabLiveFitRef.current = true;
 
@@ -4197,6 +4230,7 @@ export function ShowcaseVideoEditingDetail({
           if (isNaturalDrawerViewport) {
             releaseNaturalDrawerResizeLock();
           }
+          armDetailTabCopyReveal(0);
         }
       } else {
         detailTabMaskLockRef.current = false;
@@ -4204,13 +4238,16 @@ export function ShowcaseVideoEditingDetail({
         setDetailTabCutoffInstant(false);
         setDetailTabpanelScrollFrozen(false);
         updateDetailTabpanelCutoffFade();
+        armDetailTabCopyReveal(0);
       }
     },
     [
       activeDetailCardTab,
       animateDetailCardToMeasuredBody,
+      armDetailTabCopyReveal,
       armNaturalDrawerResizeLock,
       card.id,
+      clearDetailTabCopyRevealTimer,
       isCompactDrawerViewport,
       isNaturalDrawerViewport,
       isPlayerCappedDrawerViewport,
