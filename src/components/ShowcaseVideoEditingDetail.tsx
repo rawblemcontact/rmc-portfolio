@@ -2662,6 +2662,16 @@ export function ShowcaseVideoEditingDetail({
         }
         const beginTitle = () => {
           if (epoch !== workSwitchEpochRef.current) return;
+          // Natural: pin current title height BEFORE swapping copy. Without this,
+          // AnimatePresence commits the new title at auto height and the desc
+          // card jumps up/down; the later height tween then no-ops (from === to).
+          if (isNaturalDrawerViewport && !rapid && !reduceMotion) {
+            const titleArea = detailNowPlayingRef.current;
+            if (titleArea) {
+              const h = titleArea.offsetHeight;
+              if (h > 0) titleArea.style.height = `${h}px`;
+            }
+          }
           commitTitleText();
           if (rapid) {
             startTitleAndCardTogether();
