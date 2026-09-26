@@ -4214,7 +4214,7 @@ export function ShowcaseVideoEditingDetail({
           if (isNaturalDrawerViewport) {
             releaseNaturalDrawerResizeLock();
           }
-          // Single live measure already tweened — stamp idle key so no second fit.
+          // Height already landed on live via one tween — no second beat, no snap.
           detailCardIdleFitKeyRef.current = `${card.id}:${nextTabId}:${activeVideoIndexRef.current}:${detailBodyVisibleRef.current}`;
           skipTabLiveFitRef.current = false;
         };
@@ -4234,7 +4234,7 @@ export function ShowcaseVideoEditingDetail({
 
           skipTabLiveFitRef.current = true;
 
-          // Measure live body when resize starts (after delay) — one tween only.
+          // One tween to the live (post-settle) height — not probe then adjust.
           animateDetailCardToMeasuredBody(targetProbe, resizeDelayMs, {
             onSettled: settleMaskAfterResize,
             preferLiveMeasure: true,
