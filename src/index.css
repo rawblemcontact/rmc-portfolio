@@ -3901,7 +3901,8 @@
     pointer-events: none !important;
   }
 
-  /* Body hide — higher specificity than tablet active opacity:!important rules. */
+  /* Body hide — higher specificity than tablet active opacity:!important rules.
+   * Duration switches via --experience-body-fade-ms (160ms out / 240ms in — desc-card). */
   #experience
     .tabs-content.experience-drawer-resizing[data-experience-body-hidden]
     .panel-header,
@@ -3916,7 +3917,13 @@
     .content-card {
     opacity: 0 !important;
     pointer-events: none !important;
-    transition: opacity var(--career-card-fade-ms) var(--career-card-ease) !important;
+  }
+
+  #experience .tabs-content.experience-drawer-resizing .panel-header,
+  #experience .tabs-content.experience-drawer-resizing .career-tabs-content-inner,
+  #experience .tabs-content.experience-drawer-resizing .panel-content,
+  #experience .tabs-content.experience-drawer-resizing .content-card {
+    transition: opacity var(--experience-body-fade-ms, 160ms) cubic-bezier(0.22, 1, 0.36, 1) !important;
   }
 
   /* Mobile never uses the split entrance shell (single tabs-content only). */
