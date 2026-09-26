@@ -4318,12 +4318,11 @@ export function ShowcaseVideoEditingDetail({
       const probe = detailTabHiddenMeasureRefs.current[tabId];
       if (probe) measureDetailCardHeightForProbe(surface, probe);
     }
-    const overviewProbes = detailVideoOverviewMeasureRefs.current;
-    for (let i = 0; i < overviewProbes.length; i++) {
-      const probe = overviewProbes[i];
+    for (let i = 0; i < videos.length; i++) {
+      const probe = detailVideoOverviewMeasureRefs.current[i];
       if (probe) measureDetailCardHeightForProbe(surface, probe);
     }
-  }, [isCompactDrawerViewport, card.id, activeVideo.id, detailPlayerReveal]);
+  }, [isCompactDrawerViewport, card.id, activeVideo.id, detailPlayerReveal, videos.length]);
 
   useLayoutEffect(() => {
     const reserve = detailPanelReserveRef.current;
