@@ -1,27 +1,36 @@
+import { useEffect, useRef } from "react";
 import { useReducedMotion } from "framer-motion";
+import { LoaderIcon, type LoaderIconHandle } from "./icons/LoaderIcon";
 
 type Props = {
   className?: string;
 };
 
-/** Duration of one `pdf-fold-loader-flip` loop — keep in sync with `index.css`. */
+/**
+ * One full spin cycle of `LoaderIcon` (0.8s) × ~2.5 — keep exit wait readable
+ * with the FILE LOADING label (same role as the old fold-loop duration).
+ */
 export const PDF_FOLD_LOADER_CYCLE_MS = 2000;
 
-/**
- * Fold animation from Uiverse.io (vk-uiux / orange-horse-73). Styles: `index.css` `.pdf-fold-loader`.
- */
+/** PDF loading spinner — animated LoaderIcon (all PDF loader surfaces). */
 export function PdfFoldLoader({ className = "" }: Props) {
   const reduceMotion = useReducedMotion();
+  const controlsRef = useRef<LoaderIconHandle>(null);
+
+  useEffect(() => {
+    if (reduceMotion) return;
+    controlsRef.current?.startAnimation();
+    return () => {
+      controlsRef.current?.stopAnimation();
+    };
+  }, [reduceMotion]);
+
   return (
-    <div
-      className={`pdf-fold-loader ${reduceMotion ? "pdf-fold-loader--static" : ""} ${className}`.trim()}
+    <LoaderIcon
+      ref={controlsRef}
       aria-hidden
-    >
-      <div />
-      <div />
-      <div />
-      <div />
-      <div />
-    </div>
+      className={`text-[#52525b]/className}`.trim()}
+      size={28}
+    />
   );
 }

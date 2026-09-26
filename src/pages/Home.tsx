@@ -95,6 +95,10 @@ import { UserFilledIcon } from "../components/icons/UserFilledIcon";
 import { BriefcaseIcon } from "../components/icons/BriefcaseIcon";
 import { BriefcaseFilledIcon } from "../components/icons/BriefcaseFilledIcon";
 import { UserIcon } from "../components/icons/UserIcon";
+import {
+  CursorClickIcon,
+  type CursorClickIconHandle,
+} from "../components/icons/CursorClickIcon";
 import { DUR, EASE, HOVER, NAV_ICON_TAP, NAV_ICON_TAP_RELEASE, PORTFOLIO_BOUNCE, PORTFOLIO_SPEED, SHOWCASE_PDF_PROJECTS_FADE_OUT_S, SIDE_NAV_OVERLAY_FADE_S, SPRING, TAP } from "../lib/motion";
 import {
   DRAWER_BODY_IN_MS,
@@ -1965,6 +1969,32 @@ const prepareHeroLockupSvg = (raw: string) => {
     );
 };
 const HERO_ROB_LOCKUP_SVG = prepareHeroLockupSvg(robHeroSplitSvgRaw);
+
+/** LPM TAP TO ENTER — autoplay CursorClickIcon (no hover on touch / low-power). */
+function HeroTapToEnterCursorIcon({ className }: { className?: string }) {
+  const controlsRef = useRef<CursorClickIconHandle>(null);
+  const reduceMotion = useReducedMotion();
+
+  useEffect(() => {
+    if (reduceMotion) return;
+    const play = () => controlsRef.current?.startAnimation();
+    play();
+    const id = window.setInterval(play, 2800);
+    return () => {
+      window.clearInterval(id);
+      controlsRef.current?.stopAnimation();
+    };
+  }, [reduceMotion]);
+
+  return (
+    <CursorClickIcon
+      ref={controlsRef}
+      aria-hidden
+      className={className}
+      size={28}
+    />
+  );
+}
 
 /** Hero name accent strip — first column icon (replaces Tabler pencil mark in hero only). */
 function HeroAccentFirstIcon({ className }: { className?: string }) {
@@ -4712,9 +4742,12 @@ const Hero = ({
             }
           }}
         >
-          <span className="hero-tap-to-enter-label font-display text-[1.06rem] uppercase tracking-[0.16em] text-white/95 sm:text-[1.12rem]">
-            TAP TO ENTER
-          </span>
+          <div className="flex flex-col items-center gap-3">
+            <HeroTapToEnterCursorIcon className="text-white/95" />
+            <span className="hero-tap-to-enter-label font-display text-[1.06rem] uppercase tracking-[0.16em] text-white/95 sm:text-[1.12rem]">
+              TAP TO ENTER
+            </span>
+          </div>
         </motion.div>
       )}
       {heroStageMounted && (
