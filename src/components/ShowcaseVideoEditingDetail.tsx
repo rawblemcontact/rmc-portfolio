@@ -2821,11 +2821,14 @@ export function ShowcaseVideoEditingDetail({
           detailTabActiveNaturalRef.current,
         );
         const overviewProbe = detailVideoOverviewMeasureRefs.current[nextIndex];
-        const measureEl = liveBody ?? overviewProbe;
         let cardDelta = 0;
-        if (surface && measureEl) {
-          const toH = measureDetailCardHeightForProbe(surface, measureEl);
-          cardDelta = Math.abs(toH - surface.offsetHeight);
+        if (surface) {
+          const toH = measureDetailCardDestHeight(
+            surface,
+            overviewProbe,
+            liveBody,
+          );
+          if (toH > 0) cardDelta = Math.abs(toH - surface.offsetHeight);
         }
         const titleArea = detailNowPlayingRef.current;
         const titleProbe = detailTitleMeasureRefs.current[nextIndex];
