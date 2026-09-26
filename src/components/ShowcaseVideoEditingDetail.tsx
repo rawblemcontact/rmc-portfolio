@@ -307,10 +307,10 @@ const DETAIL_CARD_RESIZE_EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
 function detailCardResizeDurationMs(heightDeltaPx: number): number {
   const delta = Math.abs(heightDeltaPx);
   return Math.min(
-    Math.round(DETAIL_CARD_RESIZE_DUR_MS * 2.4),
+    Math.round(DETAIL_CARD_RESIZE_DUR_MS * 3.2),
     Math.max(
       DETAIL_CARD_RESIZE_DUR_MS,
-      Math.round(DETAIL_CARD_RESIZE_DUR_MS * (delta / 160)),
+      Math.round(DETAIL_CARD_RESIZE_DUR_MS * (delta / 140)),
     ),
   );
 }
@@ -1793,12 +1793,10 @@ export function ShowcaseVideoEditingDetail({
         switchEpoch?: number;
         /** Force destination height (still clamped to the player cap when present). */
         toHeightPx?: number;
-        /** Override rAF duration (natural work-switch couples title + card). */
+        /** Override rAF duration floor (natural work-switch couples title + card). */
         durationMs?: number;
         /** 0-1 multiplier after duration pick (natural phone speed-up). */
         speedScale?: number;
-        /** Natural: bump reserve once, skip per-frame reserve writes (cut layout thrash). */
-        freezeReserve?: boolean;
         /**
          * @deprecated Kept for call-site compat; destination is always the probe.
          */
@@ -1936,15 +1934,14 @@ export function ShowcaseVideoEditingDetail({
           const frozenTo = toHeight;
           const frozenCap = maxHeight;
           // Large body deltas (Undertale Forever Home) need more time than a tab swap
-          // or the 420ms tween reads as a snap. Cap so short switches stay snappy.
-          // Natural work-switch may pass durationMs so title WAAPI shares this beat.
+          // or a short shared title beat — that reads as a snap on the first tall
+          // expand. Coupled duration is a floor, never a cap.
           const heightDelta = Math.abs(frozenTo - fromHeight);
-          // Explicit duration (shared title+card beat) always wins. Otherwise
-          // scale with delta so tall overviews ease instead of snapping.
+          const scaledDurMs = detailCardResizeDurationMs(heightDelta);
           let resizeDurMs =
             forcedDurationMs != null && forcedDurationMs > 0
-              ? forcedDurationMs
-              : detailCardResizeDurationMs(heightDelta);
+              ? Math.max(forcedDurationMs, scaledDurMs)
+              : scaledDurMs;
           // Only speed small moves - compressing tall Undertale tweens reads as chop.
           if (
             heightDelta <= 160 &&
@@ -1959,22 +1956,11 @@ export function ShowcaseVideoEditingDetail({
           }
           // Tall overviews: don't write reserve every frame (double layout on mobile).
           const throttleReserve = heightDelta > 160;
-          const freezeReserve = Boolean(options?.freezeReserve);
+          const reserveEl0 = detailPanelReserveRef.current;
           let reserveFrame = 0;
-          let lastReserveWritten = -1;
-          // Natural: pre-bump page reserve to the destination once so the shell can
-          // animate without fighting minHeight writes every frame.
-          if (freezeReserve) {
-            const reserveEl = detailPanelReserveRef.current;
-            if (reserveEl) {
-              const destReserve = Math.ceil(Math.max(fromHeight, frozenTo));
-              const cur = parseFloat(reserveEl.style.minHeight) || 0;
-              if (destReserve > cur) {
-                reserveEl.style.minHeight = `${destReserve}px`;
-                lastReserveWritten = destReserve;
-              }
-            }
-          }
+          let lastReserveWritten = reserveEl0
+            ? parseFloat(reserveEl0.style.minHeight) || 0
+            : -1;
           surface.style.willChange = "height";
           const tick = (now: number) => {
             if (epoch !== detailCardResizeEpochRef.current) return;
@@ -1991,15 +1977,12 @@ export function ShowcaseVideoEditingDetail({
             surface.style.height = `${h}px`;
             if (frozenCap != null) surface.style.maxHeight = `${frozenCap}px`;
             detailCardTransitionHeightRef.current = h;
-            // Keep page reserve in lockstep with the card so a post-settle
-            // tallest bump isn't a second Undertale jump (esp. tab+work reset).
-            // Tall tweens: update reserve every other frame to cut layout thrash.
-            // Natural freezeReserve: skip - already pre-bumped above.
+            // Grow page reserve with the card. Never pre-expand to dest — that
+            // jumped under the easing shell on tall Undertale expands.
             const reserveEl = detailPanelReserveRef.current;
             reserveFrame += 1;
             if (
               reserveEl &&
-              !freezeReserve &&
               (t >= 1 || !throttleReserve || reserveFrame % 2 === 0)
             ) {
               const nextReserve = Math.ceil(h);
@@ -2485,8 +2468,6 @@ export function ShowcaseVideoEditingDetail({
         }
       };
 
-      // Don't pre-pin before the card tween; animateDetailCard pins on start.
-
       // Hold mask off through the height tween. Snap strength to 0 while hidden
       // so the later arm can ease 0->1 (mask-image class swaps always pop).
       detailTabMaskLockRef.current = true;
@@ -2495,6 +2476,27 @@ export function ShowcaseVideoEditingDetail({
       detailTabpanelCutoffFadeRef.current = "none";
       setDetailTabpanelCutoffFade("none");
       skipWorkSwitchLiveFitRef.current = true;
+
+      // Natural first work-switch: card often has no fixed height yet (null px).
+      // Pin BEFORE overview/tab content swaps — otherwise tall copy (Undertale)
+      // expands the shell instantly and the later tween no-ops (from === to).
+      if (isNaturalDrawerViewport && !rapid) {
+        const surface = detailCardSurfaceRef.current;
+        if (surface) {
+          const h = Math.ceil(surface.offsetHeight);
+          if (h > 0) {
+            surface.style.minHeight = "0px";
+            surface.style.transition = "none";
+            surface.style.height = `${h}px`;
+            detailCardTransitionHeightRef.current = h;
+            detailCardHeightPxRef.current = h;
+            detailCardHeightTransitioningRef.current = true;
+            setDetailCardHeightPx(h);
+            setDetailCardHeightTransitioning(true);
+          }
+        }
+      }
+
       setActiveDetailCardTab("overview");
       setDetailCardTabOrder((prev) => swapDetailTabToFront(prev, "overview"));
       // When deferWorkForTabs: leave title on the old work until FLIP finishes.
@@ -2629,8 +2631,8 @@ export function ShowcaseVideoEditingDetail({
             snap: Boolean(reduceMotion),
             switchEpoch: epoch,
             onSettled: revealAfterHeightSettle,
-            // Shared clock with title when both move; tall overviews still scale up
-            // inside animateDetailCardToMeasuredBody (see heightDelta <= 160).
+            // Shared clock with title when both move; tall overviews scale up
+            // inside animateDetailCardToMeasuredBody (forced duration is a floor).
             ...((sharedDur != null ||
               isNaturalDrawerViewport ||
               isTabletLandscapeViewport ||
@@ -2641,14 +2643,9 @@ export function ShowcaseVideoEditingDetail({
                     : isNaturalDrawerViewport
                       ? DETAIL_NATURAL_CARD_RESIZE_DUR_MS
                       : DETAIL_CARD_RESIZE_DUR_MS,
-                  ...(isNaturalDrawerViewport && sharedDur == null
-                    ? {
-                        speedScale: DETAIL_NATURAL_SPEED,
-                        freezeReserve: true,
-                      }
-                    : isNaturalDrawerViewport
-                      ? { freezeReserve: true }
-                      : {}),
+                  ...(isNaturalDrawerViewport
+                    ? { speedScale: DETAIL_NATURAL_SPEED }
+                    : {}),
                 }
               : {}),
           });
