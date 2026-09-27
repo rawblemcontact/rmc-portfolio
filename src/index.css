@@ -10512,3 +10512,9 @@
   }
 }
 
+/* PROFILE desktop WRITER icon — explicit alignment override. */
+@media (min-width: 1025px) {
+  #profile .profile-role-tags > span:first-child > svg {
+    transform: translateY(-0.75px) !important;
+  }
+}
