@@ -6493,7 +6493,7 @@ const PhantomProfile = ({
               >
                 <div className="flex w-full min-w-0 items-center gap-3 sm:gap-4">
                   <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full border border-white/[0.16] bg-black/70 sm:h-16 sm:w-16">
-                    <img src="/profile-avatar.svg" alt="Profile picture" className="h-full w-full object-cover object-center" />
+                    <img src="/rawbicon2-circle.png" alt="Profile picture" className="h-full w-full object-cover object-center" />
                   </div>
                   <div className="relative min-w-0 flex-1 space-y-1 pl-[13px] text-left sm:pl-[17px]">
                     <div className="absolute bottom-[-3px] left-0 top-[4px] w-px bg-white/[0.1]" aria-hidden />
