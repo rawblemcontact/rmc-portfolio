@@ -6827,7 +6827,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     detailVideos: [
       {
         id: "video-edit-1",
-        url: "/edits-meme1-online-poster.jpg",
+        url: "https://youtube.com/shorts/MO96Ul13Gpo?feature=share",
         label: "1",
         thumbnailSrc: "/edits-meme1-online-poster.jpg",
         selectorTitle: "RAWBLEM",
@@ -6843,7 +6843,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
       },
       {
         id: "video-edit-2",
-        url: "/rawblem-thumbnail-poster.jpg",
+        url: "https://youtube.com/shorts/u4NUQlkE504?feature=share",
         label: "2",
         thumbnailSrc: "/rawblem-thumbnail-poster.jpg",
         selectorTitle: "RAWBLEM",
@@ -6859,7 +6859,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
       },
       {
         id: "video-edit-3",
-        url: "/portfolio-website-thumbnail-v2-poster.jpg",
+        url: "https://youtube.com/shorts/g3M-ewa0In8?feature=share",
         label: "3",
         thumbnailSrc: "/portfolio-website-thumbnail-v2-poster.jpg",
         selectorTitle: "Guilt Trip",
@@ -6874,7 +6874,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
       },
       {
         id: "video-edit-4",
-        url: "/8bit-festival-thumbnail.jpg",
+        url: "https://youtu.be/TdL-N2IGPa0",
         label: "4",
         thumbnailSrc: "/8bit-festival-thumbnail.jpg",
         selectorTitle: "Animation Breakdown - Shining Ring",
@@ -6889,7 +6889,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
       },
       {
         id: "video-edit-5",
-        url: "/undertale-fhe-thumbnail.png",
+        url: "https://youtu.be/QU1-gZ_Ebfk",
         label: "5",
         thumbnailSrc: "/undertale-fhe-thumbnail.png",
         selectorTitle: "Edit 05",
