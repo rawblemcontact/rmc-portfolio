@@ -3722,6 +3722,12 @@
 
   /* Mobile: flush tab chrome to blue-line ends (base 1px L/R pad insets both sides ~2px). */
   @media (max-width: 767.98px) {
+    #experience .nav-header .section-main-header-title {
+      transform: translate(-0.5px, -0.125rem);
+    }
+  }
+
+  @media (max-width: 767.98px) {
     #experience .experience-tab-btn-shell {
       padding-left: 0;
       padding-right: 0;
