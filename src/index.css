@@ -4586,7 +4586,7 @@
 
     /* Mobile optical alignment: nudge the EXPERIENCE title left to the same rule edge. */
     #experience .experience-rail-title-block .section-main-header-title {
-      transform: translate(-0.1px, -0.125rem);
+      transform: translate(-0.15px, -0.125rem);
     }
 
     #experience .career-nav-section-divider {
@@ -9968,6 +9968,7 @@
   #experience .experience-skill-tag-icon {
     width: 16px !important;
     height: 16px !important;
+    transform: translateY(0.5px);
   }
 
   /* Desktop: slightly increase the icon-to-label gap in EXPERIENCE skill tags. */
