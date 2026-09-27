@@ -9968,7 +9968,7 @@
   #experience .experience-skill-tag-icon {
     width: 16px !important;
     height: 16px !important;
-    transform: translate(-0.5px, 0.5px);
+    transform: translate(-2.75px, 0.5px);
   }
 
   /* Desktop: slightly increase the icon-to-label gap in EXPERIENCE skill tags. */
