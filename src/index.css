@@ -3774,7 +3774,7 @@
   /* Mobile EXPERIENCE tags — nudge all tag text up without moving the tag shells. */
   @media (max-width: 767.98px) {
     #experience .tab-btn .tab-text {
-      transform: translateY(-0.5px);
+      transform: translateY(-1px);
     }
   }
 
