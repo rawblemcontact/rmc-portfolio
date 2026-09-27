@@ -4134,7 +4134,9 @@
   /* EXPERIENCE skill-tag optical alignment — isolated by viewport/orientation. */
   @media (min-width: 1024px) {
     #experience .experience-skill-tag-icon {
-      top: 2px;
+      top: 1.25px;
+      width: 14px;
+      height: 14px;
     }
 
     #experience .experience-skill-tag > span:last-child {
