@@ -122,6 +122,7 @@ import {
   Star, 
   Trophy,
   GraduationCap,
+  MapPin,
   Heart,
   ArrowRight,
   ArrowLeft,
@@ -6510,19 +6511,29 @@ const PhantomProfile = ({
                       ].map(({ label, Icon }, index) => (
                         <span
                           key={label}
-                          className={`inline-flex min-h-[21px] max-w-full items-center gap-[5px] rounded-full border border-white/[0.07] bg-white/[0.018] px-2 py-1 font-heading text-[0.71875rem] font-bold leading-none tracking-[0.09em] text-white/50 uppercase whitespace-nowrap max-[400px]:gap-1 max-[400px]:px-1.5 max-[400px]:text-[0.64rem] ${index === 1 ? "max-[400px]:basis-full max-[400px]:w-fit" : ""}`}
+                          className={`inline-flex min-h-[21px] max-w-full items-center gap-[5px] rounded-full border border-white/[0.07] bg-white/[0.018] px-2 py-1 font-heading text-[0.71875rem] font-bold leading-none tracking-[0.09em] uppercase whitespace-nowrap max-[400px]:gap-1 max-[400px]:px-1.5 max-[400px]:text-[0.64rem] ${index === 1 ? "max-[400px]:basis-full max-[400px]:w-fit" : ""}`}
+                          style={{ color: PROFILE_ACCENT_SOFT }}
                         >
-                          <Icon size={13} className="shrink-0 text-[color:var(--palette-blue)] opacity-[0.82]" aria-hidden />
+                          <Icon size={13} className="shrink-0 opacity-[0.9]" style={{ color: PROFILE_ACCENT_SOFT }} aria-hidden />
                           <span>{label}</span>
                         </span>
                       ))}
                     </div>
-                    <p className={`${PROFILE_CARD_INLINE_LABEL_CLASS} text-[0.68rem] sm:text-xs tracking-[0.06em]`} style={{ color: NAV_SUBHEAD_GRAY }}>
-                      B.A. WRITING
-                    </p>
-                    <p className={`${PROFILE_CARD_INLINE_LABEL_CLASS} text-[0.68rem] sm:text-xs tracking-[0.06em]`} style={{ color: NAV_SUBHEAD_GRAY }}>
-                      VICTORIA, BC
-                    </p>
+                    <div className="mt-0.5 flex w-full min-w-0 flex-wrap items-start gap-[5px]" aria-label="Education and location">
+                      {[
+                        { label: "B.A. WRITING", Icon: GraduationCap },
+                        { label: "VICTORIA, BC", Icon: MapPin },
+                      ].map(({ label, Icon }) => (
+                        <span
+                          key={label}
+                          className="inline-flex min-h-[21px] max-w-full items-center gap-[5px] rounded-full border border-white/[0.07] bg-white/[0.018] px-2 py-1 font-heading text-[0.71875rem] font-bold leading-none tracking-[0.09em] uppercase whitespace-nowrap max-[400px]:gap-1 max-[400px]:px-1.5 max-[400px]:text-[0.64rem]"
+                          style={{ color: PROFILE_ACCENT_SOFT }}
+                        >
+                          <Icon size={13} className="shrink-0 opacity-[0.9]" style={{ color: PROFILE_ACCENT_SOFT }} aria-hidden />
+                          <span>{label}</span>
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </motion.div>
