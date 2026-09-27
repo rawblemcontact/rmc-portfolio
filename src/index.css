@@ -4130,6 +4130,13 @@
     opacity: 0.82;
   }
 
+  @media (min-width: 1025px) {
+    #experience .experience-skill-tag-icon {
+      width: 14px;
+      height: 14px;
+    }
+  }
+
   #experience .panel-content {
     display: flex;
     gap: 18px;
