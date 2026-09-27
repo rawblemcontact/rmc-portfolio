@@ -10464,10 +10464,10 @@
 }
 
 
-/* PROFILE tag text — iPad landscape only. Explicit transform avoids utility-cascade ambiguity. */
-@media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+/* PROFILE tag text — iPad landscape only. */
+@media (min-width: 768px) and (max-width: 1366px) and (pointer: coarse) and (orientation: landscape) {
   #profile .profile-role-tags > span > span,
   #profile [aria-label="Education and location"] > span > span {
-    transform: translateY(-1px) !important;
+    transform: translateY(-0.5px) !important;
   }
 }
