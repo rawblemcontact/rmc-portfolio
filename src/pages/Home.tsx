@@ -5987,7 +5987,7 @@ const PROFILE_ENTRANCE_COMPLETE_MS =
 const PROFILE_METADATA_PILL_GAP = "mt-3";
 /** Shared width + left nudge for PROFILE red rule and card stack (pill + summary). */
 const PROFILE_CARD_COLUMN =
-  "min-w-0 w-full min-[1025px]:w-[calc(100%+160px)] max-w-xl min-[1025px]:max-w-[720px] xl:max-w-[816px] 2xl:max-w-[864px] -ml-[3px]";
+  "min-w-0 w-full max-w-xl min-[1025px]:w-[560px] min-[1025px]:max-w-[560px] xl:w-[560px] xl:max-w-[560px] 2xl:w-[560px] 2xl:max-w-[560px] -ml-[3px]";
 /** Metadata pill + in-card section labels (SUMMARY, etc.) — paired with `#profile` CSS. */
 const PROFILE_CARD_INLINE_LABEL_CLASS =
   "profile-card-inline-label font-heading w-full min-w-0 max-w-full text-balance leading-snug uppercase";
