@@ -9966,8 +9966,13 @@
   }
 
   #experience .experience-skill-tag-icon {
-    width: 15px !important;
-    height: 15px !important;
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  /* Desktop: slightly increase the icon-to-label gap in EXPERIENCE skill tags. */
+  #experience .experience-skill-tag {
+    gap: 5.25px;
   }
 
   #experience .card-icon {
