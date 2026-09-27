@@ -997,8 +997,7 @@ function TextFade({
           <motion.div variants={FADE_VARIANTS}>{child}</motion.div>
         );
       })}
-    </motion.div>
-  );
+    </motion.div>  );
 }
 
 const TOP_NAV_DESKTOP_MIN_PX = 1024;
@@ -1997,8 +1996,7 @@ function HeroTapToEnterCursorIcon({ className }: { className?: string }) {
   );
 }
 
-/** Hero name accent strip — first column icon (replaces Tabler pencil mark in hero only). */
-function HeroAccentFirstIcon({ className }: { className?: string }) {
+/** Hero name accent strip — first column icon (replaces Tabler pencil mark in hero only). */function HeroAccentFirstIcon({ className }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 1200 1200"
@@ -2997,8 +2995,7 @@ const HeroNameReveal = ({
                     opacity:
                       reduceMotion || desktopAnimPerf ? 1 : auxVisible ? 1 : 0,
                   }}
-                  transition={
-                    reduceMotion || desktopAnimPerf
+                  transition={                    reduceMotion || desktopAnimPerf
                       ? { duration: 0 }
                       : heroNameMasterFadeTransition(!reduceMotion && auxVisible)
                   }
@@ -3997,8 +3994,7 @@ const Hero = ({
       heroLpmBeginOpenRef.current = snapOpen;
       let transitionBufferTimer: number | null = null;
       void prepareAndPlayHeroVideo().then((allowed) => {
-        if (cancelled) return;
-        transitionBufferTimer = window.setTimeout(() => {
+        if (cancelled) return;        transitionBufferTimer = window.setTimeout(() => {
           if (cancelled) return;
           if (
             allowed &&
@@ -4997,8 +4993,7 @@ const RainbowMenuSlide = ({
   const mainMenuLabelDelayBaseS = mainMenuIndexDelayBaseS + NAV_ITEMS.length * SKILLS_STAGGER;
   const menuTimelineActive = active && introReady;
   const reduceMotion = useReducedMotion();
-  const [menuEntranceSettled, setMenuEntranceSettled] = useState(false);
-  const menuEntranceSettleMs = reduceMotion
+  const [menuEntranceSettled, setMenuEntranceSettled] = useState(false);  const menuEntranceSettleMs = reduceMotion
     ? 0
     : Math.round(
         (mainMenuLabelDelayBaseS +
@@ -5997,8 +5992,7 @@ const PROFILE_CARD_SECTION_LABEL_CLASS = `${PROFILE_CARD_INLINE_LABEL_CLASS} pro
 const PROFILE_TABLET_MIN_PX = 768;
 const PROFILE_TABLET_MAX_PX = 1366;
 const PROFILE_DESKTOP_DEBUG_MIN_PX = 1024;
-const matchesProfileTabletViewport = () =>
-  typeof window !== "undefined" &&
+const matchesProfileTabletViewport = () =>  typeof window !== "undefined" &&
   window.matchMedia(`(min-width: ${PROFILE_TABLET_MIN_PX}px) and (max-width: ${PROFILE_TABLET_MAX_PX}px)`).matches;
 const matchesProfileDesktopDebugViewport = () =>
   typeof window !== "undefined" && window.matchMedia(`(min-width: ${PROFILE_DESKTOP_DEBUG_MIN_PX}px)`).matches;
@@ -6511,7 +6505,7 @@ const PhantomProfile = ({
                       ].map(({ label, Icon }) => (
                         <span
                           key={label}
-                          className={`inline-flex min-h-[21px] max-w-full items-center gap-[5px] rounded-full border border-white/[0.07] bg-white/[0.018] px-2 py-1 font-heading text-[0.71875rem] font-bold leading-none tracking-[0.09em] text-[#e9e7e1] uppercase whitespace-nowrap max-[767px]:gap-[3px] min-[1025px]:gap-[5.5px] max-[767px]:px-[5px] max-[767px]:py-0.5 max-[767px]:text-[0.5625rem] max-[767px]:tracking-[0.06em] min-[1025px]:text-[0.71875rem] min-[768px]:max-[1024px]:landscape:text-[0.84375rem] ${label === "SOCIAL MEDIA" ? "min-[1025px]:gap-[6px] max-[767px]:gap-[4.5px]" : label === "WRITER" ? "min-[1025px]:gap-[3.5px]" : label === "CONTENT PRODUCTION" ? "max-[767px]:gap-[4.5px]" : ""} max-[767px]:shrink-0`}
+                          className={`inline-flex min-h-[21px] max-w-full items-center gap-[5px] rounded-full border border-white/[0.07] bg-white/[0.018] px-2 py-1 font-heading text-[0.71875rem] font-bold leading-none tracking-[0.09em] text-[#e9e7e1] uppercase whitespace-nowrap max-[767px]:gap-[3px] min-[1025px]:gap-[5.5px] max-[767px]:px-[5px] max-[767px]:py-0.5 max-[767px]:text-[0.5625rem] max-[767px]:tracking-[0.06em] min-[1025px]:text-[0.71875rem] min-[768px]:max-[1024px]:landscape:text-[0.84375rem] ${label === "SOCIAL MEDIA" ? "min-[1025px]:gap-[6px] max-[767px]:gap-[4.65px] min-[768px]:max-[1024px]:gap-[5.1px]" : label === "WRITER" ? "min-[1025px]:gap-[3.5px] max-[767px]:gap-[3.9px]" : label === "CONTENT PRODUCTION" ? "max-[767px]:gap-[4.65px]" : ""} max-[767px]:shrink-0 ${label === "WRITER" ? "max-[767px]:order-1" : label === "SOCIAL MEDIA" ? "max-[767px]:order-2" : label === "CONTENT PRODUCTION" ? "max-[767px]:order-3" : ""}`}
                         >
                           <Icon size={15} className={`relative top-[0.5px] h-[14px] w-[14px] shrink-0 opacity-[0.9] max-[1024px]:top-[-0.5px] max-[767px]:top-[0.25px] max-[767px]:h-[13px] max-[767px]:w-[13px] min-[1025px]:top-0 min-[1025px]:h-4 min-[1025px]:w-4 min-[768px]:max-[1024px]:landscape:h-4 min-[768px]:max-[1024px]:landscape:w-4 min-[768px]:max-[1024px]:landscape:top-[-4px] ${label === "WRITER" ? "max-[767px]:top-[0.225px] min-[768px]:max-[1024px]:portrait:top-[-0.6px] min-[768px]:max-[1024px]:landscape:top-[-4.05px]" : ""}`} style={{ color: PROFILE_ACCENT_SOFT }} aria-hidden />
                           <span className={`max-[767px]:relative max-[767px]:top-[-0.25px] min-[768px]:max-[1024px]:relative min-[768px]:max-[1024px]:top-[-0.35px] min-[768px]:max-[1024px]:landscape:top-[-7px] ${label === "WRITER" ? "max-[767px]:top-[-0.275px] min-[768px]:max-[1024px]:portrait:top-[-0.35px] min-[768px]:max-[1024px]:landscape:top-[-7.05px] min-[1025px]:top-[0.55px] " : ""} ${label === "SOCIAL MEDIA" ? "max-[767px]:top-[-0.275px] min-[768px]:max-[1024px]:portrait:top-[-0.325px] min-[768px]:max-[1024px]:landscape:top-[-7.025px]" : ""} ${label === "CONTENT PRODUCTION" ? "min-[768px]:max-[1024px]:portrait:top-[-0.285px] min-[768px]:max-[1024px]:landscape:top-[-0.325px]" : ""} ${label !== "CONTENT PRODUCTION" ? "min-[1025px]:relative min-[1025px]:top-[0.5px]" : ""}`}>{label}</span>
@@ -6525,7 +6519,7 @@ const PhantomProfile = ({
                       ].map(({ label, Icon }) => (
                         <span
                           key={label}
-                          className={`inline-flex min-h-[21px] max-w-full items-center gap-[5px] rounded-full border border-white/[0.07] bg-white/[0.018] px-2 py-1 font-heading text-[0.71875rem] font-bold leading-none tracking-[0.09em] text-[#e9e7e1] uppercase whitespace-nowrap max-[767px]:gap-[3px] min-[1025px]:gap-[5.5px] max-[767px]:px-[5px] max-[767px]:py-0.5 max-[767px]:text-[0.5625rem] max-[767px]:tracking-[0.06em] min-[1025px]:text-[0.71875rem] min-[768px]:max-[1024px]:landscape:text-[0.84375rem] ${label === "B.A. WRITING" ? "min-[1025px]:gap-[6.25px] max-[767px]:gap-[4px]" : label === "VICTORIA, BC" ? "min-[1025px]:gap-[4.25px]" : ""} max-[767px]:shrink-0`}
+                          className={`inline-flex min-h-[21px] max-w-full items-center gap-[5px] rounded-full border border-white/[0.07] bg-white/[0.018] px-2 py-1 font-heading text-[0.71875rem] font-bold leading-none tracking-[0.09em] text-[#e9e7e1] uppercase whitespace-nowrap max-[767px]:gap-[3px] min-[1025px]:gap-[5.5px] max-[767px]:px-[5px] max-[767px]:py-0.5 max-[767px]:text-[0.5625rem] max-[767px]:tracking-[0.06em] min-[1025px]:text-[0.71875rem] min-[768px]:max-[1024px]:landscape:text-[0.84375rem] ${label === "B.A. WRITING" ? "min-[1025px]:gap-[6.25px] max-[767px]:gap-[4.25px] min-[768px]:max-[1024px]:gap-[5.1px]" : label === "VICTORIA, BC" ? "min-[1025px]:gap-[4.25px]" : ""} max-[767px]:shrink-0`}
                         >
                           <Icon size={15} className={`relative top-[0.5px] h-[14px] w-[14px] shrink-0 opacity-[0.9] max-[1024px]:top-[-0.85px] max-[767px]:top-[0.25px] max-[767px]:h-[13px] max-[767px]:w-[13px] min-[1025px]:top-0 min-[1025px]:h-4 min-[1025px]:w-4 min-[768px]:max-[1024px]:landscape:h-4 min-[768px]:max-[1024px]:landscape:w-4 min-[768px]:max-[1024px]:landscape:top-[-4px] ${label === "B.A. WRITING" ? "min-[768px]:max-[1024px]:portrait:top-[-0.575px]" : label === "VICTORIA, BC" ? "min-[768px]:max-[1024px]:portrait:top-[-0.575px] min-[1025px]:top-[-0.025px]" : ""}`} style={{ color: PROFILE_ACCENT_SOFT }} aria-hidden />
                           <span className={`max-[767px]:relative max-[767px]:top-[-0.25px] min-[768px]:max-[1024px]:relative min-[768px]:max-[1024px]:top-[-0.5px] min-[768px]:max-[1024px]:landscape:top-[-6.5px] min-[1025px]:relative min-[1025px]:top-[0.5px] ${label === "B.A. WRITING" ? "min-[768px]:max-[1024px]:portrait:top-[-0.45px]" : ""} ${label === "VICTORIA, BC" ? "min-[768px]:max-[1024px]:portrait:top-[-0.575px] " : ""}`}>{label}</span>
@@ -6997,8 +6991,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
           "Completed and launched in August 2026.\nSuccessfully launched a central hub for all portfolio content outside of social media platforms.\nImproved skills with Agentic Ai IDEs",
       },
     ],
-  },
-  {
+  },  {
     id: "project-slaywire",
     title: "SLAYWIRE",
     tagline: "Self-produced original narrative IP.",
@@ -7997,8 +7990,7 @@ const ProjectsStack = ({
                                     ]
                                       ? buildProjectsTabletThumbnailStyle(
                                           tabletThumbnailValues[
-                                            card.id as ProjectsTabletThumbnailId
-                                          ],
+                                            card.id as ProjectsTabletThumbnailId                                          ],
                                         )
                                       : {
                                           objectPosition:
@@ -8997,8 +8989,7 @@ const ShowcaseIllustrationLightbox = ({
       setDescOverflows(false);
       setDescContentH(0);
       return;
-    }
-    const fullH = el.scrollHeight;
+    }    const fullH = el.scrollHeight;
     const cs = getComputedStyle(el);
     const fontSize = parseFloat(cs.fontSize) || 12;
     const lineHeightRaw = cs.lineHeight;
@@ -9997,8 +9988,7 @@ const PalaceProjects = ({
       Math.max(0, PROJECT_CARDS.length - 1) * PROJECTS_MAIN_CARD_STAGGER_S;
     const readyId = window.setTimeout(
       () => setCarouselAutoAdvanceReady(true),
-      cardsStaggerSpanS * 1000,
-    );
+      cardsStaggerSpanS * 1000,    );
     return () => window.clearTimeout(readyId);
   }, [projectsCardsRevealed, reduceMotion]);
 
@@ -10997,8 +10987,7 @@ const EXPERIENCE_DATA = [
     company: "UVIC E-Sports Community",
     location: "Victoria, BC",
     period: "2019 - 2020",
-    bullets: [
-      "Coordinated and managed content across Facebook, Discord, and Twitch in support of a university-affiliated online community.",
+    bullets: [      "Coordinated and managed content across Facebook, Discord, and Twitch in support of a university-affiliated online community.",
       "Planned, produced, and published promotional content for tournaments, announcements, and community events, contributing to increased engagement.",
       "Designed visual assets including logos, posters, and branded graphics to support community identity and event promotion.",
       "Collaborated with organizers and volunteers to ensure consistent messaging and timely updates across platforms.",
@@ -11997,8 +11986,7 @@ const ConfidantExperience = ({
     if (!root) return;
 
     const tabsNavEl = root.querySelector<HTMLElement>(".tabs-nav");
-    const tabHoverShiftPx = tabsNavEl
-      ? parseFloat(getComputedStyle(tabsNavEl).getPropertyValue("--career-tab-hover-shift")) || 6
+    const tabHoverShiftPx = tabsNavEl      ? parseFloat(getComputedStyle(tabsNavEl).getPropertyValue("--career-tab-hover-shift")) || 6
       : 6;
 
     const tabletCoarseMq = window.matchMedia(
@@ -12997,8 +12985,7 @@ const SkillsWebHooks = ({
             left: `${DIAGONAL_MID.x}%`,
             top: `${DIAGONAL_MID.y}%`,
           }}
-          animate={{
-            backgroundColor: isActive ? lineStroke : "rgba(255,255,255,0.4)",
+          animate={{            backgroundColor: isActive ? lineStroke : "rgba(255,255,255,0.4)",
             scale: isActive ? [1, 1.4, 1.2, 1] : 1,
             boxShadow: isActive 
               ? `0 0 12px ${lineStroke}, 0 0 24px ${lineStroke}40` 
@@ -13997,8 +13984,7 @@ const SkillsMainSectionHeader = ({
             }}
           />
         </div>
-      </motion.div>
-    </motion.div>
+      </motion.div>    </motion.div>
   );
 };
 
@@ -14997,8 +14983,7 @@ export default function Home() {
       };
       heroExitInputUnlockRef.current = () => {
         document.removeEventListener("wheel", blockUserPan, true);
-        document.removeEventListener("touchmove", blockUserPan, true);
-        html.style.touchAction = prevHtmlTouchAction;
+        document.removeEventListener("touchmove", blockUserPan, true);        html.style.touchAction = prevHtmlTouchAction;
         body.style.touchAction = prevBodyTouchAction;
         html.style.overscrollBehavior = prevHtmlOverscroll;
         body.style.overscrollBehavior = prevBodyOverscroll;
@@ -15997,8 +15982,7 @@ export default function Home() {
                             : 0,
                         ease: EASE.out,
                       }}
-                      onAnimationComplete={() => {
-                        if (skillsContentFade === "fade-in") {
+                      onAnimationComplete={() => {                        if (skillsContentFade === "fade-in") {
                           setSkillsContentFade("visible");
                         }
                       }}
