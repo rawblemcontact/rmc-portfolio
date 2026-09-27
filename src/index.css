@@ -3771,9 +3771,10 @@
     opacity: 1;
   }
 
-  /* Mobile EXPERIENCE tags — nudge all tag text up without moving the tag shells. */
+  /* Mobile EXPERIENCE tags — nudge the actual title/subtitle text up without moving the tag shells. */
   @media (max-width: 767.98px) {
-    #experience .tab-btn .tab-text {
+    #experience .tab-btn .tab-title,
+    #experience .tab-btn .tab-subtitle {
       transform: translateY(-1px);
     }
   }
