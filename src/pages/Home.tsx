@@ -997,7 +997,8 @@ function TextFade({
           <motion.div variants={FADE_VARIANTS}>{child}</motion.div>
         );
       })}
-    </motion.div>  );
+    </motion.div>
+  );
 }
 
 const TOP_NAV_DESKTOP_MIN_PX = 1024;
@@ -1996,7 +1997,8 @@ function HeroTapToEnterCursorIcon({ className }: { className?: string }) {
   );
 }
 
-/** Hero name accent strip — first column icon (replaces Tabler pencil mark in hero only). */function HeroAccentFirstIcon({ className }: { className?: string }) {
+/** Hero name accent strip — first column icon (replaces Tabler pencil mark in hero only). */
+function HeroAccentFirstIcon({ className }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 1200 1200"
@@ -2995,7 +2997,8 @@ const HeroNameReveal = ({
                     opacity:
                       reduceMotion || desktopAnimPerf ? 1 : auxVisible ? 1 : 0,
                   }}
-                  transition={                    reduceMotion || desktopAnimPerf
+                  transition={
+                    reduceMotion || desktopAnimPerf
                       ? { duration: 0 }
                       : heroNameMasterFadeTransition(!reduceMotion && auxVisible)
                   }
@@ -3994,7 +3997,8 @@ const Hero = ({
       heroLpmBeginOpenRef.current = snapOpen;
       let transitionBufferTimer: number | null = null;
       void prepareAndPlayHeroVideo().then((allowed) => {
-        if (cancelled) return;        transitionBufferTimer = window.setTimeout(() => {
+        if (cancelled) return;
+        transitionBufferTimer = window.setTimeout(() => {
           if (cancelled) return;
           if (
             allowed &&
@@ -4993,7 +4997,8 @@ const RainbowMenuSlide = ({
   const mainMenuLabelDelayBaseS = mainMenuIndexDelayBaseS + NAV_ITEMS.length * SKILLS_STAGGER;
   const menuTimelineActive = active && introReady;
   const reduceMotion = useReducedMotion();
-  const [menuEntranceSettled, setMenuEntranceSettled] = useState(false);  const menuEntranceSettleMs = reduceMotion
+  const [menuEntranceSettled, setMenuEntranceSettled] = useState(false);
+  const menuEntranceSettleMs = reduceMotion
     ? 0
     : Math.round(
         (mainMenuLabelDelayBaseS +
@@ -5992,7 +5997,8 @@ const PROFILE_CARD_SECTION_LABEL_CLASS = `${PROFILE_CARD_INLINE_LABEL_CLASS} pro
 const PROFILE_TABLET_MIN_PX = 768;
 const PROFILE_TABLET_MAX_PX = 1366;
 const PROFILE_DESKTOP_DEBUG_MIN_PX = 1024;
-const matchesProfileTabletViewport = () =>  typeof window !== "undefined" &&
+const matchesProfileTabletViewport = () =>
+  typeof window !== "undefined" &&
   window.matchMedia(`(min-width: ${PROFILE_TABLET_MIN_PX}px) and (max-width: ${PROFILE_TABLET_MAX_PX}px)`).matches;
 const matchesProfileDesktopDebugViewport = () =>
   typeof window !== "undefined" && window.matchMedia(`(min-width: ${PROFILE_DESKTOP_DEBUG_MIN_PX}px)`).matches;
@@ -6991,7 +6997,8 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
           "Completed and launched in August 2026.\nSuccessfully launched a central hub for all portfolio content outside of social media platforms.\nImproved skills with Agentic Ai IDEs",
       },
     ],
-  },  {
+  },
+  {
     id: "project-slaywire",
     title: "SLAYWIRE",
     tagline: "Self-produced original narrative IP.",
@@ -7990,7 +7997,8 @@ const ProjectsStack = ({
                                     ]
                                       ? buildProjectsTabletThumbnailStyle(
                                           tabletThumbnailValues[
-                                            card.id as ProjectsTabletThumbnailId                                          ],
+                                            card.id as ProjectsTabletThumbnailId
+                                          ],
                                         )
                                       : {
                                           objectPosition:
@@ -8989,7 +8997,8 @@ const ShowcaseIllustrationLightbox = ({
       setDescOverflows(false);
       setDescContentH(0);
       return;
-    }    const fullH = el.scrollHeight;
+    }
+    const fullH = el.scrollHeight;
     const cs = getComputedStyle(el);
     const fontSize = parseFloat(cs.fontSize) || 12;
     const lineHeightRaw = cs.lineHeight;
@@ -9988,7 +9997,8 @@ const PalaceProjects = ({
       Math.max(0, PROJECT_CARDS.length - 1) * PROJECTS_MAIN_CARD_STAGGER_S;
     const readyId = window.setTimeout(
       () => setCarouselAutoAdvanceReady(true),
-      cardsStaggerSpanS * 1000,    );
+      cardsStaggerSpanS * 1000,
+    );
     return () => window.clearTimeout(readyId);
   }, [projectsCardsRevealed, reduceMotion]);
 
@@ -10987,7 +10997,8 @@ const EXPERIENCE_DATA = [
     company: "UVIC E-Sports Community",
     location: "Victoria, BC",
     period: "2019 - 2020",
-    bullets: [      "Coordinated and managed content across Facebook, Discord, and Twitch in support of a university-affiliated online community.",
+    bullets: [
+      "Coordinated and managed content across Facebook, Discord, and Twitch in support of a university-affiliated online community.",
       "Planned, produced, and published promotional content for tournaments, announcements, and community events, contributing to increased engagement.",
       "Designed visual assets including logos, posters, and branded graphics to support community identity and event promotion.",
       "Collaborated with organizers and volunteers to ensure consistent messaging and timely updates across platforms.",
@@ -11986,7 +11997,8 @@ const ConfidantExperience = ({
     if (!root) return;
 
     const tabsNavEl = root.querySelector<HTMLElement>(".tabs-nav");
-    const tabHoverShiftPx = tabsNavEl      ? parseFloat(getComputedStyle(tabsNavEl).getPropertyValue("--career-tab-hover-shift")) || 6
+    const tabHoverShiftPx = tabsNavEl
+      ? parseFloat(getComputedStyle(tabsNavEl).getPropertyValue("--career-tab-hover-shift")) || 6
       : 6;
 
     const tabletCoarseMq = window.matchMedia(
@@ -12985,7 +12997,8 @@ const SkillsWebHooks = ({
             left: `${DIAGONAL_MID.x}%`,
             top: `${DIAGONAL_MID.y}%`,
           }}
-          animate={{            backgroundColor: isActive ? lineStroke : "rgba(255,255,255,0.4)",
+          animate={{
+            backgroundColor: isActive ? lineStroke : "rgba(255,255,255,0.4)",
             scale: isActive ? [1, 1.4, 1.2, 1] : 1,
             boxShadow: isActive 
               ? `0 0 12px ${lineStroke}, 0 0 24px ${lineStroke}40` 
@@ -13984,7 +13997,8 @@ const SkillsMainSectionHeader = ({
             }}
           />
         </div>
-      </motion.div>    </motion.div>
+      </motion.div>
+    </motion.div>
   );
 };
 
@@ -14983,7 +14997,8 @@ export default function Home() {
       };
       heroExitInputUnlockRef.current = () => {
         document.removeEventListener("wheel", blockUserPan, true);
-        document.removeEventListener("touchmove", blockUserPan, true);        html.style.touchAction = prevHtmlTouchAction;
+        document.removeEventListener("touchmove", blockUserPan, true);
+        html.style.touchAction = prevHtmlTouchAction;
         body.style.touchAction = prevBodyTouchAction;
         html.style.overscrollBehavior = prevHtmlOverscroll;
         body.style.overscrollBehavior = prevBodyOverscroll;
@@ -15982,7 +15997,8 @@ export default function Home() {
                             : 0,
                         ease: EASE.out,
                       }}
-                      onAnimationComplete={() => {                        if (skillsContentFade === "fade-in") {
+                      onAnimationComplete={() => {
+                        if (skillsContentFade === "fade-in") {
                           setSkillsContentFade("visible");
                         }
                       }}
