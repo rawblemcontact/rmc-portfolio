@@ -4144,8 +4144,8 @@
   }
 
   @media (min-width: 1367px) {
-    #experience .experience-skill-tag-icon {
-      transform: translateX(-1.5px);
+    #experience .experience-skill-tag-icon:not(.experience-skill-tag-icon--hootsuite) {
+      transform: translateX(-2.5px);
     }
   }
 
