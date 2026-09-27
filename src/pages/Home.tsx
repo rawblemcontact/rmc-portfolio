@@ -6492,7 +6492,7 @@ const PhantomProfile = ({
                 transition={{ duration: BUTTON_FADE_DURATION_MS / 1000, delay: overlayRevealed ? PROFILE_CARD1_DELAY_S : 0, ease: [0.16, 1, 0.3, 1] }}
               >
                 <div className="flex w-full min-w-0 items-center gap-3 sm:gap-4">
-                  <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full border border-white/[0.16] bg-black/70 sm:h-16 sm:w-16">
+                  <div className="h-14 w-14 shrink-0 -translate-x-[4px] overflow-hidden rounded-full border border-white/[0.16] bg-black/70 max-[767px]:scale-[1.14] sm:h-16 sm:w-16">
                     <img src="/rawbicon2-circle.png" alt="Profile picture" className="h-full w-full object-cover object-center" />
                   </div>
                   <div className="relative min-w-0 flex-1 space-y-1 pl-[13px] text-left sm:pl-[17px]">
