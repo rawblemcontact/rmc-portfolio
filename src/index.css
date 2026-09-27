@@ -10518,3 +10518,11 @@
     transform: translateY(-0.75px) !important;
   }
 }
+
+/* iPad landscape PROFILE tag text — explicit alignment nudge. */
+@media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse) {
+  #profile .profile-role-tags > span > span,
+  #profile [aria-label="Education and location"] > span > span {
+    transform: translateY(-0.5px) !important;
+  }
+}
