@@ -4139,7 +4139,7 @@
   @media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) and (any-pointer: coarse) {
     .profile-role-tags > span > span,
     [aria-label="Education and location"] > span > span {
-      transform: translateY(-1.5px);
+      transform: translateY(-1.75px);
     }
   }
 
