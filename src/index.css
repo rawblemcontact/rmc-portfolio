@@ -4143,6 +4143,12 @@
     }
   }
 
+  @media (min-width: 1367px) {
+    #experience .experience-skill-tag-icon {
+      transform: translateX(-1.5px);
+    }
+  }
+
   #experience .panel-content {
     display: flex;
     gap: 18px;
