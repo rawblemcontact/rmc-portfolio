@@ -4134,9 +4134,7 @@
   /* EXPERIENCE skill-tag optical alignment — isolated by viewport/orientation. */
   @media (min-width: 1024px) {
     #experience .experience-skill-tag-icon {
-      top: 1.25px;
-      width: 14px;
-      height: 14px;
+      top: 1px;
     }
 
     #experience .experience-skill-tag > span:last-child {
@@ -4155,7 +4153,7 @@
   /* Tablet portrait: icons up 0.025px; tag text remains up 0.5px. */
   @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
     #experience .experience-skill-tag-icon {
-      top: 0.225px;
+      top: 0.325px;
     }
 
     #experience .experience-skill-tag > span:last-child {
