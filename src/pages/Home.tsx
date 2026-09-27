@@ -7185,6 +7185,8 @@ type SupportingArchivePdfItem = {
   description?: string;
   /** Optional display ordering label (e.g. screenplay numbering). */
   index?: string;
+  /** Optional static first-page thumbnail used by the PROJECTS PDF preview. */
+  thumbnail?: string;
 };
 
 const supportingPdfHref = (item: SupportingArchivePdfItem) => item.href?.trim() ?? "";
@@ -7196,6 +7198,7 @@ const SUPPORTING_ARCHIVE_PDF_ITEMS: SupportingArchivePdfItem[] = [
     title: "Do You Want to See the Truth?",
     subtitle: "Robbie McLaughlin",
     href: "/cnf/example-1-article.pdf",
+    thumbnail: "/ContentWriting_thumb.png",
     description:
       "An interactive persuasive article, exploring the integration of the visual novel format with the genre of creative nonfiction. Uses limitations of the written format to highlight interactivity, and its ability to enhance the reader's experience, while keeping the content grounded in truth.",
   },
@@ -7204,6 +7207,7 @@ const SUPPORTING_ARCHIVE_PDF_ITEMS: SupportingArchivePdfItem[] = [
     title: "Addressing Ethical Issues in Gaming: Omori",
     subtitle: "Robbie McLaughlin",
     href: "/cnf/example-2-media-literary-analysis.pdf",
+    thumbnail: "/omori_thumb.png",
     description:
       "A written analysis on <em>Omori</em>: An indie psychological-horror game developed by OMOCAT (2020). Explores how horror elements and narrative-based game mechanics can be used to destigmatize mental health disorders.",
   },
@@ -7212,6 +7216,7 @@ const SUPPORTING_ARCHIVE_PDF_ITEMS: SupportingArchivePdfItem[] = [
     title: "Reflections of Mammy - A Séamas O'Reilly Literary Analysis",
     subtitle: "Robbie McLaughlin",
     href: "/cnf/example-3-critical-literary-essay.pdf",
+    thumbnail: "/mammy_thumb.png",
     description:
       "A structural breakdown of Séamas O'Reilly's award-winning memoir: <em>Did Ye Hear Mammy Died?</em> A closer look into the author's craft and technique in creative nonfiction.",
   },
@@ -7220,6 +7225,7 @@ const SUPPORTING_ARCHIVE_PDF_ITEMS: SupportingArchivePdfItem[] = [
     title: " Way of the Frog: Amphibious Meditations",
     subtitle: "Robbie McLaughlin (2023)",
     href: "/cnf/example-4-memoir.pdf",
+    thumbnail: "/frog.png",
     description: "Reflections of a small frog's supposed enlightenment. Discusses anthropomorphism, mortality, and reincarnation.",
   },
 ];
@@ -7231,6 +7237,7 @@ const SCREENPLAY_PDF_ITEMS: SupportingArchivePdfItem[] = [
     title: "Audience of One",
     subtitle: "Robbie McLaughlin",
     href: "/screenplays/audience-of-one-robbie-mclaughlin.pdf",
+    thumbnail: "/audience.png",
     description:
       "Atop Peach Hill Cemetery, a grieving detective must stop a disturbed sock puppeteer's fatal final act.\n\nTools: Arc Studio (Screenwriting Software)\n\nFormat: Short Film\nGenre: Psychological, film noir, dark fantasy.",
   },
@@ -7256,6 +7263,7 @@ const SHORT_GRAPHIC_NOVEL_PDF_ITEMS: SupportingArchivePdfItem[] = [
     title: "Blossom",
     subtitle: "Robbie McLaughlin",
     href: "/short-graphic-novels/blossom-ink-bw.pdf",
+    thumbnail: "/blossom_thumb.png",
     description:
       "A walking, talking tree who speaks exclusively in poetics comes to terms with his addiction to lighting himself on fire.\n\nTools: Arc Studio (Screenwriting Software), Clip Studio Paint",
   },
@@ -9554,6 +9562,7 @@ function ShowcaseWritingFeaturedPanel({
       ) : (
         <FeaturedWritingPdfThumbnail
           pdfSrc={supportingPdfHref(item)}
+          thumbnailSrc={item.thumbnail}
           widthPx={previewWidthPx}
           className="shrink-0 self-start"
           onActivate={() => onOpenPdfInSupporting(item)}
