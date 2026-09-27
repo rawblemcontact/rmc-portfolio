@@ -4136,6 +4136,13 @@
     }
   }
 
+  @media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) and (any-pointer: coarse) {
+    .profile-role-tags > span > span,
+    [aria-label="Education and location"] > span > span {
+      transform: translateY(-0.5px);
+    }
+  }
+
   @media (min-width: 1025px) {
     #experience .experience-skill-tag-icon {
       width: 14px;
