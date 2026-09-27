@@ -6511,9 +6511,9 @@ const PhantomProfile = ({
                       ].map(({ label, Icon }) => (
                         <span
                           key={label}
-                          className={`inline-flex min-h-[21px] max-w-full items-center gap-[5px] rounded-full border border-white/[0.07] bg-white/[0.018] px-2 py-1 font-heading text-[0.71875rem] font-bold leading-none tracking-[0.09em] text-[#e9e7e1] uppercase whitespace-nowrap max-[767px]:gap-[3px] max-[767px]:px-1 max-[767px]:py-0.5 max-[767px]:text-[0.58rem] min-[1025px]:text-[0.53125rem] max-[767px]:shrink-0`}
+                          className={`inline-flex min-h-[21px] max-w-full items-center gap-[5px] rounded-full border border-white/[0.07] bg-white/[0.018] px-2 py-1 font-heading text-[0.71875rem] font-bold leading-none tracking-[0.09em] text-[#e9e7e1] uppercase whitespace-nowrap max-[767px]:gap-[3px] max-[767px]:px-1 max-[767px]:py-0.5 max-[767px]:text-[0.58rem] min-[1025px]:text-[0.59375rem] max-[767px]:shrink-0`}
                         >
-                          <Icon size={15} className="h-3 w-3 shrink-0 opacity-[0.9] max-[767px]:h-3 max-[767px]:w-3" style={{ color: PROFILE_ACCENT_SOFT }} aria-hidden />
+                          <Icon size={15} className="relative top-[0.5px] h-[1em] w-[1em] shrink-0 opacity-[0.9] min-[768px]:max-[1024px]:landscape:top-[-1.5px]" style={{ color: PROFILE_ACCENT_SOFT }} aria-hidden />
                           <span className="min-[768px]:max-[1024px]:relative min-[768px]:max-[1024px]:top-0 min-[768px]:max-[1024px]:landscape:top-[-2px]">{label}</span>
                         </span>
                       ))}
@@ -6525,9 +6525,9 @@ const PhantomProfile = ({
                       ].map(({ label, Icon }) => (
                         <span
                           key={label}
-                          className="inline-flex min-h-[21px] max-w-full items-center gap-[5px] rounded-full border border-white/[0.07] bg-white/[0.018] px-2 py-1 font-heading text-[0.71875rem] font-bold leading-none tracking-[0.09em] text-[#e9e7e1] uppercase whitespace-nowrap max-[767px]:gap-[3px] max-[767px]:px-1 max-[767px]:py-0.5 max-[767px]:text-[0.58rem] min-[1025px]:text-[0.53125rem] max-[767px]:shrink-0"
+                          className="inline-flex min-h-[21px] max-w-full items-center gap-[5px] rounded-full border border-white/[0.07] bg-white/[0.018] px-2 py-1 font-heading text-[0.71875rem] font-bold leading-none tracking-[0.09em] text-[#e9e7e1] uppercase whitespace-nowrap max-[767px]:gap-[3px] max-[767px]:px-1 max-[767px]:py-0.5 max-[767px]:text-[0.58rem] min-[1025px]:text-[0.59375rem] max-[767px]:shrink-0"
                         >
-                          <Icon size={15} className="h-3 w-3 shrink-0 opacity-[0.9] max-[767px]:h-3 max-[767px]:w-3" style={{ color: PROFILE_ACCENT_SOFT }} aria-hidden />
+                          <Icon size={15} className="relative top-[0.5px] h-[1em] w-[1em] shrink-0 opacity-[0.9] min-[768px]:max-[1024px]:landscape:top-[-1.5px]" style={{ color: PROFILE_ACCENT_SOFT }} aria-hidden />
                           <span className="min-[768px]:max-[1024px]:relative min-[768px]:max-[1024px]:top-0 min-[768px]:max-[1024px]:landscape:top-[-2px]">{label}</span>
                         </span>
                       ))}
