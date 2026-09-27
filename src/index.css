@@ -4129,7 +4129,6 @@
     color: var(--palette-blue);
     opacity: 0.82;
     position: relative;
-    top: 0.5px;
   }
 
   /* EXPERIENCE skill-tag optical alignment — isolated by viewport/orientation. */
@@ -4139,17 +4138,17 @@
     }
   }
 
-  /* Tablet landscape: icons up 0.5px. */
+  /* Tablet landscape: keep current icon alignment. */
   @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse) {
     #experience .experience-skill-tag-icon {
       top: -0.5px;
     }
   }
 
-  /* Tablet portrait: icons down 0.5px; tag text up 0.5px. */
+  /* Tablet portrait: icons up 0.025px; tag text remains up 0.5px. */
   @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
     #experience .experience-skill-tag-icon {
-      top: 0.5px;
+      top: 0.475px;
     }
 
     #experience .experience-skill-tag > span:last-child {
@@ -4158,8 +4157,12 @@
     }
   }
 
-  /* Mobile: tag text up 0.5px. */
+  /* Mobile: icons up 0.5px; tag text remains up 0.5px. */
   @media (max-width: 767.98px) {
+    #experience .experience-skill-tag-icon {
+      top: -0.5px;
+    }
+
     #experience .experience-skill-tag > span:last-child {
       position: relative;
       top: -0.5px;
