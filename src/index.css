@@ -4135,8 +4135,8 @@
   @media (min-width: 1024px) {
     #experience .experience-skill-tag-icon {
       top: 1px;
-      width: 14px;
-      height: 14px;
+      width: 15px;
+      height: 15px;
     }
 
     #experience .experience-skill-tag > span:last-child {
