@@ -6511,7 +6511,7 @@ const PhantomProfile = ({
                       ].map(({ label, Icon }) => (
                         <span
                           key={label}
-                          className={`inline-flex min-h-[21px] max-w-full items-center gap-[5px] rounded-full border border-white/[0.07] bg-white/[0.018] px-2 py-1 font-heading text-[0.71875rem] font-bold leading-none tracking-[0.09em] text-[#e9e7e1] uppercase whitespace-nowrap max-[400px]:gap-1 max-[400px]:px-1.5 max-[400px]:text-[0.64rem] min-[1025px]:text-[0.65625rem] max-[767px]:shrink-0 min-[1025px]:text-[0.65625rem] max-[767px]:shrink-0`}
+                          className={`inline-flex min-h-[21px] max-w-full items-center gap-[5px] rounded-full border border-white/[0.07] bg-white/[0.018] px-2 py-1 font-heading text-[0.71875rem] font-bold leading-none tracking-[0.09em] text-[#e9e7e1] uppercase whitespace-nowrap max-[400px]:gap-1 max-[400px]:px-1.5 max-[400px]:text-[0.64rem] min-[1025px]:text-[0.65625rem] max-[767px]:shrink-0`}
                         >
                           <Icon size={15} className="shrink-0 opacity-[0.9]" style={{ color: PROFILE_ACCENT_SOFT }} aria-hidden />
                           <span className="min-[700px]:max-[1024px]:relative min-[700px]:max-[1024px]:-top-px">{label}</span>
@@ -6525,7 +6525,7 @@ const PhantomProfile = ({
                       ].map(({ label, Icon }) => (
                         <span
                           key={label}
-                          className="inline-flex min-h-[21px] max-w-full items-center gap-[5px] rounded-full border border-white/[0.07] bg-white/[0.018] px-2 py-1 font-heading text-[0.71875rem] font-bold leading-none tracking-[0.09em] text-[#e9e7e1] uppercase whitespace-nowrap max-[400px]:gap-1 max-[400px]:px-1.5 max-[400px]:text-[0.64rem]"
+                          className="inline-flex min-h-[21px] max-w-full items-center gap-[5px] rounded-full border border-white/[0.07] bg-white/[0.018] px-2 py-1 font-heading text-[0.71875rem] font-bold leading-none tracking-[0.09em] text-[#e9e7e1] uppercase whitespace-nowrap max-[400px]:gap-1 max-[400px]:px-1.5 max-[400px]:text-[0.64rem] min-[1025px]:text-[0.65625rem] max-[767px]:shrink-0"
                         >
                           <Icon size={15} className="shrink-0 opacity-[0.9]" style={{ color: PROFILE_ACCENT_SOFT }} aria-hidden />
                           <span className="min-[700px]:max-[1024px]:relative min-[700px]:max-[1024px]:-top-px">{label}</span>
