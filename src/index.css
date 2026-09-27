@@ -9949,8 +9949,8 @@
   }
 
   #experience .experience-skill-tag-icon {
-    width: calc(13px * var(--experience-density-boost)) !important;
-    height: calc(13px * var(--experience-density-boost)) !important;
+    width: 14px !important;
+    height: 14px !important;
   }
 
   #experience .card-icon {
