@@ -4130,6 +4130,12 @@
     opacity: 0.82;
   }
 
+  @media (min-width: 768px) and (max-width: 1366px) and (orientation: portrait) and (any-pointer: coarse) {
+    #experience .experience-skill-tag-icon {
+      transform: translateY(-0.1px);
+    }
+  }
+
   @media (min-width: 1025px) {
     #experience .experience-skill-tag-icon {
       width: 14px;
