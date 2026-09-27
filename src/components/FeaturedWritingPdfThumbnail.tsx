@@ -17,6 +17,8 @@ function cacheKey(pdfSrc: string, widthPx: number, dpr: number) {
 
 type Props = {
   pdfSrc: string;
+  /** Static thumbnail image for the PROJECTS PDF preview. */
+  thumbnailSrc?: string;
   /** Display / raster width in CSS px (e.g. active tab width). */
   widthPx?: number;
   className?: string;
@@ -31,6 +33,7 @@ type Props = {
  */
 export function FeaturedWritingPdfThumbnail({
   pdfSrc,
+  thumbnailSrc,
   widthPx = DEFAULT_W,
   className = "",
   onActivate,
@@ -48,8 +51,15 @@ export function FeaturedWritingPdfThumbnail({
     () => dataUrlByKey.get(key) ?? null,
   );
   const [error, setError] = useState(false);
+  const staticThumbnail = thumbnailSrc?.trim() ?? "";
 
   useEffect(() => {
+    if (staticThumbnail) {
+      setDataUrl(null);
+      setError(false);
+      return;
+    }
+
     if (!FEATURED_WRITING_PDF_PREVIEW_ENABLED || !pdfSrc.trim()) {
       setDataUrl(null);
       setError(!FEATURED_WRITING_PDF_PREVIEW_ENABLED && Boolean(pdfSrc.trim()));
@@ -123,7 +133,7 @@ export function FeaturedWritingPdfThumbnail({
       cancelled = true;
       void loadingTask?.destroy().catch(() => {});
     };
-  }, [pdfSrc, key, layoutW, layoutH, dpr]);
+  }, [pdfSrc, key, layoutW, layoutH, dpr, staticThumbnail]);
 
   const isBlank = !pdfSrc.trim();
   const forcePlaceholder =
@@ -174,7 +184,14 @@ export function FeaturedWritingPdfThumbnail({
         />
       ) : null}
 
-      {showImg && dataUrl ? (
+      {staticThumbnail ? (
+        <img
+          src={staticThumbnail}
+          alt=""
+          className="relative z-[1] h-full w-full object-cover object-top"
+          draggable={false}
+        />
+      ) : showImg && dataUrl ? (
         <img
           key={key}
           src={dataUrl}
@@ -184,14 +201,14 @@ export function FeaturedWritingPdfThumbnail({
         />
       ) : null}
 
-      {showImg ? (
+      {(showImg || staticThumbnail) ? (
         <div
           className="pointer-events-none absolute inset-0 z-[2] bg-[linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[length:8px_8px] opacity-[0.35]"
           aria-hidden
         />
       ) : null}
 
-      {showPlaceholder ? (
+      {showPlaceholder && !staticThumbnail ? (
         <div className="absolute inset-0 z-[3] flex flex-col items-center justify-center gap-1.5 bg-black/50 px-2 text-center">
           <FileText className="h-7 w-7 text-white/25" strokeWidth={1.25} aria-hidden />
           <span className="font-mono text-[8px] uppercase tracking-[0.14em] text-white/35">
