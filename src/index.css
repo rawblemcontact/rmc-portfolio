@@ -4155,7 +4155,7 @@
   /* Tablet portrait: icons up 0.025px; tag text remains up 0.5px. */
   @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
     #experience .experience-skill-tag-icon {
-      top: 0.475px;
+      top: 0.225px;
     }
 
     #experience .experience-skill-tag > span:last-child {
