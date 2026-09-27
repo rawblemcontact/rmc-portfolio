@@ -6948,7 +6948,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
       },
       {
         id: "interactive-media-2",
-        url: "/portfolio-website-thumbnail-v2-poster.jpg",
+        url: "https://youtube.com/shorts/aaLmxLwyBTQ?feature=share",
         label: "FugitiveFilms 1",
         thumbnailSrc: "/portfolio-website-thumbnail-v2-poster.jpg",
         selectorTitle: "Animation for FugitiveFilms - 1 of 2 (2026)",
@@ -6962,7 +6962,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
       },
       {
         id: "interactive-media-3",
-        url: "/portfolio-website-thumbnail-v2-poster.jpg",
+        url: "https://youtube.com/shorts/9ZgDZM8ZzyU?feature=share",
         label: "FugitiveFilms 2",
         thumbnailSrc: "/portfolio-website-thumbnail-v2-poster.jpg",
         selectorTitle: "Animation for FugitiveFilms - 2 of 2 (2026)",
