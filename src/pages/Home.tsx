@@ -6495,8 +6495,8 @@ const PhantomProfile = ({
                   <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full border border-white/[0.16] bg-black/70 sm:h-16 sm:w-16">
                     <img src="/rawblem3.svg" alt="Profile picture" className="h-full w-full object-cover object-center" />
                   </div>
-                  <div className="h-12 w-px shrink-0 bg-white/[0.1] sm:h-14" aria-hidden />
-                  <div className="min-w-0 flex-1 space-y-1 text-left">
+                  <div className="relative min-w-0 flex-1 space-y-1 pl-[13px] text-left sm:pl-[17px]">
+                    <div className="absolute bottom-0 left-0 top-0 w-px bg-white/[0.1]" aria-hidden />
                     <p className="min-w-0 font-display text-base leading-tight tracking-[-0.01em] text-white sm:text-lg">
                       ROBBIE MCLAUGHLIN
                     </p>
@@ -6555,7 +6555,7 @@ const PhantomProfile = ({
                 >
                 <div className="profile-summary-card-scroll-bounce relative">
                 <p className={`${PROFILE_CARD_SECTION_LABEL_CLASS} mb-1.5`} style={{ color: PROFILE_ACCENT_SOFT }}>SUMMARY</p>
-                <p className="font-body text-mono-2 leading-relaxed mb-4">
+                <p className="profile-summary-body font-body text-mono-2 leading-relaxed mb-4">
                 Writer, editor, and digital media producer specialized in narrative-driven web content and coordinating social
                 media workflows across multiple platforms. Bachelor of Arts in Writing (Distinction), University of Victoria.
                 </p>
