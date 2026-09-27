@@ -6511,9 +6511,9 @@ const PhantomProfile = ({
                       ].map(({ label, Icon }) => (
                         <span
                           key={label}
-                          className={`inline-flex min-h-[21px] max-w-full items-center gap-[5px] rounded-full border border-white/[0.07] bg-white/[0.018] px-2 py-1 font-heading text-[0.71875rem] font-bold leading-none tracking-[0.09em] text-[#e9e7e1] uppercase whitespace-nowrap max-[767px]:gap-[2px] max-[767px]:px-[3px] max-[767px]:py-0.5 max-[767px]:text-[0.5rem] max-[767px]:tracking-[0.06em] min-[1025px]:text-[0.71875rem] min-[768px]:max-[1024px]:landscape:text-[0.84375rem] max-[767px]:shrink-0`}
+                          className={`inline-flex min-h-[21px] max-w-full items-center gap-[5px] rounded-full border border-white/[0.07] bg-white/[0.018] px-2 py-1 font-heading text-[0.71875rem] font-bold leading-none tracking-[0.09em] text-[#e9e7e1] uppercase whitespace-nowrap max-[767px]:gap-[3px] max-[767px]:px-[5px] max-[767px]:py-0.5 max-[767px]:text-[0.5625rem] max-[767px]:tracking-[0.06em] min-[1025px]:text-[0.71875rem] min-[768px]:max-[1024px]:landscape:text-[0.84375rem] max-[767px]:shrink-0`}
                         >
-                          <Icon size={15} className="relative top-[0.5px] h-[14px] w-[14px] shrink-0 opacity-[0.9] max-[1024px]:top-[-0.5px] max-[767px]:h-[11px] max-[767px]:w-[11px] min-[1025px]:h-4 min-[1025px]:w-4 min-[768px]:max-[1024px]:landscape:h-4 min-[768px]:max-[1024px]:landscape:w-4 min-[768px]:max-[1024px]:landscape:top-[-2.5px]" style={{ color: PROFILE_ACCENT_SOFT }} aria-hidden />
+                          <Icon size={15} className="relative top-[0.5px] h-[14px] w-[14px] shrink-0 opacity-[0.9] max-[1024px]:top-[-0.5px] max-[767px]:top-[-1px] max-[767px]:h-[13px] max-[767px]:w-[13px] min-[1025px]:h-4 min-[1025px]:w-4 min-[768px]:max-[1024px]:landscape:h-4 min-[768px]:max-[1024px]:landscape:w-4 min-[768px]:max-[1024px]:landscape:top-[-2.5px]" style={{ color: PROFILE_ACCENT_SOFT }} aria-hidden />
                           <span className="min-[768px]:max-[1024px]:relative min-[768px]:max-[1024px]:top-0 min-[768px]:max-[1024px]:landscape:top-[-2px]">{label}</span>
                         </span>
                       ))}
@@ -6525,9 +6525,9 @@ const PhantomProfile = ({
                       ].map(({ label, Icon }) => (
                         <span
                           key={label}
-                          className="inline-flex min-h-[21px] max-w-full items-center gap-[5px] rounded-full border border-white/[0.07] bg-white/[0.018] px-2 py-1 font-heading text-[0.71875rem] font-bold leading-none tracking-[0.09em] text-[#e9e7e1] uppercase whitespace-nowrap max-[767px]:gap-[2px] max-[767px]:px-[3px] max-[767px]:py-0.5 max-[767px]:text-[0.5rem] max-[767px]:tracking-[0.06em] min-[1025px]:text-[0.71875rem] min-[768px]:max-[1024px]:landscape:text-[0.84375rem] max-[767px]:shrink-0"
+                          className="inline-flex min-h-[21px] max-w-full items-center gap-[5px] rounded-full border border-white/[0.07] bg-white/[0.018] px-2 py-1 font-heading text-[0.71875rem] font-bold leading-none tracking-[0.09em] text-[#e9e7e1] uppercase whitespace-nowrap max-[767px]:gap-[3px] max-[767px]:px-[5px] max-[767px]:py-0.5 max-[767px]:text-[0.5625rem] max-[767px]:tracking-[0.06em] min-[1025px]:text-[0.71875rem] min-[768px]:max-[1024px]:landscape:text-[0.84375rem] max-[767px]:shrink-0"
                         >
-                          <Icon size={15} className="relative top-[0.5px] h-[14px] w-[14px] shrink-0 opacity-[0.9] max-[1024px]:top-[-0.5px] max-[767px]:h-[11px] max-[767px]:w-[11px] min-[1025px]:h-4 min-[1025px]:w-4 min-[768px]:max-[1024px]:landscape:h-4 min-[768px]:max-[1024px]:landscape:w-4 min-[768px]:max-[1024px]:landscape:top-[-2.5px]" style={{ color: PROFILE_ACCENT_SOFT }} aria-hidden />
+                          <Icon size={15} className="relative top-[0.5px] h-[14px] w-[14px] shrink-0 opacity-[0.9] max-[1024px]:top-[-0.5px] max-[767px]:top-[-1px] max-[767px]:h-[13px] max-[767px]:w-[13px] min-[1025px]:h-4 min-[1025px]:w-4 min-[768px]:max-[1024px]:landscape:h-4 min-[768px]:max-[1024px]:landscape:w-4 min-[768px]:max-[1024px]:landscape:top-[-2.5px]" style={{ color: PROFILE_ACCENT_SOFT }} aria-hidden />
                           <span className="min-[768px]:max-[1024px]:relative min-[768px]:max-[1024px]:top-0 min-[768px]:max-[1024px]:landscape:top-[-2px]">{label}</span>
                         </span>
                       ))}
