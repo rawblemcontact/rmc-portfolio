@@ -10147,6 +10147,13 @@
   }
 }
 
+/* Non-mobile EXPERIENCE cards — indent the bullet entries only. */
+@media (min-width: 768px) {
+  #experience .feature-list {
+    padding-left: 12px;
+  }
+}
+
 /*
  * Desktop fine pointer â€” EXPERIENCE resume card hierarchy (parity with iPad card logic).
  * Sizes derive from --experience-type-* so they scale with the left rail on desktop.
