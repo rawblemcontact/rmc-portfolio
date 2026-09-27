@@ -11088,7 +11088,10 @@ const CAREER_OVERVIEW_SKILL_TAG_ROWS: {
 
 const ExperienceSkillTag = ({ label, Icon }: CareerOverviewSkillTagRow) => (
   <span className="experience-skill-tag">
-    <Icon size={13} className="experience-skill-tag-icon" />
+    <Icon
+        size={13}
+        className={`experience-skill-tag-icon${label === "Hootsuite" ? " experience-skill-tag-icon--hootsuite" : ""}`}
+      />
     <span>{label}</span>
   </span>
 );
