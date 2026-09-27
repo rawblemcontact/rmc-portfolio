@@ -10448,6 +10448,32 @@
   font-weight: 700;
 }
 
+#profile .profile-summary-card-scroll-bounce > p.profile-summary-body {
+  font-size: clamp(0.875rem, calc(0.35vw + 0.78rem), 1rem);
+  line-height: 1.45;
+}
+
+@media (max-width: 639px) {
+  #profile .profile-summary-card-scroll-bounce > p.profile-summary-body {
+    font-size: 0.84375rem;
+    line-height: 1.46;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1366px) {
+  #profile .profile-summary-card-scroll-bounce > p.profile-summary-body {
+    font-size: var(--section-subhead-font);
+    line-height: 1.5;
+  }
+}
+
+@media (min-width: 1024px) {
+  #profile .profile-summary-card-scroll-bounce > p.profile-summary-body {
+    font-size: clamp(0.9375rem, calc(0.42vw + 0.8rem), 1.0625rem);
+    line-height: 1.5;
+  }
+}
+
 #profile .profile-card-surface > p.font-body,
 #profile .profile-summary-card-scroll p.font-body,
 #profile .profile-card-surface > ul.font-body,
@@ -10523,6 +10549,6 @@
 @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse) {
   #profile .profile-role-tags > span > span,
   #profile [aria-label="Education and location"] > span > span {
-    transform: translateY(-0.5px) !important;
+    transform: translateY(-3.25px) !important;
   }
 }
