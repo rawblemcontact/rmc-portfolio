@@ -6496,7 +6496,7 @@ const PhantomProfile = ({
                     <img src="/rawblem3.svg" alt="Profile picture" className="h-full w-full object-cover object-center" />
                   </div>
                   <div className="relative min-w-0 flex-1 space-y-1 pl-[13px] text-left sm:pl-[17px]">
-                    <div className="absolute bottom-0 left-0 top-0 w-px bg-white/[0.1]" aria-hidden />
+                    <div className="absolute bottom-[-1rem] left-0 top-[2px] w-px bg-white/[0.1] sm:bottom-[-1.25rem]" aria-hidden />
                     <p className="min-w-0 font-display text-base leading-tight tracking-[-0.01em] text-white sm:text-lg">
                       ROBBIE MCLAUGHLIN
                     </p>
