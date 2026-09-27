@@ -6501,7 +6501,7 @@ const PhantomProfile = ({
                       ROBBIE MCLAUGHLIN
                     </p>
                     <div
-                      className="profile-role-tags flex w-full min-w-0 flex-wrap items-start content-start gap-[5px] max-sm:min-h-[42px] sm:min-h-[21px]"
+                      className="profile-role-tags flex w-full min-w-0 flex-wrap items-start content-start gap-[5px] max-sm:min-h-[42px] sm:min-h-[21px] lg:flex-nowrap"
                       aria-label="Professional focus"
                     >
                       {[
