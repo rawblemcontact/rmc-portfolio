@@ -229,8 +229,8 @@ export function useTabletLandscapeInnerScroll(
       stopMomentum();
       const max = maxScrollTop();
       const next = Math.max(0, Math.min(max, logicalTop + delta));
-      if (next === logicalTop) return;
       event.preventDefault();
+      if (next === logicalTop) return;
       applyScrollTop(next);
     };
 
@@ -262,8 +262,8 @@ export function useTabletLandscapeInnerScroll(
           : delta === Infinity
             ? max
             : Math.max(0, Math.min(max, logicalTop + delta));
-      if (next === logicalTop) return;
       event.preventDefault();
+      if (next === logicalTop) return;
       applyScrollTop(next);
     };
 
