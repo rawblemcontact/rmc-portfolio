@@ -8981,7 +8981,6 @@ const ShowcaseIllustrationLightbox = ({
   const draggingRef = useRef(false);
   const touchExpandedDragRef = useRef(false);
   const touchExpandedStartSnapRef = useRef<number | null>(null);
-  const touchExpandedStartXRef = useRef<number | null>(null);
   /* Navigation collapses the description; defer its Embla reInit until the slide settles. */
   const navigationDescCollapseRef = useRef(false);
   const skipNextDescReinitRef = useRef(false);
@@ -9106,44 +9105,23 @@ const ShowcaseIllustrationLightbox = ({
     const onNativeTouchStart = (event: TouchEvent) => {
       if (!descExpanded || event.touches.length !== 1) return;
       touchExpandedStartSnapRef.current = emblaApi.selectedScrollSnap();
-      touchExpandedStartXRef.current = event.touches[0]?.clientX ?? null;
       touchExpandedDragRef.current = true;
       draggingRef.current = true;
       navigationDescCollapseRef.current = true;
     };
 
-    const onNativeTouchMove = (event: TouchEvent) => {
-      if (
-        !touchExpandedDragRef.current ||
-        touchExpandedStartXRef.current == null ||
-        event.touches.length !== 1 ||
-        !descExpanded
-      ) {
-        return;
-      }
-      const currentX = event.touches[0]?.clientX;
-      if (currentX == null) return;
-      /* Start the collapse as soon as a real horizontal drag begins. */
-      if (Math.abs(currentX - touchExpandedStartXRef.current) >= 4) {
-        setDescExpanded(false);
-      }
-    };
-
     const onNativeTouchCancel = () => {
       touchExpandedDragRef.current = false;
       touchExpandedStartSnapRef.current = null;
-      touchExpandedStartXRef.current = null;
       draggingRef.current = false;
       navigationDescCollapseRef.current = false;
     };
 
     viewport.addEventListener("touchstart", onNativeTouchStart, { capture: true, passive: true });
-    viewport.addEventListener("touchmove", onNativeTouchMove, { capture: true, passive: true });
     viewport.addEventListener("touchcancel", onNativeTouchCancel, { capture: true, passive: true });
 
     return () => {
       viewport.removeEventListener("touchstart", onNativeTouchStart, true);
-      viewport.removeEventListener("touchmove", onNativeTouchMove, true);
       viewport.removeEventListener("touchcancel", onNativeTouchCancel, true);
     };
   }, [descExpanded, emblaApi]);
@@ -9268,21 +9246,17 @@ const ShowcaseIllustrationLightbox = ({
         const to = snaps[selected - 1]!;
         if (progress <= from + (to - from) * SWITCH_AT) targetSnap = selected - 1;
       }
-      if (touchExpandedDragRef.current && touchExpandedStartSnapRef.current != null) {
-        const startSnap = touchExpandedStartSnapRef.current;
-        const targetIsNext = targetSnap > startSnap;
-        const targetIsPrev = targetSnap < startSnap;
-        if (targetIsNext || targetIsPrev) {
-          const from = snaps[selected]!;
-          const to = targetIsNext
-            ? snaps[Math.min(selected + 1, snaps.length - 1)]!
-            : snaps[Math.max(selected - 1, 0)]!;
-          const span = Math.abs(to - from);
-          const travelled = Math.abs(progress - from);
-          const transitionProgress = span > 0 ? travelled / span : 0;
-          /* Collapse late in the visual slide, before Embla's final settle event. */
-          /* Touch collapse is triggered by the native touchmove handler as soon
-           * as the finger actually crosses the drag threshold. */
+      if (descExpanded && navigationDescCollapseRef.current) {
+        const from = snaps[selected]!;
+        const candidates = [
+          selected > 0 ? Math.abs(progress - from) / Math.max(Math.abs(snaps[selected - 1]! - from), 1e-6) : Infinity,
+          selected < snaps.length - 1 ? Math.abs(progress - from) / Math.max(Math.abs(snaps[selected + 1]! - from), 1e-6) : Infinity,
+        ];
+        const transitionProgress = Math.min(...candidates);
+        /* Start the same early collapse for touch, mouse/trackpad, and button/wheel
+         * navigation as soon as Embla has actually begun moving. */
+        if (transitionProgress >= 0.02) {
+          setDescExpanded(false);
         }
       }
 
