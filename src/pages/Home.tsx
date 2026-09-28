@@ -8979,6 +8979,8 @@ const ShowcaseIllustrationLightbox = ({
   /** Description tracks switches immediately (local), independent of slide settle. */
   const [descIndex, setDescIndex] = useState(activeIndex);
   const draggingRef = useRef(false);
+  /* Navigation collapses the description; defer its Embla reInit until the slide settles. */
+  const navigationDescCollapseRef = useRef(false);
   const descSlide = slides[descIndex] ?? activeSlide;
 
   const lightboxLabel =
@@ -9012,6 +9014,8 @@ const ShowcaseIllustrationLightbox = ({
       descViewportRef.current.scrollTop = 0;
     }
     if (!emblaApi) return;
+    /* Navigation-triggered collapse is reinitialized only after Embla settles. */
+    if (!descExpanded && navigationDescCollapseRef.current) return;
     const reinitDelayMs = reduceMotion ? 0 : 320;
     const timerId = window.setTimeout(() => {
       emblaApi.reInit();
@@ -9059,13 +9063,16 @@ const ShowcaseIllustrationLightbox = ({
 
   const handleShowPrev = useCallback(() => {
     if (!emblaApi || !emblaApi.canScrollPrev()) return;
-    /* Register description switch immediately — don't wait for Embla select/settle. */
+    /* Defer the navigation-triggered description reInit until Embla settles. */
+    navigationDescCollapseRef.current = true;
     commitDescFromSnap(emblaApi.selectedScrollSnap() - 1);
     emblaApi.scrollPrev(!!reduceMotion);
   }, [commitDescFromSnap, emblaApi, reduceMotion]);
 
   const handleShowNext = useCallback(() => {
     if (!emblaApi || !emblaApi.canScrollNext()) return;
+    /* Defer the navigation-triggered description reInit until Embla settles. */
+    navigationDescCollapseRef.current = true;
     commitDescFromSnap(emblaApi.selectedScrollSnap() + 1);
     emblaApi.scrollNext(!!reduceMotion);
   }, [commitDescFromSnap, emblaApi, reduceMotion]);
@@ -9206,6 +9213,12 @@ const ShowcaseIllustrationLightbox = ({
     emblaApi.on("scroll", syncDescFromClosestSnap);
     emblaApi.on("pointerDown", onPointerDown);
     emblaApi.on("pointerUp", onPointerUp);
+    const onSettle = () => {
+      if (!navigationDescCollapseRef.current) return;
+      navigationDescCollapseRef.current = false;
+      window.setTimeout(() => emblaApi.reInit(), reduceMotion ? 0 : 320);
+    };
+    emblaApi.on("settle", onSettle);
     emblaApi.on("reInit", syncScrollButtons);
     emblaApi.on("reInit", syncActiveIndex);
     return () => {
@@ -9214,6 +9227,7 @@ const ShowcaseIllustrationLightbox = ({
       emblaApi.off("scroll", syncDescFromClosestSnap);
       emblaApi.off("pointerDown", onPointerDown);
       emblaApi.off("pointerUp", onPointerUp);
+      emblaApi.off("settle", onSettle);
       emblaApi.off("reInit", syncScrollButtons);
       emblaApi.off("reInit", syncActiveIndex);
     };
