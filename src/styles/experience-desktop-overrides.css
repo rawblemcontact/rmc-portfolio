@@ -6,18 +6,27 @@
   }
 
   #experience .tabs-content {
-    /* Let the card begin directly at the divider; its 20px inner padding
-       then creates the matching body-text → divider gap. */
     margin-left: 0;
-    /* More noticeable desktop reduction from the original 20px. */
-    padding-bottom: 10px !important;
+    /* Keep the host's normal padding; the visible shell follows the motion
+       content's flow height, so the bottom gap is tuned below. */
+    padding-bottom: 20px !important;
+  }
+
+  #experience .experience-card-entrance-motion {
+    /* This is the actual in-flow height that determines the shell's bottom edge. */
+    margin-bottom: -10px !important;
   }
 }
 
 /* EXPERIENCE — tablet portrait only. Keep desktop/landscape values independent. */
 @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
   #experience .tabs-content {
-    /* More noticeable increase from the original 14px. */
-    padding-bottom: 20px !important;
+    /* Restore the original portrait host inset. */
+    padding-bottom: 14px !important;
+  }
+
+  #experience .experience-card-entrance-motion {
+    /* Add breathing room to the actual in-flow card height. */
+    margin-bottom: 6px !important;
   }
 }
