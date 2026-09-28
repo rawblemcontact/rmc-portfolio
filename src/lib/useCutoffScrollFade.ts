@@ -17,39 +17,20 @@ export function useCutoffScrollFade(active: boolean) {
       const shell = el?.parentElement;
       if (!shell?.classList.contains("profile-summary-card-scroll-shell")) return;
 
-      shell.classList.toggle("is-cutoff", on);
-      const token = on ? "1" : "0";
-      if (shell.style.getPropertyValue("--profile-cutoff") !== token) {
-        shell.style.setProperty("--profile-cutoff", token);
-      }
-
       /*
-       * Paint the cutoff as a real child above the scrolling content.
-       * The previous ::after approach could sit visually behind the scroll
-       * layer, especially with the glass/frost stacking context, making the
-       * shadow effectively invisible. A real overlay gives us deterministic
-       * paint order while preserving the soft, non-bar look.
+       * Match PROJECT DETAILS: the fade belongs to the non-scrolling host,
+       * not the scrolling element, so the last line dissolves into the card
+       * edge instead of having a black overlay painted over it.
        */
-      let overlay = shell.querySelector<HTMLElement>(".profile-summary-cutoff-overlay");
-      if (!overlay) {
-        overlay = document.createElement("div");
-        overlay.className = "profile-summary-cutoff-overlay";
-        Object.assign(overlay.style, {
-          position: "absolute",
-          left: "0",
-          right: "0",
-          bottom: "0",
-          height: "24px",
-          zIndex: "20",
-          pointerEvents: "none",
-          opacity: "0",
-          transition: "opacity 0.48s cubic-bezier(0.12, 1, 0.28, 1)",
-          background:
-            "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.055) 34%, rgba(0,0,0,0.13) 68%, rgba(0,0,0,0.24) 100%)",
-        });
-        shell.appendChild(overlay);
-      }
-      overlay.style.opacity = on ? "1" : "0";
+      const mask = on
+        ? "linear-gradient(to bottom, #000 0%, #000 calc(100% - 0.75rem), rgba(0,0,0,0.72) calc(100% - 0.42rem), rgba(0,0,0,0.22) calc(100% - 0.16rem), rgba(0,0,0,0) 100%)"
+        : "none";
+      shell.style.webkitMaskImage = mask;
+      shell.style.maskImage = mask;
+
+      /* Remove the old class-driven overlay path. */
+      shell.classList.remove("is-cutoff");
+      shell.style.removeProperty("--profile-cutoff");
     };
 
     if (!el || !active) {
@@ -104,6 +85,14 @@ export function useCutoffScrollFade(active: boolean) {
       el.removeEventListener("wheel", onScroll);
       io?.disconnect();
       ro?.disconnect();
+
+      const shell = el.parentElement;
+      if (shell?.classList.contains("profile-summary-card-scroll-shell")) {
+        shell.style.webkitMaskImage = "";
+        shell.style.maskImage = "";
+        shell.classList.remove("is-cutoff");
+        shell.style.removeProperty("--profile-cutoff");
+      }
     };
   }, [active, updateFade]);
 
