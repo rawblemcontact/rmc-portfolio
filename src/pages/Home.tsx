@@ -9221,7 +9221,6 @@ const ShowcaseIllustrationLightbox = ({
   useEffect(() => {
     if (!emblaApi) return;
     const syncActiveIndex = () => {
-      if (touchExpandedDragRef.current) return;
       commitDescFromSnap(emblaApi.selectedScrollSnap());
     };
     const syncScrollButtons = () => {
@@ -9229,9 +9228,9 @@ const ShowcaseIllustrationLightbox = ({
       setCanScrollNext(emblaApi.canScrollNext());
     };
     const syncDescFromClosestSnap = () => {
-      /* Mid-drag: mouse/trackpad can swap early. Touch keeps the entire
-       * expanded description frozen until settle so the media viewport cannot resize. */
-      if (!draggingRef.current || touchExpandedDragRef.current) return;
+      /* Swap the description early during every drag. For touch, the
+       * navigation lock keeps the expanded box height stable while this content changes. */
+      if (!draggingRef.current) return;
       const progress = emblaApi.scrollProgress();
       const snaps = emblaApi.scrollSnapList();
       const selected = emblaApi.selectedScrollSnap();
