@@ -8979,7 +8979,6 @@ const ShowcaseIllustrationLightbox = ({
   /** Description tracks switches immediately (local), independent of slide settle. */
   const [descIndex, setDescIndex] = useState(activeIndex);
   const draggingRef = useRef(false);
-  const touchDragStartSnapRef = useRef<number | null>(null);
   /* Navigation collapses the description; defer its Embla reInit until the slide settles. */
   const navigationDescCollapseRef = useRef(false);
   const skipNextDescReinitRef = useRef(false);
@@ -9018,9 +9017,6 @@ const ShowcaseIllustrationLightbox = ({
   }, [activeIndex]);
 
   useEffect(() => {
-    /* Touch swipes change descIndex during the drag; keep the expanded box stable
-     * until Embla settles so the media snap is not recalculated mid-gesture. */
-    if (navigationDescCollapseRef.current) return;
     setDescExpanded(false);
   }, [descIndex]);
 
@@ -9222,31 +9218,11 @@ const ShowcaseIllustrationLightbox = ({
         });
       }
     };
-    const onPointerDown = (
-      _embla: unknown,
-      event: { detail: TouchEvent | MouseEvent },
-    ) => {
+    const onPointerDown = (_embla: typeof emblaApi, event: PointerEvent) => {
       draggingRef.current = true;
-      if ("touches" in event.detail && descExpanded) {
-        touchDragStartSnapRef.current = emblaApi.selectedScrollSnap();
-        navigationDescCollapseRef.current = true;
-      } else {
-        touchDragStartSnapRef.current = null;
-      }
     };
     const onPointerUp = () => {
       draggingRef.current = false;
-      if (touchDragStartSnapRef.current != null) {
-        const startSnap = touchDragStartSnapRef.current;
-        const endedSnap = emblaApi.selectedScrollSnap();
-        touchDragStartSnapRef.current = null;
-        if (endedSnap === startSnap) {
-          navigationDescCollapseRef.current = false;
-        } else {
-          /* Keep the deferral armed until Embla's settle event finishes the swipe. */
-          navigationDescCollapseRef.current = true;
-        }
-      }
       syncActiveIndex();
     };
     syncActiveIndex();
