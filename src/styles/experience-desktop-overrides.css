@@ -9,15 +9,15 @@
     /* Let the card begin directly at the divider; its 20px inner padding
        then creates the matching body-text → divider gap. */
     margin-left: 0;
-    /* Noticeably tighter desktop body-copy → card-edge gap. */
-    padding-bottom: 14px !important;
+    /* More noticeable desktop reduction from the original 20px. */
+    padding-bottom: 10px !important;
   }
 }
 
 /* EXPERIENCE — tablet portrait only. Keep desktop/landscape values independent. */
 @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
   #experience .tabs-content {
-    /* Base portrait value is 14px; noticeably more breathing room. */
-    padding-bottom: 17px !important;
+    /* More noticeable increase from the original 14px. */
+    padding-bottom: 20px !important;
   }
 }
