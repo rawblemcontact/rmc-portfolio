@@ -9246,6 +9246,25 @@ const ShowcaseIllustrationLightbox = ({
         const to = snaps[selected - 1]!;
         if (progress <= from + (to - from) * SWITCH_AT) targetSnap = selected - 1;
       }
+      if (touchExpandedDragRef.current && touchExpandedStartSnapRef.current != null) {
+        const startSnap = touchExpandedStartSnapRef.current;
+        const targetIsNext = targetSnap > startSnap;
+        const targetIsPrev = targetSnap < startSnap;
+        if (targetIsNext || targetIsPrev) {
+          const from = snaps[selected]!;
+          const to = targetIsNext
+            ? snaps[Math.min(selected + 1, snaps.length - 1)]!
+            : snaps[Math.max(selected - 1, 0)]!;
+          const span = Math.abs(to - from);
+          const travelled = Math.abs(progress - from);
+          const transitionProgress = span > 0 ? travelled / span : 0;
+          /* Collapse late in the visual slide, before Embla's final settle event. */
+          if (transitionProgress >= 0.75 && descExpanded) {
+            setDescExpanded(false);
+          }
+        }
+      }
+
       const nextIndex = openableIndices[targetSnap];
       if (nextIndex != null && nextIndex !== descIndex) {
         flushSync(() => {
