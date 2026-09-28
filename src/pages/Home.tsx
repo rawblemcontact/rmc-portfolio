@@ -8979,7 +8979,7 @@ const ShowcaseIllustrationLightbox = ({
   /** Description tracks switches immediately (local), independent of slide settle. */
   const [descIndex, setDescIndex] = useState(activeIndex);
   const draggingRef = useRef(false);
-  const dragStartSnapRef = useRef<number | null>(null);
+  const touchExpandedDragRef = useRef(false);
   /* Navigation collapses the description; defer its Embla reInit until the slide settles. */
   const navigationDescCollapseRef = useRef(false);
   const skipNextDescReinitRef = useRef(false);
@@ -9099,52 +9099,37 @@ const ShowcaseIllustrationLightbox = ({
 
   useEffect(() => {
     const viewport = lightboxWheelViewportRef.current;
-    if (!viewport) return;
-
-    const onNativePointerDown = (event: PointerEvent) => {
-      if (!descExpanded) return;
-      dragStartSnapRef.current = emblaApi?.selectedScrollSnap() ?? null;
-      if (event.pointerType === "touch" || event.pointerType === "mouse" || event.pointerType === "pen") {
-        navigationDescCollapseRef.current = true;
-      }
-    };
-
-    const onNativePointerUp = () => {
-      if (dragStartSnapRef.current == null || !emblaApi) return;
-      if (emblaApi.selectedScrollSnap() === dragStartSnapRef.current) {
-        navigationDescCollapseRef.current = false;
-        dragStartSnapRef.current = null;
-      }
-    };
+    if (!viewport || !emblaApi) return;
 
     const onNativeTouchStart = () => {
-      if (!descExpanded || !emblaApi) return;
-      dragStartSnapRef.current = emblaApi.selectedScrollSnap();
+      if (!descExpanded) return;
+      touchExpandedDragRef.current = true;
+      draggingRef.current = true;
       navigationDescCollapseRef.current = true;
     };
 
     const onNativeTouchEnd = () => {
-      if (dragStartSnapRef.current == null || !emblaApi) return;
-      if (emblaApi.selectedScrollSnap() === dragStartSnapRef.current) {
-        navigationDescCollapseRef.current = false;
-        dragStartSnapRef.current = null;
+      if (!touchExpandedDragRef.current) return;
+      /* Keep the lock through the snap; Embla's settle event releases it. */
+      if (emblaApi.selectedScrollSnap() === emblaStartIndexRef.current) {
+        // No-op: the settle handler will determine whether the snap changed.
       }
     };
 
-    viewport.addEventListener("pointerdown", onNativePointerDown, { capture: true });
-    viewport.addEventListener("pointerup", onNativePointerUp, { capture: true });
-    viewport.addEventListener("pointercancel", onNativePointerUp, { capture: true });
+    const onNativeTouchCancel = () => {
+      touchExpandedDragRef.current = false;
+      draggingRef.current = false;
+      navigationDescCollapseRef.current = false;
+    };
+
     viewport.addEventListener("touchstart", onNativeTouchStart, { capture: true, passive: true });
     viewport.addEventListener("touchend", onNativeTouchEnd, { capture: true, passive: true });
-    viewport.addEventListener("touchcancel", onNativeTouchEnd, { capture: true, passive: true });
+    viewport.addEventListener("touchcancel", onNativeTouchCancel, { capture: true, passive: true });
 
     return () => {
-      viewport.removeEventListener("pointerdown", onNativePointerDown, true);
-      viewport.removeEventListener("pointerup", onNativePointerUp, true);
-      viewport.removeEventListener("pointercancel", onNativePointerUp, true);
       viewport.removeEventListener("touchstart", onNativeTouchStart, true);
       viewport.removeEventListener("touchend", onNativeTouchEnd, true);
-      viewport.removeEventListener("touchcancel", onNativeTouchEnd, true);
+      viewport.removeEventListener("touchcancel", onNativeTouchCancel, true);
     };
   }, [descExpanded, emblaApi]);
 
@@ -9243,6 +9228,7 @@ const ShowcaseIllustrationLightbox = ({
   useEffect(() => {
     if (!emblaApi) return;
     const syncActiveIndex = () => {
+      if (touchExpandedDragRef.current) return;
       commitDescFromSnap(emblaApi.selectedScrollSnap());
     };
     const syncScrollButtons = () => {
@@ -9250,8 +9236,9 @@ const ShowcaseIllustrationLightbox = ({
       setCanScrollNext(emblaApi.canScrollNext());
     };
     const syncDescFromClosestSnap = () => {
-      /* Mid-drag: swap description early (≈20% toward neighbor), not at midpoint. */
-      if (!draggingRef.current) return;
+      /* Mid-drag: mouse/trackpad can swap early. Touch keeps the entire
+       * expanded description frozen until settle so the media viewport cannot resize. */
+      if (!draggingRef.current || touchExpandedDragRef.current) return;
       const progress = emblaApi.scrollProgress();
       const snaps = emblaApi.scrollSnapList();
       const selected = emblaApi.selectedScrollSnap();
@@ -9274,24 +9261,18 @@ const ShowcaseIllustrationLightbox = ({
         });
       }
     };
-    const onPointerDown = (_embla: typeof emblaApi, _event: PointerEvent) => {
+    const onPointerDown = (_embla: typeof emblaApi, event: PointerEvent) => {
       draggingRef.current = true;
-      dragStartSnapRef.current = emblaApi.selectedScrollSnap();
-      if (descExpanded) {
+      if (event.pointerType !== "touch" && descExpanded) {
         navigationDescCollapseRef.current = true;
       }
     };
     const onPointerUp = () => {
       draggingRef.current = false;
-      if (dragStartSnapRef.current != null) {
-        const startSnap = dragStartSnapRef.current;
-        const endedSnap = emblaApi.selectedScrollSnap();
-        dragStartSnapRef.current = null;
-        if (endedSnap === startSnap) {
-          navigationDescCollapseRef.current = false;
-        }
+      /* Touch gestures stay deferred until Embla settles; mouse/pen can sync here. */
+      if (!touchExpandedDragRef.current) {
+        syncActiveIndex();
       }
-      syncActiveIndex();
     };
     syncActiveIndex();
     syncScrollButtons();
@@ -9301,10 +9282,24 @@ const ShowcaseIllustrationLightbox = ({
     emblaApi.on("pointerDown", onPointerDown);
     emblaApi.on("pointerUp", onPointerUp);
     const onSettle = () => {
-      if (!navigationDescCollapseRef.current) return;
-      navigationDescCollapseRef.current = false;
       const isDesktop =
         window.innerWidth >= 1024 && window.matchMedia("(pointer: fine)").matches;
+
+      if (touchExpandedDragRef.current) {
+        touchExpandedDragRef.current = false;
+        draggingRef.current = false;
+        navigationDescCollapseRef.current = false;
+        if (isDesktop) skipNextDescReinitRef.current = true;
+        commitDescFromSnap(emblaApi.selectedScrollSnap());
+        setDescExpanded(false);
+        if (!isDesktop) {
+          window.setTimeout(() => emblaApi.reInit(), reduceMotion ? 0 : 320);
+        }
+        return;
+      }
+
+      if (!navigationDescCollapseRef.current) return;
+      navigationDescCollapseRef.current = false;
       if (isDesktop) skipNextDescReinitRef.current = true;
       setDescExpanded(false);
       if (!isDesktop) {
