@@ -9484,18 +9484,7 @@ const ShowcaseIllustrationLightbox = ({
                 animate={{
                   height: descExpanded ? descContentH || "auto" : collapsedDescH,
                 }}
-                transition={{
-                  duration:
-                    reduceMotion
-                      ? 0
-                      : typeof window !== "undefined" &&
-                          window.innerWidth >= 768 &&
-                          window.innerWidth <= 1366 &&
-                          window.innerHeight < window.innerWidth
-                        ? 0.18
-                        : 0.3,
-                  ease: EASE.out,
-                }}
+                transition={{ duration: reduceMotion ? 0 : 0.3, ease: EASE.out }}
                 className={`relative min-w-0 ${
                   descExpanded
                     ? "no-scrollbar overflow-x-hidden overflow-y-auto overscroll-y-contain touch-pan-y"
