@@ -4395,13 +4395,13 @@
   /* Education body copy optical alignment — move the complete row as one unit. */
   @media (min-width: 1024px) and (pointer: fine) {
     #experience #education .feature-list li {
-      transform: translateY(-2px);
+      transform: translateY(-3px);
     }
   }
 
   @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
     #experience #education .feature-list li {
-      transform: translateY(0);
+      transform: translateY(4px);
     }
   }
 
