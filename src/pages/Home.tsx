@@ -9459,10 +9459,14 @@ const ShowcaseIllustrationLightbox = ({
         </div>
 
         <section
-          className={`group relative shrink-0 border-t border-white/[0.1] bg-black/90 px-4 pt-3 pr-16 pb-2 sm:px-6 sm:pt-4 sm:pb-2${descOverflows && measuredDescIndexRef.current === descIndex ? " cursor-pointer" : ""}`}
+          className={`group relative shrink-0 border-t border-white/[0.1] bg-black/90 px-4 pt-3 pr-16 pb-2 sm:px-6 sm:pt-4 sm:pb-2${artistStatement ? " cursor-pointer" : ""}`}
           onClick={
-            descOverflows && measuredDescIndexRef.current === descIndex
-              ? () => setDescExpanded((v) => !v)
+            artistStatement
+              ? () => {
+                  if (descOverflows || descContentH > collapsedDescH) {
+                    setDescExpanded((v) => !v);
+                  }
+                }
               : undefined
           }
         >
