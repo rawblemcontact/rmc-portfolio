@@ -9070,6 +9070,52 @@ const ShowcaseIllustrationLightbox = ({
     emblaApi.scrollNext(!!reduceMotion);
   }, [commitDescFromSnap, emblaApi, reduceMotion]);
 
+  const lightboxWheelLockRef = useRef(false);
+  const lightboxWheelUnlockTimerRef = useRef<number | null>(null);
+  const handleLightboxWheel = useCallback(
+    (event: React.WheelEvent<HTMLDivElement>) => {
+      if (
+        !window.matchMedia(
+          "(min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse)",
+        ).matches ||
+        !window.matchMedia("(hover: hover) and (pointer: fine)").matches ||
+        !emblaApi
+      ) {
+        return;
+      }
+
+      const delta = Math.abs(event.deltaX) >= Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+      if (Math.abs(delta) < 12) return;
+
+      event.preventDefault();
+      if (lightboxWheelLockRef.current) return;
+
+      lightboxWheelLockRef.current = true;
+      if (delta > 0) {
+        handleShowNext();
+      } else {
+        handleShowPrev();
+      }
+
+      if (lightboxWheelUnlockTimerRef.current != null) {
+        window.clearTimeout(lightboxWheelUnlockTimerRef.current);
+      }
+      lightboxWheelUnlockTimerRef.current = window.setTimeout(() => {
+        lightboxWheelLockRef.current = false;
+        lightboxWheelUnlockTimerRef.current = null;
+      }, 420);
+    },
+    [emblaApi, handleShowNext, handleShowPrev],
+  );
+
+  useEffect(() => {
+    return () => {
+      if (lightboxWheelUnlockTimerRef.current != null) {
+        window.clearTimeout(lightboxWheelUnlockTimerRef.current);
+      }
+    };
+  }, []);
+
   const renderArtistStatementText = useCallback((text: string) => {
     const parts = text.split(/(<em>[\s\S]*?<\/em>)/g);
     return parts.map((part, index) => {
@@ -9250,6 +9296,7 @@ const ShowcaseIllustrationLightbox = ({
 
           <div
             ref={emblaRef}
+            onWheel={handleLightboxWheel}
             className={`illustration-lightbox-media-viewport h-full min-h-0 flex-1 cursor-grab overflow-hidden [touch-action:pan-x_pinch-zoom] [-webkit-touch-callout:none] active:cursor-grabbing ${
               carouselReady ? "" : "invisible pointer-events-none"
             }`}
