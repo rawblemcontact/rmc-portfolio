@@ -11790,16 +11790,9 @@ const ConfidantExperience = ({
           if (gen !== experienceDrawerGenRef.current) return;
           tabsShellEl.style.removeProperty("height");
           tabsShellEl.style.removeProperty("transition");
-          // Let height:auto commit for one frame while the resizing class is
-          // still present. Removing both in the same style update can make
-          // the browser re-resolve the flow height by 1px at the handoff.
-          void tabsShellEl.offsetHeight;
-          requestAnimationFrame(() => {
-            if (gen !== experienceDrawerGenRef.current) return;
-            tabsShellEl.classList.remove("experience-drawer-resizing");
-            experienceDrawerHeightStopRef.current = null;
-            experienceDrawerLockRef.current = false;
-          });
+          tabsShellEl.classList.remove("experience-drawer-resizing");
+          experienceDrawerHeightStopRef.current = null;
+          experienceDrawerLockRef.current = false;
         });
       };
 
@@ -11828,9 +11821,13 @@ const ConfidantExperience = ({
             return;
           }
 
-          // Keep body hidden; measure destination as the host's own auto hug.
+          // Keep body hidden. Measure the true released auto height, not the
+          // slightly different geometry produced while the drawer-resizing class
+          // is active. Restore the class synchronously before the browser can paint.
           void incomingPanel.offsetHeight;
+          tabsShellEl.classList.remove("experience-drawer-resizing");
           const naturalShellH = measureExperienceCardHug(tabsShellEl);
+          tabsShellEl.classList.add("experience-drawer-resizing");
           tabsShellEl.style.setProperty("height", `${fromShellH}px`, "important");
           void tabsShellEl.offsetHeight;
 
