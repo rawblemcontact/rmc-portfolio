@@ -1379,7 +1379,7 @@
       opacity: 0;
       transition: opacity 0.48s cubic-bezier(0.12, 1, 0.28, 1);
       background: transparent;
-      box-shadow: 0 -10px 18px -18px rgba(0, 0, 0, 0.9);
+      box-shadow: 0 -5px 10px -7px rgba(0, 0, 0, 0.55);
     }
 
     #profile .profile-summary-card.profile-card-height-locked .profile-summary-card-scroll-shell.is-cutoff::after {
@@ -1437,7 +1437,7 @@
       opacity: 0;
       transition: opacity 0.48s cubic-bezier(0.12, 1, 0.28, 1);
       background: transparent;
-      box-shadow: 0 -10px 18px -18px rgba(0, 0, 0, 0.9);
+      box-shadow: 0 -5px 10px -7px rgba(0, 0, 0, 0.55);
     }
 
     #profile .profile-summary-card.profile-card-height-locked .profile-summary-card-scroll-shell.is-cutoff::after {
