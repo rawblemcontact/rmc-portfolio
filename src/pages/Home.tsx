@@ -11790,9 +11790,16 @@ const ConfidantExperience = ({
           if (gen !== experienceDrawerGenRef.current) return;
           tabsShellEl.style.removeProperty("height");
           tabsShellEl.style.removeProperty("transition");
-          tabsShellEl.classList.remove("experience-drawer-resizing");
-          experienceDrawerHeightStopRef.current = null;
-          experienceDrawerLockRef.current = false;
+          // Let height:auto commit for one frame while the resizing class is
+          // still present. Removing both in the same style update can make
+          // the browser re-resolve the flow height by 1px at the handoff.
+          void tabsShellEl.offsetHeight;
+          requestAnimationFrame(() => {
+            if (gen !== experienceDrawerGenRef.current) return;
+            tabsShellEl.classList.remove("experience-drawer-resizing");
+            experienceDrawerHeightStopRef.current = null;
+            experienceDrawerLockRef.current = false;
+          });
         });
       };
 
