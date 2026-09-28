@@ -4392,6 +4392,11 @@
     text-wrap: pretty;
   }
 
+  /* Education body copy optical alignment. */
+  #experience #education .feature-list li > span {
+    transform: translateY(-4px);
+  }
+
   #experience .feature-list li::before {
     content: "";
     display: block;
