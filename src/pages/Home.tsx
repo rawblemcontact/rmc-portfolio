@@ -11791,6 +11791,9 @@ const ConfidantExperience = ({
           tabsShellEl.style.removeProperty("height");
           tabsShellEl.style.removeProperty("transition");
           tabsShellEl.classList.remove("experience-drawer-resizing");
+          // Desktop keeps the drawer's geometry-only constraints after release so
+          // removing the resizing class cannot re-resolve the card by a hair pixel.
+          tabsShellEl.classList.add("experience-drawer-settled");
           experienceDrawerHeightStopRef.current = null;
           experienceDrawerLockRef.current = false;
         });
