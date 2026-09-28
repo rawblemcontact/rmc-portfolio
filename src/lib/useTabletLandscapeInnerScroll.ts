@@ -19,9 +19,6 @@ function rubberBandRange(logical: number, max: number, dimension: number) {
   return { pos: logical, visual: 0 };
 }
 
-function usesFinePointerHover() {
-  return window.matchMedia("(hover: hover) and (pointer: fine)").matches;
-}
 
 /**
  * iPad landscape: JS-drive a nested vertical scroller so page coast cannot
@@ -60,7 +57,6 @@ export function useTabletLandscapeInnerScroll(
 
   useEffect(() => {
     if (!active || !tabletLandscape) return;
-    if (usesFinePointerHover()) return;
 
     const panel = scrollRef.current;
     if (!panel) return;
@@ -225,6 +221,51 @@ export function useTabletLandscapeInnerScroll(
       applyScrollTop(logicalTop + delta);
     };
 
+    const onWheel = (event: WheelEvent) => {
+      if (maxScrollTop() <= 1) return;
+      const delta = event.deltaY;
+      if (!delta) return;
+      stopMomentum();
+      const max = maxScrollTop();
+      const next = Math.max(0, Math.min(max, logicalTop + delta));
+      if (next === logicalTop) return;
+      event.preventDefault();
+      applyScrollTop(next);
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (maxScrollTop() <= 1) return;
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const target = event.target;
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement ||
+        (target instanceof HTMLElement && target.isContentEditable)
+      ) return;
+
+      let delta = 0;
+      if (event.key === "ArrowDown") delta = 48;
+      else if (event.key === "ArrowUp") delta = -48;
+      else if (event.key === "PageDown" || event.key === " ") delta = panel.clientHeight * 0.85;
+      else if (event.key === "PageUp") delta = -panel.clientHeight * 0.85;
+      else if (event.key === "Home") delta = -Infinity;
+      else if (event.key === "End") delta = Infinity;
+      else return;
+
+      stopMomentum();
+      const max = maxScrollTop();
+      const next =
+        delta === -Infinity
+          ? 0
+          : delta === Infinity
+            ? max
+            : Math.max(0, Math.min(max, logicalTop + delta));
+      if (next === logicalTop) return;
+      event.preventDefault();
+      applyScrollTop(next);
+    };
+
     const hit =
       (hitSelector
         ? panel.closest<HTMLElement>(hitSelector)
@@ -233,6 +274,8 @@ export function useTabletLandscapeInnerScroll(
     hit.addEventListener("touchmove", onTouchMove, { passive: true });
     hit.addEventListener("touchend", endTouch, { passive: true });
     hit.addEventListener("touchcancel", endTouch, { passive: true });
+    hit.addEventListener("wheel", onWheel, { passive: false });
+    document.addEventListener("keydown", onKeyDown);
     paint();
 
     return () => {
@@ -242,6 +285,8 @@ export function useTabletLandscapeInnerScroll(
       hit.removeEventListener("touchmove", onTouchMove);
       hit.removeEventListener("touchend", endTouch);
       hit.removeEventListener("touchcancel", endTouch);
+      hit.removeEventListener("wheel", onWheel);
+      document.removeEventListener("keydown", onKeyDown);
     };
   }, [active, bounceSelector, hitSelector, onPaint, scrollRef, tabletLandscape]);
 }
