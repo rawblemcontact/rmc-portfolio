@@ -4392,22 +4392,14 @@
     text-wrap: pretty;
   }
 
-  /* Education body copy optical alignment. */
-  #experience #education .feature-list li > span {
-    transform: translateY(-4px);
-  }
-
+  /* Education body copy optical alignment — move the complete row as one unit. */
   @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
-    #experience #education .feature-list li::before {
+    #experience #education .feature-list li {
       transform: translateY(-4px);
     }
   }
 
-  @media (min-width: 1024px) and (pointer: fine) {
-    #experience #education .feature-list li::before {
-      transform: translateY(-4px);
-    }
-  }
+  /* Desktop keeps the native bullet/text relationship; no independent bullet nudge. */
 
   #experience .feature-list li::before {
     content: "";
