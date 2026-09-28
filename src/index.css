@@ -3887,7 +3887,7 @@
   /* Flow-height tuning: the in-flow motion child determines the host/card bottom edge. */
   @media (min-width: 1024px) and (pointer: fine) {
     #experience .tabs-content.experience-card-entrance-host > .experience-card-entrance-motion {
-      margin-bottom: 0;
+      margin-bottom: 4px;
     }
   }
 
@@ -9918,7 +9918,7 @@
     margin-left: var(--experience-rail-gap) !important;
     padding: calc(36px * var(--experience-scale))
       calc(36px * var(--experience-scale))
-      calc(26px * var(--experience-scale)) !important;
+      calc(22px * var(--experience-scale)) !important;
     overflow: visible !important;
     /* Same single-layer frost as tablet-portrait resume card */
     background: color-mix(in srgb, var(--portfolio-section-card) 6%, transparent) !important;
@@ -9935,7 +9935,7 @@
    * so “Awarded Distinction.” still reads balanced with a little more air.
    */
   #experience .tabs-content:has(#education.active) {
-    padding-bottom: calc(26px * var(--experience-scale)) !important;
+    padding-bottom: calc(22px * var(--experience-scale)) !important;
   }
 
   #experience .tabs-content::before {
