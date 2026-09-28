@@ -11788,8 +11788,17 @@ const ConfidantExperience = ({
         void tabsShellEl.offsetHeight;
         requestAnimationFrame(() => {
           if (gen !== experienceDrawerGenRef.current) return;
-          tabsShellEl.style.removeProperty("height");
           tabsShellEl.style.removeProperty("transition");
+          // Commit height:auto, then check the actual released box. If the
+          // browser resolves auto to a different integer than the animated
+          // destination, keep the destination height instead of allowing a
+          // one-pixel post-animation readjustment.
+          tabsShellEl.style.removeProperty("height");
+          void tabsShellEl.offsetHeight;
+          const releasedShellH = Math.max(1, Math.round(tabsShellEl.offsetHeight));
+          if (experienceDesktopViewport && releasedShellH !== naturalShellH) {
+            tabsShellEl.style.setProperty("height", `${naturalShellH}px`, "important");
+          }
           tabsShellEl.classList.remove("experience-drawer-resizing");
           experienceDrawerHeightStopRef.current = null;
           experienceDrawerLockRef.current = false;
@@ -11821,13 +11830,9 @@ const ConfidantExperience = ({
             return;
           }
 
-          // Keep body hidden. Measure the true released auto height, not the
-          // slightly different geometry produced while the drawer-resizing class
-          // is active. Restore the class synchronously before the browser can paint.
+          // Keep body hidden; measure destination as the host's own auto hug.
           void incomingPanel.offsetHeight;
-          tabsShellEl.classList.remove("experience-drawer-resizing");
           const naturalShellH = measureExperienceCardHug(tabsShellEl);
-          tabsShellEl.classList.add("experience-drawer-resizing");
           tabsShellEl.style.setProperty("height", `${fromShellH}px`, "important");
           void tabsShellEl.offsetHeight;
 
@@ -11896,6 +11901,7 @@ const ConfidantExperience = ({
       resetExperienceTabFadeLayers,
       runExperiencePanelIntro,
       measureExperienceCardHug,
+      experienceDesktopViewport,
     ],
   );
 
