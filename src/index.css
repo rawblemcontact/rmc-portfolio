@@ -4403,6 +4403,12 @@
     }
   }
 
+  @media (min-width: 1024px) and (pointer: fine) {
+    #experience #education .feature-list li::before {
+      transform: translateY(-4px);
+    }
+  }
+
   #experience .feature-list li::before {
     content: "";
     display: block;
