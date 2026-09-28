@@ -9950,7 +9950,7 @@
    * Transforming the row moves its bullet with the text as one unit.
    */
   #experience .tab-panel:not(#education) .feature-list li {
-    transform: translateY(1px);
+    transform: translateY(2px);
   }
 
   #experience .tabs-content::before {
