@@ -21,12 +21,16 @@ export function useCutoffScrollFade(active: boolean) {
        * Match PROJECT DETAILS: the fade belongs to the non-scrolling host,
        * not the scrolling element, so the last line dissolves into the card
        * edge instead of having a black overlay painted over it.
+       *
+       * The iPad-landscape compatibility rule still contains an !important
+       * mask reset, so the live mask must be written at important priority
+       * until that legacy rule is removed.
        */
       const mask = on
         ? "linear-gradient(to bottom, #000 0%, #000 calc(100% - 0.75rem), rgba(0,0,0,0.72) calc(100% - 0.42rem), rgba(0,0,0,0.22) calc(100% - 0.16rem), rgba(0,0,0,0) 100%)"
         : "none";
-      shell.style.webkitMaskImage = mask;
-      shell.style.maskImage = mask;
+      shell.style.setProperty("-webkit-mask-image", mask, "important");
+      shell.style.setProperty("mask-image", mask, "important");
 
       /* Remove the old class-driven overlay path. */
       shell.classList.remove("is-cutoff");
@@ -88,8 +92,8 @@ export function useCutoffScrollFade(active: boolean) {
 
       const shell = el.parentElement;
       if (shell?.classList.contains("profile-summary-card-scroll-shell")) {
-        shell.style.webkitMaskImage = "";
-        shell.style.maskImage = "";
+        shell.style.removeProperty("-webkit-mask-image");
+        shell.style.removeProperty("mask-image");
         shell.classList.remove("is-cutoff");
         shell.style.removeProperty("--profile-cutoff");
       }
