@@ -1374,12 +1374,12 @@
       right: 0;
       bottom: 0;
       z-index: 1;
-      height: 4px;
+      height: 2px;
       pointer-events: none;
       opacity: 0;
       transition: opacity 0.48s cubic-bezier(0.12, 1, 0.28, 1);
       background: transparent;
-      box-shadow: 0 -4px 9px -3px rgba(0, 0, 0, 0.55);
+      box-shadow: 0 -7px 16px 2px rgba(0, 0, 0, 0.5);
     }
 
     #profile .profile-summary-card.profile-card-height-locked .profile-summary-card-scroll-shell.is-cutoff::after {
@@ -1432,12 +1432,12 @@
       left: 0;
       right: 0;
       bottom: 0;
-      height: 4px;
+      height: 2px;
       pointer-events: none;
       opacity: 0;
       transition: opacity 0.48s cubic-bezier(0.12, 1, 0.28, 1);
       background: transparent;
-      box-shadow: 0 -4px 9px -3px rgba(0, 0, 0, 0.55);
+      box-shadow: 0 -7px 16px 2px rgba(0, 0, 0, 0.5);
     }
 
     #profile .profile-summary-card.profile-card-height-locked .profile-summary-card-scroll-shell.is-cutoff::after {
