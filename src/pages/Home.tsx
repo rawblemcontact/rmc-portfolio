@@ -9072,20 +9072,24 @@ const ShowcaseIllustrationLightbox = ({
 
   const lightboxWheelLockRef = useRef(false);
   const lightboxWheelUnlockTimerRef = useRef<number | null>(null);
-  const handleLightboxWheel = useCallback(
-    (event: React.WheelEvent<HTMLDivElement>) => {
-      if (
-        !window.matchMedia(
-          "(min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse)",
-        ).matches ||
-        !window.matchMedia("(hover: hover) and (pointer: fine)").matches ||
-        !emblaApi
-      ) {
-        return;
-      }
+  const lightboxWheelViewportRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const viewport = lightboxWheelViewportRef.current;
+    if (!viewport || !emblaApi) return;
+
+    const isIPadLandscapeFinePointer = () =>
+      window.innerWidth >= 768 &&
+      window.innerWidth <= 1366 &&
+      window.innerHeight < window.innerWidth &&
+      navigator.maxTouchPoints > 0 &&
+      window.matchMedia("(pointer: fine)").matches;
+
+    const onWheel = (event: WheelEvent) => {
+      if (!isIPadLandscapeFinePointer()) return;
 
       const delta = Math.abs(event.deltaX) >= Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
-      if (Math.abs(delta) < 12) return;
+      if (Math.abs(delta) < 2) return;
 
       event.preventDefault();
       if (lightboxWheelLockRef.current) return;
@@ -9104,17 +9108,17 @@ const ShowcaseIllustrationLightbox = ({
         lightboxWheelLockRef.current = false;
         lightboxWheelUnlockTimerRef.current = null;
       }, 420);
-    },
-    [emblaApi, handleShowNext, handleShowPrev],
-  );
+    };
 
-  useEffect(() => {
+    viewport.addEventListener("wheel", onWheel, { passive: false });
     return () => {
+      viewport.removeEventListener("wheel", onWheel);
       if (lightboxWheelUnlockTimerRef.current != null) {
         window.clearTimeout(lightboxWheelUnlockTimerRef.current);
+        lightboxWheelUnlockTimerRef.current = null;
       }
     };
-  }, []);
+  }, [emblaApi, handleShowNext, handleShowPrev]);
 
   const renderArtistStatementText = useCallback((text: string) => {
     const parts = text.split(/(<em>[\s\S]*?<\/em>)/g);
@@ -9295,8 +9299,10 @@ const ShowcaseIllustrationLightbox = ({
           </div>
 
           <div
-            ref={emblaRef}
-            onWheel={handleLightboxWheel}
+            ref={(node) => {
+              emblaRef(node);
+              lightboxWheelViewportRef.current = node;
+            }}
             className={`illustration-lightbox-media-viewport h-full min-h-0 flex-1 cursor-grab overflow-hidden [touch-action:pan-x_pinch-zoom] [-webkit-touch-callout:none] active:cursor-grabbing ${
               carouselReady ? "" : "invisible pointer-events-none"
             }`}
