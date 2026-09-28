@@ -9259,7 +9259,7 @@ const ShowcaseIllustrationLightbox = ({
           const travelled = Math.abs(progress - from);
           const transitionProgress = span > 0 ? travelled / span : 0;
           /* Collapse late in the visual slide, before Embla's final settle event. */
-          if (transitionProgress >= 0.3 && descExpanded) {
+          if (transitionProgress >= 0.1 && descExpanded) {
             setDescExpanded(false);
           }
         }
