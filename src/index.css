@@ -4401,7 +4401,7 @@
   /* Education body copy optical alignment — move the complete row as one unit. */
   @media (min-width: 1024px) and (pointer: fine) {
     #experience #education .feature-list li {
-      transform: translateY(-2px);
+      transform: translateY(-1px);
     }
   }
 
