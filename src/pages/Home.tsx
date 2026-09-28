@@ -9222,9 +9222,12 @@ const ShowcaseIllustrationLightbox = ({
         });
       }
     };
-    const onPointerDown = (_embla: typeof emblaApi, event: PointerEvent) => {
+    const onPointerDown = (
+      _embla: unknown,
+      event: { detail: TouchEvent | MouseEvent },
+    ) => {
       draggingRef.current = true;
-      if (event.pointerType === "touch" && descExpanded) {
+      if ("touches" in event.detail && descExpanded) {
         touchDragStartSnapRef.current = emblaApi.selectedScrollSnap();
         navigationDescCollapseRef.current = true;
       } else {
