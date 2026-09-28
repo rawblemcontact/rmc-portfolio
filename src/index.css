@@ -3830,7 +3830,7 @@
     flex: 1;
     min-width: 0;
     /* Slightly tighter bottom inset — body copy → card edge gap. */
-    padding: 28px 28px 20px;
+    padding: 28px 28px 12px;
     position: relative;
     overflow: hidden;
     isolation: isolate;
@@ -4931,7 +4931,7 @@
       min-height: min-content !important;
       /* Padding keeps content away from rounded edges so nothing clips.
        * Bottom inset = body copy → card edge gap (iPad: a smidge tighter). */
-      padding: 20px 20px 14px !important;
+      padding: 20px 20px 16px !important;
       border: 1px solid var(--career-overview-content-edge) !important;
       border-radius: 4px !important;
       background: color-mix(in srgb, var(--portfolio-section-card) 6%, transparent) !important;
