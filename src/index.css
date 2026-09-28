@@ -3907,18 +3907,6 @@
     min-height: 0 !important;
   }
 
-  /*
-   * Education desktop + iPad landscape: keep the released host at min-height:0.
-   * The shared min-height:min-content rule otherwise returns when the drawer
-   * class clears and can add a 1px final readjustment.
-   */
-  @media (min-width: 1024px) and (pointer: fine),
-    (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse) {
-    #experience .tabs-content.experience-card-entrance-host:has(#education.active) {
-      min-height: 0 !important;
-    }
-  }
-
   /* Clip body only while the host height tweens (shell chrome stays unclipped). */
   #experience
     .tabs-content.experience-card-entrance-host.experience-drawer-resizing
@@ -4237,6 +4225,13 @@
   @media (min-width: 1024px) and (pointer: fine) {
     #experience #education .content-card {
       padding-bottom: 0 !important;
+      overflow: visible !important;
+    }
+  }
+
+  @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse) {
+    #experience #education .content-card {
+      overflow: visible !important;
     }
   }
 
