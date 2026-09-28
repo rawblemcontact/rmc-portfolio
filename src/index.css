@@ -1331,6 +1331,8 @@
   /* PROFILE card — metadata pill + in-card labels (SUMMARY, etc.) */
   #profile .profile-card-surface > p.profile-card-inline-label,
   #profile .profile-summary-card-scroll > p.profile-card-inline-label {
+    font-size: var(--section-eyebrow-font);
+    line-height: var(--section-eyebrow-lh);
     letter-spacing: var(--section-eyebrow-tracking);
     font-weight: 700;
   }
@@ -1338,6 +1340,36 @@
   #profile .profile-card-surface > p.profile-card-inline-label:first-of-type,
   #profile .profile-summary-card-scroll > p.profile-card-inline-label:first-of-type {
     color: var(--section-eyebrow-muted);
+  }
+
+  #profile .profile-card-surface > p.profile-card-inline-label.profile-card-section-label,
+  #profile .profile-summary-card-scroll > p.profile-card-inline-label.profile-card-section-label {
+    font-size: clamp(0.82rem, calc(0.2vw + 0.77rem), 0.9rem);
+    line-height: 1.24;
+    letter-spacing: 0.07em;
+    font-weight: 700;
+  }
+
+  #profile .profile-card-surface > p.font-body,
+  #profile .profile-summary-card-scroll > p.font-body {
+    font-size: clamp(0.875rem, calc(0.35vw + 0.78rem), 1rem);
+    line-height: 1.45;
+  }
+
+  #profile .profile-card-surface > ul.font-body,
+  #profile .profile-summary-card-scroll > ul.font-body {
+    font-size: clamp(0.875rem, calc(0.35vw + 0.78rem), 1rem);
+    line-height: 1.45;
+  }
+
+  @media (min-width: 640px) {
+    #profile .profile-card-surface > p.font-body,
+    #profile .profile-card-surface > ul.font-body,
+    #profile .profile-summary-card-scroll > p.font-body,
+    #profile .profile-summary-card-scroll > ul.font-body {
+      font-size: clamp(0.9375rem, calc(0.42vw + 0.8rem), 1.0625rem);
+      line-height: 1.5;
+    }
   }
 
   /*
@@ -1374,13 +1406,11 @@
       right: 0;
       bottom: 0;
       z-index: 1;
-      height: 8px;
+      height: 1.75rem;
       pointer-events: none;
       opacity: 0;
       transition: opacity 0.48s cubic-bezier(0.12, 1, 0.28, 1);
-      background: rgba(0, 0, 0, 0.14);
-      filter: blur(4px);
-      transform: translateY(2px);
+      background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.55));
     }
 
     #profile .profile-summary-card.profile-card-height-locked .profile-summary-card-scroll-shell.is-cutoff::after {
@@ -1433,13 +1463,11 @@
       left: 0;
       right: 0;
       bottom: 0;
-      height: 8px;
+      height: 1.75rem;
       pointer-events: none;
       opacity: 0;
       transition: opacity 0.48s cubic-bezier(0.12, 1, 0.28, 1);
-      background: rgba(0, 0, 0, 0.14);
-      filter: blur(4px);
-      transform: translateY(2px);
+      background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.55));
     }
 
     #profile .profile-summary-card.profile-card-height-locked .profile-summary-card-scroll-shell.is-cutoff::after {
@@ -1781,12 +1809,6 @@
     #projects p.featured-writing-description {
       max-height: none !important;
       overflow: visible !important;
-    }
-
-    /* Nudge FEATURED WRITING card down 3px (relative top — no Framer transform fight). */
-    #projects:not([class*="detail-open"]) .projects-showcase-featured-block {
-      position: relative;
-      top: 3px;
     }
   }
 
@@ -3724,22 +3746,6 @@
     }
   }
 
-  /* Mobile: flush tab chrome to blue-line ends (base 1px L/R pad insets both sides ~2px). */
-  @media (max-width: 767.98px) {
-    #experience .nav-header .section-main-header-title {
-      transform: translate(-0.5px, -0.125rem);
-    }
-  }
-
-  @media (max-width: 767.98px) {
-    #experience .experience-tab-btn-shell {
-      padding-left: 0;
-      padding-right: 0;
-      margin-left: 0;
-      margin-right: 0;
-    }
-  }
-
   #experience .tab-btn::before {
     display: none;
   }
@@ -3773,14 +3779,6 @@
 
   #experience .tab-btn .tab-text {
     opacity: 1;
-  }
-
-  /* Mobile EXPERIENCE tags — nudge the actual title/subtitle text up without moving the tag shells. */
-  @media (max-width: 767.98px) {
-    #experience .tab-btn .tab-title,
-    #experience .tab-btn .tab-subtitle {
-      transform: translateY(-1px);
-    }
   }
 
   #experience .tab-title {
@@ -4146,32 +4144,6 @@
     flex-shrink: 0;
     color: var(--palette-blue);
     opacity: 0.82;
-  }
-
-  @media (min-width: 768px) and (max-width: 1366px) and (orientation: portrait) and (any-pointer: coarse) {
-    #experience .experience-skill-tag-icon {
-      transform: translateY(-0.1px);
-    }
-  }
-
-  @media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) and (any-pointer: coarse) {
-    .profile-role-tags > span > span,
-    [aria-label="Education and location"] > span > span {
-      transform: translateY(0);
-    }
-  }
-
-  @media (min-width: 1025px) {
-    #experience .experience-skill-tag-icon {
-      width: 14px;
-      height: 14px;
-    }
-  }
-
-  @media (min-width: 1367px) {
-    #experience .experience-skill-tag-icon:not(.experience-skill-tag-icon--hootsuite) {
-      transform: translateX(-2.5px);
-    }
   }
 
   #experience .panel-content {
@@ -4609,17 +4581,6 @@
       padding-bottom: 14px;
     }
 
-    /* Mobile optical alignment: extend the tab slider a hair left to meet the blue header rule. */
-    #experience .tabs-nav {
-      margin-left: -0.1px;
-      width: calc(100% + 0.1px) !important;
-    }
-
-    /* Mobile optical alignment: nudge the EXPERIENCE title left to the same rule edge. */
-    #experience .experience-rail-title-block .section-main-header-title {
-      transform: translate(-0.15px, -0.125rem);
-    }
-
     #experience .career-nav-section-divider {
       left: 0;
       right: 0;
@@ -4741,12 +4702,10 @@
     }
   }
 
-  /* iPad horizontal only: trim EXPERIENCE card top inner gap by 25%; bottom −1px. */
+  /* iPad horizontal only: trim EXPERIENCE card top inner gap by 25%. */
   @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse) {
     #experience .tabs-content {
       padding-top: calc(17px * 0.98 * 0.99 * 0.99) !important;
-      /* Base bottom is 20px — portrait keeps 14px via its own rule. */
-      padding-bottom: 19px !important;
     }
 
     #experience .tab-panel {
@@ -4762,13 +4721,6 @@
    * iPad portrait â€” stack layout with equal-width tabs, vertically centered,
    * grid background fills full viewport.
    */
-  /* Desktop/fine-pointer: directly tighten the Education card's real outer host. */
-  @media (min-width: 768px) and (pointer: fine) {
-    #experience .tabs-content:has(#education.active) {
-      padding-bottom: 10px !important;
-    }
-  }
-
   @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
     /* Fill viewport so the grid overlay covers the whole screen */
     #experience.career-viewport {
@@ -4938,7 +4890,7 @@
       min-height: min-content !important;
       /* Padding keeps content away from rounded edges so nothing clips.
        * Bottom inset = body copy → card edge gap (iPad: a smidge tighter). */
-      padding: 20px 20px 16px !important;
+      padding: 20px 20px 14px !important;
       border: 1px solid var(--career-overview-content-edge) !important;
       border-radius: 4px !important;
       background: color-mix(in srgb, var(--portfolio-section-card) 6%, transparent) !important;
@@ -7833,25 +7785,12 @@
   justify-content: center;
 }
 .pdf-loading-indicator__loader {
-  /* Same base ink as FILE LOADING… (opacity pulse lives on the wrap). */
-  color: color-mix(in srgb, rgb(186 186 186) 40.5%, transparent);
-  line-height: 0;
-}
-/* Match LoaderIcon size prop (48); phone/tablet a hair smaller. */
-.pdf-loading-indicator__loader svg {
-  width: 36px;
-  height: 36px;
-}
-/* True desktop (fine pointer ≥1024, or any viewport ≥1367). */
-@media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
-  .pdf-loading-indicator__loader svg {
-    width: 48px;
-    height: 48px;
-  }
+  transform: scale(1.35);
+  transform-origin: center center;
 }
 .pdf-loading-indicator__label {
   margin: 0;
-  margin-top: 0.625rem;
+  margin-top: 2.5rem;
   font-size: 0.6875rem;
   font-weight: 700;
   line-height: 1.12;
@@ -7880,8 +7819,11 @@
   }
 }
 @media (min-width: 640px) {
+  .pdf-loading-indicator__loader {
+    transform: scale(1.5);
+  }
   .pdf-loading-indicator__label {
-    margin-top: 0.75rem;
+    margin-top: 2.75rem;
     font-size: 0.6875rem;
     letter-spacing: 0.13em;
   }
@@ -8212,38 +8154,59 @@
 }
 
 /*
- * Hero — TAP TO ENTER: nudge icon+label up so the stack reads optically centered
- * (icon sits above the label). Phone portrait coarse keeps the stronger eye-band
- * lift (Safari chrome biases mid down). No pulse — static position only.
+ * Hero — TAP TO ENTER on phone portrait (LPM / autoplay-block): lift the label
+ * above geometric mid for optical eye-band (Safari chrome biases mid down).
+ * Mid between 4svh (read low) and 9svh (read high). Hit target stays full-screen.
+ * Coarse + portrait only — desktop / tablet / landscape stay true center.
  */
-#hero [data-hero-tap-to-enter="true"] > .hero-tap-to-enter-stack {
-  translate: 0 -1.75rem;
-}
-
 @media (max-width: 767.98px) and (orientation: portrait) and (any-pointer: coarse) {
-  #hero [data-hero-tap-to-enter="true"] > .hero-tap-to-enter-stack {
-    translate: 0 calc(-1 * clamp(2.75rem, 6.5svh, 4.75rem));
+  #hero [data-hero-tap-to-enter="true"] > .hero-tap-to-enter-label {
+    animation: hero-tap-enter-heartbeat 1.45s cubic-bezier(0.34, 1.35, 0.64, 1) infinite;
+    transform-origin: center center;
+    will-change: transform, opacity;
+    position: relative;
+  }
+  #hero [data-hero-tap-to-enter="true"] > span {
+    transform: translateY(calc(-1 * clamp(2.75rem, 6.5svh, 4.75rem)));
   }
 }
 
-/*
- * LPM tip under TAP TO ENTER — always one visual line. Size scales with viewport
- * width so the full sentence fits phone/tablet gutters without wrapping.
- */
-#hero .hero-tap-to-enter-lpm-note {
-  display: block;
-  box-sizing: border-box;
-  width: max-content;
-  max-width: none;
-  margin-inline: auto;
-  padding-inline: 0.5rem;
-  font-family: var(--font-display, inherit);
-  font-size: min(0.78rem, calc((100vw - 2.5rem) / 34));
-  font-weight: 500;
-  letter-spacing: 0.015em;
-  line-height: 1.2;
-  text-align: center;
-  white-space: nowrap;
+@keyframes hero-tap-enter-heartbeat {
+  0%,
+  100% {
+    transform: translateY(calc(-1 * clamp(2.75rem, 6.5svh, 4.75rem))) scale(1);
+    opacity: 0.96;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.06);
+  }
+  16% {
+    transform: translateY(calc(-1 * clamp(2.75rem, 6.5svh, 4.75rem))) scale(1.05);
+    opacity: 1;
+    text-shadow:
+      0 0 14px rgba(255, 255, 255, 0.38),
+      0 0 32px rgba(255, 255, 255, 0.16);
+  }
+  24% {
+    transform: translateY(calc(-1 * clamp(2.75rem, 6.5svh, 4.75rem))) scale(0.985);
+    opacity: 0.97;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+  }
+  34% {
+    transform: translateY(calc(-1 * clamp(2.75rem, 6.5svh, 4.75rem))) scale(1.06);
+    opacity: 1;
+    text-shadow:
+      0 0 16px rgba(255, 255, 255, 0.42),
+      0 0 36px rgba(255, 255, 255, 0.18);
+  }
+  46% {
+    transform: translateY(calc(-1 * clamp(2.75rem, 6.5svh, 4.75rem))) scale(0.99);
+    opacity: 0.97;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+  }
+  58% {
+    transform: translateY(calc(-1 * clamp(2.75rem, 6.5svh, 4.75rem))) scale(1);
+    opacity: 0.96;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.06);
+  }
 }
 
 /*
@@ -10004,14 +9967,8 @@
   }
 
   #experience .experience-skill-tag-icon {
-    width: 16px !important;
-    height: 16px !important;
-    transform: translate(-2.75px, 0.5px);
-  }
-
-  /* Desktop: slightly increase the icon-to-label gap in EXPERIENCE skill tags. */
-  #experience .experience-skill-tag {
-    gap: 5.25px;
+    width: calc(13px * var(--experience-density-boost)) !important;
+    height: calc(13px * var(--experience-density-boost)) !important;
   }
 
   #experience .card-icon {
@@ -10058,12 +10015,6 @@
 
 /* iPad horizontal â€” EXPERIENCE rail header parity with PROFILE section main + subhead. */
 @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse) {
-  /* Beat desktop scaled padding — portrait keeps its own 14px bottom. */
-  #experience .tabs-content,
-  #experience .tabs-content:has(#education.active) {
-    padding-bottom: 19px !important;
-  }
-
   #experience .nav-header .section-main-header-title,
   #experience .nav-header .career-nav-section-subtitle {
     font-size: var(--section-main-font-display) !important;
@@ -10155,13 +10106,6 @@
   #experience .tabs-content .stat-value {
     font-size: var(--experience-ipad-card-stat) !important;
     line-height: var(--experience-ipad-lh-stat) !important;
-  }
-}
-
-/* Non-mobile EXPERIENCE cards — indent the bullet entries only. */
-@media (min-width: 768px) {
-  #experience .feature-list {
-    padding-left: 12px;
   }
 }
 
@@ -10461,120 +10405,5 @@
   #projects,
   #projects.projects-showcase-tablet-pad {
     overflow: visible !important;
-  }
-}
-
-/* PROFILE card typography overrides — intentionally unlayered so Tailwind utility
- * classes on the card content cannot override these component-specific sizes. */
-#profile .profile-card-surface > p.profile-card-inline-label.profile-card-section-label,
-#profile .profile-summary-card-scroll p.profile-card-inline-label.profile-card-section-label {
-  font-size: clamp(0.82rem, calc(0.2vw + 0.77rem), 0.9rem);
-  line-height: 1.24;
-  letter-spacing: 0.07em;
-  font-weight: 700;
-}
-
-#profile .profile-summary-card-scroll-bounce > p.profile-summary-body {
-  font-size: clamp(0.875rem, calc(0.35vw + 0.78rem), 1rem);
-  line-height: 1.45;
-}
-
-@media (max-width: 639px) {
-  #profile .profile-summary-card-scroll-bounce > p.profile-summary-body {
-    font-size: 0.84375rem;
-    line-height: 1.46;
-  }
-}
-
-@media (min-width: 768px) and (max-width: 1366px) {
-  #profile .profile-summary-card-scroll-bounce > p.profile-summary-body {
-    font-size: var(--section-subhead-font);
-    line-height: 1.5;
-  }
-}
-
-@media (min-width: 1024px) {
-  #profile .profile-summary-card-scroll-bounce > p.profile-summary-body {
-    font-size: clamp(0.9375rem, calc(0.42vw + 0.8rem), 1.0625rem);
-    line-height: 1.5;
-  }
-}
-
-#profile .profile-card-surface > p.font-body,
-#profile .profile-summary-card-scroll p.font-body,
-#profile .profile-card-surface > ul.font-body,
-#profile .profile-summary-card-scroll ul.font-body {
-  font-size: clamp(0.875rem, calc(0.35vw + 0.78rem), 1rem);
-  line-height: 1.45;
-}
-
-@media (max-width: 639px) {
-  #profile .profile-card-surface > p.profile-card-inline-label.profile-card-section-label,
-  #profile .profile-summary-card-scroll p.profile-card-inline-label.profile-card-section-label {
-    font-size: 0.8125rem;
-    line-height: 1.22;
-  }
-
-  #profile .profile-card-surface > p.font-body,
-  #profile .profile-card-surface > ul.font-body,
-  #profile .profile-summary-card-scroll p.font-body,
-  #profile .profile-summary-card-scroll ul.font-body {
-    font-size: 0.84375rem;
-    line-height: 1.46;
-  }
-}
-
-@media (min-width: 768px) and (max-width: 1366px) {
-  #profile .profile-card-surface > p.profile-card-inline-label.profile-card-section-label,
-  #profile .profile-summary-card-scroll p.profile-card-inline-label.profile-card-section-label {
-    font-size: calc(clamp(0.82rem, calc(0.2vw + 0.77rem), 0.9rem) + 1.5px);
-    transform: translateX(-1px);
-  }
-
-  #profile .profile-summary-card-scroll p.font-body,
-  #profile .profile-summary-card-scroll ul.font-body,
-  #profile .profile-card-surface > p.font-body,
-  #profile .profile-card-surface > ul.font-body {
-    font-size: calc(clamp(0.9375rem, calc(0.42vw + 0.8rem), 1.0625rem) - 4.5px);
-    line-height: 1.5;
-  }
-
-  #profile .profile-card-surface p.profile-card-inline-label:not(.profile-card-section-label) {
-    font-size: 0.78125rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  #profile .profile-card-surface > p.font-body,
-  #profile .profile-card-surface > ul.font-body,
-  #profile .profile-summary-card-scroll p.font-body,
-  #profile .profile-summary-card-scroll ul.font-body {
-    font-size: clamp(0.9375rem, calc(0.42vw + 0.8rem), 1.0625rem);
-    line-height: 1.5;
-  }
-}
-
-/* PROFILE tablet body copy — just below the site's section subhead scale. */
-@media (min-width: 768px) and (max-width: 1366px) {
-  #profile .profile-card-surface > p.font-body,
-  #profile .profile-card-surface > ul.font-body,
-  #profile .profile-summary-card-scroll p.font-body,
-  #profile .profile-summary-card-scroll ul.font-body {
-    font-size: var(--section-subhead-font);
-  }
-}
-
-/* PROFILE desktop WRITER icon — explicit alignment override. */
-@media (min-width: 1025px) {
-  #profile .profile-role-tags > span:first-child > svg {
-    transform: translateY(-0.75px) !important;
-  }
-}
-
-/* iPad landscape PROFILE tag text — explicit alignment nudge. */
-@media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse) {
-  #profile .profile-role-tags > span > span,
-  #profile [aria-label="Education and location"] > span > span {
-    transform: translateY(-1px) !important;
   }
 }
