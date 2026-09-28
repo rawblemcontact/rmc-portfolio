@@ -9463,9 +9463,9 @@ const ShowcaseIllustrationLightbox = ({
           onClick={
             artistStatement
               ? () => {
-                  if (descOverflows || descContentH > collapsedDescH) {
-                    setDescExpanded((v) => !v);
-                  }
+                  /* The new slide can be opened while Embla is still moving.
+                   * Do not wait for the new slide's overflow measurement to land. */
+                  setDescExpanded((v) => !v);
                 }
               : undefined
           }
