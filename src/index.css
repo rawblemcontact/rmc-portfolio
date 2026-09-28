@@ -4398,10 +4398,10 @@
     text-wrap: pretty;
   }
 
-  /* Education body copy optical alignment — move the complete row as one unit. */
+  /* Education body copy shares the same baseline as the other desktop cards. */
   @media (min-width: 1024px) and (pointer: fine) {
     #experience #education .feature-list li {
-      transform: translateY(-1px);
+      transform: none;
     }
   }
 
