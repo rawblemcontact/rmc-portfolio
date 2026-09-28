@@ -11788,12 +11788,14 @@ const ConfidantExperience = ({
         void tabsShellEl.offsetHeight;
         requestAnimationFrame(() => {
           if (gen !== experienceDrawerGenRef.current) return;
-          tabsShellEl.style.removeProperty("height");
+          // Desktop Education: keep the committed final height instead of
+          // releasing to auto, which is the pass that causes the 1px bottom-edge
+          // reflow. Other cards and all tablet layouts retain the normal release.
+          if (!(experienceDesktopViewport && tabId === "education")) {
+            tabsShellEl.style.removeProperty("height");
+          }
           tabsShellEl.style.removeProperty("transition");
           tabsShellEl.classList.remove("experience-drawer-resizing");
-          // Desktop keeps the drawer's geometry-only constraints after release so
-          // removing the resizing class cannot re-resolve the card by a hair pixel.
-          tabsShellEl.classList.add("experience-drawer-settled");
           experienceDrawerHeightStopRef.current = null;
           experienceDrawerLockRef.current = false;
         });
