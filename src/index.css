@@ -908,13 +908,6 @@
    * center the content block. Content width matches EXPERIENCE side gaps
    * (container px-5 + EXPERIENCE_GUTTER shells) â€” no extra 560px cap.
    */
-  /* Desktop: reduce only the outer card's bottom inset so the final body line sits closer to the border. */
-  @media (min-width: 1280px) and (pointer: fine) {
-    #experience .tabs-content {
-      padding-bottom: 12px !important;
-    }
-  }
-
   @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
     #profile {
       min-height: 100svh;
@@ -4770,7 +4763,14 @@
    * grid background fills full viewport.
    */
   @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
-    /* Fill viewport so the grid overlay covers the whole screen */
+    /* Fill viewport so the grid overlay covers the whole screen *  /* Desktop: reduce only the outer card's bottom inset so the final body line sits closer to the border. */
+  @media (min-width: 1280px) and (pointer: fine) {
+    #experience .tabs-content {
+      padding-bottom: 12px !important;
+    }
+  }
+
+/
     #experience.career-viewport {
       min-height: 100svh !important;
       height: 100svh !important;
