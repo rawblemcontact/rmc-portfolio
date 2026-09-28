@@ -8979,6 +8979,7 @@ const ShowcaseIllustrationLightbox = ({
   /** Description tracks switches immediately (local), independent of slide settle. */
   const [descIndex, setDescIndex] = useState(activeIndex);
   const draggingRef = useRef(false);
+  const touchDragStartSnapRef = useRef<number | null>(null);
   /* Navigation collapses the description; defer its Embla reInit until the slide settles. */
   const navigationDescCollapseRef = useRef(false);
   const skipNextDescReinitRef = useRef(false);
@@ -9017,6 +9018,9 @@ const ShowcaseIllustrationLightbox = ({
   }, [activeIndex]);
 
   useEffect(() => {
+    /* Touch swipes change descIndex during the drag; keep the expanded box stable
+     * until Embla settles so the media snap is not recalculated mid-gesture. */
+    if (navigationDescCollapseRef.current) return;
     setDescExpanded(false);
   }, [descIndex]);
 
@@ -9218,11 +9222,23 @@ const ShowcaseIllustrationLightbox = ({
         });
       }
     };
-    const onPointerDown = () => {
+    const onPointerDown = (_embla: typeof emblaApi, event: PointerEvent) => {
       draggingRef.current = true;
+      if (event.pointerType === "touch" && descExpanded) {
+        touchDragStartSnapRef.current = emblaApi.selectedScrollSnap();
+        navigationDescCollapseRef.current = true;
+      } else {
+        touchDragStartSnapRef.current = null;
+      }
     };
     const onPointerUp = () => {
       draggingRef.current = false;
+      if (touchDragStartSnapRef.current != null) {
+        if (emblaApi.selectedScrollSnap() === touchDragStartSnapRef.current) {
+          navigationDescCollapseRef.current = false;
+        }
+        touchDragStartSnapRef.current = null;
+      }
       syncActiveIndex();
     };
     syncActiveIndex();
@@ -9283,7 +9299,7 @@ const ShowcaseIllustrationLightbox = ({
       role="dialog"
       aria-modal="true"
       aria-label={lightboxLabel}
-      className="fixed inset-0 z-[100] flex flex-col bg-black"
+      className="fixed inset-0 z-[100] flex flex-col bg-transparent"
       initial={reduceMotion ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -9342,7 +9358,7 @@ const ShowcaseIllustrationLightbox = ({
               emblaRef(node);
               lightboxWheelViewportRef.current = node;
             }}
-            className={`illustration-lightbox-media-viewport h-full min-h-0 flex-1 cursor-grab overflow-hidden [touch-action:pan-x_pinch-zoom] [-webkit-touch-callout:none] active:cursor-grabbing ${
+            className={`illustration-lightbox-media-viewport h-full min-h-0 flex-1 cursor-grab overflow-hidden bg-black [touch-action:pan-x_pinch-zoom] [-webkit-touch-callout:none] active:cursor-grabbing ${
               carouselReady ? "" : "invisible pointer-events-none"
             }`}
             aria-roledescription="carousel"
