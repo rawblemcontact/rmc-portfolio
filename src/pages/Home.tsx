@@ -9462,11 +9462,12 @@ const ShowcaseIllustrationLightbox = ({
 
         <section
           className={`group relative shrink-0 border-t border-white/[0.1] bg-black/90 px-4 pt-3 pr-16 pb-2 sm:px-6 sm:pt-4 sm:pb-2${artistStatement ? " cursor-pointer" : ""}`}
-          onClick={
+          onPointerDown={
             artistStatement
-              ? () => {
-                  /* The new slide can be opened while Embla is still moving.
-                   * Do not wait for the new slide's overflow measurement to land. */
+              ? (event) => {
+                  /* Toggle on pointer-down so mouse, trackpad, and touch can
+                   * open the new slide's DESC before the slide settles. */
+                  event.stopPropagation();
                   setDescExpanded((v) => !v);
                 }
               : undefined
