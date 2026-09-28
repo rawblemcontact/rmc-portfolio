@@ -9310,7 +9310,6 @@ const ShowcaseIllustrationLightbox = ({
         navigationDescCollapseRef.current = false;
         if (isDesktop) skipNextDescReinitRef.current = true;
         commitDescFromSnap(endedSnap);
-        setDescExpanded(false);
         if (!isDesktop) {
           window.setTimeout(() => emblaApi.reInit(), reduceMotion ? 0 : 320);
         }
@@ -9320,7 +9319,6 @@ const ShowcaseIllustrationLightbox = ({
       if (!navigationDescCollapseRef.current) return;
       navigationDescCollapseRef.current = false;
       if (isDesktop) skipNextDescReinitRef.current = true;
-      setDescExpanded(false);
       if (!isDesktop) {
         window.setTimeout(() => emblaApi.reInit(), reduceMotion ? 0 : 320);
       }
