@@ -8981,6 +8981,7 @@ const ShowcaseIllustrationLightbox = ({
   const draggingRef = useRef(false);
   const touchExpandedDragRef = useRef(false);
   const touchExpandedStartSnapRef = useRef<number | null>(null);
+  const touchExpandedStartXRef = useRef<number | null>(null);
   /* Navigation collapses the description; defer its Embla reInit until the slide settles. */
   const navigationDescCollapseRef = useRef(false);
   const skipNextDescReinitRef = useRef(false);
@@ -9102,26 +9103,47 @@ const ShowcaseIllustrationLightbox = ({
     const viewport = lightboxWheelViewportRef.current;
     if (!viewport || !emblaApi) return;
 
-    const onNativeTouchStart = () => {
-      if (!descExpanded) return;
+    const onNativeTouchStart = (event: TouchEvent) => {
+      if (!descExpanded || event.touches.length !== 1) return;
       touchExpandedStartSnapRef.current = emblaApi.selectedScrollSnap();
+      touchExpandedStartXRef.current = event.touches[0]?.clientX ?? null;
       touchExpandedDragRef.current = true;
       draggingRef.current = true;
       navigationDescCollapseRef.current = true;
     };
 
+    const onNativeTouchMove = (event: TouchEvent) => {
+      if (
+        !touchExpandedDragRef.current ||
+        touchExpandedStartXRef.current == null ||
+        event.touches.length !== 1 ||
+        !descExpanded
+      ) {
+        return;
+      }
+      const currentX = event.touches[0]?.clientX;
+      if (currentX == null) return;
+      /* Start the collapse as soon as a real horizontal drag begins. */
+      if (Math.abs(currentX - touchExpandedStartXRef.current) >= 4) {
+        setDescExpanded(false);
+      }
+    };
+
     const onNativeTouchCancel = () => {
       touchExpandedDragRef.current = false;
       touchExpandedStartSnapRef.current = null;
+      touchExpandedStartXRef.current = null;
       draggingRef.current = false;
       navigationDescCollapseRef.current = false;
     };
 
     viewport.addEventListener("touchstart", onNativeTouchStart, { capture: true, passive: true });
+    viewport.addEventListener("touchmove", onNativeTouchMove, { capture: true, passive: true });
     viewport.addEventListener("touchcancel", onNativeTouchCancel, { capture: true, passive: true });
 
     return () => {
       viewport.removeEventListener("touchstart", onNativeTouchStart, true);
+      viewport.removeEventListener("touchmove", onNativeTouchMove, true);
       viewport.removeEventListener("touchcancel", onNativeTouchCancel, true);
     };
   }, [descExpanded, emblaApi]);
@@ -9259,9 +9281,8 @@ const ShowcaseIllustrationLightbox = ({
           const travelled = Math.abs(progress - from);
           const transitionProgress = span > 0 ? travelled / span : 0;
           /* Collapse late in the visual slide, before Embla's final settle event. */
-          if (transitionProgress >= 0.1 && descExpanded) {
-            setDescExpanded(false);
-          }
+          /* Touch collapse is triggered by the native touchmove handler as soon
+           * as the finger actually crosses the drag threshold. */
         }
       }
 
