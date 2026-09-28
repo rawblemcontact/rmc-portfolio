@@ -9237,10 +9237,15 @@ const ShowcaseIllustrationLightbox = ({
     const onPointerUp = () => {
       draggingRef.current = false;
       if (touchDragStartSnapRef.current != null) {
-        if (emblaApi.selectedScrollSnap() === touchDragStartSnapRef.current) {
-          navigationDescCollapseRef.current = false;
-        }
+        const startSnap = touchDragStartSnapRef.current;
+        const endedSnap = emblaApi.selectedScrollSnap();
         touchDragStartSnapRef.current = null;
+        if (endedSnap === startSnap) {
+          navigationDescCollapseRef.current = false;
+        } else {
+          /* Keep the deferral armed until Embla's settle event finishes the swipe. */
+          navigationDescCollapseRef.current = true;
+        }
       }
       syncActiveIndex();
     };
@@ -9361,7 +9366,7 @@ const ShowcaseIllustrationLightbox = ({
               emblaRef(node);
               lightboxWheelViewportRef.current = node;
             }}
-            className={`illustration-lightbox-media-viewport h-full min-h-0 flex-1 cursor-grab overflow-hidden bg-black [touch-action:pan-x_pinch-zoom] [-webkit-touch-callout:none] active:cursor-grabbing ${
+            className={`illustration-lightbox-media-viewport h-full min-h-0 flex-1 cursor-grab overflow-hidden bg-transparent [touch-action:pan-x_pinch-zoom] [-webkit-touch-callout:none] active:cursor-grabbing ${
               carouselReady ? "" : "invisible pointer-events-none"
             }`}
             aria-roledescription="carousel"
