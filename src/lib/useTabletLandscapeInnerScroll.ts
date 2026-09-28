@@ -83,6 +83,14 @@ export function useTabletLandscapeInnerScroll(
 
     const maxScrollTop = () => Math.max(0, panel.scrollHeight - panel.clientHeight);
 
+    // Pointer/keyboard input can arrive in much larger chunks than a finger drag.
+    // Keep their logical overshoot within the same restrained visual range as the
+    // finger rubber-band instead of allowing a single wheel tick to pull the card far out.
+    const clampRubberBandLogical = (logical: number, max: number) => {
+      const limit = Math.max(24, panel.clientHeight * 0.35);
+      return Math.max(-limit, Math.min(max + limit, logical));
+    };
+
     const paint = () => {
       bounceEl = bounceElOf(panel);
       const max = maxScrollTop();
@@ -244,7 +252,7 @@ export function useTabletLandscapeInnerScroll(
       if (!delta) return;
       stopMomentum();
       const max = maxScrollTop();
-      const nextLogical = logicalTop + delta;
+      const nextLogical = clampRubberBandLogical(logicalTop + delta, max);
       const next = Math.max(0, Math.min(max, nextLogical));
       event.preventDefault();
 
@@ -281,18 +289,14 @@ export function useTabletLandscapeInnerScroll(
 
       stopMomentum();
       const max = maxScrollTop();
-      const next =
-        delta === -Infinity
-          ? 0
-          : delta === Infinity
-            ? max
-            : Math.max(0, Math.min(max, logicalTop + delta));
-      const nextLogical =
+      const rawNextLogical =
         delta === -Infinity
           ? 0
           : delta === Infinity
             ? max
             : logicalTop + delta;
+      const nextLogical = clampRubberBandLogical(rawNextLogical, max);
+      const next = Math.max(0, Math.min(max, nextLogical));
       event.preventDefault();
 
       if (nextLogical < 0 || nextLogical > max) {
