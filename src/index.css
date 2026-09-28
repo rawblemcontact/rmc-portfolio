@@ -9935,7 +9935,7 @@
    * so “Awarded Distinction.” still reads balanced with a little more air.
    */
   #experience .tabs-content:has(#education.active) {
-    padding-bottom: calc(14px * var(--experience-scale)) !important;
+    padding-bottom: calc(26px * var(--experience-scale)) !important;
   }
 
   #experience .tabs-content::before {
