@@ -3887,7 +3887,7 @@
   /* Flow-height tuning: the in-flow motion child determines the host/card bottom edge. */
   @media (min-width: 1024px) and (pointer: fine) {
     #experience .tabs-content.experience-card-entrance-host > .experience-card-entrance-motion {
-      margin-bottom: 0;
+      margin-bottom: 4px;
     }
   }
 
@@ -4224,7 +4224,7 @@
 
   @media (min-width: 1024px) and (pointer: fine) {
     #experience #education .content-card {
-      padding-bottom: calc(clamp(20px, 2.25vw, 30px) + 12px);
+      padding-bottom: calc(clamp(20px, 2.25vw, 30px) + 8px);
     }
   }
 
