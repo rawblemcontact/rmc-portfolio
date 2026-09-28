@@ -9881,11 +9881,11 @@
   }
 
   /*
-   * EDUCATION desktop — body↔bottom gap a touch above the header↔body gap
-   * so “Awarded Distinction.” still reads balanced with a little more air.
+   * EDUCATION desktop — use the same bottom inset as the other EXPERIENCE cards.
+   * The iPad landscape override below remains independent.
    */
   #experience .tabs-content:has(#education.active) {
-    padding-bottom: calc(14px * var(--experience-scale)) !important;
+    padding-bottom: calc(26px * var(--experience-scale)) !important;
   }
 
   #experience .tabs-content::before {
