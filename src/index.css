@@ -4224,7 +4224,7 @@
 
   @media (min-width: 1024px) and (pointer: fine) {
     #experience #education .content-card {
-      padding-bottom: calc(clamp(20px, 2.25vw, 30px) + 4px);
+      padding-bottom: calc(clamp(20px, 2.25vw, 30px) + 6px);
     }
   }
 
@@ -4401,7 +4401,7 @@
   /* Education body copy optical alignment — move the complete row as one unit. */
   @media (min-width: 1024px) and (pointer: fine) {
     #experience #education .feature-list li {
-      transform: translateY(-3px);
+      transform: translateY(-2px);
     }
   }
 
