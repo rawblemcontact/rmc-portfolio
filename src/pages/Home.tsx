@@ -9259,7 +9259,7 @@ const ShowcaseIllustrationLightbox = ({
           const travelled = Math.abs(progress - from);
           const transitionProgress = span > 0 ? travelled / span : 0;
           /* Collapse late in the visual slide, before Embla's final settle event. */
-          if (transitionProgress >= 0.75 && descExpanded) {
+          if (transitionProgress >= 0.55 && descExpanded) {
             setDescExpanded(false);
           }
         }
@@ -9499,17 +9499,7 @@ const ShowcaseIllustrationLightbox = ({
                 animate={{
                   height: descExpanded ? descContentH || "auto" : collapsedDescH,
                 }}
-                transition={{
-                  duration:
-                    reduceMotion
-                      ? 0
-                      : !descExpanded &&
-                          typeof window !== "undefined" &&
-                          window.matchMedia("(pointer: coarse)").matches
-                        ? 0.18
-                        : 0.3,
-                  ease: EASE.out,
-                }}
+                transition={{ duration: reduceMotion ? 0 : 0.3, ease: EASE.out }}
                 className={`relative min-w-0 ${
                   descExpanded
                     ? "no-scrollbar overflow-x-hidden overflow-y-auto overscroll-y-contain touch-pan-y"
