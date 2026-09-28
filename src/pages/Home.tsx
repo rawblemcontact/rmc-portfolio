@@ -11721,13 +11721,20 @@ const ConfidantExperience = ({
     });
   }, []);
 
-  const measureExperienceCardHug = useCallback((shell: HTMLElement) => {
-    // True host hug — must match what `height:auto` resolves to on release,
-    // or the post-tween clear reads as a 1px hair snap.
-    shell.style.setProperty("height", "auto", "important");
-    void shell.offsetHeight;
-    return Math.max(1, Math.round(shell.offsetHeight));
-  }, []);
+  const measureExperienceCardHug = useCallback(
+    (shell: HTMLElement, roundUp = false) => {
+      // True host hug — must match what `height:auto` resolves to on release.
+      // Education can land just under a device pixel boundary, so its target
+      // uses the next whole pixel while the actual tween remains unchanged.
+      shell.style.setProperty("height", "auto", "important");
+      void shell.offsetHeight;
+      const measuredHeight = roundUp
+        ? Math.ceil(shell.getBoundingClientRect().height)
+        : Math.round(shell.offsetHeight);
+      return Math.max(1, measuredHeight);
+    },
+    [],
+  );
 
   const selectExperienceTab = useCallback(
     (tabId: ExperienceTabId) => {
@@ -11823,7 +11830,10 @@ const ConfidantExperience = ({
 
           // Keep body hidden; measure destination as the host's own auto hug.
           void incomingPanel.offsetHeight;
-          const naturalShellH = measureExperienceCardHug(tabsShellEl);
+          const naturalShellH = measureExperienceCardHug(
+            tabsShellEl,
+            tabId === "education",
+          );
           tabsShellEl.style.setProperty("height", `${fromShellH}px`, "important");
           void tabsShellEl.offsetHeight;
 
