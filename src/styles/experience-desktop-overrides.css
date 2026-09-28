@@ -22,6 +22,19 @@
     position: relative;
     top: -10px;
   }
+
+  #experience .feature-list li {
+    /* Move all EXPERIENCE body text down 1px without changing card geometry. */
+    transform: translateY(1px);
+  }
+}
+
+/* EXPERIENCE — iPad landscape only. Keep portrait geometry independent. */
+@media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse) {
+  #experience .feature-list li {
+    /* Move all EXPERIENCE body text down 1px without changing card geometry. */
+    transform: translateY(1px);
+  }
 }
 
 /* EXPERIENCE — tablet portrait only. Keep desktop/landscape values independent. */
@@ -40,5 +53,10 @@
     /* Reposition the Awarded Distinction body line by the same 6px as the portrait gap correction. */
     position: relative;
     top: 6px;
+  }
+
+  #experience .feature-list li {
+    /* Move all EXPERIENCE body text up 1px without changing card geometry. */
+    transform: translateY(-1px);
   }
 }
