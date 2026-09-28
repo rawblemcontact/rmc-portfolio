@@ -9021,14 +9021,6 @@ const ShowcaseIllustrationLightbox = ({
   }, [activeIndex]);
 
   useEffect(() => {
-    /* During an active drag/swipe, keep the expanded box's geometry stable.
-     * Embla updates descIndex mid-gesture; collapsing here would resize the
-     * media viewport before the snap finishes. */
-    if (navigationDescCollapseRef.current) return;
-    setDescExpanded(false);
-  }, [descIndex]);
-
-  useEffect(() => {
     if (!descExpanded && descViewportRef.current) {
       descViewportRef.current.scrollTop = 0;
     }
