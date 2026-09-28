@@ -18,21 +18,15 @@
   }
 
   #experience #education .feature-list li {
-    /* Reposition the Awarded Distinction body line by the same 10px as the desktop gap correction. */
+    /* Compensate for the new generic +1px body-text transform so this line
+       stays at its previously corrected visual position. */
     position: relative;
-    top: -10px;
-    /* Keep the education-specific correction independent of the generic 1px body-text nudge. */
-    transform: none;
+    top: -11px;
   }
 
   #experience .feature-list li {
     /* Move all EXPERIENCE body text down 1px without changing card geometry. */
     transform: translateY(1px);
-  }
-
-  #experience #education .feature-list li {
-    /* Restore the education-specific positioning after the generic body-text rule. */
-    transform: none;
   }
 }
 
@@ -57,18 +51,14 @@
   }
 
   #experience #education .feature-list li {
-    /* Reposition the Awarded Distinction body line by the same 6px as the portrait gap correction. */
+    /* Compensate for the new generic -1px body-text transform so this line
+       stays at its previously corrected visual position. */
     position: relative;
-    top: 6px;
+    top: 7px;
   }
 
   #experience .feature-list li {
     /* Move all EXPERIENCE body text up 1px without changing card geometry. */
     transform: translateY(-1px);
-  }
-
-  #experience #education .feature-list li {
-    /* Keep the education-specific correction independent of the generic 1px body-text nudge. */
-    transform: none;
   }
 }
