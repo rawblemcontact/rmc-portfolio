@@ -29,6 +29,12 @@
     top: -10px;
     transform: none !important;
   }
+
+  #experience .experience-card-entrance-motion:has(#education.active) {
+    /* Education's single body line needs the full in-flow bottom room;
+       otherwise the relative text correction can sit against the shell edge. */
+    margin-bottom: 0 !important;
+  }
 }
 
 /* EXPERIENCE — iPad landscape only. Keep portrait geometry independent. */
@@ -62,5 +68,10 @@
     position: relative;
     top: 6px;
     transform: none !important;
+  }
+
+  #experience .experience-card-entrance-motion:has(#education.active) {
+    /* Restore the Education line's required in-flow bottom room. */
+    margin-bottom: 6px !important;
   }
 }
