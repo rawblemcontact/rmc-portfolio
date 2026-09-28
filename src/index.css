@@ -4224,7 +4224,7 @@
 
   @media (min-width: 1024px) and (pointer: fine) {
     #experience #education .content-card {
-      padding-bottom: calc(clamp(20px, 2.25vw, 30px) + 6px);
+      padding-bottom: calc(clamp(20px, 2.25vw, 30px) + 8px);
     }
   }
 
