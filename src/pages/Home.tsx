@@ -9015,6 +9015,7 @@ const ShowcaseIllustrationLightbox = ({
   const [descContentH, setDescContentH] = useState(0);
   const [descExpanded, setDescExpanded] = useState(false);
   const descExpandedRef = useRef(false);
+  const measuredDescIndexRef = useRef(descIndex);
   descExpandedRef.current = descExpanded;
 
   useEffect(() => {
@@ -9042,6 +9043,7 @@ const ShowcaseIllustrationLightbox = ({
   useLayoutEffect(() => {
     const el = descContentRef.current;
     if (!el) {
+      measuredDescIndexRef.current = descIndex;
       setDescOverflows(false);
       setDescContentH(0);
       return;
@@ -9055,6 +9057,7 @@ const ShowcaseIllustrationLightbox = ({
         ? fontSize * 1.625
         : parseFloat(lineHeightRaw) || fontSize * 1.625;
     const peekH = Math.round(lineHeight * COLLAPSED_DESC_LINES);
+    measuredDescIndexRef.current = descIndex;
     setCollapsedDescH(peekH);
     setDescContentH(Math.min(fullH, EXPANDED_DESC_MAX_H));
     setDescOverflows(fullH > peekH + 4);
@@ -9456,8 +9459,12 @@ const ShowcaseIllustrationLightbox = ({
         </div>
 
         <section
-          className={`group relative shrink-0 border-t border-white/[0.1] bg-black/90 px-4 pt-3 pr-16 pb-2 sm:px-6 sm:pt-4 sm:pr-28 sm:pb-2${descOverflows ? " cursor-pointer" : ""}`}
-          onClick={descOverflows ? () => setDescExpanded((v) => !v) : undefined}
+          className={`group relative shrink-0 border-t border-white/[0.1] bg-black/90 px-4 pt-3 pr-16 pb-2 sm:px-6 sm:pt-4 sm:pb-2${descOverflows && measuredDescIndexRef.current === descIndex ? " cursor-pointer" : ""}`}
+          onClick={
+            descOverflows && measuredDescIndexRef.current === descIndex
+              ? () => setDescExpanded((v) => !v)
+              : undefined
+          }
         >
           {descOverflows ? (
             <button
