@@ -1724,7 +1724,7 @@ const HERO_CROP_SHARED_BOUNDS_WIDTH_PX = HERO_CROP_VIDEO_LAYOUT_WIDTH_PX * HERO_
  * Scaled with layout width (1140/1118) and name meet box; -25 after 102px
  * name bump (measured ink was ~1.2px past face at -26).
  */
-const HERO_CROP_SVG_ALIGN_X_PX = -25;
+const HERO_CROP_SVG_ALIGN_X_PX = -24;
 /** Crop SVG Y — lift visible name toward PORTFOLIO baseline (left-top origin; X frozen). Undo: -44 shared default. */
 const HERO_CROP_SVG_LOCKUP_OFFSET_Y_PX = -52;
 /**
