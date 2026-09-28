@@ -4397,6 +4397,12 @@
     transform: translateY(-4px);
   }
 
+  @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
+    #experience #education .feature-list li::before {
+      transform: translateY(-4px);
+    }
+  }
+
   #experience .feature-list li::before {
     content: "";
     display: block;
