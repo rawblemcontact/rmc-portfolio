@@ -9110,6 +9110,23 @@ const ShowcaseIllustrationLightbox = ({
       navigationDescCollapseRef.current = true;
     };
 
+    const onNativeTouchMove = (event: TouchEvent) => {
+      if (
+        !touchExpandedDragRef.current ||
+        event.touches.length !== 1 ||
+        !descExpanded
+      ) {
+        return;
+      }
+      /* Start the collapse as soon as the finger actually begins moving. */
+      const startX = event.touches[0]?.clientX;
+      const startSnap = touchExpandedStartSnapRef.current;
+      if (startX == null || startSnap == null) return;
+      if (emblaApi.selectedScrollSnap() !== startSnap || Math.abs(emblaApi.scrollProgress()) > 0.01) {
+        setDescExpanded(false);
+      }
+    };
+
     const onNativeTouchCancel = () => {
       touchExpandedDragRef.current = false;
       touchExpandedStartSnapRef.current = null;
@@ -9118,10 +9135,12 @@ const ShowcaseIllustrationLightbox = ({
     };
 
     viewport.addEventListener("touchstart", onNativeTouchStart, { capture: true, passive: true });
+    viewport.addEventListener("touchmove", onNativeTouchMove, { capture: true, passive: true });
     viewport.addEventListener("touchcancel", onNativeTouchCancel, { capture: true, passive: true });
 
     return () => {
       viewport.removeEventListener("touchstart", onNativeTouchStart, true);
+      viewport.removeEventListener("touchmove", onNativeTouchMove, true);
       viewport.removeEventListener("touchcancel", onNativeTouchCancel, true);
     };
   }, [descExpanded, emblaApi]);
@@ -9246,20 +9265,6 @@ const ShowcaseIllustrationLightbox = ({
         const to = snaps[selected - 1]!;
         if (progress <= from + (to - from) * SWITCH_AT) targetSnap = selected - 1;
       }
-      if (descExpanded && navigationDescCollapseRef.current) {
-        const from = snaps[selected]!;
-        const candidates = [
-          selected > 0 ? Math.abs(progress - from) / Math.max(Math.abs(snaps[selected - 1]! - from), 1e-6) : Infinity,
-          selected < snaps.length - 1 ? Math.abs(progress - from) / Math.max(Math.abs(snaps[selected + 1]! - from), 1e-6) : Infinity,
-        ];
-        const transitionProgress = Math.min(...candidates);
-        /* Start the same early collapse for touch, mouse/trackpad, and button/wheel
-         * navigation as soon as Embla has actually begun moving. */
-        if (transitionProgress >= 0.02) {
-          setDescExpanded(false);
-        }
-      }
-
       const nextIndex = openableIndices[targetSnap];
       if (nextIndex != null && nextIndex !== descIndex) {
         flushSync(() => {
