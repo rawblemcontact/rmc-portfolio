@@ -4398,10 +4398,11 @@
     text-wrap: pretty;
   }
 
-  /* Education body copy shares the same baseline as the other desktop cards. */
+  /* Education has a single-line body item; lower it 4px for optical
+     bottom-gap parity with the multi-line desktop Experience cards. */
   @media (min-width: 1024px) and (pointer: fine) {
     #experience #education .feature-list li {
-      transform: none;
+      transform: translateY(4px);
     }
   }
 
