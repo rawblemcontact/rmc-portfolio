@@ -16,6 +16,12 @@
     /* This is the actual in-flow height that determines the shell's bottom edge. */
     margin-bottom: -10px !important;
   }
+
+  #experience #education .feature-list li {
+    /* Reposition the Awarded Distinction body line by the same 10px as the desktop gap correction. */
+    position: relative;
+    top: -10px;
+  }
 }
 
 /* EXPERIENCE — tablet portrait only. Keep desktop/landscape values independent. */
@@ -26,7 +32,13 @@
   }
 
   #experience .experience-card-entrance-motion {
-    /* Add breathing room to the actual in-flow card height. */
-    margin-bottom: 6px !important;
+    /* Keep the portrait card slightly tighter after the 6px text-position correction. */
+    margin-bottom: 2px !important;
+  }
+
+  #experience #education .feature-list li {
+    /* Reposition the Awarded Distinction body line by the same 6px as the portrait gap correction. */
+    position: relative;
+    top: 6px;
   }
 }
