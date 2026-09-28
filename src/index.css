@@ -4407,7 +4407,7 @@
 
   @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
     #experience #education .feature-list li {
-      transform: translateY(4px);
+      transform: translateY(2px);
     }
   }
 
@@ -4799,9 +4799,9 @@
    */
 
   @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
-    /* Education body copy — move the complete row down 4px; preserve card flow height. */
+    /* Education body copy — move the complete row down 2px; preserve card flow height. */
     #experience #education .feature-list li {
-      transform: translateY(4px);
+      transform: translateY(2px);
     }
 
     /* Fill viewport so the grid overlay covers the whole screen */
