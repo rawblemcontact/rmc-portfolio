@@ -11722,11 +11722,11 @@ const ConfidantExperience = ({
   }, []);
 
   const measureExperienceCardHug = useCallback((shell: HTMLElement) => {
-    // True host hug — preserve fractional layout pixels so the final height→auto
-    // release lands on the same geometry instead of rounding into a 1px snap.
+    // True host hug — must match what `height:auto` resolves to on release,
+    // or the post-tween clear reads as a 1px hair snap.
     shell.style.setProperty("height", "auto", "important");
     void shell.offsetHeight;
-    return Math.max(1, shell.getBoundingClientRect().height);
+    return Math.max(1, Math.round(shell.offsetHeight));
   }, []);
 
   const selectExperienceTab = useCallback(
@@ -11758,9 +11758,7 @@ const ConfidantExperience = ({
 
       // Pin height first, then mark resizing (min-height only — shell chrome untouched).
       // Card geometry stays fixed except the bottom edge during the height tween.
-      // Preserve the rendered fractional height; desktop's scaled padding can
-      // produce subpixel card geometry, and rounding here causes the final 1px snap.
-      const fromShellH = Math.max(1, tabsShellEl.getBoundingClientRect().height);
+      const fromShellH = Math.max(1, Math.round(tabsShellEl.offsetHeight));
       tabsShellEl.style.setProperty("height", `${fromShellH}px`, "important");
       tabsShellEl.style.setProperty("transition", "none", "important");
       void tabsShellEl.offsetHeight;
@@ -11864,7 +11862,7 @@ const ConfidantExperience = ({
             if (gen !== experienceDrawerGenRef.current) return;
             const t = Math.min(1, (now - start) / resizeDurMs);
             const k = drawerCardResizeEaseK(t);
-            const h = fromShellH + dShell * k;
+            const h = Math.round(fromShellH + dShell * k);
             tabsShellEl.style.setProperty("height", `${h}px`, "important");
             if (t < 1) {
               experienceDrawerRafRef.current = window.requestAnimationFrame(tick);
