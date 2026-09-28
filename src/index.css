@@ -908,6 +908,13 @@
    * center the content block. Content width matches EXPERIENCE side gaps
    * (container px-5 + EXPERIENCE_GUTTER shells) â€” no extra 560px cap.
    */
+  /* Desktop: reduce only the outer card's bottom inset so the final body line sits closer to the border. */
+  @media (min-width: 1280px) and (pointer: fine) {
+    #experience .tabs-content {
+      padding-bottom: 12px !important;
+    }
+  }
+
   @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
     #profile {
       min-height: 100svh;
@@ -3830,7 +3837,7 @@
     flex: 1;
     min-width: 0;
     /* Slightly tighter bottom inset — body copy → card edge gap. */
-    padding: 28px 28px 12px;
+    padding: 28px 28px 20px;
     position: relative;
     overflow: hidden;
     isolation: isolate;
