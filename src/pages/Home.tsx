@@ -8981,6 +8981,7 @@ const ShowcaseIllustrationLightbox = ({
   const draggingRef = useRef(false);
   /* Navigation collapses the description; defer its Embla reInit until the slide settles. */
   const navigationDescCollapseRef = useRef(false);
+  const skipNextDescReinitRef = useRef(false);
   const shouldDeferDescriptionReinit = useCallback(() => {
     if (typeof window === "undefined") return false;
     const isDesktop =
@@ -9026,6 +9027,10 @@ const ShowcaseIllustrationLightbox = ({
     if (!emblaApi) return;
     /* Navigation-triggered collapse is reinitialized only after Embla settles. */
     if (!descExpanded && navigationDescCollapseRef.current) return;
+    if (!descExpanded && skipNextDescReinitRef.current) {
+      skipNextDescReinitRef.current = false;
+      return;
+    }
     const reinitDelayMs = reduceMotion ? 0 : 320;
     const timerId = window.setTimeout(() => {
       emblaApi.reInit();
@@ -9230,7 +9235,13 @@ const ShowcaseIllustrationLightbox = ({
     const onSettle = () => {
       if (!navigationDescCollapseRef.current) return;
       navigationDescCollapseRef.current = false;
-      window.setTimeout(() => emblaApi.reInit(), reduceMotion ? 0 : 320);
+      const isDesktop =
+        window.innerWidth >= 1024 && window.matchMedia("(pointer: fine)").matches;
+      if (isDesktop) skipNextDescReinitRef.current = true;
+      setDescExpanded(false);
+      if (!isDesktop) {
+        window.setTimeout(() => emblaApi.reInit(), reduceMotion ? 0 : 320);
+      }
     };
     emblaApi.on("settle", onSettle);
     emblaApi.on("reInit", syncScrollButtons);
