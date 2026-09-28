@@ -9076,20 +9076,20 @@ const ShowcaseIllustrationLightbox = ({
 
   useEffect(() => {
     const viewport = lightboxWheelViewportRef.current;
-    if (!viewport || !emblaApi) return;
+    if (!viewport || !emblaApi || !carouselReady) return;
 
     const isIPadLandscapeFinePointer = () =>
       window.innerWidth >= 768 &&
       window.innerWidth <= 1366 &&
       window.innerHeight < window.innerWidth &&
       navigator.maxTouchPoints > 0 &&
-      window.matchMedia("(pointer: fine)").matches;
+      window.matchMedia("(any-pointer: fine)").matches;
 
     const onWheel = (event: WheelEvent) => {
       if (!isIPadLandscapeFinePointer()) return;
 
       const delta = Math.abs(event.deltaX) >= Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
-      if (Math.abs(delta) < 2) return;
+      if (Math.abs(delta) < 1) return;
 
       event.preventDefault();
       if (lightboxWheelLockRef.current) return;
@@ -9110,15 +9110,15 @@ const ShowcaseIllustrationLightbox = ({
       }, 420);
     };
 
-    viewport.addEventListener("wheel", onWheel, { passive: false });
+    viewport.addEventListener("wheel", onWheel, { passive: false, capture: true });
     return () => {
-      viewport.removeEventListener("wheel", onWheel);
+      viewport.removeEventListener("wheel", onWheel, true);
       if (lightboxWheelUnlockTimerRef.current != null) {
         window.clearTimeout(lightboxWheelUnlockTimerRef.current);
         lightboxWheelUnlockTimerRef.current = null;
       }
     };
-  }, [emblaApi, handleShowNext, handleShowPrev]);
+  }, [carouselReady, emblaApi, handleShowNext, handleShowPrev]);
 
   const renderArtistStatementText = useCallback((text: string) => {
     const parts = text.split(/(<em>[\s\S]*?<\/em>)/g);
