@@ -9926,7 +9926,7 @@
     margin-left: var(--experience-rail-gap) !important;
     padding: calc(36px * var(--experience-scale))
       calc(36px * var(--experience-scale))
-      calc(22px * var(--experience-scale)) !important;
+      calc(20px * var(--experience-scale)) !important;
     overflow: visible !important;
     /* Same single-layer frost as tablet-portrait resume card */
     background: color-mix(in srgb, var(--portfolio-section-card) 6%, transparent) !important;
@@ -9939,11 +9939,18 @@
   }
 
   /*
-   * EDUCATION desktop — body↔bottom gap a touch above the header↔body gap
-   * so “Awarded Distinction.” still reads balanced with a little more air.
+   * EDUCATION desktop — same 2px bottom-height reduction as every other
+   * Experience card; the optical body text position stays independently tuned.
    */
   #experience .tabs-content:has(#education.active) {
-    padding-bottom: calc(22px * var(--experience-scale)) !important;
+    padding-bottom: calc(20px * var(--experience-scale)) !important;
+  }
+
+  /* Desktop: move every Experience body row except Education down 1px.
+   * Transforming the row moves its bullet with the text as one unit.
+   */
+  #experience .tab-panel:not(#education) .feature-list li {
+    transform: translateY(1px);
   }
 
   #experience .tabs-content::before {
