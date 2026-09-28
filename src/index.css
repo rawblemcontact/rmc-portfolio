@@ -3884,6 +3884,19 @@
     z-index: 1;
   }
 
+  /* Flow-height tuning: the in-flow motion child determines the host/card bottom edge. */
+  @media (min-width: 1024px) and (pointer: fine) {
+    #experience .tabs-content.experience-card-entrance-host > .experience-card-entrance-motion {
+      margin-bottom: -8px;
+    }
+  }
+
+  @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
+    #experience .tabs-content.experience-card-entrance-host > .experience-card-entrance-motion {
+      margin-bottom: 4px;
+    }
+  }
+
   /*
    * EXPERIENCE drawer — host height is the ONLY geometric change (bottom edge).
    * Entrance-shell frost stays painted via inset:0 (no height:100% / chrome swap).
