@@ -1374,11 +1374,11 @@
       right: 0;
       bottom: 0;
       z-index: 1;
-      height: 1.05rem;
+      height: 1.3rem;
       pointer-events: none;
       opacity: 0;
       transition: opacity 0.48s cubic-bezier(0.12, 1, 0.28, 1);
-      background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.22));
+      background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.3));
     }
 
     #profile .profile-summary-card.profile-card-height-locked .profile-summary-card-scroll-shell.is-cutoff::after {
@@ -1431,11 +1431,11 @@
       left: 0;
       right: 0;
       bottom: 0;
-      height: 1.05rem;
+      height: 1.3rem;
       pointer-events: none;
       opacity: 0;
       transition: opacity 0.48s cubic-bezier(0.12, 1, 0.28, 1);
-      background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.22));
+      background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.3));
     }
 
     #profile .profile-summary-card.profile-card-height-locked .profile-summary-card-scroll-shell.is-cutoff::after {
