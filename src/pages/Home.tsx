@@ -11721,29 +11721,13 @@ const ConfidantExperience = ({
     });
   }, []);
 
-  const measureExperienceZoom = useCallback((shell: HTMLElement) => {
-    const zoom = Number.parseFloat(
-      getComputedStyle(shell.parentElement ?? shell).zoom,
-    );
-    return Number.isFinite(zoom) && zoom > 0 ? zoom : 1;
+  const measureExperienceCardHug = useCallback((shell: HTMLElement) => {
+    // True host hug — must match what `height:auto` resolves to on release,
+    // or the post-tween clear reads as a 1px hair snap.
+    shell.style.setProperty("height", "auto", "important");
+    void shell.offsetHeight;
+    return Math.max(1, Math.round(shell.offsetHeight));
   }, []);
-
-  const measureExperienceCardHug = useCallback(
-    (shell: HTMLElement) => {
-      // Measure in the unzoomed layout coordinate space, then round back to
-      // the integer height used by the existing drawer tween. This avoids the
-      // fractional CSS zoom changing the final physical pixel independently
-      // from the animated height.
-      shell.style.setProperty("height", "auto", "important");
-      void shell.offsetHeight;
-      const zoom = measureExperienceZoom(shell);
-      return Math.max(
-        1,
-        Math.round(shell.getBoundingClientRect().height / zoom),
-      );
-    },
-    [measureExperienceZoom],
-  );
 
   const selectExperienceTab = useCallback(
     (tabId: ExperienceTabId) => {
@@ -11774,11 +11758,7 @@ const ConfidantExperience = ({
 
       // Pin height first, then mark resizing (min-height only — shell chrome untouched).
       // Card geometry stays fixed except the bottom edge during the height tween.
-      const startZoom = measureExperienceZoom(tabsShellEl);
-      const fromShellH = Math.max(
-        1,
-        Math.round(tabsShellEl.getBoundingClientRect().height / startZoom),
-      );
+      const fromShellH = Math.max(1, Math.round(tabsShellEl.offsetHeight));
       tabsShellEl.style.setProperty("height", `${fromShellH}px`, "important");
       tabsShellEl.style.setProperty("transition", "none", "important");
       void tabsShellEl.offsetHeight;
@@ -11912,7 +11892,6 @@ const ConfidantExperience = ({
       resetExperienceTabFadeLayers,
       runExperiencePanelIntro,
       measureExperienceCardHug,
-      measureExperienceZoom,
     ],
   );
 
