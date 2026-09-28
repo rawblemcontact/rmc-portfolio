@@ -57,6 +57,8 @@ export function useTabletLandscapeInnerScroll(
 
   useEffect(() => {
     if (!active || !tabletLandscape) return;
+    const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    if (finePointer) return;
 
     const panel = scrollRef.current;
     if (!panel) return;
