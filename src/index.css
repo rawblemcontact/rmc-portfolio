@@ -4381,6 +4381,7 @@
     gap: clamp(10px, 1.25svh, 15px);
     margin: 0;
     padding: 0;
+    padding-left: 2px;
   }
 
   #experience .feature-list li {
@@ -10210,7 +10211,7 @@
 /* Non-mobile EXPERIENCE cards — indent the bullet entries only. */
 @media (min-width: 768px) {
   #experience .feature-list {
-    padding-left: 12px;
+    padding-left: 14px;
   }
 }
 
