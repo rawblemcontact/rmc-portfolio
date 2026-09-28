@@ -9307,7 +9307,7 @@ const ShowcaseIllustrationLightbox = ({
       role="dialog"
       aria-modal="true"
       aria-label={lightboxLabel}
-      className="fixed inset-0 z-[100] flex flex-col bg-transparent"
+      className="fixed inset-0 z-[100] flex flex-col bg-black"
       initial={reduceMotion ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -9366,7 +9366,7 @@ const ShowcaseIllustrationLightbox = ({
               emblaRef(node);
               lightboxWheelViewportRef.current = node;
             }}
-            className={`illustration-lightbox-media-viewport h-full min-h-0 flex-1 cursor-grab overflow-hidden bg-transparent [touch-action:pan-x_pinch-zoom] [-webkit-touch-callout:none] active:cursor-grabbing ${
+            className={`illustration-lightbox-media-viewport h-full min-h-0 flex-1 cursor-grab overflow-hidden [touch-action:pan-x_pinch-zoom] [-webkit-touch-callout:none] active:cursor-grabbing ${
               carouselReady ? "" : "invisible pointer-events-none"
             }`}
             aria-roledescription="carousel"
