@@ -3915,25 +3915,6 @@
     min-height: 0 !important;
   }
 
-  /*
-   * Desktop post-drawer geometry lock.
-   * Keep the same min-height/overflow constraints used during the resize after
-   * height is released, preventing the final auto-layout pass from moving the
-   * Education card by one physical pixel. iPad layouts intentionally do not use this.
-   */
-  @media (min-width: 1280px) and (pointer: fine) {
-    #experience .tabs-content.experience-card-entrance-host.experience-drawer-settled {
-      min-height: 0 !important;
-    }
-
-    #experience
-      .tabs-content.experience-card-entrance-host.experience-drawer-settled
-      > .experience-card-entrance-motion {
-      overflow: hidden !important;
-      min-height: 0 !important;
-    }
-  }
-
   /* Body hide — higher specificity than tablet active opacity:!important rules.
    * Duration switches via --experience-body-fade-ms (160ms out / 240ms in — desc-card). */
   #experience
