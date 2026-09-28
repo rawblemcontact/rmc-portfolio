@@ -8979,6 +8979,7 @@ const ShowcaseIllustrationLightbox = ({
   /** Description tracks switches immediately (local), independent of slide settle. */
   const [descIndex, setDescIndex] = useState(activeIndex);
   const draggingRef = useRef(false);
+  const dragStartSnapRef = useRef<number | null>(null);
   /* Navigation collapses the description; defer its Embla reInit until the slide settles. */
   const navigationDescCollapseRef = useRef(false);
   const skipNextDescReinitRef = useRef(false);
@@ -9017,6 +9018,10 @@ const ShowcaseIllustrationLightbox = ({
   }, [activeIndex]);
 
   useEffect(() => {
+    /* During an active drag/swipe, keep the expanded box's geometry stable.
+     * Embla updates descIndex mid-gesture; collapsing here would resize the
+     * media viewport before the snap finishes. */
+    if (navigationDescCollapseRef.current) return;
     setDescExpanded(false);
   }, [descIndex]);
 
@@ -9218,11 +9223,23 @@ const ShowcaseIllustrationLightbox = ({
         });
       }
     };
-    const onPointerDown = (_embla: typeof emblaApi, event: PointerEvent) => {
+    const onPointerDown = (_embla: typeof emblaApi, _event: PointerEvent) => {
       draggingRef.current = true;
+      dragStartSnapRef.current = emblaApi.selectedScrollSnap();
+      if (descExpanded) {
+        navigationDescCollapseRef.current = true;
+      }
     };
     const onPointerUp = () => {
       draggingRef.current = false;
+      if (dragStartSnapRef.current != null) {
+        const startSnap = dragStartSnapRef.current;
+        const endedSnap = emblaApi.selectedScrollSnap();
+        dragStartSnapRef.current = null;
+        if (endedSnap === startSnap) {
+          navigationDescCollapseRef.current = false;
+        }
+      }
       syncActiveIndex();
     };
     syncActiveIndex();
