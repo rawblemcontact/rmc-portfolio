@@ -9016,6 +9016,10 @@ const ShowcaseIllustrationLightbox = ({
   }, [activeIndex]);
 
   useEffect(() => {
+    /* On desktop/iPad landscape, keep the expanded box's geometry stable until
+     * the slide transition settles; collapsing it mid-flight makes Embla
+     * recalculate the centered snap and produces the visible snap/jump. */
+    if (navigationDescCollapseRef.current) return;
     setDescExpanded(false);
   }, [descIndex]);
 
@@ -9230,7 +9234,7 @@ const ShowcaseIllustrationLightbox = ({
     const onSettle = () => {
       if (!navigationDescCollapseRef.current) return;
       navigationDescCollapseRef.current = false;
-      window.setTimeout(() => emblaApi.reInit(), reduceMotion ? 0 : 320);
+      setDescExpanded(false);
     };
     emblaApi.on("settle", onSettle);
     emblaApi.on("reInit", syncScrollButtons);
