@@ -4783,6 +4783,11 @@
    */
 
   @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
+    /* Education body copy — optical-only nudge; preserve card flow height. */
+    #experience #education .feature-list li {
+      transform: translateY(-4px);
+    }
+
     /* Fill viewport so the grid overlay covers the whole screen */
     #experience.career-viewport {
       min-height: 100svh !important;
