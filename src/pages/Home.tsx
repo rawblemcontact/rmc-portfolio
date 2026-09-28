@@ -8984,6 +8984,8 @@ const ShowcaseIllustrationLightbox = ({
   const touchExpandedStartSnapRef = useRef<number | null>(null);
   /* Navigation collapses the description; defer its Embla reInit until the slide settles. */
   const navigationDescCollapseRef = useRef(false);
+  /* For drag navigation, collapse exactly once on the first real Embla scroll frame. */
+  const collapseDescOnNextScrollRef = useRef(false);
   const skipNextDescReinitRef = useRef(false);
   const shouldDeferDescriptionReinit = useCallback(() => {
     if (typeof window === "undefined") return false;
@@ -9241,9 +9243,13 @@ const ShowcaseIllustrationLightbox = ({
     };
     const syncDescFromClosestSnap = () => {
       /* First actual Embla scroll frame = actual start of a drag. Collapse the
-       * expanded box here rather than using a percentage/timer. */
-      if (navigationDescCollapseRef.current && descExpandedRef.current) {
-        setDescExpanded(false);
+       * expanded box once. After that, a newly opened DESC must be allowed to
+       * stay open during the remaining slide movement. */
+      if (collapseDescOnNextScrollRef.current) {
+        collapseDescOnNextScrollRef.current = false;
+        if (descExpandedRef.current) {
+          setDescExpanded(false);
+        }
       }
       /* Swap the description early during every drag. */
       if (!draggingRef.current) return;
@@ -9273,6 +9279,7 @@ const ShowcaseIllustrationLightbox = ({
       draggingRef.current = true;
       if (descExpandedRef.current) {
         navigationDescCollapseRef.current = true;
+        collapseDescOnNextScrollRef.current = true;
       }
     };
     const onPointerUp = () => {
