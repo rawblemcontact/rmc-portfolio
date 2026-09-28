@@ -3,7 +3,6 @@ import App from "./App";
 import heroVideoSrc from "./assets/hero1.mp4";
 import "./index.css";
 import "./styles/projects-corners.css";
-import "./styles/experience-desktop-overrides.css";
 
 // Locator UI is kept as a dependency but hard-disabled (not initialized).
 
