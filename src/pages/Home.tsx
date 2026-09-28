@@ -9027,8 +9027,10 @@ const ShowcaseIllustrationLightbox = ({
       descViewportRef.current.scrollTop = 0;
     }
     if (!emblaApi) return;
-    /* Navigation-triggered collapse is reinitialized only after Embla settles. */
-    if (!descExpanded && navigationDescCollapseRef.current) return;
+    /* While a slide navigation is still in progress, keep Embla geometry
+     * frozen. This also lets the new slide's description be opened during
+     * the movement without scheduling a competing reInit mid-transition. */
+    if (navigationDescCollapseRef.current) return;
     if (!descExpanded && skipNextDescReinitRef.current) {
       skipNextDescReinitRef.current = false;
       return;
