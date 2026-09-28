@@ -4381,7 +4381,6 @@
     gap: clamp(10px, 1.25svh, 15px);
     margin: 0;
     padding: 0;
-    padding-left: 2px;
   }
 
   #experience .feature-list li {
