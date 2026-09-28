@@ -9013,6 +9013,8 @@ const ShowcaseIllustrationLightbox = ({
   const [collapsedDescH, setCollapsedDescH] = useState(40);
   const [descContentH, setDescContentH] = useState(0);
   const [descExpanded, setDescExpanded] = useState(false);
+  const descExpandedRef = useRef(false);
+  descExpandedRef.current = descExpanded;
 
   useEffect(() => {
     setDescIndex(activeIndex);
@@ -9084,16 +9086,28 @@ const ShowcaseIllustrationLightbox = ({
 
   const handleShowPrev = useCallback(() => {
     if (!emblaApi || !emblaApi.canScrollPrev()) return;
-    /* Defer the navigation-triggered description reInit until Embla settles. */
-    if (shouldDeferDescriptionReinit()) navigationDescCollapseRef.current = true;
+    /* Lock Embla geometry before navigation, but start the description collapse
+     * in the same turn as the command that starts the slide. */
+    if (descExpandedRef.current) {
+      navigationDescCollapseRef.current = true;
+      setDescExpanded(false);
+    } else if (shouldDeferDescriptionReinit()) {
+      navigationDescCollapseRef.current = true;
+    }
     commitDescFromSnap(emblaApi.selectedScrollSnap() - 1);
     emblaApi.scrollPrev(!!reduceMotion);
   }, [commitDescFromSnap, emblaApi, reduceMotion, shouldDeferDescriptionReinit]);
 
   const handleShowNext = useCallback(() => {
     if (!emblaApi || !emblaApi.canScrollNext()) return;
-    /* Defer the navigation-triggered description reInit until Embla settles. */
-    if (shouldDeferDescriptionReinit()) navigationDescCollapseRef.current = true;
+    /* Lock Embla geometry before navigation, but start the description collapse
+     * in the same turn as the command that starts the slide. */
+    if (descExpandedRef.current) {
+      navigationDescCollapseRef.current = true;
+      setDescExpanded(false);
+    } else if (shouldDeferDescriptionReinit()) {
+      navigationDescCollapseRef.current = true;
+    }
     commitDescFromSnap(emblaApi.selectedScrollSnap() + 1);
     emblaApi.scrollNext(!!reduceMotion);
   }, [commitDescFromSnap, emblaApi, reduceMotion, shouldDeferDescriptionReinit]);
@@ -9103,28 +9117,11 @@ const ShowcaseIllustrationLightbox = ({
     if (!viewport || !emblaApi) return;
 
     const onNativeTouchStart = (event: TouchEvent) => {
-      if (!descExpanded || event.touches.length !== 1) return;
+      if (!descExpandedRef.current || event.touches.length !== 1) return;
       touchExpandedStartSnapRef.current = emblaApi.selectedScrollSnap();
       touchExpandedDragRef.current = true;
       draggingRef.current = true;
       navigationDescCollapseRef.current = true;
-    };
-
-    const onNativeTouchMove = (event: TouchEvent) => {
-      if (
-        !touchExpandedDragRef.current ||
-        event.touches.length !== 1 ||
-        !descExpanded
-      ) {
-        return;
-      }
-      /* Start the collapse as soon as the finger actually begins moving. */
-      const startX = event.touches[0]?.clientX;
-      const startSnap = touchExpandedStartSnapRef.current;
-      if (startX == null || startSnap == null) return;
-      if (emblaApi.selectedScrollSnap() !== startSnap || Math.abs(emblaApi.scrollProgress()) > 0.01) {
-        setDescExpanded(false);
-      }
     };
 
     const onNativeTouchCancel = () => {
@@ -9135,12 +9132,10 @@ const ShowcaseIllustrationLightbox = ({
     };
 
     viewport.addEventListener("touchstart", onNativeTouchStart, { capture: true, passive: true });
-    viewport.addEventListener("touchmove", onNativeTouchMove, { capture: true, passive: true });
     viewport.addEventListener("touchcancel", onNativeTouchCancel, { capture: true, passive: true });
 
     return () => {
       viewport.removeEventListener("touchstart", onNativeTouchStart, true);
-      viewport.removeEventListener("touchmove", onNativeTouchMove, true);
       viewport.removeEventListener("touchcancel", onNativeTouchCancel, true);
     };
   }, [descExpanded, emblaApi]);
@@ -9247,8 +9242,12 @@ const ShowcaseIllustrationLightbox = ({
       setCanScrollNext(emblaApi.canScrollNext());
     };
     const syncDescFromClosestSnap = () => {
-      /* Swap the description early during every drag. For touch, the
-       * navigation lock keeps the expanded box height stable while this content changes. */
+      /* First actual Embla scroll frame = actual start of a drag. Collapse the
+       * expanded box here rather than using a percentage/timer. */
+      if (navigationDescCollapseRef.current && descExpandedRef.current) {
+        setDescExpanded(false);
+      }
+      /* Swap the description early during every drag. */
       if (!draggingRef.current) return;
       const progress = emblaApi.scrollProgress();
       const snaps = emblaApi.scrollSnapList();
@@ -9272,9 +9271,9 @@ const ShowcaseIllustrationLightbox = ({
         });
       }
     };
-    const onPointerDown = (_embla: typeof emblaApi, event: PointerEvent) => {
+    const onPointerDown = (_embla: typeof emblaApi, _event: PointerEvent) => {
       draggingRef.current = true;
-      if (event.pointerType !== "touch" && descExpanded) {
+      if (descExpandedRef.current) {
         navigationDescCollapseRef.current = true;
       }
     };
