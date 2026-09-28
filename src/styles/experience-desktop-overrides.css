@@ -66,12 +66,12 @@
     /* Keep Education out of the generic body-text transform so its prior
        independently corrected rendering is preserved. */
     position: relative;
-    top: 6px;
+    top: 4px;
     transform: none !important;
   }
 
   #experience .experience-card-entrance-motion:has(#education.active) {
-    /* Restore the Education line's required in-flow bottom room. */
-    margin-bottom: 6px !important;
+    /* Tighten the Education card 2px after the portrait placement correction. */
+    margin-bottom: 4px !important;
   }
 }
