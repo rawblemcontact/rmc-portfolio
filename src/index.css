@@ -4208,8 +4208,7 @@
     flex: 0 1 auto;
     flex-direction: column;
     justify-content: flex-start;
-    overflow-y: visible;
-    overflow-x: hidden;
+    overflow: visible !important;
     background: color-mix(in srgb, var(--portfolio-section-card) 8%, transparent);
     background-image: none;
     filter: none;
