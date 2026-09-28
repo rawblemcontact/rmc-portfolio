@@ -1,0 +1,13 @@
+/* EXPERIENCE — desktop-only divider spacing. Keep tablet geometry independent. */
+@media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
+  #experience .tabs-nav {
+    /* Match the body-text inset on the opposite side of the divider. */
+    padding-right: 20px;
+  }
+
+  #experience .tabs-content {
+    /* Let the card begin directly at the divider; its 20px inner padding
+       then creates the matching body-text → divider gap. */
+    margin-left: 0;
+  }
+}
