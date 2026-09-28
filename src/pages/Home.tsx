@@ -1,3 +1,4 @@
+// Vercel deploy trigger: Lightbox transition sync
 // Force rebuild: 2024-05-21
 import {
   motion,
