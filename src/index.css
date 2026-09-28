@@ -4762,12 +4762,6 @@
    * iPad portrait â€” stack layout with equal-width tabs, vertically centered,
    * grid background fills full viewport.
    */
-  /* Desktop/fine-pointer: directly tighten the Education card's real outer host. */
-  @media (min-width: 768px) and (pointer: fine) {
-    #experience .tabs-content:has(#education.active) {
-      padding-bottom: 10px !important;
-    }
-  }
 
   @media (min-width: 768px) and (max-width: 1023.98px) and (orientation: portrait) {
     /* Fill viewport so the grid overlay covers the whole screen */
@@ -4938,7 +4932,7 @@
       min-height: min-content !important;
       /* Padding keeps content away from rounded edges so nothing clips.
        * Bottom inset = body copy → card edge gap (iPad: a smidge tighter). */
-      padding: 20px 20px 16px !important;
+      padding: 20px 20px 14px !important;
       border: 1px solid var(--career-overview-content-edge) !important;
       border-radius: 4px !important;
       background: color-mix(in srgb, var(--portfolio-section-card) 6%, transparent) !important;
