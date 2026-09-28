@@ -11788,17 +11788,8 @@ const ConfidantExperience = ({
         void tabsShellEl.offsetHeight;
         requestAnimationFrame(() => {
           if (gen !== experienceDrawerGenRef.current) return;
-          tabsShellEl.style.removeProperty("transition");
-          // Commit height:auto, then check the actual released box. If the
-          // browser resolves auto to a different integer than the animated
-          // destination, keep the destination height instead of allowing a
-          // one-pixel post-animation readjustment.
           tabsShellEl.style.removeProperty("height");
-          void tabsShellEl.offsetHeight;
-          const releasedShellH = Math.max(1, Math.round(tabsShellEl.offsetHeight));
-          if (experienceDesktopViewport && releasedShellH !== naturalShellH) {
-            tabsShellEl.style.setProperty("height", `${naturalShellH}px`, "important");
-          }
+          tabsShellEl.style.removeProperty("transition");
           tabsShellEl.classList.remove("experience-drawer-resizing");
           experienceDrawerHeightStopRef.current = null;
           experienceDrawerLockRef.current = false;
@@ -11901,7 +11892,6 @@ const ConfidantExperience = ({
       resetExperienceTabFadeLayers,
       runExperiencePanelIntro,
       measureExperienceCardHug,
-      experienceDesktopViewport,
     ],
   );
 
