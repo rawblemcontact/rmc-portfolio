@@ -9097,6 +9097,57 @@ const ShowcaseIllustrationLightbox = ({
     emblaApi.scrollNext(!!reduceMotion);
   }, [commitDescFromSnap, emblaApi, reduceMotion, shouldDeferDescriptionReinit]);
 
+  useEffect(() => {
+    const viewport = lightboxWheelViewportRef.current;
+    if (!viewport) return;
+
+    const onNativePointerDown = (event: PointerEvent) => {
+      if (!descExpanded) return;
+      dragStartSnapRef.current = emblaApi?.selectedScrollSnap() ?? null;
+      if (event.pointerType === "touch" || event.pointerType === "mouse" || event.pointerType === "pen") {
+        navigationDescCollapseRef.current = true;
+      }
+    };
+
+    const onNativePointerUp = () => {
+      if (dragStartSnapRef.current == null || !emblaApi) return;
+      if (emblaApi.selectedScrollSnap() === dragStartSnapRef.current) {
+        navigationDescCollapseRef.current = false;
+        dragStartSnapRef.current = null;
+      }
+    };
+
+    const onNativeTouchStart = () => {
+      if (!descExpanded || !emblaApi) return;
+      dragStartSnapRef.current = emblaApi.selectedScrollSnap();
+      navigationDescCollapseRef.current = true;
+    };
+
+    const onNativeTouchEnd = () => {
+      if (dragStartSnapRef.current == null || !emblaApi) return;
+      if (emblaApi.selectedScrollSnap() === dragStartSnapRef.current) {
+        navigationDescCollapseRef.current = false;
+        dragStartSnapRef.current = null;
+      }
+    };
+
+    viewport.addEventListener("pointerdown", onNativePointerDown, { capture: true });
+    viewport.addEventListener("pointerup", onNativePointerUp, { capture: true });
+    viewport.addEventListener("pointercancel", onNativePointerUp, { capture: true });
+    viewport.addEventListener("touchstart", onNativeTouchStart, { capture: true, passive: true });
+    viewport.addEventListener("touchend", onNativeTouchEnd, { capture: true, passive: true });
+    viewport.addEventListener("touchcancel", onNativeTouchEnd, { capture: true, passive: true });
+
+    return () => {
+      viewport.removeEventListener("pointerdown", onNativePointerDown, true);
+      viewport.removeEventListener("pointerup", onNativePointerUp, true);
+      viewport.removeEventListener("pointercancel", onNativePointerUp, true);
+      viewport.removeEventListener("touchstart", onNativeTouchStart, true);
+      viewport.removeEventListener("touchend", onNativeTouchEnd, true);
+      viewport.removeEventListener("touchcancel", onNativeTouchEnd, true);
+    };
+  }, [descExpanded, emblaApi]);
+
   const lightboxWheelLockRef = useRef(false);
   const lightboxWheelUnlockTimerRef = useRef<number | null>(null);
   const lightboxWheelViewportRef = useRef<HTMLDivElement | null>(null);
@@ -9433,7 +9484,18 @@ const ShowcaseIllustrationLightbox = ({
                 animate={{
                   height: descExpanded ? descContentH || "auto" : collapsedDescH,
                 }}
-                transition={{ duration: reduceMotion ? 0 : 0.3, ease: EASE.out }}
+                transition={{
+                  duration:
+                    reduceMotion
+                      ? 0
+                      : typeof window !== "undefined" &&
+                          window.innerWidth >= 768 &&
+                          window.innerWidth <= 1366 &&
+                          window.innerHeight < window.innerWidth
+                        ? 0.18
+                        : 0.3,
+                  ease: EASE.out,
+                }}
                 className={`relative min-w-0 ${
                   descExpanded
                     ? "no-scrollbar overflow-x-hidden overflow-y-auto overscroll-y-contain touch-pan-y"
