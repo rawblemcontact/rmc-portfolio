@@ -4762,10 +4762,10 @@
    * iPad portrait â€” stack layout with equal-width tabs, vertically centered,
    * grid background fills full viewport.
    */
-  /* Desktop: reduce only the outer card's bottom inset so the final body line sits closer to the border. */
-  @media (min-width: 1280px) and (pointer: fine) {
-    #experience .tabs-content {
-      padding-bottom: 12px !important;
+  /* Desktop/fine-pointer: directly tighten the Education card's real outer host. */
+  @media (min-width: 768px) and (pointer: fine) {
+    #experience .tabs-content:has(#education.active) {
+      padding-bottom: 10px !important;
     }
   }
 
