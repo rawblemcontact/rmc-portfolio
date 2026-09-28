@@ -9095,6 +9095,10 @@ const ShowcaseIllustrationLightbox = ({
     const viewport = lightboxWheelViewportRef.current;
     if (!viewport || !emblaApi || !carouselReady) return;
 
+    const isDesktopFinePointer = () =>
+      window.innerWidth >= 1024 &&
+      window.matchMedia("(pointer: fine)").matches;
+
     const isIPadLandscapeFinePointer = () =>
       window.innerWidth >= 768 &&
       window.innerWidth <= 1366 &&
@@ -9103,7 +9107,7 @@ const ShowcaseIllustrationLightbox = ({
       window.matchMedia("(any-pointer: fine)").matches;
 
     const onWheel = (event: WheelEvent) => {
-      if (!isIPadLandscapeFinePointer()) return;
+      if (!isDesktopFinePointer() && !isIPadLandscapeFinePointer()) return;
 
       const delta = Math.abs(event.deltaX) >= Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
       if (Math.abs(delta) < 1) return;
