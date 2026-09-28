@@ -78,6 +78,7 @@ export function useTabletLandscapeInnerScroll(
     let startY = 0;
     let velocityY = 0;
     let momentumRaf = 0;
+    let bounceTimer = 0;
     let mode: "undecided" | "js" | "ignore" = "undecided";
 
     const maxScrollTop = () => Math.max(0, panel.scrollHeight - panel.clientHeight);
@@ -102,6 +103,21 @@ export function useTabletLandscapeInnerScroll(
         window.cancelAnimationFrame(momentumRaf);
         momentumRaf = 0;
       }
+    };
+
+    const stopBounceTimer = () => {
+      if (bounceTimer) {
+        window.clearTimeout(bounceTimer);
+        bounceTimer = 0;
+      }
+    };
+
+    const scheduleSpringToRange = (delay = 90) => {
+      stopBounceTimer();
+      bounceTimer = window.setTimeout(() => {
+        bounceTimer = 0;
+        springToRange();
+      }, delay);
     };
 
     const springToRange = () => {
@@ -228,8 +244,17 @@ export function useTabletLandscapeInnerScroll(
       if (!delta) return;
       stopMomentum();
       const max = maxScrollTop();
-      const next = Math.max(0, Math.min(max, logicalTop + delta));
+      const nextLogical = logicalTop + delta;
+      const next = Math.max(0, Math.min(max, nextLogical));
       event.preventDefault();
+
+      if (nextLogical < 0 || nextLogical > max) {
+        applyScrollTop(nextLogical);
+        scheduleSpringToRange();
+        return;
+      }
+
+      stopBounceTimer();
       if (next === logicalTop) return;
       applyScrollTop(next);
     };
@@ -262,8 +287,25 @@ export function useTabletLandscapeInnerScroll(
           : delta === Infinity
             ? max
             : Math.max(0, Math.min(max, logicalTop + delta));
+      const nextLogical =
+        delta === -Infinity
+          ? 0
+          : delta === Infinity
+            ? max
+            : logicalTop + delta;
       event.preventDefault();
-      if (next === logicalTop) return;
+
+      if (nextLogical < 0 || nextLogical > max) {
+        stopBounceTimer();
+        applyScrollTop(nextLogical);
+        scheduleSpringToRange(0);
+        return;
+      }
+
+      stopBounceTimer();
+      if (next === logicalTop) {
+        return;
+      }
       applyScrollTop(next);
     };
 
@@ -283,6 +325,7 @@ export function useTabletLandscapeInnerScroll(
 
     return () => {
       stopMomentum();
+      stopBounceTimer();
       bounceEl.style.transform = "";
       if (!finePointer) {
         hit.removeEventListener("touchstart", onTouchStart);
