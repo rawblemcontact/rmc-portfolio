@@ -8981,6 +8981,16 @@ const ShowcaseIllustrationLightbox = ({
   const draggingRef = useRef(false);
   /* Navigation collapses the description; defer its Embla reInit until the slide settles. */
   const navigationDescCollapseRef = useRef(false);
+  const shouldDeferDescriptionReinit = useCallback(() => {
+    if (typeof window === "undefined") return false;
+    const isDesktop =
+      window.innerWidth >= 1024 && window.matchMedia("(pointer: fine)").matches;
+    const isIPadLandscape =
+      window.innerWidth >= 768 &&
+      window.innerWidth <= 1366 &&
+      window.innerHeight < window.innerWidth;
+    return isDesktop || isIPadLandscape;
+  }, []);
   const descSlide = slides[descIndex] ?? activeSlide;
 
   const lightboxLabel =
@@ -9064,18 +9074,18 @@ const ShowcaseIllustrationLightbox = ({
   const handleShowPrev = useCallback(() => {
     if (!emblaApi || !emblaApi.canScrollPrev()) return;
     /* Defer the navigation-triggered description reInit until Embla settles. */
-    navigationDescCollapseRef.current = true;
+    if (shouldDeferDescriptionReinit()) navigationDescCollapseRef.current = true;
     commitDescFromSnap(emblaApi.selectedScrollSnap() - 1);
     emblaApi.scrollPrev(!!reduceMotion);
-  }, [commitDescFromSnap, emblaApi, reduceMotion]);
+  }, [commitDescFromSnap, emblaApi, reduceMotion, shouldDeferDescriptionReinit]);
 
   const handleShowNext = useCallback(() => {
     if (!emblaApi || !emblaApi.canScrollNext()) return;
     /* Defer the navigation-triggered description reInit until Embla settles. */
-    navigationDescCollapseRef.current = true;
+    if (shouldDeferDescriptionReinit()) navigationDescCollapseRef.current = true;
     commitDescFromSnap(emblaApi.selectedScrollSnap() + 1);
     emblaApi.scrollNext(!!reduceMotion);
-  }, [commitDescFromSnap, emblaApi, reduceMotion]);
+  }, [commitDescFromSnap, emblaApi, reduceMotion, shouldDeferDescriptionReinit]);
 
   const lightboxWheelLockRef = useRef(false);
   const lightboxWheelUnlockTimerRef = useRef<number | null>(null);
