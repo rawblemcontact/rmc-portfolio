@@ -3887,12 +3887,6 @@
   /* Flow-height tuning: the in-flow motion child determines the host/card bottom edge. */
   @media (min-width: 1024px) and (pointer: fine) {
     #experience .tabs-content.experience-card-entrance-host > .experience-card-entrance-motion {
-      margin-bottom: 4px;
-    }
-
-    /* Education desktop: remove only the 4px flow-height tail so its bottom edge
-     * matches the intended card height without changing internal padding/settling. */
-    #experience .tabs-content.experience-card-entrance-host:has(#education.active) > .experience-card-entrance-motion {
       margin-bottom: 0;
     }
   }
