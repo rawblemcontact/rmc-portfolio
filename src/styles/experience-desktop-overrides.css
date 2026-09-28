@@ -23,17 +23,11 @@
   }
 
   #experience #education .feature-list li {
-    /* Keep Education out of the generic body-text transform so its prior
-       independently corrected rendering is preserved. */
+    /* Reposition Awarded Distinction by the same 10px as the desktop
+       Education flow correction, independent of the generic body nudge. */
     position: relative;
     top: -10px;
     transform: none !important;
-  }
-
-  #experience .experience-card-entrance-motion:has(#education.active) {
-    /* Education's single body line needs the full in-flow bottom room;
-       otherwise the relative text correction can sit against the shell edge. */
-    margin-bottom: 0 !important;
   }
 }
 
@@ -53,7 +47,7 @@
   }
 
   #experience .experience-card-entrance-motion {
-    /* Keep the portrait card slightly tighter after the 6px text-position correction. */
+    /* Final portrait Education gap: 2px after the 6px placement correction. */
     margin-bottom: 2px !important;
   }
 
@@ -63,15 +57,10 @@
   }
 
   #experience #education .feature-list li {
-    /* Keep Education out of the generic body-text transform so its prior
-       independently corrected rendering is preserved. */
+    /* Move Awarded Distinction down by the same 6px as the portrait
+       Education placement correction, then keep the final card gap at 2px. */
     position: relative;
-    top: 4px;
+    top: 6px;
     transform: none !important;
-  }
-
-  #experience .experience-card-entrance-motion:has(#education.active) {
-    /* Tighten the Education card 2px after the portrait placement correction. */
-    margin-bottom: 4px !important;
   }
 }
