@@ -58,7 +58,6 @@ export function useTabletLandscapeInnerScroll(
   useEffect(() => {
     if (!active || !tabletLandscape) return;
     const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
-    if (finePointer) return;
 
     const panel = scrollRef.current;
     if (!panel) return;
@@ -272,10 +271,12 @@ export function useTabletLandscapeInnerScroll(
       (hitSelector
         ? panel.closest<HTMLElement>(hitSelector)
         : null) ?? panel;
-    hit.addEventListener("touchstart", onTouchStart, { passive: true });
-    hit.addEventListener("touchmove", onTouchMove, { passive: true });
-    hit.addEventListener("touchend", endTouch, { passive: true });
-    hit.addEventListener("touchcancel", endTouch, { passive: true });
+    if (!finePointer) {
+      hit.addEventListener("touchstart", onTouchStart, { passive: true });
+      hit.addEventListener("touchmove", onTouchMove, { passive: true });
+      hit.addEventListener("touchend", endTouch, { passive: true });
+      hit.addEventListener("touchcancel", endTouch, { passive: true });
+    }
     hit.addEventListener("wheel", onWheel, { passive: false });
     document.addEventListener("keydown", onKeyDown);
     paint();
@@ -283,10 +284,12 @@ export function useTabletLandscapeInnerScroll(
     return () => {
       stopMomentum();
       bounceEl.style.transform = "";
-      hit.removeEventListener("touchstart", onTouchStart);
-      hit.removeEventListener("touchmove", onTouchMove);
-      hit.removeEventListener("touchend", endTouch);
-      hit.removeEventListener("touchcancel", endTouch);
+      if (!finePointer) {
+        hit.removeEventListener("touchstart", onTouchStart);
+        hit.removeEventListener("touchmove", onTouchMove);
+        hit.removeEventListener("touchend", endTouch);
+        hit.removeEventListener("touchcancel", endTouch);
+      }
       hit.removeEventListener("wheel", onWheel);
       document.removeEventListener("keydown", onKeyDown);
     };
