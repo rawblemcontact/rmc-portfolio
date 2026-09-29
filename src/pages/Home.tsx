@@ -10881,7 +10881,10 @@ const PalaceProjects = ({
             ...projectsRightDebugStyle,
             ...(projectsDesktopViewport && !projectsTabletLandscapeViewport
               ? {
-                  width: "calc(100% - 2px)",
+                  width:
+                    typeof projectsRightDebugStyle?.width === "string"
+                      ? `calc(${projectsRightDebugStyle.width} - 2px)`
+                      : undefined,
                   alignSelf: "center",
                 }
               : {}),
