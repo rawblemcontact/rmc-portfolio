@@ -10877,7 +10877,15 @@ const PalaceProjects = ({
           className={`projects-showcase-flow flex min-h-0 flex-none flex-col 2xl:flex-1${
             projectsShowcaseClusterStyleActive ? " min-w-0 self-center" : " w-full"
           } ${showcaseObscured ? "pointer-events-none select-none" : ""}`}
-          style={projectsRightDebugStyle}
+          style={{
+            ...projectsRightDebugStyle,
+            ...(projectsDesktopViewport && !projectsTabletLandscapeViewport
+              ? {
+                  width: "calc(100% - 1px)",
+                  alignSelf: "center",
+                }
+              : {}),
+          }}
         >
           <motion.div
             className="projects-showcase-featured-block flex w-full shrink-0 min-w-0 flex-col transform-gpu"
