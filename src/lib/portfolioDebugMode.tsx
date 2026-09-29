@@ -243,8 +243,37 @@ export function PortfolioDebugProvider({ children }: { children: ReactNode }) {
       setRulerDebugEnabled((value) => !value);
     };
 
+    let lastTouchTime = 0;
+    let lastTouchX = 0;
+    let lastTouchY = 0;
+
+    const handleTouchEnd = (event: TouchEvent) => {
+      const touch = event.changedTouches[0];
+      if (!touch) return;
+
+      const now = Date.now();
+      const deltaTime = now - lastTouchTime;
+      const deltaX = touch.clientX - lastTouchX;
+      const deltaY = touch.clientY - lastTouchY;
+
+      if (deltaTime > 0 && deltaTime <= 300 && Math.hypot(deltaX, deltaY) <= 32) {
+        setRulerDebugEnabled((value) => !value);
+        lastTouchTime = 0;
+        return;
+      }
+
+      lastTouchTime = now;
+      lastTouchX = touch.clientX;
+      lastTouchY = touch.clientY;
+    };
+
     window.addEventListener("keydown", handleKeyDown, true);
-    return () => window.removeEventListener("keydown", handleKeyDown, true);
+    window.addEventListener("touchend", handleTouchEnd, { capture: true, passive: true });
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown, true);
+      window.removeEventListener("touchend", handleTouchEnd, true);
+    };
   }, []);
 
   return (
