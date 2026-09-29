@@ -17,7 +17,7 @@ function App() {
           <Toaster />
           <Home />
           <MobileLandscapeGate />
-          {import.meta.env.DEV ? <DebugRulerTool /> : null}
+          <DebugRulerTool />
         </TooltipProvider>
       </PortfolioDebugProvider>
     </QueryClientProvider>
