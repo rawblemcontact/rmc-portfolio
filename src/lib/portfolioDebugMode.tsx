@@ -234,8 +234,6 @@ export function saveSectionDesktopLayoutDebugValues(
 /** Debug UI is hard-disabled — panels remain in the repo but cannot be toggled on. */
 export function PortfolioDebugProvider({ children }: { children: ReactNode }) {
   const [rulerDebugEnabled, setRulerDebugEnabled] = useState(false);
-  const isDev = import.meta.env.DEV;
-
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.repeat || event.metaKey || event.ctrlKey || event.altKey) return;
@@ -246,9 +244,9 @@ export function PortfolioDebugProvider({ children }: { children: ReactNode }) {
       setRulerDebugEnabled((value) => !value);
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isDev]);
+    window.addEventListener("keydown", handleKeyDown, true);
+    return () => window.removeEventListener("keydown", handleKeyDown, true);
+  }, []);
 
   return (
     <PortfolioDebugContext.Provider value={false}>
