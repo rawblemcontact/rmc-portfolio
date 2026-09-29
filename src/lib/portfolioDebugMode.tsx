@@ -237,7 +237,6 @@ export function PortfolioDebugProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.repeat || event.metaKey || event.ctrlKey || event.altKey) return;
-      if (isEditableTarget(event.target)) return;
       if (event.key.toLowerCase() !== "r") return;
 
       event.preventDefault();
