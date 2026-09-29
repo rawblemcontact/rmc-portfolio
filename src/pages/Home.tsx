@@ -11897,10 +11897,11 @@ const ConfidantExperience = ({
         void tabsShellEl.offsetHeight;
         requestAnimationFrame(() => {
           if (gen !== experienceDrawerGenRef.current) return;
-          // Desktop Education: keep the committed final height instead of
-          // releasing to auto, which is the pass that causes the 1px bottom-edge
-          // reflow. Other cards and all tablet layouts retain the normal release.
-          if (!(experienceDesktopViewport && tabId === "education")) {
+          // Desktop EXPERIENCE: keep the committed final height instead of
+          // releasing to auto. The Education card proved that the final auto release
+          // is what causes the 1px bottom-edge reflow; apply the same settle behavior
+          // to every desktop EXPERIENCE drawer. Tablet layouts retain normal release.
+          if (!experienceDesktopViewport) {
             tabsShellEl.style.removeProperty("height");
           }
           tabsShellEl.style.removeProperty("transition");
