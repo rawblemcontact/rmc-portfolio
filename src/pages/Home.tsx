@@ -10881,14 +10881,6 @@ const PalaceProjects = ({
         >
           <motion.div
             className="projects-showcase-featured-block flex w-full shrink-0 min-w-0 flex-col transform-gpu"
-            style={{
-              ...(projectsDesktopViewport && !projectsTabletLandscapeViewport
-                ? {
-                    width: "calc(100% - 1px)",
-                    alignSelf: "center",
-                  }
-                : {}),
-            }}
             initial={
               reduceMotion
                 ? false
