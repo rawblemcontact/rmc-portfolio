@@ -1270,6 +1270,14 @@
     border-radius: 0 0 11px 11px;
   }
 
+  /* Desktop only: pull the visible FEATURED WRITING card in by exactly 1px. */
+  @media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
+    #projects .featured-writing-body-card .profile-card-surface {
+      width: calc(100% - 1px);
+      align-self: center;
+    }
+  }
+
   @media (min-width: 640px) {
     #projects .featured-writing-body-card .profile-card-surface {
       border-radius: 0 0 12px 12px;
