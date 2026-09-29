@@ -1949,12 +1949,6 @@
     overflow-anchor: none;
   }
 
-  /* Desktop only: FEATURED WRITING right edge sits 1px inside the project-card edge. */
-  @media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
-    #projects .projects-showcase-flow {
-      clip-path: inset(0 1px 0 0);
-    }
-  }
 
   /* Keep the folder *cut* (overflow + square inners). Stroke lives on the folder so
    * a 1px inner border isn't sliced into weird tips at the clip. */
