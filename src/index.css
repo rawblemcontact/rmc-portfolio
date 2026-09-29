@@ -1270,14 +1270,6 @@
     border-radius: 0 0 11px 11px;
   }
 
-  /* Desktop only: pull the visible FEATURED WRITING card in by exactly 1px. */
-  @media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
-    #projects .featured-writing-body-card .profile-card-surface {
-      width: calc(100% - 1px);
-      align-self: center;
-    }
-  }
-
   @media (min-width: 640px) {
     #projects .featured-writing-body-card .profile-card-surface {
       border-radius: 0 0 12px 12px;
@@ -1955,6 +1947,13 @@
   #projects .projects-showcase-featured-block,
   #projects .featured-writing-folder {
     overflow-anchor: none;
+  }
+
+  /* Desktop only: FEATURED WRITING right edge sits 1px inside the project-card edge. */
+  @media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
+    #projects .projects-showcase-flow {
+      clip-path: inset(0 1px 0 0);
+    }
   }
 
   /* Keep the folder *cut* (overflow + square inners). Stroke lives on the folder so
