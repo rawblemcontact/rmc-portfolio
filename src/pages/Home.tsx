@@ -7321,7 +7321,12 @@ const SUPPORTING_ARCHIVE_PDF_SECTIONS: { heading: string; items: SupportingArchi
 const SHOWCASE_WRITING_TAB_FEATURED_ORDER = [
   SUPPORTING_ARCHIVE_PDF_ITEMS.find((x) => x.id === "cnf-article")!,
   SCREENPLAY_PDF_ITEMS.find((x) => x.id === "screenplay-audience-of-one")!,
-  SHORT_GRAPHIC_NOVEL_PDF_ITEMS.find((x) => x.id === "sgn-blossom-ink-bw")!,
+  {
+    id: "narrative-design-forever-home",
+    title: "Undertale: Forever Home Edition",
+    subtitle: "Robbie McLaughlin",
+    description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.\n\nSed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+  },
   SUPPORTING_ARCHIVE_PDF_ITEMS.find((x) => x.id === "cnf-critical-essay")!,
   SUPPORTING_ARCHIVE_PDF_ITEMS.find((x) => x.id === "cnf-media-literary")!,
   {
