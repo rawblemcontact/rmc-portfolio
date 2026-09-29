@@ -7283,7 +7283,7 @@ const SHORT_GRAPHIC_NOVEL_PDF_ITEMS: SupportingArchivePdfItem[] = [
     id: "sgn-blossom-ink-bw",
     title: "Blossom",
     subtitle: "Robbie McLaughlin",
-    href: "/short-graphic-novels/blossom-ink-bw.pdf",
+    href: "/short-graphic-novels/Blossom (Ink BW)_COMP.pdf",
     thumbnail: "/blossom_thumb.png",
     description:
       "A walking, talking tree who speaks exclusively in poetics comes to terms with his addiction to lighting himself on fire.\n\nTools: Arc Studio (Screenwriting Software), Clip Studio Paint",
