@@ -237,8 +237,6 @@ export function PortfolioDebugProvider({ children }: { children: ReactNode }) {
   const isDev = import.meta.env.DEV;
 
   useEffect(() => {
-    if (!isDev) return;
-
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.repeat || event.metaKey || event.ctrlKey || event.altKey) return;
       if (isEditableTarget(event.target)) return;
@@ -257,7 +255,7 @@ export function PortfolioDebugProvider({ children }: { children: ReactNode }) {
       <HeroDebugContext.Provider value={false}>
         <MainMenuDebugContext.Provider value={false}>
           <RuleOfThirdsContext.Provider value={false}>
-            <RulerDebugContext.Provider value={isDev && rulerDebugEnabled}>
+            <RulerDebugContext.Provider value={rulerDebugEnabled}>
               {children}
             </RulerDebugContext.Provider>
           </RuleOfThirdsContext.Provider>
