@@ -231,12 +231,31 @@ export function saveSectionDesktopLayoutDebugValues(
 
 /** Debug UI is hard-disabled — panels remain in the repo but cannot be toggled on. */
 export function PortfolioDebugProvider({ children }: { children: ReactNode }) {
+  const [rulerDebugEnabled, setRulerDebugEnabled] = useState(false);
+  const isDev = import.meta.env.DEV;
+
+  useEffect(() => {
+    if (!isDev) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.repeat || event.metaKey || event.ctrlKey || event.altKey) return;
+      if (isEditableTarget(event.target)) return;
+      if (event.key.toLowerCase() !== "r") return;
+
+      event.preventDefault();
+      setRulerDebugEnabled((value) => !value);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isDev]);
+
   return (
     <PortfolioDebugContext.Provider value={false}>
       <HeroDebugContext.Provider value={false}>
         <MainMenuDebugContext.Provider value={false}>
           <RuleOfThirdsContext.Provider value={false}>
-            <RulerDebugContext.Provider value={false}>
+            <RulerDebugContext.Provider value={isDev && rulerDebugEnabled}>
               {children}
             </RulerDebugContext.Provider>
           </RuleOfThirdsContext.Provider>
