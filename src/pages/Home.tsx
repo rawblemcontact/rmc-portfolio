@@ -6696,7 +6696,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     id: "project-visual-design",
     title: "VISUAL DESIGN",
     tagline: "Graphic design, digital art, and branding.",
-    thumbnail: "/illustrations/illustrations-charger.png",
+    thumbnail: "/Visual_Design_Thumb.png",
     focalPoint: "50% 42%",
     detailGallery: [
       {
@@ -6811,7 +6811,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     id: "project-video-editing",
     title: "VIDEO EDITING",
     tagline: "Assembly, color, motion, and audio.",
-    thumbnail: "/edits-meme1-online-poster.jpg",
+    thumbnail: "/videoedithumb2.png",
     poster: "/edits-meme1-online-poster.jpg",
     focalPoint: "50% 36%",
     detailOverview:
@@ -6917,7 +6917,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     title: "INTERACTIVE MEDIA",
     tagline: "Web design, game development, and animation.",
     mobileTagline: "Web design, game dev, and animation.",
-    thumbnail: "/portfolio-website-thumbnail-v2-poster.jpg",
+    thumbnail: "/interactivethumb.png",
     poster: "/portfolio-website-thumbnail-v2-poster.jpg",
     focalPoint: "50% 38%",
     detailOverview:
@@ -6997,7 +6997,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     id: "project-slaywire",
     title: "SLAYWIRE",
     tagline: "Self-produced original narrative IP.",
-    thumbnail: "/slaywire-thumbnail.png",
+    thumbnail: "/slaywirethumb.png",
     focalPoint: "50% 40%",
     detailOverview:
       "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
