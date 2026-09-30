@@ -186,31 +186,31 @@
 }
 @keyframes hero-idle-float-y-from-bottom {
   0% {
-    transform: translate3d(0, 1px, 0);
+    transform: translate3d(0, 0, 0);
   }
   12.5% {
-    transform: translate3d(0, 0.7071px, 0);
+    transform: translate3d(0, -0.7071px, 0);
   }
   25% {
-    transform: translate3d(0, 0, 0);
+    transform: translate3d(0, -1px, 0);
   }
   37.5% {
     transform: translate3d(0, -0.7071px, 0);
   }
   50% {
-    transform: translate3d(0, -1px, 0);
+    transform: translate3d(0, 0, 0);
   }
   62.5% {
-    transform: translate3d(0, -0.7071px, 0);
+    transform: translate3d(0, 0.7071px, 0);
   }
   75% {
-    transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 1px, 0);
   }
   87.5% {
     transform: translate3d(0, 0.7071px, 0);
   }
   100% {
-    transform: translate3d(0, 1px, 0);
+    transform: translate3d(0, 0, 0);
   }
 }
 @keyframes hero-idle-float-y-counter {
@@ -252,7 +252,7 @@
   transform: translateZ(0);
 }
 .hero-idle-float-rest--bottom {
-  transform: translate3d(0, 1px, 0);
+  transform: translate3d(0, 0, 0);
 }
 .hero-idle-float {
   animation: hero-idle-float-y 4.6s linear infinite;
