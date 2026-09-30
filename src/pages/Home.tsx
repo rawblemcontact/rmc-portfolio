@@ -4638,15 +4638,11 @@ const Hero = ({
     };
   }, [heroPhase1LayoutReady, isMobileHeroLayout, isHeroCropLayout]);
 
-  /* Mobile SVG/text: rest + float phase start at most-down (+amp). Desktop unchanged.
-   * Idle float is CSS keyframes (compositor) — not Framer Motion y arrays. */
-  const heroIdleFloatClass = heroIdleFloat
-    ? isMobileHeroLayout
-      ? "hero-idle-float--from-bottom"
-      : "hero-idle-float"
-    : isMobileHeroLayout
-      ? "hero-idle-float-rest--bottom"
-      : undefined;
+  /* Keep the idle-float transform attached from mount; only play/pause it.
+   * This avoids a 1px transform handoff when PORTFOLIO finishes fading in. */
+  const heroIdleFloatClass = isMobileHeroLayout
+    ? "hero-idle-float--from-bottom"
+    : "hero-idle-float";
 
   const wrapHeroIdleFloat = (node: React.ReactNode) => (
     <div
