@@ -1698,7 +1698,6 @@ const HERO_PORTFOLIO_TAP_SPRING = {
   mass: 0.52,
 } as const;
 /** Idle float — starts after entrance (video scale + PORTFOLIO fade) finishes. CSS keyframes in index.css. */
-const HERO_IDLE_FLOAT_START_MS = 450;
 /** Desktop hard-crop stage — fixed design width; viewport clips instead of reflowing. */
 const HERO_CROP_STAGE_PX = 1680;
 /** Hero video card width — matches name line span (58rem column + line bleed). */
@@ -3697,9 +3696,8 @@ const Hero = ({
       setHeroIdleFloat(false);
       return;
     }
-    const t = window.setTimeout(() => setHeroIdleFloat(true), HERO_IDLE_FLOAT_START_MS);
+    setHeroIdleFloat(true);
     return () => {
-      window.clearTimeout(t);
       setHeroIdleFloat(false);
     };
   }, [active, portfolioFadeReady, reduceMotion]);
