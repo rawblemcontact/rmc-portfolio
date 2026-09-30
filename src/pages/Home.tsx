@@ -4641,8 +4641,8 @@ const Hero = ({
   /* Keep the idle-float transform attached from mount; only play/pause it.
    * This avoids a 1px transform handoff when PORTFOLIO finishes fading in. */
   const heroIdleFloatClass = isMobileHeroLayout
-    ? "hero-idle-float--from-bottom"
-    : "hero-idle-float";
+    ? `hero-idle-float--from-bottom${heroIdleFloat ? " is-idle-playing" : ""}`
+    : `hero-idle-float${heroIdleFloat ? " is-idle-playing" : ""}`;
 
   const wrapHeroIdleFloat = (node: React.ReactNode) => (
     <div
