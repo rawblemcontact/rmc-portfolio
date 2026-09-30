@@ -256,12 +256,19 @@
 }
 .hero-idle-float {
   animation: hero-idle-float-y 4.6s linear infinite;
+  animation-play-state: paused;
 }
 .hero-idle-float--from-bottom {
   animation: hero-idle-float-y-from-bottom 4.6s linear infinite;
+  animation-play-state: paused;
 }
 .hero-idle-float--counter {
   animation: hero-idle-float-y-counter 4.6s linear infinite;
+}
+
+.hero-idle-float.is-idle-playing,
+.hero-idle-float--from-bottom.is-idle-playing {
+  animation-play-state: running;
 }
 
 /* Pause idle float when slide is off-screen — grid drift keeps running. */
