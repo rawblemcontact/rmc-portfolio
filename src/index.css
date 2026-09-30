@@ -7398,15 +7398,23 @@
   .featured-tabs-mobile-nav-btn--next:not([aria-disabled="true"]).featured-tabs-mobile-nav-btn--pressed .featured-tabs-scroll-hint {
     transform: translateX(4px);
   }
-  /* Compact portrait only: enlarge the arrow hitbox upward by 16px while keeping the visible chevron and bottom edge fixed. */
+  /* Compact portrait only: 16px hitbox expansion left/right/up; extend downward only to the PDF preview boundary. */
   @media (max-width: 639.98px), (min-width: 768px) and (max-width: 1366px) and (orientation: portrait) {
     .featured-tabs-mobile-arrow-clock .featured-tabs-mobile-nav-btn {
       position: relative;
-      top: -8px;
-      height: 44px;
+      top: -2px;
+      width: 60px;
+      height: 56px;
       padding-top: 23px;
       align-items: flex-start;
+      flex: 0 0 60px;
       box-sizing: border-box;
+    }
+    .featured-tabs-mobile-arrow-clock .featured-tabs-mobile-nav-btn--prev {
+      margin-left: -16px;
+    }
+    .featured-tabs-mobile-arrow-clock .featured-tabs-mobile-nav-btn--next {
+      margin-right: -16px;
     }
   }
   .featured-tabs-mobile-nav-btn[aria-disabled="true"] {
