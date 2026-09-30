@@ -7398,6 +7398,17 @@
   .featured-tabs-mobile-nav-btn--next:not([aria-disabled="true"]).featured-tabs-mobile-nav-btn--pressed .featured-tabs-scroll-hint {
     transform: translateX(4px);
   }
+  /* Compact portrait only: enlarge the arrow hitbox upward by 16px while keeping the visible chevron and bottom edge fixed. */
+  @media (max-width: 639.98px), (min-width: 768px) and (max-width: 1366px) and (orientation: portrait) {
+    .featured-tabs-mobile-arrow-clock .featured-tabs-mobile-nav-btn {
+      position: relative;
+      top: -8px;
+      height: 44px;
+      padding-top: 23px;
+      align-items: flex-start;
+      box-sizing: border-box;
+    }
+  }
   .featured-tabs-mobile-nav-btn[aria-disabled="true"] {
     cursor: default;
     opacity: 0;
