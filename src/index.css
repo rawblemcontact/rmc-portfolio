@@ -7398,23 +7398,24 @@
   .featured-tabs-mobile-nav-btn--next:not([aria-disabled="true"]).featured-tabs-mobile-nav-btn--pressed .featured-tabs-scroll-hint {
     transform: translateX(4px);
   }
-  /* Compact portrait only: 16px hitbox expansion left/right/up; extend downward only to the PDF preview boundary. */
+  /* Compact portrait only: expand the invisible arrow hitbox without moving the visible chevron. */
   @media (max-width: 639.98px), (min-width: 768px) and (max-width: 1366px) and (orientation: portrait) {
     .featured-tabs-mobile-arrow-clock .featured-tabs-mobile-nav-btn {
       position: relative;
+    }
+    .featured-tabs-mobile-arrow-clock .featured-tabs-mobile-nav-btn::before {
+      content: "";
+      position: absolute;
+      left: -16px;
+      right: -16px;
       top: -16px;
-      width: 60px;
-      height: 60px;
-      padding: 0;
-      align-items: center;
-      flex: 0 0 60px;
-      box-sizing: border-box;
+      bottom: -16px;
+      z-index: 0;
+      pointer-events: auto;
     }
-    .featured-tabs-mobile-arrow-clock .featured-tabs-mobile-nav-btn--prev {
-      margin-left: -16px;
-    }
-    .featured-tabs-mobile-arrow-clock .featured-tabs-mobile-nav-btn--next {
-      margin-right: -16px;
+    .featured-tabs-mobile-arrow-clock .featured-tabs-mobile-nav-btn > * {
+      position: relative;
+      z-index: 1;
     }
   }
   .featured-tabs-mobile-nav-btn[aria-disabled="true"] {
