@@ -7402,11 +7402,11 @@
   @media (max-width: 639.98px), (min-width: 768px) and (max-width: 1366px) and (orientation: portrait) {
     .featured-tabs-mobile-arrow-clock .featured-tabs-mobile-nav-btn {
       position: relative;
-      top: -2px;
+      top: -16px;
       width: 60px;
-      height: 56px;
-      padding-top: 23px;
-      align-items: flex-start;
+      height: 60px;
+      padding: 0;
+      align-items: center;
       flex: 0 0 60px;
       box-sizing: border-box;
     }
