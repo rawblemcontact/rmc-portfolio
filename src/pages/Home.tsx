@@ -9471,6 +9471,10 @@ const ShowcaseIllustrationLightbox = ({
           onPointerDown={
             artistStatement
               ? (event) => {
+                  /* Middle-click (button 1) is the browser autoscroll gesture.
+                   * Ignore it and do not preventDefault — that would cancel autoscroll.
+                   * mousedown/auxclick are not bound here, so they also stay native. */
+                  if (event.button === 1) return;
                   /* Toggle on pointer-down so mouse, trackpad, and touch can
                    * open the new slide's DESC before the slide settles. */
                   event.stopPropagation();
