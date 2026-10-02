@@ -10679,6 +10679,13 @@
   }
 }
 
+/* iPads (640px+ / coarse up to 1366px): no extra zoom on Visual Design thumbnail. */
+@media (min-width: 640px) and (max-width: 1023.98px), (min-width: 640px) and (max-width: 1366px) and (pointer: coarse) {
+  #projects [data-carousel-card] img[src="/Visual_Design_Thumb.png"] {
+    transform: none !important;
+  }
+}
+
 
 /* Desktop: use the native card border (like iPad) instead of the ::after overlay stroke. */
 @media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
