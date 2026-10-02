@@ -10684,3 +10684,23 @@
     right: 1px !important;
   }
 }
+
+/* Desktop: uniform card stroke — overlay sits on the real border box; media flush under it on every side. */
+@media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
+  #projects [data-carousel-card].project-card-surface::after {
+    inset: -1px !important;
+  }
+
+  #projects [data-carousel-card] .project-card-thumbnail-section,
+  #projects [data-carousel-card] .project-card-thumbnail-section:has(img[src="/Visual_Design_Thumb.png"]) {
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: auto !important;
+  }
+
+  #projects [data-carousel-card] .project-card-description-section {
+    left: 0 !important;
+    right: 0 !important;
+  }
+}
