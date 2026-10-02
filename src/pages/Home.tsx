@@ -8002,6 +8002,10 @@ const ProjectsStack = ({
                               />
                             ) : (
                               <div className="h-full w-full">
+                                <picture className="contents">
+                                  {card.id === "project-visual-design" ? (
+                                    <source media="(max-width: 1023.98px), (max-width: 1366px) and (pointer: coarse)" srcSet="/Visual_Design_Thumb_mobile.png" />
+                                  ) : null}
                                 <img
                                   src={card.thumbnail}
                                   alt={`${showcaseProjectDisplayTitle(card)} thumbnail`}
@@ -8043,6 +8047,7 @@ const ProjectsStack = ({
                                   onLoad={() => markCardMediaReady(index)}
                                   onError={() => markCardMediaReady(index)}
                                 />
+                                </picture>
                               </div>
                             )
                             ) : null}
