@@ -10707,3 +10707,31 @@
     width: auto !important;
   }
 }
+
+/* Visual Design card: 1px side bleed so a subpixel seam can't show the card's black fill
+ * at the right edge (fractional card widths). Card overflow:hidden clips at the padding
+ * edge, so the bleed sits under the border and never covers it. */
+#projects [data-carousel-card] .project-card-thumbnail-section:has(img[src="/Visual_Design_Thumb.png"]) {
+  left: -1px !important;
+  right: -1px !important;
+}
+
+/* Desktop: crisp FEATURED WRITING strokes — no per-tab compositor layer (translateZ) and
+ * no backdrop blur (blur darkens/softens the edge under the semi-transparent stroke). */
+@media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
+  #projects .featured-writing-tab-active,
+  #projects .featured-writing-tab-idle-edge {
+    transform: none !important;
+    -webkit-backface-visibility: visible !important;
+    backface-visibility: visible !important;
+  }
+
+  #projects .featured-writing-folder .featured-writing-panel,
+  #projects .featured-writing-folder .featured-writing-tab-active,
+  #projects .featured-writing-folder .featured-writing-tab-idle-edge,
+  #projects .featured-writing-folder .profile-card-surface,
+  #projects .featured-writing-folder .featured-writing-raised {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
