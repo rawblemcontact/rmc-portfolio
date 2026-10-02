@@ -153,7 +153,13 @@ export function buildProjectsShowcaseDesktopClusterStyle(
       width: `${widthPercent}%`,
       maxWidth: "none",
       alignSelf: "center",
-      transform: `translate(${offsetX}px, ${offsetY}px) scale(${uniformScale})`,
+      /* Near-1 scale (desktop 0.96*1.04 = 0.9984) resamples the whole cluster and
+       * smears 1px card / FEATURED WRITING borders across two device pixels on the
+       * left/bottom. Drop it when it's within 1% of 1x (<=~2px size change). */
+      transform:
+        Math.abs(uniformScale - 1) < 0.01
+          ? `translate(${offsetX}px, ${offsetY}px)`
+          : `translate(${offsetX}px, ${offsetY}px) scale(${uniformScale})`,
       transformOrigin: "center top",
     };
   }
