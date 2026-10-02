@@ -10659,6 +10659,13 @@
 @media (max-width: 639.98px) {
   #projects [data-carousel-card] img[src="/Visual_Design_Thumb.png"] {
     object-fit: contain !important;
-    transform: none !important;
+  }
+}
+
+/* Non-desktop (phones + iPads): zoom Visual Design thumbnail 10%. */
+@media (max-width: 1023.98px), (max-width: 1366px) and (pointer: coarse) {
+  #projects [data-carousel-card] img[src="/Visual_Design_Thumb.png"] {
+    transform: scale(1.1) !important;
+    transform-origin: 50% 50% !important;
   }
 }
