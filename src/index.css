@@ -10735,3 +10735,25 @@
     backdrop-filter: none !important;
   }
 }
+
+/* Desktop: solid stroke (0.18 white over black) so card + Featured Writing borders render evenly. */
+@media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
+  #projects {
+    --portfolio-glass-stroke: #2e2e2e;
+  }
+}
+
+/* iPad landscape: same hover/press text highlight as desktop (Tailwind group-hover is gated behind hover:hover). */
+@media (min-width: 1024px) and (max-width: 1366px) and (orientation: landscape) and (pointer: coarse) {
+  #projects [data-carousel-card]:hover .project-card-title,
+  #projects [data-carousel-card]:active .project-card-title,
+  #projects [data-carousel-card].is-press-accent .project-card-title {
+    color: var(--palette-yellow-projects) !important;
+  }
+
+  #projects [data-carousel-card]:hover .project-card-tagline,
+  #projects [data-carousel-card]:active .project-card-tagline,
+  #projects [data-carousel-card].is-press-accent .project-card-tagline {
+    color: rgb(255 255 255 / 0.9) !important;
+  }
+}
