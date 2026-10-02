@@ -6815,7 +6815,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     poster: "/edits-meme1-online-poster.jpg",
     focalPoint: "50% 36%",
     detailOverview:
-      "Short-form edits built around timing, meme literacy, and platform-native pacing?hooks, captions, and sound-led moments.",
+      "Short-form edits built around timing, meme literacy, and platform-native pacing—hooks, captions, and sound-led moments.",
     detailRole: "Editor and creative director for individual cuts.",
     detailTools: ["CapCut", "DaVinci Resolve"],
     detailImpact: "Sharper retention in the first seconds; clearer punchlines and readable on-screen text.",
@@ -6850,7 +6850,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
           "Independent\nCreative Director\nProducer\nWriter\nDigital Artist\nVideo Editor\nSocial Media Coordinator",
         detailTools: ["CapCut", "Procreate", "Clip Studio Paint", "GIMP/Photoshop"],
         detailImpact:
-          "Completed and published on November 23rd, 2025.\nIncreased sales of commercial RAWBLEM merch.\nIncreased unique visitors to RAWBLEM storefront following launch.\nStrengthened brand awareness and identity through a distinct and consistent artstyle.",
+          "Completed and published on November 23rd, 2025.\nIncreased sales of commercial RAWBLEM merch.\nIncreased unique visitors to RAWBLEM storefront following launch.\nStrengthened brand awareness and identity through a distinct and consistent art style.",
       },
       {
         id: "video-edit-3",
@@ -6861,7 +6861,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         selectorSubtitle: "Comedy/Horror Short Film",
         selectorDuration: "0:45",
         detailOverview:
-          "Undergraduate film project. Directed by Eliza Musselwhite and Written by Johnny Cole.\n<em>Wes must face his fear of scary movies to save Ellie from an endless-nightmare-horror-film-death loop.</em>\n\nFeatures:\n- 30FPS\n- 16:9 YouTube-friendly aspect ratio\n- Keyframed animation\n- Campy horror-themed aesthetic and sound\n- Intense camera-shake motion effects\n- Fast-paced TV static VFX and transitions\n- Color correction",
+          "Undergraduate film project. Directed by Eliza Musselwhite and written by Johnny Cole.\n<em>Wes must face his fear of scary movies to save Ellie from an endless-nightmare-horror-film-death loop.</em>\n\nFeatures:\n- 30FPS\n- 16:9 YouTube-friendly aspect ratio\n- Keyframed animation\n- Campy horror-themed aesthetic and sound\n- Intense camera-shake motion effects\n- Fast-paced TV static VFX and transitions\n- Color correction",
         detailRole: "Video Editor\nMusic and Sound Effect Curator + Mixer",
         detailTools: ["DaVinci Resolve", "Audacity"],
         detailImpact:
@@ -6921,7 +6921,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     poster: "/portfolio-website-thumbnail-v2-poster.jpg",
     focalPoint: "50% 38%",
     detailOverview:
-      "Playable and interactive work?from GameMaker prototypes to motion-forward web UI?where feel, pacing, and user flow are the design problem.",
+      "Playable and interactive work—from GameMaker prototypes to motion-forward web UI—where feel, pacing, and user flow are the design problem.",
     detailRole: "Design, implementation, and iteration across game and front-end builds.",
     detailTools: ["GameMaker Studio 2", "React", "Vite", "TypeScript", "Framer Motion"],
     detailImpact: "Shippable slices with tight feedback loops and interfaces that reward exploration.",
@@ -6989,7 +6989,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
           "Software: Cursor + VS Code",
         ],
         detailImpact:
-          "Completed and launched in August 2026.\nSuccessfully launched a central hub for all portfolio content outside of social media platforms.\nImproved skills with Agentic Ai IDEs",
+          "Completed and launched in August 2026.\nSuccessfully launched a central hub for all portfolio content outside of social media platforms.\nImproved skills with Agentic AI IDEs",
       },
     ],
   },
@@ -7237,7 +7237,7 @@ const SUPPORTING_ARCHIVE_PDF_ITEMS: SupportingArchivePdfItem[] = [
   },
   {
     id: "cnf-memoir",
-    title: " Way of the Frog: Amphibious Meditations",
+    title: "Way of the Frog: Amphibious Meditations",
     subtitle: "Robbie McLaughlin (2023)",
     href: "/cnf/example-4-memoir.pdf",
     thumbnail: "/frog.png",
@@ -7285,13 +7285,13 @@ const SHORT_GRAPHIC_NOVEL_PDF_ITEMS: SupportingArchivePdfItem[] = [
   {
     id: "sgn-writ405-final",
     title: "WRIT405",
-    subtitle: "Final revision ? Robbie McLaughlin",
+    subtitle: "Final revision · Robbie McLaughlin",
     href: "/short-graphic-novels/writ405-final-revision-robbie-mclaughlin.pdf",
   },
   {
     id: "sgn-blossom-thumbnails",
     title: "Blossom",
-    subtitle: "Thumbnails ? Robbie McLaughlin",
+    subtitle: "Thumbnails · Robbie McLaughlin",
     href: "/short-graphic-novels/blossom-thumbnails-robbie-mclaughlin.pdf",
   },
   {
@@ -7303,9 +7303,9 @@ const SHORT_GRAPHIC_NOVEL_PDF_ITEMS: SupportingArchivePdfItem[] = [
 ];
 
 const SUPPORTING_ARCHIVE_PDF_SECTIONS: { heading: string; items: SupportingArchivePdfItem[] }[] = [
-  { heading: "Creative nonfiction ? PDF", items: SUPPORTING_ARCHIVE_PDF_ITEMS },
-  { heading: "Screenplays ? PDF", items: SCREENPLAY_PDF_ITEMS },
-  { heading: "Short graphic novels ? PDF", items: SHORT_GRAPHIC_NOVEL_PDF_ITEMS },
+  { heading: "Creative nonfiction · PDF", items: SUPPORTING_ARCHIVE_PDF_ITEMS },
+  { heading: "Screenplays · PDF", items: SCREENPLAY_PDF_ITEMS },
+  { heading: "Short graphic novels · PDF", items: SHORT_GRAPHIC_NOVEL_PDF_ITEMS },
 ];
 
 /**
@@ -9675,18 +9675,75 @@ const ShowcaseDetailIllustrationsGrid = ({
   );
 };
 
+const SHOWCASE_OVERVIEW_COPY_CLASS =
+  "font-body text-sm sm:text-base text-mono-2 leading-snug whitespace-pre-line";
+const SHOWCASE_OVERVIEW_LIST_CLASS =
+  "ml-1 list-disc list-outside space-y-1 pl-6 sm:pl-7 marker:text-mono-2/70";
+
+function renderShowcaseOverviewCopy(text: string) {
+  if (!text.split("\n").some((line) => line.startsWith("- "))) {
+    return <p className={SHOWCASE_OVERVIEW_COPY_CLASS}>{text}</p>;
+  }
+  const blocks: Array<{ kind: "text"; text: string } | { kind: "list"; items: string[] }> = [];
+  let textLines: string[] = [];
+  let items: string[] = [];
+  const flushText = () => {
+    if (textLines.length === 0) return;
+    const joined = textLines.join("\n");
+    textLines = [];
+    if (!joined.trim()) return;
+    blocks.push({ kind: "text", text: joined });
+  };
+  const flushList = () => {
+    if (items.length === 0) return;
+    blocks.push({ kind: "list", items: items.slice() });
+    items = [];
+  };
+  for (const line of text.split("\n")) {
+    if (line.startsWith("- ")) {
+      flushText();
+      items.push(line.slice(2));
+      continue;
+    }
+    if (items.length > 0) flushList();
+    textLines.push(line);
+  }
+  flushList();
+  flushText();
+  return (
+    <div className="min-w-0">
+      {blocks.map((block, index) =>
+        block.kind === "list" ? (
+          <ul key={`ov-list-${index}`} className={SHOWCASE_OVERVIEW_LIST_CLASS}>
+            {block.items.map((item, itemIndex) => (
+              <li
+                key={`ov-item-${index}-${itemIndex}`}
+                className="font-body text-sm sm:text-base text-mono-2 leading-snug"
+              >
+                {item}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p key={`ov-text-${index}`} className={SHOWCASE_OVERVIEW_COPY_CLASS}>
+            {block.text}
+          </p>
+        ),
+      )}
+    </div>
+  );
+}
+
 const ShowcaseDetailOverviewRole = ({ card }: { card: ShowcaseProjectCard }) => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-3">
     <section className={`${showcaseDetailCard} min-w-0 md:col-span-2`}>
       <p className="font-heading text-xs tracking-eyebrow-tight leading-snug uppercase text-[color:var(--palette-yellow-projects)] mb-1.5">OVERVIEW</p>
-      <p className="font-body text-sm sm:text-base text-mono-2 leading-snug whitespace-pre-line">
-        {card.detailOverview?.trim() || "?"}
-      </p>
+      {renderShowcaseOverviewCopy(card.detailOverview?.trim() || "—")}
     </section>
     <section className={`${showcaseDetailCard} min-w-0`}>
       <p className="font-heading text-xs tracking-eyebrow-tight leading-snug uppercase text-[color:var(--palette-yellow-projects)] mb-1.5">ROLE</p>
       <p className="font-body text-sm sm:text-base text-mono-2 leading-snug whitespace-pre-line">
-        {card.detailRole?.trim() || "?"}
+        {card.detailRole?.trim() || "—"}
       </p>
     </section>
   </div>
@@ -9697,7 +9754,7 @@ const ShowcaseDetailImpactTools = ({ card }: { card: ShowcaseProjectCard }) => (
     <section className={`${showcaseDetailCard} min-w-0 md:col-span-2`}>
       <p className="font-heading text-xs tracking-eyebrow-tight leading-snug uppercase text-[color:var(--palette-yellow-projects)] mb-1.5">IMPACT</p>
       <p className="font-body text-sm sm:text-base text-mono-2 leading-snug whitespace-pre-line">
-        {card.detailImpact?.trim() || "?"}
+        {card.detailImpact?.trim() || "—"}
       </p>
     </section>
     <section className={`${showcaseDetailCard} min-w-0`}>
@@ -9711,7 +9768,7 @@ const ShowcaseDetailImpactTools = ({ card }: { card: ShowcaseProjectCard }) => (
           ))}
         </ul>
       ) : (
-        <p className="font-body text-sm sm:text-base text-mono-2/55">?</p>
+        <p className="font-body text-sm sm:text-base text-mono-2/55">—</p>
       )}
     </section>
   </div>
@@ -13673,8 +13730,8 @@ const ViewportRuleOfThirdsOverlay = styled(RuleOfThirdsOverlay)`
 type SkillsAmbientBand = "core" | "tools";
 
 const SKILLS_AMBIENT_MARQUEE_COPY: Record<SkillsAmbientBand, string> = {
-  core: "Core ? Competencies ? Systems ? Execution ?",
-  tools: "Toolkit ? Stack ? Workflow ? Production ?",
+  core: "Core · Competencies · Systems · Execution ·",
+  tools: "Toolkit · Stack · Workflow · Production ·",
 };
 
 /** Stacked marquee ?wall? behind each skills card band only (not full page). */
@@ -14658,7 +14715,7 @@ const ResumeView = () => {
       {/* Header */}
       <header className="border-b-2 border-black pb-8 mb-8">
         <h1 className="text-4xl md:text-5xl font-bold uppercase tracking-tight mb-2">Robbie McLaughlin</h1>
-        <p className="text-xl text-gray-700 mb-4">Writer ? Digital Media Coordinator ? Content Creator</p>
+        <p className="text-xl text-gray-700 mb-4">Writer · Digital Media Coordinator · Content Creator</p>
         <div className="flex flex-wrap gap-4 text-sm font-medium">
           <a href="mailto:robbie@example.com" className="flex items-center gap-2 hover:underline">
             <Mail size={16} /> robbie@example.com
@@ -14714,7 +14771,7 @@ const ResumeView = () => {
         <div className="mb-8">
           <div className="flex justify-between items-baseline mb-2">
             <h3 className="text-xl font-bold">Starbucks</h3>
-            <span className="text-gray-600 font-medium">2018 ? Present</span>
+            <span className="text-gray-600 font-medium">2018 — Present</span>
           </div>
           <p className="italic text-gray-700 mb-3">Barista & Team Member</p>
           <ul className="list-disc list-outside ml-5 space-y-2 text-gray-800">

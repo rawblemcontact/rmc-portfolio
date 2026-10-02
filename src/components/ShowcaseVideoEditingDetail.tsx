@@ -265,6 +265,74 @@ function renderDetailInlineEm(text: string) {
   });
 }
 
+const OVERVIEW_COPY_CLASS =
+  "m-0 whitespace-pre-line font-body text-sm leading-snug text-mono-2 sm:text-base";
+const OVERVIEW_LIST_CLASS =
+  "ml-1 mb-0 list-disc list-outside space-y-1 pl-6 marker:text-mono-2/70 sm:pl-7";
+const OVERVIEW_ITEM_CLASS = "font-body text-sm leading-snug text-mono-2 sm:text-base";
+
+type OverviewCopyBlock =
+  | { kind: "text"; text: string }
+  | { kind: "list"; items: string[] };
+
+/** Lines that start with "- " become list items. Other dashes stay in the text. */
+function splitOverviewFeatureBlocks(text: string): OverviewCopyBlock[] {
+  const blocks: OverviewCopyBlock[] = [];
+  let textLines: string[] = [];
+  let items: string[] = [];
+
+  const flushText = () => {
+    if (textLines.length === 0) return;
+    const joined = textLines.join("\n");
+    textLines = [];
+    if (!joined.trim()) return;
+    blocks.push({ kind: "text", text: joined });
+  };
+  const flushList = () => {
+    if (items.length === 0) return;
+    blocks.push({ kind: "list", items: items.slice() });
+    items = [];
+  };
+
+  for (const line of text.split("\n")) {
+    if (line.startsWith("- ")) {
+      flushText();
+      items.push(line.slice(2));
+      continue;
+    }
+    if (items.length > 0) flushList();
+    textLines.push(line);
+  }
+  flushList();
+  flushText();
+  return blocks;
+}
+
+function renderOverviewCopy(text: string) {
+  if (!text.split("\n").some((line) => line.startsWith("- "))) {
+    return <p className={OVERVIEW_COPY_CLASS}>{renderDetailInlineEm(text)}</p>;
+  }
+  return (
+    <div className="overview-feature-copy min-w-0">
+      {splitOverviewFeatureBlocks(text).map((block, index) =>
+        block.kind === "list" ? (
+          <ul key={`ov-list-${index}`} className={OVERVIEW_LIST_CLASS}>
+            {block.items.map((item, itemIndex) => (
+              <li key={`ov-item-${index}-${itemIndex}`} className={OVERVIEW_ITEM_CLASS}>
+                {renderDetailInlineEm(item)}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p key={`ov-text-${index}`} className={OVERVIEW_COPY_CLASS}>
+            {renderDetailInlineEm(block.text)}
+          </p>
+        ),
+      )}
+    </div>
+  );
+}
+
 /** Move `nextTabId` to index 0; the previous first tab takes its vacated slot. */
 function swapDetailTabToFront(
   order: readonly DetailCardTabId[],
@@ -562,9 +630,12 @@ function visualPxToLayoutPx(el: HTMLElement, visualPx: number): number {
 
 /** Copy height only — flex-stretched tab-body wrappers cannot inflate the drawer. */
 function measureCopyBlockHeight(el: HTMLElement, cardSurface?: HTMLElement | null): number {
-  const copy = el.matches("p, ul")
-    ? el
-    : el.querySelector(":scope p, :scope ul") ?? el.querySelector("p, ul");
+  const featureCopy = el.querySelector(":scope > .overview-feature-copy");
+  const copy = featureCopy instanceof HTMLElement
+    ? featureCopy
+    : el.matches("p, ul")
+      ? el
+      : el.querySelector(":scope p, :scope ul") ?? el.querySelector("p, ul");
   const node = copy instanceof HTMLElement ? copy : el;
   const laidOut = Math.max(
     node.offsetHeight,
@@ -4038,9 +4109,9 @@ export function ShowcaseVideoEditingDetail({
     (isSlaywire ? card.title : activeVideo.label || "Selected work");
   const activeSelectorSubtitle = activeVideo.selectorSubtitle?.trim() || "";
   const activeDetails = {
-    detailOverview: activeVideo.detailOverview?.trim() || card.detailOverview?.trim() || "?",
-    detailRole: activeVideo.detailRole?.trim() || card.detailRole?.trim() || "?",
-    detailImpact: activeVideo.detailImpact?.trim() || card.detailImpact?.trim() || "?",
+    detailOverview: activeVideo.detailOverview?.trim() || card.detailOverview?.trim() || "—",
+    detailRole: activeVideo.detailRole?.trim() || card.detailRole?.trim() || "—",
+    detailImpact: activeVideo.detailImpact?.trim() || card.detailImpact?.trim() || "—",
     detailTools: activeVideo.detailTools?.length ? activeVideo.detailTools : card.detailTools,
   };
 
@@ -4081,11 +4152,7 @@ export function ShowcaseVideoEditingDetail({
 
   const renderPortraitDetailTabBody = (tabId: DetailCardTabId) => {
     if (tabId === "overview") {
-      return (
-        <p className="m-0 whitespace-pre-line font-body text-sm leading-snug text-mono-2 sm:text-base">
-          {renderDetailInlineEm(activeDetails.detailOverview)}
-        </p>
-      );
+      return renderOverviewCopy(activeDetails.detailOverview);
     }
 
     if (tabId === "role") {
@@ -4155,7 +4222,7 @@ export function ShowcaseVideoEditingDetail({
       );
     }
 
-    return <p className="m-0 font-body text-sm text-mono-2/55 sm:text-base">?</p>;
+    return <p className="m-0 font-body text-sm text-mono-2/55 sm:text-base">—</p>;
   };
 
   const renderDetailCardTabBody = (tabId: DetailCardTabId, _variant: "portrait" | "ipad") => (
@@ -5241,13 +5308,11 @@ export function ShowcaseVideoEditingDetail({
                                   }}
                                   className="relative w-full min-w-0"
                                 >
-                                  <p className="m-0 whitespace-pre-line font-body text-sm leading-snug text-mono-2 sm:text-base">
-                                    {renderDetailInlineEm(
-                                      video.detailOverview?.trim() ||
-                                        card.detailOverview?.trim() ||
-                                        "?",
-                                    )}
-                                  </p>
+                                  {renderOverviewCopy(
+                                    video.detailOverview?.trim() ||
+                                      card.detailOverview?.trim() ||
+                                      "—",
+                                  )}
                                 </div>
                               ))}
                             </div>
