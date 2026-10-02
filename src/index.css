@@ -10757,3 +10757,11 @@
     color: rgb(255 255 255 / 0.9) !important;
   }
 }
+
+/* Desktop: 2px strokes so 1px subpixel splitting does not dim some sides. */
+@media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
+  #projects [data-carousel-card].project-card-surface,
+  #projects .featured-writing-panel {
+    border-width: 2px !important;
+  }
+}
