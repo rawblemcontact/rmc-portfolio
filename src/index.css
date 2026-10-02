@@ -10757,3 +10757,13 @@
     color: rgb(255 255 255 / 0.9) !important;
   }
 }
+
+/* Desktop: no forced compositing layers on project cards at rest (keeps 1px borders crisp like PROFILE). */
+@media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
+  #projects .projects-main-card-entrance-slot,
+  #projects .project-card-tap-shell,
+  #projects [data-carousel-card] {
+    will-change: auto !important;
+    backface-visibility: visible !important;
+  }
+}

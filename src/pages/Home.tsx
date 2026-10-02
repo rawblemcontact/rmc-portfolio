@@ -7896,7 +7896,7 @@ const ProjectsStack = ({
               return (
               <motion.div
                 key={card.id}
-                className="projects-main-card-entrance-slot min-w-0 overflow-visible transform-gpu"
+                className="projects-main-card-entrance-slot min-w-0 overflow-visible"
                 variants={projectsCardItemEntrance}
               >
                 {/* PORTFOLIO SPEED bounce — native media drag blocked separately (Brave hit-test freeze). */}
