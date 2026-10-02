@@ -10679,11 +10679,6 @@
   }
 }
 
-@media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
-  #projects [data-carousel-card] .project-card-thumbnail-section:has(img[src="/Visual_Design_Thumb.png"]) {
-    right: 1px !important;
-  }
-}
 
 /* Desktop: use the native card border (like iPad) instead of the ::after overlay stroke. */
 @media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
@@ -10700,5 +10695,15 @@
 
   #projects [data-carousel-card].project-card-surface::after {
     display: none !important;
+  }
+}
+
+/* Desktop (native border): media + description flush to the border on all four cards. */
+@media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
+  #projects [data-carousel-card] .project-card-thumbnail-section,
+  #projects [data-carousel-card] .project-card-description-section {
+    left: 0 !important;
+    right: 0 !important;
+    width: auto !important;
   }
 }
