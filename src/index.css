@@ -10669,3 +10669,11 @@
     transform-origin: 50% 50% !important;
   }
 }
+
+/* Keep Visual Design thumbnail inside the card stroke (was covering right border). */
+#projects [data-carousel-card] .project-card-thumbnail-section:has(img[src="/Visual_Design_Thumb.png"]) {
+  left: 1px !important;
+  right: 1px !important;
+  top: 1px !important;
+  width: auto !important;
+}
