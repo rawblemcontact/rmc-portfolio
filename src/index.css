@@ -3773,8 +3773,9 @@
       0 0 0 1px color-mix(in srgb, var(--palette-blue) 24%, transparent);
   }
 
-  /* Desktop: PROFILE-strength stroke (0.18) on the resume card + idle tabs (was 0.09). */
-  @media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
+  /* Desktop + iPad landscape: PROFILE-strength stroke (0.18) on the resume card + idle tabs (was 0.09). */
+  @media (min-width: 1024px) and (pointer: fine), (min-width: 1367px),
+    (min-width: 1024px) and (max-width: 1366px) and (orientation: landscape) and (any-pointer: coarse) {
     #experience .experience-card-entrance-shell {
       --career-overview-content-edge: var(--portfolio-glass-stroke);
     }
