@@ -10654,3 +10654,11 @@
     transform: translateY(-1px) !important;
   }
 }
+
+/* Mobile: show the full Visual Design thumbnail (no crop). */
+@media (max-width: 639.98px) {
+  #projects [data-carousel-card] img[src="/Visual_Design_Thumb.png"] {
+    object-fit: contain !important;
+    transform: none !important;
+  }
+}
