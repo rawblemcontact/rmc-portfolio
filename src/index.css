@@ -10677,3 +10677,10 @@
   top: 1px !important;
   width: auto !important;
 }
+
+/* Mobile only: Visual Design thumbnail zoom 1.1 -> 1.15. */
+@media (max-width: 639.98px) {
+  #projects [data-carousel-card] img[src="/Visual_Design_Thumb.png"] {
+    transform: scale(1.15) !important;
+  }
+}
