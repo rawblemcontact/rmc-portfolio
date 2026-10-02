@@ -10436,8 +10436,11 @@ const PalaceProjects = ({
     // do not divide by detailZoom (that over-widens). Keep detail zoom for type/media size.
     const widthPercent =
       (showcase.leftWidthScale / Math.max(showcase.leftHeightScale, 1e-6)) * 100;
+    // zoom multiplies the translate (11px * 0.8836 = 9.72px); Chrome won't pixel-snap that,
+    // smearing 1px card borders across two pixels. Round the effective offset (<=0.5px shift).
+    const snap = (v: number) => (detailZoom ? Math.round(v * detailZoom) / detailZoom : v);
     return {
-      transform: `translate(${detail.offsetX}px, ${detail.offsetY}px)`,
+      transform: `translate(${snap(detail.offsetX)}px, ${snap(detail.offsetY)}px)`,
       transformOrigin: "top center" as const,
       zoom: detailZoom,
       width: `${widthPercent}%`,
