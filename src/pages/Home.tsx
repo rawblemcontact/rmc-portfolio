@@ -6705,7 +6705,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         alt: "CHARGER - SLAYWIRE Concept Art (2023)",
         caption: "CHARGER - SLAYWIRE Concept Art (2023)",
         artistStatement:
-          "Digital-ink style illustration for the lead protagonist of SLAYWIRE. Blends an anime aesthetic with dark mechanical texture and typography.\n\n<em>\"WITHOUT A CHARGER,\nA MACHINE IS NOTHING.\"</em>\n\nTools: Procreate and Photoshop.",
+          "Digital-ink style illustration for the lead protagonist of SLAYWIRE. Blends an anime aesthetic with dark mechanical texture and typography.\n\n<em>\"WITHOUT A CHARGER,\nA MACHINE IS NOTHING.\"</em>\n\nTools: Procreate and Photoshop",
         focalPoint: "50% 42%",
       },
       {
@@ -6714,7 +6714,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         alt: "FRAGMENT - SLAYWIRE Concept Art (2023)",
         caption: "FRAGMENT - SLAYWIRE Concept Art (2023)",
         artistStatement:
-          "Digital-ink style illustration for the lead antagonist of SLAYWIRE. Features shattered typography and fractured geometry.\n\n<em>\"WE ALL BEGIN\nAND WE SHALL ALL END\nIN FRAGMENTS\"</em>\n\nTools: Procreate and Photoshop.",
+          "Digital-ink style illustration for the lead antagonist of SLAYWIRE. Features shattered typography and fractured geometry.\n\n<em>\"WE ALL BEGIN\nAND WE SHALL ALL END\nIN FRAGMENTS\"</em>\n\nTools: Procreate and Photoshop",
         focalPoint: "50% 45%",
       },
       {
@@ -6723,7 +6723,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         alt: "WISELY - SLAYWIRE Concept Art (2023)",
         caption: "WISELY - SLAYWIRE Concept Art (2023)",
         artistStatement:
-          "Digital-ink style illustration for SLAYWIRE's antihero. Merges cloaked fabric and metallic texture to achieve a unique expression of contrast.\n\n<em>\"O, CHILD.\nI CAN ONLY HOPE.\nYOU WERE NOT ONCE.\nLIKE ME.\nREST NOW.\nAND MAY YOUR IRON SLEEP.\nWITHOUT A FEELING.\"</em>\n\nTools: Procreate and Photoshop.",
+          "Digital-ink style illustration for SLAYWIRE's antihero. Merges cloaked fabric and metallic texture to achieve a unique expression of contrast.\n\n<em>\"O, CHILD.\nI CAN ONLY HOPE.\nYOU WERE NOT ONCE.\nLIKE ME.\nREST NOW.\nAND MAY YOUR IRON SLEEP.\nWITHOUT A FEELING.\"</em>\n\nTools: Procreate and Photoshop",
         focalPoint: "50% 42%",
       },
       {
@@ -6732,7 +6732,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         alt: "SPACE ANIMAL - Illustration (2023)",
         caption: "SPACE ANIMAL - Illustration (2023)",
         artistStatement:
-          "Digital-ink style homage to Star Fox (1993). Featuring the subject centered in profile; framed in the character's signature hexagonal \"shine\" pattern. Certain visual elements break past the framing and out into the larger canvas to communicate visual depth.\n\n<em>This is a noncommercial and transformative project. All trademarks and copyrights belong to their respective owners.</em>\n\nTools: Clip Studio Paint.",
+          "Digital-ink style homage to Star Fox (1993). Featuring the subject centered in profile; framed in the character's signature hexagonal \"shine\" pattern. Certain visual elements break past the framing and out into the larger canvas to communicate visual depth.\n\n<em>This is a noncommercial and transformative project. All trademarks and copyrights belong to their respective owners.</em>\n\nTools: Clip Studio Paint",
         focalPoint: "50% 50%",
       },
       {
@@ -6775,7 +6775,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         alt: "Vancouver Island Melee - Poster Design (2020)",
         caption: "Vancouver Island Melee - Poster Design (2020)",
         artistStatement:
-          "Designed for the Vancouver Island UVic E-Sports Community.\n\nA visual homage to Pokémon Emerald (2005) and its famous gym leader ranking system. Implemented as both a creative and functional solution to a four-person tie for the season's final ranking results.\n\nUses in-game character models and background references, but each featured character in this design was recreated and modified by hand, using a 1px brush in Photoshop, dot by dot.\n\nAll re-models and re-designs visually resemble each competitor's likeness (with permission).\n\n<em>This is a noncommercial and transformative project. All trademarks and copyrights belong to their respective owners.</em>\n\nTools: Clip Studio Paint, Photoshop/GIMP, Inkscape and Figma (for SVG formats).",
+          "Designed for the Vancouver Island UVic E-Sports Community.\n\nA visual homage to Pokémon Emerald (2005) and its famous gym leader ranking system. Implemented as both a creative and functional solution to a four-person tie for the season's final ranking results.\n\nUses in-game character models and background references, but each featured character in this design was recreated and modified by hand, using a 1px brush in Photoshop, dot by dot.\n\nAll re-models and re-designs visually resemble each competitor's likeness (with permission).\n\n<em>This is a noncommercial and transformative project. All trademarks and copyrights belong to their respective owners.</em>\n\nTools: Clip Studio Paint, Photoshop/GIMP, Inkscape and Figma (for SVG formats)",
         focalPoint: "50% 38%",
       },
       {
@@ -6784,7 +6784,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         alt: "RAWBLEM Logo - Brand Design (2025)",
         caption: "RAWBLEM Logo - Brand Design (2025)",
         artistStatement:
-          "Hand-drawn, digital ink style logo with matching custom typography.\n\nTools: Clip Studio Paint, Photoshop, Inkscape (for SVG formats).",
+          "Hand-drawn, digital ink style logo with matching custom typography.\n\nTools: Clip Studio Paint, Photoshop, Inkscape (for SVG formats)",
         focalPoint: "50% 45%",
       },
       {
