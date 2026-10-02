@@ -10665,13 +10665,11 @@
 }
 
 /* Keep Visual Design thumbnail inside the card stroke (was covering right border). */
-@media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
-  #projects [data-carousel-card] .project-card-thumbnail-section:has(img[src="/Visual_Design_Thumb.png"]) {
-    left: 1px !important;
-    right: 1px !important;
-    top: 1px !important;
-    width: auto !important;
-  }
+#projects [data-carousel-card] .project-card-thumbnail-section:has(img[src="/Visual_Design_Thumb.png"]) {
+  left: 0 !important;
+  right: 0 !important;
+  top: 0 !important;
+  width: auto !important;
 }
 
 /* Mobile only: Visual Design thumbnail zoom 1.1 -> 1.2. */
