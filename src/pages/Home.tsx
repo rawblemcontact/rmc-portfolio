@@ -8010,6 +8010,8 @@ const ProjectsStack = ({
                                     </>
                                   ) : card.id === "project-video-editing" ? (
                                     <source media="(min-width: 640px) and (max-width: 1366px) and (orientation: portrait) and (pointer: coarse)" srcSet="/Video_Editing_Thumb_ipad_portrait.png" />
+                                  ) : card.id === "project-interactive-media" ? (
+                                    <source media="(min-width: 640px) and (max-width: 1366px) and (orientation: portrait) and (pointer: coarse)" srcSet="/Interactive_Media_Thumb_ipad_portrait.png" />
                                   ) : null}
                                 <img
                                   src={card.thumbnail}
