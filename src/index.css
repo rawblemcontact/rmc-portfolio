@@ -10684,3 +10684,21 @@
     right: 1px !important;
   }
 }
+
+/* Desktop: use the native card border (like iPad) instead of the ::after overlay stroke. */
+@media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
+  #projects [data-carousel-card].project-card-surface {
+    border-color: var(--portfolio-glass-stroke) !important;
+    transition: border-color 0.3s ease-out, opacity 0.3s ease-out, background-color 0.3s ease-out;
+  }
+
+  #projects [data-carousel-card].project-card-surface:hover,
+  #projects [data-carousel-card].project-card-surface:focus-visible,
+  #projects [data-carousel-card].project-card-surface.is-press-accent {
+    border-color: var(--palette-yellow-projects) !important;
+  }
+
+  #projects [data-carousel-card].project-card-surface::after {
+    display: none !important;
+  }
+}
