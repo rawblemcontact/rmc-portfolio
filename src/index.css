@@ -3773,6 +3773,21 @@
       0 0 0 1px color-mix(in srgb, var(--palette-blue) 24%, transparent);
   }
 
+  /* Desktop: PROFILE-strength stroke (0.18) on the resume card + idle tabs (was 0.09). */
+  @media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
+    #experience .experience-card-entrance-shell {
+      --career-overview-content-edge: var(--portfolio-glass-stroke);
+    }
+
+    #experience .tab-btn:not(.active) {
+      box-shadow: inset 0 0 0 1px var(--portfolio-glass-stroke);
+    }
+
+    #experience .tab-btn:not(.active):hover {
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.24);
+    }
+  }
+
   #experience .tab-text {
     position: relative;
     z-index: 1;

@@ -112,8 +112,12 @@ export function buildDesktopLayoutSideStyle(
   }
 
   const zoom = scale * heightScale;
+  /* `zoom` multiplies the translate (e.g. 9px * 0.95 = 8.55px). Chrome doesn't pixel-snap a
+   * fractional translation, so 1px borders inside smear across two pixels. Round the
+   * *effective* offset to whole pixels (<=0.5px shift). */
+  const snap = (v: number) => (zoom ? Math.round(v * zoom) / zoom : v);
   const style: CSSProperties = {
-    transform: `translate(${offsetX}px, ${offsetY}px)`,
+    transform: `translate(${snap(offsetX)}px, ${snap(offsetY)}px)`,
     transformOrigin,
     zoom,
   };
