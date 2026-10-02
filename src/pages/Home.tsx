@@ -8004,7 +8004,10 @@ const ProjectsStack = ({
                               <div className="h-full w-full">
                                 <picture className="contents">
                                   {card.id === "project-visual-design" ? (
-                                    <source media="(max-width: 1023.98px), (max-width: 1366px) and (pointer: coarse)" srcSet="/Visual_Design_Thumb_mobile.png" />
+                                    <>
+                                      <source media="(min-width: 640px) and (max-width: 1366px) and (orientation: portrait) and (pointer: coarse)" srcSet="/Visual_Design_Thumb_ipad_portrait.png" />
+                                      <source media="(max-width: 1023.98px), (max-width: 1366px) and (pointer: coarse)" srcSet="/Visual_Design_Thumb_mobile.png" />
+                                    </>
                                   ) : null}
                                 <img
                                   src={card.thumbnail}
