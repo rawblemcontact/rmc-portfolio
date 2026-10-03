@@ -8006,6 +8006,7 @@ const ProjectsStack = ({
                                   {card.id === "project-visual-design" ? (
                                     <>
                                       <source media="(min-width: 640px) and (max-width: 1366px) and (orientation: portrait) and (pointer: coarse)" srcSet="/Visual_Design_Thumb_ipad_portrait.png" />
+                                      <source media="(min-width: 768px) and (max-width: 1366px) and (min-height: 600px) and (orientation: landscape) and (pointer: coarse)" srcSet="/Visual_Design_Thumb_ipad_landscape.png" />
                                       <source media="(max-width: 1023.98px), (max-width: 1366px) and (pointer: coarse)" srcSet="/Visual_Design_Thumb_mobile.png" />
                                       <source media="(min-width: 1024px) and (pointer: fine), (min-width: 1367px)" srcSet="/Visual_Design_Thumb_desktop.png" />
                                     </>

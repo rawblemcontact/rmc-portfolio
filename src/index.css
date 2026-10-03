@@ -10702,14 +10702,6 @@
   }
 }
 
-/* iPad landscape only: 10% zoom on Visual Design thumbnail (must follow the iPad transform:none rule above). */
-@media (min-width: 768px) and (max-width: 1366px) and (min-height: 600px) and (orientation: landscape) and (pointer: coarse) {
-  #projects [data-carousel-card] img[src="/Visual_Design_Thumb.png"] {
-    transform: scale(1.1) !important;
-    transform-origin: 50% 50% !important;
-  }
-}
-
 
 /* Desktop: use the native card border (like iPad) instead of the ::after overlay stroke. */
 @media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
