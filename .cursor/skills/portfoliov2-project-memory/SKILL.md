@@ -32,6 +32,7 @@ disable-model-invocation: true
 
 | Date | Note |
 |------|------|
+| 2026-09-26 | **PROJECT DETAILS desc-card drawer height** — One visible height tween only; measure live (matched to probe) or probe clone before start; wait for live on first switch; snap title height; no settle pin / live-fit / cap height rewrite after. Locked in `portfoliov2-showcase-overlays` + `ShowcaseVideoEditingDetail.tsx`. |
 | 2026-09-26 | **Default branch = `continue-publish-main`** — All PR bases, merges, and publish work target this branch. Never default to `main`. Recorded in `AGENTS.md` Branch Safety. |
 | 2026-09-17 | **SHOWCASE native YouTube** — Future YouTube clips: set `detailVideos[].url` to the YouTube URL. Player is a native `youtube-nocookie` iframe in `ShowcaseVideoEditingDetail` (same card, YouTube’s controls). Do not reintroduce Plyr around YouTube. Strip thumbs can keep `thumbnailSrc`. Plyr remains for local files only. |
 | 2026-09-13 | **Palette yellow undo** — Desktop back to `#ffe100` (undid `#ffe400` and `#ffe800`). iOS P3 unchanged. `--palette-yellow-projects` aliases `--palette-yellow`. |
