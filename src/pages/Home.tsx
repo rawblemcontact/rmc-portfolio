@@ -7258,6 +7258,7 @@ const SCREENPLAY_PDF_ITEMS: SupportingArchivePdfItem[] = [
     subtitle: "Robbie McLaughlin",
     href: "/screenplays/audience-of-one-robbie-mclaughlin.pdf",
     thumbnail: "/audience.png",
+    thumbnailDesktop: "/Screenplay_Preview_desktop.png",
     description:
       "Atop Peach Hill Cemetery, a grieving detective must stop a disturbed sock puppeteer's fatal final act.\n\nTools: Arc Studio (Screenwriting Software)\n\nFormat: Short Film\nGenre: Psychological, film noir, dark fantasy.",
   },
