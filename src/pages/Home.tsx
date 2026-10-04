@@ -7216,6 +7216,7 @@ const SUPPORTING_ARCHIVE_PDF_ITEMS: SupportingArchivePdfItem[] = [
     subtitle: "Robbie McLaughlin",
     href: "/cnf/example-1-article.pdf",
     thumbnail: "/ContentWriting_thumb.png",
+    thumbnailDesktop: "/Content_Writing_Preview_desktop.png",
     description:
       "An interactive persuasive article, exploring the integration of the visual novel format with the genre of creative nonfiction. Uses limitations of the written format to highlight interactivity, and its ability to enhance the reader's experience, while keeping the content grounded in truth.",
   },
