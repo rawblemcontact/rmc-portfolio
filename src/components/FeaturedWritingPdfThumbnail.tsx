@@ -9,6 +9,10 @@ const FIXED_H = 216;
 /** When false, skip PDF.js raster and show the FileText placeholder on all viewports. */
 const FEATURED_WRITING_PDF_PREVIEW_ENABLED = false;
 
+/** Desktop + iPad landscape; every other viewport uses `thumbnailSrc`. */
+const DESKTOP_THUMBNAIL_MEDIA =
+  "(min-width:1024px) and (pointer:fine), (min-width:1367px), (min-width:768px) and (max-width:1366px) and (min-height:600px) and (orientation:landscape) and (pointer:coarse)";
+
 const dataUrlByKey = new Map<string, string>();
 
 function cacheKey(pdfSrc: string, widthPx: number, dpr: number) {
@@ -19,6 +23,8 @@ type Props = {
   pdfSrc: string;
   /** Static thumbnail image for the PROJECTS PDF preview. */
   thumbnailSrc?: string;
+  /** Optional static thumbnail for desktop + iPad landscape (see DESKTOP_THUMBNAIL_MEDIA). */
+  thumbnailDesktopSrc?: string;
   /** Display / raster width in CSS px (e.g. active tab width). */
   widthPx?: number;
   className?: string;
@@ -34,6 +40,7 @@ type Props = {
 export function FeaturedWritingPdfThumbnail({
   pdfSrc,
   thumbnailSrc,
+  thumbnailDesktopSrc,
   widthPx = DEFAULT_W,
   className = "",
   onActivate,
@@ -52,6 +59,7 @@ export function FeaturedWritingPdfThumbnail({
   );
   const [error, setError] = useState(false);
   const staticThumbnail = thumbnailSrc?.trim() ?? "";
+  const staticThumbnailDesktop = thumbnailDesktopSrc?.trim() ?? "";
 
   useEffect(() => {
     if (staticThumbnail) {
@@ -184,7 +192,17 @@ export function FeaturedWritingPdfThumbnail({
         />
       ) : null}
 
-      {staticThumbnail ? (
+      {staticThumbnail && staticThumbnailDesktop ? (
+        <picture className="block h-full w-full">
+          <source media={DESKTOP_THUMBNAIL_MEDIA} srcSet={staticThumbnailDesktop} />
+          <img
+            src={staticThumbnail}
+            alt=""
+            className="relative z-[1] h-full w-full object-cover object-top"
+            draggable={false}
+          />
+        </picture>
+      ) : staticThumbnail ? (
         <img
           src={staticThumbnail}
           alt=""

@@ -7202,6 +7202,8 @@ type SupportingArchivePdfItem = {
   index?: string;
   /** Optional static first-page thumbnail used by the PROJECTS PDF preview. */
   thumbnail?: string;
+  /** Optional FEATURED WRITING preview for desktop + iPad landscape (falls back to `thumbnail`). */
+  thumbnailDesktop?: string;
 };
 
 const supportingPdfHref = (item: SupportingArchivePdfItem) => item.href?.trim() ?? "";
@@ -7223,6 +7225,7 @@ const SUPPORTING_ARCHIVE_PDF_ITEMS: SupportingArchivePdfItem[] = [
     subtitle: "Robbie McLaughlin",
     href: "/cnf/example-2-media-literary-analysis.pdf",
     thumbnail: "/omori_thumb.png",
+    thumbnailDesktop: "/Media_Analysis_Preview_desktop.png",
     description:
       "A written analysis on <em>Omori</em>: An indie psychological-horror game developed by OMOCAT (2020). Explores how horror elements and narrative-based game mechanics can be used to destigmatize mental health disorders.",
   },
@@ -9845,6 +9848,7 @@ function ShowcaseWritingFeaturedPanel({
         <FeaturedWritingPdfThumbnail
           pdfSrc={supportingPdfHref(item)}
           thumbnailSrc={item.thumbnail}
+          thumbnailDesktopSrc={item.thumbnailDesktop}
           widthPx={previewWidthPx}
           className="shrink-0 self-start"
           onActivate={() => onOpenPdfInSupporting(item)}
