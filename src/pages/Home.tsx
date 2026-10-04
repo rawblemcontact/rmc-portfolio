@@ -7236,6 +7236,7 @@ const SUPPORTING_ARCHIVE_PDF_ITEMS: SupportingArchivePdfItem[] = [
     subtitle: "Robbie McLaughlin",
     href: "/cnf/example-3-critical-literary-essay.pdf",
     thumbnail: "/mammy_thumb.png",
+    thumbnailDesktop: "/Literary_Analysis_Preview_desktop.png",
     description:
       "A structural breakdown of Séamas O'Reilly's award-winning memoir: <em>Did Ye Hear Mammy Died?</em> A closer look into the author's craft and technique in creative nonfiction.",
   },
