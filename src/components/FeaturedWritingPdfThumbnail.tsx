@@ -13,6 +13,9 @@ const FEATURED_WRITING_PDF_PREVIEW_ENABLED = false;
 const DESKTOP_THUMBNAIL_MEDIA =
   "(min-width:1024px) and (pointer:fine), (min-width:1367px), (min-width:768px) and (max-width:1366px) and (min-height:600px) and (orientation:landscape) and (pointer:coarse)";
 
+/** Fallback when only a desktop thumbnail exists: other viewports keep the current (empty) look. */
+const TRANSPARENT_PIXEL_SRC = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+
 const dataUrlByKey = new Map<string, string>();
 
 function cacheKey(pdfSrc: string, widthPx: number, dpr: number) {
@@ -192,11 +195,11 @@ export function FeaturedWritingPdfThumbnail({
         />
       ) : null}
 
-      {staticThumbnail && staticThumbnailDesktop ? (
+      {staticThumbnailDesktop ? (
         <picture className="block h-full w-full">
           <source media={DESKTOP_THUMBNAIL_MEDIA} srcSet={staticThumbnailDesktop} />
           <img
-            src={staticThumbnail}
+            src={staticThumbnail || TRANSPARENT_PIXEL_SRC}
             alt=""
             className="relative z-[1] h-full w-full object-cover object-top"
             draggable={false}

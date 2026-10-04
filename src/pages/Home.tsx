@@ -7325,6 +7325,7 @@ const SHOWCASE_WRITING_TAB_FEATURED_ORDER = [
     id: "narrative-design-forever-home",
     title: "Undertale: Forever Home Edition",
     subtitle: "Robbie McLaughlin",
+    thumbnailDesktop: "/Narrative_Design_Preview_desktop.png",
     description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.\n\nSed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
   },
   SUPPORTING_ARCHIVE_PDF_ITEMS.find((x) => x.id === "cnf-critical-essay")!,
