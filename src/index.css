@@ -10802,23 +10802,15 @@
 }
 
 /*
- * FEATURED WRITING PDF preview border (per item via `data-preview-border`). Overlay stroke so it sits above
- * the image + grid without shrinking them; default = project-card glass stroke. All viewports.
+ * FEATURED WRITING PDF preview border — only items with `data-preview-border="white"` (Screenplay, Narrative Design).
+ * Overlay stroke so it sits above the image + grid without shrinking them. All viewports.
  */
-.featured-writing-raised[data-preview-border]::after {
+.featured-writing-raised[data-preview-border="white"]::after {
   content: "";
   position: absolute;
   inset: 0;
   z-index: 4;
   border-radius: inherit;
   pointer-events: none;
-  border: 1px solid var(--portfolio-glass-stroke);
-}
-
-.featured-writing-raised[data-preview-border="black"]::after {
-  border-color: #000;
-}
-
-.featured-writing-raised[data-preview-border="white"]::after {
-  border-color: #fff;
+  border: 1px solid #fff;
 }

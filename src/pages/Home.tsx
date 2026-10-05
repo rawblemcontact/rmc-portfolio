@@ -7204,8 +7204,8 @@ type SupportingArchivePdfItem = {
   thumbnail?: string;
   /** Optional FEATURED WRITING preview for desktop + iPad landscape (falls back to `thumbnail`). */
   thumbnailDesktop?: string;
-  /** Optional FEATURED WRITING preview border color (omit = default glass stroke, same as project cards). */
-  previewBorder?: "black" | "white";
+  /** Optional FEATURED WRITING preview border (omit = no border). */
+  previewBorder?: "white";
 };
 
 const supportingPdfHref = (item: SupportingArchivePdfItem) => item.href?.trim() ?? "";
@@ -7219,7 +7219,6 @@ const SUPPORTING_ARCHIVE_PDF_ITEMS: SupportingArchivePdfItem[] = [
     href: "/cnf/example-1-article.pdf",
     thumbnail: "/ContentWriting_thumb.png",
     thumbnailDesktop: "/Content_Writing_Preview_desktop.png",
-    previewBorder: "black",
     description:
       "An interactive persuasive article, exploring the integration of the visual novel format with the genre of creative nonfiction. Uses limitations of the written format to highlight interactivity, and its ability to enhance the reader's experience, while keeping the content grounded in truth.",
   },
@@ -7230,7 +7229,6 @@ const SUPPORTING_ARCHIVE_PDF_ITEMS: SupportingArchivePdfItem[] = [
     href: "/cnf/example-2-media-literary-analysis.pdf",
     thumbnail: "/omori_thumb.png",
     thumbnailDesktop: "/Media_Analysis_Preview_desktop.png",
-    previewBorder: "black",
     description:
       "A written analysis on <em>Omori</em>: An indie psychological-horror game developed by OMOCAT (2020). Explores how horror elements and narrative-based game mechanics can be used to destigmatize mental health disorders.",
   },
