@@ -224,7 +224,7 @@ export function FeaturedWritingPdfThumbnail({
 
       {(showImg || staticThumbnail) ? (
         <div
-          className="pointer-events-none absolute inset-0 z-[2] bg-[linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[length:8px_8px] opacity-[0.35]"
+          className={`${staticThumbnailDesktop ? "featured-writing-thumb-grid--desktop-art " : ""}pointer-events-none absolute inset-0 z-[2] bg-[linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[length:8px_8px] opacity-[0.35]`}
           aria-hidden
         />
       ) : null}

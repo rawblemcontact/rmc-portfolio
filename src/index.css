@@ -10790,3 +10790,13 @@
     backface-visibility: visible !important;
   }
 }
+
+/*
+ * FEATURED WRITING desktop/iPad landscape preview art (`thumbnailDesktop`): no faint grid overlay,
+ * so solid black in the artwork stays solid black. Same media list as DESKTOP_THUMBNAIL_MEDIA.
+ */
+@media (min-width: 1024px) and (pointer: fine), (min-width: 1367px), (min-width: 768px) and (max-width: 1366px) and (min-height: 600px) and (orientation: landscape) and (pointer: coarse) {
+  .featured-writing-thumb-grid--desktop-art {
+    display: none;
+  }
+}
