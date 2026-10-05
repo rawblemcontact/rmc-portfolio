@@ -7204,6 +7204,8 @@ type SupportingArchivePdfItem = {
   thumbnail?: string;
   /** Optional FEATURED WRITING preview for desktop + iPad landscape (falls back to `thumbnail`). */
   thumbnailDesktop?: string;
+  /** Optional FEATURED WRITING preview border color (omit = default glass stroke, same as project cards). */
+  previewBorder?: "black" | "white";
 };
 
 const supportingPdfHref = (item: SupportingArchivePdfItem) => item.href?.trim() ?? "";
@@ -7217,6 +7219,7 @@ const SUPPORTING_ARCHIVE_PDF_ITEMS: SupportingArchivePdfItem[] = [
     href: "/cnf/example-1-article.pdf",
     thumbnail: "/ContentWriting_thumb.png",
     thumbnailDesktop: "/Content_Writing_Preview_desktop.png",
+    previewBorder: "black",
     description:
       "An interactive persuasive article, exploring the integration of the visual novel format with the genre of creative nonfiction. Uses limitations of the written format to highlight interactivity, and its ability to enhance the reader's experience, while keeping the content grounded in truth.",
   },
@@ -7227,6 +7230,7 @@ const SUPPORTING_ARCHIVE_PDF_ITEMS: SupportingArchivePdfItem[] = [
     href: "/cnf/example-2-media-literary-analysis.pdf",
     thumbnail: "/omori_thumb.png",
     thumbnailDesktop: "/Media_Analysis_Preview_desktop.png",
+    previewBorder: "black",
     description:
       "A written analysis on <em>Omori</em>: An indie psychological-horror game developed by OMOCAT (2020). Explores how horror elements and narrative-based game mechanics can be used to destigmatize mental health disorders.",
   },
@@ -7259,6 +7263,7 @@ const SCREENPLAY_PDF_ITEMS: SupportingArchivePdfItem[] = [
     href: "/screenplays/audience-of-one-robbie-mclaughlin.pdf",
     thumbnail: "/audience.png",
     thumbnailDesktop: "/Screenplay_Preview_desktop.png",
+    previewBorder: "white",
     description:
       "Atop Peach Hill Cemetery, a grieving detective must stop a disturbed sock puppeteer's fatal final act.\n\nTools: Arc Studio (Screenwriting Software)\n\nFormat: Short Film\nGenre: Psychological, film noir, dark fantasy.",
   },
@@ -7326,6 +7331,7 @@ const SHOWCASE_WRITING_TAB_FEATURED_ORDER = [
     title: "Undertale: Forever Home Edition",
     subtitle: "Robbie McLaughlin",
     thumbnailDesktop: "/Narrative_Design_Preview_desktop.png",
+    previewBorder: "white",
     description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.\n\nSed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
   },
   SUPPORTING_ARCHIVE_PDF_ITEMS.find((x) => x.id === "cnf-critical-essay")!,
@@ -9854,6 +9860,7 @@ function ShowcaseWritingFeaturedPanel({
           pdfSrc={supportingPdfHref(item)}
           thumbnailSrc={item.thumbnail}
           thumbnailDesktopSrc={item.thumbnailDesktop}
+          previewBorder={item.previewBorder}
           widthPx={previewWidthPx}
           className="shrink-0 self-start"
           onActivate={() => onOpenPdfInSupporting(item)}

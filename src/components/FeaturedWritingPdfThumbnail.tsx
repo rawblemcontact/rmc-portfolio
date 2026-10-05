@@ -28,6 +28,8 @@ type Props = {
   thumbnailSrc?: string;
   /** Optional static thumbnail for desktop + iPad landscape (see DESKTOP_THUMBNAIL_MEDIA). */
   thumbnailDesktopSrc?: string;
+  /** Preview border color; omit for the default glass stroke (same as project cards). */
+  previewBorder?: "black" | "white";
   /** Display / raster width in CSS px (e.g. active tab width). */
   widthPx?: number;
   className?: string;
@@ -44,6 +46,7 @@ export function FeaturedWritingPdfThumbnail({
   pdfSrc,
   thumbnailSrc,
   thumbnailDesktopSrc,
+  previewBorder,
   widthPx = DEFAULT_W,
   className = "",
   onActivate,
@@ -168,6 +171,7 @@ export function FeaturedWritingPdfThumbnail({
         className,
       ].join(" ")}
       style={{ width: layoutW, height: layoutH, maxWidth: "100%" }}
+      data-preview-border={previewBorder ?? "default"}
       role={interactive && !isBlank ? "button" : undefined}
       tabIndex={interactive ? 0 : undefined}
       aria-busy={showLoadingShell}
