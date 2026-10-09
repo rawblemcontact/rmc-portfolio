@@ -10893,8 +10893,10 @@
  * text: on select the real text fades to transparent while the aurora fades in (300ms), and the
  * reverse on deselect. Inactive labels keep the original mono colour + yellow hover.
  */
-#projects.projects-slaywire-detail-open .video-editing-detail-card-tab-label {
-  --aurora-duration: 4.5s;
+#projects.projects-slaywire-detail-open .video-editing-detail-card-tab-label,
+#projects.projects-slaywire-detail-open .slaywire-aurora-text {
+  /* Active tab label + "PROJECT DETAILS" eyebrow: 3s (thumb border / focus ring stay 9s). */
+  --aurora-duration: 3s;
 }
 #projects.projects-slaywire-detail-open .video-editing-detail-card-tab[aria-selected="true"] {
   color: transparent !important;
