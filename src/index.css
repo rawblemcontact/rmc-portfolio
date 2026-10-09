@@ -10830,35 +10830,12 @@
   transition: filter 1.4s cubic-bezier(0.45, 0, 0.25, 1);
 }
 
-/* Grid greys FIRST as the opening beat (SLAYWIRE_GRID_GREY_MS = 700 in Home.tsx). */
-#projects.projects-slaywire-detail-open > .projects-section-grid {
-  transition: filter 0.7s cubic-bezier(0.45, 0, 0.25, 1);
-}
-
 #projects.projects-slaywire-greyscale .video-editing-detail-divider-wrap,
 #projects.projects-slaywire-greyscale .video-editing-works-strip-thumb-caption > * {
   /* Washed-out grey, not just desaturated: flatten contrast, dim, and fade. */
   filter: grayscale(1) contrast(0.7) brightness(0.85) opacity(0.8);
 }
 
-/*
- * Grid BG is near-black (#020202 + #080808 lines), so grayscale alone is invisible.
- * Lift it first (brightness spreads the line/fill gap), then flatten toward mid-grey so the
- * whole backdrop reads as a visible grey wash with grey grid lines (~#3e3e3e / #4b4b4b).
- */
-#projects.projects-slaywire-grid-grey > .projects-section-grid {
-  /* Dark grey wash: v' = 1.25v + 0.049 -> fill #020202 ~ #0f0f0f, lines #080808 ~ #161616. */
-  filter: grayscale(1) brightness(1.3859) contrast(0.902);
-}
-
-/*
- * Side nav opened over SLAYWIRE: its own backdrop grid opens already in the same grey wash
- * (no transition) so the menu never flashes or resets the SLAYWIRE grid treatment.
- */
-.side-nav-grid-backdrop.side-nav-grid-backdrop--slaywire-grey {
-  filter: grayscale(1) brightness(1.3859) contrast(0.902);
-  transition: none;
-}
 
 @media (prefers-reduced-motion: reduce) {
   #projects.projects-slaywire-detail-open .video-editing-detail-divider-wrap,
@@ -11115,8 +11092,8 @@
  * SLAYWIRE info card glass: deep #202020 see-through fill (was 8% of #0a0c12). Blur + border unchanged.
  */
 #projects.projects-slaywire-detail-open .video-editing-detail-meta-card {
-  /* Reads as ~#161616 over the #121212 wash; keeps a slight see-through feel + 2px blur. */
-  background: rgba(23, 23, 23, 0.85);
+  /* Reads as ~#161616 over the standard #020202 grid (~#171717 on lines); slight see-through + 2px blur. */
+  background: rgba(25, 25, 25, 0.85);
   background-image: none;
 }
 

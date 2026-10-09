@@ -708,13 +708,11 @@ function useSyncedGridOverlayStyle(): React.CSSProperties {
 }
 
 /** Mount-only backdrop; drift phase synced via negative animation-delay. */
-function SideNavGridBackdrop({ slaywireGrey = false }: { slaywireGrey?: boolean }) {
+function SideNavGridBackdrop() {
   const style = useSyncedGridOverlayStyle();
   return (
     <div
-      className={`side-nav-grid-backdrop${
-        slaywireGrey ? " side-nav-grid-backdrop--slaywire-grey" : ""
-      } pointer-events-none absolute inset-0 z-0 grid-drift-bg portfolio-grid-overlay`}
+      className="side-nav-grid-backdrop pointer-events-none absolute inset-0 z-0 grid-drift-bg portfolio-grid-overlay"
       style={style}
       aria-hidden
     />
@@ -5373,7 +5371,6 @@ const SideNavOverlay = ({
   onNavigate,
   currentSection,
   exitButtonDebug,
-  slaywireGridGrey = false,
 }: {
   open: boolean;
   onClose: () => void;
@@ -5381,8 +5378,6 @@ const SideNavOverlay = ({
   /** Keeps FillIcon filled for the section the user is still in (not reset on leave-to-menu). */
   currentSection: string | null;
   exitButtonDebug: NavIconButtonDebugValues;
-  /** Opened over the SLAYWIRE detail: show the same greyscale grid wash (no reset). */
-  slaywireGridGrey?: boolean;
 }) => {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [pendingNavId, setPendingNavId] = useState<string | null>(null);
@@ -5538,7 +5533,7 @@ const SideNavOverlay = ({
           transition={{ duration: SIDE_NAV_OVERLAY_FADE_S }}
           onClick={onClose}
         >
-          <SideNavGridBackdrop slaywireGrey={slaywireGridGrey} />
+          <SideNavGridBackdrop />
         </motion.button>
       )}
       {open && (
@@ -7514,14 +7509,10 @@ const SLAYWIRE_GREYSCALE_SETTLE_HOLD_MS = 120;
 const SLAYWIRE_GREYSCALE_MAX_WAIT_MS = 4000;
 /** SLAYWIRE opening step 1: PROJECTS list fades fully out before the detail mounts. */
 const SLAYWIRE_LIST_FADE_OUT_MS = 320;
-/** SLAYWIRE opening step 2: grid BG greys (keep in sync with index.css grid transition). */
-const SLAYWIRE_GRID_GREY_MS = 700;
-/** Fallback: force the SLAYWIRE entrance this long after the grid step if it hasn't started. */
-const SLAYWIRE_REVEAL_FALLBACK_EXTRA_MS = 600;
-/** SLAYWIRE exit step 1: detail elements fade out (grid stays grey). */
+/** Fallback: force the SLAYWIRE entrance this long after the detail mounts if it hasn't started. */
+const SLAYWIRE_REVEAL_FALLBACK_MS = 600;
+/** SLAYWIRE exit: detail elements fade out, then the normal transition runs. */
 const SLAYWIRE_EXIT_FADE_MS = 300;
-/** SLAYWIRE exit step 2: grid eases back to colour (same CSS transition as greying in). */
-const SLAYWIRE_EXIT_GRID_RESTORE_MS = SLAYWIRE_GRID_GREY_MS;
 /** Settled hero video/image: opacity ramp after morph (CSS; eases video compositor flash vs. motion.div). */
 const DETAIL_HERO_MEDIA_FADE_MS = Math.round(340 / SHOWCASE_TIME_DIV);
 const DETAIL_HERO_MEDIA_FADE_EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
@@ -9936,7 +9927,7 @@ type SlaywireExitGate = {
   isActive: () => boolean;
   /** Exit beat already running (ignore repeat nav input). */
   isBusy: () => boolean;
-  /** Fade SLAYWIRE elements out → grid back to colour → then(). */
+  /** Fade SLAYWIRE elements out → then(). */
   run: (then: () => void, opts?: SlaywireExitRunOptions) => void;
 };
 
@@ -9947,8 +9938,6 @@ type SlaywireExitRunOptions = {
    * never seen again as the overlay fades away.
    */
   instantHide?: boolean;
-  /** Delay before the grid starts easing back to standard (default SLAYWIRE_EXIT_FADE_MS). */
-  gridRestoreDelayMs?: number;
   /**
    * Leaving PROJECTS entirely: keep the showcase content hidden after the detail unmounts so
    * nothing (SLAYWIRE elements or the PROJECTS list) fades back in under the outgoing panel.
@@ -9966,7 +9955,6 @@ const PalaceProjects = ({
   featuredPdfViewerActive = false,
   onEntranceSettled,
   slaywireExitGateRef,
-  onSlaywireGridGreyChange,
 }: {
   onSelectProject: (id: string) => void;
   onOpenSupporting: () => void;
@@ -9979,8 +9967,6 @@ const PalaceProjects = ({
   featuredPdfViewerActive?: boolean;
   onEntranceSettled?: () => void;
   slaywireExitGateRef?: MutableRefObject<SlaywireExitGate | null>;
-  /** Mirrors the SLAYWIRE grid-grey state up so the side-nav backdrop grid can match it. */
-  onSlaywireGridGreyChange?: (grey: boolean) => void;
 }) => {
   const reduceMotion = useReducedMotion();
   const portfolioDebugEnabled = usePortfolioDebugEnabled();
@@ -10633,33 +10619,10 @@ const PalaceProjects = ({
   const slaywireGreyscaleActive = slaywireDetailInFlow && slaywireGreyscaleReady;
 
   /**
-   * SLAYWIRE opening step 2: grid BG eases to grey as soon as the detail mounts
-   * (after the PROJECTS list fade-out). Class lands two frames after mount so the
-   * freshly keyed grid paints in colour first and the CSS filter transition runs.
-   */
-  const [slaywireGridGrey, setSlaywireGridGrey] = useState(false);
-  useEffect(() => {
-    if (!slaywireDetailInFlow) {
-      setSlaywireGridGrey(false);
-      return;
-    }
-    let raf2 = 0;
-    const raf1 = requestAnimationFrame(() => {
-      raf2 = requestAnimationFrame(() => setSlaywireGridGrey(true));
-    });
-    return () => {
-      cancelAnimationFrame(raf1);
-      cancelAnimationFrame(raf2);
-    };
-  }, [slaywireDetailInFlow]);
-
-  /**
    * SLAYWIRE exit beat (back / top nav / side nav / any navigateTo): fade the detail
-   * elements out, then ease the grid back to colour, then hand control back so the
-   * normal transition continues. Greyscale classes stay on until the detail unmounts.
+   * elements out, then hand control back so the normal transition continues. Greyscale classes stay on until the detail unmounts.
    */
   const [slaywireExiting, setSlaywireExiting] = useState(false);
-  const [slaywireExitGridRestore, setSlaywireExitGridRestore] = useState(false);
   /** Side-nav exit: elements snap hidden (behind the opaque nav overlay) instead of fading. */
   const [slaywireExitInstant, setSlaywireExitInstant] = useState(false);
   /** Leaving PROJECTS after the SLAYWIRE exit: keep content hidden past the detail unmount. */
@@ -10677,7 +10640,6 @@ const PalaceProjects = ({
     slaywireExitBusyRef.current = false;
     slaywireExitDoneRef.current = false;
     setSlaywireExiting(false);
-    setSlaywireExitGridRestore(false);
     setSlaywireExitInstant(false);
   }, [slaywireDetailInFlow]);
   /**
@@ -10714,14 +10676,12 @@ const PalaceProjects = ({
         } else {
           setSlaywireExiting(true);
         }
+        // Side nav: elements are already hidden, so continue on the next tick (the normal
+        // side-nav transition runs while the overlay closes). Otherwise wait for the fade.
         const t1 = window.setTimeout(() => {
-          setSlaywireExitGridRestore(true);
-          const t2 = window.setTimeout(() => {
-            slaywireExitDoneRef.current = true;
-            then();
-          }, SLAYWIRE_EXIT_GRID_RESTORE_MS);
-          slaywireExitTimersRef.current.push(t2);
-        }, opts?.gridRestoreDelayMs ?? SLAYWIRE_EXIT_FADE_MS);
+          slaywireExitDoneRef.current = true;
+          then();
+        }, opts?.instantHide ? 0 : SLAYWIRE_EXIT_FADE_MS);
         slaywireExitTimersRef.current.push(t1);
       },
     };
@@ -10735,7 +10695,7 @@ const PalaceProjects = ({
   const slaywireExitingActive = slaywireDetailInFlow && slaywireExiting;
 
   /**
-   * Safety net: the SLAYWIRE entrance must always start after the grid step. If the
+   * Safety net: the SLAYWIRE entrance must always start once the detail mounts. If the
    * reveal timer was lost (cleanup race, throttled tab, etc.), force the reveal flags.
    */
   useEffect(() => {
@@ -10746,17 +10706,9 @@ const PalaceProjects = ({
       setDetailGalleryReveal(true);
       setDetailRow1Reveal(true);
       setDetailRow2Reveal(true);
-    }, SLAYWIRE_GRID_GREY_MS + SLAYWIRE_REVEAL_FALLBACK_EXTRA_MS);
+    }, SLAYWIRE_REVEAL_FALLBACK_MS);
     return () => window.clearTimeout(id);
   }, [slaywireDetailInFlow, detailHdrReveal]);
-  const slaywireGridGreyActive =
-    slaywireDetailInFlow && slaywireGridGrey && !slaywireExitGridRestore;
-  const onSlaywireGridGreyChangeRef = useRef(onSlaywireGridGreyChange);
-  onSlaywireGridGreyChangeRef.current = onSlaywireGridGreyChange;
-  useEffect(() => {
-    onSlaywireGridGreyChangeRef.current?.(slaywireGridGreyActive);
-  }, [slaywireGridGreyActive]);
-  useEffect(() => () => onSlaywireGridGreyChangeRef.current?.(false), []);
   const [detailHeroMediaFadeIn, setDetailHeroMediaFadeIn] = useState(false);
   const [detailCardRadiusPx, setDetailCardRadiusPx] = useState<number>(() => {
     if (typeof window === "undefined") return 4;
@@ -10991,15 +10943,22 @@ const PalaceProjects = ({
       return;
     }
     if (activeCard?.id === "project-slaywire") {
-      // Step 3: SLAYWIRE entrance starts only after the grid BG has eased to grey.
-      const revealTimer = window.setTimeout(() => {
-        setDetailHdrReveal(true);
-        setDetailRuleReveal(true);
-        setDetailGalleryReveal(true);
-        setDetailRow1Reveal(true);
-        setDetailRow2Reveal(true);
-      }, SLAYWIRE_GRID_GREY_MS);
-      return () => window.clearTimeout(revealTimer);
+      // Step 2: SLAYWIRE entrance starts right after the list fade-out (detail just mounted).
+      // Two frames so the hidden initial state paints before the reveal transitions run.
+      let raf2 = 0;
+      const raf1 = requestAnimationFrame(() => {
+        raf2 = requestAnimationFrame(() => {
+          setDetailHdrReveal(true);
+          setDetailRuleReveal(true);
+          setDetailGalleryReveal(true);
+          setDetailRow1Reveal(true);
+          setDetailRow2Reveal(true);
+        });
+      });
+      return () => {
+        cancelAnimationFrame(raf1);
+        cancelAnimationFrame(raf2);
+      };
     }
     if (
       projectDetailMotionReduced ||
@@ -11043,8 +11002,6 @@ const PalaceProjects = ({
             } ${
               slaywireGreyscaleActive ? "projects-slaywire-greyscale" : ""
             } ${
-              slaywireGridGreyActive ? "projects-slaywire-grid-grey" : ""
-            } ${
               interactiveMediaDetailInFlow ? "projects-interactive-media-detail-open" : ""
             } ${
               videoEditingProjectDetailInFlow ? "projects-video-editing-detail-open" : ""
@@ -11058,10 +11015,7 @@ const PalaceProjects = ({
         projectsEntranceSettled ? " projects-entrance-settled" : ""
       }`}
     >
-      <SectionGridOverlay
-        key={projectDetailInFlow ? "projects-detail-grid" : "projects-list-grid"}
-        className="projects-section-grid"
-      />
+      <SectionGridOverlay key={projectDetailInFlow ? "projects-detail-grid" : "projects-list-grid"} />
       {allowDebugPanels &&
         projectsTabletThumbnailDebugEnabled &&
         projectsTabletPortraitViewport &&
@@ -15276,8 +15230,6 @@ export default function Home() {
   const [activeShowcaseProjectId, setActiveShowcaseProjectId] = useState<string | null>(null);
   /** SLAYWIRE exit beat (fade elements → grid back to colour) before any leave. */
   const slaywireExitGateRef = useRef<SlaywireExitGate | null>(null);
-  /** SLAYWIRE grid is grey: the side-nav backdrop grid opens already grey to match. */
-  const [slaywireSideNavGridGrey, setSlaywireSideNavGridGrey] = useState(false);
   const navigateToRef = useRef<(id: string) => void>(() => {});
   const topNavFadeViewKey = `${currentSection ?? "none"}:${activeShowcaseProjectId ?? "list"}`;
   /** Showcase 4-up hover scale needs X room; keep X clipped for most project details.
@@ -15736,12 +15688,9 @@ export default function Home() {
       if (!slaywireGate.isBusy()) {
         const fromSideNav = isSideNavOpen;
         // Side nav: hide the elements instantly while the opaque overlay still covers them,
-        // let the overlay fade away (grid stays grey), then restore the grid, then navigate.
+        // then navigate (they stay hidden; never re-revealed as the overlay fades).
         slaywireGate.run(() => navigateToRef.current(id), {
           instantHide: fromSideNav,
-          gridRestoreDelayMs: fromSideNav
-            ? Math.round(SIDE_NAV_OVERLAY_FADE_S * 1000) + 48
-            : undefined,
           holdHiddenAfterExit: id !== "projects",
         });
         setIsSideNavOpen(false);
@@ -16310,7 +16259,6 @@ export default function Home() {
           onNavigate={navigateTo}
           currentSection={currentSection}
           exitButtonDebug={sideNavExitButtonDebug}
-          slaywireGridGrey={slaywireSideNavGridGrey && currentSection === "projects"}
         />
       )}
 
@@ -16591,7 +16539,6 @@ export default function Home() {
                           featuredPdfViewerActive={showcasePdfViewerActive}
                           onEntranceSettled={onProjectsListEntranceSettled}
                           slaywireExitGateRef={slaywireExitGateRef}
-                          onSlaywireGridGreyChange={setSlaywireSideNavGridGrey}
                         />
                       </div>
                     )}
@@ -16628,7 +16575,6 @@ export default function Home() {
                           featuredPdfViewerActive={showcasePdfViewerActive}
                           onEntranceSettled={onProjectsListEntranceSettled}
                           slaywireExitGateRef={slaywireExitGateRef}
-                          onSlaywireGridGreyChange={setSlaywireSideNavGridGrey}
                         />
                       </motion.div>
                     )}
