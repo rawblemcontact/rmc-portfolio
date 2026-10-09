@@ -10816,79 +10816,11 @@
 }
 
 /*
- * SLAYWIRE details — greyscale mode (all viewports: desktop, iPad landscape/portrait, phone).
- * Header block, now-playing title and the OVERVIEW/ROLE/STATUS/TOOLS info card stay in full colour.
- * Filter goes on the NON-excluded leaves only, because a parent filter cannot be undone by
- * children. Kept in full colour: player card (`.video-editing-player`), works-strip thumbnails +
- * their borders (`.video-editing-works-strip-thumb-art`), prev/next works arrows, and the top nav
- * / side nav (rendered outside the section panel).
- * `.projects-slaywire-greyscale` is toggled in PalaceProjects after the entrance settles and is only
- * removed once the detail has unmounted.
- */
-#projects.projects-slaywire-detail-open .video-editing-detail-divider-wrap,
-#projects.projects-slaywire-detail-open .video-editing-works-strip-thumb-caption > * {
-  transition: filter 1.4s cubic-bezier(0.45, 0, 0.25, 1);
-}
-
-#projects.projects-slaywire-greyscale .video-editing-detail-divider-wrap,
-#projects.projects-slaywire-greyscale .video-editing-works-strip-thumb-caption > * {
-  /* Washed-out grey, not just desaturated: flatten contrast, dim, and fade. */
-  filter: grayscale(1) contrast(0.7) brightness(0.85) opacity(0.8);
-}
-
-
-@media (prefers-reduced-motion: reduce) {
-  #projects.projects-slaywire-detail-open .video-editing-detail-divider-wrap,
-  #projects.projects-slaywire-detail-open .video-editing-works-strip-thumb-caption > * {
-    transition-duration: 0.6s;
-  }
-}
-
-/*
- * SLAYWIRE now-playing title: the h3 is nudged translate(-1px) inside an overflow-hidden
- * height wrapper, so the first glyph's left side bearing ("S") was clipped. Give the
- * clip box a few px of left bleed without moving the text.
- */
-#projects.projects-slaywire-detail-open .video-editing-detail-now-playing-clip {
-  margin-left: -4px !important;
-  padding-left: 4px !important;
-  width: calc(100% + 4px) !important;
-  max-width: none !important;
-}
-
-/*
- * SLAYWIRE info card sits IN the section's grey wash: no backdrop correction, so its normal
- * see-through glass (8% fill + 2px blur) shows the greyed grid like the rest of the page.
- * Tab body copy stays STANDARD (same colour/opacity as other project details); only the scroll
- * hint takes the washed-out grey of the other greyed text, on the same `.projects-slaywire-greyscale` toggle + 1.4s curve. The tab strip
- * (yellow active label + yellow underline; inactive labels already mono grey) is left untouched
- * so the yellow stays full colour.
- */
-#projects.projects-slaywire-detail-open
-  .video-editing-detail-meta-card
-  > .video-editing-detail-scroll-hint {
-  transition: filter 1.4s cubic-bezier(0.45, 0, 0.25, 1);
-}
-
-#projects.projects-slaywire-greyscale
-  .video-editing-detail-meta-card
-  > .video-editing-detail-scroll-hint {
-  filter: grayscale(1) contrast(0.7) brightness(0.85) opacity(0.8);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  #projects.projects-slaywire-detail-open
-    .video-editing-detail-meta-card
-    > .video-editing-detail-scroll-hint {
-    transition-duration: 0.6s;
-  }
-}
-
-/*
- * SLAYWIRE aurora (after Magic UI "Aurora Text") — replaces the YELLOW accents in the SLAYWIRE
- * details section only (all layouts). Colour-only: background-position / colour keyframes, no
- * transforms, sizes or layout changes. The two SLAYWIRE titles are intentionally NOT aurora.
- * Tweak palette via --aurora-c1..c6 and speed via --aurora-duration (scoped to the section).
+ * SLAYWIRE aurora (after Magic UI "Aurora Text"), SLAYWIRE details only (all layouts).
+ * Colour-only: background-position / colour keyframes, no transforms, sizes or layout changes.
+ * Applies to: "PROJECT DETAILS" eyebrow, ACTIVE description-card tab label, selected thumbnail
+ * border (+ its coarse-pointer focus ring). Everything else (inactive tabs, yellow underline)
+ * stays original. Tweak palette via --aurora-c1..c6 and speed via --aurora-duration.
  */
 #projects.projects-slaywire-detail-open {
   --aurora-c1: #ff0080;
@@ -10927,7 +10859,7 @@
   100% { background-position: 0 0, 0% 50%; }
 }
 
-/* For things that can only take one colour (glyph strokes, glows, rings). */
+/* For things that can only take one colour (focus ring). */
 @keyframes slaywire-aurora-cycle {
   0% { color: var(--aurora-c1); }
   20% { color: var(--aurora-c2); }
@@ -10937,7 +10869,7 @@
   100% { color: var(--aurora-c6); }
 }
 
-/* 1. Text: "PROJECT DETAILS" eyebrow (span). */
+/* 1. "PROJECT DETAILS" eyebrow (span). */
 #projects.projects-slaywire-detail-open .slaywire-aurora-text {
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
@@ -10948,37 +10880,25 @@
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
-  filter: none !important;
   animation: slaywire-aurora var(--aurora-duration) ease-in-out infinite alternate;
-}
-/* Eyebrow span: side bleed (cancelled by negative margin) so glyph edges get gradient. */
-#projects.projects-slaywire-detail-open .slaywire-aurora-text {
+  /* Side bleed (cancelled by negative margin) so glyph edges get gradient, never clipped. */
   display: inline;
   padding: 0.06em 0.1em;
   margin: 0 -0.1em;
 }
+
 /*
- * Tab LABELS. Active = aurora text; inactive keep their dim mono colour and fade to white on
- * hover (fine pointer) / press (touch tap) over 250ms. The aurora is a gradient-text ::after copy
- * of the label (content from data-label, empty alt text so it isn't read twice) stacked exactly
- * over the real text: on select the real text fades to transparent while the aurora layer fades
- * in (300ms), and the reverse on deselect, so labels crossfade into / out of the aurora.
+ * 2. ACTIVE tab label = aurora text at 4.5s. The aurora is a gradient-text ::after copy of the
+ * label (content from data-label, empty alt text so it isn't read twice) stacked over the real
+ * text: on select the real text fades to transparent while the aurora fades in (300ms), and the
+ * reverse on deselect. Inactive labels keep the original mono colour + yellow hover.
  */
-#projects.projects-slaywire-detail-open .video-editing-detail-card-tab {
-  transition: color 300ms ease-out !important;
+#projects.projects-slaywire-detail-open .video-editing-detail-card-tab-label {
+  --aurora-duration: 4.5s;
 }
 #projects.projects-slaywire-detail-open .video-editing-detail-card-tab[aria-selected="true"] {
   color: transparent !important;
-}
-#projects.projects-slaywire-detail-open .video-editing-detail-card-tab[aria-selected="false"]:active {
-  color: #fff !important;
-  transition-duration: 250ms !important;
-}
-@media (hover: hover) and (pointer: fine) {
-  #projects.projects-slaywire-detail-open .video-editing-detail-card-tab[aria-selected="false"]:hover {
-    color: #fff !important;
-    transition-duration: 250ms !important;
-  }
+  transition-duration: 300ms !important;
 }
 #projects.projects-slaywire-detail-open .video-editing-detail-card-tab-label::after {
   content: attr(data-label);
@@ -11006,15 +10926,10 @@
   opacity: 1;
 }
 
-/* 2. Tab underlines removed in SLAYWIRE (bar + its grow/fade). */
-#projects.projects-slaywire-detail-open .video-editing-detail-card-tab-underline {
-  display: none !important;
-}
-
 /*
- * 3. Active thumbnail border: transparent border + two backgrounds — black clipped to the
- * padding box (under the image) and the moving rainbow clipped to the border box — so the 1px
- * border itself shows the aurora. Same border width / radius / size as before.
+ * 3. Selected thumbnail border: transparent border + two backgrounds (black clipped to the
+ * padding box under the image, moving rainbow clipped to the border box) so the 1px border
+ * itself shows the aurora. Same border width / radius / size as before.
  */
 #projects.projects-slaywire-detail-open
   .video-editing-works-strip-thumb[aria-pressed="true"]
@@ -11028,7 +10943,7 @@
   animation: slaywire-aurora-border var(--aurora-duration) ease-in-out infinite alternate;
 }
 
-/* 4. Thumb keyboard focus ring (coarse pointer): colour-cycled box-shadow via currentColor. */
+/* 4. Thumb focus ring (coarse pointer): colour-cycled box-shadow via currentColor. */
 @media (pointer: coarse) {
   #projects.projects-slaywire-detail-open
     .video-editing-works-strip
@@ -11038,86 +10953,11 @@
   }
 }
 
-/*
- * 5. Works prev/next arrows — NO aurora; greyscale in every state (idle, hover, tap), on the
- * same `.projects-slaywire-greyscale` toggle + 1.4s curve as the rest of the section greying.
- * Glyph gets the grey filter (keeps its translate nudge transition); the hover/tap glow colour is
- * swapped from yellow to the matching grey. Idle pulse (custom-property opacity) untouched.
- */
-#projects.projects-slaywire-detail-open .video-editing-works-arrow-glyph {
-  transition:
-    transform var(--works-arrow-motion-dur, 0.34s)
-      var(--works-arrow-motion-ease, cubic-bezier(0.22, 1, 0.36, 1)),
-    filter 1.4s cubic-bezier(0.45, 0, 0.25, 1);
-}
-#projects.projects-slaywire-greyscale .video-editing-works-arrow-glyph {
-  filter: grayscale(1) contrast(0.7) brightness(0.85) opacity(0.8);
-}
-@media (hover: hover) and (pointer: fine) {
-  #projects.projects-slaywire-greyscale .video-editing-works-arrow:hover,
-  #projects.projects-slaywire-greyscale .video-editing-works-arrow:active {
-    filter: drop-shadow(0 0 7px rgba(158, 158, 158, 0.55));
-  }
-}
-#projects.projects-slaywire-greyscale
-  .video-editing-works-arrow.video-editing-works-arrow--pressed {
-  filter: drop-shadow(0 0 7px rgba(158, 158, 158, 0.55));
-}
-
-/*
- * Guard: info-card body copy (tab panel) and the now-playing title never take aurora
- * gradient-text styling, whatever wraps them — solid fill so the washed-out grey filter applies.
- */
-#projects.projects-slaywire-detail-open .video-editing-detail-card-tabpanel-shell,
-#projects.projects-slaywire-detail-open .video-editing-detail-card-tabpanel-shell *,
-#projects.projects-slaywire-detail-open .video-editing-detail-now-playing,
-#projects.projects-slaywire-detail-open .video-editing-detail-now-playing * {
-  -webkit-text-fill-color: currentColor;
-  background-image: none;
-  -webkit-background-clip: border-box;
-  background-clip: border-box;
-}
-
 @media (prefers-reduced-motion: reduce) {
   #projects.projects-slaywire-detail-open .slaywire-aurora-text,
   #projects.projects-slaywire-detail-open .video-editing-detail-card-tab-label::after,
   #projects.projects-slaywire-detail-open .video-editing-works-strip-thumb-art,
   #projects.projects-slaywire-detail-open .video-editing-works-strip-thumb:focus-visible {
-    /* Static rainbow / first palette colour, no motion. */
     animation-play-state: paused;
   }
-}
-
-/*
- * SLAYWIRE info card glass: deep #202020 see-through fill (was 8% of #0a0c12). Blur + border unchanged.
- */
-#projects.projects-slaywire-detail-open .video-editing-detail-meta-card {
-  /* Reads as ~#161616 over the standard #020202 grid (~#171717 on lines); slight see-through + 2px blur. */
-  background: rgba(25, 25, 25, 0.85);
-  background-image: none;
-}
-
-/*
- * SLAYWIRE drop shadows (all layouts). Player keeps its 1px white/9% ring (Tailwind ring is a
- * box-shadow, so it is re-declared first). Thumbs: shadow on the art tile (aurora border is a
- * background, unaffected); negative spread keeps it from bleeding sideways into the strip clip,
- * and the strip gets bottom room (cancelled by negative margin, layout unchanged) so its
- * overflow clip/scroll box never cuts the shadow.
- */
-#projects.projects-slaywire-detail-open .video-editing-player {
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.09),
-    0 8px 24px rgba(0, 0, 0, 0.85) !important;
-}
-#projects.projects-slaywire-detail-open .video-editing-works-strip-thumb-art {
-  box-shadow: 0 5px 12px -3px rgba(0, 0, 0, 0.9);
-}
-#projects.projects-slaywire-detail-open .video-editing-works-strip {
-  padding-bottom: 16px !important;
-  margin-bottom: -16px !important;
-}
-
-/* SLAYWIRE tab labels only: aurora runs 2x faster (inherited by the ::after aurora copy). */
-#projects.projects-slaywire-detail-open .video-editing-detail-card-tab-label {
-  --aurora-duration: 4.5s;
 }

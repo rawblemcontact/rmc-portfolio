@@ -4852,7 +4852,7 @@ export function ShowcaseVideoEditingDetail({
   return (
     <>
       <motion.div
-        className="video-editing-detail-header order-1 mt-0 flex w-full flex-col items-stretch gap-y-1.5 text-left"
+        className="order-1 mt-0 flex w-full flex-col items-stretch gap-y-1.5 text-left"
         style={
           reduceMotion
             ? { opacity: detailHdrReveal ? 1 : 0 }
@@ -5111,7 +5111,7 @@ export function ShowcaseVideoEditingDetail({
               >
                 <div
                   ref={detailNowPlayingRef}
-                  className="video-editing-detail-now-playing-clip relative w-full min-w-0 overflow-hidden"
+                  className="relative w-full min-w-0 overflow-hidden"
                 >
                   <div className="flex w-full min-w-0 flex-col items-stretch gap-y-1.5 text-left">
                     <AnimatePresence mode="wait" initial={false}>

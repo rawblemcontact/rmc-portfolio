@@ -7015,9 +7015,9 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     detailVideos: [
       {
         id: "slaywire-01",
-        url: "/slaywire-title-card.jpg",
+        url: "/slaywire1.png",
         label: "1",
-        thumbnailSrc: "/slaywire-title-card.jpg",
+        thumbnailSrc: "/slaywire1.png",
         selectorTitle: "",
         selectorSubtitle: "",
         detailOverview:
@@ -7498,21 +7498,6 @@ const DETAIL_SLIDE_CUBIC = "cubic-bezier(0.16, 1, 0.32, 1)";
 const DETAIL_RULE_LINE_LEAD_MS = Math.round(150 / SHOWCASE_TIME_DIV);
 /** Horizontal rule under project title block: center-out scaleX. */
 const DETAIL_RULE_EXPAND_MS = Math.round(280 / SHOWCASE_TIME_DIV);
-/**
- * SLAYWIRE details greyscale: earliest arm after the detail mounts (covers header /
- * player / rule / tab-body / scroll-hint entrance), then wait for N idle frames with
- * no finite animations, then a short hold. Hard cap so it always arms.
- */
-const SLAYWIRE_GREYSCALE_MIN_WAIT_MS = 700;
-const SLAYWIRE_GREYSCALE_IDLE_FRAMES = 6;
-const SLAYWIRE_GREYSCALE_SETTLE_HOLD_MS = 120;
-const SLAYWIRE_GREYSCALE_MAX_WAIT_MS = 4000;
-/** SLAYWIRE opening step 1: PROJECTS list fades fully out before the detail mounts. */
-const SLAYWIRE_LIST_FADE_OUT_MS = 320;
-/** Fallback: force the SLAYWIRE entrance this long after the detail mounts if it hasn't started. */
-const SLAYWIRE_REVEAL_FALLBACK_MS = 600;
-/** SLAYWIRE exit: detail elements fade out, then the normal transition runs. */
-const SLAYWIRE_EXIT_FADE_MS = 300;
 /** Settled hero video/image: opacity ramp after morph (CSS; eases video compositor flash vs. motion.div). */
 const DETAIL_HERO_MEDIA_FADE_MS = Math.round(340 / SHOWCASE_TIME_DIV);
 const DETAIL_HERO_MEDIA_FADE_EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
@@ -9921,30 +9906,6 @@ function ShowcaseWritingFeaturedPanel({
   );
 }
 
-/** Imperative handle PalaceProjects exposes so Home can run the SLAYWIRE exit beat before leaving. */
-type SlaywireExitGate = {
-  /** SLAYWIRE detail is open and its exit beat has not completed yet. */
-  isActive: () => boolean;
-  /** Exit beat already running (ignore repeat nav input). */
-  isBusy: () => boolean;
-  /** Fade SLAYWIRE elements out → then(). */
-  run: (then: () => void, opts?: SlaywireExitRunOptions) => void;
-};
-
-type SlaywireExitRunOptions = {
-  /**
-   * Hide the SLAYWIRE elements in the same frame (no fade). Used when leaving from the side
-   * nav: the opaque nav overlay is still covering them, so they disappear behind it and are
-   * never seen again as the overlay fades away.
-   */
-  instantHide?: boolean;
-  /**
-   * Leaving PROJECTS entirely: keep the showcase content hidden after the detail unmounts so
-   * nothing (SLAYWIRE elements or the PROJECTS list) fades back in under the outgoing panel.
-   */
-  holdHiddenAfterExit?: boolean;
-};
-
 const PalaceProjects = ({
   onSelectProject,
   onOpenSupporting,
@@ -9954,7 +9915,6 @@ const PalaceProjects = ({
   forceContentHidden = false,
   featuredPdfViewerActive = false,
   onEntranceSettled,
-  slaywireExitGateRef,
 }: {
   onSelectProject: (id: string) => void;
   onOpenSupporting: () => void;
@@ -9966,7 +9926,6 @@ const PalaceProjects = ({
   /** FEATURED WRITING VIEW ? fade carousel/tabs/header while grid PDF loader is up. */
   featuredPdfViewerActive?: boolean;
   onEntranceSettled?: () => void;
-  slaywireExitGateRef?: MutableRefObject<SlaywireExitGate | null>;
 }) => {
   const reduceMotion = useReducedMotion();
   const portfolioDebugEnabled = usePortfolioDebugEnabled();
@@ -10367,7 +10326,6 @@ const PalaceProjects = ({
   const projectDetailAllowsOverflowX =
     videoEditingDetailNoMainCard || slaywireDetailInFlow || visualDesignDetailInFlow;
 
-
   const activeProjectsTabletThumbnailValues =
     projectsTabletPortraitViewport
       ? projectsTabletThumbnailDebugEnabled
@@ -10554,161 +10512,6 @@ const PalaceProjects = ({
   const [detailGalleryReveal, setDetailGalleryReveal] = useState(false);
   const [detailRow1Reveal, setDetailRow1Reveal] = useState(false);
   const [detailRow2Reveal, setDetailRow2Reveal] = useState(false);
-
-  /**
-   * SLAYWIRE details greyscale mode (text / info card). Arms only after the detail
-   * entrance (which itself waits for the list fade-out + grid greying) has fully settled (min wait + no finite CSS/WAAPI animations running in
-   * #projects), then `.projects-slaywire-greyscale` eases the filter in via CSS.
-   * Resets only when the detail is unmounted (back / side nav / menu exit), so
-   * nothing snaps back to colour while the exit transition is still on screen.
-   */
-  const [slaywireGreyscaleReady, setSlaywireGreyscaleReady] = useState(false);
-  const slaywireEntranceStarted = slaywireDetailInFlow && detailHdrReveal;
-  useEffect(() => {
-    if (!slaywireDetailInFlow) {
-      setSlaywireGreyscaleReady(false);
-      return;
-    }
-    if (!slaywireEntranceStarted) return;
-    let cancelled = false;
-    let raf = 0;
-    let holdTimer = 0;
-    let idleFrames = 0;
-    const startedAt = performance.now();
-    const finiteAnimationsRunning = () => {
-      const section = projectsSectionRef.current;
-      if (!section || typeof section.getAnimations !== "function") return false;
-      return section.getAnimations({ subtree: true }).some((anim) => {
-        if (anim.playState !== "running" && !anim.pending) return false;
-        const end = anim.effect?.getComputedTiming().endTime;
-        // Ignore infinite loops (grid drift, arrow idle pulse, scroll-hint float).
-        return typeof end === "number" && Number.isFinite(end);
-      });
-    };
-    const arm = () => {
-      if (cancelled) return;
-      holdTimer = window.setTimeout(() => {
-        if (!cancelled) setSlaywireGreyscaleReady(true);
-      }, SLAYWIRE_GREYSCALE_SETTLE_HOLD_MS);
-    };
-    const poll = () => {
-      if (cancelled) return;
-      const elapsed = performance.now() - startedAt;
-      if (elapsed >= SLAYWIRE_GREYSCALE_MAX_WAIT_MS) {
-        arm();
-        return;
-      }
-      if (elapsed >= SLAYWIRE_GREYSCALE_MIN_WAIT_MS && !finiteAnimationsRunning()) {
-        idleFrames += 1;
-        if (idleFrames >= SLAYWIRE_GREYSCALE_IDLE_FRAMES) {
-          arm();
-          return;
-        }
-      } else {
-        idleFrames = 0;
-      }
-      raf = requestAnimationFrame(poll);
-    };
-    raf = requestAnimationFrame(poll);
-    return () => {
-      cancelled = true;
-      cancelAnimationFrame(raf);
-      window.clearTimeout(holdTimer);
-    };
-  }, [slaywireDetailInFlow, slaywireEntranceStarted]);
-  const slaywireGreyscaleActive = slaywireDetailInFlow && slaywireGreyscaleReady;
-
-  /**
-   * SLAYWIRE exit beat (back / top nav / side nav / any navigateTo): fade the detail
-   * elements out, then hand control back so the normal transition continues. Greyscale classes stay on until the detail unmounts.
-   */
-  const [slaywireExiting, setSlaywireExiting] = useState(false);
-  /** Side-nav exit: elements snap hidden (behind the opaque nav overlay) instead of fading. */
-  const [slaywireExitInstant, setSlaywireExitInstant] = useState(false);
-  /** Leaving PROJECTS after the SLAYWIRE exit: keep content hidden past the detail unmount. */
-  const [slaywireLeaveHold, setSlaywireLeaveHold] = useState(false);
-  const slaywireLeaveHoldRef = useRef(false);
-  const slaywireExitTimersRef = useRef<number[]>([]);
-  const slaywireExitBusyRef = useRef(false);
-  const slaywireExitDoneRef = useRef(false);
-  const slaywireDetailInFlowRef = useRef(slaywireDetailInFlow);
-  slaywireDetailInFlowRef.current = slaywireDetailInFlow;
-  useEffect(() => {
-    if (slaywireDetailInFlow) return;
-    slaywireExitTimersRef.current.forEach((t) => window.clearTimeout(t));
-    slaywireExitTimersRef.current = [];
-    slaywireExitBusyRef.current = false;
-    slaywireExitDoneRef.current = false;
-    setSlaywireExiting(false);
-    setSlaywireExitInstant(false);
-  }, [slaywireDetailInFlow]);
-  /**
-   * Safety: if the leave hold is still set long after the exit (navigation was refused and this
-   * component is still on screen), let the content come back rather than staying blank.
-   */
-  useEffect(() => {
-    if (!slaywireLeaveHold || slaywireDetailInFlow) return;
-    const id = window.setTimeout(() => {
-      slaywireLeaveHoldRef.current = false;
-      setSlaywireLeaveHold(false);
-    }, 3000);
-    return () => window.clearTimeout(id);
-  }, [slaywireLeaveHold, slaywireDetailInFlow]);
-  useEffect(() => {
-    if (!slaywireExitGateRef) return;
-    const gate: SlaywireExitGate = {
-      isActive: () => slaywireDetailInFlowRef.current && !slaywireExitDoneRef.current,
-      isBusy: () => slaywireExitBusyRef.current && !slaywireExitDoneRef.current,
-      run: (then, opts) => {
-        if (slaywireExitBusyRef.current) return;
-        slaywireExitBusyRef.current = true;
-        if (opts?.holdHiddenAfterExit) {
-          slaywireLeaveHoldRef.current = true;
-          setSlaywireLeaveHold(true);
-        }
-        if (opts?.instantHide) {
-          // Commit synchronously so the elements are already gone before the nav overlay
-          // starts fading out on the next frame.
-          flushSync(() => {
-            setSlaywireExitInstant(true);
-            setSlaywireExiting(true);
-          });
-        } else {
-          setSlaywireExiting(true);
-        }
-        // Side nav: elements are already hidden, so continue on the next tick (the normal
-        // side-nav transition runs while the overlay closes). Otherwise wait for the fade.
-        const t1 = window.setTimeout(() => {
-          slaywireExitDoneRef.current = true;
-          then();
-        }, opts?.instantHide ? 0 : SLAYWIRE_EXIT_FADE_MS);
-        slaywireExitTimersRef.current.push(t1);
-      },
-    };
-    slaywireExitGateRef.current = gate;
-    return () => {
-      if (slaywireExitGateRef.current === gate) slaywireExitGateRef.current = null;
-      slaywireExitTimersRef.current.forEach((t) => window.clearTimeout(t));
-      slaywireExitTimersRef.current = [];
-    };
-  }, [slaywireExitGateRef]);
-  const slaywireExitingActive = slaywireDetailInFlow && slaywireExiting;
-
-  /**
-   * Safety net: the SLAYWIRE entrance must always start once the detail mounts. If the
-   * reveal timer was lost (cleanup race, throttled tab, etc.), force the reveal flags.
-   */
-  useEffect(() => {
-    if (!slaywireDetailInFlow || detailHdrReveal) return;
-    const id = window.setTimeout(() => {
-      setDetailHdrReveal(true);
-      setDetailRuleReveal(true);
-      setDetailGalleryReveal(true);
-      setDetailRow1Reveal(true);
-      setDetailRow2Reveal(true);
-    }, SLAYWIRE_REVEAL_FALLBACK_MS);
-    return () => window.clearTimeout(id);
-  }, [slaywireDetailInFlow, detailHdrReveal]);
   const [detailHeroMediaFadeIn, setDetailHeroMediaFadeIn] = useState(false);
   const [detailCardRadiusPx, setDetailCardRadiusPx] = useState<number>(() => {
     if (typeof window === "undefined") return 4;
@@ -10746,36 +10549,7 @@ const PalaceProjects = ({
   const mScaleX = useMotionValue(1);
   const mScaleY = useMotionValue(1);
 
-  const [slaywireListFadeOut, setSlaywireListFadeOut] = useState(false);
-  const slaywireListFadeTimerRef = useRef<number | null>(null);
-  useEffect(
-    () => () => {
-      if (slaywireListFadeTimerRef.current != null) {
-        window.clearTimeout(slaywireListFadeTimerRef.current);
-        slaywireListFadeTimerRef.current = null;
-      }
-    },
-    [],
-  );
-
   const handleCardClick = useCallback((id: string, el: HTMLElement) => {
-    // Any fresh card open clears a stale SLAYWIRE leave hold.
-    slaywireLeaveHoldRef.current = false;
-    setSlaywireLeaveHold(false);
-    if (id === "project-slaywire") {
-      // Step 1: fade the whole PROJECTS list out, then mount the detail (all layouts).
-      if (slaywireListFadeTimerRef.current != null) return;
-      setSlaywireListFadeOut(true);
-      slaywireListFadeTimerRef.current = window.setTimeout(() => {
-        slaywireListFadeTimerRef.current = null;
-        setMorphRect(null);
-        setTargetRect(null);
-        setMorphDone(true);
-        setSlaywireListFadeOut(false);
-        onSelectProject(id);
-      }, SLAYWIRE_LIST_FADE_OUT_MS);
-      return;
-    }
     if (projectDetailSafariLite) {
       setMorphRect(null);
       setTargetRect(null);
@@ -10942,24 +10716,6 @@ const PalaceProjects = ({
       detailRevealTimersRef.current = [];
       return;
     }
-    if (activeCard?.id === "project-slaywire") {
-      // Step 2: SLAYWIRE entrance starts right after the list fade-out (detail just mounted).
-      // Two frames so the hidden initial state paints before the reveal transitions run.
-      let raf2 = 0;
-      const raf1 = requestAnimationFrame(() => {
-        raf2 = requestAnimationFrame(() => {
-          setDetailHdrReveal(true);
-          setDetailRuleReveal(true);
-          setDetailGalleryReveal(true);
-          setDetailRow1Reveal(true);
-          setDetailRow2Reveal(true);
-        });
-      });
-      return () => {
-        cancelAnimationFrame(raf1);
-        cancelAnimationFrame(raf2);
-      };
-    }
     if (
       projectDetailMotionReduced ||
       activeCard?.detailGallery?.length ||
@@ -10999,8 +10755,6 @@ const PalaceProjects = ({
         projectDetailInFlow
           ? `min-h-screen shrink-0 ${SECTION_MAIN_HEADER_INSET} ${
               slaywireDetailInFlow ? "projects-slaywire-detail-open" : ""
-            } ${
-              slaywireGreyscaleActive ? "projects-slaywire-greyscale" : ""
             } ${
               interactiveMediaDetailInFlow ? "projects-interactive-media-detail-open" : ""
             } ${
@@ -11067,9 +10821,7 @@ const PalaceProjects = ({
       <motion.div
         className={`${PROFILE_SECTION_CONTAINER} relative z-10 flex min-w-0 w-full flex-col ${
           projectDetailInFlow ? "min-h-min shrink-0" : "max-2xl:min-h-min max-2xl:flex-none 2xl:min-h-0 2xl:flex-1"
-        }${forceContentHidden ? " opacity-0 pointer-events-none select-none" : ""}${
-          slaywireListFadeOut || slaywireExitingActive || slaywireLeaveHold ? " pointer-events-none" : ""
-        }`}
+        }${forceContentHidden ? " opacity-0 pointer-events-none select-none" : ""}`}
         initial={false}
         animate={{ opacity: featuredPdfViewerActive ? 0 : 1 }}
         transition={{
@@ -11078,28 +10830,7 @@ const PalaceProjects = ({
         }}
         aria-hidden={forceContentHidden || undefined}
       >
-        {/*
-         * SLAYWIRE list fade-out / exit fade: plain CSS opacity on this inner shell, NOT the Framer
-         * animate above. Driving them through Framer could leave the shell stuck at opacity 0 when
-         * the 0-duration "show" landed on top of the still-finishing fade (intermittent empty detail).
-         */}
-        <div
-          className={EXPERIENCE_GUTTER_SHELL_OUTER}
-          style={{
-            opacity: slaywireListFadeOut || slaywireExitingActive || slaywireLeaveHold ? 0 : 1,
-            transition: `opacity ${
-              slaywireListFadeOut
-                ? SLAYWIRE_LIST_FADE_OUT_MS
-                : slaywireExitingActive || slaywireLeaveHold
-                  ? slaywireExitInstant || slaywireLeaveHold
-                    ? 0
-                    : SLAYWIRE_EXIT_FADE_MS
-                  : slaywireDetailInFlow
-                    ? 0
-                    : SLAYWIRE_EXIT_FADE_MS
-            }ms ease-out`,
-          }}
-        >
+        <div className={EXPERIENCE_GUTTER_SHELL_OUTER}>
           <div className={EXPERIENCE_GUTTER_SHELL_INNER}>
         <div
           className={`projects-showcase-viewport ${PROJECTS_VIEWPORT_SHELL} overflow-y-visible ${
@@ -15228,9 +14959,6 @@ export default function Home() {
   const [profileSectionMounted, setProfileSectionMounted] = useState(false);
   const [menuLockedFillId, setMenuLockedFillId] = useState<string | null>(null);
   const [activeShowcaseProjectId, setActiveShowcaseProjectId] = useState<string | null>(null);
-  /** SLAYWIRE exit beat (fade elements → grid back to colour) before any leave. */
-  const slaywireExitGateRef = useRef<SlaywireExitGate | null>(null);
-  const navigateToRef = useRef<(id: string) => void>(() => {});
   const topNavFadeViewKey = `${currentSection ?? "none"}:${activeShowcaseProjectId ?? "list"}`;
   /** Showcase 4-up hover scale needs X room; keep X clipped for most project details.
    * VISUAL DESIGN masonry must keep overflow-x visible too — otherwise overflow-y
@@ -15682,21 +15410,6 @@ export default function Home() {
   };
 
   const navigateTo = (id: string) => {
-    // SLAYWIRE open: run its exit beat first, then re-enter with the latest closure.
-    const slaywireGate = slaywireExitGateRef.current;
-    if (slaywireGate?.isActive()) {
-      if (!slaywireGate.isBusy()) {
-        const fromSideNav = isSideNavOpen;
-        // Side nav: hide the elements instantly while the opaque overlay still covers them,
-        // then navigate (they stay hidden; never re-revealed as the overlay fades).
-        slaywireGate.run(() => navigateToRef.current(id), {
-          instantHide: fromSideNav,
-          holdHiddenAfterExit: id !== "projects",
-        });
-        setIsSideNavOpen(false);
-      }
-      return;
-    }
     if (id !== currentSection || id === "menu") resetTopNavScrollFade();
     const panelLeaving = sectionPanelRef.current;
     if (id !== currentSection && panelLeaving) panelLeaving.scrollTop = 0;
@@ -15883,8 +15596,6 @@ export default function Home() {
       );
     }
   };
-
-  navigateToRef.current = navigateTo;
 
   const finishShowcasePdfClose = useCallback(() => {
     if (showcasePdfCloseFinishRef.current) return;
@@ -16166,13 +15877,6 @@ export default function Home() {
                       return;
                     }
                     if (activeShowcaseProjectId) {
-                      const slaywireGate = slaywireExitGateRef.current;
-                      if (slaywireGate?.isActive()) {
-                        if (!slaywireGate.isBusy()) {
-                          slaywireGate.run(() => setActiveShowcaseProjectId(null));
-                        }
-                        return;
-                      }
                       setActiveShowcaseProjectId(null);
                       return;
                     }
@@ -16538,7 +16242,6 @@ export default function Home() {
                           forceContentHidden={projectsSideNavLeaveHidden}
                           featuredPdfViewerActive={showcasePdfViewerActive}
                           onEntranceSettled={onProjectsListEntranceSettled}
-                          slaywireExitGateRef={slaywireExitGateRef}
                         />
                       </div>
                     )}
@@ -16574,7 +16277,6 @@ export default function Home() {
                           forceContentHidden={projectsSideNavLeaveHidden}
                           featuredPdfViewerActive={showcasePdfViewerActive}
                           onEntranceSettled={onProjectsListEntranceSettled}
-                          slaywireExitGateRef={slaywireExitGateRef}
                         />
                       </motion.div>
                     )}
