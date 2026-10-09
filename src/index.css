@@ -10872,14 +10872,11 @@
 /*
  * SLAYWIRE info card sits IN the section's grey wash: no backdrop correction, so its normal
  * see-through glass (8% fill + 2px blur) shows the greyed grid like the rest of the page.
- * Non-yellow contents (tab body copy + scroll hint) take the same washed-out grey as the other
- * greyed text, on the same `.projects-slaywire-greyscale` toggle + 1.4s curve. The tab strip
+ * Tab body copy stays STANDARD (same colour/opacity as other project details); only the scroll
+ * hint takes the washed-out grey of the other greyed text, on the same `.projects-slaywire-greyscale` toggle + 1.4s curve. The tab strip
  * (yellow active label + yellow underline; inactive labels already mono grey) is left untouched
  * so the yellow stays full colour.
  */
-#projects.projects-slaywire-detail-open
-  .video-editing-detail-meta-card
-  .video-editing-detail-card-tabpanel-shell,
 #projects.projects-slaywire-detail-open
   .video-editing-detail-meta-card
   > .video-editing-detail-scroll-hint {
@@ -10888,17 +10885,11 @@
 
 #projects.projects-slaywire-greyscale
   .video-editing-detail-meta-card
-  .video-editing-detail-card-tabpanel-shell,
-#projects.projects-slaywire-greyscale
-  .video-editing-detail-meta-card
   > .video-editing-detail-scroll-hint {
   filter: grayscale(1) contrast(0.7) brightness(0.85) opacity(0.8);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #projects.projects-slaywire-detail-open
-    .video-editing-detail-meta-card
-    .video-editing-detail-card-tabpanel-shell,
   #projects.projects-slaywire-detail-open
     .video-editing-detail-meta-card
     > .video-editing-detail-scroll-hint {
