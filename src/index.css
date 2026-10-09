@@ -10988,3 +10988,8 @@
   .video-editing-works-arrow.video-editing-works-arrow--pressed {
   filter: drop-shadow(0 0 7px rgba(158, 158, 158, 0.55));
 }
+
+/* SLAYWIRE: description card tab underlines removed (bar + its grow/fade). */
+#projects.projects-slaywire-detail-open .video-editing-detail-card-tab-underline {
+  display: none !important;
+}
