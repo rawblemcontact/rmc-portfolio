@@ -10905,3 +10905,69 @@
     transition-duration: 0.6s;
   }
 }
+
+/*
+ * SLAYWIRE aurora text (after Magic UI "Aurora Text") — main header title + now-playing title,
+ * all layouts. Colour-only: animates background-position on a clipped gradient; no transform,
+ * so no wobble and the h3's own translate / clip-fix stay as-is. The span is inline, so font,
+ * size, weight, tracking and layout are inherited unchanged; real text stays for screen readers.
+ * Small inline padding (cancelled by equal negative margin) gives the glyph side bearings
+ * (e.g. the first "S") gradient coverage so nothing paints transparent at the edges.
+ * Tweak palette via --aurora-c1..c6 and speed via --aurora-duration.
+ */
+.slaywire-aurora-text {
+  --aurora-c1: #ff0080;
+  --aurora-c2: #ff8c00;
+  --aurora-c3: #ffe600;
+  --aurora-c4: #00e676;
+  --aurora-c5: #00b0ff;
+  --aurora-c6: #7928ca;
+  --aurora-duration: 9s;
+  display: inline;
+  padding: 0.06em 0.1em;
+  margin: 0 -0.1em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  background-image: linear-gradient(
+    135deg,
+    var(--aurora-c1),
+    var(--aurora-c2),
+    var(--aurora-c3),
+    var(--aurora-c4),
+    var(--aurora-c5),
+    var(--aurora-c6),
+    var(--aurora-c1)
+  );
+  background-size: 200% auto;
+  background-position: 0% 50%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  filter: none !important;
+  animation: slaywire-aurora var(--aurora-duration) ease-in-out infinite alternate;
+}
+
+@keyframes slaywire-aurora {
+  0% {
+    background-position: 0% 50%;
+  }
+  25% {
+    background-position: 50% 100%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  75% {
+    background-position: 50% 0%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slaywire-aurora-text {
+    animation: none;
+  }
+}
