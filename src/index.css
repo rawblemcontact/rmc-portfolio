@@ -10838,9 +10838,18 @@
 #projects.projects-slaywire-greyscale .video-editing-detail-divider-wrap,
 #projects.projects-slaywire-greyscale .video-editing-detail-now-playing,
 #projects.projects-slaywire-greyscale .video-editing-detail-meta-card > *,
-#projects.projects-slaywire-greyscale > .projects-section-grid,
 #projects.projects-slaywire-greyscale .video-editing-works-strip-thumb-caption > * {
-  filter: grayscale(1);
+  /* Washed-out grey, not just desaturated: flatten contrast, dim, and fade. */
+  filter: grayscale(1) contrast(0.7) brightness(0.85) opacity(0.8);
+}
+
+/*
+ * Grid BG is near-black (#020202 + #080808 lines), so grayscale alone is invisible.
+ * Lift it first (brightness spreads the line/fill gap), then flatten toward mid-grey so the
+ * whole backdrop reads as a visible grey wash with grey grid lines (~#3e3e3e / #4b4b4b).
+ */
+#projects.projects-slaywire-greyscale > .projects-section-grid {
+  filter: grayscale(1) brightness(4) contrast(0.55);
 }
 
 @media (prefers-reduced-motion: reduce) {
