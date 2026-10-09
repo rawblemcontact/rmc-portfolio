@@ -7511,6 +7511,8 @@ const SLAYWIRE_GREYSCALE_MAX_WAIT_MS = 4000;
 const SLAYWIRE_LIST_FADE_OUT_MS = 320;
 /** SLAYWIRE opening step 2: grid BG greys (keep in sync with index.css grid transition). */
 const SLAYWIRE_GRID_GREY_MS = 700;
+/** Fallback: force the SLAYWIRE entrance this long after the grid step if it hasn't started. */
+const SLAYWIRE_REVEAL_FALLBACK_EXTRA_MS = 600;
 /** SLAYWIRE exit step 1: detail elements fade out (grid stays grey). */
 const SLAYWIRE_EXIT_FADE_MS = 300;
 /** SLAYWIRE exit step 2: grid eases back to colour (same CSS transition as greying in). */
@@ -10676,6 +10678,22 @@ const PalaceProjects = ({
     };
   }, [slaywireExitGateRef]);
   const slaywireExitingActive = slaywireDetailInFlow && slaywireExiting;
+
+  /**
+   * Safety net: the SLAYWIRE entrance must always start after the grid step. If the
+   * reveal timer was lost (cleanup race, throttled tab, etc.), force the reveal flags.
+   */
+  useEffect(() => {
+    if (!slaywireDetailInFlow || detailHdrReveal) return;
+    const id = window.setTimeout(() => {
+      setDetailHdrReveal(true);
+      setDetailRuleReveal(true);
+      setDetailGalleryReveal(true);
+      setDetailRow1Reveal(true);
+      setDetailRow2Reveal(true);
+    }, SLAYWIRE_GRID_GREY_MS + SLAYWIRE_REVEAL_FALLBACK_EXTRA_MS);
+    return () => window.clearTimeout(id);
+  }, [slaywireDetailInFlow, detailHdrReveal]);
   const slaywireGridGreyActive =
     slaywireDetailInFlow && slaywireGridGrey && !slaywireExitGridRestore;
   const [detailHeroMediaFadeIn, setDetailHeroMediaFadeIn] = useState(false);
@@ -11035,25 +11053,33 @@ const PalaceProjects = ({
           slaywireListFadeOut || slaywireExitingActive ? " pointer-events-none" : ""
         }`}
         initial={false}
-        animate={{
-          opacity:
-            featuredPdfViewerActive || slaywireListFadeOut || slaywireExitingActive ? 0 : 1,
-        }}
+        animate={{ opacity: featuredPdfViewerActive ? 0 : 1 }}
         transition={{
-          duration: slaywireListFadeOut
-            ? SLAYWIRE_LIST_FADE_OUT_MS / 1000
-            : slaywireExitingActive
-              ? SLAYWIRE_EXIT_FADE_MS / 1000
-              : slaywireDetailInFlow
-              ? 0
-              : reduceMotion
-                ? 0
-                : SHOWCASE_PDF_PROJECTS_FADE_OUT_S,
+          duration: reduceMotion ? 0 : SHOWCASE_PDF_PROJECTS_FADE_OUT_S,
           ease: EASE.out,
         }}
         aria-hidden={forceContentHidden || undefined}
       >
-        <div className={EXPERIENCE_GUTTER_SHELL_OUTER}>
+        {/*
+         * SLAYWIRE list fade-out / exit fade: plain CSS opacity on this inner shell, NOT the Framer
+         * animate above. Driving them through Framer could leave the shell stuck at opacity 0 when
+         * the 0-duration "show" landed on top of the still-finishing fade (intermittent empty detail).
+         */}
+        <div
+          className={EXPERIENCE_GUTTER_SHELL_OUTER}
+          style={{
+            opacity: slaywireListFadeOut || slaywireExitingActive ? 0 : 1,
+            transition: `opacity ${
+              slaywireListFadeOut
+                ? SLAYWIRE_LIST_FADE_OUT_MS
+                : slaywireExitingActive
+                  ? SLAYWIRE_EXIT_FADE_MS
+                  : slaywireDetailInFlow
+                    ? 0
+                    : SLAYWIRE_EXIT_FADE_MS
+            }ms ease-out`,
+          }}
+        >
           <div className={EXPERIENCE_GUTTER_SHELL_INNER}>
         <div
           className={`projects-showcase-viewport ${PROJECTS_VIEWPORT_SHELL} overflow-y-visible ${

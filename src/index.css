@@ -10847,8 +10847,8 @@
  * whole backdrop reads as a visible grey wash with grey grid lines (~#3e3e3e / #4b4b4b).
  */
 #projects.projects-slaywire-grid-grey > .projects-section-grid {
-  /* Trailing brightness(0.82) = quieter wash (~#323232 fill / #3d3d3d lines). */
-  filter: grayscale(1) brightness(4) contrast(0.55) brightness(0.82);
+  /* Dark grey wash: v' = 1.7v + 0.096 -> fill #020202 ~ #1c1c1c, lines #080808 ~ #262626. */
+  filter: grayscale(1) brightness(2.1) contrast(0.807);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -11103,10 +11103,10 @@
 }
 
 /*
- * SLAYWIRE info card glass: slightly more noticeable neutral-grey see-through fill
- * (was 8% of #0a0c12). Blur + border unchanged.
+ * SLAYWIRE info card glass: deep #202020 see-through fill (was 8% of #0a0c12). Blur + border unchanged.
  */
 #projects.projects-slaywire-detail-open .video-editing-detail-meta-card {
-  background: rgba(128, 128, 128, 0.13);
+  /* Reads as ~#202020 over the #1c1c1c wash; keeps a slight see-through feel + 2px blur. */
+  background: rgba(32, 32, 32, 0.85);
   background-image: none;
 }
