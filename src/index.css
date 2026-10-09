@@ -10961,3 +10961,30 @@
     animation-play-state: paused;
   }
 }
+
+/*
+ * SLAYWIRE works prev/next arrows (beside the thumbnails) — NO aurora; greyscale in every state
+ * (idle, hover, tap). Fades in on `.projects-slaywire-greyscale` (armed in PalaceProjects once the
+ * detail entrance has settled) over 1.4s. Glyph gets the grey filter (keeps its translate nudge
+ * transition); the hover/tap glow colour is swapped from yellow to the matching grey. Idle pulse
+ * (custom-property opacity) untouched.
+ */
+#projects.projects-slaywire-detail-open .video-editing-works-arrow-glyph {
+  transition:
+    transform var(--works-arrow-motion-dur, 0.34s)
+      var(--works-arrow-motion-ease, cubic-bezier(0.22, 1, 0.36, 1)),
+    filter 1.4s cubic-bezier(0.45, 0, 0.25, 1);
+}
+#projects.projects-slaywire-greyscale .video-editing-works-arrow-glyph {
+  filter: grayscale(1) contrast(0.7) brightness(0.85) opacity(0.8);
+}
+@media (hover: hover) and (pointer: fine) {
+  #projects.projects-slaywire-greyscale .video-editing-works-arrow:hover,
+  #projects.projects-slaywire-greyscale .video-editing-works-arrow:active {
+    filter: drop-shadow(0 0 7px rgba(158, 158, 158, 0.55));
+  }
+}
+#projects.projects-slaywire-greyscale
+  .video-editing-works-arrow.video-editing-works-arrow--pressed {
+  filter: drop-shadow(0 0 7px rgba(158, 158, 158, 0.55));
+}
