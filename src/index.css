@@ -10978,18 +10978,43 @@
 #projects.projects-slaywire-greyscale .video-editing-works-arrow-glyph {
   filter: grayscale(1) contrast(0.7) brightness(0.85) opacity(0.8);
 }
+/*
+ * Never yellow, at any time (not gated on the settle trigger): hover / click / tap colour is the
+ * greyscale equivalent of the yellow (#ffe100 -> luminance ~#d7d7d7), glow is grey, and the
+ * keyboard focus ring is grey. The settle-gated glyph filter above still dims them afterwards.
+ */
 @media (hover: hover) and (pointer: fine) {
-  #projects.projects-slaywire-greyscale .video-editing-works-arrow:hover,
-  #projects.projects-slaywire-greyscale .video-editing-works-arrow:active {
+  #projects.projects-slaywire-detail-open .video-editing-works-arrow:hover,
+  #projects.projects-slaywire-detail-open .video-editing-works-arrow:active {
+    color: #d7d7d7;
     filter: drop-shadow(0 0 7px rgba(158, 158, 158, 0.55));
   }
 }
-#projects.projects-slaywire-greyscale
+#projects.projects-slaywire-detail-open
   .video-editing-works-arrow.video-editing-works-arrow--pressed {
+  color: #d7d7d7;
   filter: drop-shadow(0 0 7px rgba(158, 158, 158, 0.55));
+}
+#projects.projects-slaywire-detail-open .video-editing-works-arrow:focus-visible {
+  --tw-ring-color: #9e9e9e;
 }
 
 /* SLAYWIRE: description card tab underlines removed (bar + its grow/fade). */
 #projects.projects-slaywire-detail-open .video-editing-detail-card-tab-underline {
   display: none !important;
+}
+
+/*
+ * SLAYWIRE: inactive tab labels fade to WHITE (not yellow) over 250ms on hover (fine pointer) /
+ * press (touch tap), and fade back on leave. Active (aurora) label is excluded.
+ */
+#projects.projects-slaywire-detail-open .video-editing-detail-card-tab[aria-selected="false"]:active {
+  color: #fff !important;
+  transition-duration: 250ms !important;
+}
+@media (hover: hover) and (pointer: fine) {
+  #projects.projects-slaywire-detail-open .video-editing-detail-card-tab[aria-selected="false"]:hover {
+    color: #fff !important;
+    transition-duration: 250ms !important;
+  }
 }
