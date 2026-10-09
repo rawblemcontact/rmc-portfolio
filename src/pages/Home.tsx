@@ -7498,6 +7498,15 @@ const DETAIL_SLIDE_CUBIC = "cubic-bezier(0.16, 1, 0.32, 1)";
 const DETAIL_RULE_LINE_LEAD_MS = Math.round(150 / SHOWCASE_TIME_DIV);
 /** Horizontal rule under project title block: center-out scaleX. */
 const DETAIL_RULE_EXPAND_MS = Math.round(280 / SHOWCASE_TIME_DIV);
+/**
+ * SLAYWIRE details greyscale: earliest arm after the detail mounts (covers header /
+ * player / rule / tab-body / scroll-hint entrance), then wait for N idle frames with
+ * no finite animations, then a short hold. Hard cap so it always arms.
+ */
+const SLAYWIRE_GREYSCALE_MIN_WAIT_MS = 700;
+const SLAYWIRE_GREYSCALE_IDLE_FRAMES = 6;
+const SLAYWIRE_GREYSCALE_SETTLE_HOLD_MS = 120;
+const SLAYWIRE_GREYSCALE_MAX_WAIT_MS = 4000;
 /** Settled hero video/image: opacity ramp after morph (CSS; eases video compositor flash vs. motion.div). */
 const DETAIL_HERO_MEDIA_FADE_MS = Math.round(340 / SHOWCASE_TIME_DIV);
 const DETAIL_HERO_MEDIA_FADE_EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
@@ -10326,6 +10335,67 @@ const PalaceProjects = ({
   const projectDetailAllowsOverflowX =
     videoEditingDetailNoMainCard || slaywireDetailInFlow || visualDesignDetailInFlow;
 
+  /**
+   * SLAYWIRE details greyscale mode. Arms only after the detail entrance has
+   * fully settled (min wait + no finite CSS/WAAPI animations running in
+   * #projects), then `.projects-slaywire-greyscale` eases the filter in via CSS.
+   * Resets only when the detail is unmounted (back / side nav / menu exit), so
+   * nothing snaps back to colour while the exit transition is still on screen.
+   */
+  const [slaywireGreyscaleReady, setSlaywireGreyscaleReady] = useState(false);
+  useEffect(() => {
+    if (!slaywireDetailInFlow) {
+      setSlaywireGreyscaleReady(false);
+      return;
+    }
+    let cancelled = false;
+    let raf = 0;
+    let holdTimer = 0;
+    let idleFrames = 0;
+    const startedAt = performance.now();
+    const finiteAnimationsRunning = () => {
+      const section = projectsSectionRef.current;
+      if (!section || typeof section.getAnimations !== "function") return false;
+      return section.getAnimations({ subtree: true }).some((anim) => {
+        if (anim.playState !== "running" && !anim.pending) return false;
+        const end = anim.effect?.getComputedTiming().endTime;
+        // Ignore infinite loops (grid drift, arrow idle pulse, scroll-hint float).
+        return typeof end === "number" && Number.isFinite(end);
+      });
+    };
+    const arm = () => {
+      if (cancelled) return;
+      holdTimer = window.setTimeout(() => {
+        if (!cancelled) setSlaywireGreyscaleReady(true);
+      }, SLAYWIRE_GREYSCALE_SETTLE_HOLD_MS);
+    };
+    const poll = () => {
+      if (cancelled) return;
+      const elapsed = performance.now() - startedAt;
+      if (elapsed >= SLAYWIRE_GREYSCALE_MAX_WAIT_MS) {
+        arm();
+        return;
+      }
+      if (elapsed >= SLAYWIRE_GREYSCALE_MIN_WAIT_MS && !finiteAnimationsRunning()) {
+        idleFrames += 1;
+        if (idleFrames >= SLAYWIRE_GREYSCALE_IDLE_FRAMES) {
+          arm();
+          return;
+        }
+      } else {
+        idleFrames = 0;
+      }
+      raf = requestAnimationFrame(poll);
+    };
+    raf = requestAnimationFrame(poll);
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(raf);
+      window.clearTimeout(holdTimer);
+    };
+  }, [slaywireDetailInFlow]);
+  const slaywireGreyscaleActive = slaywireDetailInFlow && slaywireGreyscaleReady;
+
   const activeProjectsTabletThumbnailValues =
     projectsTabletPortraitViewport
       ? projectsTabletThumbnailDebugEnabled
@@ -10755,6 +10825,8 @@ const PalaceProjects = ({
         projectDetailInFlow
           ? `min-h-screen shrink-0 ${SECTION_MAIN_HEADER_INSET} ${
               slaywireDetailInFlow ? "projects-slaywire-detail-open" : ""
+            } ${
+              slaywireGreyscaleActive ? "projects-slaywire-greyscale" : ""
             } ${
               interactiveMediaDetailInFlow ? "projects-interactive-media-detail-open" : ""
             } ${

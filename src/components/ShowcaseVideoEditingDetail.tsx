@@ -4849,7 +4849,7 @@ export function ShowcaseVideoEditingDetail({
   return (
     <>
       <motion.div
-        className="order-1 mt-0 flex w-full flex-col items-stretch gap-y-1.5 text-left"
+        className="video-editing-detail-header order-1 mt-0 flex w-full flex-col items-stretch gap-y-1.5 text-left"
         style={
           reduceMotion
             ? { opacity: detailHdrReveal ? 1 : 0 }

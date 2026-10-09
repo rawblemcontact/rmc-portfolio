@@ -10814,3 +10814,39 @@
   pointer-events: none;
   border: 1px solid #fff;
 }
+
+/*
+ * SLAYWIRE details — greyscale mode (all viewports: desktop, iPad landscape/portrait, phone).
+ * Filter goes on the NON-excluded leaves only, because a parent filter cannot be undone by
+ * children. Kept in full colour: player card (`.video-editing-player`), works-strip thumbnails +
+ * their borders (`.video-editing-works-strip-thumb-art`), prev/next works arrows, and the top nav
+ * / side nav (rendered outside the section panel). Targets are children of elements that get
+ * inline `transition` writes (header motion.div, meta card) so the CSS filter transition survives.
+ * `.projects-slaywire-greyscale` is toggled in PalaceProjects after the entrance settles and is only
+ * removed once the detail has unmounted.
+ */
+#projects.projects-slaywire-detail-open .video-editing-detail-header > *,
+#projects.projects-slaywire-detail-open .video-editing-detail-divider-wrap,
+#projects.projects-slaywire-detail-open .video-editing-detail-now-playing,
+#projects.projects-slaywire-detail-open .video-editing-detail-meta-card > *,
+#projects.projects-slaywire-detail-open .video-editing-works-strip-thumb-caption > * {
+  transition: filter 1.4s cubic-bezier(0.45, 0, 0.25, 1);
+}
+
+#projects.projects-slaywire-greyscale .video-editing-detail-header > *,
+#projects.projects-slaywire-greyscale .video-editing-detail-divider-wrap,
+#projects.projects-slaywire-greyscale .video-editing-detail-now-playing,
+#projects.projects-slaywire-greyscale .video-editing-detail-meta-card > *,
+#projects.projects-slaywire-greyscale .video-editing-works-strip-thumb-caption > * {
+  filter: grayscale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #projects.projects-slaywire-detail-open .video-editing-detail-header > *,
+  #projects.projects-slaywire-detail-open .video-editing-detail-divider-wrap,
+  #projects.projects-slaywire-detail-open .video-editing-detail-now-playing,
+  #projects.projects-slaywire-detail-open .video-editing-detail-meta-card > *,
+  #projects.projects-slaywire-detail-open .video-editing-works-strip-thumb-caption > * {
+    transition-duration: 0.6s;
+  }
+}
