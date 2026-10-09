@@ -11031,34 +11031,43 @@
 }
 
 /*
- * 5. Works prev/next arrows hover / pressed: yellow glyph + yellow drop-shadow glow become a
- * colour-cycled glyph with a matching glow. Moved onto the glyph so the button keeps its idle
- * pulse animation (phase lock with FEATURED WRITING).
+ * 5. Works prev/next arrows — NO aurora; greyscale in every state (idle, hover, tap), on the
+ * same `.projects-slaywire-greyscale` toggle + 1.4s curve as the rest of the section greying.
+ * Glyph gets the grey filter (keeps its translate nudge transition); the hover/tap glow colour is
+ * swapped from yellow to the matching grey. Idle pulse (custom-property opacity) untouched.
  */
+#projects.projects-slaywire-detail-open .video-editing-works-arrow-glyph {
+  transition:
+    transform var(--works-arrow-motion-dur, 0.34s)
+      var(--works-arrow-motion-ease, cubic-bezier(0.22, 1, 0.36, 1)),
+    filter 1.4s cubic-bezier(0.45, 0, 0.25, 1);
+}
+#projects.projects-slaywire-greyscale .video-editing-works-arrow-glyph {
+  filter: grayscale(1) contrast(0.7) brightness(0.85) opacity(0.8);
+}
 @media (hover: hover) and (pointer: fine) {
-  #projects.projects-slaywire-detail-open .video-editing-works-arrow:hover,
-  #projects.projects-slaywire-detail-open .video-editing-works-arrow:active {
-    filter: none;
-  }
-  #projects.projects-slaywire-detail-open
-    .video-editing-works-arrow:hover
-    .video-editing-works-arrow-glyph,
-  #projects.projects-slaywire-detail-open
-    .video-editing-works-arrow:active
-    .video-editing-works-arrow-glyph {
-    filter: drop-shadow(0 0 7px color-mix(in srgb, currentColor 62%, transparent));
-    animation: slaywire-aurora-cycle var(--aurora-duration) ease-in-out infinite alternate;
+  #projects.projects-slaywire-greyscale .video-editing-works-arrow:hover,
+  #projects.projects-slaywire-greyscale .video-editing-works-arrow:active {
+    filter: drop-shadow(0 0 7px rgba(158, 158, 158, 0.55));
   }
 }
-#projects.projects-slaywire-detail-open
+#projects.projects-slaywire-greyscale
   .video-editing-works-arrow.video-editing-works-arrow--pressed {
-  filter: none;
+  filter: drop-shadow(0 0 7px rgba(158, 158, 158, 0.55));
 }
-#projects.projects-slaywire-detail-open
-  .video-editing-works-arrow.video-editing-works-arrow--pressed
-  .video-editing-works-arrow-glyph {
-  filter: drop-shadow(0 0 7px color-mix(in srgb, currentColor 62%, transparent));
-  animation: slaywire-aurora-cycle var(--aurora-duration) ease-in-out infinite alternate;
+
+/*
+ * Guard: info-card body copy (tab panel) and the now-playing title never take aurora
+ * gradient-text styling, whatever wraps them — solid fill so the washed-out grey filter applies.
+ */
+#projects.projects-slaywire-detail-open .video-editing-detail-card-tabpanel-shell,
+#projects.projects-slaywire-detail-open .video-editing-detail-card-tabpanel-shell *,
+#projects.projects-slaywire-detail-open .video-editing-detail-now-playing,
+#projects.projects-slaywire-detail-open .video-editing-detail-now-playing * {
+  -webkit-text-fill-color: currentColor;
+  background-image: none;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -11066,8 +11075,7 @@
   #projects.projects-slaywire-detail-open .video-editing-detail-card-tab > span,
   #projects.projects-slaywire-detail-open .video-editing-detail-card-tab-underline,
   #projects.projects-slaywire-detail-open .video-editing-works-strip-thumb-art,
-  #projects.projects-slaywire-detail-open .video-editing-works-strip-thumb:focus-visible,
-  #projects.projects-slaywire-detail-open .video-editing-works-arrow-glyph {
+  #projects.projects-slaywire-detail-open .video-editing-works-strip-thumb:focus-visible {
     /* Static rainbow / first palette colour, no motion. */
     animation-play-state: paused;
   }
