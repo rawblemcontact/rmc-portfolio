@@ -11121,10 +11121,10 @@
 #projects.projects-slaywire-detail-open .video-editing-player {
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.09),
-    0 8px 24px rgba(0, 0, 0, 0.55) !important;
+    0 8px 24px rgba(0, 0, 0, 0.85) !important;
 }
 #projects.projects-slaywire-detail-open .video-editing-works-strip-thumb-art {
-  box-shadow: 0 5px 12px -3px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 5px 12px -3px rgba(0, 0, 0, 0.9);
 }
 #projects.projects-slaywire-detail-open .video-editing-works-strip {
   padding-bottom: 16px !important;
