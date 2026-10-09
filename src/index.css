@@ -10950,11 +10950,8 @@
   100% { color: var(--aurora-c6); }
 }
 
-/* 1. Text: "PROJECT DETAILS" eyebrow (span), active tab label, hovered tab label. */
-#projects.projects-slaywire-detail-open .slaywire-aurora-text,
-#projects.projects-slaywire-detail-open
-  .video-editing-detail-card-tab[aria-selected="true"]
-  > span {
+/* 1. Text: "PROJECT DETAILS" eyebrow (span). */
+#projects.projects-slaywire-detail-open .slaywire-aurora-text {
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
   background-image: var(--aurora-gradient);
@@ -10973,17 +10970,21 @@
   padding: 0.06em 0.1em;
   margin: 0 -0.1em;
 }
+/*
+ * Tab LABELS: no aurora. Active = solid white; inactive keep their dim mono colour and fade to
+ * white on hover (fine pointer) / press (touch tap), fading back on leave. Selecting a tab fades
+ * its label to white on the same 250ms colour transition. Underline keeps the aurora (below).
+ */
+#projects.projects-slaywire-detail-open .video-editing-detail-card-tab {
+  transition: color 250ms ease-out !important;
+}
+#projects.projects-slaywire-detail-open .video-editing-detail-card-tab[aria-selected="true"],
+#projects.projects-slaywire-detail-open .video-editing-detail-card-tab:active {
+  color: #fff !important;
+}
 @media (hover: hover) and (pointer: fine) {
-  #projects.projects-slaywire-detail-open
-    .video-editing-detail-card-tab[aria-selected="false"]:hover
-    > span {
-    background-image: var(--aurora-gradient);
-    background-size: 200% auto;
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: transparent;
-    animation: slaywire-aurora var(--aurora-duration) ease-in-out infinite alternate;
+  #projects.projects-slaywire-detail-open .video-editing-detail-card-tab:hover {
+    color: #fff !important;
   }
 }
 
