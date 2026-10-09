@@ -10870,15 +10870,23 @@
 }
 
 /*
- * SLAYWIRE info card stays full colour: `.profile-card-surface` is translucent glass
- * (8% fill + 2px backdrop blur), so once the grid BG is lifted to grey the card picked up
- * that grey through its fill/backdrop. Make it opaque at its normal on-black tone and drop
- * the backdrop sample, for every layout, so the greyed grid can never show through.
+ * SLAYWIRE info card keeps its normal see-through glass (8% fill + 2px blur) and matches the
+ * other project details. The greyed grid is v' = 2.2v + 0.225 (grayscale(1) brightness(4)
+ * contrast(0.55) on a neutral grid), so the card's backdrop applies the exact inverse
+ * (brightness(0.3774) then contrast(1.2045) => v = v'/2.2 - 0.1023) before blurring. The card
+ * therefore samples the original near-black grid. Same class toggle + 0.7s curve as the grid lift
+ * so they track each other in and out. !important beats JS inline `transition: none` writes, and
+ * only backdrop-filter is listed, so height tweens are unaffected.
  */
 #projects.projects-slaywire-detail-open .video-editing-detail-meta-card {
-  background: #030304 !important;
-  background-image: none !important;
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
-  filter: none !important;
+  -webkit-backdrop-filter: blur(2px) brightness(1) contrast(1);
+  backdrop-filter: blur(2px) brightness(1) contrast(1);
+  transition:
+    backdrop-filter 0.7s cubic-bezier(0.45, 0, 0.25, 1),
+    -webkit-backdrop-filter 0.7s cubic-bezier(0.45, 0, 0.25, 1) !important;
+}
+
+#projects.projects-slaywire-grid-grey .video-editing-detail-meta-card {
+  -webkit-backdrop-filter: blur(2px) brightness(0.3774) contrast(1.2045);
+  backdrop-filter: blur(2px) brightness(0.3774) contrast(1.2045);
 }
