@@ -10847,8 +10847,8 @@
  * whole backdrop reads as a visible grey wash with grey grid lines (~#3e3e3e / #4b4b4b).
  */
 #projects.projects-slaywire-grid-grey > .projects-section-grid {
-  /* Dark grey wash: v' = 1.7v + 0.096 -> fill #020202 ~ #1c1c1c, lines #080808 ~ #262626. */
-  filter: grayscale(1) brightness(2.1) contrast(0.807);
+  /* Dark grey wash: v' = 1.539v + 0.0583 -> fill #020202 ~ #121212, lines #080808 ~ #1b1b1b. */
+  filter: grayscale(1) brightness(1.742) contrast(0.8834);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -11106,7 +11106,27 @@
  * SLAYWIRE info card glass: deep #202020 see-through fill (was 8% of #0a0c12). Blur + border unchanged.
  */
 #projects.projects-slaywire-detail-open .video-editing-detail-meta-card {
-  /* Reads as ~#202020 over the #1c1c1c wash; keeps a slight see-through feel + 2px blur. */
-  background: rgba(32, 32, 32, 0.85);
+  /* Reads as ~#161616 over the #121212 wash; keeps a slight see-through feel + 2px blur. */
+  background: rgba(23, 23, 23, 0.85);
   background-image: none;
+}
+
+/*
+ * SLAYWIRE drop shadows (all layouts). Player keeps its 1px white/9% ring (Tailwind ring is a
+ * box-shadow, so it is re-declared first). Thumbs: shadow on the art tile (aurora border is a
+ * background, unaffected); negative spread keeps it from bleeding sideways into the strip clip,
+ * and the strip gets bottom room (cancelled by negative margin, layout unchanged) so its
+ * overflow clip/scroll box never cuts the shadow.
+ */
+#projects.projects-slaywire-detail-open .video-editing-player {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.09),
+    0 8px 24px rgba(0, 0, 0, 0.55) !important;
+}
+#projects.projects-slaywire-detail-open .video-editing-works-strip-thumb-art {
+  box-shadow: 0 5px 12px -3px rgba(0, 0, 0, 0.6);
+}
+#projects.projects-slaywire-detail-open .video-editing-works-strip {
+  padding-bottom: 16px !important;
+  margin-bottom: -16px !important;
 }
