@@ -4863,10 +4863,10 @@ export function ShowcaseVideoEditingDetail({
         }
       >
         <p className="project-detail-main-eyebrow m-0 w-full font-heading text-sm sm:text-base leading-snug tracking-eyebrow-tight uppercase text-[color:var(--palette-yellow-projects)]">
-          Project details
+          {isSlaywire ? <span className="slaywire-aurora-text">Project details</span> : "Project details"}
         </p>
         <h3 className="m-0 w-full font-display text-2xl md:text-3xl leading-[1.1] tracking-[-0.015em] text-white">
-          {isSlaywire ? <span className="slaywire-aurora-text">{card.title}</span> : card.title}
+          {card.title}
         </h3>
         <p className="project-detail-main-subtitle m-0 w-full font-body text-sm sm:text-base leading-snug text-mono-2">
           {card.tagline}
@@ -5128,11 +5128,7 @@ export function ShowcaseVideoEditingDetail({
                         className="flex w-full min-w-0 flex-col items-stretch gap-y-1.5 text-left"
                       >
                         <h3 className="m-0 w-full font-display text-2xl md:text-3xl leading-[1.1] tracking-[-0.015em] text-white">
-                          {isSlaywire ? (
-                            <span className="slaywire-aurora-text">{activeSelectorTitle}</span>
-                          ) : (
-                            activeSelectorTitle
-                          )}
+                          {activeSelectorTitle}
                         </h3>
                         {activeSelectorSubtitle ? (
                           <p className="m-0 w-full pl-[2px] font-body text-sm sm:text-base leading-snug text-mono-2">

@@ -10907,15 +10907,12 @@
 }
 
 /*
- * SLAYWIRE aurora text (after Magic UI "Aurora Text") — main header title + now-playing title,
- * all layouts. Colour-only: animates background-position on a clipped gradient; no transform,
- * so no wobble and the h3's own translate / clip-fix stay as-is. The span is inline, so font,
- * size, weight, tracking and layout are inherited unchanged; real text stays for screen readers.
- * Small inline padding (cancelled by equal negative margin) gives the glyph side bearings
- * (e.g. the first "S") gradient coverage so nothing paints transparent at the edges.
- * Tweak palette via --aurora-c1..c6 and speed via --aurora-duration.
+ * SLAYWIRE aurora (after Magic UI "Aurora Text") — replaces the YELLOW accents in the SLAYWIRE
+ * details section only (all layouts). Colour-only: background-position / colour keyframes, no
+ * transforms, sizes or layout changes. The two SLAYWIRE titles are intentionally NOT aurora.
+ * Tweak palette via --aurora-c1..c6 and speed via --aurora-duration (scoped to the section).
  */
-.slaywire-aurora-text {
+#projects.projects-slaywire-detail-open {
   --aurora-c1: #ff0080;
   --aurora-c2: #ff8c00;
   --aurora-c3: #ffe600;
@@ -10923,12 +10920,7 @@
   --aurora-c5: #00b0ff;
   --aurora-c6: #7928ca;
   --aurora-duration: 9s;
-  display: inline;
-  padding: 0.06em 0.1em;
-  margin: 0 -0.1em;
-  -webkit-box-decoration-break: clone;
-  box-decoration-break: clone;
-  background-image: linear-gradient(
+  --aurora-gradient: linear-gradient(
     135deg,
     var(--aurora-c1),
     var(--aurora-c2),
@@ -10938,6 +10930,43 @@
     var(--aurora-c6),
     var(--aurora-c1)
   );
+}
+
+@keyframes slaywire-aurora {
+  0% { background-position: 0% 50%; }
+  25% { background-position: 50% 100%; }
+  50% { background-position: 100% 50%; }
+  75% { background-position: 50% 0%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Two-layer variant: layer 1 = solid inner fill (static), layer 2 = moving rainbow border. */
+@keyframes slaywire-aurora-border {
+  0% { background-position: 0 0, 0% 50%; }
+  25% { background-position: 0 0, 50% 100%; }
+  50% { background-position: 0 0, 100% 50%; }
+  75% { background-position: 0 0, 50% 0%; }
+  100% { background-position: 0 0, 0% 50%; }
+}
+
+/* For things that can only take one colour (glyph strokes, glows, rings). */
+@keyframes slaywire-aurora-cycle {
+  0% { color: var(--aurora-c1); }
+  20% { color: var(--aurora-c2); }
+  40% { color: var(--aurora-c3); }
+  60% { color: var(--aurora-c4); }
+  80% { color: var(--aurora-c5); }
+  100% { color: var(--aurora-c6); }
+}
+
+/* 1. Text: "PROJECT DETAILS" eyebrow (span), active tab label, hovered tab label. */
+#projects.projects-slaywire-detail-open .slaywire-aurora-text,
+#projects.projects-slaywire-detail-open
+  .video-editing-detail-card-tab[aria-selected="true"]
+  > span {
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  background-image: var(--aurora-gradient);
   background-size: 200% auto;
   background-position: 0% 50%;
   -webkit-background-clip: text;
@@ -10947,27 +10976,99 @@
   filter: none !important;
   animation: slaywire-aurora var(--aurora-duration) ease-in-out infinite alternate;
 }
-
-@keyframes slaywire-aurora {
-  0% {
-    background-position: 0% 50%;
-  }
-  25% {
-    background-position: 50% 100%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  75% {
-    background-position: 50% 0%;
-  }
-  100% {
-    background-position: 0% 50%;
+/* Eyebrow span: side bleed (cancelled by negative margin) so glyph edges get gradient. */
+#projects.projects-slaywire-detail-open .slaywire-aurora-text {
+  display: inline;
+  padding: 0.06em 0.1em;
+  margin: 0 -0.1em;
+}
+@media (hover: hover) and (pointer: fine) {
+  #projects.projects-slaywire-detail-open
+    .video-editing-detail-card-tab[aria-selected="false"]:hover
+    > span {
+    background-image: var(--aurora-gradient);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    animation: slaywire-aurora var(--aurora-duration) ease-in-out infinite alternate;
   }
 }
 
+/* 2. Tab underline (1px bar; Framer still owns its scaleX/opacity). */
+#projects.projects-slaywire-detail-open .video-editing-detail-card-tab-underline {
+  background-image: var(--aurora-gradient);
+  background-size: 200% auto;
+  animation: slaywire-aurora var(--aurora-duration) ease-in-out infinite alternate;
+}
+
+/*
+ * 3. Active thumbnail border: transparent border + two backgrounds — black clipped to the
+ * padding box (under the image) and the moving rainbow clipped to the border box — so the 1px
+ * border itself shows the aurora. Same border width / radius / size as before.
+ */
+#projects.projects-slaywire-detail-open
+  .video-editing-works-strip-thumb[aria-pressed="true"]
+  > .video-editing-works-strip-thumb-art {
+  border-color: transparent !important;
+  background-image: linear-gradient(#000, #000), var(--aurora-gradient);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  background-size: 100% 100%, 200% 200%;
+  background-repeat: no-repeat;
+  animation: slaywire-aurora-border var(--aurora-duration) ease-in-out infinite alternate;
+}
+
+/* 4. Thumb keyboard focus ring (coarse pointer): colour-cycled box-shadow via currentColor. */
+@media (pointer: coarse) {
+  #projects.projects-slaywire-detail-open
+    .video-editing-works-strip
+    .video-editing-works-strip-thumb:focus-visible {
+    box-shadow: 0 0 0 1px currentColor;
+    animation: slaywire-aurora-cycle var(--aurora-duration) ease-in-out infinite alternate;
+  }
+}
+
+/*
+ * 5. Works prev/next arrows hover / pressed: yellow glyph + yellow drop-shadow glow become a
+ * colour-cycled glyph with a matching glow. Moved onto the glyph so the button keeps its idle
+ * pulse animation (phase lock with FEATURED WRITING).
+ */
+@media (hover: hover) and (pointer: fine) {
+  #projects.projects-slaywire-detail-open .video-editing-works-arrow:hover,
+  #projects.projects-slaywire-detail-open .video-editing-works-arrow:active {
+    filter: none;
+  }
+  #projects.projects-slaywire-detail-open
+    .video-editing-works-arrow:hover
+    .video-editing-works-arrow-glyph,
+  #projects.projects-slaywire-detail-open
+    .video-editing-works-arrow:active
+    .video-editing-works-arrow-glyph {
+    filter: drop-shadow(0 0 7px color-mix(in srgb, currentColor 62%, transparent));
+    animation: slaywire-aurora-cycle var(--aurora-duration) ease-in-out infinite alternate;
+  }
+}
+#projects.projects-slaywire-detail-open
+  .video-editing-works-arrow.video-editing-works-arrow--pressed {
+  filter: none;
+}
+#projects.projects-slaywire-detail-open
+  .video-editing-works-arrow.video-editing-works-arrow--pressed
+  .video-editing-works-arrow-glyph {
+  filter: drop-shadow(0 0 7px color-mix(in srgb, currentColor 62%, transparent));
+  animation: slaywire-aurora-cycle var(--aurora-duration) ease-in-out infinite alternate;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .slaywire-aurora-text {
-    animation: none;
+  #projects.projects-slaywire-detail-open .slaywire-aurora-text,
+  #projects.projects-slaywire-detail-open .video-editing-detail-card-tab > span,
+  #projects.projects-slaywire-detail-open .video-editing-detail-card-tab-underline,
+  #projects.projects-slaywire-detail-open .video-editing-works-strip-thumb-art,
+  #projects.projects-slaywire-detail-open .video-editing-works-strip-thumb:focus-visible,
+  #projects.projects-slaywire-detail-open .video-editing-works-arrow-glyph {
+    /* Static rainbow / first palette colour, no motion. */
+    animation-play-state: paused;
   }
 }
