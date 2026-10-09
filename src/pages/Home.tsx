@@ -7507,6 +7507,10 @@ const SLAYWIRE_GREYSCALE_MIN_WAIT_MS = 700;
 const SLAYWIRE_GREYSCALE_IDLE_FRAMES = 6;
 const SLAYWIRE_GREYSCALE_SETTLE_HOLD_MS = 120;
 const SLAYWIRE_GREYSCALE_MAX_WAIT_MS = 4000;
+/** SLAYWIRE opening step 1: PROJECTS list fades fully out before the detail mounts. */
+const SLAYWIRE_LIST_FADE_OUT_MS = 320;
+/** SLAYWIRE opening step 2: grid BG greys (keep in sync with index.css grid transition). */
+const SLAYWIRE_GRID_GREY_MS = 700;
 /** Settled hero video/image: opacity ramp after morph (CSS; eases video compositor flash vs. motion.div). */
 const DETAIL_HERO_MEDIA_FADE_MS = Math.round(340 / SHOWCASE_TIME_DIV);
 const DETAIL_HERO_MEDIA_FADE_EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
@@ -10335,66 +10339,6 @@ const PalaceProjects = ({
   const projectDetailAllowsOverflowX =
     videoEditingDetailNoMainCard || slaywireDetailInFlow || visualDesignDetailInFlow;
 
-  /**
-   * SLAYWIRE details greyscale mode. Arms only after the detail entrance has
-   * fully settled (min wait + no finite CSS/WAAPI animations running in
-   * #projects), then `.projects-slaywire-greyscale` eases the filter in via CSS.
-   * Resets only when the detail is unmounted (back / side nav / menu exit), so
-   * nothing snaps back to colour while the exit transition is still on screen.
-   */
-  const [slaywireGreyscaleReady, setSlaywireGreyscaleReady] = useState(false);
-  useEffect(() => {
-    if (!slaywireDetailInFlow) {
-      setSlaywireGreyscaleReady(false);
-      return;
-    }
-    let cancelled = false;
-    let raf = 0;
-    let holdTimer = 0;
-    let idleFrames = 0;
-    const startedAt = performance.now();
-    const finiteAnimationsRunning = () => {
-      const section = projectsSectionRef.current;
-      if (!section || typeof section.getAnimations !== "function") return false;
-      return section.getAnimations({ subtree: true }).some((anim) => {
-        if (anim.playState !== "running" && !anim.pending) return false;
-        const end = anim.effect?.getComputedTiming().endTime;
-        // Ignore infinite loops (grid drift, arrow idle pulse, scroll-hint float).
-        return typeof end === "number" && Number.isFinite(end);
-      });
-    };
-    const arm = () => {
-      if (cancelled) return;
-      holdTimer = window.setTimeout(() => {
-        if (!cancelled) setSlaywireGreyscaleReady(true);
-      }, SLAYWIRE_GREYSCALE_SETTLE_HOLD_MS);
-    };
-    const poll = () => {
-      if (cancelled) return;
-      const elapsed = performance.now() - startedAt;
-      if (elapsed >= SLAYWIRE_GREYSCALE_MAX_WAIT_MS) {
-        arm();
-        return;
-      }
-      if (elapsed >= SLAYWIRE_GREYSCALE_MIN_WAIT_MS && !finiteAnimationsRunning()) {
-        idleFrames += 1;
-        if (idleFrames >= SLAYWIRE_GREYSCALE_IDLE_FRAMES) {
-          arm();
-          return;
-        }
-      } else {
-        idleFrames = 0;
-      }
-      raf = requestAnimationFrame(poll);
-    };
-    raf = requestAnimationFrame(poll);
-    return () => {
-      cancelled = true;
-      cancelAnimationFrame(raf);
-      window.clearTimeout(holdTimer);
-    };
-  }, [slaywireDetailInFlow]);
-  const slaywireGreyscaleActive = slaywireDetailInFlow && slaywireGreyscaleReady;
 
   const activeProjectsTabletThumbnailValues =
     projectsTabletPortraitViewport
@@ -10582,6 +10526,91 @@ const PalaceProjects = ({
   const [detailGalleryReveal, setDetailGalleryReveal] = useState(false);
   const [detailRow1Reveal, setDetailRow1Reveal] = useState(false);
   const [detailRow2Reveal, setDetailRow2Reveal] = useState(false);
+
+  /**
+   * SLAYWIRE details greyscale mode (text / info card). Arms only after the detail
+   * entrance (which itself waits for the list fade-out + grid greying) has fully settled (min wait + no finite CSS/WAAPI animations running in
+   * #projects), then `.projects-slaywire-greyscale` eases the filter in via CSS.
+   * Resets only when the detail is unmounted (back / side nav / menu exit), so
+   * nothing snaps back to colour while the exit transition is still on screen.
+   */
+  const [slaywireGreyscaleReady, setSlaywireGreyscaleReady] = useState(false);
+  const slaywireEntranceStarted = slaywireDetailInFlow && detailHdrReveal;
+  useEffect(() => {
+    if (!slaywireDetailInFlow) {
+      setSlaywireGreyscaleReady(false);
+      return;
+    }
+    if (!slaywireEntranceStarted) return;
+    let cancelled = false;
+    let raf = 0;
+    let holdTimer = 0;
+    let idleFrames = 0;
+    const startedAt = performance.now();
+    const finiteAnimationsRunning = () => {
+      const section = projectsSectionRef.current;
+      if (!section || typeof section.getAnimations !== "function") return false;
+      return section.getAnimations({ subtree: true }).some((anim) => {
+        if (anim.playState !== "running" && !anim.pending) return false;
+        const end = anim.effect?.getComputedTiming().endTime;
+        // Ignore infinite loops (grid drift, arrow idle pulse, scroll-hint float).
+        return typeof end === "number" && Number.isFinite(end);
+      });
+    };
+    const arm = () => {
+      if (cancelled) return;
+      holdTimer = window.setTimeout(() => {
+        if (!cancelled) setSlaywireGreyscaleReady(true);
+      }, SLAYWIRE_GREYSCALE_SETTLE_HOLD_MS);
+    };
+    const poll = () => {
+      if (cancelled) return;
+      const elapsed = performance.now() - startedAt;
+      if (elapsed >= SLAYWIRE_GREYSCALE_MAX_WAIT_MS) {
+        arm();
+        return;
+      }
+      if (elapsed >= SLAYWIRE_GREYSCALE_MIN_WAIT_MS && !finiteAnimationsRunning()) {
+        idleFrames += 1;
+        if (idleFrames >= SLAYWIRE_GREYSCALE_IDLE_FRAMES) {
+          arm();
+          return;
+        }
+      } else {
+        idleFrames = 0;
+      }
+      raf = requestAnimationFrame(poll);
+    };
+    raf = requestAnimationFrame(poll);
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(raf);
+      window.clearTimeout(holdTimer);
+    };
+  }, [slaywireDetailInFlow, slaywireEntranceStarted]);
+  const slaywireGreyscaleActive = slaywireDetailInFlow && slaywireGreyscaleReady;
+
+  /**
+   * SLAYWIRE opening step 2: grid BG eases to grey as soon as the detail mounts
+   * (after the PROJECTS list fade-out). Class lands two frames after mount so the
+   * freshly keyed grid paints in colour first and the CSS filter transition runs.
+   */
+  const [slaywireGridGrey, setSlaywireGridGrey] = useState(false);
+  useEffect(() => {
+    if (!slaywireDetailInFlow) {
+      setSlaywireGridGrey(false);
+      return;
+    }
+    let raf2 = 0;
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => setSlaywireGridGrey(true));
+    });
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+    };
+  }, [slaywireDetailInFlow]);
+  const slaywireGridGreyActive = slaywireDetailInFlow && slaywireGridGrey;
   const [detailHeroMediaFadeIn, setDetailHeroMediaFadeIn] = useState(false);
   const [detailCardRadiusPx, setDetailCardRadiusPx] = useState<number>(() => {
     if (typeof window === "undefined") return 4;
@@ -10619,7 +10648,33 @@ const PalaceProjects = ({
   const mScaleX = useMotionValue(1);
   const mScaleY = useMotionValue(1);
 
+  const [slaywireListFadeOut, setSlaywireListFadeOut] = useState(false);
+  const slaywireListFadeTimerRef = useRef<number | null>(null);
+  useEffect(
+    () => () => {
+      if (slaywireListFadeTimerRef.current != null) {
+        window.clearTimeout(slaywireListFadeTimerRef.current);
+        slaywireListFadeTimerRef.current = null;
+      }
+    },
+    [],
+  );
+
   const handleCardClick = useCallback((id: string, el: HTMLElement) => {
+    if (id === "project-slaywire") {
+      // Step 1: fade the whole PROJECTS list out, then mount the detail (all layouts).
+      if (slaywireListFadeTimerRef.current != null) return;
+      setSlaywireListFadeOut(true);
+      slaywireListFadeTimerRef.current = window.setTimeout(() => {
+        slaywireListFadeTimerRef.current = null;
+        setMorphRect(null);
+        setTargetRect(null);
+        setMorphDone(true);
+        setSlaywireListFadeOut(false);
+        onSelectProject(id);
+      }, SLAYWIRE_LIST_FADE_OUT_MS);
+      return;
+    }
     if (projectDetailSafariLite) {
       setMorphRect(null);
       setTargetRect(null);
@@ -10786,6 +10841,17 @@ const PalaceProjects = ({
       detailRevealTimersRef.current = [];
       return;
     }
+    if (activeCard?.id === "project-slaywire") {
+      // Step 3: SLAYWIRE entrance starts only after the grid BG has eased to grey.
+      const revealTimer = window.setTimeout(() => {
+        setDetailHdrReveal(true);
+        setDetailRuleReveal(true);
+        setDetailGalleryReveal(true);
+        setDetailRow1Reveal(true);
+        setDetailRow2Reveal(true);
+      }, SLAYWIRE_GRID_GREY_MS);
+      return () => window.clearTimeout(revealTimer);
+    }
     if (
       projectDetailMotionReduced ||
       activeCard?.detailGallery?.length ||
@@ -10827,6 +10893,8 @@ const PalaceProjects = ({
               slaywireDetailInFlow ? "projects-slaywire-detail-open" : ""
             } ${
               slaywireGreyscaleActive ? "projects-slaywire-greyscale" : ""
+            } ${
+              slaywireGridGreyActive ? "projects-slaywire-grid-grey" : ""
             } ${
               interactiveMediaDetailInFlow ? "projects-interactive-media-detail-open" : ""
             } ${
@@ -10896,11 +10964,19 @@ const PalaceProjects = ({
       <motion.div
         className={`${PROFILE_SECTION_CONTAINER} relative z-10 flex min-w-0 w-full flex-col ${
           projectDetailInFlow ? "min-h-min shrink-0" : "max-2xl:min-h-min max-2xl:flex-none 2xl:min-h-0 2xl:flex-1"
-        }${forceContentHidden ? " opacity-0 pointer-events-none select-none" : ""}`}
+        }${forceContentHidden ? " opacity-0 pointer-events-none select-none" : ""}${
+          slaywireListFadeOut ? " pointer-events-none" : ""
+        }`}
         initial={false}
-        animate={{ opacity: featuredPdfViewerActive ? 0 : 1 }}
+        animate={{ opacity: featuredPdfViewerActive || slaywireListFadeOut ? 0 : 1 }}
         transition={{
-          duration: reduceMotion ? 0 : SHOWCASE_PDF_PROJECTS_FADE_OUT_S,
+          duration: slaywireListFadeOut
+            ? SLAYWIRE_LIST_FADE_OUT_MS / 1000
+            : slaywireDetailInFlow
+              ? 0
+              : reduceMotion
+                ? 0
+                : SHOWCASE_PDF_PROJECTS_FADE_OUT_S,
           ease: EASE.out,
         }}
         aria-hidden={forceContentHidden || undefined}

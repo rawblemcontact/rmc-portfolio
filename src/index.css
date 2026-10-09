@@ -10829,9 +10829,13 @@
 #projects.projects-slaywire-detail-open .video-editing-detail-divider-wrap,
 #projects.projects-slaywire-detail-open .video-editing-detail-now-playing,
 #projects.projects-slaywire-detail-open .video-editing-detail-meta-card > *,
-#projects.projects-slaywire-detail-open > .projects-section-grid,
 #projects.projects-slaywire-detail-open .video-editing-works-strip-thumb-caption > * {
   transition: filter 1.4s cubic-bezier(0.45, 0, 0.25, 1);
+}
+
+/* Grid greys FIRST as the opening beat (SLAYWIRE_GRID_GREY_MS = 700 in Home.tsx). */
+#projects.projects-slaywire-detail-open > .projects-section-grid {
+  transition: filter 0.7s cubic-bezier(0.45, 0, 0.25, 1);
 }
 
 #projects.projects-slaywire-greyscale .video-editing-detail-header > *,
@@ -10848,7 +10852,7 @@
  * Lift it first (brightness spreads the line/fill gap), then flatten toward mid-grey so the
  * whole backdrop reads as a visible grey wash with grey grid lines (~#3e3e3e / #4b4b4b).
  */
-#projects.projects-slaywire-greyscale > .projects-section-grid {
+#projects.projects-slaywire-grid-grey > .projects-section-grid {
   filter: grayscale(1) brightness(4) contrast(0.55);
 }
 
@@ -10857,7 +10861,6 @@
   #projects.projects-slaywire-detail-open .video-editing-detail-divider-wrap,
   #projects.projects-slaywire-detail-open .video-editing-detail-now-playing,
   #projects.projects-slaywire-detail-open .video-editing-detail-meta-card > *,
-  #projects.projects-slaywire-detail-open > .projects-section-grid,
   #projects.projects-slaywire-detail-open .video-editing-works-strip-thumb-caption > * {
     transition-duration: 0.6s;
   }
