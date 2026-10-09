@@ -10817,7 +10817,7 @@
 
 /*
  * SLAYWIRE details — greyscale mode (all viewports: desktop, iPad landscape/portrait, phone).
- * Header block + OVERVIEW/ROLE/STATUS/TOOLS info card intentionally stay in full colour.
+ * Header block, now-playing title and the OVERVIEW/ROLE/STATUS/TOOLS info card stay in full colour.
  * Filter goes on the NON-excluded leaves only, because a parent filter cannot be undone by
  * children. Kept in full colour: player card (`.video-editing-player`), works-strip thumbnails +
  * their borders (`.video-editing-works-strip-thumb-art`), prev/next works arrows, and the top nav
@@ -10826,7 +10826,6 @@
  * removed once the detail has unmounted.
  */
 #projects.projects-slaywire-detail-open .video-editing-detail-divider-wrap,
-#projects.projects-slaywire-detail-open .video-editing-detail-now-playing,
 #projects.projects-slaywire-detail-open .video-editing-works-strip-thumb-caption > * {
   transition: filter 1.4s cubic-bezier(0.45, 0, 0.25, 1);
 }
@@ -10837,7 +10836,6 @@
 }
 
 #projects.projects-slaywire-greyscale .video-editing-detail-divider-wrap,
-#projects.projects-slaywire-greyscale .video-editing-detail-now-playing,
 #projects.projects-slaywire-greyscale .video-editing-works-strip-thumb-caption > * {
   /* Washed-out grey, not just desaturated: flatten contrast, dim, and fade. */
   filter: grayscale(1) contrast(0.7) brightness(0.85) opacity(0.8);
@@ -10854,7 +10852,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   #projects.projects-slaywire-detail-open .video-editing-detail-divider-wrap,
-  #projects.projects-slaywire-detail-open .video-editing-detail-now-playing,
   #projects.projects-slaywire-detail-open .video-editing-works-strip-thumb-caption > * {
     transition-duration: 0.6s;
   }
@@ -10870,4 +10867,18 @@
   padding-left: 4px !important;
   width: calc(100% + 4px) !important;
   max-width: none !important;
+}
+
+/*
+ * SLAYWIRE info card stays full colour: `.profile-card-surface` is translucent glass
+ * (8% fill + 2px backdrop blur), so once the grid BG is lifted to grey the card picked up
+ * that grey through its fill/backdrop. Make it opaque at its normal on-black tone and drop
+ * the backdrop sample, for every layout, so the greyed grid can never show through.
+ */
+#projects.projects-slaywire-detail-open .video-editing-detail-meta-card {
+  background: #030304 !important;
+  background-image: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  filter: none !important;
 }
