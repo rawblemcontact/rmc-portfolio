@@ -10841,7 +10841,10 @@ const PalaceProjects = ({
         projectsEntranceSettled ? " projects-entrance-settled" : ""
       }`}
     >
-      <SectionGridOverlay key={projectDetailInFlow ? "projects-detail-grid" : "projects-list-grid"} />
+      <SectionGridOverlay
+        key={projectDetailInFlow ? "projects-detail-grid" : "projects-list-grid"}
+        className="projects-section-grid"
+      />
       {allowDebugPanels &&
         projectsTabletThumbnailDebugEnabled &&
         projectsTabletPortraitViewport &&

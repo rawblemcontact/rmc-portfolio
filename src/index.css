@@ -10829,6 +10829,7 @@
 #projects.projects-slaywire-detail-open .video-editing-detail-divider-wrap,
 #projects.projects-slaywire-detail-open .video-editing-detail-now-playing,
 #projects.projects-slaywire-detail-open .video-editing-detail-meta-card > *,
+#projects.projects-slaywire-detail-open > .projects-section-grid,
 #projects.projects-slaywire-detail-open .video-editing-works-strip-thumb-caption > * {
   transition: filter 1.4s cubic-bezier(0.45, 0, 0.25, 1);
 }
@@ -10837,6 +10838,7 @@
 #projects.projects-slaywire-greyscale .video-editing-detail-divider-wrap,
 #projects.projects-slaywire-greyscale .video-editing-detail-now-playing,
 #projects.projects-slaywire-greyscale .video-editing-detail-meta-card > *,
+#projects.projects-slaywire-greyscale > .projects-section-grid,
 #projects.projects-slaywire-greyscale .video-editing-works-strip-thumb-caption > * {
   filter: grayscale(1);
 }
@@ -10846,6 +10848,7 @@
   #projects.projects-slaywire-detail-open .video-editing-detail-divider-wrap,
   #projects.projects-slaywire-detail-open .video-editing-detail-now-playing,
   #projects.projects-slaywire-detail-open .video-editing-detail-meta-card > *,
+  #projects.projects-slaywire-detail-open > .projects-section-grid,
   #projects.projects-slaywire-detail-open .video-editing-works-strip-thumb-caption > * {
     transition-duration: 0.6s;
   }
