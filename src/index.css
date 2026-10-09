@@ -10890,3 +10890,26 @@
   -webkit-backdrop-filter: blur(2px) brightness(0.3774) contrast(1.2045);
   backdrop-filter: blur(2px) brightness(0.3774) contrast(1.2045);
 }
+
+/*
+ * SLAYWIRE info card: subtle partial greyscale on its contents (card stays see-through glass).
+ * Rides the same `.projects-slaywire-greyscale` toggle + 1.4s curve as the rest of the greying.
+ * Tweak `--slaywire-card-grey` (0 = full colour, 1 = full grey).
+ */
+#projects.projects-slaywire-detail-open {
+  --slaywire-card-grey: 0.35;
+}
+
+#projects.projects-slaywire-detail-open .video-editing-detail-meta-card > * {
+  transition: filter 1.4s cubic-bezier(0.45, 0, 0.25, 1);
+}
+
+#projects.projects-slaywire-greyscale .video-editing-detail-meta-card > * {
+  filter: grayscale(var(--slaywire-card-grey));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #projects.projects-slaywire-detail-open .video-editing-detail-meta-card > * {
+    transition-duration: 0.6s;
+  }
+}
