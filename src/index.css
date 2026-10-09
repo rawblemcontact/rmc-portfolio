@@ -11139,3 +11139,8 @@
   padding-bottom: 16px !important;
   margin-bottom: -16px !important;
 }
+
+/* SLAYWIRE tab labels only: aurora runs 2x faster (inherited by the ::after aurora copy). */
+#projects.projects-slaywire-detail-open .video-editing-detail-card-tab-label {
+  --aurora-duration: 4.5s;
+}
