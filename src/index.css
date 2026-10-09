@@ -10870,46 +10870,38 @@
 }
 
 /*
- * SLAYWIRE info card keeps its normal see-through glass (8% fill + 2px blur) and matches the
- * other project details. The greyed grid is v' = 2.2v + 0.225 (grayscale(1) brightness(4)
- * contrast(0.55) on a neutral grid), so the card's backdrop applies the exact inverse
- * (brightness(0.3774) then contrast(1.2045) => v = v'/2.2 - 0.1023) before blurring. The card
- * therefore samples the original near-black grid. Same class toggle + 0.7s curve as the grid lift
- * so they track each other in and out. !important beats JS inline `transition: none` writes, and
- * only backdrop-filter is listed, so height tweens are unaffected.
+ * SLAYWIRE info card sits IN the section's grey wash: no backdrop correction, so its normal
+ * see-through glass (8% fill + 2px blur) shows the greyed grid like the rest of the page.
+ * Non-yellow contents (tab body copy + scroll hint) take the same washed-out grey as the other
+ * greyed text, on the same `.projects-slaywire-greyscale` toggle + 1.4s curve. The tab strip
+ * (yellow active label + yellow underline; inactive labels already mono grey) is left untouched
+ * so the yellow stays full colour.
  */
-#projects.projects-slaywire-detail-open .video-editing-detail-meta-card {
-  -webkit-backdrop-filter: blur(2px) brightness(1) contrast(1);
-  backdrop-filter: blur(2px) brightness(1) contrast(1);
-  transition:
-    backdrop-filter 0.7s cubic-bezier(0.45, 0, 0.25, 1),
-    -webkit-backdrop-filter 0.7s cubic-bezier(0.45, 0, 0.25, 1) !important;
-}
-
-#projects.projects-slaywire-grid-grey .video-editing-detail-meta-card {
-  -webkit-backdrop-filter: blur(2px) brightness(0.3774) contrast(1.2045);
-  backdrop-filter: blur(2px) brightness(0.3774) contrast(1.2045);
-}
-
-/*
- * SLAYWIRE info card: subtle partial greyscale on its contents (card stays see-through glass).
- * Rides the same `.projects-slaywire-greyscale` toggle + 1.4s curve as the rest of the greying.
- * Tweak `--slaywire-card-grey` (0 = full colour, 1 = full grey).
- */
-#projects.projects-slaywire-detail-open {
-  --slaywire-card-grey: 0.35;
-}
-
-#projects.projects-slaywire-detail-open .video-editing-detail-meta-card > * {
+#projects.projects-slaywire-detail-open
+  .video-editing-detail-meta-card
+  .video-editing-detail-card-tabpanel-shell,
+#projects.projects-slaywire-detail-open
+  .video-editing-detail-meta-card
+  > .video-editing-detail-scroll-hint {
   transition: filter 1.4s cubic-bezier(0.45, 0, 0.25, 1);
 }
 
-#projects.projects-slaywire-greyscale .video-editing-detail-meta-card > * {
-  filter: grayscale(var(--slaywire-card-grey));
+#projects.projects-slaywire-greyscale
+  .video-editing-detail-meta-card
+  .video-editing-detail-card-tabpanel-shell,
+#projects.projects-slaywire-greyscale
+  .video-editing-detail-meta-card
+  > .video-editing-detail-scroll-hint {
+  filter: grayscale(1) contrast(0.7) brightness(0.85) opacity(0.8);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #projects.projects-slaywire-detail-open .video-editing-detail-meta-card > * {
+  #projects.projects-slaywire-detail-open
+    .video-editing-detail-meta-card
+    .video-editing-detail-card-tabpanel-shell,
+  #projects.projects-slaywire-detail-open
+    .video-editing-detail-meta-card
+    > .video-editing-detail-scroll-hint {
     transition-duration: 0.6s;
   }
 }
