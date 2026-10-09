@@ -4546,7 +4546,10 @@ export function ShowcaseVideoEditingDetail({
                 onPointerCancel={handleDetailCardTabPointerCancel}
                 onClick={handleDetailCardTabClick(tabId)}
               >
-                <span className="relative inline-block w-max pb-2">
+                <span
+                  className="video-editing-detail-card-tab-label relative inline-block w-max pb-2"
+                  data-label={detailCardTabLabel(tabId, isSlaywire)}
+                >
                   {detailCardTabLabel(tabId, isSlaywire)}
                   <motion.span
                     className="video-editing-detail-card-tab-underline pointer-events-none absolute inset-x-0 bottom-0 h-px bg-[color:var(--palette-yellow-projects)]"

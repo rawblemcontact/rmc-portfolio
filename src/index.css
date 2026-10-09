@@ -10847,7 +10847,8 @@
  * whole backdrop reads as a visible grey wash with grey grid lines (~#3e3e3e / #4b4b4b).
  */
 #projects.projects-slaywire-grid-grey > .projects-section-grid {
-  filter: grayscale(1) brightness(4) contrast(0.55);
+  /* Trailing brightness(0.82) = quieter wash (~#323232 fill / #3d3d3d lines). */
+  filter: grayscale(1) brightness(4) contrast(0.55) brightness(0.82);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -10971,28 +10972,57 @@
   margin: 0 -0.1em;
 }
 /*
- * Tab LABELS: no aurora. Active = solid white; inactive keep their dim mono colour and fade to
- * white on hover (fine pointer) / press (touch tap), fading back on leave. Selecting a tab fades
- * its label to white on the same 250ms colour transition. Underline keeps the aurora (below).
+ * Tab LABELS. Active = aurora text; inactive keep their dim mono colour and fade to white on
+ * hover (fine pointer) / press (touch tap) over 250ms. The aurora is a gradient-text ::after copy
+ * of the label (content from data-label, empty alt text so it isn't read twice) stacked exactly
+ * over the real text: on select the real text fades to transparent while the aurora layer fades
+ * in (300ms), and the reverse on deselect, so labels crossfade into / out of the aurora.
  */
 #projects.projects-slaywire-detail-open .video-editing-detail-card-tab {
-  transition: color 250ms ease-out !important;
+  transition: color 300ms ease-out !important;
 }
-#projects.projects-slaywire-detail-open .video-editing-detail-card-tab[aria-selected="true"],
-#projects.projects-slaywire-detail-open .video-editing-detail-card-tab:active {
+#projects.projects-slaywire-detail-open .video-editing-detail-card-tab[aria-selected="true"] {
+  color: transparent !important;
+}
+#projects.projects-slaywire-detail-open .video-editing-detail-card-tab[aria-selected="false"]:active {
   color: #fff !important;
+  transition-duration: 250ms !important;
 }
 @media (hover: hover) and (pointer: fine) {
-  #projects.projects-slaywire-detail-open .video-editing-detail-card-tab:hover {
+  #projects.projects-slaywire-detail-open .video-editing-detail-card-tab[aria-selected="false"]:hover {
     color: #fff !important;
+    transition-duration: 250ms !important;
   }
 }
-
-/* 2. Tab underline (1px bar; Framer still owns its scaleX/opacity). */
-#projects.projects-slaywire-detail-open .video-editing-detail-card-tab-underline {
+#projects.projects-slaywire-detail-open .video-editing-detail-card-tab-label::after {
+  content: attr(data-label);
+  content: attr(data-label) / "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  white-space: nowrap;
+  pointer-events: none;
   background-image: var(--aurora-gradient);
   background-size: 200% auto;
+  background-position: 0% 50%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  opacity: 0;
+  transition: opacity 300ms ease-out;
   animation: slaywire-aurora var(--aurora-duration) ease-in-out infinite alternate;
+}
+#projects.projects-slaywire-detail-open
+  .video-editing-detail-card-tab[aria-selected="true"]
+  .video-editing-detail-card-tab-label::after {
+  opacity: 1;
+}
+
+/* 2. Tab underlines removed in SLAYWIRE (bar + its grow/fade). */
+#projects.projects-slaywire-detail-open .video-editing-detail-card-tab-underline {
+  display: none !important;
 }
 
 /*
@@ -11064,11 +11094,19 @@
 
 @media (prefers-reduced-motion: reduce) {
   #projects.projects-slaywire-detail-open .slaywire-aurora-text,
-  #projects.projects-slaywire-detail-open .video-editing-detail-card-tab > span,
-  #projects.projects-slaywire-detail-open .video-editing-detail-card-tab-underline,
+  #projects.projects-slaywire-detail-open .video-editing-detail-card-tab-label::after,
   #projects.projects-slaywire-detail-open .video-editing-works-strip-thumb-art,
   #projects.projects-slaywire-detail-open .video-editing-works-strip-thumb:focus-visible {
     /* Static rainbow / first palette colour, no motion. */
     animation-play-state: paused;
   }
+}
+
+/*
+ * SLAYWIRE info card glass: slightly more noticeable neutral-grey see-through fill
+ * (was 8% of #0a0c12). Blur + border unchanged.
+ */
+#projects.projects-slaywire-detail-open .video-editing-detail-meta-card {
+  background: rgba(128, 128, 128, 0.13);
+  background-image: none;
 }
