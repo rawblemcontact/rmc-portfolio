@@ -10817,18 +10817,16 @@
 
 /*
  * SLAYWIRE details — greyscale mode (all viewports: desktop, iPad landscape/portrait, phone).
+ * Header block + OVERVIEW/ROLE/STATUS/TOOLS info card intentionally stay in full colour.
  * Filter goes on the NON-excluded leaves only, because a parent filter cannot be undone by
  * children. Kept in full colour: player card (`.video-editing-player`), works-strip thumbnails +
  * their borders (`.video-editing-works-strip-thumb-art`), prev/next works arrows, and the top nav
- * / side nav (rendered outside the section panel). Targets are children of elements that get
- * inline `transition` writes (header motion.div, meta card) so the CSS filter transition survives.
+ * / side nav (rendered outside the section panel).
  * `.projects-slaywire-greyscale` is toggled in PalaceProjects after the entrance settles and is only
  * removed once the detail has unmounted.
  */
-#projects.projects-slaywire-detail-open .video-editing-detail-header > *,
 #projects.projects-slaywire-detail-open .video-editing-detail-divider-wrap,
 #projects.projects-slaywire-detail-open .video-editing-detail-now-playing,
-#projects.projects-slaywire-detail-open .video-editing-detail-meta-card > *,
 #projects.projects-slaywire-detail-open .video-editing-works-strip-thumb-caption > * {
   transition: filter 1.4s cubic-bezier(0.45, 0, 0.25, 1);
 }
@@ -10838,10 +10836,8 @@
   transition: filter 0.7s cubic-bezier(0.45, 0, 0.25, 1);
 }
 
-#projects.projects-slaywire-greyscale .video-editing-detail-header > *,
 #projects.projects-slaywire-greyscale .video-editing-detail-divider-wrap,
 #projects.projects-slaywire-greyscale .video-editing-detail-now-playing,
-#projects.projects-slaywire-greyscale .video-editing-detail-meta-card > *,
 #projects.projects-slaywire-greyscale .video-editing-works-strip-thumb-caption > * {
   /* Washed-out grey, not just desaturated: flatten contrast, dim, and fade. */
   filter: grayscale(1) contrast(0.7) brightness(0.85) opacity(0.8);
@@ -10857,11 +10853,21 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #projects.projects-slaywire-detail-open .video-editing-detail-header > *,
   #projects.projects-slaywire-detail-open .video-editing-detail-divider-wrap,
   #projects.projects-slaywire-detail-open .video-editing-detail-now-playing,
-  #projects.projects-slaywire-detail-open .video-editing-detail-meta-card > *,
   #projects.projects-slaywire-detail-open .video-editing-works-strip-thumb-caption > * {
     transition-duration: 0.6s;
   }
+}
+
+/*
+ * SLAYWIRE now-playing title: the h3 is nudged translate(-1px) inside an overflow-hidden
+ * height wrapper, so the first glyph's left side bearing ("S") was clipped. Give the
+ * clip box a few px of left bleed without moving the text.
+ */
+#projects.projects-slaywire-detail-open .video-editing-detail-now-playing-clip {
+  margin-left: -4px !important;
+  padding-left: 4px !important;
+  width: calc(100% + 4px) !important;
+  max-width: none !important;
 }

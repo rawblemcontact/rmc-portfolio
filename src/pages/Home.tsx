@@ -7511,6 +7511,10 @@ const SLAYWIRE_GREYSCALE_MAX_WAIT_MS = 4000;
 const SLAYWIRE_LIST_FADE_OUT_MS = 320;
 /** SLAYWIRE opening step 2: grid BG greys (keep in sync with index.css grid transition). */
 const SLAYWIRE_GRID_GREY_MS = 700;
+/** SLAYWIRE exit step 1: detail elements fade out (grid stays grey). */
+const SLAYWIRE_EXIT_FADE_MS = 300;
+/** SLAYWIRE exit step 2: grid eases back to colour (same CSS transition as greying in). */
+const SLAYWIRE_EXIT_GRID_RESTORE_MS = SLAYWIRE_GRID_GREY_MS;
 /** Settled hero video/image: opacity ramp after morph (CSS; eases video compositor flash vs. motion.div). */
 const DETAIL_HERO_MEDIA_FADE_MS = Math.round(340 / SHOWCASE_TIME_DIV);
 const DETAIL_HERO_MEDIA_FADE_EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
@@ -9919,6 +9923,16 @@ function ShowcaseWritingFeaturedPanel({
   );
 }
 
+/** Imperative handle PalaceProjects exposes so Home can run the SLAYWIRE exit beat before leaving. */
+type SlaywireExitGate = {
+  /** SLAYWIRE detail is open and its exit beat has not completed yet. */
+  isActive: () => boolean;
+  /** Exit beat already running (ignore repeat nav input). */
+  isBusy: () => boolean;
+  /** Fade SLAYWIRE elements out → grid back to colour → then(). */
+  run: (then: () => void) => void;
+};
+
 const PalaceProjects = ({
   onSelectProject,
   onOpenSupporting,
@@ -9928,6 +9942,7 @@ const PalaceProjects = ({
   forceContentHidden = false,
   featuredPdfViewerActive = false,
   onEntranceSettled,
+  slaywireExitGateRef,
 }: {
   onSelectProject: (id: string) => void;
   onOpenSupporting: () => void;
@@ -9939,6 +9954,7 @@ const PalaceProjects = ({
   /** FEATURED WRITING VIEW ? fade carousel/tabs/header while grid PDF loader is up. */
   featuredPdfViewerActive?: boolean;
   onEntranceSettled?: () => void;
+  slaywireExitGateRef?: MutableRefObject<SlaywireExitGate | null>;
 }) => {
   const reduceMotion = useReducedMotion();
   const portfolioDebugEnabled = usePortfolioDebugEnabled();
@@ -10610,7 +10626,58 @@ const PalaceProjects = ({
       cancelAnimationFrame(raf2);
     };
   }, [slaywireDetailInFlow]);
-  const slaywireGridGreyActive = slaywireDetailInFlow && slaywireGridGrey;
+
+  /**
+   * SLAYWIRE exit beat (back / top nav / side nav / any navigateTo): fade the detail
+   * elements out, then ease the grid back to colour, then hand control back so the
+   * normal transition continues. Greyscale classes stay on until the detail unmounts.
+   */
+  const [slaywireExiting, setSlaywireExiting] = useState(false);
+  const [slaywireExitGridRestore, setSlaywireExitGridRestore] = useState(false);
+  const slaywireExitTimersRef = useRef<number[]>([]);
+  const slaywireExitBusyRef = useRef(false);
+  const slaywireExitDoneRef = useRef(false);
+  const slaywireDetailInFlowRef = useRef(slaywireDetailInFlow);
+  slaywireDetailInFlowRef.current = slaywireDetailInFlow;
+  useEffect(() => {
+    if (slaywireDetailInFlow) return;
+    slaywireExitTimersRef.current.forEach((t) => window.clearTimeout(t));
+    slaywireExitTimersRef.current = [];
+    slaywireExitBusyRef.current = false;
+    slaywireExitDoneRef.current = false;
+    setSlaywireExiting(false);
+    setSlaywireExitGridRestore(false);
+  }, [slaywireDetailInFlow]);
+  useEffect(() => {
+    if (!slaywireExitGateRef) return;
+    const gate: SlaywireExitGate = {
+      isActive: () => slaywireDetailInFlowRef.current && !slaywireExitDoneRef.current,
+      isBusy: () => slaywireExitBusyRef.current && !slaywireExitDoneRef.current,
+      run: (then) => {
+        if (slaywireExitBusyRef.current) return;
+        slaywireExitBusyRef.current = true;
+        setSlaywireExiting(true);
+        const t1 = window.setTimeout(() => {
+          setSlaywireExitGridRestore(true);
+          const t2 = window.setTimeout(() => {
+            slaywireExitDoneRef.current = true;
+            then();
+          }, SLAYWIRE_EXIT_GRID_RESTORE_MS);
+          slaywireExitTimersRef.current.push(t2);
+        }, SLAYWIRE_EXIT_FADE_MS);
+        slaywireExitTimersRef.current.push(t1);
+      },
+    };
+    slaywireExitGateRef.current = gate;
+    return () => {
+      if (slaywireExitGateRef.current === gate) slaywireExitGateRef.current = null;
+      slaywireExitTimersRef.current.forEach((t) => window.clearTimeout(t));
+      slaywireExitTimersRef.current = [];
+    };
+  }, [slaywireExitGateRef]);
+  const slaywireExitingActive = slaywireDetailInFlow && slaywireExiting;
+  const slaywireGridGreyActive =
+    slaywireDetailInFlow && slaywireGridGrey && !slaywireExitGridRestore;
   const [detailHeroMediaFadeIn, setDetailHeroMediaFadeIn] = useState(false);
   const [detailCardRadiusPx, setDetailCardRadiusPx] = useState<number>(() => {
     if (typeof window === "undefined") return 4;
@@ -10965,14 +11032,19 @@ const PalaceProjects = ({
         className={`${PROFILE_SECTION_CONTAINER} relative z-10 flex min-w-0 w-full flex-col ${
           projectDetailInFlow ? "min-h-min shrink-0" : "max-2xl:min-h-min max-2xl:flex-none 2xl:min-h-0 2xl:flex-1"
         }${forceContentHidden ? " opacity-0 pointer-events-none select-none" : ""}${
-          slaywireListFadeOut ? " pointer-events-none" : ""
+          slaywireListFadeOut || slaywireExitingActive ? " pointer-events-none" : ""
         }`}
         initial={false}
-        animate={{ opacity: featuredPdfViewerActive || slaywireListFadeOut ? 0 : 1 }}
+        animate={{
+          opacity:
+            featuredPdfViewerActive || slaywireListFadeOut || slaywireExitingActive ? 0 : 1,
+        }}
         transition={{
           duration: slaywireListFadeOut
             ? SLAYWIRE_LIST_FADE_OUT_MS / 1000
-            : slaywireDetailInFlow
+            : slaywireExitingActive
+              ? SLAYWIRE_EXIT_FADE_MS / 1000
+              : slaywireDetailInFlow
               ? 0
               : reduceMotion
                 ? 0
@@ -15110,6 +15182,9 @@ export default function Home() {
   const [profileSectionMounted, setProfileSectionMounted] = useState(false);
   const [menuLockedFillId, setMenuLockedFillId] = useState<string | null>(null);
   const [activeShowcaseProjectId, setActiveShowcaseProjectId] = useState<string | null>(null);
+  /** SLAYWIRE exit beat (fade elements → grid back to colour) before any leave. */
+  const slaywireExitGateRef = useRef<SlaywireExitGate | null>(null);
+  const navigateToRef = useRef<(id: string) => void>(() => {});
   const topNavFadeViewKey = `${currentSection ?? "none"}:${activeShowcaseProjectId ?? "list"}`;
   /** Showcase 4-up hover scale needs X room; keep X clipped for most project details.
    * VISUAL DESIGN masonry must keep overflow-x visible too — otherwise overflow-y
@@ -15561,6 +15636,15 @@ export default function Home() {
   };
 
   const navigateTo = (id: string) => {
+    // SLAYWIRE open: run its exit beat first, then re-enter with the latest closure.
+    const slaywireGate = slaywireExitGateRef.current;
+    if (slaywireGate?.isActive()) {
+      if (!slaywireGate.isBusy()) {
+        setIsSideNavOpen(false);
+        slaywireGate.run(() => navigateToRef.current(id));
+      }
+      return;
+    }
     if (id !== currentSection || id === "menu") resetTopNavScrollFade();
     const panelLeaving = sectionPanelRef.current;
     if (id !== currentSection && panelLeaving) panelLeaving.scrollTop = 0;
@@ -15747,6 +15831,8 @@ export default function Home() {
       );
     }
   };
+
+  navigateToRef.current = navigateTo;
 
   const finishShowcasePdfClose = useCallback(() => {
     if (showcasePdfCloseFinishRef.current) return;
@@ -16028,6 +16114,13 @@ export default function Home() {
                       return;
                     }
                     if (activeShowcaseProjectId) {
+                      const slaywireGate = slaywireExitGateRef.current;
+                      if (slaywireGate?.isActive()) {
+                        if (!slaywireGate.isBusy()) {
+                          slaywireGate.run(() => setActiveShowcaseProjectId(null));
+                        }
+                        return;
+                      }
                       setActiveShowcaseProjectId(null);
                       return;
                     }
@@ -16393,6 +16486,7 @@ export default function Home() {
                           forceContentHidden={projectsSideNavLeaveHidden}
                           featuredPdfViewerActive={showcasePdfViewerActive}
                           onEntranceSettled={onProjectsListEntranceSettled}
+                          slaywireExitGateRef={slaywireExitGateRef}
                         />
                       </div>
                     )}
@@ -16428,6 +16522,7 @@ export default function Home() {
                           forceContentHidden={projectsSideNavLeaveHidden}
                           featuredPdfViewerActive={showcasePdfViewerActive}
                           onEntranceSettled={onProjectsListEntranceSettled}
+                          slaywireExitGateRef={slaywireExitGateRef}
                         />
                       </motion.div>
                     )}

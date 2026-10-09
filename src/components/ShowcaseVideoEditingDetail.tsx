@@ -5108,7 +5108,7 @@ export function ShowcaseVideoEditingDetail({
               >
                 <div
                   ref={detailNowPlayingRef}
-                  className="relative w-full min-w-0 overflow-hidden"
+                  className="video-editing-detail-now-playing-clip relative w-full min-w-0 overflow-hidden"
                 >
                   <div className="flex w-full min-w-0 flex-col items-stretch gap-y-1.5 text-left">
                     <AnimatePresence mode="wait" initial={false}>
