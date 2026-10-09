@@ -10847,8 +10847,17 @@
  * whole backdrop reads as a visible grey wash with grey grid lines (~#3e3e3e / #4b4b4b).
  */
 #projects.projects-slaywire-grid-grey > .projects-section-grid {
-  /* Dark grey wash: v' = 1.539v + 0.0583 -> fill #020202 ~ #121212, lines #080808 ~ #1b1b1b. */
-  filter: grayscale(1) brightness(1.742) contrast(0.8834);
+  /* Dark grey wash: v' = 1.25v + 0.049 -> fill #020202 ~ #0f0f0f, lines #080808 ~ #161616. */
+  filter: grayscale(1) brightness(1.3859) contrast(0.902);
+}
+
+/*
+ * Side nav opened over SLAYWIRE: its own backdrop grid opens already in the same grey wash
+ * (no transition) so the menu never flashes or resets the SLAYWIRE grid treatment.
+ */
+.side-nav-grid-backdrop.side-nav-grid-backdrop--slaywire-grey {
+  filter: grayscale(1) brightness(1.3859) contrast(0.902);
+  transition: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
