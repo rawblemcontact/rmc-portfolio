@@ -7231,6 +7231,7 @@ const SUPPORTING_ARCHIVE_PDF_ITEMS: SupportingArchivePdfItem[] = [
     href: "/cnf/example-2-media-literary-analysis.pdf",
     thumbnail: "/omori_thumb.png",
     thumbnailDesktop: "/Media_Analysis_Preview_desktop.png",
+    thumbnailMobile: "/Media_Analysis_Preview_mobile.png",
     description:
       "A written analysis on <em>Omori</em>: An indie psychological-horror game developed by OMOCAT (2020). Explores how horror elements and narrative-based game mechanics can be used to destigmatize mental health disorders.",
   },
