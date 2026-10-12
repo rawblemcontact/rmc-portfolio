@@ -11020,3 +11020,11 @@
     transition-duration: 250ms !important;
   }
 }
+
+/* FEATURED WRITING: iPad portrait holder matches the 5:3 mobile thumbnail art so it fits whole. */
+@media (min-width: 768px) and (max-width: 1366px) and (orientation: portrait) {
+  #projects .featured-writing-raised {
+    height: auto !important;
+    aspect-ratio: 5 / 3;
+  }
+}
