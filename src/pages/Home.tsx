@@ -9870,7 +9870,6 @@ function ShowcaseWritingFeaturedPanel({
           thumbnailSrc={item.thumbnail}
           thumbnailDesktopSrc={item.thumbnailDesktop}
           thumbnailMobileSrc={item.thumbnailMobile}
-          thumbnailMobileSrc={item.thumbnailMobile}
           previewBorder={item.previewBorder}
           widthPx={previewWidthPx}
           className="shrink-0 self-start"
