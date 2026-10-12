@@ -1,4 +1,16 @@
 import { useEffect, useState } from "react";
+
+function useMediaQuery(q: string) {
+  const [m, setM] = useState(() => typeof window !== "undefined" && window.matchMedia(q).matches);
+  useEffect(() => {
+    const mq = window.matchMedia(q);
+    const on = () => setM(mq.matches);
+    on();
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, [q]);
+  return m;
+}
 import { FileText } from "lucide-react";
 /** Legacy build — same worker path as PdfJsDocumentView (Map polyfills for older WebKit). */
 import workerUrl from "pdfjs-dist/legacy/build/pdf.worker.min.mjs?url";
@@ -66,6 +78,7 @@ export function FeaturedWritingPdfThumbnail({
   const [error, setError] = useState(false);
   const staticThumbnail = thumbnailSrc?.trim() ?? "";
   const staticThumbnailDesktop = thumbnailDesktopSrc?.trim() ?? "";
+  const isDesktopMedia = useMediaQuery(DESKTOP_THUMBNAIL_MEDIA);
 
   useEffect(() => {
     if (staticThumbnail) {
@@ -200,15 +213,23 @@ export function FeaturedWritingPdfThumbnail({
       ) : null}
 
       {staticThumbnailDesktop ? (
-        <picture className="block h-full w-full">
-          <source media={DESKTOP_THUMBNAIL_MEDIA} srcSet={staticThumbnailDesktop} />
+        isDesktopMedia ? (
           <img
-            src={staticThumbnail || TRANSPARENT_PIXEL_SRC}
+            src={staticThumbnailDesktop}
             alt=""
             className="relative z-[1] h-full w-full object-cover object-top"
             draggable={false}
           />
-        </picture>
+        ) : (
+          <div className="relative z-[1] flex h-full w-full items-center justify-center bg-black">
+            <img
+              src={staticThumbnailDesktop}
+              alt=""
+              className="h-full w-auto max-w-full object-contain"
+              draggable={false}
+            />
+          </div>
+        )
       ) : staticThumbnail ? (
         <img
           src={staticThumbnail}
