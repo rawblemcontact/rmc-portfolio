@@ -40,6 +40,8 @@ type Props = {
   thumbnailSrc?: string;
   /** Optional static thumbnail for desktop + iPad landscape (see DESKTOP_THUMBNAIL_MEDIA). */
   thumbnailDesktopSrc?: string;
+  /** Optional static thumbnail for mobile + iPad portrait (object-cover). */
+  thumbnailMobileSrc?: string;
   /** Optional preview border; omit for no border. */
   previewBorder?: "white";
   /** Display / raster width in CSS px (e.g. active tab width). */
@@ -58,6 +60,7 @@ export function FeaturedWritingPdfThumbnail({
   pdfSrc,
   thumbnailSrc,
   thumbnailDesktopSrc,
+  thumbnailMobileSrc,
   previewBorder,
   widthPx = DEFAULT_W,
   className = "",
@@ -78,6 +81,7 @@ export function FeaturedWritingPdfThumbnail({
   const [error, setError] = useState(false);
   const staticThumbnail = thumbnailSrc?.trim() ?? "";
   const staticThumbnailDesktop = thumbnailDesktopSrc?.trim() ?? "";
+  const staticThumbnailMobile = thumbnailMobileSrc?.trim() ?? "";
   const isDesktopMedia = useMediaQuery(DESKTOP_THUMBNAIL_MEDIA);
 
   useEffect(() => {
@@ -216,6 +220,13 @@ export function FeaturedWritingPdfThumbnail({
         isDesktopMedia ? (
           <img
             src={staticThumbnailDesktop}
+            alt=""
+            className="relative z-[1] h-full w-full object-cover object-top"
+            draggable={false}
+          />
+        ) : staticThumbnailMobile ? (
+          <img
+            src={staticThumbnailMobile}
             alt=""
             className="relative z-[1] h-full w-full object-cover object-top"
             draggable={false}

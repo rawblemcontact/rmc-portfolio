@@ -7204,6 +7204,7 @@ type SupportingArchivePdfItem = {
   thumbnail?: string;
   /** Optional FEATURED WRITING preview for desktop + iPad landscape (falls back to `thumbnail`). */
   thumbnailDesktop?: string;
+  thumbnailMobile?: string;
   /** Optional FEATURED WRITING preview border (omit = no border). */
   previewBorder?: "white";
 };
@@ -7239,6 +7240,7 @@ const SUPPORTING_ARCHIVE_PDF_ITEMS: SupportingArchivePdfItem[] = [
     href: "/cnf/example-3-critical-literary-essay.pdf",
     thumbnail: "/mammy_thumb.png",
     thumbnailDesktop: "/Literary_Analysis_Preview_desktop.png",
+    thumbnailMobile: "/Literary_Analysis_Preview_mobile.png",
     description:
       "A structural breakdown of Séamas O'Reilly's award-winning memoir: <em>Did Ye Hear Mammy Died?</em> A closer look into the author's craft and technique in creative nonfiction.",
   },
@@ -9867,6 +9869,7 @@ function ShowcaseWritingFeaturedPanel({
           pdfSrc={supportingPdfHref(item)}
           thumbnailSrc={item.thumbnail}
           thumbnailDesktopSrc={item.thumbnailDesktop}
+          thumbnailMobileSrc={item.thumbnailMobile}
           previewBorder={item.previewBorder}
           widthPx={previewWidthPx}
           className="shrink-0 self-start"
