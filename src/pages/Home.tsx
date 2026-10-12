@@ -7334,6 +7334,7 @@ const SHOWCASE_WRITING_TAB_FEATURED_ORDER = [
     title: "Undertale: Forever Home Edition",
     subtitle: "Robbie McLaughlin",
     thumbnailDesktop: "/Narrative_Design_Preview_desktop.png",
+    thumbnailMobile: "/Narrative_Design_Preview_mobile.png",
     previewBorder: "white",
     description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.\n\nSed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
   },
