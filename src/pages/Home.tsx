@@ -7342,6 +7342,7 @@ const SHOWCASE_WRITING_TAB_FEATURED_ORDER = [
     ...SUPPORTING_ARCHIVE_PDF_ITEMS.find((x) => x.id === "cnf-memoir")!,
     title: "Way of the Frog: Amphibious Meditations",
     thumbnailDesktop: "/Narrative_Essay_Preview_desktop.png",
+    thumbnailMobile: "/Narrative_Essay_Preview_mobile.png",
   },
 ] as const satisfies readonly SupportingArchivePdfItem[];
 
