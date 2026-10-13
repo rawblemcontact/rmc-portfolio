@@ -6931,7 +6931,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         id: "interactive-media-2",
         url: "https://youtube.com/shorts/aaLmxLwyBTQ?feature=share",
         label: "FugitiveFilms 1",
-        thumbnailSrc: "https://i.ytimg.com/vi/aaLmxLwyBTQ/hqdefault.jpg",
+        thumbnailSrc: "/Interactive_Media_2_thumb.png",
         selectorTitle: "Animation for FugitiveFilms - 1 of 2 (2026)",
         selectorSubtitle: "Commissioned Work",
         detailOverview:
@@ -6945,7 +6945,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         id: "interactive-media-3",
         url: "https://youtube.com/shorts/9ZgDZM8ZzyU?feature=share",
         label: "FugitiveFilms 2",
-        thumbnailSrc: "https://i.ytimg.com/vi/9ZgDZM8ZzyU/hqdefault.jpg",
+        thumbnailSrc: "/Interactive_Media_3_thumb.png",
         selectorTitle: "Animation for FugitiveFilms - 2 of 2 (2026)",
         selectorSubtitle: "Commissioned Work",
         detailOverview:
@@ -6957,9 +6957,9 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
       },
       {
         id: "interactive-media-4",
-        url: "/portfolio-website-thumbnail-v2-poster.jpg",
+        url: "/Interactive_Media_4_thumb.png",
         label: "RAWBLEM.COM",
-        thumbnailSrc: "/portfolio-website-thumbnail-v2-poster.jpg",
+        thumbnailSrc: "/Interactive_Media_4_thumb.png",
         selectorTitle: "RAWBLEM.com (2026)",
         selectorSubtitle: "Portfolio Website",
         detailOverview:
