@@ -6840,7 +6840,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         id: "video-edit-2",
         url: "https://youtube.com/shorts/u4NUQlkE504?feature=share",
         label: "2",
-        thumbnailSrc: "https://i.ytimg.com/vi/u4NUQlkE504/hqdefault.jpg",
+        thumbnailSrc: "/Video_Editing_2_thumb.png",
         selectorTitle: "RAWBLEM",
         selectorSubtitle: "Meme-Style Promotional Announcement (2025)",
         selectorDuration: "0:30",
