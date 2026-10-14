@@ -11031,3 +11031,12 @@
     aspect-ratio: 5 / 3 !important;
   }
 }
+
+/* PROJECT DETAILS works strip: 16:9 thumbnail holders so 16:9 art fits whole (all viewports). */
+#projects .video-editing-works-strip .video-editing-works-strip-thumb .video-editing-works-strip-thumb-art,
+.video-editing-works-strip-thumb > .video-editing-works-strip-thumb-art {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  aspect-ratio: 16 / 9 !important;
+}
