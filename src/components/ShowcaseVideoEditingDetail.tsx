@@ -477,10 +477,7 @@ function worksStripUsesFlushPaging() {
 
 function worksStripPageSize(cardId: string | undefined) {
   if (typeof window !== "undefined" && window.innerWidth < 768) return 2;
-  if (cardId === "project-slaywire") {
-    return typeof window !== "undefined" && window.innerWidth < 1024 ? 3 : 4;
-  }
-  return 3;
+  return typeof window !== "undefined" && window.innerWidth < 1024 ? 3 : 4;
 }
 
 function worksStripTileStep(strip: HTMLElement) {
@@ -4124,6 +4121,34 @@ export function ShowcaseVideoEditingDetail({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: phase freeze per card
     [card.id],
   );
+  /* Phone + tablet portrait: centre strip arrows on the (16:9) thumbnail art. */
+  useLayoutEffect(() => {
+    if (typeof window === "undefined") return;
+    const sync = () => {
+      document.querySelectorAll<HTMLElement>(".video-editing-detail-works").forEach((works) => {
+        const arrows = works.querySelectorAll<HTMLElement>(".video-editing-works-arrow");
+        const art = works.querySelector<HTMLElement>(".video-editing-works-strip-thumb-art");
+        const natural = !worksStripUsesFlushPaging();
+        arrows.forEach((a) => {
+          if (natural && art && art.offsetHeight > 0) {
+            const outer = a.offsetParent as HTMLElement | null;
+            const offset = outer ? art.getBoundingClientRect().top - outer.getBoundingClientRect().top : 0;
+            a.style.setProperty("top", `${offset + art.offsetHeight / 2}px`, "important");
+          } else {
+            a.style.removeProperty("top");
+          }
+        });
+      });
+    };
+    sync();
+    const ro = new ResizeObserver(sync);
+    document.querySelectorAll(".video-editing-works-strip-thumb-art").forEach((el) => ro.observe(el));
+    window.addEventListener("resize", sync);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", sync);
+    };
+  });
   const worksArrowIdleStyle = {
     ["--directional-arrow-idle-delay" as string]: worksArrowIdleDelay,
   };
