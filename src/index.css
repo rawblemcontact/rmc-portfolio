@@ -6938,8 +6938,8 @@
       .video-editing-works-strip
       .video-editing-works-strip-thumb {
       /* −1px so the rightmost 1px border sits inside the clip, not on it. */
-      flex-basis: calc((100cqw - 1.25rem - 1px) / 3) !important;
-      max-width: calc((100cqw - 1.25rem - 1px) / 3);
+      flex-basis: calc((100cqw - 1.875rem - 1px) / 4) !important;
+      max-width: calc((100cqw - 1.875rem - 1px) / 4);
     }
 
     #projects.projects-slaywire-detail-open
@@ -7318,6 +7318,10 @@
     }
 
     @media (min-width: 1024px) {
+      #projects.projects-interactive-media-detail-open
+        .video-editing-works-strip-thumb,
+      #projects.projects-video-editing-detail-open
+        .video-editing-works-strip-thumb,
       #projects.projects-slaywire-detail-open
         .video-editing-works-strip-thumb {
         flex-basis: calc((100cqw - 1.875rem - 1px) / 4) !important;

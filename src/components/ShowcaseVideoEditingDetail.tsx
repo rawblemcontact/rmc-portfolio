@@ -4128,7 +4128,7 @@ export function ShowcaseVideoEditingDetail({
     ["--directional-arrow-idle-delay" as string]: worksArrowIdleDelay,
   };
   const worksStripThumbBasisClass = matchInteractiveMediaChrome
-    ? "basis-[calc((100%-0.5rem-1px)/2)] sm:basis-[calc((100%-0.625rem-1px)/2)] md:basis-[calc((100%-1.25rem-1px)/3)] lg:basis-[calc((100%-1.25rem-1px)/3)]"
+    ? "basis-[calc((100%-0.5rem-1px)/2)] sm:basis-[calc((100%-0.625rem-1px)/2)] md:basis-[calc((100%-1.25rem-1px)/3)] lg:basis-[calc((100%-1.875rem-1px)/4)]"
     : "basis-[calc((100%-0.5rem-1px)/2)] sm:basis-[calc((100%-0.625rem-1px)/2)] md:basis-[calc((100%-1.25rem-1px)/3)] lg:basis-[calc((100%-1.875rem-1px)/4)]";
   const worksStripOuterClass =
     videos.length > 1
