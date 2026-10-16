@@ -6886,7 +6886,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         id: "video-edit-5",
         url: "https://youtu.be/QU1-gZ_Ebfk",
         label: "5",
-        thumbnailSrc: "https://i.ytimg.com/vi/QU1-gZ_Ebfk/hqdefault.jpg",
+        thumbnailSrc: "/Video_Editing_5_thumb.png",
         selectorTitle: "Edit 05",
         selectorSubtitle: "Pacing Variant",
         selectorDuration: "0:32",
