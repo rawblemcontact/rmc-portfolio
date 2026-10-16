@@ -6856,7 +6856,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         id: "video-edit-3",
         url: "https://youtube.com/shorts/g3M-ewa0In8?feature=share",
         label: "3",
-        thumbnailSrc: "https://i.ytimg.com/vi/g3M-ewa0In8/hqdefault.jpg",
+        thumbnailSrc: "/Video_Editing_3_thumb.png",
         selectorTitle: "Guilt Trip",
         selectorSubtitle: "Comedy/Horror Short Film",
         selectorDuration: "0:45",
