@@ -6896,6 +6896,20 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         detailTools: ["DaVinci Resolve", "CapCut"],
         detailImpact: "Cleaner narrative rhythm across the middle beats with improved continuity.",
       },
+      {
+        id: "video-edit-6",
+        url: "/Video_Editing_6_thumb.png",
+        label: "6",
+        thumbnailSrc: "/Video_Editing_6_thumb.png",
+        selectorTitle: "Edit 06",
+        selectorSubtitle: "Branding Variant",
+        selectorDuration: "0:27",
+        detailOverview:
+          "Title-card-forward variation tuned for branding clarity while preserving fast short-form momentum.",
+        detailRole: "Brand integration, typography pass, and final polish.",
+        detailTools: ["CapCut", "DaVinci Resolve"],
+        detailImpact: "Stronger brand recall while maintaining retention-friendly pacing.",
+      },
     ],
   },
   {
