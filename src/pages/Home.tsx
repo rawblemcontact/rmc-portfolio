@@ -6871,7 +6871,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         id: "video-edit-4",
         url: "https://youtu.be/TdL-N2IGPa0",
         label: "4",
-        thumbnailSrc: "https://i.ytimg.com/vi/TdL-N2IGPa0/hqdefault.jpg",
+        thumbnailSrc: "/Video_Editing_4_thumb.png",
         selectorTitle: "Animation Breakdown - Shining Ring",
         selectorSubtitle: "Tutorial-style content",
         selectorDuration: "0:38",
