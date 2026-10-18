@@ -7162,7 +7162,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
       },
       {
         id: "slaywire-e9",
-        url: "/slaywire_e9.png",
+        url: "/slaywire_final_full.png",
         label: "8",
         thumbnailSrc: "/slaywire_e9.png",
         selectorTitle: "Concept Art #6",
