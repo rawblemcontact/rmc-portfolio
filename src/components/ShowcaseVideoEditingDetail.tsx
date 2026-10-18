@@ -5141,9 +5141,9 @@ export function ShowcaseVideoEditingDetail({
                   <div className="flex w-full min-w-0 flex-col items-stretch gap-y-1.5 text-left">
                     <AnimatePresence mode="wait" initial={false}>
                       <motion.div
-                        key={activeVideo.id}
-                        initial={reduceMotion ? false : { opacity: 0 }}
-                        animate={{ opacity: detailTitleVisible ? 1 : 0 }}
+                        key={isSlaywire ? "slaywire-static-title" : activeVideo.id}
+                        initial={reduceMotion || isSlaywire ? false : { opacity: 0 }}
+                        animate={{ opacity: isSlaywire || detailTitleVisible ? 1 : 0 }}
                         exit={reduceMotion ? undefined : { opacity: 0 }}
                         transition={
                           reduceMotion
