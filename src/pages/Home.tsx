@@ -7081,7 +7081,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "/slaywire_e6.png",
         label: "4",
         thumbnailSrc: "/slaywire_e6.png",
-        selectorTitle: "Concept Art #5",
+        selectorTitle: "Concept Art #2",
         selectorSubtitle: "",
         detailOverview:
           "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
@@ -7102,7 +7102,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "/slaywire_c2_full.png",
         label: "5",
         thumbnailSrc: "/slaywire_new_3.png",
-        selectorTitle: "Concept Art #2",
+        selectorTitle: "Concept Art #3",
         selectorSubtitle: "",
         detailOverview:
           "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
@@ -7123,7 +7123,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "/slaywire_c3_full.png",
         label: "6",
         thumbnailSrc: "/slaywire_01_full.png",
-        selectorTitle: "Concept Art #3",
+        selectorTitle: "Concept Art #4",
         selectorSubtitle: "",
         detailOverview:
           "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
@@ -7144,7 +7144,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "/slaywire_e9.png",
         label: "7",
         thumbnailSrc: "/slaywire_e9.png",
-        selectorTitle: "Concept Art #4",
+        selectorTitle: "Concept Art #5",
         selectorSubtitle: "",
         detailOverview:
           "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
