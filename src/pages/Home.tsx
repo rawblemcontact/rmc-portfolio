@@ -7119,10 +7119,10 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         detailImpact: "Active Development (2023 - Present)",
       },
       {
-        id: "slaywire-e6",
-        url: "/slaywire_e6.png",
+        id: "slaywire-e9",
+        url: "/slaywire_e9.png",
         label: "6",
-        thumbnailSrc: "/slaywire_e6.png",
+        thumbnailSrc: "/slaywire_e9.png",
         selectorTitle: "",
         selectorSubtitle: "",
         detailOverview:
@@ -7140,10 +7140,10 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         detailImpact: "Active Development (2023 - Present)",
       },
       {
-        id: "slaywire-e9",
-        url: "/slaywire_e9.png",
+        id: "slaywire-e6",
+        url: "/slaywire_e6.png",
         label: "7",
-        thumbnailSrc: "/slaywire_e9.png",
+        thumbnailSrc: "/slaywire_e6.png",
         selectorTitle: "",
         selectorSubtitle: "",
         detailOverview:
