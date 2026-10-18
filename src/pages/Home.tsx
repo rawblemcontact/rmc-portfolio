@@ -7015,7 +7015,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     detailVideos: [
       {
         id: "slaywire-new-1",
-        url: "/slaywire_new_1.png",
+        url: "/slaywire_new_1_full.png",
         label: "1",
         thumbnailSrc: "/slaywire_new_1.png",
         selectorTitle: "",
