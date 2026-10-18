@@ -4968,14 +4968,6 @@ export function ShowcaseVideoEditingDetail({
                     />
                   </div>
                 ) : null}
-                {youtubeVideoId(playerVideo.url) || youtubeFacePending ? null : (
-                  <div className="pointer-events-none absolute inset-x-0 top-0 z-10 bg-gradient-to-b from-black/70 via-black/30 to-transparent px-3 pt-2 pb-8 opacity-0 transition-opacity duration-200 ease-out group-hover:opacity-100 group-focus-within:opacity-100 sm:px-3.5 sm:pt-2.5">
-                    <p className="truncate font-body text-[12px] leading-none text-white sm:text-[13px]">
-                      <span className="font-display tracking-[-0.01em]">{activeSelectorTitle}</span>
-                      {activeSelectorSubtitle ? <span className="text-mono-2"> · {activeSelectorSubtitle}</span> : null}
-                    </p>
-                  </div>
-                )}
               </div>
               <div className="video-editing-detail-works mt-3 w-full min-w-0 overflow-x-visible">
                 <div className={worksStripOuterClass} style={worksArrowIdleStyle}>
