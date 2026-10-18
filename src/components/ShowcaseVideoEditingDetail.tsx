@@ -4121,16 +4121,15 @@ export function ShowcaseVideoEditingDetail({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: phase freeze per card
     [card.id],
   );
-  /* Phone + tablet portrait: centre strip arrows on the (16:9) thumbnail art. */
+  /* All viewports: centre strip arrows vertically on the (16:9) thumbnail art. */
   useLayoutEffect(() => {
     if (typeof window === "undefined") return;
     const sync = () => {
       document.querySelectorAll<HTMLElement>(".video-editing-detail-works").forEach((works) => {
         const arrows = works.querySelectorAll<HTMLElement>(".video-editing-works-arrow");
         const art = works.querySelector<HTMLElement>(".video-editing-works-strip-thumb-art");
-        const natural = !worksStripUsesFlushPaging();
         arrows.forEach((a) => {
-          if (natural && art && art.offsetHeight > 0) {
+          if (art && art.offsetHeight > 0) {
             const outer = a.offsetParent as HTMLElement | null;
             const offset = outer ? art.getBoundingClientRect().top - outer.getBoundingClientRect().top : 0;
             a.style.setProperty("top", `${offset + art.offsetHeight / 2}px`, "important");
