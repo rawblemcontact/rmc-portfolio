@@ -7080,7 +7080,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         id: "slaywire-01",
         url: "/slaywire_01_full.png",
         label: "4",
-        thumbnailSrc: "/slaywire1.png",
+        thumbnailSrc: "/slaywire_01_full.png",
         selectorTitle: "",
         selectorSubtitle: "",
         detailOverview:
