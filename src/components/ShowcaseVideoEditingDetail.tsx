@@ -5064,6 +5064,12 @@ export function ShowcaseVideoEditingDetail({
                             ) : (
                               <span className="absolute inset-0 bg-black/45" aria-hidden />
                             )}
+                            {isSlaywire && active ? (
+                              <span
+                                className="pointer-events-none absolute inset-0 rounded-[inherit] border-[3px] border-black"
+                                aria-hidden
+                              />
+                            ) : null}
                             {selectorDuration ? (
                               <span className="absolute right-1.5 bottom-1.5 rounded bg-black/70 px-1 py-[2px] font-mono text-[10px] leading-none text-white">
                                 {selectorDuration}
