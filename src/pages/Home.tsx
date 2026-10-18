@@ -7018,7 +7018,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "/slaywire_new_1_full.png",
         label: "1",
         thumbnailSrc: "/slaywire_new_1.png",
-        selectorTitle: "",
+        selectorTitle: "Cover Art",
         selectorSubtitle: "",
         detailOverview:
           "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
@@ -7039,7 +7039,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "/slaywire_e5.png",
         label: "2",
         thumbnailSrc: "/slaywire_e5.png",
-        selectorTitle: "",
+        selectorTitle: "Logo Art",
         selectorSubtitle: "",
         detailOverview:
           "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
@@ -7060,7 +7060,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "/slaywire_new_2_full.png",
         label: "3",
         thumbnailSrc: "/slaywire_new_2.png",
-        selectorTitle: "",
+        selectorTitle: "Concept Art #1",
         selectorSubtitle: "",
         detailOverview:
           "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
@@ -7081,7 +7081,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "/slaywire_new_3_full.png",
         label: "4",
         thumbnailSrc: "/slaywire_new_3.png",
-        selectorTitle: "",
+        selectorTitle: "Concept Art #2",
         selectorSubtitle: "",
         detailOverview:
           "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
@@ -7102,7 +7102,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "/slaywire_01_full.png",
         label: "5",
         thumbnailSrc: "/slaywire_01_full.png",
-        selectorTitle: "",
+        selectorTitle: "Concept Art #3",
         selectorSubtitle: "",
         detailOverview:
           "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
@@ -7123,7 +7123,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "/slaywire_e9.png",
         label: "6",
         thumbnailSrc: "/slaywire_e9.png",
-        selectorTitle: "",
+        selectorTitle: "Concept Art #4",
         selectorSubtitle: "",
         detailOverview:
           "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
@@ -7144,7 +7144,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "/slaywire_e6.png",
         label: "7",
         thumbnailSrc: "/slaywire_e6.png",
-        selectorTitle: "",
+        selectorTitle: "Concept Art #5",
         selectorSubtitle: "",
         detailOverview:
           "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
@@ -7165,7 +7165,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "/slaywire_e7.png",
         label: "8",
         thumbnailSrc: "/slaywire_e7.png",
-        selectorTitle: "",
+        selectorTitle: "Concept Art #6",
         selectorSubtitle: "",
         detailOverview:
           "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
