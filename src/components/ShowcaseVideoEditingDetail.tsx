@@ -5136,7 +5136,7 @@ export function ShowcaseVideoEditingDetail({
               >
                 <div
                   ref={detailNowPlayingRef}
-                  className="relative w-full min-w-0 overflow-hidden"
+                  className={`relative w-full min-w-0 overflow-hidden${isSlaywire ? " -ml-2 w-[calc(100%+0.5rem)] pl-2" : ""}`}
                 >
                   <div className="flex w-full min-w-0 flex-col items-stretch gap-y-1.5 text-left">
                     <AnimatePresence mode="wait" initial={false}>
