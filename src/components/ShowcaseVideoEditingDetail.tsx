@@ -4101,9 +4101,9 @@ export function ShowcaseVideoEditingDetail({
     Boolean(youtubeVideoId(faceVideo.url)) &&
     (safeFaceIndex !== safePlayerIndex || youtubeFaceCoverHold);
   const youtubeFacePosterSrc = youtubeFacePending ? facePosterSrc(faceVideo) : null;
-  const activeSelectorTitle =
-    activeVideo.selectorTitle?.trim() ||
-    (isSlaywire ? card.title : activeVideo.label || "Selected work");
+  const activeSelectorTitle = isSlaywire
+    ? card.title
+    : activeVideo.selectorTitle?.trim() || activeVideo.label || "Selected work";
   const activeSelectorSubtitle = activeVideo.selectorSubtitle?.trim() || "";
   const activeDetails = {
     detailOverview: activeVideo.detailOverview?.trim() || card.detailOverview?.trim() || "—",
@@ -5172,9 +5172,9 @@ export function ShowcaseVideoEditingDetail({
                   aria-hidden
                 >
                   {videos.map((video, index) => {
-                    const selectorTitle =
-                      video.selectorTitle?.trim() ||
-                      (isSlaywire ? card.title : video.label || "Selected work");
+                    const selectorTitle = isSlaywire
+                      ? card.title
+                      : video.selectorTitle?.trim() || video.label || "Selected work";
                     const selectorSubtitle = video.selectorSubtitle?.trim() || "";
                     return (
                       <div
