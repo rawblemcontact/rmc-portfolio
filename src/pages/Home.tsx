@@ -7057,7 +7057,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
       },
       {
         id: "slaywire-new-2",
-        url: "/slaywire_new_2_full.png",
+        url: "/slaywire_c1_full.png",
         label: "3",
         thumbnailSrc: "/slaywire_new_2.png",
         selectorTitle: "Concept Art #1",
@@ -7078,7 +7078,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
       },
       {
         id: "slaywire-new-3",
-        url: "/slaywire_new_3_full.png",
+        url: "/slaywire_c2_full.png",
         label: "4",
         thumbnailSrc: "/slaywire_new_3.png",
         selectorTitle: "Concept Art #2",
@@ -7099,7 +7099,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
       },
       {
         id: "slaywire-01",
-        url: "/slaywire_01_full.png",
+        url: "/slaywire_c3_full.png",
         label: "5",
         thumbnailSrc: "/slaywire_01_full.png",
         selectorTitle: "Concept Art #3",
