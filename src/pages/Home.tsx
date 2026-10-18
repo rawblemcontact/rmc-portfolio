@@ -7014,9 +7014,72 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
     detailImpact: "Active Development (2023 - Present)",
     detailVideos: [
       {
+        id: "slaywire-new-1",
+        url: "/slaywire_new_1.png",
+        label: "1",
+        thumbnailSrc: "/slaywire_new_1.png",
+        selectorTitle: "",
+        selectorSubtitle: "",
+        detailOverview:
+          "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
+        detailRole:
+          "Creative Director\nGame Developer\nWriter\nAnimator\nVisual artist\nComposer",
+        detailTools: [
+          "GameMaker Studio 2 or Godot",
+          "Clip Studio Paint",
+          "Procreate",
+          "Photoshop/GIMP",
+          "Aseprite",
+          "FamiTracker (Music Composition Software)",
+        ],
+        detailImpact: "Active Development (2023 - Present)",
+      },
+      {
+        id: "slaywire-new-2",
+        url: "/slaywire_new_2.png",
+        label: "2",
+        thumbnailSrc: "/slaywire_new_2.png",
+        selectorTitle: "",
+        selectorSubtitle: "",
+        detailOverview:
+          "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
+        detailRole:
+          "Creative Director\nGame Developer\nWriter\nAnimator\nVisual artist\nComposer",
+        detailTools: [
+          "GameMaker Studio 2 or Godot",
+          "Clip Studio Paint",
+          "Procreate",
+          "Photoshop/GIMP",
+          "Aseprite",
+          "FamiTracker (Music Composition Software)",
+        ],
+        detailImpact: "Active Development (2023 - Present)",
+      },
+      {
+        id: "slaywire-new-3",
+        url: "/slaywire_new_3.png",
+        label: "3",
+        thumbnailSrc: "/slaywire_new_3.png",
+        selectorTitle: "",
+        selectorSubtitle: "",
+        detailOverview:
+          "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
+        detailRole:
+          "Creative Director\nGame Developer\nWriter\nAnimator\nVisual artist\nComposer",
+        detailTools: [
+          "GameMaker Studio 2 or Godot",
+          "Clip Studio Paint",
+          "Procreate",
+          "Photoshop/GIMP",
+          "Aseprite",
+          "FamiTracker (Music Composition Software)",
+        ],
+        detailImpact: "Active Development (2023 - Present)",
+      },
+      {
         id: "slaywire-01",
         url: "/slaywire1.png",
-        label: "1",
+        label: "4",
         thumbnailSrc: "/slaywire1.png",
         selectorTitle: "",
         selectorSubtitle: "",
@@ -7037,7 +7100,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
       {
         id: "slaywire-02",
         url: "/slaywire1_small.png",
-        label: "2",
+        label: "5",
         thumbnailSrc: "/slaywire1_small.png",
         selectorTitle: "",
         selectorSubtitle: "",
@@ -7058,7 +7121,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
       {
         id: "slaywire-03",
         url: "/slaywire2_rawthumb.png",
-        label: "3",
+        label: "6",
         thumbnailSrc: "/slaywire2_rawthumb.png",
         selectorTitle: "",
         selectorSubtitle: "",
@@ -7079,7 +7142,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
       {
         id: "slaywire-04",
         url: "/slaywirethumb3.png",
-        label: "4",
+        label: "7",
         thumbnailSrc: "/slaywirethumb3.png",
         selectorTitle: "",
         selectorSubtitle: "",
@@ -7100,7 +7163,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
       {
         id: "slaywire-05",
         url: "/slaywire4_thumb.jpg",
-        label: "5",
+        label: "8",
         thumbnailSrc: "/slaywire4_thumb.jpg",
         selectorTitle: "",
         selectorSubtitle: "",
