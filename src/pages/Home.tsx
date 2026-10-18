@@ -7098,9 +7098,30 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         detailImpact: "Active Development (2023 - Present)",
       },
       {
+        id: "slaywire-e9",
+        url: "/slaywire_e9.png",
+        label: "5",
+        thumbnailSrc: "/slaywire_e9.png",
+        selectorTitle: "",
+        selectorSubtitle: "",
+        detailOverview:
+          "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
+        detailRole:
+          "Creative Director\nGame Developer\nWriter\nAnimator\nVisual artist\nComposer",
+        detailTools: [
+          "GameMaker Studio 2 or Godot",
+          "Clip Studio Paint",
+          "Procreate",
+          "Photoshop/GIMP",
+          "Aseprite",
+          "FamiTracker (Music Composition Software)",
+        ],
+        detailImpact: "Active Development (2023 - Present)",
+      },
+      {
         id: "slaywire-new-3",
         url: "/slaywire_new_3_full.png",
-        label: "5",
+        label: "6",
         thumbnailSrc: "/slaywire_new_3.png",
         selectorTitle: "",
         selectorSubtitle: "",
@@ -7121,7 +7142,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
       {
         id: "slaywire-01",
         url: "/slaywire_01_full.png",
-        label: "6",
+        label: "7",
         thumbnailSrc: "/slaywire_01_full.png",
         selectorTitle: "",
         selectorSubtitle: "",
@@ -7142,7 +7163,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
       {
         id: "slaywire-e7",
         url: "/slaywire_e7.png",
-        label: "7",
+        label: "8",
         thumbnailSrc: "/slaywire_e7.png",
         selectorTitle: "",
         selectorSubtitle: "",
@@ -7163,29 +7184,8 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
       {
         id: "slaywire-e8",
         url: "/slaywire_e8.png",
-        label: "8",
-        thumbnailSrc: "/slaywire_e8.png",
-        selectorTitle: "",
-        selectorSubtitle: "",
-        detailOverview:
-          "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
-        detailRole:
-          "Creative Director\nGame Developer\nWriter\nAnimator\nVisual artist\nComposer",
-        detailTools: [
-          "GameMaker Studio 2 or Godot",
-          "Clip Studio Paint",
-          "Procreate",
-          "Photoshop/GIMP",
-          "Aseprite",
-          "FamiTracker (Music Composition Software)",
-        ],
-        detailImpact: "Active Development (2023 - Present)",
-      },
-      {
-        id: "slaywire-e9",
-        url: "/slaywire_e9.png",
         label: "9",
-        thumbnailSrc: "/slaywire_e9.png",
+        thumbnailSrc: "/slaywire_e8.png",
         selectorTitle: "",
         selectorSubtitle: "",
         detailOverview:
