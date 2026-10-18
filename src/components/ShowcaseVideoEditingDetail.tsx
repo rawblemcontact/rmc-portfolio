@@ -5063,7 +5063,7 @@ export function ShowcaseVideoEditingDetail({
                             ) : (
                               <span className="absolute inset-0 bg-black/45" aria-hidden />
                             )}
-                            {isSlaywire && active ? (
+                            {active ? (
                               <span
                                 className="pointer-events-none absolute inset-0 rounded-[inherit] border-[3px] border-black"
                                 aria-hidden
