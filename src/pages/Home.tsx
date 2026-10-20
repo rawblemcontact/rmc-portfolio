@@ -7077,53 +7077,11 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         detailImpact: "Active Development (2023 - Present)",
       },
       {
-        id: "slaywire-e6",
-        url: "/slaywire_s4_full.png",
-        label: "4",
-        thumbnailSrc: "/slaywire_s4.png",
-        selectorTitle: "Concept Art #2",
-        selectorSubtitle: "",
-        detailOverview:
-          "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
-        detailRole:
-          "Creative Director\nGame Developer\nWriter\nAnimator\nVisual artist\nComposer",
-        detailTools: [
-          "GameMaker Studio 2 or Godot",
-          "Clip Studio Paint",
-          "Procreate",
-          "Photoshop/GIMP",
-          "Aseprite",
-          "FamiTracker (Music Composition Software)",
-        ],
-        detailImpact: "Active Development (2023 - Present)",
-      },
-      {
-        id: "slaywire-e7",
-        url: "/slaywire_e7.png",
-        label: "5",
-        thumbnailSrc: "/slaywire_e7.png",
-        selectorTitle: "Concept Art #3",
-        selectorSubtitle: "",
-        detailOverview:
-          "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
-        detailRole:
-          "Creative Director\nGame Developer\nWriter\nAnimator\nVisual artist\nComposer",
-        detailTools: [
-          "GameMaker Studio 2 or Godot",
-          "Clip Studio Paint",
-          "Procreate",
-          "Photoshop/GIMP",
-          "Aseprite",
-          "FamiTracker (Music Composition Software)",
-        ],
-        detailImpact: "Active Development (2023 - Present)",
-      },
-      {
         id: "slaywire-01",
         url: "/slaywire_c3_full.png",
-        label: "6",
+        label: "4",
         thumbnailSrc: "/slaywire_01_full.png",
-        selectorTitle: "Concept Art #4",
+        selectorTitle: "Concept Art #2",
         selectorSubtitle: "",
         detailOverview:
           "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
@@ -7142,9 +7100,9 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
       {
         id: "slaywire-new-3",
         url: "/slaywire_c2_full.png",
-        label: "7",
+        label: "5",
         thumbnailSrc: "/slaywire_new_3.png",
-        selectorTitle: "Concept Art #5",
+        selectorTitle: "Concept Art #3",
         selectorSubtitle: "",
         detailOverview:
           "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
@@ -7163,8 +7121,50 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
       {
         id: "slaywire-e9",
         url: "/slaywire_final_full.png",
-        label: "8",
+        label: "6",
         thumbnailSrc: "/slaywire_e9.png",
+        selectorTitle: "Concept Art #4",
+        selectorSubtitle: "",
+        detailOverview:
+          "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
+        detailRole:
+          "Creative Director\nGame Developer\nWriter\nAnimator\nVisual artist\nComposer",
+        detailTools: [
+          "GameMaker Studio 2 or Godot",
+          "Clip Studio Paint",
+          "Procreate",
+          "Photoshop/GIMP",
+          "Aseprite",
+          "FamiTracker (Music Composition Software)",
+        ],
+        detailImpact: "Active Development (2023 - Present)",
+      },
+      {
+        id: "slaywire-e6",
+        url: "/slaywire_s4_full.png",
+        label: "7",
+        thumbnailSrc: "/slaywire_s4.png",
+        selectorTitle: "Concept Art #5",
+        selectorSubtitle: "",
+        detailOverview:
+          "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
+        detailRole:
+          "Creative Director\nGame Developer\nWriter\nAnimator\nVisual artist\nComposer",
+        detailTools: [
+          "GameMaker Studio 2 or Godot",
+          "Clip Studio Paint",
+          "Procreate",
+          "Photoshop/GIMP",
+          "Aseprite",
+          "FamiTracker (Music Composition Software)",
+        ],
+        detailImpact: "Active Development (2023 - Present)",
+      },
+      {
+        id: "slaywire-e7",
+        url: "/slaywire_e7.png",
+        label: "8",
+        thumbnailSrc: "/slaywire_e7.png",
         selectorTitle: "Concept Art #6",
         selectorSubtitle: "",
         detailOverview:
