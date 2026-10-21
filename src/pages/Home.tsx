@@ -11869,7 +11869,13 @@ const ConfidantExperience = ({
       scrolling = false;
       if (experienceTabsSelectScrollingRef.current) {
         experienceTabsSelectScrollingRef.current = false;
-        nav.removeAttribute("data-experience-tabs-select-scroll");
+        /* Apply final fades while transitions are still off, then re-enable next frame
+         * so Barista's right-edge mask doesn't animate after a select slide. */
+        updateTabsEdgeFade();
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => nav.removeAttribute("data-experience-tabs-select-scroll")),
+        );
+        return;
       }
       updateTabsEdgeFade();
     };
@@ -11925,6 +11931,16 @@ const ConfidantExperience = ({
     // Only Social Media (uvic-esports) reaches here — freeze edge-fade animation for select scroll.
     experienceTabsSelectScrollingRef.current = true;
     nav.setAttribute("data-experience-tabs-select-scroll", "");
+    /* Set the right fade to its end state up front (no transition) so Barista doesn't fade in/out. */
+    const lastShell = nav
+      .querySelector<HTMLElement>('[data-tab="starbucks"]')
+      ?.closest<HTMLElement>(".experience-tab-btn-shell");
+    if (lastShell) {
+      const endRight =
+        lastShell.getBoundingClientRect().right - (target - nav.scrollLeft) >
+        nav.getBoundingClientRect().right + 2;
+      setExperienceTabsFadeRight(endRight);
+    }
     nav.scrollTo({ left: target, behavior: rm ? "auto" : "smooth" });
   }, [activeExperienceTabId, isMobileExperienceLayout, rm]);
 
