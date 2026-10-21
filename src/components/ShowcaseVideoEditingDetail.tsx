@@ -3864,8 +3864,8 @@ export function ShowcaseVideoEditingDetail({
 
     const maxOffset = () => worksStripFlushMaxOffset(strip, card.id);
 
-    /* Tablet landscape (trackpad/mouse): hard-stop at the ends like touch — no overscroll/spring-back. */
-    const hardClampEnds = matchesDetailTabletLandscapeViewport();
+    /* Trackpad/mouse (desktop + tablet landscape): hard-stop at the ends like touch — no overscroll/spring-back. */
+    const hardClampEnds = true;
     const clampIfHard = () => {
       if (hardClampEnds) logicalX = Math.max(0, Math.min(maxOffset(), logicalX));
     };
