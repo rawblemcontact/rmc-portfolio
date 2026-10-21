@@ -10914,3 +10914,10 @@
   .main-card-loading__spin { animation: none; }
   .main-card-loading__pulse { animation: none; opacity: 0.9; }
 }
+
+/* Project Details main-card placeholder: text only, sized to the frame. */
+.main-card-loading.pdf-loading-indicator .main-card-loading__label {
+  font-size: clamp(1.5rem, 2.6vw, 2.75rem);
+  line-height: 1;
+  letter-spacing: 0.08em;
+}

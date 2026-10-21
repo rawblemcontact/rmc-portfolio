@@ -81,12 +81,7 @@ function MainCardLoadingPlaceholder() {
   return (
     <div className="pointer-events-none absolute inset-0 z-[1] flex items-center justify-center bg-black">
       <div className="pdf-loading-indicator main-card-loading" role="status" aria-live="polite">
-        <div className="pdf-loading-indicator__loader-wrap main-card-loading__pulse">
-          <div className="main-card-loading__spin">
-            <LoaderIcon aria-hidden className="pdf-loading-indicator__loader" size={48} />
-          </div>
-        </div>
-        <p className="pdf-loading-indicator__label font-display main-card-loading__pulse">LOADING...</p>
+        <p className="pdf-loading-indicator__label main-card-loading__label font-display main-card-loading__pulse">LOADING...</p>
       </div>
     </div>
   );
