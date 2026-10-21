@@ -10921,3 +10921,18 @@
 }
 
 
+
+/* PDF loader: spinner only, a touch larger, centred. */
+.pdf-loading-indicator--spinner-only {
+  justify-content: center;
+}
+.pdf-loading-indicator--spinner-only .pdf-loading-indicator__loader svg {
+  width: 44px;
+  height: 44px;
+}
+@media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
+  .pdf-loading-indicator--spinner-only .pdf-loading-indicator__loader svg {
+    width: 58px;
+    height: 58px;
+  }
+}

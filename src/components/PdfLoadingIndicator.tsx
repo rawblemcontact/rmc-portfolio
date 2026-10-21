@@ -34,7 +34,7 @@ export function PdfLoadingIndicator({
      the PDF loads on the main thread; framer-motion only handles enter/exit fades. */
   return (
     <motion.div
-      className={`pdf-loading-indicator ${className}`.trim()}
+      className={`pdf-loading-indicator pdf-loading-indicator--spinner-only ${className}`.trim()}
       role="status"
       aria-live="polite"
       initial={{ opacity: skipEnterFade ? 1 : 0 }}
@@ -46,12 +46,9 @@ export function PdfLoadingIndicator({
     >
       <div className="pdf-loading-indicator__loader-wrap main-card-loading__pulse">
         <div className="main-card-loading__spin">
-          <LoaderIcon aria-hidden className="pdf-loading-indicator__loader" size={48} />
+          <LoaderIcon aria-hidden className="pdf-loading-indicator__loader flex items-center justify-center" size={48} />
         </div>
       </div>
-      <p className="pdf-loading-indicator__label font-display main-card-loading__pulse">
-        FILE LOADING...
-      </p>
     </motion.div>
   );
 }
