@@ -9582,8 +9582,25 @@ const ShowcaseIllustrationLightbox = ({
                    * Ignore it and do not preventDefault — that would cancel autoscroll.
                    * mousedown/auxclick are not bound here, so they also stay native. */
                   if (event.button === 1) return;
+                  /* Touch: toggle on tap (click) instead, so a swipe can scroll
+                   * the expanded DESC text without collapsing it. */
+                  if (event.pointerType === "touch") {
+                    event.currentTarget.dataset.touchTap = "1";
+                    return;
+                  }
+                  delete event.currentTarget.dataset.touchTap;
                   /* Toggle on pointer-down so mouse, trackpad, and touch can
                    * open the new slide's DESC before the slide settles. */
+                  event.stopPropagation();
+                  setDescExpanded((v) => !v);
+                }
+              : undefined
+          }
+          onClick={
+            artistStatement
+              ? (event) => {
+                  if (event.currentTarget.dataset.touchTap !== "1") return;
+                  delete event.currentTarget.dataset.touchTap;
                   event.stopPropagation();
                   setDescExpanded((v) => !v);
                 }
