@@ -10898,13 +10898,18 @@
   line-height: 0;
   animation: main-card-loading-spin 0.8s linear infinite;
   will-change: transform;
+  /* Own GPU layer; no hover so LoaderIcon's JS spin never kicks in on top. */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  pointer-events: none;
 }
 .main-card-loading__pulse {
   animation: main-card-loading-pulse 1.8s ease-in-out infinite;
   will-change: opacity;
 }
 @keyframes main-card-loading-spin {
-  to { transform: rotate(360deg); }
+  from { transform: translateZ(0) rotate(0deg); }
+  to { transform: translateZ(0) rotate(360deg); }
 }
 @keyframes main-card-loading-pulse {
   0%, 100% { opacity: 0.42; }
