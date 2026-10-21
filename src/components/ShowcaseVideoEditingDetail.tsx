@@ -3864,6 +3864,12 @@ export function ShowcaseVideoEditingDetail({
 
     const maxOffset = () => worksStripFlushMaxOffset(strip, card.id);
 
+    /* Tablet landscape (trackpad/mouse): hard-stop at the ends like touch — no overscroll/spring-back. */
+    const hardClampEnds = matchesDetailTabletLandscapeViewport();
+    const clampIfHard = () => {
+      if (hardClampEnds) logicalX = Math.max(0, Math.min(maxOffset(), logicalX));
+    };
+
     const readOffset = () => {
       const match = /translate3d\((-?[\d.]+)px/.exec(track.style.transform);
       if (!match?.[1]) return 0;
@@ -3947,6 +3953,12 @@ export function ShowcaseVideoEditingDetail({
           return;
         }
         logicalX += v * dt;
+        if (hardClampEnds && (logicalX <= 0 || logicalX >= max)) {
+          logicalX = Math.max(0, Math.min(max, logicalX));
+          paintOffset();
+          momentumRaf = 0;
+          return;
+        }
         paintOffset();
         if (logicalX < 0 || logicalX > max) {
           v *= 0.45;
@@ -3970,7 +3982,9 @@ export function ShowcaseVideoEditingDetail({
       event.preventDefault();
       stopMomentum();
       logicalX = readOffset() + dx;
+      clampIfHard();
       paintOffset();
+      if (hardClampEnds) return;
       wheelSnapTimer = window.setTimeout(() => {
         wheelSnapTimer = 0;
         springToRange();
@@ -4011,6 +4025,7 @@ export function ShowcaseVideoEditingDetail({
       lastX = event.clientX;
       lastMoveTime = now;
       logicalX = dragStartOffset + (dragStartX - event.clientX);
+      clampIfHard();
       paintOffset();
     };
 
