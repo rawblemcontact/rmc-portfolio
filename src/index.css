@@ -10891,3 +10891,26 @@
   max-height: none !important;
   aspect-ratio: 16 / 9 !important;
 }
+
+/* PROJECT DETAILS main card loading placeholder — CSS-only so it never stutters. */
+.main-card-loading__spin {
+  display: flex;
+  line-height: 0;
+  animation: main-card-loading-spin 0.8s linear infinite;
+  will-change: transform;
+}
+.main-card-loading__pulse {
+  animation: main-card-loading-pulse 1.8s ease-in-out infinite;
+  will-change: opacity;
+}
+@keyframes main-card-loading-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes main-card-loading-pulse {
+  0%, 100% { opacity: 0.42; }
+  50% { opacity: 0.9; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .main-card-loading__spin { animation: none; }
+  .main-card-loading__pulse { animation: none; opacity: 0.9; }
+}

@@ -3,7 +3,7 @@ import { flushSync } from "react-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import Plyr from "plyr";
-import { PdfFoldLoader } from "./PdfFoldLoader";
+import { LoaderIcon } from "./icons/LoaderIcon";
 import type { Options as PlyrOptions } from "plyr";
 import "plyr/dist/plyr.css";
 import { directionalArrowIdlePhaseDelaySec, EASE } from "@/lib/motion";
@@ -75,25 +75,18 @@ function facePosterSrc(video: ShowcaseDetailVideo): string | null {
 }
 
 
-/** Black main-card placeholder with the PDF reader's FILE LOADING... animation centred. */
+/** Black main-card placeholder with the PDF reader's loader + LOADING... label centred.
+ * Pure CSS (compositor) animations so it stays smooth while media mounts/decodes. */
 function MainCardLoadingPlaceholder() {
   return (
     <div className="pointer-events-none absolute inset-0 z-[1] flex items-center justify-center bg-black">
-      <div className="pdf-loading-indicator" role="status" aria-live="polite">
-        <motion.div
-          className="pdf-loading-indicator__loader-wrap"
-          animate={{ opacity: [0.42, 0.9, 0.42] }}
-          transition={{ duration: 1.8, ease: "easeInOut", repeat: Infinity }}
-        >
-          <PdfFoldLoader className="pdf-loading-indicator__loader" />
-        </motion.div>
-        <motion.p
-          className="pdf-loading-indicator__label font-display"
-          animate={{ opacity: [0.42, 0.9, 0.42] }}
-          transition={{ duration: 1.8, ease: "easeInOut", repeat: Infinity }}
-        >
-          FILE LOADING...
-        </motion.p>
+      <div className="pdf-loading-indicator main-card-loading" role="status" aria-live="polite">
+        <div className="pdf-loading-indicator__loader-wrap main-card-loading__pulse">
+          <div className="main-card-loading__spin">
+            <LoaderIcon aria-hidden className="pdf-loading-indicator__loader" size={48} />
+          </div>
+        </div>
+        <p className="pdf-loading-indicator__label font-display main-card-loading__pulse">LOADING...</p>
       </div>
     </div>
   );
