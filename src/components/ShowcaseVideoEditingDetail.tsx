@@ -81,7 +81,7 @@ function MainCardLoadingPlaceholder() {
   return (
     <div className="pointer-events-none absolute inset-0 z-[1] flex items-center justify-center bg-black">
       <div className="pdf-loading-indicator main-card-loading" role="status" aria-live="polite">
-        <p className="pdf-loading-indicator__label main-card-loading__label font-display main-card-loading__pulse">LOADING...</p>
+        <p className="pdf-loading-indicator__label main-card-loading__label font-display main-card-loading__pulse">LOADING<span className="main-card-loading__dots" aria-hidden>...</span></p>
       </div>
     </div>
   );

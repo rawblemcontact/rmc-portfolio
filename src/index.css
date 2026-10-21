@@ -10921,3 +10921,18 @@
   line-height: 1;
   letter-spacing: 0.08em;
 }
+
+/* Dots reveal one by one; fixed width so the word doesn't shift. */
+.main-card-loading__dots {
+  display: inline-block;
+  width: 3ch;
+  text-align: left;
+  animation: main-card-loading-dots 1.2s steps(4, end) infinite;
+}
+@keyframes main-card-loading-dots {
+  0% { clip-path: inset(0 100% 0 0); }
+  100% { clip-path: inset(0 -10% 0 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .main-card-loading__dots { animation: none; }
+}
