@@ -10920,10 +10920,4 @@
   .main-card-loading__pulse { animation: none; opacity: 0.9; }
 }
 
-/* Project Details main-card placeholder: text only, sized to the frame. */
-.main-card-loading.pdf-loading-indicator .main-card-loading__label {
-  font-size: clamp(1.25rem, 2.1vw, 2.25rem);
-  line-height: 1;
-  letter-spacing: 0.08em;
-}
 
