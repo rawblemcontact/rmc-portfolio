@@ -80,12 +80,9 @@ function facePosterSrc(video: ShowcaseDetailVideo): string | null {
 function MainCardLoadingPlaceholder() {
   return (
     <div className="pointer-events-none absolute inset-0 z-[1] flex items-center justify-center bg-black">
-      <div className="pdf-loading-indicator main-card-loading" role="status" aria-live="polite">
-        <div className="pdf-loading-indicator__loader-wrap">
-          <div className="main-card-loading__spin">
-            <LoaderIcon aria-hidden className="pdf-loading-indicator__loader" size={48} />
-          </div>
-        </div>
+      {/* Spinner only, dead-centre of the card; square box so rotation doesn't wobble. */}
+      <div className="main-card-loading__spin items-center justify-center" role="status" aria-label="Loading">
+        <LoaderIcon aria-hidden className="pdf-loading-indicator__loader flex items-center justify-center" size={48} />
       </div>
     </div>
   );
