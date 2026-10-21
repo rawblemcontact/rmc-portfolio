@@ -10857,11 +10857,6 @@
   --tw-ring-color: #9e9e9e;
 }
 
-/* SLAYWIRE: description card tab underlines removed (bar + its grow/fade). */
-#projects.projects-slaywire-detail-open .video-editing-detail-card-tab-underline {
-  display: none !important;
-}
-
 /*
  * SLAYWIRE: inactive tab labels fade to WHITE (not yellow) over 250ms on hover (fine pointer) /
  * press (touch tap), and fade back on leave. Active (aurora) label is excluded.
