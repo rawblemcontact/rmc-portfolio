@@ -3840,8 +3840,13 @@ export function ShowcaseVideoEditingDetail({
     const strip = thumbStripRef.current;
     const track = worksStripTrackRef.current;
     if (!strip || !track || videos.length <= 1) return;
-    if (matchesDetailTabletLandscapeViewport()) return;
-    if (!matchesDetailPlayerCapViewport() || !usesFinePointerHover()) return;
+    /* Tablet landscape: also run so iPad trackpad/mouse (wheel + mouse drag) slides the strip;
+     * touch is still handled by the touch strip effect (this one ignores touch pointers). */
+    if (
+      !matchesDetailTabletLandscapeViewport() &&
+      (!matchesDetailPlayerCapViewport() || !usesFinePointerHover())
+    )
+      return;
 
     let logicalX = (() => {
       const match = /translate3d\((-?[\d.]+)px/.exec(track.style.transform);
@@ -4039,7 +4044,7 @@ export function ShowcaseVideoEditingDetail({
       strip.removeEventListener("pointerup", onPointerUp);
       strip.removeEventListener("pointercancel", onPointerUp);
     };
-  }, [card.id, usesFinePointerHover, videos.length]);
+  }, [card.id, isTabletLandscapeViewport, usesFinePointerHover, videos.length]);
 
   useEffect(() => {
     activeVideoIndexRef.current = 0;
