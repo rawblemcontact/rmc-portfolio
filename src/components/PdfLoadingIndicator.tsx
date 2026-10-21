@@ -1,6 +1,6 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { useNavLayoutFreeze } from "@/lib/navLayoutFreeze";
-import { PdfFoldLoader } from "./PdfFoldLoader";
+import { LoaderIcon } from "./icons/LoaderIcon";
 import { DUR, EASE } from "@/lib/motion";
 
 /** Slow enough to read on grid — used for fold anim + label enter/exit. */
@@ -30,56 +30,28 @@ export function PdfLoadingIndicator({
     ease: EASE.out,
   };
 
+  /* Pulse + spin run as CSS keyframes (compositor) so they stay smooth while
+     the PDF loads on the main thread; framer-motion only handles enter/exit fades. */
   return (
     <motion.div
       className={`pdf-loading-indicator ${className}`.trim()}
       role="status"
       aria-live="polite"
-      initial={false}
+      initial={{ opacity: skipEnterFade ? 1 : 0 }}
+      animate={{ opacity: exiting ? 0 : 1 }}
+      transition={fadeTransition}
+      onAnimationComplete={() => {
+        if (exiting) onExitComplete?.();
+      }}
     >
-      <motion.div
-        className="pdf-loading-indicator__loader-wrap"
-        initial={{ opacity: skipEnterFade ? 0.9 : reduceMotion ? 1 : 0 }}
-        animate={
-          exiting
-            ? { opacity: 0 }
-            : reduceMotion
-              ? { opacity: 1 }
-              : { opacity: [0.42, 0.9, 0.42] }
-        }
-        transition={
-          exiting
-            ? fadeTransition
-            : reduceMotion
-              ? { duration: 0 }
-              : { duration: 1.8, ease: "easeInOut", repeat: Infinity }
-        }
-      >
-        <PdfFoldLoader className="pdf-loading-indicator__loader" />
-      </motion.div>
-      <motion.p
-        className="pdf-loading-indicator__label font-display"
-        initial={{ opacity: skipEnterFade ? 0.9 : reduceMotion ? 1 : 0 }}
-        animate={
-          exiting
-            ? { opacity: 0 }
-            : reduceMotion
-              ? { opacity: 1 }
-              : { opacity: [0.42, 0.9, 0.42] }
-        }
-        transition={
-          exiting
-            ? fadeTransition
-            : reduceMotion
-              ? { duration: 0 }
-              : { duration: 1.8, ease: "easeInOut", repeat: Infinity }
-        }
-        onAnimationComplete={() => {
-          if (exiting) onExitComplete?.();
-        }}
-      >
+      <div className="pdf-loading-indicator__loader-wrap main-card-loading__pulse">
+        <div className="main-card-loading__spin">
+          <LoaderIcon aria-hidden className="pdf-loading-indicator__loader" size={48} />
+        </div>
+      </div>
+      <p className="pdf-loading-indicator__label font-display main-card-loading__pulse">
         FILE LOADING...
-      </motion.p>
+      </p>
     </motion.div>
   );
 }
