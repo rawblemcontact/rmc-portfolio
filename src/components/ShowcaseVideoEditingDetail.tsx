@@ -4176,15 +4176,11 @@ export function ShowcaseVideoEditingDetail({
     : "basis-[calc((100%-0.5rem-1px)/2)] sm:basis-[calc((100%-0.625rem-1px)/2)] md:basis-[calc((100%-1.25rem-1px)/3)] lg:basis-[calc((100%-1.875rem-1px)/4)]";
   const worksStripOuterClass =
     videos.length > 1
-      ? matchInteractiveMediaChrome
-        ? "relative -mx-5 overflow-visible sm:-mx-7"
-        : "relative -mx-4 overflow-visible sm:-mx-6"
+      ? "relative -mx-4 overflow-visible sm:-mx-6"
       : "relative w-full min-w-0";
   const worksStripClass =
     videos.length > 1
-      ? matchInteractiveMediaChrome
-        ? "mx-5 sm:mx-7"
-        : "mx-4 sm:mx-6"
+      ? "mx-4 sm:mx-6"
       : "w-full";
   const worksStripShellClass = `video-editing-works-strip-shell min-w-0 overflow-x-visible ${worksStripClass}`;
   const worksArrowPrevOffsetClass = matchInteractiveMediaChrome
