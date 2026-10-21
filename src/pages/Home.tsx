@@ -9272,7 +9272,21 @@ const ShowcaseIllustrationLightbox = ({
       if (Math.abs(delta) < 1) return;
 
       event.preventDefault();
-      if (lightboxWheelLockRef.current) return;
+      /* One entry per gesture: stay locked while wheel events keep arriving
+         (incl. macOS trackpad momentum/coasting); unlock only after a quiet gap. */
+      const scheduleUnlock = () => {
+        if (lightboxWheelUnlockTimerRef.current != null) {
+          window.clearTimeout(lightboxWheelUnlockTimerRef.current);
+        }
+        lightboxWheelUnlockTimerRef.current = window.setTimeout(() => {
+          lightboxWheelLockRef.current = false;
+          lightboxWheelUnlockTimerRef.current = null;
+        }, 180);
+      };
+      if (lightboxWheelLockRef.current) {
+        scheduleUnlock();
+        return;
+      }
 
       lightboxWheelLockRef.current = true;
       if (delta > 0) {
@@ -9280,14 +9294,7 @@ const ShowcaseIllustrationLightbox = ({
       } else {
         handleShowPrev();
       }
-
-      if (lightboxWheelUnlockTimerRef.current != null) {
-        window.clearTimeout(lightboxWheelUnlockTimerRef.current);
-      }
-      lightboxWheelUnlockTimerRef.current = window.setTimeout(() => {
-        lightboxWheelLockRef.current = false;
-        lightboxWheelUnlockTimerRef.current = null;
-      }, 420);
+      scheduleUnlock();
     };
 
     viewport.addEventListener("wheel", onWheel, { passive: false, capture: true });
