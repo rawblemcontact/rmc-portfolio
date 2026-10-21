@@ -11905,10 +11905,16 @@ const ConfidantExperience = ({
   useEffect(() => {
     if (!isMobileExperienceLayout) return;
     const idx = EXPERIENCE_TAB_IDS.indexOf(activeExperienceTabId);
-    if (idx < 0 || EXPERIENCE_TAB_IDS.length - idx <= 2) return;
+    if (idx < 0) return;
     const nav = tabsRootRef.current?.querySelector<HTMLElement>(".tabs-nav");
     if (!nav) return;
-    const btn = nav.querySelector<HTMLElement>(`[data-tab="${activeExperienceTabId}"]`);
+    let scrollTabId: string = activeExperienceTabId;
+    if (EXPERIENCE_TAB_IDS.length - idx <= 2) {
+      /* Education / Barista from the start of the slider: slide so Social Media is leftmost. */
+      if (nav.scrollLeft > 1) return;
+      scrollTabId = "uvic-esports";
+    }
+    const btn = nav.querySelector<HTMLElement>(`[data-tab="${scrollTabId}"]`);
     const shell = btn?.closest<HTMLElement>(".experience-tab-btn-shell");
     if (!shell) return;
     const delta =
