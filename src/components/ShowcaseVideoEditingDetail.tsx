@@ -3,6 +3,7 @@ import { flushSync } from "react-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import Plyr from "plyr";
+import { PdfFoldLoader } from "./PdfFoldLoader";
 import type { Options as PlyrOptions } from "plyr";
 import "plyr/dist/plyr.css";
 import { directionalArrowIdlePhaseDelaySec, EASE } from "@/lib/motion";
@@ -74,6 +75,30 @@ function facePosterSrc(video: ShowcaseDetailVideo): string | null {
 }
 
 
+/** Black main-card placeholder with the PDF reader's FILE LOADING... animation centred. */
+function MainCardLoadingPlaceholder() {
+  return (
+    <div className="pointer-events-none absolute inset-0 z-[1] flex items-center justify-center bg-black">
+      <div className="pdf-loading-indicator" role="status" aria-live="polite">
+        <motion.div
+          className="pdf-loading-indicator__loader-wrap"
+          animate={{ opacity: [0.42, 0.9, 0.42] }}
+          transition={{ duration: 1.8, ease: "easeInOut", repeat: Infinity }}
+        >
+          <PdfFoldLoader className="pdf-loading-indicator__loader" />
+        </motion.div>
+        <motion.p
+          className="pdf-loading-indicator__label font-display"
+          animate={{ opacity: [0.42, 0.9, 0.42] }}
+          transition={{ duration: 1.8, ease: "easeInOut", repeat: Infinity }}
+        >
+          FILE LOADING...
+        </motion.p>
+      </div>
+    </div>
+  );
+}
+
 function VideoEditingImagePlayer({
   video,
   focalPoint = "50% 50%",
@@ -84,11 +109,18 @@ function VideoEditingImagePlayer({
   className?: string;
 }) {
   const src = isImageMedia(video) ? video.url : video.thumbnailSrc;
+  const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
   if (!src || !IMAGE_EXT_RE.test(src)) return null;
 
   return (
-    <div className={`relative aspect-video w-full ${className}`.trim()}>
+    <div className={`relative aspect-video w-full bg-black ${className}`.trim()}>
+      {loadedSrc !== src ? <MainCardLoadingPlaceholder /> : null}
       <img
+        key={src}
+        ref={(node) => {
+          if (node?.complete && node.naturalWidth > 0 && loadedSrc !== src) setLoadedSrc(src);
+        }}
+        onLoad={() => setLoadedSrc(src)}
         src={src}
         alt={video.selectorTitle?.trim() || video.label}
         className="absolute inset-0 h-full w-full object-cover"
@@ -4120,7 +4152,6 @@ export function ShowcaseVideoEditingDetail({
   const youtubeFacePending =
     Boolean(youtubeVideoId(faceVideo.url)) &&
     (safeFaceIndex !== safePlayerIndex || youtubeFaceCoverHold);
-  const youtubeFacePosterSrc = youtubeFacePending ? facePosterSrc(faceVideo) : null;
   const activeSelectorTitle = isSlaywire
     ? card.title
     : activeVideo.selectorTitle?.trim() || activeVideo.label || "Selected work";
@@ -4969,17 +5000,7 @@ export function ShowcaseVideoEditingDetail({
                     }}
                   />
                 )}
-                {youtubeFacePending && youtubeFacePosterSrc ? (
-                  <div className="pointer-events-none absolute inset-0 z-[1] bg-black">
-                    <img
-                      src={youtubeFacePosterSrc}
-                      alt=""
-                      className="absolute inset-0 h-full w-full object-cover"
-                      style={{ objectPosition: card.focalPoint ?? "50% 50%" }}
-                      decoding="async"
-                    />
-                  </div>
-                ) : null}
+                {youtubeFacePending ? <MainCardLoadingPlaceholder /> : null}
               </div>
               <div className="video-editing-detail-works mt-3 w-full min-w-0 overflow-x-visible">
                 <div className={worksStripOuterClass} style={worksArrowIdleStyle}>
