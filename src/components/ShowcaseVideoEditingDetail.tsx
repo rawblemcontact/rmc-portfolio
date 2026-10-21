@@ -4183,12 +4183,8 @@ export function ShowcaseVideoEditingDetail({
       ? "mx-4 sm:mx-6"
       : "w-full";
   const worksStripShellClass = `video-editing-works-strip-shell min-w-0 overflow-x-visible ${worksStripClass}`;
-  const worksArrowPrevOffsetClass = matchInteractiveMediaChrome
-    ? "left-[-6px] sm:left-0"
-    : "-left-[14px] sm:-left-2";
-  const worksArrowNextOffsetClass = matchInteractiveMediaChrome
-    ? "right-[-6px] sm:right-0"
-    : "-right-[14px] sm:-right-2";
+  const worksArrowPrevOffsetClass = "-left-[14px] sm:-left-2";
+  const worksArrowNextOffsetClass = "-right-[14px] sm:-right-2";
 
   const renderPortraitDetailTabBody = (tabId: DetailCardTabId) => {
     if (tabId === "overview") {
