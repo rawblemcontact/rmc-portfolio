@@ -11464,7 +11464,7 @@ const EXPERIENCE_DATA = [
     location: "Victoria, BC",
     period: "2024 - Present",
     bullets: [
-      "Created, produced, and distributed digital art and interactive narrative content across short-form video platforms.",
+      "Created, produced, and distributed digital art and interactive narrative content for my own RAWBLEM brand, alongside commissioned creative work for external clients.",
       "Planned and executed a story-driven interactive project that reached 30,000+ views on TikTok through platform-driven engagement.",
       "Edited and assembled short-form video using CapCut and DaVinci Resolve, applying timing, transitions, text overlays, animation, and audio synchronization to ensure clarity and pacing.",
       "Adapted content for TikTok, Instagram Reels, and YouTube Shorts to align with platform-specific formatting standards.",
@@ -11504,7 +11504,7 @@ const EXPERIENCE_DATA = [
 
 const CAREER_OVERVIEW_PANEL_BULLETS = {
   rawblem: [
-    "Created, produced, and distributed digital art and interactive narrative content across short-form video platforms.",
+    "Created, produced, and distributed digital art and interactive narrative content for my own RAWBLEM brand, alongside commissioned creative work for external clients.",
     "Planned and executed a story-driven interactive project that reached 30,000+ views on TikTok through platform-driven engagement.",
     "Edited and assembled short-form video using CapCut and DaVinci Resolve, applying timing, transitions, text overlays, animation, and audio synchronization to ensure clarity and pacing.",
     "Adapted content for TikTok, Instagram Reels, and YouTube Shorts to align with platform-specific formatting standards.",
