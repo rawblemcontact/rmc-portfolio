@@ -6563,7 +6563,7 @@ const PhantomProfile = ({
                 </ul>
                 <p className={`${PROFILE_CARD_SECTION_LABEL_CLASS} mb-1.5`} style={{ color: PROFILE_ACCENT_SOFT }}>AREAS OF FOCUS</p>
                 <ul className="font-body text-mono-2 leading-relaxed mb-4 ml-3 list-disc list-outside space-y-2 pl-6 sm:pl-7 marker:text-mono-2/50">
-                  <li>Content Strategy</li>
+                  <li>Content Development</li>
                   <li>Digital Communications</li>
                   <li>Creative Production and Technology</li>
                 </ul>
@@ -6705,7 +6705,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         alt: "CHARGER - SLAYWIRE Concept Art (2023)",
         caption: "CHARGER - SLAYWIRE Concept Art (2023)",
         artistStatement:
-          "Digital-ink style illustration for the lead protagonist of SLAYWIRE. Blends an anime aesthetic with dark mechanical texture and typography.\n\n<em>\"WITHOUT A CHARGER,\nA MACHINE IS NOTHING.\"</em>\n\nTools: Procreate and Photoshop",
+          "Digital-ink style illustration for the lead protagonist of SLAYWIRE. Blends an anime aesthetic with dark mechanical texture and typography.\n<em>\"Without a CHARGER,\nWe cannot be.\"\"</em>\n\nTools: Procreate and Photoshop",
         focalPoint: "50% 42%",
       },
       {
@@ -6714,7 +6714,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         alt: "FRAGMENT - SLAYWIRE Concept Art (2023)",
         caption: "FRAGMENT - SLAYWIRE Concept Art (2023)",
         artistStatement:
-          "Digital-ink style illustration for the lead antagonist of SLAYWIRE. Features shattered typography and fractured geometry.\n\n<em>\"WE ALL BEGIN\nAND WE SHALL ALL END\nIN FRAGMENTS\"</em>\n\nTools: Procreate and Photoshop",
+          "Digital-ink style illustration for the lead antagonist of SLAYWIRE. Features shattered typography and fractured geometry.\n\n<em>\"WE ALL BEGIN,\nAND END,\nIN FRAGMENTS.\"\"</em>\n\nTools: Procreate and Photoshop",
         focalPoint: "50% 45%",
       },
       {
@@ -6723,7 +6723,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         alt: "WISELY - SLAYWIRE Concept Art (2023)",
         caption: "WISELY - SLAYWIRE Concept Art (2023)",
         artistStatement:
-          "Digital-ink style illustration for SLAYWIRE's antihero. Merges cloaked fabric and metallic texture to achieve a unique expression of contrast.\n\n<em>\"O, CHILD.\nI CAN ONLY HOPE.\nYOU WERE NOT ONCE.\nLIKE ME.\nREST NOW.\nAND MAY YOUR IRON SLEEP.\nWITHOUT A FEELING.\"</em>\n\nTools: Procreate and Photoshop",
+          "Digital-ink style illustration for SLAYWIRE's antihero. Merges cloaked fabric and metallic texture to achieve a unique expression of contrast.\n\n<em>\"Rest now,\nAnd may your iron sleep\nWithout a feeling.\"</em>\n\nTools: Procreate and Photoshop",
         focalPoint: "50% 42%",
       },
       {
@@ -6732,7 +6732,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         alt: "SPACE ANIMAL - Illustration (2023)",
         caption: "SPACE ANIMAL - Illustration (2023)",
         artistStatement:
-          "Digital-ink style homage to Star Fox (1993). Featuring the subject centered in profile; framed in the character's signature hexagonal \"shine\" pattern. Certain visual elements break past the framing and out into the larger canvas to communicate visual depth.\n\n<em>This is a noncommercial and transformative project. All trademarks and copyrights belong to their respective owners.</em>\n\nTools: Clip Studio Paint",
+          "Digital-ink style homage to Star Fox (Nintendo, 1993). Featuring the subject centered in profile; framed in the character's signature hexagonal \"shine\" pattern. Visual elements break past the framing and out into the larger canvas to convey visual depth.\n\n<em>This is a noncommercial and transformative project. All trademarks and copyrights belong to their respective owners.</em>\n\nTools: Clip Studio Paint",
         focalPoint: "50% 50%",
       },
       {
@@ -6749,15 +6749,15 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         alt: "SLAYWIRE - Promotional Illustration (2022)",
         caption: "SLAYWIRE - Promotional Illustration (2022)",
         artistStatement:
-          "Digital-ink and textured brush artwork featuring DE, a key character in SLAYWIRE.\n\n<em>\"AM I...ERROR?\"</em>\n\nTools: Procreate and Photoshop",
+          "Digital ink and textured brush artwork featuring DE [pronounced \"Dee\"], a lead character in SLAYWIRE.\n\n<em>\"AM \nI... \n...E̶R̶R̷O̶R̶?̵ \n</em>\n\nTools: Procreate and Photoshop",
         focalPoint: "50% 45%",
       },
       {
         id: "illustrations-07",
         src: "/illustrations/illustrations-dish-cat.png",
-        alt: "DISHCAT - Illustration (2024)",
-        caption: "DISHCAT - Illustration (2024)",
-        artistStatement: "Commissioned work for an individual client. Monochrome palette and conservative linework used to emphasize a minimalist feel.\n\nTools: Clip Studio Paint",
+        alt: "DISHCAT - Commissioned Illustration (2024)",
+        caption: "DISHCAT - Commissioned Illustration (2024)",
+        artistStatement: "Meownimalist.\nMonochrome palette and conservative linework.\n\nTools: Clip Studio Paint",
         focalPoint: "50% 50%",
       },
       {
@@ -6766,7 +6766,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         alt: "Vancouver Island Melee - Poster Design (2020)",
         caption: "Vancouver Island Melee - Poster Design (2020)",
         artistStatement:
-          "Designed for the Vancouver Island UVic E-Sports Community.\n\nManually captured in-game snapshots to capture dynamic poses for each character featured in this work, using Dolphin Emulator + an in-game greenscreen hack and an owned copy of Super Smash Bros. Melee for the Nintendo GameCube (Nintendo, 2001).\n\nCombines splatter-paint strokes with strong drop shadows to yield a pop-up book style of expression.\n\n<em>This is a noncommercial and transformative project. All trademarks and copyrights belong to their respective owners.</em>\n\nTools: Photoshop, GIMP\n\nSubtools: Dolphin Emulator, Screenshot Tools, Debug Background Colors Mod (UnclePunch, 2020)",
+          "Designed for the Vancouver Island UVic E-Sports Community.\n\nManually captured in-game snapshots to capture dynamic poses for each character featured in this work, using Dolphin Emulator, an in-game greenscreen hack, and an owned copy of Super Smash Bros. Melee for the Nintendo GameCube (Nintendo, 2001).\n\nCombines splatter-paint strokes with strong drop shadows to create a pop-up book style of expression.\n\n<em>This is a noncommercial and transformative project. All trademarks and copyrights belong to their respective owners.</em>\n\nTools: Photoshop, GIMP\n\nSubtools: Dolphin Emulator, Screenshot Tools, Debug Background Colors Mod (UnclePunch, 2020)",
         focalPoint: "50% 42%",
       },
       {
@@ -6775,7 +6775,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         alt: "Vancouver Island Melee - Poster Design (2020)",
         caption: "Vancouver Island Melee - Poster Design (2020)",
         artistStatement:
-          "Designed for the Vancouver Island UVic E-Sports Community.\n\nA visual homage to Pokémon Emerald (2005) and its famous gym leader ranking system. Implemented as both a creative and functional solution to a four-person tie for the season's final ranking results.\n\nUses in-game character models and background references, but each featured character in this design was recreated and modified by hand, using a 1px brush in Photoshop, dot by dot.\n\nAll re-models and re-designs visually resemble each competitor's likeness (with permission).\n\n<em>This is a noncommercial and transformative project. All trademarks and copyrights belong to their respective owners.</em>\n\nTools: Clip Studio Paint, Photoshop/GIMP, Inkscape and Figma (for SVG formats)",
+          "Designed for the Vancouver Island UVic E-Sports Community.\n\nA visual homage to Pokémon Emerald (Nintendo, 2005) and its famous gym leader ranking system. Implemented as both a creative and functional solution to a four-person tie for the season's final ranking results.\n\nUses in-game character models and background references, but each featured character in this design was recreated and modified by hand, using a 1px brush in Photoshop, dot by dot.\n\nAll remodels and redesigns visually resemble each competitor's likeness (with permission).\n\n<em>This is a noncommercial and transformative project. All trademarks and copyrights belong to their respective owners.</em>\n\nTools: Clip Studio Paint, Photoshop, GIMP",
         focalPoint: "50% 38%",
       },
       {
@@ -6784,7 +6784,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         alt: "RAWBLEM Logo - Brand Design (2025)",
         caption: "RAWBLEM Logo - Brand Design (2025)",
         artistStatement:
-          "Hand-drawn, digital ink style logo with matching custom typography.\n\nTools: Clip Studio Paint, Photoshop, Inkscape (for SVG formats)",
+          "High contrast digital-ink style logo with matching handdrawn custom typography.\n\nTools: Clip Studio Paint, Photoshop, Inkscape",
         focalPoint: "50% 45%",
       },
       {
@@ -6826,7 +6826,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         label: "1",
         thumbnailSrc: "/Video_Editing_1_thumb.png",
         selectorTitle: "RAWBLEM",
-        selectorSubtitle: "Promotional Announcement (2025)",
+        selectorSubtitle: "Promotional Announcement #1 (2025)",
         selectorDuration: "0:20",
         detailOverview:
           "Short-form video content produced to increase engagement on the RAWBLEM Instagram account, using my own digital artwork as the subject.\n\nFeatures:\n- 9:16 mobile friendly aspect ratio\n- 60FPS animation\n- Rotating/scaling 3D motion effects\n- Dynamic video backgrounds\n- Color and filter effects (e.g., Motion blur, chromatic aberration, etc.)\n- Animated CTA (call to action) buttons and typography.",
@@ -6842,7 +6842,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         label: "2",
         thumbnailSrc: "/Video_Editing_2_thumb.png",
         selectorTitle: "RAWBLEM",
-        selectorSubtitle: "Meme-Style Promotional Announcement (2025)",
+        selectorSubtitle: "Promotional Announcement/Meme Content (2025)",
         selectorDuration: "0:30",
         detailOverview:
           "Short-form video content produced to increase engagement on the RAWBLEM Instagram, TikTok, YouTube Shorts, and online storefront.\nEmphasizes using internet meme absurdism and humor. Uses my own digital artwork as the subject.\n\nFeatures:\n- 60FPS Animation\n- 4K Resolution\n- 9:16 mobile friendly aspect ratio\n- Rotating/scaling/zooming/camera shake motion effects\n- Exaggerated scene transitions and bold typography\n- Timed to music",
@@ -6858,7 +6858,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         label: "3",
         thumbnailSrc: "/Video_Editing_3_thumb.png",
         selectorTitle: "Guilt Trip",
-        selectorSubtitle: "Comedy/Horror Short Film",
+        selectorSubtitle: "Comedy/Horror Short Film (2023)",
         selectorDuration: "0:45",
         detailOverview:
           "Undergraduate film project. Directed by Eliza Musselwhite and written by Johnny Cole.\n<em>Wes must face his fear of scary movies to save Ellie from an endless-nightmare-horror-film-death loop.</em>\n\nFeatures:\n- 30FPS\n- 16:9 YouTube-friendly aspect ratio\n- Keyframed animation\n- Campy horror-themed aesthetic and sound\n- Intense camera-shake motion effects\n- Fast-paced TV static VFX and transitions\n- Color correction",
@@ -6872,8 +6872,8 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "https://youtu.be/TdL-N2IGPa0",
         label: "4",
         thumbnailSrc: "/Video_Editing_4_thumb.png",
-        selectorTitle: "Animation Breakdown - Shining Ring",
-        selectorSubtitle: "Tutorial-style content",
+        selectorTitle: "My Perfect Morning Routine",
+        selectorSubtitle: "Short Film (2022)",
         selectorDuration: "0:38",
         detailOverview:
           "A frame-by-frame look at a 14-frame animation created for the release of <em>UNDERTALE: Forever Home Edition</em>.\n\nFeatures:\n- 60FPS\n- 4K Resolution\n- 9:16 mobile-friendly aspect ratio\n- Handcrafted pixel animation\n- 8-bit style typography\n- Timed to music",
@@ -6887,8 +6887,8 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "https://youtu.be/QU1-gZ_Ebfk",
         label: "5",
         thumbnailSrc: "/Video_Editing_5_thumb.png",
-        selectorTitle: "Edit 05",
-        selectorSubtitle: "Pacing Variant",
+        selectorTitle: "Animation Breakdown - Shining Ring",
+        selectorSubtitle: "Tutorial-Style Content (2025)",
         selectorDuration: "0:32",
         detailOverview:
           "Alternate pacing pass emphasizing setup-to-punchline contrast and stronger cadence in transition points.",
@@ -6901,8 +6901,8 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "/Video_Editing_6_thumb.png",
         label: "6",
         thumbnailSrc: "/Video_Editing_6_thumb.png",
-        selectorTitle: "Edit 06",
-        selectorSubtitle: "Branding Variant",
+        selectorTitle: "RAWBLEM's Game of the Year",
+        selectorSubtitle: "Social Media Edit (2025)",
         selectorDuration: "0:27",
         detailOverview:
           "Title-card-forward variation tuned for branding clarity while preserving fast short-form momentum.",
@@ -11473,7 +11473,7 @@ const EXPERIENCE_DATA = [
     bullets: [
       "Created, produced, and distributed digital art and interactive narrative content for my own RAWBLEM brand, alongside commissioned creative work for external clients.",
       "Planned and executed a story-driven interactive project that reached 30,000+ views on TikTok through platform-driven engagement.",
-      "Edited and assembled short-form video using CapCut and DaVinci Resolve, applying timing, transitions, text overlays, animation, and audio synchronization to ensure clarity and pacing.",
+      "Edited and assembled short-form videos using CapCut and DaVinci Resolve, applying timing, transitions, text overlays, animation, and audio synchronization to ensure clarity and pacing.",
       "Adapted content for TikTok, Instagram Reels, and YouTube Shorts to align with platform-specific formatting standards.",
       "Scheduled and coordinated content distribution using Hootsuite while monitoring and responding to audience engagement across multiple platforms.",
       "Managed end-to-end creative workflows independently, from concept and scripting to visual design and audience-driven revision.",
@@ -11488,9 +11488,9 @@ const EXPERIENCE_DATA = [
       "Coordinated and managed content across Facebook, Discord, and Twitch in support of a university-affiliated online community.",
       "Planned, produced, and published promotional content for tournaments, announcements, and community events, contributing to increased engagement.",
       "Designed visual assets including logos, posters, and branded graphics to support community identity and event promotion.",
-      "Collaborated with organizers and volunteers to ensure consistent messaging and timely updates across platforms.",
+      "Collaborated with organizers and volunteers to ensure consistent messaging and routine updates across platforms.",
       "Built foundational livestream production experience, and later expanded into independently managing full end-to-end stream configurations using OBS and Streamlabs (scene design, overlays, transitions, and audio routing).",
-      "Assisted with in-person tournament setup, including CRT configuration and station preparation.",
+      "Assisted with in-person event setup, including CRT configuration and station preparation.",
     ],
   },
   {
@@ -11499,12 +11499,12 @@ const EXPERIENCE_DATA = [
     location: "Victoria, BC",
     period: "2018 - Present",
     bullets: [
-      "Delivered consistent customer service in a high-volume environment, supporting 200+ customer transactions per shift while maintaining quality and efficiency standards.",
+      "Delivered consistent customer service in a high-volume setting, supporting 200+ customer transactions per shift while maintaining quality and efficiency standards.",
       "Supported daily operations through clear communication, multitasking, and real-time coordination with team members during peak periods.",
-      "Trained and mentored 5+ new team members, contributing to onboarding, skill development, and team readiness.",
-      "Maintained a strong attendance and reliability record over 6+ years in a fast-paced, team-based setting.",
+      "Coached and mentored 10+ new team members, contributing to onboarding, skill development, and team readiness.",
+      "Maintained a strong attendance and reliability record over 8+ years in a fast-paced, team-based setting.",
       "Resolved customer concerns and service disruptions by applying company policy, leading with empathy and situational awareness.",
-      "Adapted to evolving store procedures, product launches, and operational changes within a continuously shifting retail environment.",
+      "Adapted to evolving store procedures, product launches, and operational changes within a dynamic retail environment.",
     ],
   },
 ] as const;
@@ -11513,7 +11513,7 @@ const CAREER_OVERVIEW_PANEL_BULLETS = {
   rawblem: [
     "Created, produced, and distributed digital art and interactive narrative content for my own RAWBLEM brand, alongside commissioned creative work for external clients.",
     "Planned and executed a story-driven interactive project that reached 30,000+ views on TikTok through platform-driven engagement.",
-    "Edited and assembled short-form video using CapCut and DaVinci Resolve, applying timing, transitions, text overlays, animation, and audio synchronization to ensure clarity and pacing.",
+    "Edited and assembled short-form videos using CapCut and DaVinci Resolve, applying timing, transitions, text overlays, animation, and audio synchronization to ensure clarity and pacing.",
     "Adapted content for TikTok, Instagram Reels, and YouTube Shorts to align with platform-specific formatting standards.",
     "Scheduled and coordinated content distribution using Hootsuite while monitoring and responding to audience engagement across multiple platforms.",
     "Managed end-to-end creative workflows independently, from concept and scripting to visual design and audience-driven revision.",
@@ -11522,17 +11522,17 @@ const CAREER_OVERVIEW_PANEL_BULLETS = {
     "Coordinated and managed content across Facebook, Discord, and Twitch in support of a university-affiliated online community.",
     "Planned, produced, and published promotional content for tournaments, announcements, and community events, contributing to increased engagement.",
     "Designed visual assets including logos, posters, and branded graphics to support community identity and event promotion.",
-    "Collaborated with organizers and volunteers to ensure consistent messaging and timely updates across platforms.",
-    "Built foundational livestream production experience, and later expanded into independently managing full end-to-end stream configurations using OBS and Streamlabs, including scene design, overlays, transitions, and audio routing.",
-    "Assisted with in-person tournament setup, including CRT configuration and station preparation.",
+    "Collaborated with organizers and volunteers to ensure consistent messaging and routine updates across platforms.",
+    "Built foundational livestream production experience, and later expanded into independently managing full stream configurations using OBS and Streamlabs (including scene design, overlays, transitions, and audio routing).",
+    "Assisted with in-person event setup, including CRT configuration and station preparation.",
   ],
   starbucks: [
-    "Delivered consistent customer service in a high-volume environment, supporting 200+ customer transactions per shift while maintaining quality and efficiency standards.",
+    "Delivered consistent customer service in a high-volume setting, supporting 200+ customer transactions per shift while maintaining quality and efficiency standards.",
     "Supported daily operations through clear communication, multitasking, and real-time coordination with team members during peak periods.",
-    "Trained and mentored 5+ new team members, contributing to onboarding, skill development, and team readiness.",
-    "Maintained a strong attendance and reliability record over 6+ years in a fast-paced, team-based setting.",
+    "Coached and mentored 10+ new team members, contributing to onboarding, skill development, and team readiness.",
+    "Maintained a strong attendance and reliability record over 8+ years in a fast-paced, team-based setting.",
     "Resolved customer concerns and service disruptions by applying company policy, leading with empathy and situational awareness.",
-    "Adapted to evolving store procedures, product launches, and operational changes within a continuously shifting retail environment.",
+    "Adapted to evolving store procedures, product launches, and operational changes within a dynamic retail environment.",
   ],
   education: [
     "Awarded Distinction.",
@@ -11754,6 +11754,14 @@ const ExperienceTabPanelBody = ({ tabId }: { tabId: ExperienceTabId }) => {
                       <span>{bullet}</span>
                     </li>
                   ))}
+                  <li>
+                    <span>Areas of Study:</span>
+                    <ul className="feature-list" style={{ marginTop: "0.5rem", paddingLeft: "1.25rem" }}>
+                      <li><span>Screenwriting</span></li>
+                      <li><span>Content Writing, Creative Nonfiction, and Journalism.</span></li>
+                      <li><span>Video Editing, Graphic Design, and Audio Mixing.</span></li>
+                    </ul>
+                  </li>
                 </ul>
               </div>
             </div>
