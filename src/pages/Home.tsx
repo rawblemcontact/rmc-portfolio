@@ -6749,7 +6749,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         alt: "SLAYWIRE - Promotional Illustration (2022)",
         caption: "SLAYWIRE - Promotional Illustration (2022)",
         artistStatement:
-          "Digital ink and textured brush artwork featuring DE [pronounced \"Dee\"], a lead character in SLAYWIRE.\n\n<em>\"AM \nI... \n...E̶R̶R̷O̶R̶?̵ \n</em>\n\nTools: Procreate and Photoshop",
+          "Digital ink and textured brush artwork featuring DE [pronounced \"Dee\"], a lead character in SLAYWIRE.\n\n<em>\"AM/ \nI.../ \n...E̶R̶R̷O̶R̶?̵ \n</em>\n\nTools: Procreate and Photoshop",
         focalPoint: "50% 45%",
       },
       {
