@@ -6825,8 +6825,8 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "https://youtube.com/shorts/MO96Ul13Gpo?feature=share",
         label: "1",
         thumbnailSrc: "/Video_Editing_1_thumb.png",
-        selectorTitle: "RAWBLEM",
-        selectorSubtitle: "Promotional Announcement #1 (2025)",
+        selectorTitle: "RAWBLEM's Shop #1",
+        selectorSubtitle: "Promotional Announcement (2025)",
         selectorDuration: "0:20",
         detailOverview:
           "Short-form video content produced to increase engagement on the RAWBLEM Instagram account, using my own digital artwork as the subject.\n\nFeatures:\n- 9:16 mobile friendly aspect ratio\n- 60FPS animation\n- Rotating/scaling 3D motion effects\n- Dynamic video backgrounds\n- Color and filter effects (e.g., Motion blur, chromatic aberration, etc.)\n- Animated CTA (call to action) buttons and typography.",
@@ -6841,8 +6841,8 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "https://youtube.com/shorts/u4NUQlkE504?feature=share",
         label: "2",
         thumbnailSrc: "/Video_Editing_2_thumb.png",
-        selectorTitle: "RAWBLEM",
-        selectorSubtitle: "Promotional Announcement/Meme Content (2025)",
+        selectorTitle: "RAWBLEM's Shop #2",
+        selectorSubtitle: "Promotional Announcement & Meme Content (2025)",
         selectorDuration: "0:30",
         detailOverview:
           "Short-form video content produced to increase engagement on the RAWBLEM Instagram, TikTok, YouTube Shorts, and online storefront.\nEmphasizes using internet meme absurdism and humor. Uses my own digital artwork as the subject.\n\nFeatures:\n- 60FPS Animation\n- 4K Resolution\n- 9:16 mobile friendly aspect ratio\n- Rotating/scaling/zooming/camera shake motion effects\n- Exaggerated scene transitions and bold typography\n- Timed to music",
@@ -6931,10 +6931,10 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "https://youtu.be/_YiB0_TS2U0",
         label: "UNDERTALE FHE",
         thumbnailSrc: "https://i.ytimg.com/vi/_YiB0_TS2U0/hqdefault.jpg",
-        selectorTitle: "UNDERTALE: Forever Home Edition (2025)",
-        selectorSubtitle: "Video Game",
+        selectorTitle: "UNDERTALE: Forever Home Edition",
+        selectorSubtitle: "Video Game (2025)",
         detailOverview:
-          "UNDERTALE - FOREVER HOME EDITION (UTFHE) is a narrative-driven game based on UNDERTALE by Toby Fox.\nThis was created to propose to my girlfriend and was completed over a one-year development period. She said YES!\n\nSince UNDERTALE is a game about choice-based outcomes, and happens to be my fiancé's favourite, it proved the perfect candidate for this project.\n\n<em>When the Underground is overhauled by an unknown entity, a lone girl faces one of the most important decisions of her life.</em>\n\nFeatures:\n- Heavy rewriting of the original game\n- Handcrafted pixel animations\n- Heavily edited visual assets\n- Brand new characters\n- Brand new cutscenes\n- Brand new explorable areas\n- Narrative driven mechanics (e.g. Multiple endings, choices matter, etc.)\n- Multiple endings\n- Social media promotional campaign\n- Full playability on PC (Windows)\n- Full video playthrough and YouTube release.\n\n<em>This is a noncommercial, transformative project created for educational and entertainment purposes.\nIt is not affiliated with, endorsed by, or sponsored by Toby Fox or any other rights holders.\nSome third-party assets have been modified or adapted for use in this project.\nNo copyright infringement is intended.</em>\n\n<em>Full credits available in the YouTube video description.</em>",
+          "UNDERTALE - FOREVER HOME EDITION (UTFHE) is a narrative-driven game based on UNDERTALE by Toby Fox.\nThis was created to propose to my girlfriend and was completed over a one-year development period. She said YES!\n\nSince UNDERTALE is a game about choice-based outcomes, and happens to be my fiancé's favourite, it proved the perfect candidate for this project.\n\n<em>When the Underground is overhauled by an unknown entity, a lone girl faces one of the most important decisions of her life.</em>\n\nFeatures:\n\n- Heavy rewriting of the original game\n- Handcrafted pixel animations\n- Heavily edited visual assets\n- Brand new characters\n- Brand new cutscenes\n- Brand new explorable areas\n- Narrative driven mechanics (e.g. Multiple endings, choices matter, etc.)\n- Multiple endings\n- Social media promotional campaign\n- Full playability on PC (Windows)\n- Full video playthrough and YouTube release.\n\n<em>This is a noncommercial, transformative project created for educational and entertainment purposes.\nIt is not affiliated with, endorsed by, or sponsored by Toby Fox or any other rights holders.\nSome third-party assets have been modified or adapted for use in this project.\nNo copyright infringement is intended.</em>\n\n<em>Full credits available in the YouTube video description.</em>",
         detailRole:
           "Independent\nCreative Director\nWriter\nProducer\nProgrammer\nGame Developer\nVideo Editor\nAnimator\nSocial Media Coordinator",
         detailTools: ["GameMaker Studio 2", "DaVinci Resolve", "CapCut", "OBS Studio", "Audacity"],
@@ -6946,8 +6946,8 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "https://youtube.com/shorts/aaLmxLwyBTQ?feature=share",
         label: "FugitiveFilms 1",
         thumbnailSrc: "/Interactive_Media_2_thumb.png",
-        selectorTitle: "Animation for FugitiveFilms - 1 of 2 (2026)",
-        selectorSubtitle: "Commissioned Work",
+        selectorTitle: "Animation for FugitiveFilms #1",
+        selectorSubtitle: "Commissioned Work (2026)",
         detailOverview:
           "Handcrafted pixel animation for DOGBALL, produced by FugitiveFilms for the CineVic Presenter Series: Art for Art's Sake.\nThis project was created over a one-month development period.\n\nFeatures:\n- All original pixel artwork and animation\n- 8-bit retro-game style aesthetic\n- 16:9 YouTube-friendly aspect ratio\n- 4K resolution\n- Sound Effects - curated, modified, and mixed",
         detailRole: "Animator\nCreative Lead (animation only)\nVideo Editor (animation only)",
@@ -6960,8 +6960,8 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "https://youtube.com/shorts/9ZgDZM8ZzyU?feature=share",
         label: "FugitiveFilms 2",
         thumbnailSrc: "/Interactive_Media_3_thumb.png",
-        selectorTitle: "Animation for FugitiveFilms - 2 of 2 (2026)",
-        selectorSubtitle: "Commissioned Work",
+        selectorTitle: "Animation for FugitiveFilms #2",
+        selectorSubtitle: "Commissioned Work (2026)",
         detailOverview:
           "Handcrafted pixel animation for DOGBALL, produced by FugitiveFilms for the CineVic Presenter Series: Art for Art's Sake.\nThis project was created over a one-month development period.\n\nFeatures:\n- All original pixel artwork and animation\n- 8-bit retro-game style aesthetic\n- 16:9 YouTube-friendly aspect ratio\n- 4K Resolution\n- Sound Effects - curated, modified, and mixed",
         detailRole: "Animator\nCreative Lead (animation only)\nVideo Editor (animation only)",
@@ -6974,8 +6974,8 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "/Interactive_Media_4_thumb.png",
         label: "RAWBLEM.COM",
         thumbnailSrc: "/Interactive_Media_4_thumb.png",
-        selectorTitle: "RAWBLEM.com (2026)",
-        selectorSubtitle: "Portfolio Website",
+        selectorTitle: "RAWBLEM.com",
+        selectorSubtitle: "Portfolio Website (2026)",
         detailOverview:
           "Portfolio website showcasing selected works and career highlights across multiple disciplines, including writing, content production, and social media.\nThis project was completed over a six-month development period.\n\nCombined my existing knowledge of coding and design with agentic AI-assisted tools to create a fully-realized portfolio experience.\n\nDisplays a minimalist and modern editorial motif featuring a 5-color design theme (red, yellow, blue, green, violet)\n\nFeatures:\n- Single-page application with fluid client-side navigation (eliminates full page-reloads to enhance user experience)\n- Modern, minimalist editorial motif featuring a 5-color design theme (red, yellow, blue, green, violet).\n- Fully navigable Main Menu and Side Menu with 5 explorable sections.\n- Responsive viewport-specific designs for desktop, mobile, and tablet.\n- 60fps interactive web elements using Framer Motion (page transitions, CTA buttons, text, etc.)\n- Featured Writing Showcase: Tab System\n- Built-in Lightbox Gallery\n- Built-in Media Player\n- Built-in PDF Reader",
         detailRole: "Creative Director\nVisual Designer\nWeb Developer (Assisted by Cursor AI)\nContent Writer",
@@ -7018,7 +7018,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "/slaywire_new_1_full.png",
         label: "1",
         thumbnailSrc: "/slaywire_new_1.png",
-        selectorTitle: "Cover Art",
+        selectorTitle: "Cover Art (2022)",
         selectorSubtitle: "",
         detailOverview:
           "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
@@ -7039,7 +7039,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "/slaywire_e5.png",
         label: "2",
         thumbnailSrc: "/slaywire_e5.png",
-        selectorTitle: "Logo Art",
+        selectorTitle: "Logo Art (2022)",
         selectorSubtitle: "",
         detailOverview:
           "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
@@ -7060,7 +7060,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "/slaywire_c1_full.png",
         label: "3",
         thumbnailSrc: "/slaywire_new_2.png",
-        selectorTitle: "Concept Art #1",
+        selectorTitle: "Concept Art #1 (2023)",
         selectorSubtitle: "",
         detailOverview:
           "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
@@ -7081,7 +7081,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "/slaywire_c3_full.png",
         label: "4",
         thumbnailSrc: "/slaywire_01_full.png",
-        selectorTitle: "Concept Art #2",
+        selectorTitle: "Concept Art #2 (2023)",
         selectorSubtitle: "",
         detailOverview:
           "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
@@ -7102,7 +7102,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "/slaywire_c2_full.png",
         label: "5",
         thumbnailSrc: "/slaywire_new_3.png",
-        selectorTitle: "Concept Art #3",
+        selectorTitle: "Concept Art #3 (2023)",
         selectorSubtitle: "",
         detailOverview:
           "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
@@ -7123,7 +7123,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "/slaywire_final_full.png",
         label: "6",
         thumbnailSrc: "/slaywire_e9.png",
-        selectorTitle: "Concept Art #4",
+        selectorTitle: "Concept Art #4 (2023)",
         selectorSubtitle: "",
         detailOverview:
           "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
@@ -7144,7 +7144,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "/slaywire_s4_full.png",
         label: "7",
         thumbnailSrc: "/slaywire_s4.png",
-        selectorTitle: "Concept Art #5",
+        selectorTitle: "Concept Art #5 (2024)",
         selectorSubtitle: "",
         detailOverview:
           "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
@@ -7165,7 +7165,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "/slaywire_e7.png",
         label: "8",
         thumbnailSrc: "/slaywire_e7.png",
-        selectorTitle: "Concept Art #6",
+        selectorTitle: "Concept Art #6 (2024)",
         selectorSubtitle: "",
         detailOverview:
           "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
