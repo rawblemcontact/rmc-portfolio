@@ -6714,7 +6714,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         alt: "FRAGMENT - SLAYWIRE Concept Art (2023)",
         caption: "FRAGMENT - SLAYWIRE Concept Art (2023)",
         artistStatement:
-          "Digital-ink style illustration for the lead antagonist of SLAYWIRE. Features shattered typography and fractured geometry.\n\n<em>\"WE ALL BEGIN,\nAND END,\nIN FRAGMENTS.\"\"</em>\n\nTools: Procreate and Photoshop",
+          "Digital-ink style illustration for the lead antagonist of SLAYWIRE. Features shattered typography and fractured geometry.\n\n<em>\"WE ALL BEGIN,\nAND END,\nIN FRAGMENTS.\"</em>\n\nTools: Procreate and Photoshop",
         focalPoint: "50% 45%",
       },
       {
@@ -11489,7 +11489,7 @@ const EXPERIENCE_DATA = [
       "Planned, produced, and published promotional content for tournaments, announcements, and community events, contributing to increased engagement.",
       "Designed visual assets including logos, posters, and branded graphics to support community identity and event promotion.",
       "Collaborated with organizers and volunteers to ensure consistent messaging and routine updates across platforms.",
-      "Built foundational livestream production experience, and later expanded into independently managing full end-to-end stream configurations using OBS and Streamlabs (scene design, overlays, transitions, and audio routing).",
+      "Built foundational livestream production experience, and later expanded into independently managing full stream configurations using OBS and Streamlabs (including scene design, overlays, transitions, and audio routing).",
       "Assisted with in-person event setup, including CRT configuration and station preparation.",
     ],
   },
