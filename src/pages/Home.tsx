@@ -6705,7 +6705,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         alt: "CHARGER - SLAYWIRE Concept Art (2023)",
         caption: "CHARGER - SLAYWIRE Concept Art (2023)",
         artistStatement:
-          "Digital-ink style illustration for the lead protagonist of SLAYWIRE. Blends an anime aesthetic with dark mechanical texture and typography.\n<em>\"Without a CHARGER,\nWe cannot be.\"\"</em>\n\nTools: Procreate and Photoshop",
+          "Digital-ink style illustration for the lead protagonist of SLAYWIRE. Blends an anime aesthetic with dark mechanical texture and typography.\n<em>\"Without a CHARGER,\nWe cannot be.\"</em>\n\nTools: Procreate and Photoshop",
         focalPoint: "50% 42%",
       },
       {
@@ -6723,7 +6723,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         alt: "WISELY - SLAYWIRE Concept Art (2023)",
         caption: "WISELY - SLAYWIRE Concept Art (2023)",
         artistStatement:
-          "Digital-ink style illustration for SLAYWIRE's antihero. Merges cloaked fabric and metallic texture to achieve a unique expression of contrast.\n\n<em>\"Rest now,\nAnd may your iron sleep\nWithout a feeling.\"</em>\n\nTools: Procreate and Photoshop",
+          "Digital-ink style illustration for SLAYWIRE's antihero. Merges cloaked fabric and metallic texture to achieve a unique expression of contrast.\n\n<em>\"REST NOW,\nAND MAY YOUR IRON SLEEP\nWITHOUT A FEELING.\"</em>\n\nTools: Procreate and Photoshop",
         focalPoint: "50% 42%",
       },
       {
