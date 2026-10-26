@@ -282,7 +282,20 @@ function renderDetailInlineEm(text: string) {
     if (emMatch) {
       return <em key={`em-${index}`}>{emMatch[1]}</em>;
     }
-    return <span key={`txt-${index}`}>{part}</span>;
+    const segs = part.split(/(^Features:$)/m);
+    return (
+      <span key={`txt-${index}`}>
+        {segs.map((seg, segIndex) =>
+          seg === "Features:" ? (
+            <span key={`ft-${segIndex}`} className="underline underline-offset-4">
+              {seg}
+            </span>
+          ) : (
+            seg
+          ),
+        )}
+      </span>
+    );
   });
 }
 
