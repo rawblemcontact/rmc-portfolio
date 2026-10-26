@@ -6861,7 +6861,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         selectorSubtitle: "Comedy/Horror Short Film (2023)",
         selectorDuration: "1:17",
         detailOverview:
-          "Undergraduate film project. Directed by Eliza Musselwhite and written by Johnny Cole.\n\n<em>Wes must face his fear of scary movies to save Ellie from an endless-nightmare-horror-film death loop.</em>\n\nFeatures:\n\n- 30FPS\n- 16:9 YouTube-friendly aspect ratio\n- Keyframed animation\n- Campy horror-themed aesthetic and sound\n- Intense camera-shake motion effects\n- Fast-paced TV static VFX and transitions\n- Color correction",
+          "Undergraduate film project. Directed by Eliza Musselwhite and written by Johnny Cole.\n\n<em>Wes must face his fear of scary movies to save Ellie from an endless nightmare-horror-film death loop.</em>\n\nFeatures:\n\n- 30FPS\n- 16:9 YouTube-friendly aspect ratio\n- Keyframed animation\n- Campy horror-themed aesthetic and sound\n- Intense camera-shake motion effects\n- Fast-paced TV static VFX and transitions\n- Color correction",
         detailRole: "Video Editor",
         detailTools: ["DaVinci Resolve", "Audacity"],
         detailImpact:
