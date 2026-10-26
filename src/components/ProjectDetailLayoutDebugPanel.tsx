@@ -58,7 +58,7 @@ const PROJECT_DETAIL_LAYOUT_LOCKED_DEFAULTS_BY_PROJECT: Partial<
   "project-video-editing": PROJECT_VIDEO_EDITING_DETAIL_LAYOUT_DEFAULTS,
   /* Flex-centered vertically (offsetY 0) on desktop / iPad landscape. */
   "project-interactive-media": PROJECT_VIDEO_EDITING_DETAIL_LAYOUT_DEFAULTS,
-  "project-slaywire": PROJECT_VIDEO_EDITING_DETAIL_LAYOUT_DEFAULTS,
+  "project-slaywire": { ...PROJECT_VIDEO_EDITING_DETAIL_LAYOUT_DEFAULTS, offsetY: 19 },
 };
 
 export function projectDetailLayoutDefaultsForProject(
