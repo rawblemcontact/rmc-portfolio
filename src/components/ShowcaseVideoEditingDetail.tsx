@@ -4238,12 +4238,17 @@ export function ShowcaseVideoEditingDetail({
     }
 
     if (tabId === "impact") {
-      const impactLines = activeDetails.detailImpact
+      const impactRaw = activeDetails.detailImpact;
+      const disclaimerAt = impactRaw.indexOf("\n\n<em>");
+      const impactBody = disclaimerAt >= 0 ? impactRaw.slice(0, disclaimerAt) : impactRaw;
+      const impactDisclaimer =
+        disclaimerAt >= 0 ? impactRaw.slice(disclaimerAt + 2).trim() : "";
+      const impactLines = impactBody
         .split(/\n+/)
         .map((line) => line.trim())
         .filter(Boolean);
       if (impactLines.length > 1 || isSlaywire) {
-        return (
+        const list = (
           <ul className="ml-1 mb-0 list-disc list-outside space-y-1 pl-6 marker:text-mono-2/70 sm:pl-7">
             {impactLines.map((line, index) => (
               <li
@@ -4254,6 +4259,15 @@ export function ShowcaseVideoEditingDetail({
               </li>
             ))}
           </ul>
+        );
+        if (!impactDisclaimer) return list;
+        return (
+          <div className="min-w-0">
+            {list}
+            <p className="mt-3 mb-0 whitespace-pre-line font-body text-sm leading-snug text-mono-2 sm:text-base">
+              {renderDetailInlineEm(impactDisclaimer)}
+            </p>
+          </div>
         );
       }
       return (
