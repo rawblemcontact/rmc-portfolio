@@ -6827,7 +6827,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         thumbnailSrc: "/Video_Editing_1_thumb.png",
         selectorTitle: "RAWBLEM's Shop #1",
         selectorSubtitle: "Promotional Announcement (2025)",
-        selectorDuration: "0:20",
+        selectorDuration: "0:06",
         detailOverview:
           "Short-form video content produced to increase engagement on the RAWBLEM Instagram account, using my own digital artwork as the subject.\n\nFeatures:\n- 9:16 mobile friendly aspect ratio\n- 60FPS animation\n- Rotating/scaling 3D motion effects\n- Dynamic video backgrounds\n- Color and filter effects (e.g., Motion blur, chromatic aberration, etc.)\n- Animated CTA (call to action) buttons and typography.",
         detailRole:
@@ -6843,7 +6843,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         thumbnailSrc: "/Video_Editing_2_thumb.png",
         selectorTitle: "RAWBLEM's Shop #2",
         selectorSubtitle: "Promotional Announcement & Meme Content (2025)",
-        selectorDuration: "0:30",
+        selectorDuration: "0:11",
         detailOverview:
           "Short-form video content produced to increase engagement on the RAWBLEM Instagram, TikTok, YouTube Shorts, and online storefront.\nEmphasizes using internet meme absurdism and humor. Uses my own digital artwork as the subject.\n\nFeatures:\n- 60FPS Animation\n- 4K Resolution\n- 9:16 mobile friendly aspect ratio\n- Rotating/scaling/zooming/camera shake motion effects\n- Exaggerated scene transitions and bold typography\n- Timed to music",
         detailRole:
@@ -6859,7 +6859,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         thumbnailSrc: "/Video_Editing_3_thumb.png",
         selectorTitle: "Guilt Trip",
         selectorSubtitle: "Comedy/Horror Short Film (2023)",
-        selectorDuration: "0:45",
+        selectorDuration: "1:17",
         detailOverview:
           "Undergraduate film project. Directed by Eliza Musselwhite and written by Johnny Cole.\n<em>Wes must face his fear of scary movies to save Ellie from an endless-nightmare-horror-film-death loop.</em>\n\nFeatures:\n- 30FPS\n- 16:9 YouTube-friendly aspect ratio\n- Keyframed animation\n- Campy horror-themed aesthetic and sound\n- Intense camera-shake motion effects\n- Fast-paced TV static VFX and transitions\n- Color correction",
         detailRole: "Video Editor\nMusic and Sound Effect Curator + Mixer",
@@ -6874,7 +6874,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         thumbnailSrc: "/Video_Editing_4_thumb.png",
         selectorTitle: "My Perfect Morning Routine",
         selectorSubtitle: "Short Film (2022)",
-        selectorDuration: "0:38",
+        selectorDuration: "5:16",
         detailOverview:
           "A frame-by-frame look at a 14-frame animation created for the release of <em>UNDERTALE: Forever Home Edition</em>.\n\nFeatures:\n- 60FPS\n- 4K Resolution\n- 9:16 mobile-friendly aspect ratio\n- Handcrafted pixel animation\n- 8-bit style typography\n- Timed to music",
         detailRole: "Independent\nVideo Editor\nAnimator\nSocial Media Coordinator",
@@ -6889,7 +6889,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         thumbnailSrc: "/Video_Editing_5_thumb.png",
         selectorTitle: "Animation Breakdown - Shining Ring",
         selectorSubtitle: "Tutorial-Style Content (2025)",
-        selectorDuration: "0:32",
+        selectorDuration: "8:06",
         detailOverview:
           "Alternate pacing pass emphasizing setup-to-punchline contrast and stronger cadence in transition points.",
         detailRole: "Timing pass, arrangement tweaks, and social delivery prep.",
@@ -6933,6 +6933,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         thumbnailSrc: "https://i.ytimg.com/vi/_YiB0_TS2U0/hqdefault.jpg",
         selectorTitle: "UNDERTALE: Forever Home Edition",
         selectorSubtitle: "Video Game (2025)",
+        selectorDuration: "23:15",
         detailOverview:
           "UNDERTALE - FOREVER HOME EDITION (UTFHE) is a narrative-driven game based on UNDERTALE by Toby Fox.\nThis was created to propose to my girlfriend and was completed over a one-year development period. She said YES!\n\nSince UNDERTALE is a game about choice-based outcomes, and happens to be my fiancé's favourite, it proved the perfect candidate for this project.\n\n<em>When the Underground is overhauled by an unknown entity, a lone girl faces one of the most important decisions of her life.</em>\n\nFeatures:\n\n- Heavy rewriting of the original game\n- Handcrafted pixel animations\n- Heavily edited visual assets\n- Brand new characters\n- Brand new cutscenes\n- Brand new explorable areas\n- Narrative driven mechanics (e.g. Multiple endings, choices matter, etc.)\n- Multiple endings\n- Social media promotional campaign\n- Full playability on PC (Windows)\n- Full video playthrough and YouTube release.\n\n<em>This is a noncommercial, transformative project created for educational and entertainment purposes.\nIt is not affiliated with, endorsed by, or sponsored by Toby Fox or any other rights holders.\nSome third-party assets have been modified or adapted for use in this project.\nNo copyright infringement is intended.</em>\n\n<em>Full credits available in the YouTube video description.</em>",
         detailRole:
@@ -6948,6 +6949,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         thumbnailSrc: "/Interactive_Media_2_thumb.png",
         selectorTitle: "Animation for FugitiveFilms #1",
         selectorSubtitle: "Commissioned Work (2026)",
+        selectorDuration: "0:11",
         detailOverview:
           "Handcrafted pixel animation for DOGBALL, produced by FugitiveFilms for the CineVic Presenter Series: Art for Art's Sake.\nThis project was created over a one-month development period.\n\nFeatures:\n- All original pixel artwork and animation\n- 8-bit retro-game style aesthetic\n- 16:9 YouTube-friendly aspect ratio\n- 4K resolution\n- Sound Effects - curated, modified, and mixed",
         detailRole: "Animator\nCreative Lead (animation only)\nVideo Editor (animation only)",
@@ -6962,6 +6964,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         thumbnailSrc: "/Interactive_Media_3_thumb.png",
         selectorTitle: "Animation for FugitiveFilms #2",
         selectorSubtitle: "Commissioned Work (2026)",
+        selectorDuration: "0:11",
         detailOverview:
           "Handcrafted pixel animation for DOGBALL, produced by FugitiveFilms for the CineVic Presenter Series: Art for Art's Sake.\nThis project was created over a one-month development period.\n\nFeatures:\n- All original pixel artwork and animation\n- 8-bit retro-game style aesthetic\n- 16:9 YouTube-friendly aspect ratio\n- 4K Resolution\n- Sound Effects - curated, modified, and mixed",
         detailRole: "Animator\nCreative Lead (animation only)\nVideo Editor (animation only)",
