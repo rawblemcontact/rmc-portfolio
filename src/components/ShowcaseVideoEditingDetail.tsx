@@ -337,7 +337,7 @@ function renderOverviewCopy(text: string) {
     <div className="overview-feature-copy min-w-0">
       {splitOverviewFeatureBlocks(text).map((block, index) =>
         block.kind === "list" ? (
-          <ul key={`ov-list-${index}`} className={OVERVIEW_LIST_CLASS}>
+          <ul key={`ov-list-${index}`} className={`${OVERVIEW_LIST_CLASS}${index > 0 ? " mt-3" : ""}`}>
             {block.items.map((item, itemIndex) => (
               <li key={`ov-item-${index}-${itemIndex}`} className={OVERVIEW_ITEM_CLASS}>
                 {renderDetailInlineEm(item)}
