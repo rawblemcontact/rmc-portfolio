@@ -6891,10 +6891,11 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         selectorSubtitle: "Tutorial-Style Content (2025)",
         selectorDuration: "8:06",
         detailOverview:
-          "Alternate pacing pass emphasizing setup-to-punchline contrast and stronger cadence in transition points.",
-        detailRole: "Timing pass, arrangement tweaks, and social delivery prep.",
-        detailTools: ["DaVinci Resolve", "CapCut"],
-        detailImpact: "Cleaner narrative rhythm across the middle beats with improved continuity.",
+          "A frame-by-frame look at a 14-frame animation created for the release of <em>UNDERTALE: Forever Home Edition</em>.\n\nFeatures:\n- 60FPS\n- 4K Resolution\n- 9:16 mobile-friendly aspect ratio\n- Handcrafted pixel animation\n- 8-bit style typography\n- Timed to music",
+        detailRole: "Independent\nVideo Editor\nAnimator\nSocial Media Coordinator",
+        detailTools: ["DaVinci Resolve", "OBS Studio", "GameMaker Studio 2"],
+        detailImpact:
+          "Completed and published November 15th, 2025.\nDiversified RAWBLEM brand identity by introducing tutorial-style content to viewers for the first time.\nStrengthened visual communication by expressing the animation in both frame-by-frame and normal playback.",
       },
       {
         id: "video-edit-6",
