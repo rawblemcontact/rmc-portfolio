@@ -4229,7 +4229,9 @@ export function ShowcaseVideoEditingDetail({
         .split(/\n+/)
         .map((line) => line.trim())
         .filter(Boolean);
-      if (roleLines.length > 1) {
+      const roleForceList = roleLines.length === 1 && roleLines[0]!.startsWith("- ");
+      if (roleForceList) roleLines[0] = roleLines[0]!.slice(2);
+      if (roleLines.length > 1 || roleForceList) {
         return (
           <ul className="ml-1 mb-0 list-disc list-outside space-y-1 pl-6 marker:text-mono-2/70 sm:pl-7">
             {roleLines.map((line, index) => (

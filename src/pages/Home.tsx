@@ -6862,10 +6862,10 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         selectorDuration: "1:17",
         detailOverview:
           "Undergraduate film project. Directed by Eliza Musselwhite and written by Johnny Cole.\n\n<em>Wes must face his fear of scary movies to save Ellie from an endless nightmare-horror-film death loop.</em>\n\nFeatures:\n\n- 30FPS\n- 16:9 YouTube-friendly aspect ratio\n- Keyframed animation\n- Campy horror-themed aesthetic and sound\n- Intense camera-shake motion effects\n- Fast-paced TV static VFX and transitions\n- Color correction",
-        detailRole: "Video Editor",
+        detailRole: "- Video Editor",
         detailTools: ["DaVinci Resolve", "Audacity"],
         detailImpact:
-          "Completed and published April 8th, 2023.\nExecuted a multi-stage editorial workflow (e.g., assembly cut -> refined cut -> final cut) while meeting all deadlines.\nStrengthened skills and familiarity with tools in DaVinci Resolve (e.g., output blanking, keyframing, chroma keys, and LUTs).",
+          "Completed and published April 8th, 2023.\nExecuted a multi-stage editorial workflow (e.g., assembly cut, refined cut, and final cut) while meeting all deadlines.\nStrengthened skills and familiarity with tools in DaVinci Resolve (e.g., output blanking, keyframing, chroma keys, and LUTs).",
       },
       {
         id: "video-edit-4",
