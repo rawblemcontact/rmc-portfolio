@@ -5288,7 +5288,7 @@ export function ShowcaseVideoEditingDetail({
                       {renderDetailCardTabList()}
                       <AnimatePresence mode="wait" initial={false}>
                         <motion.div
-                          key={activeVideo.id}
+                          key={isSlaywire ? "slaywire-static-body" : activeVideo.id}
                           initial={false}
                           className={`w-full min-w-0${
                             detailCardUsesInnerScroll ? " flex min-h-0 flex-1 flex-col" : ""
@@ -5343,8 +5343,9 @@ export function ShowcaseVideoEditingDetail({
                                   : ""
                               }`}
                               style={{
-                                opacity: detailBodyVisible ? 1 : 0,
-                                transition: reduceMotion
+                                /* SLAYWIRE entries share identical copy — no body fade on switch. */
+                                opacity: isSlaywire || detailBodyVisible ? 1 : 0,
+                                transition: reduceMotion || isSlaywire
                                   ? undefined
                                   : `opacity ${
                                       detailBodyVisible
