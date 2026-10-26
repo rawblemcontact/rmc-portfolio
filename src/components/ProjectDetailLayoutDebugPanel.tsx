@@ -38,7 +38,8 @@ export const PROJECT_VIDEO_STYLE_DETAIL_LAYOUT_DEFAULTS: ProjectDetailLayoutDebu
  */
 export const PROJECT_VIDEO_EDITING_DETAIL_LAYOUT_DEFAULTS: ProjectDetailLayoutDebugValues = {
   ...PROJECT_VIDEO_STYLE_DETAIL_LAYOUT_DEFAULTS,
-  offsetY: 0,
+  /* Optical vertical center (zoomed px; ~11 CSS px down). */
+  offsetY: 13,
 };
 
 /** Locked desktop VISUAL DESIGN layout (Jun 2026). */
