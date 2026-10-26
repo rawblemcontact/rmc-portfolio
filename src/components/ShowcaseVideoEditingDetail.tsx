@@ -287,7 +287,7 @@ function renderDetailInlineEm(text: string) {
       <span key={`txt-${index}`}>
         {segs.map((seg, segIndex) =>
           seg === "Features:" ? (
-            <span key={`ft-${segIndex}`} className="underline decoration-1 underline-offset-[9px]">
+            <span key={`ft-${segIndex}`} className="underline decoration-1 underline-offset-[9px] [clip-path:inset(-4px_-4px_-14px_1px)]">
               {seg}
             </span>
           ) : (
