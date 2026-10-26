@@ -4157,7 +4157,9 @@ export function ShowcaseVideoEditingDetail({
   const activeSelectorTitle = isSlaywire
     ? card.title
     : activeVideo.selectorTitle?.trim() || activeVideo.label || "Selected work";
-  const activeSelectorSubtitle = activeVideo.selectorSubtitle?.trim() || "";
+  const activeSelectorSubtitle = isSlaywire
+    ? "(2023 - Present)"
+    : activeVideo.selectorSubtitle?.trim() || "";
   const activeDetails = {
     detailOverview: activeVideo.detailOverview?.trim() || card.detailOverview?.trim() || "—",
     detailRole: activeVideo.detailRole?.trim() || card.detailRole?.trim() || "—",
