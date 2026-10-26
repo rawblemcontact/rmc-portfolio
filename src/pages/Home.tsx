@@ -6873,14 +6873,14 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         label: "4",
         thumbnailSrc: "/Video_Editing_4_thumb.png",
         selectorTitle: "My Perfect Morning Routine",
-        selectorSubtitle: "Short Film (2021)",
+        selectorSubtitle: "Short Film (2022)",
         selectorDuration: "5:16",
         detailOverview:
           "Independent undergraduate film project.\n<em>A sporadic narrator shows off their fully authentic, totally relateable morning routine — without anything going wrong at all.</em>\n\nFeatures:\n\n- 30FPS\n- 720p Resolution\n- 16:9 YouTube-friendly aspect ratio\n- Voiceover narration\n- 8-bit style motion typography",
         detailRole: "Independent\nCreative Director\nWriter\nVideo Editor",
         detailTools: ["DaVinci Resolve", "Audacity"],
         detailImpact:
-          "Completed and published December 10th, 2021.\nGained valuable experience in writing unconventional story structure.\nLearned how to produce, record, and mix voiceover content.\nStrengthened knowledge of tools in DaVinci Resolve.",
+          "Completed and published in Spring 2022.\nGained valuable experience in writing unconventional story structure.\nLearned how to produce, record, and mix voiceover content.\nStrengthened knowledge of tools in DaVinci Resolve.",
       },
       {
         id: "video-edit-5",
