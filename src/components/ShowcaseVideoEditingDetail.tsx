@@ -4630,12 +4630,12 @@ export function ShowcaseVideoEditingDetail({
                 onClick={handleDetailCardTabClick(tabId)}
               >
                 <span
-                  className="video-editing-detail-card-tab-label relative inline-block w-max pb-2"
+                  className="video-editing-detail-card-tab-label relative inline-block w-max pb-[7px]"
                   data-label={detailCardTabLabel(tabId, isSlaywire)}
                 >
                   {detailCardTabLabel(tabId, isSlaywire)}
                   <motion.span
-                    className="video-editing-detail-card-tab-underline pointer-events-none absolute inset-x-0 bottom-0 h-px bg-[color:var(--palette-yellow-projects)]"
+                    className="video-editing-detail-card-tab-underline pointer-events-none absolute left-0 right-[0.1em] bottom-0 h-px bg-[color:var(--palette-yellow-projects)]"
                     style={{ transformOrigin: "center center" }}
                     initial={false}
                     animate={
