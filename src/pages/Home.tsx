@@ -6829,12 +6829,12 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         selectorSubtitle: "Promotional Announcement (2025)",
         selectorDuration: "0:06",
         detailOverview:
-          "Short-form video content produced to increase engagement on the RAWBLEM Instagram account, using my own digital artwork as the subject.\n\nFeatures:\n- 9:16 mobile friendly aspect ratio\n- 60FPS animation\n- Rotating/scaling 3D motion effects\n- Dynamic video backgrounds\n- Color and filter effects (e.g., Motion blur, chromatic aberration, etc.)\n- Animated CTA (call to action) buttons and typography.",
+          "Short-form video content produced to increase engagement on the RAWBLEM Instagram account, using my own digital artwork as the subject.\n\nFeatures:\n\n- 9:16 mobile-friendly aspect ratio\n- 60FPS animation\n- Rotating/scaling 3D motion effects\n- Dynamic video backgrounds\n- Color and filter effects (e.g., Motion blur, chromatic aberration, etc.)\n- Animated CTA (call to action) buttons and typography",
         detailRole:
           "Independent\nCreative Director\nProducer\nWriter\nDigital Artist\nVideo Editor\nSocial Media Coordinator",
-        detailTools: ["CapCut", "Instagram Performance Insights"],
+        detailTools: ["CapCut", "Procreate", "GIMP/Photoshop"],
         detailImpact:
-          "Completed and published on November 28th, 2025.\nTop-performing post on Instagram.\nSubstantial increase in profile views and followers gained, and overall account growth.\nIncreased sales of commercial RAWBLEM merch.\n\n<em>The featured design in this project is an unofficial fan work, and is not available for purchase.\nAll trademarks and copyrights belong to their respective owners.</em>",
+          "Completed and published on November 28th, 2025.\nTop-performing post on the RAWBLEM Instagram account.\nSubstantial increase in profile views, followers gained, and overall account growth.\n\n<em>The featured design in this project is an unofficial fan work, and is not available for purchase.\nAll trademarks and copyrights belong to their respective owners.</em>",
       },
       {
         id: "video-edit-2",
@@ -6845,12 +6845,12 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         selectorSubtitle: "Promotional Announcement & Meme Content (2025)",
         selectorDuration: "0:11",
         detailOverview:
-          "Short-form video content produced to increase engagement on the RAWBLEM Instagram, TikTok, YouTube Shorts, and online storefront.\nEmphasizes using internet meme absurdism and humor. Uses my own digital artwork as the subject.\n\nFeatures:\n- 60FPS Animation\n- 4K Resolution\n- 9:16 mobile friendly aspect ratio\n- Rotating/scaling/zooming/camera shake motion effects\n- Exaggerated scene transitions and bold typography\n- Timed to music",
+          "Short-form video content produced to increase engagement on the RAWBLEM Instagram, TikTok, YouTube Shorts, and online storefront.\n\nEmphasizes internet meme absurdism and humor, using my own digital artwork as the subject.\n\nFeatures:\n\n- 60FPS Animation\n- 4K Resolution\n- 9:16 mobile-friendly aspect ratio\n- Rotating/scaling/zooming/camera shake motion effects\n- Exaggerated scene transitions and bold typography\n- Timed to music",
         detailRole:
           "Independent\nCreative Director\nProducer\nWriter\nDigital Artist\nVideo Editor\nSocial Media Coordinator",
         detailTools: ["CapCut", "Procreate", "Clip Studio Paint", "GIMP/Photoshop"],
         detailImpact:
-          "Completed and published on November 23rd, 2025.\nIncreased sales of commercial RAWBLEM merch.\nIncreased unique visitors to RAWBLEM storefront following launch.\nStrengthened brand awareness and identity through a distinct and consistent art style.",
+          "Completed and published on November 23rd, 2025.\nIncreased sales of commercial RAWBLEM merch.\nIncreased unique visitors to the RAWBLEM storefront following launch.\nStrengthened brand awareness and identity through a distinct and consistent art style.",
       },
       {
         id: "video-edit-3",
@@ -6861,7 +6861,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         selectorSubtitle: "Comedy/Horror Short Film (2023)",
         selectorDuration: "1:17",
         detailOverview:
-          "Undergraduate film project. Directed by Eliza Musselwhite and written by Johnny Cole.\n<em>Wes must face his fear of scary movies to save Ellie from an endless-nightmare-horror-film-death loop.</em>\n\nFeatures:\n- 30FPS\n- 16:9 YouTube-friendly aspect ratio\n- Keyframed animation\n- Campy horror-themed aesthetic and sound\n- Intense camera-shake motion effects\n- Fast-paced TV static VFX and transitions\n- Color correction",
+          "Undergraduate film project. Directed by Eliza Musselwhite and written by Johnny Cole.\n<em>Wes must face his fear of scary movies to save Ellie from an endless-nightmare-horror-film-death loop.</em>\n\nFeatures:\n\n- 30FPS\n- 16:9 YouTube-friendly aspect ratio\n- Keyframed animation\n- Campy horror-themed aesthetic and sound\n- Intense camera-shake motion effects\n- Fast-paced TV static VFX and transitions\n- Color correction",
         detailRole: "Video Editor\nMusic and Sound Effect Curator + Mixer",
         detailTools: ["DaVinci Resolve", "Audacity"],
         detailImpact:
