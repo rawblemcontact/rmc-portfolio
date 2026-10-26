@@ -55,9 +55,9 @@ const PROJECT_DETAIL_LAYOUT_LOCKED_DEFAULTS_BY_PROJECT: Partial<
 > = {
   "project-visual-design": PROJECT_VISUAL_DESIGN_DETAIL_LAYOUT_DEFAULTS,
   "project-video-editing": PROJECT_VIDEO_EDITING_DETAIL_LAYOUT_DEFAULTS,
-  "project-interactive-media": PROJECT_VIDEO_STYLE_DETAIL_LAYOUT_DEFAULTS,
-  /* SLAYWIRE sat ~11px lower than VIDEO EDITING / INTERACTIVE MEDIA — nudge up to match. */
-  "project-slaywire": { ...PROJECT_VIDEO_EDITING_DETAIL_LAYOUT_DEFAULTS, offsetY: -24 },
+  /* Flex-centered vertically (offsetY 0) on desktop / iPad landscape. */
+  "project-interactive-media": PROJECT_VIDEO_EDITING_DETAIL_LAYOUT_DEFAULTS,
+  "project-slaywire": PROJECT_VIDEO_EDITING_DETAIL_LAYOUT_DEFAULTS,
 };
 
 export function projectDetailLayoutDefaultsForProject(
