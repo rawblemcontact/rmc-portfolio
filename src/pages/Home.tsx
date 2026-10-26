@@ -7018,8 +7018,8 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "/slaywire_new_1_full.png",
         label: "1",
         thumbnailSrc: "/slaywire_new_1.png",
-        selectorTitle: "Cover Art (2022)",
-        selectorSubtitle: "",
+        selectorTitle: "Cover Art",
+        selectorSubtitle: "(2022)",
         detailOverview:
           "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
         detailRole:
@@ -7039,8 +7039,8 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "/slaywire_e5.png",
         label: "2",
         thumbnailSrc: "/slaywire_e5.png",
-        selectorTitle: "Logo Art (2022)",
-        selectorSubtitle: "",
+        selectorTitle: "Logo Art",
+        selectorSubtitle: "(2022)",
         detailOverview:
           "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
         detailRole:
@@ -7060,8 +7060,8 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "/slaywire_c1_full.png",
         label: "3",
         thumbnailSrc: "/slaywire_new_2.png",
-        selectorTitle: "Concept Art #1 (2023)",
-        selectorSubtitle: "",
+        selectorTitle: "Concept Art #1",
+        selectorSubtitle: "(2023)",
         detailOverview:
           "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
         detailRole:
@@ -7081,8 +7081,8 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "/slaywire_c3_full.png",
         label: "4",
         thumbnailSrc: "/slaywire_01_full.png",
-        selectorTitle: "Concept Art #2 (2023)",
-        selectorSubtitle: "",
+        selectorTitle: "Concept Art #2",
+        selectorSubtitle: "(2023)",
         detailOverview:
           "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
         detailRole:
@@ -7102,8 +7102,8 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "/slaywire_c2_full.png",
         label: "5",
         thumbnailSrc: "/slaywire_new_3.png",
-        selectorTitle: "Concept Art #3 (2023)",
-        selectorSubtitle: "",
+        selectorTitle: "Concept Art #3",
+        selectorSubtitle: "(2023)",
         detailOverview:
           "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
         detailRole:
@@ -7123,8 +7123,8 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "/slaywire_final_full.png",
         label: "6",
         thumbnailSrc: "/slaywire_e9.png",
-        selectorTitle: "Concept Art #4 (2023)",
-        selectorSubtitle: "",
+        selectorTitle: "Concept Art #4",
+        selectorSubtitle: "(2023)",
         detailOverview:
           "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
         detailRole:
@@ -7144,8 +7144,8 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "/slaywire_s4_full.png",
         label: "7",
         thumbnailSrc: "/slaywire_s4.png",
-        selectorTitle: "Concept Art #5 (2024)",
-        selectorSubtitle: "",
+        selectorTitle: "Concept Art #5",
+        selectorSubtitle: "(2024)",
         detailOverview:
           "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
         detailRole:
@@ -7165,8 +7165,8 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         url: "/slaywire_e7.png",
         label: "8",
         thumbnailSrc: "/slaywire_e7.png",
-        selectorTitle: "Concept Art #6 (2024)",
-        selectorSubtitle: "",
+        selectorTitle: "Concept Art #6",
+        selectorSubtitle: "(2024)",
         detailOverview:
           "<em>\"Deep within the Iron Sleep, the MACHINA awake.\"</em>\n\nWhen lightning strikes a broken robot to life, Machina DE must survive a world without humanity.\n\nSLAYWIRE is an indie game project, planned for release on Windows.",
         detailRole:
