@@ -6829,7 +6829,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         selectorSubtitle: "Promotional Announcement (2025)",
         selectorDuration: "0:06",
         detailOverview:
-          "Short-form video content produced to increase engagement on the RAWBLEM Instagram account, using my own digital artwork as the subject.\n\nFeatures:\n\n- 9:16 mobile-friendly aspect ratio\n- 60FPS animation\n- Rotating/scaling 3D motion effects\n- Dynamic video backgrounds\n- Color and filter effects (e.g., Motion blur, chromatic aberration, etc.)\n- Animated CTA (call to action) buttons and typography\n\n<em>The featured design in this project is an unofficial fan work, and is not available for purchase.\n\nAll trademarks and copyrights belong to their respective owners.</em>",
+          "Short-form video content produced to increase engagement on the RAWBLEM Instagram account, using my own digital artwork as the subject.\n\nFeatures:\n\n- 9:16 mobile-friendly aspect ratio\n- 60FPS animation\n- Rotating/scaling 3D motion effects\n- Dynamic video backgrounds\n- Color and filter effects (e.g., Motion blur, chromatic aberration, etc.)\n- Animated CTA (call to action) buttons and typography\n\n<em>The featured design in this project is an unofficial fan work, and is not available for purchase. All trademarks and copyrights belong to their respective owners.</em>",
         detailRole:
           "Independent\nCreative Director\nProducer\nWriter\nDigital Artist\nVideo Editor\nSocial Media Coordinator",
         detailTools: ["CapCut", "Procreate", "GIMP/Photoshop"],
@@ -6873,14 +6873,14 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         label: "4",
         thumbnailSrc: "/Video_Editing_4_thumb.png",
         selectorTitle: "My Perfect Morning Routine",
-        selectorSubtitle: "Short Film (2022)",
+        selectorSubtitle: "Short Film (2021)",
         selectorDuration: "5:16",
         detailOverview:
-          "A frame-by-frame look at a 14-frame animation created for the release of <em>UNDERTALE: Forever Home Edition</em>.\n\nFeatures:\n- 60FPS\n- 4K Resolution\n- 9:16 mobile-friendly aspect ratio\n- Handcrafted pixel animation\n- 8-bit style typography\n- Timed to music",
-        detailRole: "Independent\nVideo Editor\nAnimator\nSocial Media Coordinator",
-        detailTools: ["DaVinci Resolve", "OBS Studio", "GameMaker Studio 2"],
+          "Independent undergraduate film project.\n<em>A sporadic narrator shows off their fully authentic, totally relateable morning routine — without anything going wrong at all.</em>\n\nFeatures:\n\n- 30FPS\n- 720p Resolution\n- 16:9 YouTube-friendly aspect ratio\n- Voiceover narration\n- 8-bit style motion typography",
+        detailRole: "Independent\nCreative Director\nWriter\nVideo Editor",
+        detailTools: ["DaVinci Resolve", "Audacity"],
         detailImpact:
-          "Completed and published November 15th, 2025.\nDiversified RAWBLEM brand identity by introducing tutorial-style content to viewers for the first time.\nStrengthened visual communication by expressing the animation in both frame-by-frame and normal playback.",
+          "Completed and published December 10th, 2021.\nGained valuable experience in writing unconventional story structure.\nLearned how to produce, record, and mix voiceover content.\nStrengthened knowledge of tools in DaVinci Resolve.",
       },
       {
         id: "video-edit-5",
@@ -6906,10 +6906,10 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         selectorSubtitle: "Social Media Edit (2025)",
         selectorDuration: "0:27",
         detailOverview:
-          "Title-card-forward variation tuned for branding clarity while preserving fast short-form momentum.",
-        detailRole: "Brand integration, typography pass, and final polish.",
-        detailTools: ["CapCut", "DaVinci Resolve"],
-        detailImpact: "Stronger brand recall while maintaining retention-friendly pacing.",
+          "Short-form video content produced for RAWBLEM social media accounts (e.g., Instagram, YouTube, and TikTok) to celebrate the brand's pick for Game of the Year 2025.\n\nFeatures:\n\n- 30 - 60 FPS\n- 9:16 Mobile-friendly aspect ratio\n- Blurred background fill\n- Motion blur transitions and animated typography synchronized to the beats of the game's official release trailer.",
+        detailRole: "Independent\nCreative Director\nVideo Editor\nSocial Media Coordinator",
+        detailTools: ["CapCut"],
+        detailImpact: "Promoted RAWBLEM's gaming-focused content to expand social media presence and engagement.\nSuccessfully predicted Game of the Year 2025.",
       },
     ],
   },
