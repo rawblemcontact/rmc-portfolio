@@ -6967,7 +6967,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         selectorSubtitle: "Commissioned Work (2026)",
         selectorDuration: "0:11",
         detailOverview:
-          "Handcrafted pixel animation for DOGBALL, produced by FugitiveFilms for the CineVic Presenter Series: Art for Art's Sake.\n\nThis project was created over a one-month development period.\n\nFeatures:\n- All original pixel artwork and animation\n- 8-bit retro-game style aesthetic\n- 16:9 YouTube-friendly aspect ratio\n- 4K Resolution\n- Sound effects - curated, modified, and mixed",
+          "Handcrafted pixel animation for DOGBALL, a short film produced by FugitiveFilms for the CineVic Presenter Series: Art for Art's Sake.\n\nThis project was created over a one-month development period.\n\nFeatures:\n- All original pixel artwork and animation\n- 8-bit retro-game aesthetic\n- 16:9 and 9:16 aspect ratios\n- 4K resolution\n- Sound effects (curated, modified, and mixed)",
         detailRole: "Animator\nCreative Lead (animation only)\nVideo Editor (animation only)",
         detailTools: ["Aseprite (Animation Software)", "CapCut", "OBS Studio"],
         detailImpact:
