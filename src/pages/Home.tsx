@@ -6936,10 +6936,10 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         selectorSubtitle: "Video Game (2025)",
         selectorDuration: "23:15",
         detailOverview:
-          "UNDERTALE - FOREVER HOME EDITION (UTFHE) is a narrative-driven game based on UNDERTALE by Toby Fox.\nThis was created to propose to my girlfriend and was completed over a one-year development period. She said YES!\n\nSince UNDERTALE is a game about choice-based outcomes, and happens to be my fiancé's favourite, it proved the perfect candidate for this project.\n\n<em>When the Underground is overhauled by an unknown entity, a lone girl faces one of the most important decisions of her life.</em>\n\nFeatures:\n\n- Heavy rewriting of the original game\n- Handcrafted pixel animations\n- Heavily edited visual assets\n- Brand new characters\n- Brand new cutscenes\n- Brand new explorable areas\n- Narrative driven mechanics (e.g. Multiple endings, choices matter, etc.)\n- Multiple endings\n- Social media promotional campaign\n- Full playability on PC (Windows)\n- Full video playthrough and YouTube release.\n\n<em>This is a noncommercial, transformative project created for educational and entertainment purposes.\nIt is not affiliated with, endorsed by, or sponsored by Toby Fox or any other rights holders.\nSome third-party assets have been modified or adapted for use in this project.\nNo copyright infringement is intended.</em>\n\n<em>Full credits available in the YouTube video description.</em>",
+          "<em>When the Underground is overhauled by an unknown entity, a lone girl faces one of the most important decisions of her life.</em>\n\n<em>UNDERTALE: Forever Home Edition (UTFHE)</em> is a narrative-driven game based on UNDERTALE by Toby Fox.\n\nThis project was created to propose to my now fiancé, and was completed over a one-year development period.\n\nSince <em>UNDERTALE</em> is a story-focused game about choice-based outcomes (and happens to be her favourite), it proved the perfect candidate for this project.\n\n<em>UNDERTALE Forever Home Edition</em>, uses this choice-based approach coupled with environmental storytelling to ask the fated question: <em>\"Will you marry me?</em>\"\n\nFeatures:\n\n- Full playability on PC (Windows)\n- Heavy rewriting of the original game\n- Handcrafted pixel animations\n- Heavily edited visual assets\n- Brand new characters\n- Brand new cutscenes\n- Brand new explorable areas\n- Preserved tonality of the original game\n- Narrative-driven mechanics (e.g., multiple endings, choices matter, etc.)\n- Multiple endings\n- Social media promotional campaign\n- Full video playthrough and YouTube release\n\n<em>This is a noncommercial, transformative project created for educational and entertainment purposes.\nIt is not affiliated with, endorsed by, or sponsored by Toby Fox or any other rights holders.\n\nSome third-party assets have been modified or adapted for use in this project.\n\nNo copyright infringement is intended.</em>\n\n<em>Full credits available in the YouTube video description.</em>",
         detailRole:
-          "Independent\nCreative Director\nWriter\nProducer\nProgrammer\nGame Developer\nVideo Editor\nAnimator\nSocial Media Coordinator",
-        detailTools: ["GameMaker Studio 2", "DaVinci Resolve", "CapCut", "OBS Studio", "Audacity"],
+          "Independent\nCreative Director\nWriter\nProducer\nAnimator\nGame Developer\nVideo Editor\nSocial Media Coordinator",
+        detailTools: ["GameMaker Studio 2", "Aseprite (Animation Software)", "DaVinci Resolve", "CapCut", "OBS Studio", "Audacity"],
         detailImpact:
           "100,000+ combined viewers across TikTok, YouTube, and Instagram.\nSuccessfully managed all workflows independently from concept -> game development -> video production -> promotion\nTop performing posts across all RAWBLEM social media platforms.\nLed to professional work opportunities following the project's public release.\nGot engaged.",
       },
@@ -6952,11 +6952,11 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         selectorSubtitle: "Commissioned Work (2026)",
         selectorDuration: "0:11",
         detailOverview:
-          "Handcrafted pixel animation for DOGBALL, produced by FugitiveFilms for the CineVic Presenter Series: Art for Art's Sake.\nThis project was created over a one-month development period.\n\nFeatures:\n- All original pixel artwork and animation\n- 8-bit retro-game style aesthetic\n- 16:9 YouTube-friendly aspect ratio\n- 4K resolution\n- Sound Effects - curated, modified, and mixed",
+          "Handcrafted pixel animation for DOGBALL, a short film produced by FugitiveFilms for the CineVic Presenter Series: Art for Art's Sake.\n\nThis project was created over a one-month development period.\n\nFeatures:\n- All original pixel artwork and animation\n- 8-bit retro-game aesthetic\n- 16:9 and 9:16 aspect ratios\n- 4K resolution\n- Sound effects (curated, modified, and mixed)",
         detailRole: "Animator\nCreative Lead (animation only)\nVideo Editor (animation only)",
         detailTools: ["Aseprite (Animation Software)", "CapCut", "OBS Studio"],
         detailImpact:
-          "3000+ combined views across all RAWBLEM social media platforms.\n97% Audience Retention on YouTube Shorts\nPremiered at The Roxy Theatre with strong positive audience reception.\nSuccessfully managed all relevant workflows from animation production -> video editing",
+          "Premiered at The Roxy Theatre in Victoria, BC with strong audience reception.\n96% Audience Retention (average percentage viewed) on YouTube Shorts.\nSuccessfully managed all relevant workflows from animation production -> video editing -> promotion",
       },
       {
         id: "interactive-media-3",
@@ -6967,7 +6967,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         selectorSubtitle: "Commissioned Work (2026)",
         selectorDuration: "0:11",
         detailOverview:
-          "Handcrafted pixel animation for DOGBALL, produced by FugitiveFilms for the CineVic Presenter Series: Art for Art's Sake.\nThis project was created over a one-month development period.\n\nFeatures:\n- All original pixel artwork and animation\n- 8-bit retro-game style aesthetic\n- 16:9 YouTube-friendly aspect ratio\n- 4K Resolution\n- Sound Effects - curated, modified, and mixed",
+          "Handcrafted pixel animation for DOGBALL, produced by FugitiveFilms for the CineVic Presenter Series: Art for Art's Sake.\n\nThis project was created over a one-month development period.\n\nFeatures:\n- All original pixel artwork and animation\n- 8-bit retro-game style aesthetic\n- 16:9 YouTube-friendly aspect ratio\n- 4K Resolution\n- Sound effects - curated, modified, and mixed",
         detailRole: "Animator\nCreative Lead (animation only)\nVideo Editor (animation only)",
         detailTools: ["Aseprite (Animation Software)", "CapCut", "OBS Studio"],
         detailImpact:
@@ -6981,8 +6981,8 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         selectorTitle: "RAWBLEM.com",
         selectorSubtitle: "Portfolio Website (2026)",
         detailOverview:
-          "Portfolio website showcasing selected works and career highlights across multiple disciplines, including writing, content production, and social media.\nThis project was completed over a six-month development period.\n\nCombined my existing knowledge of coding and design with agentic AI-assisted tools to create a fully-realized portfolio experience.\n\nDisplays a minimalist and modern editorial motif featuring a 5-color design theme (red, yellow, blue, green, violet)\n\nFeatures:\n- Single-page application with fluid client-side navigation (eliminates full page-reloads to enhance user experience)\n- Modern, minimalist editorial motif featuring a 5-color design theme (red, yellow, blue, green, violet).\n- Fully navigable Main Menu and Side Menu with 5 explorable sections.\n- Responsive viewport-specific designs for desktop, mobile, and tablet.\n- 60fps interactive web elements using Framer Motion (page transitions, CTA buttons, text, etc.)\n- Featured Writing Showcase: Tab System\n- Built-in Lightbox Gallery\n- Built-in Media Player\n- Built-in PDF Reader",
-        detailRole: "Creative Director\nVisual Designer\nWeb Developer (Assisted by Cursor AI)\nContent Writer",
+          "Portfolio website showcasing selected works and career highlights across multiple disciplines, including writing, content production, and social media.\n\nThis project was completed over an eight-month development period.\n\nCombined my existing knowledge of coding, UX/UI, animation, and visual design to create a fully-realized portfolio experience. Agentic AI-assisted tools were implemented for complex coding tasks, and to a create debug menu interfaces (used to manually tweak visual elements and their values in real time as needed. In essence, photoshop-esque controls within a browser-based environment). Every single design element/design decision of this website was painstakingly crafted, curated, and polished for hundreds of hours).  \n\nDisplays a minimalist, modern, and editorial motif featuring a five-hue colour palette (red, yellow, blue, green, violet).\n\nFeatures:\n- Single-page application with fluid client-side navigation (eliminates full page-reloads to enhance user experience)\n- Fully navigable Main Menu and Side Menu with explorable sections.\n- Responsive viewport-specific designs for desktop, mobile, and tablet.\n- 60fps interactive web elements using Framer Motion (page transitions, CTA buttons, text, etc.)\n- Featured Writing Showcase: Tab System\n- Built-in Lightbox Gallery\n- Built-in Media Player\n- Built-in PDF Reader",
+        detailRole: "Creative Director\nVisual Designer\nWeb Developer (Assisted by Cursor AI + VS Code)\nContent Writer",
         detailTools: [
           "Tech Stack: Vite 7",
           "React 19",
@@ -6990,10 +6990,10 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
           "Tailwind CSS v4",
           "Framer Motion",
           "npm",
-          "Software: Cursor + VS Code",
+          "Cursor + VS Code",
         ],
         detailImpact:
-          "Completed and launched in August 2026.\nSuccessfully launched a central hub for all portfolio content outside of social media platforms.\nImproved skills with Agentic AI IDEs",
+          "Completed and launched in November 2026.\nSuccessfully created a central hub for all portfolio and resume content.\nImproved skills with Agentic AI IDEs",
       },
     ],
   },
