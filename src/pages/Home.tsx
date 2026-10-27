@@ -6971,7 +6971,7 @@ const PROJECT_CARDS: readonly ShowcaseProjectCard[] = [
         detailRole: "Animator\nCreative Lead (animation only)\nVideo Editor (animation only)",
         detailTools: ["Aseprite (Animation Software)", "CapCut", "OBS Studio"],
         detailImpact:
-          "3000+ combined views across all RAWBLEM social media platforms.\n97% Audience Retention on YouTube Shorts\nPremiered at The Roxy Theatre with strong positive audience reception.\nSuccessfully managed all relevant workflows from animation production -> video editing",
+          "Premiered at The Roxy Theatre in Victoria, BC with strong audience reception.\n97% Audience Retention (average percentage viewed) on YouTube Shorts.\nSuccessfully managed all relevant workflows from animation production -> video editing -> promotion",
       },
       {
         id: "interactive-media-4",
