@@ -17,6 +17,7 @@ Load for SHOWCASE, FEATURED WRITING, section overlays, or `#projects` layout wor
 | Area | Location |
 |------|----------|
 | SHOWCASE carousel, FEATURED WRITING, project detail / FLIP, section slide-in panels | `src/pages/Home.tsx` — locate via `.cursor/section-map.md` |
+| PROJECT DETAILS desc drawer (tab/work height tween) | `src/components/ShowcaseVideoEditingDetail.tsx` |
 | Folder tab strip + FEATURED WRITING chrome | `src/components/ShowcaseAttachedTabStrip.tsx` (`LAYOUT_ANCHOR_TAB_ID`, `FEATURED_WRITING_PREVIEW_GUTTER_PX`) |
 | PDF first-page thumbnails (FEATURED WRITING) | `src/components/FeaturedWritingPdfThumbnail.tsx` |
 | Global scrollbar utilities | `src/index.css` (`.no-scrollbar`, etc.) — Grep, do not full-read |
@@ -47,6 +48,31 @@ Prefer **small, focused components** in `src/components/` when extracting from `
 ## SHOWCASE YouTube (native embed)
 
 Adding another YouTube clip is a **data change**: set that item’s `detailVideos[].url` to the YouTube URL in `Home.tsx`. `ShowcaseVideoEditingDetail` already maps YouTube URLs to a native `youtube-nocookie.com/embed/{id}` iframe that fills the existing player card (YouTube’s own UI). Do **not** wrap YouTube in Plyr, add a new player library, or restyle the iframe. Keep `thumbnailSrc` for the works-strip thumb. Plyr is only for local file videos.
+
+## PROJECT DETAILS desc-card drawer height (locked pattern)
+
+Validated 2026-09-26 in `ShowcaseVideoEditingDetail.tsx`. **Do not reintroduce a second height ease** (probe→live fit, settle pin, or post-visible hug).
+
+### Goal
+
+Tab and work switches: **one** visible height motion that lands on the **correct hug height** (no empty bottom pad, no clip).
+
+### How it works
+
+1. **One tween only** — `animateDetailCardToMeasuredBody` rAF-eases height once. Freeze destination for the whole beat (no mid-tween cap bending).
+2. **Measure before the tween** — prefer **live wrap** when its copy matches the target probe tab; else **probe clone**. Wait (rAF retries) until live matches on first switch so cold mounts don’t undershoot/overshoot.
+3. **Probe clones** — shelf is `h-0 overflow-hidden`; trust the width-matched clone alone (don’t `max` with clipped `scrollHeight`). Sample typography from the **live** meta-card `.font-body` / `li` / `p`, not cold shelf computed styles. Warm probes on compact-drawer mount.
+4. **Tab change** — `flushSync` commit incoming tab **before** scheduling resize so AnimatePresence can mount during `DETAIL_BODY_OUT`.
+5. **Title vs card** — snap title height; ease **only** the desc card (animating both shifted `cardTop` / player-cap mid-tween and read as a second adjust).
+6. **After settle** — no settle pin, no `fitDetailCardToLiveBody` / `scheduleFit` height writes. The card shell stays visible while body opacity is 0; any post-tween height write is a visible second beat.
+7. **Player cap** — update `maxHeight` only in `syncDetailCardMaxHeightNow`; do not rewrite `height` there after the primary tween.
+
+### Anti-patterns (failed / rejected)
+
+- Probe tween then live-fit ease (or short hug ease) → “big motion + small adjust”.
+- `max(live, probe)` destination → overshoot + empty pad on short tabs (ROLE / IMPACT).
+- Pin/correct after settle while shell is visible → second motion even if “instant”.
+- Live-only measure on frame 0 of first switch → wrong height; subsequent switches looked fine.
 
 ## FEATURED WRITING
 
