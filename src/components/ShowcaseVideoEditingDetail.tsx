@@ -4297,14 +4297,21 @@ export function ShowcaseVideoEditingDetail({
     if (activeDetails.detailTools?.length) {
       return (
         <ul className="ml-1 mb-0 list-disc list-outside space-y-1 pl-6 marker:text-mono-2/70 sm:pl-7">
-          {activeDetails.detailTools.map((tool, index) => (
-            <li
-              key={`${tool}-${index}`}
-              className="font-body text-sm leading-snug text-mono-2 sm:text-base"
-            >
-              {tool}
-            </li>
-          ))}
+          {activeDetails.detailTools.map((tool, index) => {
+            const isHeading = /^.+:\s*$/.test(tool);
+            return (
+              <li
+                key={`${tool}-${index}`}
+                className={
+                  isHeading
+                    ? `list-none -ml-6 sm:-ml-7 font-body text-sm leading-snug text-mono-2 sm:text-base${index > 0 ? " mt-3" : ""}`
+                    : "font-body text-sm leading-snug text-mono-2 sm:text-base"
+                }
+              >
+                {tool}
+              </li>
+            );
+          })}
         </ul>
       );
     }
