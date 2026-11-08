@@ -4308,7 +4308,13 @@ export function ShowcaseVideoEditingDetail({
                     : "font-body text-sm leading-snug text-mono-2 sm:text-base"
                 }
               >
-                {tool}
+                {isHeading ? (
+                  <span className="underline decoration-1 underline-offset-[9px] [clip-path:inset(-4px_-4px_-14px_1px)]">
+                    {tool}
+                  </span>
+                ) : (
+                  tool
+                )}
               </li>
             );
           })}
